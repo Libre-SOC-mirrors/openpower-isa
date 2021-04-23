@@ -48,4 +48,9 @@ setup(
     install_requires=install_requires,
     tests_require=test_requires,
     test_suite='nose.collector',
+    entry_points = {
+        'console_scripts': [
+            'pywriter=openpower.decoder.pseudo.pywriter:pywriter'
+        ]
+    }
 )

@@ -24,18 +24,13 @@ from collections import namedtuple
 def find_wiki_dir():
     filedir = os.path.dirname(os.path.abspath(__file__))
     basedir = dirname(dirname(dirname(filedir)))
-    tabledir = join(basedir, 'libreriscv')
-    tabledir = join(tabledir, 'openpower')
-    return join(tabledir, 'isatables')
+    tabledir = join(basedir, 'openpower')
+    isatables = join(tabledir, 'isatables')
+    print ("find_wiki_dir", isatables)
+    return isatables
 
 
 def find_wiki_file(name):
-    filedir = os.path.dirname(os.path.abspath(__file__))
-    basedir = dirname(dirname(dirname(filedir)))
-    tabledir = join(basedir, 'libreriscv')
-    tabledir = join(tabledir, 'openpower')
-    tabledir = join(tabledir, 'isatables')
-
     return join(find_wiki_dir(), name)
 
 

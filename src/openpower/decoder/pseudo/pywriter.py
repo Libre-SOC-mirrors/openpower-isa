@@ -4,10 +4,10 @@ import os
 import sys
 import shutil
 import subprocess
-from soc.decoder.pseudo.pagereader import ISA
-from soc.decoder.power_pseudo import convert_to_python
-from soc.decoder.orderedset import OrderedSet
-from soc.decoder.isa.caller import create_args
+from openpower.decoder.pseudo.pagereader import ISA
+from openpower.decoder.power_pseudo import convert_to_python
+from openpower.decoder.orderedset import OrderedSet
+from openpower.decoder.isa.caller import create_args
 
 
 def get_isasrc_dir():
@@ -129,7 +129,7 @@ class PyISAWriter(ISA):
             f.write('        }\n')
 
 
-if __name__ == '__main__':
+def pywriter():
     isa = PyISAWriter()
     write_isa_class = True
     if len(sys.argv) == 1:  # quick way to do it
@@ -146,3 +146,6 @@ if __name__ == '__main__':
         isa.patch_if_needed(source)
     if write_isa_class:
         isa.write_isa_class()
+
+if __name__ == '__main__':
+    pywriter()
