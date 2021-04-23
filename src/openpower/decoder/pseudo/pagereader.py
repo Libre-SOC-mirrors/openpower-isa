@@ -58,7 +58,8 @@ def get_isa_dir():
     fdir = os.path.split(fdir)[0]
     fdir = os.path.split(fdir)[0]
     fdir = os.path.split(fdir)[0]
-    return os.path.join(fdir, "libreriscv", "openpower", "isa")
+    print (fdir)
+    return os.path.join(fdir, "openpower", "isa")
 
 
 class ISA:
@@ -68,10 +69,12 @@ class ISA:
         self.forms = {}
         self.page = {}
         for pth in os.listdir(os.path.join(get_isa_dir())):
-            print(get_isa_dir(), pth)
+            print("examining", get_isa_dir(), pth)
             if "swp" in pth:
                 continue
-            assert pth.endswith(".mdwn"), "only %s in isa dir" % pth
+            if not pth.endswith(".mdwn"):
+                print ("warning, file not .mdwn, skipping", pth)
+                continue
             self.read_file(pth)
             continue
             # code which helped add in the keyword "Pseudo-code:" automatically
