@@ -1,7 +1,10 @@
+# just... don't ask.  MSB0 is a massive pain in the neck.
+# this module, aside from creating various field constants,
+# helps out by creating alternative (identical) classes with
+# a "b" name to indicate "MSB0 big-endian".
+
+
 # sigh create little-ended versions of bitfield flags
-from nmigen import Cat
-
-
 def botchify(bekls, lekls, msb=63):
     for attr in dir(bekls):
         if attr[0] == '_':
@@ -272,3 +275,34 @@ class CR:
 
 
 botchify(CRb, CR, CR_SIZE-1)
+
+
+# POWER9 Register Files
+# XXX these are specific to Libre-SOC's decoder. really, they
+# should be in libre-soc.  however... long story: because the
+# PowerDecoder2 has been moved to openpower-isa, and its decoding
+# depends on that, then... whoops.
+
+# "State" Regfile
+class StateRegsEnum:
+    PC = 0
+    MSR = 1
+    SVSTATE = 2
+
+# Fast SPRs Regfile
+class FastRegsEnum:
+    CTR = 0
+    LR = 1
+    TAR = 2
+    SRR0 = 3
+    SRR1 = 4
+    XER = 5 # non-XER bits
+    DEC = 6
+    TB = 7
+    N_REGS = 8 # maximum number of regs
+
+# XER Regfile
+class XERRegsEnum:
+    SO=0 # this is actually 2-bit but we ignore 1 bit of it
+    CA=1 # CA and CA32
+    OV=2 # OV and OV32
