@@ -78,10 +78,18 @@ def ROTL64(value, bits):
 
 
 def ROTL32(value, bits):
+    if isinstance(bits, SelectableInt):
+        bits = bits.value
     if isinstance(value, SelectableInt):
         value = SelectableInt(value.value, 64)
     return rotl(value | (value << 32), bits, 64)
 
+def MASK32(x, y):
+    if isinstance(x, SelectableInt):
+        x = x.value
+    if isinstance(y, SelectableInt):
+        y = y.value
+    return MASK(x+32, y+32)
 
 def MASK(x, y):
     if isinstance(x, SelectableInt):
