@@ -1,6 +1,6 @@
 PYTHON3 ?= "python3"
 
-.PHONY: help Makefile gitupdate svanalysis test htmlupload pypiuload
+.PHONY: help Makefile gitupdate svanalysis test htmlupload pypiuload pywriter
 
 gitupdate:
 	git submodule init
@@ -8,6 +8,10 @@ gitupdate:
 
 svanalysis:
 	python3 openpower/sv_analysis.py
+
+# now installed as a command (/usr/local/bin/pywriter) by setup.py
+pywriter:
+	pywriter
 
 develop:
 	python3 setup.py develop # yes, develop, not install
