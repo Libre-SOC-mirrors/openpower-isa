@@ -11,9 +11,11 @@ Sponsored by http://nlnet.nl
 
 # Installation
 
+```
     python setup.py develop
     make svanalysis
     make pywriter
+```
 
 # Copyrights
 
