@@ -38,10 +38,7 @@ from openpower.consts import FastRegsEnum
 from openpower.consts import XERRegsEnum
 from openpower.consts import TT
 from openpower.state import CoreState
-
-# XXX these have to go
-from soc.regfile.util import spr_to_fast
-
+from openpower.util import spr_to_fast
 
 
 def decode_spr_num(spr):
