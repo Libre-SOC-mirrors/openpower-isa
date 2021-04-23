@@ -1,0 +1,127 @@
+<!-- Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- 3.3.1 System Linkage Instructions Page 952 - 956 -->
+
+<!-- These instructions provide the means by which a program can call upon the system to perform a service. -->
+
+# System Call
+
+SC-Form
+
+* sc LEV
+
+Pseudo-code:
+
+    SRR0 <-iea CIA + 4
+    SRR1[33:36] <- 0
+    SRR1[42:47] <- 0
+    SRR1[0:32]  <- MSR[0:32]
+    SRR1[37:41] <- MSR[37:41]
+    SRR1[48:63] <- MSR[48:63]
+    MSR <- new_value
+    NIA <- 0x0000_0000_0000_0C00
+
+Special Registers Altered:
+
+    SRR0 SRR1 MSR
+
+# System Call Vectored
+
+SC-Form
+
+* scv LEV
+
+Pseudo-code:
+
+    LR <- CIA + 4
+    SRR1[33:36] <- undefined([0]*4)
+    SRR1[42:47] <- undefined([0]*6)
+    SRR1[0:32]  <- MSR[0:32]
+    SRR1[37:41] <- MSR[37:41]
+    SRR1[48:63] <- MSR[48:63]
+    MSR <- new_value
+    NIA <- vectored
+
+Special Registers Altered:
+
+    LR CTR MSR
+
+# Return From System Call Vectored
+
+XL-Form
+
+* rfscv
+
+Pseudo-code:
+
+    if (MSR[29:31] != 0b010) | (CTR[29:31] != 0b000) then
+        MSR[29:31] <- CTR[29:31]
+    MSR[48] <- CTR[49]
+    MSR[58] <- CTR[49]
+    MSR[59] <- CTR[49]
+    MSR[0:2] <- CTR[0:2]
+    MSR[4:28] <- CTR[4:28]
+    MSR[32] <- CTR[32]
+    MSR[37:41] <- CTR[37:41]
+    MSR[49:50] <- CTR[49:50]
+    MSR[52:57] <- CTR[52:57]
+    MSR[60:63] <- CTR[60:63]
+    NIA <-iea LR[0:61] || 0b00
+
+Special Registers Altered:
+
+    MSR
+
+# Return From Interrupt Doubleword
+
+XL-Form
+
+* rfid
+
+Pseudo-code:
+
+    MSR[51] <- (MSR[3] & SRR1[51]) | ((¬MSR[3] & MSR[51]))
+    MSR[3] <- (MSR[3] & SRR1[3])
+    if (MSR[29:31] != 0b010) | (SRR1[29:31] != 0b000) then
+        MSR[29:31] <- SRR1[29:31]
+    MSR[48] <- SRR1[48] | SRR1[49]
+    MSR[58] <- SRR1[58] | SRR1[49]
+    MSR[59] <- SRR1[59] | SRR1[49]
+    MSR[0:2] <- SRR1[0:2]
+    MSR[4:28] <- SRR1[4:28]
+    MSR[32] <- SRR1[32]
+    MSR[37:41] <- SRR1[37:41]
+    MSR[49:50] <- SRR1[49:50]
+    MSR[52:57] <- SRR1[52:57]
+    MSR[60:63] <- SRR1[60:63]
+    NIA <-iea SRR0[0:61] || 0b00
+
+Special Registers Altered:
+
+    MSR
+
+# Hypervisor Return From Interrupt Doubleword
+
+XL-Form
+
+* hrfid
+
+Pseudo-code:
+
+    if (MSR[29:31] != 0b010) | (HSRR1[29:31] != 0b000) then
+        MSR[29:31] <- HSRR1[29:31]
+    MSR[48] <- HSRR1[48] | HSRR1[49]
+    MSR[58] <- HSRR1[58] | HSRR1[49]
+    MSR[59] <- HSRR1[59] | HSRR1[49]
+    MSR[0:28] <- HSRR1[0:28]
+    MSR[32] <- HSRR1[32]
+    MSR[37:41] <- HSRR1[37:41]
+    MSR[49:57] <- HSRR1[49:57]
+    MSR[60:63] <- HSRR1[60:63]
+    NIA <-iea HSRR0[0:61] || 0b00
+
+Special Registers Altered:
+
+    MSR
+
+<!-- Checked March 2021 -->

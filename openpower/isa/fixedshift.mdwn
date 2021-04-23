@@ -1,0 +1,378 @@
+<!-- This defines instructions described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 3.3.14 Fixed-Point Rotate and Shift Instructions pages 101 - 110 -->
+<!-- Section 3.3.14.1 Fixed-Point Rotate Instructions pages 101 - 106 -->
+<!-- Section 3.3.14.2 Fixed-Point Shift Instructions pages 107 - 110 -->
+
+<!-- The Fixed-Point Facility performs rotation operations on data from a GPR and -->
+<!-- returns the result, or a portion of the result, to a GPR. -->
+
+
+<!-- Section 3.3.14.1 Fixed-Point Rotate Instructions pages 101 - 106 -->
+
+# Rotate Left Word Immediate then AND with Mask
+
+M-Form
+
+* rlwinm RA,RS,SH,MB,ME (Rc=0)
+* rlwinm.  RA,RS,SH,MB,ME (Rc=1)
+
+Pseudo-code:
+
+    n <- SH
+    r <- ROTL32((RS)[32:63], n)
+    m <- MASK(MB+32, ME+32)
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Rotate Left Word then AND with Mask
+
+M-Form
+
+* rlwnm RA,RS,RB,MB,ME (Rc=0)
+* rlwnm.  RA,RS,RB,MB,ME (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[59:63]
+    r <- ROTL32((RS)[32:63], n)
+    m <- MASK(MB+32, ME+32)
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Rotate Left Word Immediate then Mask Insert
+
+M-Form
+
+* rlwimi RA,RS,SH,MB,ME (Rc=0)
+* rlwimi.  RA,RS,SH,MB,ME (Rc=1)
+
+Pseudo-code:
+
+    n <- SH
+    r <- ROTL32((RS)[32:63], n)
+    m <- MASK(MB+32, ME+32)
+    RA <- r&m | (RA) & ¬m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Rotate Left Doubleword Immediate then Clear Left
+
+MD-Form
+
+* rldicl RA,RS,SH,MB (Rc=0)
+* rldicl.  RA,RS,SH,MB (Rc=1)
+
+Pseudo-code:
+
+    n <- sh
+    r <- ROTL64((RS), n)
+    b <- mb[5] || mb[0:4]
+    m <- MASK(b, 63)
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Rotate Left Doubleword Immediate then Clear Right
+
+MD-Form
+
+* rldicr RA,RS,SH,ME (Rc=0)
+* rldicr.  RA,RS,SH,ME (Rc=1)
+
+Pseudo-code:
+
+    n <- sh
+    r <- ROTL64((RS), n)
+    e <- me[5] || me[0:4]
+    m <- MASK(0, e)
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Rotate Left Doubleword Immediate then Clear
+
+MD-Form
+
+* rldic RA,RS,SH,MB (Rc=0)
+* rldic.  RA,RS,SH,MB (Rc=1)
+
+Pseudo-code:
+
+    n <- sh
+    r <- ROTL64((RS), n)
+    b <- mb[5] || mb[0:4]
+    m <- MASK(b,  ¬n)
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Rotate Left Doubleword then Clear Left
+
+MDS-Form
+
+* rldcl RA,RS,RB,MB (Rc=0)
+* rldcl.  RA,RS,RB,MB (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[58:63]
+    r <- ROTL64((RS), n)
+    b <- mb[5] || mb[0:4]
+    m <- MASK(b, 63)
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Rotate Left Doubleword then Clear Right
+
+MDS-Form
+
+* rldcr RA,RS,RB,ME (Rc=0)
+* rldcr.  RA,RS,RB,ME (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[58:63]
+    r <- ROTL64((RS), n)
+    e <- me[5] || me[0:4]
+    m <- MASK(0, e)
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Rotate Left Doubleword Immediate then Mask Insert
+
+MD-Form
+
+* rldimi RA,RS,SH,MB (Rc=0)
+* rldimi.  RA,RS,SH,MB (Rc=1)
+
+Pseudo-code:
+
+    n <- sh
+    r <- ROTL64((RS), n)
+    b <- mb[5] || mb[0:4]
+    m <- MASK(b,  ¬n)
+    RA <- r&m | (RA)& ¬m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+
+<!-- Section 3.3.14.2 Fixed-Point Shift Instructions pages 107 - 110 -->
+
+# Shift Left Word
+
+X-Form
+
+* slw RA,RS,RB (Rc=0)
+* slw.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[59:63]
+    r <- ROTL32((RS)[32:63], n)
+    if (RB)[58] = 0 then
+         m <- MASK(32, 63-n)
+    else m <- [0]*64
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Shift Right Word
+
+X-Form
+
+* srw RA,RS,RB (Rc=0)
+* srw.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[59:63]
+    r <- ROTL32((RS)[32:63], 64-n)
+    if (RB)[58] = 0 then
+        m <-  MASK(n+32, 63)
+    else m <- [0]*64
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Shift Right Algebraic Word Immediate
+
+X-Form
+
+* srawi RA,RS,SH (Rc=0)
+* srawi.  RA,RS,SH (Rc=1)
+
+Pseudo-code:
+
+    n <- SH
+    r <- ROTL32((RS)[32:63], 64-n)
+    m <- MASK(n+32, 63)
+    s <- (RS)[32]
+    RA <- r&m | ([s]*64)& ¬m
+    carry <- s & ((r&¬m)[32:63] != 0)
+    CA    <- carry
+    CA32  <- carry
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                    (if Rc=1)
+
+# Shift Right Algebraic Word
+
+X-Form
+
+* sraw RA,RS,RB (Rc=0)
+* sraw.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[59:63]
+    r <- ROTL32((RS)[32:63], 64-n)
+    if (RB)[58] = 0 then
+        m <-  MASK(n+32, 63)
+    else m <- [0]*64
+    s <- (RS)[32]
+    RA <- r&m | ([s]*64)& ¬m
+    carry <-  s & ((r&¬m)[32:63] != 0)
+    CA    <-  carry
+    CA32  <-  carry
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                    (if Rc=1)
+
+# Shift Left Doubleword
+
+X-Form
+
+* sld RA,RS,RB (Rc=0)
+* sld.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[58:63]
+    r <- ROTL64((RS), n)
+    if (RB)[57] = 0 then
+         m <- MASK(0, 63-n)
+    else m <- [0]*64
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Shift Right Doubleword
+
+X-Form
+
+* srd RA,RS,RB (Rc=0)
+* srd.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[58:63]
+    r <- ROTL64((RS), 64-n)
+    if (RB)[57] = 0 then
+        m <-  MASK(n, 63)
+    else m <- [0]*64
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Shift Right Algebraic Doubleword Immediate
+
+XS-Form
+
+* sradi RA,RS,SH (Rc=0)
+* sradi.  RA,RS,SH (Rc=1)
+
+Pseudo-code:
+
+    n <- sh
+    r <- ROTL64((RS), 64-n)
+    m <- MASK(n, 63)
+    s <- (RS)[0]
+    RA <- r&m | ([s]*64)& ¬m
+    carry <- s & ((r& ¬m) != 0)
+    CA    <- carry
+    CA32  <- carry
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                    (if Rc=1)
+
+# Shift Right Algebraic Doubleword
+
+X-Form
+
+* srad RA,RS,RB (Rc=0)
+* srad.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    n <- (RB)[58:63]
+    r <- ROTL64((RS), 64-n)
+    if (RB)[57] = 0 then
+        m <-  MASK(n, 63)
+    else m <- [0]*64
+    s <- (RS)[0]
+    RA <- r&m | ([s]*64)& ¬m
+    carry <-  s & ((r&¬m) != 0)
+    CA    <-  carry
+    CA32  <-  carry
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                    (if Rc=1)
+
+# Extend-Sign Word and Shift Left Immediate
+
+XS-Form
+
+* extswsli RA,RS,SH (Rc=0)
+* extswsli.  RA,RS,SH (Rc=1)
+
+Pseudo-code:
+
+    n  <- sh
+    r  <- ROTL64(EXTS64(RS[32:63]), n)
+    m  <- MASK(0, 63-n)
+    RA <- r & m
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
+<!-- Checked March 2021 -->

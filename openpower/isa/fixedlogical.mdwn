@@ -1,0 +1,481 @@
+<!-- This defines instructions described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 3.3.13 Fixed-Point Logical Instructions page 92 - 100 -->
+
+<!-- The Logical instructions perform bit-parallel operations on 64-bit operands. -->
+
+<!-- The X-form Logical instructions with Rc=1, and the D-form Logical instructions -->
+<!-- andi. and andis., set the first three bits of CR Field 0 as described in -->
+<!-- Section 3.3.8, “Other Fixed-Point Instructions” on page 66. The Logical -->
+<!-- instructions do not change the SO, OV, OV32, CA, and CA32 bits in the XER. -->
+
+
+# AND Immediate
+
+D-Form
+
+* andi.  RA,RS,UI
+
+Pseudo-code:
+
+    RA <- (RS) & ([0]*48 || UI)
+
+Special Registers Altered:
+
+    CR0
+
+# OR Immediate
+
+D-Form
+
+* ori RA,RS,UI
+
+Pseudo-code:
+
+    RA <- (RS) | ([0]*48 || UI)
+
+Special Registers Altered:
+
+    None
+
+# AND Immediate Shifted
+
+D-Form
+
+* andis.  RA,RS,UI
+
+Pseudo-code:
+
+    RA <- (RS) & ([0]*32 || UI || [0]*16)
+
+Special Registers Altered:
+
+    CR0
+
+# OR Immediate Shifted
+
+D-Form
+
+* oris      RA,RS,UI
+
+Pseudo-code:
+
+    RA <- (RS) | ([0]*32 || UI || [0]*16)
+
+Special Registers Altered:
+
+    None
+
+# XOR Immediate Shifted
+
+D-Form
+
+* xoris RA,RS,UI
+
+Pseudo-code:
+
+    RA <- (RS) ^ ([0]*32 || UI || [0]*16)
+
+Special Registers Altered:
+
+    None
+
+# XOR Immediate
+
+D-Form
+
+* xori RA,RS,UI
+
+Pseudo-code:
+
+    RA <- (RS) ^ ([0]*48 || UI)
+
+Special Registers Altered:
+
+    None
+
+# AND
+
+X-Form
+
+* and RA,RS,RB (Rc=0)
+* and.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    RA <- (RS) & (RB)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# OR
+
+X-Form
+
+* or RA,RS,RB (Rc=0)
+* or.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    RA <- (RS) | (RB)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# XOR
+
+X-Form
+
+* xor RA,RS,RB (Rc=0)
+* xor.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    RA <- (RS) ^ (RB)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# NAND
+
+X-Form
+
+* nand RA,RS,RB (Rc=0)
+* nand.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    RA <- ¬((RS) & (RB))
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# NOR
+
+X-Form
+
+* nor RA,RS,RB (Rc=0)
+* nor.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    RA <- ¬((RS) | (RB))
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Equivalent
+
+X-Form
+
+* eqv RA,RS,RB (Rc=0)
+* eqv.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    RA <- ¬((RS) ^ (RB))
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# AND with Complement
+
+X-Form
+
+* andc RA,RS,RB (Rc=0)
+* andc.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    RA <- (RS) &  ¬(RB)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# OR with Complement
+
+X-Form
+
+* orc RA,RS,RB (Rc=0)
+* orc.  RA,RS,RB (Rc=1)
+
+Pseudo-code:
+
+    RA <- (RS) |  ¬(RB)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Extend Sign Byte
+
+X-Form
+
+* extsb RA,RS (Rc=0)
+* extsb.  RA,RS (Rc=1)
+
+Pseudo-code:
+
+    s <- (RS)[56]
+    RA[56:63] <- (RS)[56:63]
+    RA[0:55] <- [s]*56
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Extend Sign Halfword
+
+X-Form
+
+* extsh RA,RS (Rc=0)
+* extsh.  RA,RS (Rc=1)
+
+Pseudo-code:
+
+    s <- (RS)[48]
+    RA[48:63] <-  (RS)[48:63]
+    RA[0:47] <- [s]*48
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Count Leading Zeros Word
+
+X-Form
+
+* cntlzw RA,RS (Rc=0)
+* cntlzw.  RA,RS (Rc=1)
+
+Pseudo-code:
+
+    n <- 32
+    do while n < 64
+       if (RS)[n] = 1 then
+           leave
+       n <- n + 1
+    RA <- n - 32
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Count Trailing Zeros Word
+
+X-Form
+
+* cnttzw RA,RS (Rc=0)
+* cnttzw.  RA,RS (Rc=1)
+
+Pseudo-code:
+
+    n <- 0
+    do while n < 32
+       if (RS)[63-n] = 0b1 then
+            leave
+       n  <- n + 1
+    RA <- EXTZ64(n)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Compare Bytes
+
+X-Form
+
+* cmpb RA,RS,RB
+
+Pseudo-code:
+
+    do n = 0 to 7
+        if RS[8*n:8* n+7] = (RB)[8*n:8*n+7] then
+           RA[8*n:8* n+7] <- [1]*8
+        else
+           RA[8*n:8* n+7] <- [0]*8
+
+Special Registers Altered:
+
+    None
+
+# Population Count Bytes
+
+X-Form
+
+* popcntb RA, RS
+
+Pseudo-code:
+
+    do i = 0 to 7
+       n <-  0
+       do j = 0 to 7
+          if (RS)[(i*8)+j] = 1 then
+              n <- n+1
+       RA[(i*8):(i*8)+7] <-  n
+
+Special Registers Altered:
+
+    None
+
+# Population Count Words
+
+X-Form
+
+* popcntw RA, RS
+
+Pseudo-code:
+
+    do i = 0 to 1
+       n <-  0
+       do j = 0 to 31
+          if (RS)[(i*32)+j] = 1 then
+              n <- n+1
+       RA[(i*32):(i*32)+31] <- n
+
+Special Registers Altered:
+
+    None
+
+# Parity Doubleword
+
+X-Form
+
+* prtyd RA,RS
+
+Pseudo-code:
+
+    s <- 0
+    do i = 0 to 7
+        s <- s ^ (RS)[i*8+7]
+    RA <- [0] * 63 || s
+
+Special Registers Altered:
+
+    None
+
+# Parity Word
+
+X-Form
+
+* prtyw RA,RS
+
+Pseudo-code:
+
+    s <- 0
+    t <- 0
+    do i = 0 to 3
+        s <-  s ^ (RS)[i*8+7]
+    do i = 4 to 7
+        t <-  t ^ (RS)[i*8+7]
+    RA[0:31] <- [0]*31 || s
+    RA[32:63] <- [0]*31 || t
+
+Special Registers Altered:
+
+    None
+
+# Extend Sign Word
+
+X-Form
+
+* extsw RA,RS (Rc=0)
+* extsw.  RA,RS (Rc=1)
+
+Pseudo-code:
+
+    s <- (RS)[32]
+    RA[32:63] <- (RS)[32:63]
+    RA[0:31] <- [s]*32
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Population Count Doubleword
+
+X-Form
+
+* popcntd RA, RS
+
+Pseudo-code:
+
+    n <- 0
+    do i = 0 to 63
+       if (RS)[i] = 1 then
+           n <-  n+1
+    RA <- n
+
+Special Registers Altered:
+
+    None
+
+# Count Leading Zeros Doubleword
+
+X-Form
+
+* cntlzd RA,RS (Rc=0)
+* cntlzd.  RA,RS (Rc=1)
+
+Pseudo-code:
+
+    n <- 0
+    do while n < 64
+      if (RS)[n]  = 1 then
+         leave
+      n <- n + 1
+    RA <- n
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Count Trailing Zeros Doubleword
+
+X-Form
+
+* cnttzd RA,RS (Rc=0)
+* cnttzd.  RA,RS (Rc=1)
+
+Pseudo-code:
+
+    n  <- 0
+    do while n < 64
+       if (RS)[63-n] = 0b1 then
+            leave
+       n  <- n + 1
+    RA <- EXTZ64(n)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Bit Permute Doubleword
+
+X-Form
+
+* bpermd RA,RS,RB]
+
+Pseudo-code:
+
+    perm <- [0] * 8
+    for i = 0 to 7
+       index <- (RS)[8*i:8*i+7]
+       if index < 64 then
+            perm[i] <- (RB)[index]
+       else
+            perm[i] <- 0
+    RA <- [0]*56 || perm[0:7]
+
+Special Registers Altered:
+
+    None
+
+<!-- Checked March 2021 -->

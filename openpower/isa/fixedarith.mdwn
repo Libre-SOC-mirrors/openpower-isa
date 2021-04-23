@@ -1,0 +1,819 @@
+<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 3.3.9 Fixed-point arithmetic instructions. Pages 67 - 83 -->
+
+# Add Immediate
+
+D-Form
+
+* addi RT,RA,SI
+
+Pseudo-code:
+
+    RT <- (RA|0) + EXTS(SI)
+
+Special Registers Altered:
+
+    None
+
+# Add Immediate Shifted
+
+D-Form
+
+* addis RT,RA,SI
+
+Pseudo-code:
+
+    RT <- (RA|0) + EXTS(SI || [0]*16)
+
+Special Registers Altered:
+
+    None
+
+# Add PC Immediate Shifted
+
+DX-Form
+
+* addpcis RT,D
+
+Pseudo-code:
+
+    D <- d0||d1||d2
+    RT <- NIA + EXTS(D || [0]*16)
+
+Special Registers Altered:
+
+    None
+
+# Add
+
+XO-Form
+
+* add RT,RA,RB (OE=0 Rc=0)
+* add.  RT,RA,RB (OE=0 Rc=1)
+* addo RT,RA,RB (OE=1 Rc=0)
+* addo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- (RA) + (RB)
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Subtract From
+
+XO-Form
+
+* subf RT,RA,RB (OE=0 Rc=0)
+* subf.  RT,RA,RB (OE=0 Rc=1)
+* subfo RT,RA,RB (OE=1 Rc=0)
+* subfo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- ¬(RA) + (RB) + 1
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Add Immediate Carrying
+
+D-Form
+
+* addic RT,RA,SI
+
+Pseudo-code:
+
+    RT <- (RA) + EXTS(SI)
+
+Special Registers Altered:
+
+    CA CA32
+
+# Add Immediate Carrying and Record
+
+D-Form
+
+* addic. RT,RA,SI
+
+Pseudo-code:
+
+    RT <- (RA) + EXTS(SI)
+
+Special Registers Altered:
+
+    CR0 CA CA32
+
+# Subtract From Immediate Carrying
+
+D-Form
+
+* subfic RT,RA,SI
+
+Pseudo-code:
+
+    RT <- ¬(RA) + EXTS(SI) + 1
+
+Special Registers Altered:
+
+    CA CA32
+
+# Add Carrying
+
+XO-Form
+
+* addc RT,RA,RB (OE=0 Rc=0)
+* addc.  RT,RA,RB (OE=0 Rc=1)
+* addco RT,RA,RB (OE=1 Rc=0)
+* addco.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- (RA) + (RB)
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Subtract From Carrying
+
+XO-Form
+
+* subfc RT,RA,RB (OE=0 Rc=0)
+* subfc.  RT,RA,RB (OE=0 Rc=1)
+* subfco RT,RA,RB (OE=1 Rc=0)
+* subfco.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- ¬(RA) + (RB) + 1
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Add Extended
+
+XO-Form
+
+* adde RT,RA,RB (OE=0 Rc=0)
+* adde.  RT,RA,RB (OE=0 Rc=1)
+* addeo RT,RA,RB (OE=1 Rc=0)
+* addeo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- (RA) + (RB) + CA
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Subtract From Extended
+
+XO-Form
+
+* subfe RT,RA,RB (OE=0 Rc=0)
+* subfe.  RT,RA,RB (OE=0 Rc=1)
+* subfeo RT,RA,RB (OE=1 Rc=0)
+* subfeo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- ¬(RA) + (RB) + CA
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Add to Minus One Extended
+
+XO-Form
+
+* addme RT,RA (OE=0 Rc=0)
+* addme.  RT,RA (OE=0 Rc=1)
+* addmeo RT,RA (OE=1 Rc=0)
+* addmeo.  RT,RA (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- (RA) + CA - 1
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Subtract From Minus One Extended
+
+XO-Form
+
+* subfme RT,RA (OE=0 Rc=0)
+* subfme.  RT,RA (OE=0 Rc=1)
+* subfmeo RT,RA (OE=1 Rc=0)
+* subfmeo.  RT,RA (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- ¬(RA) + CA - 1
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Add Extended using alternate carry bit
+
+Z23-Form
+
+* addex RT,RA,RB,CY
+
+Pseudo-code:
+
+    if CY=0 then RT <- (RA) + (RB) + OV
+
+Special Registers Altered:
+
+    OV OV32                (if CY=0 )
+
+# Subtract From Zero Extended
+
+XO-Form
+
+* subfze RT,RA (OE=0 Rc=0)
+* subfze.  RT,RA (OE=0 Rc=1)
+* subfzeo RT,RA (OE=1 Rc=0)
+* subfzeo.  RT,RA (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- ¬(RA) + CA
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Add to Zero Extended
+
+XO-Form
+
+* addze RT,RA (OE=0 Rc=0)
+* addze.  RT,RA (OE=0 Rc=1)
+* addzeo RT,RA (OE=1 Rc=0)
+* addzeo.  RT,RA (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- (RA) + CA
+
+Special Registers Altered:
+
+    CA CA32
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Negate
+
+XO-Form
+
+* neg RT,RA (OE=0 Rc=0)
+* neg.  RT,RA (OE=0 Rc=1)
+* nego RT,RA (OE=1 Rc=0)
+* nego.  RT,RA (OE=1 Rc=1)
+
+Pseudo-code:
+
+    RT <- ¬(RA) + 1
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Multiply Low Immediate
+
+D-Form
+
+* mulli RT,RA,SI
+
+Pseudo-code:
+
+    prod[0:127] <- MULS((RA), EXTS(SI))
+    RT <- prod[64:127]
+
+Special Registers Altered:
+
+    None
+
+# Multiply High Word
+
+XO-Form
+
+* mulhw RT,RA,RB (Rc=0)
+* mulhw.  RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    prod[0:63] <- MULS((RA)[32:63], (RB)[32:63])
+    RT[32:63] <- prod[0:31]
+    RT[0:31] <- undefined(prod[0:31])
+
+Special Registers Altered:
+
+    CR0 (bits 0:2 undefined in 64-bit mode) (if Rc=1)
+
+# Multiply Low Word
+
+XO-Form
+
+* mullw RT,RA,RB (OE=0 Rc=0)
+* mullw.  RT,RA,RB (OE=0 Rc=1)
+* mullwo RT,RA,RB (OE=1 Rc=0)
+* mullwo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    prod[0:63] <- MULS((RA)[32:63], (RB)[32:63])
+    RT <- prod
+    overflow <- ((prod[0:32] != [0]*33) &
+                 (prod[0:32] != [1]*33))
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Multiply High Word Unsigned
+
+XO-Form
+
+* mulhwu RT,RA,RB (Rc=0)
+* mulhwu.  RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    prod[0:63] <- (RA)[32:63] * (RB)[32:63]
+    RT[32:63] <- prod[0:31]
+    RT[0:31] <- undefined(prod[0:31])
+
+Special Registers Altered:
+
+    CR0 (bits 0:2 undefined in 64-bit mode) (if Rc=1)
+
+# Divide Word
+
+XO-Form
+
+* divw RT,RA,RB (OE=0 Rc=0)
+* divw.  RT,RA,RB (OE=0 Rc=1)
+* divwo RT,RA,RB (OE=1 Rc=0)
+* divwo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    dividend[0:31] <- (RA)[32:63]
+    divisor[0:31] <- (RB) [32:63]
+    if (((dividend = 0x8000_0000) &
+         (divisor = [1]*32)) |
+         (divisor = [0]*32)) then
+        RT[0:63] <- undefined([0]*64)
+        overflow <- 1
+    else
+        RT[32:63] <- DIVS(dividend, divisor)
+        RT[0:31] <- undefined([0]*32)
+        overflow <- 0
+
+Special Registers Altered:
+
+    CR0 (bits 0:2 undefined in 64-bit mode) (if Rc=1)
+    SO OV OV32                              (if OE=1)
+
+# Divide Word Unsigned
+
+XO-Form
+
+* divwu RT,RA,RB (OE=0 Rc=0)
+* divwu.  RT,RA,RB (OE=0 Rc=1)
+* divwuo RT,RA,RB (OE=1 Rc=0)
+* divwuo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    dividend[0:31] <- (RA)[32:63]
+    divisor[0:31] <- (RB)[32:63]
+    if divisor != 0 then
+        RT[32:63] <- dividend / divisor
+        RT[0:31] <- undefined([0]*32)
+        overflow <- 0
+    else
+        RT[0:63] <- undefined([0]*64)
+        overflow <- 1
+
+Special Registers Altered:
+
+    CR0 (bits 0:2 undefined in 64-bit mode) (if Rc=1)
+    SO OV OV32                              (if OE=1)
+
+# Divide Word Extended
+
+XO-Form
+
+* divwe RT,RA,RB (OE=0 Rc=0)
+* divwe.  RT,RA,RB (OE=0 Rc=1)
+* divweo RT,RA,RB (OE=1 Rc=0)
+* divweo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    dividend[0:63] <- (RA)[32:63] || [0]*32
+    divisor[0:63] <- EXTS64((RB)[32:63])
+    if (((dividend = 0x8000_0000_0000_0000) &
+         (divisor = [1]*64)) |
+         (divisor = [0]*64)) then
+        overflow <- 1
+    else
+        result <- DIVS(dividend, divisor)
+        result32[0:63] <- EXTS64(result[32:63])
+        if (result32 = result) then
+            RT[32:63] <- result[32:63]
+            RT[0:31] <- undefined([0]*32)
+            overflow <- 0
+        else
+            overflow <- 1
+    if overflow = 1 then
+        RT[0:63] <- undefined([0]*64)
+
+Special Registers Altered:
+
+    CR0 (bits 0:2 undefined in 64-bit mode) (if Rc=1)
+    SO OV OV32                              (if OE=1)
+
+# Divide Word Extended Unsigned
+
+XO-Form
+
+* divweu RT,RA,RB (OE=0 Rc=0)
+* divweu.  RT,RA,RB (OE=0 Rc=1)
+* divweuo RT,RA,RB (OE=1 Rc=0)
+* divweuo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    dividend[0:63] <- (RA)[32:63] || [0]*32
+    divisor[0:63] <- [0]*32 || (RB)[32:63]
+    if (divisor = [0]*64) then
+        overflow <- 1
+    else
+        result <- dividend / divisor
+        if RA[32:63] <u RB[32:63] then
+            RT[32:63] <- result[32:63]
+            RT[0:31] <- undefined([0]*32)
+            overflow <- 0
+        else
+            overflow <- 1
+    if overflow = 1 then
+        RT[0:63] <- undefined([0]*64)
+
+Special Registers Altered:
+
+    CR0 (bits 0:2 undefined in 64-bit mode) (if Rc=1)
+    SO OV OV32                              (if OE=1)
+
+# Modulo Signed Word
+
+X-Form
+
+* modsw RT,RA,RB
+
+Pseudo-code:
+
+    dividend[0:31] <- (RA)[32:63]
+    divisor[0:31] <- (RB)[32:63]
+    if (((dividend = 0x8000_0000) &
+         (divisor = [1]*32)) |
+         (divisor = [0]*32)) then
+        RT[0:63] <- undefined([0]*64)
+        overflow <- 1
+    else
+        RT[0:63] <- EXTS64(MODS(dividend, divisor))
+        RT[0:31] <- undefined(RT[0:31])
+        overflow <- 0
+
+Special Registers Altered:
+
+    None
+
+# Modulo Unsigned Word
+
+X-Form
+
+* moduw RT,RA,RB
+
+Pseudo-code:
+
+    dividend[0:31] <- (RA) [32:63]
+    divisor [0:31] <- (RB) [32:63]
+    if divisor = [0]*32 then
+        RT[0:63] <- undefined([0]*64)
+        overflow <- 1
+    else
+        RT[32:63] <- dividend % divisor
+        RT[0:31] <- undefined([0]*32)
+        overflow <- 0
+
+Special Registers Altered:
+
+    None
+
+# Deliver A Random Number
+
+X-Form
+
+* darn RT,L3
+
+Pseudo-code:
+
+    RT <- random(L3)
+
+Special Registers Altered:
+
+    none
+
+# Multiply Low Doubleword
+
+XO-Form
+
+* mulld RT,RA,RB (OE=0 Rc=0)
+* mulld.  RT,RA,RB (OE=0 Rc=1)
+* mulldo RT,RA,RB (OE=1 Rc=0)
+* mulldo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    prod[0:127] <- MULS((RA), (RB))
+    RT <- prod[64:127]
+    overflow <- ((prod[0:64] != [0]*65) &
+                 (prod[0:64] != [1]*65))
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Multiply High Doubleword
+
+XO-Form
+
+* mulhd RT,RA,RB (Rc=0)
+* mulhd.  RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    prod[0:127] <- MULS((RA), (RB))
+    RT <- prod[0:63]
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
+# Multiply High Doubleword Unsigned
+
+XO-Form
+
+* mulhdu RT,RA,RB (Rc=0)
+* mulhdu.  RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    prod[0:127] <- (RA) * (RB)
+    RT <- prod[0:63]
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Multiply-Add High Doubleword VA-Form
+
+VA-Form
+
+* maddhd RT,RA.RB,RC
+
+Pseudo-code:
+
+    prod[0:127] <- MULS((RA), (RB))
+    sum[0:127] <- prod + EXTS(RC)
+    RT <- sum[0:63]
+
+Special Registers Altered:
+
+    None
+
+# Multiply-Add High Doubleword Unsigned
+
+VA-Form
+
+* maddhdu RT,RA.RB,RC
+
+Pseudo-code:
+
+    prod[0:127] <- (RA) * (RB)
+    sum[0:127] <- prod + EXTZ(RC)
+    RT <- sum[0:63]
+
+Special Registers Altered:
+
+    None
+
+# Multiply-Add Low Doubleword
+
+VA-Form
+
+* maddld RT,RA.RB,RC
+
+Pseudo-code:
+
+    prod[0:127] <- MULS((RA), (RB))
+    sum[0:127] <- prod + EXTS(RC)
+    RT <- sum[64:127]
+
+Special Registers Altered:
+
+    None
+
+# Divide Doubleword
+
+XO-Form
+
+* divd RT,RA,RB (OE=0 Rc=0)
+* divd.  RT,RA,RB (OE=0 Rc=1)
+* divdo RT,RA,RB (OE=1 Rc=0)
+* divdo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    dividend[0:63] <- (RA)
+    divisor[0:63] <- (RB)
+    if (((dividend = 0x8000_0000_0000_0000) &
+         (divisor = [1]*64)) |
+         (divisor = [0]*64)) then
+        RT[0:63] <- undefined([0]*64)
+        overflow <- 1
+    else
+        RT <- DIVS(dividend, divisor)
+        overflow <- 0
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Divide Doubleword Unsigned
+
+XO-Form
+
+* divdu RT,RA,RB (OE=0 Rc=0)
+* divdu.  RT,RA,RB (OE=0 Rc=1)
+* divduo RT,RA,RB (OE=1 Rc=0)
+* divduo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    dividend[0:63] <- (RA)
+    divisor[0:63] <- (RB)
+    if (divisor = [0]*64) then
+        RT[0:63] <- undefined([0]*64)
+        overflow <- 1
+    else
+        RT <- dividend / divisor
+        overflow <- 0
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Divide Doubleword Extended
+
+XO-Form
+
+* divde RT,RA,RB (OE=0 Rc=0)
+* divde.  RT,RA,RB (OE=0 Rc=1)
+* divdeo RT,RA,RB (OE=1 Rc=0)
+* divdeo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    dividend[0:127] <- (RA) || [0]*64
+    divisor[0:127] <- EXTS128((RB))
+    if (((dividend = 0x8000_0000_0000_0000_0000_0000_0000_0000) &
+         (divisor = [1]*128)) |
+         (divisor = [0]*128)) then
+        overflow <- 1
+    else
+        result <- DIVS(dividend, divisor)
+        result64[0:127] <- EXTS128(result[64:127])
+        if (result64 = result) then
+            RT <- result[64:127]
+            overflow <- 0
+        else
+            overflow <- 1
+    if overflow = 1 then
+        RT[0:63] <- undefined([0]*64)
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Divide Doubleword Extended Unsigned
+
+XO-Form
+
+* divdeu RT,RA,RB (OE=0 Rc=0)
+* divdeu.  RT,RA,RB (OE=0 Rc=1)
+* divdeuo RT,RA,RB (OE=1 Rc=0)
+* divdeuo.  RT,RA,RB (OE=1 Rc=1)
+
+Pseudo-code:
+
+    dividend[0:127] <- (RA) || [0]*64
+    divisor[0:127] <- [0]*64 || (RB)
+    if divisor = [0]*128 then
+        overflow <- 1
+    else
+        result <- dividend / divisor
+        if (RA) <u (RB) then
+            RT <- result[64:127]
+            overflow <- 0
+        else
+            overflow <- 1
+    if overflow = 1 then
+        RT[0:63] <- undefined([0]*64)
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+    SO OV OV32             (if OE=1)
+
+# Modulo Signed Doubleword
+
+X-Form
+
+* modsd RT,RA,RB
+
+Pseudo-code:
+
+    dividend <- (RA)
+    divisor <- (RB)
+    if (((dividend = 0x8000_0000_0000_0000) &
+         (divisor = [1]*64)) |
+         (divisor = [0]*64)) then
+        RT[0:63] <- undefined([0]*64)
+        overflow <- 1
+    else
+        RT <- MODS(dividend, divisor)
+        overflow <- 0
+
+Special Registers Altered:
+
+    None
+
+# Modulo Unsigned Doubleword
+
+X-Form
+
+* modud RT,RA,RB
+
+Pseudo-code:
+
+    dividend <- (RA)
+    divisor <- (RB)
+    if (divisor = [0]*64) then
+        RT[0:63] <- undefined([0]*64)
+        overflow <- 1
+    else
+        RT <- dividend % divisor
+        overflow <- 0
+
+Special Registers Altered:
+
+    None
+
+<!-- Checked March 2021 -->

@@ -1,0 +1,393 @@
+<!-- This defines instructions described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- This defines instructions that store from a register to RAM -->
+
+<!-- Note that these pages also define equivalent load instructions, -->
+<!-- these are described in fixedload.mdwn -->
+
+<!-- Section 3.3.3 Fixed-Point Store Instructions pages 54 - 57 -->
+<!-- Section 3.3.3.1 64-bit Fixed-Point Store Instructions page 57 -->
+<!-- Section 3.3.4 Fixed Point Load and Store Quadword Instructions pages 58 - 59 -->
+<!-- Section 3.3.5 Fixed-Point Load and Store with Byte Reversal Instructions page 60 -->
+<!-- Section 3.3.5.1 64-Bit Load and Store with Byte Reversal Instructions page 61 -->
+<!-- Section 3.3.6 Fixed-Point Load and Store Multiple Instructions page 62 -->
+
+<!-- MISSING stbh -->
+<!-- MISSING stbhx -->
+<!-- MISSING stbhu -->
+<!-- MISSING stbhux -->
+<!-- MISSING stbw -->
+<!-- MISSING stbwx -->
+<!-- MISSING stbwu -->
+<!-- MISSING stbwux -->
+
+<!-- Section 3.3.3 Fixed-Point Store Instructions pages 54 - 57 -->
+
+# Store Byte
+
+D-Form
+
+* stb RS,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    MEM(EA, 1) <- (RS)[56:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Byte Indexed
+
+X-Form
+
+* stbx RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 1) <- (RS)[56:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Byte with Update
+
+D-Form
+
+* stbu RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    MEM(EA, 1) <- (RS)[56:63]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Byte with Update Indexed
+
+X-Form
+
+* stbux RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    MEM(EA, 1) <- (RS)[56:63]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword
+
+D-Form
+
+* sth RS,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    MEM(EA, 2) <- (RS)[48:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword Indexed
+
+X-Form
+
+* sthx RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 2) <- (RS)[48:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword with Update
+
+D-Form
+
+* sthu RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    MEM(EA, 2) <- (RS)[48:63]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword with Update Indexed
+
+X-Form
+
+* sthux RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    MEM(EA, 2) <- (RS)[48:63]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Word
+
+D-Form
+
+* stw RS,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    MEM(EA, 4) <- (RS)[32:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Word Indexed
+
+X-Form
+
+* stwx RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 4) <- (RS)[32:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Word with Update
+
+D-Form
+
+* stwu RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    MEM(EA, 4) <- (RS)[32:63]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Word with Update Indexed
+
+X-Form
+
+* stwux RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    MEM(EA, 4) <- (RS)[32:63]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+
+
+<!-- Section 3.3.3.1 64-bit Fixed-Point Store Instructions page 57 -->
+
+# Store Doubleword
+
+DS-Form
+
+* std RS,DS(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(DS || 0b00)
+    MEM(EA, 8) <- (RS)
+
+Special Registers Altered:
+
+    None
+
+# Store Doubleword Indexed
+
+X-Form
+
+* stdx RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 8) <- (RS)
+
+Special Registers Altered:
+
+    None
+
+# Store Doubleword with Update
+
+DS-Form
+
+* stdu RS,DS(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(DS || 0b00)
+    MEM(EA, 8) <- (RS)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Doubleword with Update Indexed
+
+X-Form
+
+* stdux RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    MEM(EA, 8) <- (RS)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+
+<!-- Section 3.3.4 Fixed Point Load and Store Quadword Instructions pages 58 - 59 -->
+
+<!-- For stq, the contents of an even-odd pair of GPRs is stored into the quadword -->
+<!-- in storage addressed by EA as follows. In Big-Endian mode, the even-numbered -->
+<!-- GPR is stored into the doubleword in storage addressed by EA and the -->
+<!-- odd-numbered GPR is stored into the doubleword addressed by EA+8. In -->
+<!-- Little-Endian mode, the even-numbered GPR is stored byte-reversed into the -->
+<!-- doubleword in storage addressed by EA+8 and the odd-numbered GPR is stored -->
+<!-- byte-reversed into the doubleword addressed by EA. -->
+
+
+# Store Quadword
+
+DS-Form
+
+* stq RSp,DS(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(DS || 0b00)
+    MEM(EA, 16) <- RSp
+
+Special Registers Altered:
+
+    None
+
+<!-- Section 3.3.5 Fixed-Point Load and Store with Byte Reversal Instructions page 60 -->
+
+# Store Halfword Byte-Reverse Indexed
+
+X-Form
+
+* sthbrx RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 2) <- (RS) [56:63] || (RS)[48:55]
+
+Special Registers Altered:
+
+    None
+
+# Store Word Byte-Reverse Indexed
+
+X-Form
+
+* stwbrx RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 4) <- ((RS)[56:63] || (RS)[48:55] || (RS)[40:47]
+                   ||(RS)[32:39])
+
+Special Registers Altered:
+
+    None
+
+<!-- Section 3.3.5.1 64-Bit Load and Store with Byte Reversal Instructions page 61 -->
+
+# Store Doubleword Byte-Reverse Indexed
+
+X-Form
+
+* stdbrx RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 8) <- ((RS) [56:63] || (RS)[48:55]
+                    || (RS)[40:47] || (RS)[32:39]
+                    || (RS)[24:31] || (RS)[16:23]
+                    || (RS)[8:15]  || (RS)[0:7])
+
+Special Registers Altered:
+
+    None
+
+
+<!-- Section 3.3.6 Fixed-Point Load and Store Multiple Instructions page 62 -->
+
+# Store Multiple Word
+
+D-Form
+
+* stmw RS,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    r <- RS
+    do while r <= 31
+        MEM(EA, 4) <- GPR(r)[32:63]
+        r <-  r + 1
+        EA <-  EA + 4
+
+Special Registers Altered:
+
+    None
+
+<!-- Checked March 2021 -->

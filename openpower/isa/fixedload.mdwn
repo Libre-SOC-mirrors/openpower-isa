@@ -1,0 +1,530 @@
+<!-- This defines instructions described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- This defines instructions that load from RAM to a register -->
+
+<!-- Note that these pages also define equivalent store instructions, -->
+<!-- these are described in fixedstore.mdwn -->
+
+<!-- Section 3.3.2 This defines the Fixed-Point Load Instructions pages 47 - 53 -->
+<!-- Section 3.3.3 Fixed-Point Store Instructions pages 54 - 56 -->
+<!-- Section 3.3.3.1 64-bit Fixed-Point Store Instructions pages 57 -->
+<!-- Section 3.3.4 Fixed Point Load and Store Quadword Instructions pages 58 - 59 -->
+<!-- Section 3.3.5 Fixed-Point Load and Store with Byte Reversal Instructions page 60 -->
+<!-- Section 3.3.5.1 64-Bit Load and Store with Byte Reversal Instructions page 61 -->
+<!-- Section 3.3.6 Fixed-Point Load and Store Multiple Instructions page 62 -->
+
+
+
+<!-- Section 3.3.2 This defines the Fixed-Point Load Instructions pages 47 - 53 -->
+
+<!-- The byte, halfword, word, or doubleword in storage addressed by EA is loaded -->
+<!-- into register RT. -->
+
+<!-- Many of the Load instructions have an “update” form, in which register RA is -->
+<!-- updated with the effective address. For these forms, if RA!=0 and RA!=RT, the -->
+<!-- effective address is placed into register RA and the storage element (byte, -->
+<!-- halfword, word, or doubleword) addressed by EA is loaded into RT. -->
+
+
+# Load Byte and Zero
+
+D-Form
+
+* lbz RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    RT <- [0]*56 || MEM(EA, 1)
+
+Special Registers Altered:
+
+    None
+
+# Load Byte and Zero Indexed
+
+X-Form
+
+* lbzx RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- [0] * 56 || MEM(EA, 1)
+
+Special Registers Altered:
+
+    None
+
+# Load Byte and Zero with Update
+
+D-Form
+
+* lbzu RT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    RT <- [0] * 56 || MEM(EA, 1)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Byte and Zero with Update Indexed
+
+X-Form
+
+* lbzux RT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    RT <- [0] * 56 || MEM(EA, 1)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword and Zero
+
+D-Form
+
+* lhz RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    RT <- [0] * 48 || MEM(EA, 2)
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword and Zero Indexed
+
+X-Form
+
+* lhzx RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- [0] * 48 || MEM(EA, 2)
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword and Zero with Update
+
+D-Form
+
+* lhzu RT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    RT <- [0] * 48 || MEM(EA, 2)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword and Zero with Update Indexed
+
+X-Form
+
+* lhzux RT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    RT <- [0] * 48 || MEM(EA, 2)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword Algebraic
+
+D-Form
+
+* lha RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    RT <- EXTS(MEM(EA, 2))
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword Algebraic Indexed
+
+X-Form
+
+* lhax RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- EXTS(MEM(EA, 2))
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword Algebraic with Update
+
+D-Form
+
+* lhau RT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    RT <- EXTS(MEM(EA, 2))
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword Algebraic with Update Indexed
+
+X-Form
+
+* lhaux RT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    RT <- EXTS(MEM(EA, 2))
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Word and Zero
+
+D-Form
+
+* lwz RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    RT <- [0] * 32 || MEM(EA, 4)
+
+Special Registers Altered:
+
+    None
+
+# Load Word and Zero Indexed
+
+X-Form
+
+* lwzx RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- [0] * 32 || MEM(EA, 4)
+
+Special Registers Altered:
+
+    None
+
+# Load Word and Zero with Update
+
+D-Form
+
+* lwzu RT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    RT <- [0]*32 || MEM(EA, 4)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Word and Zero with Update Indexed
+
+X-Form
+
+* lwzux RT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    RT <- [0] * 32 || MEM(EA, 4)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Word Algebraic
+
+DS-Form
+
+* lwa RT,DS(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(DS || 0b00)
+    RT <- EXTS(MEM(EA, 4))
+
+Special Registers Altered:
+
+    None
+
+# Load Word Algebraic Indexed
+
+X-Form
+
+* lwax RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- EXTS(MEM(EA, 4))
+
+Special Registers Altered:
+
+    None
+
+# Load Word Algebraic with Update Indexed
+
+X-Form
+
+* lwaux RT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    RT <- EXTS(MEM(EA, 4))
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Doubleword
+
+DS-Form
+
+* ld RT,DS(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(DS || 0b00)
+    RT <- MEM(EA, 8)
+
+Special Registers Altered:
+
+    None
+
+# Load Doubleword Indexed
+
+X-Form
+
+* ldx RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- MEM(EA, 8)
+
+Special Registers Altered:
+
+    None
+
+# Load Doubleword with Update Indexed
+
+DS-Form
+
+* ldu RT,DS(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(DS || 0b00)
+    RT <- MEM(EA, 8)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Doubleword with Update Indexed
+
+X-Form
+
+* ldux RT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    RT <- MEM(EA, 8)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+<!-- Section 3.3.3 Fixed-Point Store Instructions pages 54 - 56 -->
+
+<!-- The contents of register RS are stored into the byte, halfword, word, or -->
+<!-- doubleword in storage addressed by EA. -->
+
+<!-- Many of the Store instructions have an “update” form, in which register RA is -->
+<!-- updated with the effective address. For these forms, the following rules apply. -->
+
+<!-- If RA!=0, the effective address is placed into register RA. -->
+
+<!-- If RS=RA, the contents of register RS are copied to the target storage element -->
+<!-- and then EA is placed into RA (RS). -->
+
+<!-- Section 3.3.3.1 64-bit Fixed-Point Store Instructions pages 57 -->
+
+<!-- Section 3.3.4 Fixed Point Load and Store Quadword Instructions pages 58 - 59 -->
+
+<!-- For lq, the quadword in storage addressed by EA is loaded into an even-odd pair -->
+<!-- of GPRs as follows. In Big-Endian mode, the even-numbered GPR is loaded with -->
+<!-- the doubleword from storage addressed by EA and the odd-numbered GPR is loaded -->
+<!-- with the doubleword addressed by EA+8. In Little-Endian mode, the even-numbered -->
+<!-- GPR is loaded with the byte-reversed doubleword from storage addressed by EA+8 -->
+<!-- and the odd-numbered GPR is loaded with the byte-reversed doubleword addressed -->
+<!-- by EA. -->
+
+# Load Quadword
+
+DQ-Form
+
+* lq RTp,DQ(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(DQ || 0b0000)
+    RTp <- MEM(EA, 16)
+
+Special Registers Altered:
+
+    None
+
+<!-- MISSING stq -->
+
+<!-- Section 3.3.5 Fixed-Point Load and Store with Byte Reversal Instructions page 60 -->
+
+# Load Halfword Byte-Reverse Indexed
+
+X-Form
+
+* lhbrx RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    load_data <- MEM(EA, 2)
+    RT <- [0]*48 || load_data[8:15] || load_data[0:7]
+
+Special Registers Altered:
+
+    None
+
+<!-- MISSING sthbrx -->
+
+# Load Word Byte-Reverse Indexed
+
+X-Form
+
+* lwbrx RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    load_data <- MEM(EA, 4)
+    RT <- ([0] * 32 || load_data[24:31] || load_data[16:23]
+                    || load_data[8:15]  || load_data[0:7])
+
+Special Registers Altered:
+
+    None
+
+<!-- MISSING stwbrx -->
+
+
+<!-- Section 3.3.5.1 64-Bit Load and Store with Byte Reversal Instructions page 61 -->
+
+# Load Doubleword Byte-Reverse Indexed
+
+X-Form
+
+* ldbrx RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    load_data <- MEM(EA, 8)
+    RT <- (load_data[56:63] || load_data[48:55]
+        || load_data[40:47] || load_data[32:39]
+        || load_data[24:31] || load_data[16:23]
+        || load_data[8:15]  || load_data[0:7])
+
+Special Registers Altered:
+
+    None
+
+<!-- MISSING stdbrx -->
+
+<!-- Section 3.3.6 Fixed-Point Load and Store Multiple Instructions page 62 -->
+
+# Load Multiple Word
+
+DQ-Form
+
+* lmw RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    r <- RT
+    do while r <=  31
+        GPR(r) <- [0]*32 || MEM(EA, 4)
+        r <- r + 1
+        EA <- EA + 4
+
+Special Registers Altered:
+
+    None
+
+<!-- MISSING stmw -->
+
+

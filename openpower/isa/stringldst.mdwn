@@ -1,0 +1,116 @@
+<!-- Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 3.3.7 Fixed-Point Move Assist Instructions [Phased Out] pages 63 - 65 -->
+
+<!-- The Move Assist instructions allow movement of an arbitrary sequence of bytes -->
+<!-- from storage to registers or from registers to storage without concern for -->
+<!-- alignment. These instructions can be used for a short move between arbitrary -->
+<!-- storage locations or to initiate a long move between unaligned storage fields. -->
+
+
+# Load String Word Immediate
+
+X-Form
+
+* lswi RT,RA,NB
+
+Pseudo-code:
+
+    EA <- (RA|0)
+    if NB = 0 then n <-  32
+    else           n <-  NB
+    r <- RT - 1
+    i <- 32
+    do while n > 0
+        if i = 32 then
+            r <- (r + 1) % 32
+            GPR(r) <- 0
+        GPR(r)[i:i+7] <- MEM(EA, 1)
+        i <- i + 8
+        if i = 64 then i <- 32
+        EA <- EA + 1
+        n <- n - 1
+
+Special Registers Altered:
+
+    None
+
+# Load String Word Indexed
+
+X-Form
+
+* lswx RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    n <- XER[57:63]
+    r <- RT - 1
+    i <- 32
+    RT <- undefined([0]*64)
+    do while n > 0
+        if i = 32 then
+            r <-  (r + 1) % 32
+            GPR(r) <- 0
+        GPR(r)[i:i+7] <- MEM(EA, 1)
+        i <-  i + 8
+        if i = 64 then i <- 32
+        EA <-  EA + 1
+        n <- n - 1
+
+Special Registers Altered:
+
+    None
+
+# Store String Word Immediate
+
+X-Form
+
+* stswi RS,RA,NB
+
+Pseudo-code:
+
+    EA <- (RA|0)
+    if NB = 0 then n <-  32
+    else           n <-  NB
+    r <- RS - 1
+    i <- 32
+    do while n > 0
+      if i = 32 then r <-  (r + 1) % 32
+      MEM(EA, 1) <-  GPR(r)[i:i+7]
+      i <-  i + 8
+      if i = 64 then i <-  32
+      EA <-  EA + 1
+      n <- n - 1
+
+Special Registers Altered:
+
+    None
+
+# Store String Word Indexed
+
+X-Form
+
+* stswx RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    n <- XER[57:63]
+    r <- RS - 1
+    i <- 32
+    do while n > 0
+      if i = 32 then r <- (r + 1) % 32
+      MEM(EA, 1) <- GPR(r)[i:i+7]
+      i <-  i + 8
+      if i = 64 then i <- 32
+      EA <-  EA + 1
+      n <- n - 1
+
+Special Registers Altered:
+
+    None
+
+<!-- Checked March 2021 -->

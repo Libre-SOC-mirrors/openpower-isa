@@ -1,0 +1,35 @@
+<!-- This defines instructions described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- These are not described in book 1 -->
+
+# setvl
+
+SVL-Form
+
+* setvl RT, RA, SVi, vs, ms
+* setvl. RT, RA, SVi, vs, ms
+
+Pseudo-code:
+
+    VLimm <- SVi + 1
+    if vs = 1 then
+        if _RA != 0 then
+            VL <- (RA|0)[57:63]
+        else
+            VL <- VLimm[1:7]
+    else
+        VL <- SVSTATE[7:13]
+    if ms = 1 then
+        MVL <- VLimm[1:7]
+    else
+        MVL <- SVSTATE[0:6]
+    if VL > MVL then
+        VL = MVL
+    SVSTATE[0:6] <- MVL
+    SVSTATE[7:13] <- VL
+    RT <- [0]*57 || VL
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+

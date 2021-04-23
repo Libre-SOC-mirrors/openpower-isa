@@ -1,0 +1,148 @@
+<!-- Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 3.3.10 Fixed-Point Compare Instructions Pages 84 - 88 -->
+
+<!-- The fixed-point Compare instructions compare the contents of register RA with -->
+<!-- (1) the sign-extended value of the SI field, (2) the zero-extended value of the -->
+<!-- UI field, or (3) the contents of register RB. The comparison is signed for cmpi -->
+<!-- and cmp, and unsigned for cmpli and cmpl. -->
+
+# Compare Immediate
+
+D-Form
+
+* cmpi BF,L,RA,SI
+
+Pseudo-code:
+
+    if L = 0 then a <- EXTS((RA)[32:63])
+    else a <-  (RA)
+    if      a < EXTS(SI) then c <- 0b100
+    else if a > EXTS(SI) then c <- 0b010
+    else                      c <- 0b001
+    CR[4*BF+32:4*BF+35] <- c || XER[SO]
+
+Special Registers Altered:
+
+    CR field BF
+
+# Compare
+
+X-Form
+
+* cmp BF,L,RA,RB
+
+Pseudo-code:
+
+    if L = 0 then
+        a <- EXTS((RA)[32:63])
+        b <- EXTS((RB)[32:63])
+    else
+        a <- (RA)
+        b <- (RB)
+    if      a < b then c <-  0b100
+    else if a > b then c <-  0b010
+    else               c <-  0b001
+    CR[4*BF+32:4*BF+35] <-  c || XER[SO]
+
+Special Registers Altered:
+
+    CR field BF
+
+# Compare Logical Immediate
+
+D-Form
+
+* cmpli BF,L,RA,UI
+
+Pseudo-code:
+
+    if L = 0 then a <- [0]*32 || (RA)[32:63]
+    else a <- (RA)
+    if      a <u ([0]*48 || UI) then c <- 0b100
+    else if a >u ([0]*48 || UI) then c <- 0b010
+    else                             c <- 0b001
+    CR[4*BF+32:4*BF+35] <- c || XER[SO]
+
+Special Registers Altered:
+
+    CR field BF
+
+# Compare Logical
+
+X-Form
+
+* cmpl BF,L,RA,RB
+
+Pseudo-code:
+
+    if L = 0 then
+        a <- [0]*32 || (RA)[32:63]
+        b <- [0]*32 || (RB)[32:63]
+    else
+        a <-  (RA)
+        b <-  (RB)
+    if      a <u b then c <- 0b100
+    else if a >u b then c <- 0b010
+    else                c <-  0b001
+    CR[4*BF+32:4*BF+35] <- c || XER[SO]
+
+Special Registers Altered:
+
+    CR field BF
+
+# Compare Ranged Byte
+
+X-Form
+
+* cmprb BF,L,RA,RB
+
+Pseudo-code:
+
+    src1    <- EXTZ((RA)[56:63])
+    src21hi <- EXTZ((RB)[32:39])
+    src21lo <- EXTZ((RB)[40:47])
+    src22hi <- EXTZ((RB)[48:55])
+    src22lo <- EXTZ((RB)[56:63])
+    if L=0 then
+       in_range <-  (src22lo  <= src1) & (src1 <=  src22hi)
+    else
+       in_range <- (((src21lo  <= src1) & (src1 <=  src21hi)) |
+                    ((src22lo  <= src1) & (src1 <=  src22hi)))
+    CR[4*BF+32] <- 0b0
+    CR[4*BF+33] <- in_range
+    CR[4*BF+34] <- 0b0
+    CR[4*BF+35] <- 0b0
+
+Special Registers Altered:
+
+    CR field BF
+
+# Compare Equal Byte
+
+X-Form
+
+* cmpeqb BF,RA,RB
+
+Pseudo-code:
+
+    src1 <- GPR[RA]
+    src1 <- src1[56:63]
+    match <- ((src1 = (RB)[00:07]) |
+              (src1 = (RB)[08:15]) |
+              (src1 = (RB)[16:23]) |
+              (src1 = (RB)[24:31]) |
+              (src1 = (RB)[32:39]) |
+              (src1 = (RB)[40:47]) |
+              (src1 = (RB)[48:55]) |
+              (src1 = (RB)[56:63]))
+    CR[4*BF+32] <- 0b0
+    CR[4*BF+33] <- match
+    CR[4*BF+34] <- 0b0
+    CR[4*BF+35] <- 0b0
+
+Special Registers Altered:
+
+    CR field BF
+
+<!-- Checked March 2021 -->

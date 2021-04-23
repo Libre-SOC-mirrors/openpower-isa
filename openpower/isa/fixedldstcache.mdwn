@@ -1,0 +1,140 @@
+<!-- Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.4.1 Fixed-Point Load and Store Caching Inhibited Instructions. Pages 965 - 967 -->
+
+<!-- The storage accesses caused by the instructions described in this section are -->
+<!-- performed as though the specified storage location is Caching Inhibited and -->
+<!-- Guarded. The instructions can be executed only in hypervisor state. Software -->
+<!-- must ensure that the specified storage location is not in the caches. If the -->
+<!-- specified storage location is in a cache, the results are undefined. -->
+
+
+# Load Byte and Zero Caching Inhibited Indexed
+
+X-Form
+
+* lbzcix RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- [0] * 56 || MEM(EA, 1)
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword and Zero Caching Inhibited Indexed
+
+X-Form
+
+* lhzcix RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- [0] * 48 || MEM(EA, 2)
+
+Special Registers Altered:
+
+    None
+
+# Load Word and Zero Caching Inhibited Indexed
+
+X-Form
+
+* lwzcix RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- [0] * 32 || MEM(EA, 4)
+
+Special Registers Altered:
+
+    None
+
+# Load Doubleword Caching Inhibited Indexed
+
+X-Form
+
+* ldcix RT,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    RT <- MEM(EA, 8)
+
+Special Registers Altered:
+
+    None
+
+# Store Byte Caching Inhibited Indexed
+
+X-Form
+
+* stbcix RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 1) <- (RS)[56:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword Caching Inhibited Indexed
+
+X-Form
+
+* sthcix RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 2) <- (RS)[48:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Word Caching Inhibited Indexed
+
+X-Form
+
+* stwcix RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 4) <- (RS)[32:63]
+
+Special Registers Altered:
+
+    None
+
+# Store Doubleword Caching Inhibited Indexed
+
+X-Form
+
+* stdcix RS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 8) <- (RS)
+
+Special Registers Altered:
+
+    None
+
+<!-- Checked March 2021 -->

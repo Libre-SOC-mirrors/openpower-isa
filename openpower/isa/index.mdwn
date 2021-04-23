@@ -1,0 +1,86 @@
+The SOC is designed to be compliant with POWER 3.0B with somewhere near
+300 instructions excluding Vector instructions.
+
+# Decoder
+
+The Decoder uses a class called PowerOp which get instantiated
+for every instruction. PowerOp class instantiation has member signals
+whose values get set respectively for each instruction.
+
+We use Python Enums to help with common decoder values.
+Below is the POWER add insruction.
+
+| opcode       | unit | internal op | in1 | in2 | in3  | out | CR in | CR out | inv A | inv out | cry in | cry out | ldst len | BR | sgn ext | upd | rsrv | 32b | sgn | rc | lk | sgl pipe | comment | form |
+|--------------|------|-------------|-----|-----|------|-----|-------|--------|-------|---------|--------|---------|----------|----|---------|-----|------|-----|-----|----|----|----------|---------|------|
+| 0b0100001010 | ALU  | OP_ADD      | RA  | RB  | NONE | RT  | 0     | 0      | 0     | 0       | ZERO   | 0       | NONE     | 0  | 0       | 0   | 0    | 0   | 0   | RC | 0  | 0        | add     | XO   |
+
+Here is an example of a toy multiplexer that sets various fields in the
+PowerOP signal class to the correct values for the add instruction when
+select is set equal to 1.  This should give you a feel for how we work with
+enums and PowerOP.
+
+    from nmigen import Module, Elaboratable, Signal, Cat, Mux
+    from soc.decoder.power_enums import (Function, Form, InternalOp,
+                             In1Sel, In2Sel, In3Sel, OutSel, RC, LdstLen,
+                             CryIn, get_csv, single_bit_flags,
+                             get_signal_name, default_values)
+    from soc.decoder.power_fields import DecodeFields
+    from soc.decoder.power_fieldsn import SigDecode, SignalBitRange
+    from soc.decoder.power_decoder import PowerOp
+    
+    class Op_Add_Example(Elaboratable):
+        def __init__(self):
+            self.select = Signal(reset_less=True)
+            self.op_add = PowerOp()
+        
+        def elaborate(self, platform):
+            m = Module()
+            op_add = self.op_add
+    
+            with m.If(self.select == 1):
+                m.d.comb += op_add.function_unit.eq(Function.ALU)
+                m.d.comb += op_add.form.eq(Form.XO)
+                m.d.comb += op_add.internal_op.eq(InternalOp.OP_ADD)
+                m.d.comb += op_add.in1_sel.eq(In1Sel.RA)
+                m.d.comb += op_add.in2_sel.eq(In2Sel.RB)
+                m.d.comb += op_add.in3_sel.eq(In3Sel.NONE)
+                m.d.comb += op_add.out_sel.eq(OutSel.RT)
+                m.d.comb += op_add.rc_sel.eq(RC.RC)
+                m.d.comb += op_add.ldst_len.eq(LdstLen.NONE)
+                m.d.comb += op_add.cry_in.eq(CryIn.ZERO)
+            
+            return m
+    
+    from nmigen.back import verilog
+    verilog_file = "op_add_example.v"
+    top = Op_Add_Example()
+    f = open(verilog_file, "w")
+    verilog = verilog.convert(top, name='top', strip_internal_attrs=True,
+                              ports=top.op_add.ports())
+    f.write(verilog)
+    print(f"Verilog Written to: {verilog_file}")
+
+The [actual POWER9 Decoder](https://git.libre-soc.org/?p=soc.git;a=blob;f=src/soc/decoder/power_decoder2.py;hb=HEAD)
+uses this principle, in conjunction with reading the information shown
+in the table above from CSV files (as opposed to hardcoding them in
+python source).  These [[CSV files|openpower/isatables]],
+being machine-readable in a wide variety
+of programming languages, are conveniently available for use by
+other projects well beyond just this SOC.
+
+This also demonstrates one of the design aspects taken in this project: to
+*combine* the power of python's full capabilities in order to create
+advanced dynamically generated HDL, rather than (as done with MyHDL)
+limit python code to a subset of its full capabilities.
+
+The CSV Files are loaded by
+[power_decoder.py](https://git.libre-soc.org/?p=soc.git;a=blob;f=src/soc/decoder/power_decoder.py;hb=HEAD)
+and are used to construct a hierarchical cascade of switch statements.  The original code came from
+[microwatt](https://github.com/antonblanchard/microwatt/blob/master/decode1.vhdl)
+where the original hardcoded cascade can be seen.
+
+The docstring for power_decoder.py gives more details: each level in the hierarchy, just as in the original decode1.vhdl, will take slices of the instruction bitpattern, match against it, and if successful will continue with further subdecoders until a line is met that contains the required Operand Information (a PowerOp) exactly as shown at the top of this page.
+
+In this way, different sections of the instruction are successively decoded (major opcode, then minor opcode, then sub-patterns under those) until the required instruction is fully recognised, and the hierarchical cascade of switch patterns results in a flat interpretation being produced that is useful internally. 
+
+

@@ -1,0 +1,283 @@
+<!-- This defines instructions described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.4.4 Move To/From System Register Instructions pages 970 - 1038 -->
+
+<!-- Section 4.4.4 Move To/From System Register Instructions pages 970 - 1038 -->
+<!-- Section 3.3.17 Move To/From System Register Instructions Page 120 -->
+<!-- Section 4.3.2 Data Cache Instructions Page 850 -->
+
+<!-- This needs checking again -->
+
+<!-- The Move To Special Purpose Register and Move From Special Purpose Register -->
+<!-- instructions are described in Book I, but only at the level available to an -->
+<!-- application programmer. For example, no mention is made there of registers that -->
+<!-- can be accessed only in privileged state. The descriptions of these instructions -->
+<!-- given below extend the descriptions given in Book I, but do not list Special -->
+<!-- Purpose Registers that are implementation-dependent. In the descriptions of -->
+<!-- these instructions given in below, the “defined” SPR numbers are the SPR -->
+<!-- numbers shown in the Figure 18 for the instruction and the -->
+<!-- implementation-specific SPR numbers that are implemented, and similarly for -->
+<!-- “defined” registers. All other SPR numbers are undefined for the instruction. -->
+<!-- (Implementation-specific SPR numbers that are not implemented are considered to -->
+<!-- be undefined.) When an SPR is defined for mtspr and undefined for mfspr, or -->
+<!-- vice versa, a hyphen appears in the column for the instruction for which the -->
+<!-- SPR number is undefined. -->
+
+
+
+<!-- Page 974 -->
+
+# Move To Special Purpose Register
+
+XFX-Form
+
+* mtspr SPR,RS
+
+Pseudo-code:
+
+    n <- spr[5:9] || spr[0:4]
+    switch (n)
+      case(13): see(Book_III_p974)
+      case(808, 809, 810, 811):
+      default:
+        if length(SPR(n)) = 64 then
+          SPR(n) <- (RS)
+        else
+          SPR(n) <- (RS) [32:63]
+
+Special Registers Altered:
+
+    See spec 3.3.17
+
+<!-- Page 975 -->
+
+# Move From Special Purpose Register
+
+XFX-Form
+
+* mfspr RT,SPR
+
+Pseudo-code:
+
+    n <- spr[5:9] || spr[0:4]
+    switch (n)
+      case(129): see(Book_III_p975)
+      case(808, 809, 810, 811):
+      default:
+        if length(SPR(n)) = 64 then
+          RT <- SPR(n)
+        else
+          RT <- [0]*32 || SPR(n)
+
+Special Registers Altered:
+
+    None
+
+<!-- Section 3.3.17 Move To/From System Register Instructions Page 120 -->
+
+# Move to CR from XER Extended
+
+X-Form
+
+* mcrxrx BF
+
+Pseudo-code:
+
+    CR[4*BF+32:4*BF+35] <-  XER[OV] || XER[OV32] || XER[CA] || XER[CA32]
+
+Special Registers Altered:
+
+    CR field BF
+
+# Move To One Condition Register Field
+
+XFX-Form
+
+* mtocrf FXM,RS
+
+Pseudo-code:
+
+    n <- 7
+    do i = 7 to 0
+      if FXM[i] = 1 then
+        n <- i
+    CR[4*n+32:4*n+35] <- (RS)[4*n+32:4*n+35]
+
+Special Registers Altered:
+
+    CR field selected by FXM
+
+# Move To Condition Register Fields
+
+XFX-Form
+
+* mtcrf FXM,RS
+
+Pseudo-code:
+
+    do n = 0 to 7
+      if FXM[n] = 1 then
+        CR[4*n+32:4*n+35] <- (RS)[4*n+32:4*n+35]
+
+Special Registers Altered:
+
+    CR fields selected by mask
+
+# Move From One Condition Register Field
+
+XFX-Form
+
+* mfocrf RT,FXM
+
+Pseudo-code:
+
+    done <- 0
+    RT <- [0]*64
+    do n = 0 to 7
+      if (done = 0) & (FXM[n] = 1) then
+        RT[4*n+32:4*n+35] <- CR[4*n+32:4*n+35]
+        done <- 1
+
+Special Registers Altered:
+
+    None
+
+# Move From Condition Register
+
+XFX-Form
+
+* mfcr RT
+
+Pseudo-code:
+
+    RT <- [0]*32 || CR
+
+Special Registers Altered:
+
+    None
+
+# Set Boolean
+
+X-Form
+
+* setb RT,BFA
+
+Pseudo-code:
+
+    if CR[4*BFA+32] = 1 then
+       RT <- 0xFFFF_FFFF_FFFF_FFFF
+    else if CR[4*BFA+33]=1 then
+       RT <- 0x0000_0000_0000_0001
+    else
+       RT <- 0x0000_0000_0000_0000
+
+Special Registers Altered:
+
+    None
+
+<!-- Out of order from the PDF. Page 977 -->
+
+# Move To Machine State Register
+
+X-Form
+
+* mtmsr RS,L1
+
+Pseudo-code:
+
+    if L1 = 0 then
+        MSR[48] <- (RS)[48] | (RS)[49]
+        MSR[58] <- (RS)[58] | (RS)[49]
+        MSR[59] <- (RS)[59] | (RS)[49]
+        MSR[32:40] <- (RS)[32:40]
+        MSR[42:47] <- (RS)[42:47]
+        MSR[49:50] <- (RS)[49:50]
+        MSR[52:57] <- (RS)[52:57]
+        MSR[60:62] <- (RS)[60:62]
+    else
+        MSR[48] <- (RS)[48]
+        MSR[62] <- (RS)[62]
+
+Special Registers Altered:
+
+    MSR
+
+# Move To Machine State Register
+
+X-Form
+
+* mtmsrd RS,L1
+
+Pseudo-code:
+
+    if L1 = 0 then
+        if (MSR[29:31] != 0b010) | ((RS)[29:31] != 0b000) then
+            MSR[29:31] <- (RS)[29:31]
+        MSR[48] <- (RS)[48] | (RS)[49]
+        MSR[58] <- (RS)[58] | (RS)[49]
+        MSR[59] <- (RS)[59] | (RS)[49]
+        MSR[0:2] <- (RS)[0:2]
+        MSR[4:28] <- (RS)[4:28]
+        MSR[32:40] <- (RS)[32:40]
+        MSR[42:47] <- (RS)[42:47]
+        MSR[49:50] <- (RS)[49:50]
+        MSR[52:57] <- (RS)[52:57]
+        MSR[60:62] <- (RS)[60:62]
+    else
+        MSR[48] <- (RS)[48]
+        MSR[62] <- (RS)[62]
+
+Special Registers Altered:
+
+    MSR
+
+# Move From Machine State Register
+
+X-Form
+
+* mfmsr RT
+
+Pseudo-code:
+
+    RT <- MSR
+
+Special Registers Altered:
+
+    None
+
+<!-- Section 4.3.2 Data Cache Instructions Page 850 -->
+
+# Data Cache Block set to Zero
+
+X-Form
+
+* dcbz RA,RB
+
+Pseudo-code:
+
+    if RA = 0 then b <- 0
+    else           b <-(RA)
+    EA <- b + (RB)
+
+Special Registers Altered:
+
+    None
+
+<!-- Section 5.9.3.3 TLB Management Instructions Page 1033 -->
+
+# TLB Invalidate Entry
+
+X-Form
+
+* tlbie RB,RS,RIC,PRS,R
+
+Pseudo-code:
+
+    IS <- (RB) [52:53]
+
+Special Registers Altered:
+
+    None
+
+<!-- MISSING tlbiel page 1038 -->
+<!-- MISSING tlbsync page 1042 -->

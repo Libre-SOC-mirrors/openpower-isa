@@ -1,0 +1,130 @@
+<!-- Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 2.4 Branch Instructions. Pages 33 - 39 -->
+
+<!-- The sequence of instruction execution can be changed by the Branch -->
+<!-- instructions. Because all instructions are on word boundaries, bits 62 and 63 -->
+<!-- of the generated branch target address are ignored by the processor in -->
+<!-- performing the branch. -->
+
+<!-- target_addr specifies the branch target address. -->
+
+<!-- If AA=0 then the branch target address is the sum of LI || 0b00 sign-extended -->
+<!-- and the address of this instruction, with the high-order 32 bits of the branch -->
+<!-- target address set to 0 in 32-bit mode. -->
+
+<!-- If AA=1 then the branch target address is the value LI || 0b00 sign-extended, -->
+<!-- with the high-order 32 bits of the branch target address set to 0 in 32-bit -->
+<!-- mode. -->
+
+<!-- If LK=1 then the effective address of the instruction following the Branch -->
+<!-- instruction is placed into the Link Register. -->
+
+# Branch
+
+I-Form
+
+* b target_addr (AA=0 LK=0)
+* ba target_addr (AA=1 LK=0)
+* bl target_addr (AA=0 LK=1)
+* bla target_addr (AA=1 LK=1)
+
+Pseudo-code:
+
+    if AA then NIA  <-iea EXTS(LI || 0b00)
+    else       NIA  <-iea CIA + EXTS(LI || 0b00)
+    if LK then LR <-iea  CIA + 4
+
+Special Registers Altered:
+
+    LR                       (if LK=1)
+
+# Branch Conditional
+
+B-Form
+
+* bc BO,BI,target_addr (AA=0 LK=0)
+* bca BO,BI,target_addr (AA=1 LK=0)
+* bcl BO,BI,target_addr (AA=0 LK=1)
+* bcla BO,BI,target_addr (AA=1 LK=1)
+
+Pseudo-code:
+
+    if (mode_is_64bit) then M <- 0
+    else M <- 32
+    if ¬BO[2] then CTR <- CTR - 1
+    ctr_ok <- BO[2] | ((CTR[M:63] != 0) ^ BO[3])
+    cond_ok <- BO[0] | ¬(CR[BI+32] ^ BO[1])
+    if ctr_ok & cond_ok then
+      if AA then NIA <-iea EXTS(BD || 0b00)
+      else       NIA <-iea CIA + EXTS(BD || 0b00)
+    if LK then LR  <-iea  CIA + 4
+
+Special Registers Altered:
+
+    CTR                    (if BO2=0)
+    LR                       (if LK=1)
+
+# Branch Conditional to Link Register
+
+XL-Form
+
+* bclr BO,BI,BH (LK=0)
+* bclrl BO,BI,BH (LK=1)
+
+Pseudo-code:
+
+    if (mode_is_64bit) then M <- 0
+    else M <- 32
+    if ¬BO[2]  then CTR <- CTR - 1
+    ctr_ok <- BO[2] | ((CTR[M:63] != 0) ^ BO[3])
+    cond_ok <- BO[0] | ¬(CR[BI+32] ^  BO[1])
+    if ctr_ok & cond_ok then NIA <-iea LR[0:61] || 0b00
+    if LK then LR <-iea CIA + 4
+
+Special Registers Altered:
+
+    CTR                    (if BO2=0)
+    LR                       (if LK=1)
+
+# Branch Conditional to Count Register
+
+XL-Form
+
+* bcctr BO,BI,BH (LK=0)
+* bcctrl BO,BI,BH (LK=1)
+
+Pseudo-code:
+
+    cond_ok <- BO[0] | ¬(CR[BI+32] ^ BO[1])
+    if cond_ok then NIA <-iea CTR[0:61] || 0b00
+    if LK then LR <-iea CIA + 4
+
+Special Registers Altered:
+
+    LR                     (if LK=1)
+
+# Branch Conditional to Branch Target Address Register
+
+XL-Form
+
+* bctar BO,BI,BH (LK=0)
+* bctarl BO,BI,BH (LK=1)
+
+Pseudo-code:
+
+    if (mode_is_64bit) then M <- 0
+    else M <- 32
+    if ¬BO[2] then CTR <- CTR - 1
+    ctr_ok <- BO[2]  | ((CTR[M:63] != 0) ^ BO[3])
+    cond_ok <- BO[0] | ¬(CR[BI+32] ^ BO[1])
+    if ctr_ok & cond_ok then NIA <-iea TAR[0:61]  || 0b00
+    if LK then LR <-iea  CIA + 4
+
+Special Registers Altered:
+
+    CTR                    (if BO2=0)
+    LR                       (if LK=1)
+
+
+<!-- Checked March 2021 -->

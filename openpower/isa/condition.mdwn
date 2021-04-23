@@ -1,0 +1,139 @@
+<!-- Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 2.5.1 Condition Register Logical Instructions Pages 40 - 41 -->
+
+<!-- The Condition Register Logical instructions have preferred forms; see Section -->
+<!-- 1.9.1. -->
+
+<!-- In the preferred forms, the BT and BB fields satisfy the following rule: -->
+
+<!-- * The bit specified by BT is in the same Condition Register field as the bit -->
+<!-- specified by BB. -->
+
+# Condition Register AND
+
+XL-Form
+
+* crand BT,BA,BB
+
+Pseudo-code:
+
+    CR[BT+32] <-  CR[BA+32] & CR[BB+32]
+
+Special Registers Altered:
+
+    CR[BT+32]
+
+# Condition Register NAND
+
+XL-Form
+
+* crnand BT,BA,BB
+
+Pseudo-code:
+
+    CR[BT+32] <- ¬(CR[BA+32] & CR[BB+32])
+
+Special Registers Altered:
+
+    CR[BT+32]
+
+# Condition Register OR
+
+XL-Form
+
+* cror BT,BA,BB
+
+Pseudo-code:
+
+    CR[BT+32] <-  CR[BA+32] | CR[BB+32]
+
+Special Registers Altered:
+
+    CR[BT+32]
+
+# Condition Register XOR
+
+XL-Form
+
+* crxor     BT,BA,BB
+
+Pseudo-code:
+
+    CR[BT+32] <- CR[BA+32] ^ CR[BB+32]
+
+Special Registers Altered:
+
+    CR[BT+32]
+
+# Condition Register NOR
+
+XL-Form
+
+* crnor BT,BA,BB
+
+Pseudo-code:
+
+    CR[BT+32] <- ¬(CR[BA+32] | CR[BB+32])
+
+Special Registers Altered:
+
+    CR[BT+32]
+
+# Condition Register Equivalent
+
+XL-Form
+
+* creqv BT,BA,BB
+
+Pseudo-code:
+
+    CR[BT+32] <- ¬(CR[BA+32] ^ CR[BB+32])
+
+Special Registers Altered:
+
+    CR[BT+32]
+
+# Condition Register AND with Complement
+
+XL-Form
+
+* crandc BT,BA,BB
+
+Pseudo-code:
+
+    CR[BT+32] <- CR[BA+32] &  ¬CR[BB+32]
+
+Special Registers Altered:
+
+    CR[BT+32]
+
+# Condition Register OR with Complement
+
+XL-Form
+
+* crorc BT,BA,BB
+
+Pseudo-code:
+
+    CR[BT+32] <- CR[BA+32] |  ¬CR[BB+32]
+
+Special Registers Altered:
+
+    CR[BT+32]
+
+# Move Condition Register Field
+
+XL-Form
+
+* mcrf BF,BFA
+
+Pseudo-code:
+
+    CR[4*BF+32:4*BF+35] <- CR[4*BFA+32:4*BFA+35]
+
+Special Registers Altered:
+
+    CR field BF
+
+<!-- Checked March 2021 -->

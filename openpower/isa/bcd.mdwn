@@ -1,0 +1,66 @@
+<!-- Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 3.3.15 Binary Coded Decimal (BCD) Assist Instructions. Page 111 -->
+
+<!-- The Binary Coded Decimal Assist instructions operate on Binary Coded Decimal -->
+<!-- operands (cbcdtd and addg6s) and Decimal Floating-Point operands (cdtbcd) -->
+<!-- See Chapter 5. for additional information. -->
+
+
+# Convert Declets To Binary Coded Decimal
+
+X-Form
+
+* cdtbcd RA, RS
+
+Pseudo-code:
+
+    do i = 0 to 1
+      n <- i * 32
+      RA[n+0:n+7] <- 0
+      RA[n+8:n+19 ] <- DPD_TO_BCD ( (RS)[n+12:n+21] )
+      RA[n+20:n+31] <- DPD_TO_BCD ( (RS)[n+22:n+31] )
+
+Special Registers Altered:
+
+    None
+
+# Add and Generate Sixes
+
+XO-Form
+
+* addg6s RT,RA,RB
+
+Pseudo-code:
+
+    do i = 0 to 15
+        dci <- carry_out(RA[4*i:63] + RB[4*i:63])
+        c <- ([dc[0]]*4 || [dc[1]]*4 || [dc[2]]*4 || [dc[3]]*4 ||
+              [dc[4]]*4 || [dc[5]]*4 || [dc[6]]*4 || [dc[7]]*4 ||
+              [dc[8]]*4 || [dc[9]]*4 || [dc[10]]*4 || [dc[11]]*4 ||
+              [dc[12]]*4 || [dc[13]]*4 || [dc[14]]*4 || [dc[15]]*4)
+        RT <- (¬c) & 0x6666_6666_6666_6666
+
+Special Registers Altered:
+
+    None
+
+# Convert Binary Coded Decimal To Declets
+
+X-Form
+
+* cbcdtd RA, RS
+
+Pseudo-code:
+
+    do i = 0 to 1
+      n <- i * 32
+      RA[n+0:n+11] <- 0
+      RA[n+12:n+21] <- BCD_TO_DPD ( (RS)[n+8:n+19] )
+      RA[n+22:n+31] <- BCD_TO_DPD ( (RS)[n+20:n+31] )
+
+Special Registers Altered:
+
+    None
+
+<!-- Checked March 2021 -->
