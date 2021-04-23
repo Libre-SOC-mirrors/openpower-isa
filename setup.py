@@ -50,7 +50,7 @@ setup(
     test_suite='nose.collector',
     entry_points = {
         'console_scripts': [
-            'pywriter=openpower.decoder.pseudo.pywriter:pywriter'
+            'pywriter=openpower.decoder.pseudo.pywriter:pywriter',
             'sv_analysis=openpower.sv:sv_analysis'
         ]
     }
