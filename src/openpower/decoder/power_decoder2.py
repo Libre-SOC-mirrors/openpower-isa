@@ -37,6 +37,8 @@ from openpower.consts import (MSR, SPEC, EXTRA2, EXTRA3, SVP64P, field,
 from soc.regfile.regfiles import FastRegs
 from openpower.consts import TT
 from openpower.state import CoreState
+
+# XXX these have to go
 from soc.regfile.util import spr_to_fast
 from soc.regfile.regfiles import XERRegs
 
