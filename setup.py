@@ -6,8 +6,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md')).read()
 NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
-
-version = '0.0.0'
+version = '0.0.1'
 
 # using pip3 for ongoing development is a royal pain.  seriously not
 # recommended.  therefore a number of these dependencies have been
@@ -15,13 +14,17 @@ version = '0.0.0'
 # manually.
 
 install_requires = [
+    # ok to install using pip3 as long as it is not with the rest of Libre-SOC.     # https://git.libre-soc.org/?p=nmigen.git
     'nmigen', 
-    'nmutil',  # can be obtained with pip3, best done manually
+    # can be obtained with pip3, best done manually
+    # https://git.libre-soc.org/?p=nmutil.git
+    'nmutil',
 ]
 
 test_requires = [
     'nose',
-    # install pia from https://salsa.debian.org/Kazan-team/power-instruction-analyzer
+    # best to install pia from Libre-SOC:
+    # https://git.libre-soc.org/?p=power-instruction-analyzer.git
     'power-instruction-analyzer'
 ]
 
