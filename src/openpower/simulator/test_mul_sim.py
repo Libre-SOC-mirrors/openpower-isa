@@ -6,7 +6,7 @@ from openpower.decoder.power_decoder import (create_pdecode)
 from openpower.decoder.power_enums import (Function, MicrOp,
                                      In1Sel, In2Sel, In3Sel,
                                      OutSel, RC, LdstLen, CryIn,
-                                     single_bit_flags, Form, SPR,
+                                     single_bit_flags, Form, SPRfull,
                                      get_signal_name, get_csv)
 from openpower.decoder.power_decoder2 import (PowerDecode2)
 from openpower.simulator.program import Program
