@@ -39,3 +39,15 @@ def spr_to_slow_reg(spr_num):
     for i, x in enumerate(SPR):
         if spr_num == x.value:
             return i
+
+
+# TODO: make this a util routine (somewhere)
+def mask_extend(x, nbits, repeat):
+    res = 0
+    extended = (1<<repeat)-1
+    for i in range(nbits):
+        if x & (1<<i):
+            res |= extended << (i*repeat)
+    return res
+    
+
