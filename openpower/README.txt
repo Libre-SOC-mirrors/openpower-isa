@@ -9,4 +9,3 @@ The files in this directory have come from many locations:
 * isa markdown files are extracted from the OpenPOWER v3.0B specification which
   is managed by the OpenPOWER Foundation
 * python files are written by Libre-SOC team members and are LGPLv3+ licensed
-
