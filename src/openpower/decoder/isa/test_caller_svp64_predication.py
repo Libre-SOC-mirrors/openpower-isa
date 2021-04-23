@@ -2,17 +2,17 @@ from nmigen import Module, Signal
 from nmigen.back.pysim import Simulator, Delay, Settle
 from nmutil.formaltest import FHDLTestCase
 import unittest
-from soc.decoder.isa.caller import ISACaller
-from soc.decoder.power_decoder import (create_pdecode)
-from soc.decoder.power_decoder2 import (PowerDecode2)
-from soc.simulator.program import Program
-from soc.decoder.isa.caller import ISACaller, SVP64State
-from soc.decoder.selectable_int import SelectableInt
-from soc.decoder.orderedset import OrderedSet
-from soc.decoder.isa.all import ISA
-from soc.decoder.isa.test_caller import Register, run_tst
-from soc.sv.trans.svp64 import SVP64Asm
-from soc.consts import SVP64CROffs
+from openpower.decoder.isa.caller import ISACaller
+from openpower.decoder.power_decoder import (create_pdecode)
+from openpower.decoder.power_decoder2 import (PowerDecode2)
+from openpower.simulator.program import Program
+from openpower.decoder.isa.caller import ISACaller, SVP64State
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.decoder.orderedset import OrderedSet
+from openpower.decoder.isa.all import ISA
+from openpower.decoder.isa.test_caller import Register, run_tst
+from openpower.sv.trans.svp64 import SVP64Asm
+from openpower.consts import SVP64CROffs
 from copy import deepcopy
 
 class DecoderTestCase(FHDLTestCase):

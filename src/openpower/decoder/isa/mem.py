@@ -13,10 +13,10 @@ related bugs:
 """
 
 from copy import copy
-from soc.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
+from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 
-from soc.decoder.helpers import exts, gtu, ltu, undefined
+from openpower.decoder.helpers import exts, gtu, ltu, undefined
 import math
 import sys
 

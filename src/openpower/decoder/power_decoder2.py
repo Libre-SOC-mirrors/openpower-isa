@@ -10,36 +10,36 @@ from nmigen import Module, Elaboratable, Signal, Mux, Const, Cat, Repl, Record
 from nmigen.cli import rtlil
 from nmutil.util import sel
 
-from soc.regfile.regfiles import XERRegs
-
 from nmutil.picker import PriorityPicker
 from nmutil.iocontrol import RecordObject
 from nmutil.extend import exts
 
-from soc.experiment.mem_types import LDSTException
+from openpower.exceptions import LDSTException
 
-from soc.decoder.power_svp64_prefix import SVP64PrefixDecoder
-from soc.decoder.power_svp64_extra import SVP64CRExtra, SVP64RegExtra
-from soc.decoder.power_svp64_rm import SVP64RMModeDecode
-from soc.decoder.power_regspec_map import regspec_decode_read
-from soc.decoder.power_regspec_map import regspec_decode_write
-from soc.decoder.power_decoder import create_pdecode
-from soc.decoder.power_enums import (MicrOp, CryIn, Function,
+from openpower.decoder.power_svp64_prefix import SVP64PrefixDecoder
+from openpower.decoder.power_svp64_extra import SVP64CRExtra, SVP64RegExtra
+from openpower.decoder.power_svp64_rm import SVP64RMModeDecode
+from openpower.decoder.power_regspec_map import regspec_decode_read
+from openpower.decoder.power_regspec_map import regspec_decode_write
+from openpower.decoder.power_decoder import create_pdecode
+from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      CRInSel, CROutSel,
                                      LdstLen, In1Sel, In2Sel, In3Sel,
                                      OutSel, SPRfull, SPRreduced,
                                      RC, LDSTMode,
                                      SVEXTRA, SVEtype, SVPtype)
-from soc.decoder.decode2execute1 import (Decode2ToExecute1Type, Data,
+from openpower.decoder.decode2execute1 import (Decode2ToExecute1Type, Data,
                                          Decode2ToOperand)
-from soc.sv.svp64 import SVP64Rec
-from soc.consts import (MSR, SPEC, EXTRA2, EXTRA3, SVP64P, field,
+from openpower.sv.svp64 import SVP64Rec
+from openpower.consts import (MSR, SPEC, EXTRA2, EXTRA3, SVP64P, field,
                         SPEC_SIZE, SPECb, SPEC_AUG_SIZE, SVP64CROffs)
 
 from soc.regfile.regfiles import FastRegs
-from soc.consts import TT
-from soc.config.state import CoreState
+from openpower.consts import TT
+from openpower.state import CoreState
 from soc.regfile.util import spr_to_fast
+from soc.regfile.regfiles import XERRegs
+
 
 
 def decode_spr_num(spr):

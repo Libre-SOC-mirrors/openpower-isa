@@ -1,10 +1,10 @@
 import unittest
-from soc.decoder.selectable_int import SelectableInt, onebit
+from openpower.decoder.selectable_int import SelectableInt, onebit
 from nmutil.divmod import trunc_divs, trunc_rems
 from operator import floordiv, mod
-from soc.decoder.selectable_int import selectltu as ltu
-from soc.decoder.selectable_int import selectgtu as gtu
-from soc.decoder.selectable_int import check_extsign
+from openpower.decoder.selectable_int import selectltu as ltu
+from openpower.decoder.selectable_int import selectgtu as gtu
+from openpower.decoder.selectable_int import check_extsign
 
 trunc_div = floordiv
 trunc_rem = mod
@@ -25,6 +25,7 @@ def exts(value, bits):
 def EXTS(value):
     """ extends sign bit out from current MSB to all 256 bits
     """
+    print ("EXTS", value, type(value))
     assert isinstance(value, SelectableInt)
     return SelectableInt(exts(value.value, value.bits) & ((1 << 256)-1), 256)
 

@@ -1,6 +1,6 @@
 import unittest
 from copy import copy
-from soc.decoder.power_fields import BitRange
+from openpower.decoder.power_fields import BitRange
 from operator import (add, sub, mul, floordiv, truediv, mod, or_, and_, xor,
                       neg, inv, lshift, rshift)
 

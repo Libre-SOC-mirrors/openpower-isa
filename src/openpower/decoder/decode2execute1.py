@@ -5,10 +5,10 @@ based on Anton Blanchard microwatt decode2.vhdl
 """
 from nmigen import Signal, Record
 from nmutil.iocontrol import RecordObject
-from soc.decoder.power_enums import (MicrOp, CryIn, Function,
+from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      SPRfull, SPRreduced, LDSTMode)
-from soc.consts import TT
-from soc.experiment.mem_types import LDSTException
+from openpower.consts import TT
+from openpower.exceptions import LDSTException
 
 
 class Data(Record):

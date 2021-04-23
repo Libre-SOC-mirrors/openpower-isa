@@ -15,7 +15,7 @@ import os
 import sys
 from io import BytesIO
 
-from soc.simulator.envcmds import cmds
+from openpower.simulator.envcmds import cmds
 
 filedir = os.path.dirname(os.path.realpath(__file__))
 memmap = os.path.join(filedir, "memmap")

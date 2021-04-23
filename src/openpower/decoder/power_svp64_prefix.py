@@ -6,7 +6,7 @@ from nmigen import Module, Elaboratable, Signal, Mux, Const, Cat
 from nmigen.cli import rtlil
 from nmutil.util import sel
 
-from soc.consts import SVP64P
+from openpower.consts import SVP64P
 
 # SVP64 Prefix fields: see https://libre-soc.org/openpower/sv/svp64/
 # identifies if an instruction is a SVP64-encoded prefix, and extracts

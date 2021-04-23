@@ -1,6 +1,6 @@
 from nmutil.iocontrol import RecordObject
 from nmigen import Signal
-from soc.sv.svstate import SVSTATERec
+from openpower.sv.svstate import SVSTATERec
 
 
 class CoreState(RecordObject):

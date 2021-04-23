@@ -15,11 +15,11 @@ related bugs:
 
 #from nmigen.back.pysim import Settle
 from copy import copy
-from soc.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
+from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
-from soc.decoder.helpers import exts, gtu, ltu, undefined
-from soc.decoder.isa.mem import Mem
-from soc.consts import MSRb  # big-endian (PowerISA versions)
+from openpower.decoder.helpers import exts, gtu, ltu, undefined
+from openpower.decoder.isa.mem import Mem
+from openpower.consts import MSRb  # big-endian (PowerISA versions)
 
 import math
 import sys

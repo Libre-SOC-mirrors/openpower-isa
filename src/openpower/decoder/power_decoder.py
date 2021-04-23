@@ -90,16 +90,16 @@ import gc
 from collections import namedtuple
 from nmigen import Module, Elaboratable, Signal, Cat, Mux
 from nmigen.cli import rtlil
-from soc.decoder.power_enums import (Function, Form, MicrOp,
+from openpower.decoder.power_enums import (Function, Form, MicrOp,
                                      In1Sel, In2Sel, In3Sel, OutSel,
                                      SVEXTRA, SVEtype, SVPtype,  # Simple-V
                                      RC, LdstLen, LDSTMode, CryIn,
                                      single_bit_flags, CRInSel,
                                      CROutSel, get_signal_name,
                                      default_values, insns, asmidx)
-from soc.decoder.power_fields import DecodeFields
-from soc.decoder.power_fieldsn import SigDecode, SignalBitRange
-from soc.decoder.power_svp64 import SVP64RM
+from openpower.decoder.power_fields import DecodeFields
+from openpower.decoder.power_fieldsn import SigDecode, SignalBitRange
+from openpower.decoder.power_svp64 import SVP64RM
 
 # key data structure in which the POWER decoder is specified,
 # in a hierarchical fashion
