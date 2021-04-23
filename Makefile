@@ -6,8 +6,9 @@ gitupdate:
 	git submodule init
 	git submodule update --init --recursive --remote
 
+# now installed as a command (/usr/local/bin/svanalysis) by setup.py
 svanalysis:
-	python3 openpower/sv_analysis.py
+	svanalysis
 
 # now installed as a command (/usr/local/bin/pywriter) by setup.py
 pywriter:

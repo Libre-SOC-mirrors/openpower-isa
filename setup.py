@@ -16,7 +16,7 @@ version = '0.0.1'
 
 install_requires = [
     'nmigen', 
-    #'nmutil',  # can be obtained with pip3, best done manually
+    'nmutil',  # can be obtained with pip3, best done manually
 ]
 
 test_requires = [
@@ -51,6 +51,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'pywriter=openpower.decoder.pseudo.pywriter:pywriter'
+            'sv_analysis=openpower.sv:sv_analysis'
         ]
     }
 )
