@@ -1,4 +1,5 @@
-The files in this directory have come from many locations
+This directory contains OpenPOWER ISA related machine-readable files
+The files in this directory have come from many locations:
 
 * isatables CSV files are from Microwatt decode1.vhdl which is
   CC 4.0 Copyrighted
