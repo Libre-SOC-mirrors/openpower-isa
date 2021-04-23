@@ -1,14 +1,5 @@
-from nmigen import Module, Signal
-from nmigen.back.pysim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_enums import (Function, MicrOp,
-                                     In1Sel, In2Sel, In3Sel,
-                                     OutSel, RC, LdstLen, CryIn,
-                                     single_bit_flags, Form, SPR,
-                                     get_signal_name, get_csv)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
+from nmutil.formaltest import FHDLTestCase
 from openpower.simulator.program import Program
 from openpower.simulator.qemu import run_program
 from openpower.decoder.isa.all import ISA

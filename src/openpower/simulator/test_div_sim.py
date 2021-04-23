@@ -1,19 +1,11 @@
-from nmigen import Module, Signal
-from nmigen.back.pysim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_enums import (Function, MicrOp,
-                                     In1Sel, In2Sel, In3Sel,
-                                     OutSel, RC, LdstLen, CryIn,
-                                     single_bit_flags, Form, SPR,
-                                     get_signal_name, get_csv)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
+from nmutil.formaltest import FHDLTestCase
 from openpower.simulator.program import Program
 from openpower.simulator.qemu import run_program
 from openpower.decoder.isa.all import ISA
 from openpower.test.common import TestCase
 from openpower.simulator.test_sim import DecoderBase
+from openpower.endian import bigendian
 
 
 
@@ -29,7 +21,7 @@ class DivTestCases(FHDLTestCase):
                "addi 2, 0, 0x1234",
                "divw  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_1_divw_(self):
@@ -37,7 +29,7 @@ class DivTestCases(FHDLTestCase):
                "addi 2, 0, 0x1234",
                "divw.  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_2_divw_(self):
@@ -45,7 +37,7 @@ class DivTestCases(FHDLTestCase):
                "addi 2, 0, 0x5678",
                "divw.  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_1_divwe(self):
@@ -53,7 +45,7 @@ class DivTestCases(FHDLTestCase):
                "addi 2, 0, 0x1234",
                "divwe  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_2_divweu(self):
@@ -61,7 +53,7 @@ class DivTestCases(FHDLTestCase):
                "addi 2, 0, 0x1234",
                "divweu  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_4_moduw(self):
@@ -69,7 +61,7 @@ class DivTestCases(FHDLTestCase):
                "addi 2, 0, 0x1234",
                "moduw  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_5_div_regression(self):
@@ -79,7 +71,7 @@ class DivTestCases(FHDLTestCase):
                "neg 1, 1",
                "divwo  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def run_tst_program(self, prog, initial_regs=None, initial_sprs=None,
@@ -102,7 +94,7 @@ class DivZeroTestCases(FHDLTestCase):
                "addi 2, 0, 0x0",
                "divw  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_1_divwe(self):
@@ -110,7 +102,7 @@ class DivZeroTestCases(FHDLTestCase):
                "addi 2, 0, 0x0",
                "divwe  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_2_divweu(self):
@@ -118,7 +110,7 @@ class DivZeroTestCases(FHDLTestCase):
                "addi 2, 0, 0x0",
                "divweu  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def test_4_moduw(self):
@@ -126,7 +118,7 @@ class DivZeroTestCases(FHDLTestCase):
                "addi 2, 0, 0x0",
                "moduw  3, 1, 2",
                ]
-        with Program(lst) as program:
+        with Program(lst, bigendian) as program:
             self.run_tst_program(program, [1, 2, 3])
 
     def run_tst_program(self, prog, initial_regs=None, initial_sprs=None,
