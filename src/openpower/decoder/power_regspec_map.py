@@ -35,7 +35,7 @@ has to be "remapped" to internal SPR Enum indices (see SPRMap in PowerDecode2)
 see https://libre-soc.org/3d_gpu/architecture/regfile/ section on regspecs
 """
 from nmigen import Const
-from soc.regfile.regfiles import XERRegs, FastRegs, StateRegs
+from openpower.consts import XERRegsEnum, FastRegsEnum, StateRegsEnum
 from openpower.decoder.power_enums import CryIn
 
 
@@ -70,10 +70,10 @@ def regspec_decode_read(e, regfile, name):
     # XER regfile
 
     if regfile == 'XER':
-        # XERRegs register numbering is *unary* encoded
-        SO = 1<<XERRegs.SO
-        CA = 1<<XERRegs.CA
-        OV = 1<<XERRegs.OV
+        # XERRegsEnum register numbering is *unary* encoded
+        SO = 1<<XERRegsEnum.SO
+        CA = 1<<XERRegsEnum.CA
+        OV = 1<<XERRegsEnum.OV
         if name == 'xer_so':
             # SO needs to be read for overflow *and* for creation
             # of CR0 and also for MFSPR
@@ -90,8 +90,8 @@ def regspec_decode_read(e, regfile, name):
 
     if regfile == 'STATE':
         # STATE register numbering is *unary* encoded
-        PC = 1<<StateRegs.PC
-        MSR = 1<<StateRegs.MSR
+        PC = 1<<StateRegsEnum.PC
+        MSR = 1<<StateRegsEnum.MSR
         if name in ['cia', 'nia']:
             return Const(1), PC # TODO: detect read-conditions
         if name == 'msr':
@@ -142,10 +142,10 @@ def regspec_decode_write(e, regfile, name):
     # XER regfile
 
     if regfile == 'XER':
-        # XERRegs register numbering is *unary* encoded
-        SO = 1<<XERRegs.SO
-        CA = 1<<XERRegs.CA
-        OV = 1<<XERRegs.OV
+        # XERRegsEnum register numbering is *unary* encoded
+        SO = 1<<XERRegsEnum.SO
+        CA = 1<<XERRegsEnum.CA
+        OV = 1<<XERRegsEnum.OV
         if name == 'xer_so':
             return e.xer_out, SO # hmmm
         if name == 'xer_ov':
@@ -157,8 +157,8 @@ def regspec_decode_write(e, regfile, name):
 
     if regfile == 'STATE':
         # STATE register numbering is *unary* encoded
-        PC = 1<<StateRegs.PC
-        MSR = 1<<StateRegs.MSR
+        PC = 1<<StateRegsEnum.PC
+        MSR = 1<<StateRegsEnum.MSR
         if name in ['cia', 'nia']:
             return None, PC # hmmm
         if name == 'msr':

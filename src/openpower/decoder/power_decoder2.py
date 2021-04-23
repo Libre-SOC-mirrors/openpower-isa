@@ -34,13 +34,13 @@ from openpower.sv.svp64 import SVP64Rec
 from openpower.consts import (MSR, SPEC, EXTRA2, EXTRA3, SVP64P, field,
                         SPEC_SIZE, SPECb, SPEC_AUG_SIZE, SVP64CROffs)
 
-from soc.regfile.regfiles import FastRegs
+from openpower.consts import FastRegsEnum
+from openpower.consts import XERRegsEnum
 from openpower.consts import TT
 from openpower.state import CoreState
 
 # XXX these have to go
 from soc.regfile.util import spr_to_fast
-from soc.regfile.regfiles import XERRegs
 
 
 
@@ -148,14 +148,14 @@ class DecodeA(Elaboratable):
             with m.Case(MicrOp.OP_BC):
                 with m.If(~self.dec.BO[2]):  # 3.0B p38 BO2=0, use CTR reg
                     # constant: CTR
-                    comb += self.fast_out.data.eq(FastRegs.CTR)
+                    comb += self.fast_out.data.eq(FastRegsEnum.CTR)
                     comb += self.fast_out.ok.eq(1)
             with m.Case(MicrOp.OP_BCREG):
                 xo9 = self.dec.FormXL.XO[9]  # 3.0B p38 top bit of XO
                 xo5 = self.dec.FormXL.XO[5]  # 3.0B p38
                 with m.If(xo9 & ~xo5):
                     # constant: CTR
-                    comb += self.fast_out.data.eq(FastRegs.CTR)
+                    comb += self.fast_out.data.eq(FastRegsEnum.CTR)
                     comb += self.fast_out.ok.eq(1)
 
             # MFSPR move from SPRs
@@ -237,10 +237,10 @@ class DecodeB(Elaboratable):
             xo9 = self.dec.FormXL.XO[9]  # 3.0B p38 top bit of XO
             xo5 = self.dec.FormXL.XO[5]  # 3.0B p38
             with m.If(~xo9):
-                comb += self.fast_out.data.eq(FastRegs.LR)
+                comb += self.fast_out.data.eq(FastRegsEnum.LR)
                 comb += self.fast_out.ok.eq(1)
             with m.Elif(xo5):
-                comb += self.fast_out.data.eq(FastRegs.TAR)
+                comb += self.fast_out.data.eq(FastRegsEnum.TAR)
                 comb += self.fast_out.ok.eq(1)
 
         return m
@@ -387,12 +387,12 @@ class DecodeOut(Elaboratable):
             with m.Case(MicrOp.OP_BC, MicrOp.OP_BCREG):
                 with m.If(~self.dec.BO[2]):  # 3.0B p38 BO2=0, use CTR reg
                     # constant: CTR
-                    comb += self.fast_out.data.eq(FastRegs.CTR)
+                    comb += self.fast_out.data.eq(FastRegsEnum.CTR)
                     comb += self.fast_out.ok.eq(1)
 
             # RFID 1st spr (fast)
             with m.Case(MicrOp.OP_RFID):
-                comb += self.fast_out.data.eq(FastRegs.SRR0)  # constant: SRR0
+                comb += self.fast_out.data.eq(FastRegsEnum.SRR0)  # SRR0
                 comb += self.fast_out.ok.eq(1)
 
         return m
@@ -442,12 +442,12 @@ class DecodeOut2(Elaboratable):
             # BC* implicit register (LR)
             with m.Case(MicrOp.OP_BC, MicrOp.OP_B, MicrOp.OP_BCREG):
                 with m.If(self.lk):  # "link" mode
-                    comb += self.fast_out.data.eq(FastRegs.LR)  # constant: LR
+                    comb += self.fast_out.data.eq(FastRegsEnum.LR)  # LR
                     comb += self.fast_out.ok.eq(1)
 
             # RFID 2nd spr (fast)
             with m.Case(MicrOp.OP_RFID):
-                comb += self.fast_out.data.eq(FastRegs.SRR1)  # constant: SRR1
+                comb += self.fast_out.data.eq(FastRegsEnum.SRR1)  # SRR1
                 comb += self.fast_out.ok.eq(1)
 
         return m
@@ -1220,7 +1220,7 @@ class PowerDecode2(PowerDecodeSubset):
         with m.If(op.internal_op == MicrOp.OP_MFSPR):
             comb += e.xer_in.eq(0b111) # SO, CA, OV
         with m.If(op.internal_op == MicrOp.OP_CMP):
-            comb += e.xer_in.eq(1<<XERRegs.SO) # SO
+            comb += e.xer_in.eq(1<<XERRegsEnum.SO) # SO
         with m.If(op.internal_op == MicrOp.OP_MTSPR):
             comb += e.xer_out.eq(1)
 
@@ -1302,19 +1302,19 @@ class PowerDecode2(PowerDecodeSubset):
         with m.If((do_out.insn_type == MicrOp.OP_TRAP) |
                   (do_out.insn_type == MicrOp.OP_SC)):
             # TRAP write fast1 = SRR0
-            comb += e_out.write_fast1.data.eq(FastRegs.SRR0)  # constant: SRR0
+            comb += e_out.write_fast1.data.eq(FastRegsEnum.SRR0)  # SRR0
             comb += e_out.write_fast1.ok.eq(1)
             # TRAP write fast2 = SRR1
-            comb += e_out.write_fast2.data.eq(FastRegs.SRR1)  # constant: SRR1
+            comb += e_out.write_fast2.data.eq(FastRegsEnum.SRR1)  # SRR1
             comb += e_out.write_fast2.ok.eq(1)
 
         # RFID: needs to read SRR0/1
         with m.If(do_out.insn_type == MicrOp.OP_RFID):
             # TRAP read fast1 = SRR0
-            comb += e_out.read_fast1.data.eq(FastRegs.SRR0)  # constant: SRR0
+            comb += e_out.read_fast1.data.eq(FastRegsEnum.SRR0)  # SRR0
             comb += e_out.read_fast1.ok.eq(1)
             # TRAP read fast2 = SRR1
-            comb += e_out.read_fast2.data.eq(FastRegs.SRR1)  # constant: SRR1
+            comb += e_out.read_fast2.data.eq(FastRegsEnum.SRR1)  # SRR1
             comb += e_out.read_fast2.ok.eq(1)
 
         # annoying simulator bug
