@@ -1,0 +1,2 @@
+opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry out,ldst len,BR,sgn ext,upd,rsrv,32b,sgn,rc,lk,sgl pipe,comment,form
+0b00000,VL,OP_SETVL,RA_OR_ZERO,NONE,NONE,RT_OR_ZERO,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,setvl,SVL

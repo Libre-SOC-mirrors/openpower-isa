@@ -1,0 +1,3 @@
+opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry out,ldst len,BR,sgn ext,upd,rsrv,32b,sgn,rc,lk,sgl pipe,comment,form
+0,LDST,OP_STORE,RA_OR_ZERO,CONST_DS,RS,NONE,NONE,NONE,0,0,ZERO,0,is8B,0,0,0,0,0,0,NONE,0,1,std,DS
+1,LDST,OP_STORE,RA_OR_ZERO,CONST_DS,RS,NONE,NONE,NONE,0,0,ZERO,0,is8B,0,0,1,0,0,0,NONE,0,1,stdu,DS

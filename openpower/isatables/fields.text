@@ -1,0 +1,870 @@
+#1.6.1 I-FORM
+   |0     |6         |30|31 |
+   | PO   |      LI  |AA|LK |
+
+#1.6.2 B-FORM
+   |0     |6   |11     |16     |30|31 |
+   | PO   |  BO|   BI  |   BD  |AA|LK |
+
+#1.6.3 SC-FORM
+   |0     |6    |11    |16    |20     |27  |30 |31  |
+   | PO   |  ///|   ///|   // |   LEV |  //|  1|  / |
+
+#1.6.4 D-FORM
+   |0     |6   |9  |10 |11   |16      |31 |
+   | PO   |    RT      |   RA|   D        |
+   | PO   |    RT      |   RA|   SI       |
+   | PO   |   RS       |   RA|   D        |
+   | PO   |   RS       |   RA|   UI       |
+   | PO   | BF | / | L |   RA|   SI       |
+   | PO   | BF | / | L |   RA|   UI       |
+   | PO   |    TO      |   RA|   SI       |
+   | PO   |   FRT      |   RA|   D        |
+   | PO   |   FRS      |   RA|   D        |
+
+#1.6.5 DS-FORM
+   |0     |6      |11    |16    |30  |31 |
+   | PO   |   RT  |   RA |   DS |  XO    |
+   | PO   |   RS  |   RA |   DS |  XO    |
+   | PO   |  RSp  |   RA |   DS |  XO    |
+   | PO   |  FRTp |   RA |   DS |  XO    |
+   | PO   |  FRSp |   RA |   DS |  XO    |
+
+#1.6.6 DQ-FORM
+   |0     |6     |11    |16    |28|29 |31 |
+   | PO   |  RTp |   RA |   DQ |   PT     |
+   | PO   |  S   |   RA |   DQ |SX| XO    |
+   | PO   |  T   |   RA |   DQ |TX| XO    |
+
+# 1.6.7 X-FORM
+   |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
+   | PO   |       RT      |    RA       |     ///     |   XO |  / |
+   | PO   |       RT      |    RA       |    RB       |   XO |  / |
+   | PO   |       RT      |    RA       |    RB       |   XO |EH  |
+   | PO   |       RT      |    RA       |    NB       |   XO |  / |
+   | PO   |       RT      | /|SR        |     ///     |   XO |  / |
+   | PO   |       RT      |     ///     |    RB       |   XO |  / |
+   | PO   |       RT      |     ///     |    RB       |   XO | 1  |
+   | PO   |       RT      |     ///     |     ///     |   XO |  / |
+   | PO   |       RS      |    RA       |    RB       |   XO |Rc  |
+   | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
+   | PO   |       RS      |    RA       |    RB       |   XO | 1  |
+   | PO   |       RS      |    RA       |    RB       |   XO |  / |
+   | PO   |       RS      |    RA       |    NB       |   XO |  / |
+   | PO   |       RS      |    RA       |    SH       |   XO |Rc  |
+   | PO   |       RS      |    RA       |     ///     |   XO |Rc  |
+   | PO   |       RS      |    RA       |     ///     |   XO |  / |
+   | PO   |       RS      | /|SR        |     ///     |   XO |  / |
+   | PO   |       RS      |     ///     |    RB       |   XO |  / |
+   | PO   |       RS      |     ///     |     ///     |   XO |  / |
+   | PO   |       RS      |    ///   |L1|     ///     |   XO |  / |
+   | PO   |       TH      |    RA       |    RB       |   XO |  / |
+   | PO   |  BF  |/  | L  |    RA       |    RB       |   XO |  / |
+   | PO   |  BF  |//      |   FRA       |   FRB       |   XO |  / |
+   | PO   |  BF  |//      | BFA | //    |     ///     |   XO |  / |
+   | PO   |  BF  |//      |    ///   |W |    U     |/ |   XO |Rc  |
+   | PO   |  BF  |//      |     ///     |     ///     |   XO |  / |
+   | PO   |       TH      |    RA       |    RB       |   XO |  / |
+   | PO   | /| CT         |     ///     |     ///     |   XO |  / |
+   | PO   | /| CT         |    RA       |    RB       |   XO |  / |
+   | PO   |  /// | L2     |    RA       |    RB       |   XO |  / |
+   | PO   |  /// | L2     |     ///     |    RB       |   XO |  / |
+   | PO   |  /// | L2     |     ///     |     ///     |   XO |  / |
+   | PO   |  /// | L2     | /|     E    |     ///     |   XO |  / |
+   | PO   |     TO        |    RA       |    RB       |   XO |  / |
+   | PO   |   FRT         |    RA       |    RB       |   XO |  / |
+   | PO   |   FRT         |   FRA       |   FRB       |   XO |  / |
+   | PO   |  FRTp         |    RA       |    RB       |   XO |  / |
+   | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
+   | PO   |   FRT         |     ///     |   FRBp      |   XO |Rc  |
+   | PO   |   FRT         |     ///     |     ///     |   XO |Rc  |
+   | PO   |  FRTp         |      ///    |   FRB       |   XO |Rc  |
+   | PO   |  FRTp         |      ///    |   FRBp      |   XO |Rc  |
+   | PO   |  FRTp         |   FRA       |   FRBp      |   XO |Rc  |
+   | PO   |  FRTp         |   FRAp      |   FRBp      |   XO |Rc  |
+   | PO   |  BF  |//      |   FRA       |   FRBp      |   XO |  / |
+   | PO   |  BF  |//      |   FRAp      |   FRBp      |   XO |  / |
+   | PO   |    FRT        |S |          | FRB         |   XO |Rc  |
+   | PO   |  FRTp         |S |          | FRBp        |   XO |Rc  |
+   | PO   |    FRS        |  RA         |  RB         |   XO |  / |
+   | PO   |  FRSp         |  RA         |  RB         |   XO |  / |
+   | PO   |     BT        |  ///        |  ///        |   XO |Rc  |
+   | PO   |     ///       |  RA         |  RB         |   XO |  / |
+   | PO   |     ///       |  ///        |  RB         |   XO |  / |
+   | PO   |     ///       |  ///        |  ///        |   XO |  / |
+   | PO   |     ///       |  ///        | E|///       |   XO |  / |
+   | PO   |  //|IH        |  ///        |  ///        |   XO |  / |
+   | PO   | A|//          |  ///        |  ///        |   XO | 1  |
+   | PO   | A|//     |R   |  ///        |  ///        |   XO | 1  |
+   | PO   |     ///       |  RA         |  RB         |   XO | 1  |
+   | PO   |  /// |WC      |  ///        |  ///        |   XO |  / |
+   | PO   |  /// |T       |  RA         |  RB         |   XO |  / |
+   | PO   |    VRT        |  RA         |  RB         |   XO |  / |
+   | PO   |   VRS         |  RA         |  RB         |   XO |  / |
+   | PO   |    MO         |  ///        |  ///        |   XO |  / |
+   | PO   |       RT      | /// |L3     |     ///     |   XO | /  |
+
+# 1.6.8 XL-FORM
+   |0     |6    |9  |11  |14   |16    |19|20|21    |31 |
+   | PO   |   BT    |     BA   |    BB      |   XO | / |
+   | PO   |   BO    |     BI   |  /// |BH   |   XO |LK |
+   | PO   |         |    ///             |S |   XO | / |
+   | PO   |  BF |// |BFA |//   |     ///    |   XO | / |
+   | PO   |              ///                |   XO | / |
+   | PO   |             OC                  |   XO | / |
+
+# 1.6.9 XFX-FORM
+   |0     |6        |11|12             |20|21    |31 |
+   | PO   |  RT     |     spr             |   XO | / |
+   | PO   |  RT     |     tbr             |   XO | / |
+   | PO   |  RT     |0 |     ///          |   XO | / |
+   | PO   |  RT     |1 |  FXM          |/ |   XO | / |
+   | PO   |  RT     |     dcr             |   XO | / |
+   | PO   |  RT     |    pmrn             |   XO | / |
+   | PO   |  RT     |   BHRBE             |   XO | / |
+   | PO   |  DUI    |    DUIS             |   XO | / |
+   | PO   |  RS     |0 |  FXM          |/ |   XO | / |
+   | PO   |  RS     |1 |  FXM          |/ |   XO | / |
+   | PO   |  RS     |     spr             |   XO | / |
+   | PO   |  RS     |     dcr             |   XO | / |
+   | PO   |  RS     |    pmrn             |   XO | / |
+
+# 1.6.10 XFL-FORM
+   |0     |6|7             |15|16        |21    |31 |
+   | PO   |L|    FLM       |W |FRB       |   XO |Rc |
+
+# 1.6.11 XX1-FORM
+   |0     |6        |11       |16        |21    |31 |
+   | PO   |  T      |   RA    |   RB     |   XO |TX |
+   | PO   |  S      |   RA    |   RB     |   XO |SX |
+
+# 1.6.12 XX2-FORM
+   |0     |6    |9  |11   |14  |16        |21 |30|31 |
+   | PO   |    T    |    ///   |    B     |XO |BX|TX |
+   | PO   |    T    | /// |UIM |    B     |XO |BX|TX |
+   | PO   |  BF | //|      /// |    B     |XO |BX| / |
+
+# 1.6.13 XX3-FORM
+   |0     |6     |9    |11   |16   |21 |22  |24    |29|30|31 |
+   | PO   |     T      |   A |   B |         XO    |AX|BX|TX |
+   | PO   |     T      |   A |   B |Rc |       XO  |AX|BX|TX |
+   | PO   |  BF  |  // |   A |   B |         XO    |AX|BX|/  |
+   | PO   |     T      |   A |   B |XO |SHW |   XO |AX|BX|TX |
+   | PO   |     T      |   A |   B |XO |DM  |   XO |AX|BX|TX |
+
+# 1.6.14 XX4-FORM
+   |0     |6   |11   |16   |21   |26  |28|29 |30|31 |
+   | PO   |  T |   A |   B |   C | XO |CX|AX |BX|TX |
+
+# 1.6.15 XS-FORM
+   |0     |6    |11    |16    |21    |30|31 |
+   | PO   |  RS |   RA |   sh |   XO |sh|Rc |
+
+# 1.6.16 XO-FORM
+   |0     |6   |11   |16     |21 |22    |31  |
+   | PO   |  RT|   RA|   RB  |OE |   XO |Rc  |
+   | PO   |  RT|   RA|   RB  |  /|   XO |Rc  |
+   | PO   |  RT|   RA|   RB  |  /|   XO |  / |
+   | PO   |  RT|   RA|   /// |OE |   XO |Rc  |
+
+# 1.6.17 A-FORM
+   |0     |6     |11      |16     |21      |26    |31 |
+   | PO   |  FRT |   FRA  | FRB   |   FRC  |   XO |Rc |
+   | PO   |  FRT |   FRA  | FRB   |    /// |   XO |Rc |
+   | PO   |  FRT |   FRA  |   /// |   FRC  |   XO |Rc |
+   | PO   |  FRT |    /// | FRB   |    /// |   XO |Rc |
+   | PO   |   RT |   RA   |   RB  |    BC  |   XO |  /|
+
+# 1.6.18 M-FORM
+   |0     |6    |11    |16    |21    |26    |31|
+   | PO   |  RS |   RA |   RB |   MB |   ME |Rc|
+   | PO   |  RS |   RA |   SH |   MB |   ME |Rc|
+
+# 1.6.19 MD-FORM
+   |0     |6    |11    |16    |21    |27|30|31|
+   | PO   |  RS |   RA |   sh |   mb |XO|sh|Rc|
+   | PO   |  RS |   RA |   sh |   me |XO|sh|Rc|
+
+# 1.6.20 MDS-FORM
+   |0     |6    |11    |16    |21    |27    |31|
+   | PO   |  RS |   RA |   RB |   mb |   XO |Rc|
+   | PO   |  RS |   RA |   RB |   me |   XO |Rc|
+
+# 1.6.21 VA-FORM
+   |0      |6     |11     |16     |21|22 |26   |31|
+   | PO    |  RT  |   RA  |   RB  |   RC |   XO   |
+   | PO    |  VRT |   VRA |   VRB |  VRC |   XO   |
+   | PO    |  VRT |   VRA |   VRB | /|SHB|   XO   |
+
+# 1.6.22 VC-FORM
+   |0      |6     |11     |16     |21|22   |31|
+   | PO    |  VRT |   VRA |   VRB |Rc|   XO   |
+
+# 1.6.23 VX-FORM
+   |0      |6     |11           |16    |21   |31|
+   | PO    |  VRT |     VRA     | VRB  |   XO   |
+   | PO    |  VRT |      ///    | VRB  |   XO   |
+   | PO    |  VRT |     UIM     | VRB  |   XO   |
+   | PO    |  VRT | / UIM       | VRB  |   XO   |
+   | PO    |  VRT |  // UIM     | VRB  |   XO   |
+   | PO    |  VRT |   /// UIM   | VRB  |   XO   |
+   | PO    |  VRT |     SIM     |   ///|   XO   |
+   | PO    |  VRT |          ///|      |   XO   |
+   | PO    |      |///          | VRB  |   XO   |
+
+# 1.6.24 EVX-FORM
+   |0      |6   |9 |11    |16    |21    |31|
+   | PO    |   RS  |   RA |   RB |   XO    |
+   | PO    |   RS  |   RA |   UI |   XO    |
+   | PO    |   RT  |   ///|   RB |   XO    |
+   | PO    |   RT  |   RA |   RB |   XO    |
+   | PO    |   RT  |   RA |   ///|   XO    |
+   | PO    |   RT  |   UI |   RB |   XO    |
+   | PO    |  BF|//|   RA |   RB |   XO    |
+   | PO    |   RT  |   RA |   UI |   XO    |
+   | PO    |   RT  |   SI |   ///|   XO    |
+
+# 1.6.25 EVS-FORM
+   |0      |6   |11    |16    |21    |29 |31 |
+   | PO    |  RT|   RA |   RB |   XO |BFA    |
+
+# 1.6.26 Z22-FORM
+   |0      |6  |9 |11     |16     |22    |31 |
+   | PO    | BF|//|   FRA |   DCM |   XO | / |
+   | PO    | BF|//|  FRAp |   DCM |   XO | / |
+   | PO    | BF|//|   FRA |   DGM |   XO | / |
+   | PO    | BF|//|  FRAp |   DGM |   XO | / |
+   | PO    |  FRT |   FRA |    SH |   XO |Rc |
+   | PO    |  FRTp|  FRAp |    SH |   XO |Rc |
+
+# 1.6.27 Z23-FORM
+   |0     |6     |11    |15 |16     |21 |23    |31 |
+   | PO   |  FRT |    TE    |   FRB |RMC|   XO |Rc |
+   | PO   |  FRTp|    TE    |  FRBp |RMC|   XO |Rc |
+   | PO   |  FRT |   FRA    |   FRB |RMC|   XO |Rc |
+   | PO   |  FRTp|   FRA    |  FRBp |RMC|   XO |Rc |
+   | PO   |  FRTp|  FRAp    |  FRBp |RMC|   XO |Rc |
+   | PO   |  FRT |  /// | R | FRB   |RMC|   XO |Rc |
+   | PO   |  FRTp|  /// | R | FRBp  |RMC|   XO |Rc |
+
+# V3.0B 1.6.6 DX-FORM
+   |0    |6   |11   |16   |26   |31
+   | PO  |  RT|   d1|   d0|   XO|d2
+
+# 1.6.28 SVL-FORM
+   |0     |6    |11    |16   |22 |24 |25 |26    |31 |
+   | PO   |  RT |   RA | SVi |// |vs |ms |   XO |Rc |
+
+# 1.6.28 Instruction Fields
+    A (6)
+        Field used by the tbegin. instruction to specify an
+        implementation-specific function.
+        Field used by the tend. instruction to specify the
+        completion of the outer transaction and all nested
+        transactions.
+        Formats: X
+    AA (30)
+        Absolute Address.
+        0    The immediate field represents an address
+             relative to the current instruction address. For
+             I-form branches the effective address of the
+             branch target is the sum of the LI field
+             sign-extended to 64 bits and the address of
+             the branch instruction. For B-form branches
+             the effective address of the branch target is
+             the sum of the BD field sign-extended to 64
+             bits and the address of the branch instruction.
+        1    The immediate field represents an absolute
+             address. For I-form branches the effective
+             address of the branch target is the LI field
+             sign-extended to 64 bits. For B-form branches
+             the effective address of the branch target is
+             the BD field sign-extended to 64 bits.
+        Formats: B, I
+    AX,A (29,11:15)
+        Fields that are concatenated to specify a VSR to
+        be used as a source.
+        Formats: XX3, XX4
+    BA (11:15)
+        Field used to specify a bit in the CR to be used as
+        a source.
+        Formats: XL
+    BB (16:20)
+         Field used to specify a bit in the CR to be used as
+         a source.
+         Formats: XL
+    BC (21:25)
+         Field used to specify a bit in the CR to be used as
+         a source.
+         Formats: A
+    BD (16:29)
+         Immediate field used to specify a 14-bit signed
+         two's complement branch displacement which is
+         concatenated on the right with 0b00 and
+         sign-extended to 64 bits.
+         Formats: B
+    BF (6:8)
+         Field used to specify one of the CR fields or one of
+         the FPSCR fields to be used as a target.
+         Formats: D, X, XL, XX2, XX3, Z22
+    BFA (29:31)
+         Field used to specify one of the CR fields or one of
+         the FPSCR fields to be used as a source.
+         Formats: EVS
+    BFA (11:13)
+         Field used to specify one of the CR fields or one of
+         the FPSCR fields to be used as a source.
+         Formats: X, XL
+    BH (19:20)
+         Field used to specify a hint in the Branch Condi-
+         tional to Link Register and Branch Conditional to
+         Count Register instructions. The encoding is
+         described in Section 2.4, 'Branch Instructions'.
+         Formats: XL
+    BHRBE (11:20)
+         Field used to identify the BHRB entry to be used
+         as a source by the Move From Branch History
+         Rolling Buffer instruction.
+         Formats: XFX
+    BI (11:15)
+         Field used to specify a bit in the CR to be tested by
+         a Branch Conditional instruction.
+         Formats: B, XL
+    BO (6:10)
+         Field used to specify options for the Branch Condi-
+         tional instructions. The encoding is described in
+         Section 2.4, 'Branch Instructions'.
+         Formats: B, XL, X, XL
+    BT (6:10)
+         Field used to specify a bit in the CR or in the
+         FPSCR to be used as a target.
+         Formats: XL
+    BX,B (30,16:20)
+        Fields that are concatenated to specify a VSR to
+        be used as a source.
+        Formats: XX2, XX3, XX4
+    CT (7:10)
+        Field used in X-form instructions to specify a cache
+        target (see Section 4.3.2 of Book II).
+        Formats: X
+    CX,C (28,21:25)
+        Fields that are concatenated to specify a VSR to
+        be used as a source.
+        Formats: XX4
+    D (16:31)
+        Immediate field used to specify a 16-bit signed
+        two's complement integer which is sign-extended
+        to 64 bits.
+        Formats: D
+    d0,d1,d2 (16:25,11:15,31)
+        Immediate fields that are concatenated to specify a
+        16-bit signed two's complement integer which is
+        sign-extended to 64 bits.
+        Formats: DX
+    dc,dm,dx (25,29,11:15)
+        Immediate fields that are concatenated to specify
+        Data Class Mask.
+        Formats: XX2
+    DCM (16:21)
+        Immediate field used to specify Data Class Mask.
+        Formats: Z22
+    DCMX (9:15)
+        Immediate field used to specify Data Class Mask.
+        Formats: X, XX2
+    DGM (16:21)
+        Immediate field used as the Data Group Mask.
+        Formats: Z22
+    DM (22:23)
+        Immediate field used by xxpermdi instruction as
+        doubleword permute control.
+        Formats: XX3
+    DRM (18:20)
+        Immediate operand field used to specify new deci-
+        mal floating-point rounding mode.
+        Formats: X
+    DUI (6:10)
+        Field used by the dnh instruction (see Book III-E).
+        Formats: XFX
+    DUIS (11:20)
+        Field used by the dnh instruction (see Book III-E).
+        Formats: XFX
+    DQ (16:27)
+        Immediate field used to specify a 12-bit signed
+        two's complement integer which is concatenated
+        on the right with 0b0000 and sign-extended to 64
+        bits.
+        Formats: DQ
+    DS (16:29)
+        Immediate field used to specify a 14-bit signed
+        two's complement integer which is concatenated
+        on the right with 0b00 and sign-extended to 64 bits.
+        Formats: DS
+    E (16)
+        Field used by the Write MSR External Enable
+        instruction (see Book III-E).
+        Formats: X
+    E (12:15)
+        Field used to specify the access types ordered by
+        an Elemental Memory Barrier type of sync instruc-
+        tion.
+    EH (31)
+        Field used to specify a hint in the Load and
+        Reserve instructions. The meaning is described in
+        Section 4.6.2, 'Load and Reserve and Store Con-
+        ditional Instructions', in Book II.
+        Formats: X
+    EO (11:12)
+        Expanded opcode field
+        Formats: X
+    EO (11:15)
+        Expanded opcode field
+        Formats: VX, X, XX2
+    EX (31)
+        Field used to specify Inexact form of round to
+        quad-precision integer.
+        Formats: X
+    FC (16:20)
+        Field used to specify the function code in Load/
+        Store Atomic instructions.
+        Formats: X
+    FLM (7:14)
+        Field mask used to identify the FPSCR fields that
+        are to be updated by the mtfsf instruction.
+        Formats: XFL
+    FRA (11:15)
+        Field used to specify a FPR to be used as a
+        source.
+        Formats: A, X, Z22, Z23
+    FRAp (11:15)
+        Field used to specify an even/odd pair of FPRs to
+        be concatenated and used as a source.
+        Formats: X, Z22, Z23
+    FRB (16:20)
+        Field used to specify an FPR to be used as a
+        source.
+        Formats: A, X, XFL, Z23
+    FRBp (16:20)
+         Field used to specify an even/odd pair of FPRs to
+         be concatenated and used as a source.
+         Formats: X, Z23
+    FRC (21:25)
+         Field used to specify an FPR to be used as a
+         source.
+         Formats: A
+    FRS (6:10)
+         Field used to specify an FPR to be used as a
+         source.
+         Formats: D, X
+    FRSp (6:10)
+         Field used to specify an even/odd pair of FPRs to
+         be concatenated and used as a source.
+         Formats: DS, X
+    FRT (6:10)
+         Field used to specify an FPR to be used as a tar-
+         get.
+         Formats: A, D, X, Z22, Z23
+    FRTp (6:10)
+         Field used to specify an even/odd pair of FPRs to
+         be concatenated and used as a target.
+         Formats: DS, X, Z22, Z23
+    FXM (12:19)
+         Field mask used to identify the CR fields that are to
+         be written by the mtcrf and mtocrf instructions, or
+         read by the mfocrf instruction.
+         Formats: XFX
+    IB (16:20)
+         Immediate field used to specify a 5-bit signed inte-
+         ger.
+         Formats: MDS
+    IH (8:10)
+         Field used to specify a hint in the SLB Invalidate
+         All instruction. The meaning is described in
+         Section 5.9.3.2, 'SLB Management Instructions',
+         in Book III.
+         Formats: X
+    IMM8 (13:20)
+         Immediate field used to specify an 8-bit integer.
+         Formats: X
+    IS (6:10)
+         Immediate field used to specify a 5-bit signed inte-
+         ger.
+         Formats: MDS
+    L (6)
+         Field used to specify whether the mtfsf instruction
+         updates the entire FPSCR.
+         Formats: XFL
+    L2 (9:10)
+         Field used by the Data Cache Block Flush instruc-
+         tion (see Section 4.3.2 of Book II) and also by the
+         Synchronize instruction (see Section 4.6.3 of Book
+         II).
+         Formats: X
+    L (10)
+         Field used to specify whether a fixed-point Com-
+         pare instruction is to compare 64-bit numbers or
+         32-bit numbers.
+         Field used by the Compare Range Byte instruction
+         to indicate whether to compare against 1 or 2
+         ranges of bytes.
+         Formats: D, X
+    L1 (15)
+         Field used by the Move To Machine State Register
+         instruction (see Book III).
+         Field used by the SLB Move From Entry VSID and
+         SLB Move From Entry ESID instructions for imple-
+         mentation-specific purposes.
+         Formats: X
+    L3 (14:15)
+         Field used by the Deliver A Random Number
+         instruction (see Section 3.3.9, 'Fixed-Point Arith-
+         metic Instructions') to choose the random number
+         format.
+         Formats: X
+    LEV (20:26)
+         Field used by the System Call instructions.
+         Formats: SC
+    LI (6:29)
+         Immediate field used to specify a 24-bit signed
+         two's complement integer which is concatenated
+         on the right with 0b00 and sign-extended to 64
+         bits.
+         Formats: I
+    LK (31)
+         LINK bit.
+         0     Do not set the Link Register.
+         1     Set the Link Register. The address of the
+               instruction following the Branch instruction is
+               placed into the Link Register.
+         Formats: B, I, XL
+    MB (21:25)
+        Field used in M-form instructions to specify the first
+        1-bit of a 64-bit mask, as described in
+        Section 3.3.14, 'Fixed-Point Rotate and Shift
+        Instructions' on page 101.
+        Formats: M
+    mb (21:26)
+        Field used in MD-form and MDS-form instructions
+        to specify the first 1-bit of a 64-bit mask, as
+        described in Section 3.3.14, 'Fixed-Point Rotate
+        and Shift Instructions' on page 101.
+        Formats: MD, MDS
+    me (21:26)
+        Field used in MD-form and MDS-form instructions
+        to specify the last 1-bit of a 64-bit mask, as
+        described in Section 3.3.14, 'Fixed-Point Rotate
+        and Shift Instructions' on page 101.
+        Formats: MD, MDS
+    ME (26:30)
+        Field used in M-form instructions to specify the last
+        1-bit of a 64-bit mask, as described in
+        Section 3.3.14, 'Fixed-Point Rotate and Shift
+        Instructions' on page 101.
+        Formats: M
+    MO (6:10)
+        Field used in X-form instructions to specify a sub-
+        set of storage accesses.
+        Formats: X
+    ms (25)
+        Field used in Simple-V to specify whether MVL is to be set
+        Formats: SVL
+    NB (16:20)
+        Field used to specify the number of bytes to move
+        in an immediate Move Assist instruction.
+        Formats: X
+    OC (6:20)
+        Field used by the Embedded Hypervisor Privilege
+        instruction.
+        Formats: XL
+    OE (21)
+        Field used by XO-form instructions to enable set-
+        ting OV and SO in the XER.
+        Formats: XO
+    PO (0:5)
+        Primary opcode field.
+        Formats: all
+    PRS (14)
+        Field used to specify whether to invalidate pro-
+        cess- or partition-scoped entries for tlbie[l].
+        Formats: X
+    PS (22)
+        Field used to specify preferred sign for BCD opera-
+        tions.
+        Formats: VX
+    PT (28:31)
+        Immediate field used to specify a 4-bit unsigned
+        value.
+        Formats: DQ
+    R (10)
+        Field used by the tbegin. instruction to specify the
+        start of a ROT.
+        Formats: X
+    R (15)
+        Immediate field that specifies whether the RMC is
+        specifying the primary or secondary encoding
+        Field used to specify whether to invalidate Radix
+        Tree or HPT entries for tlbie[l].
+        Formats: X, Z23
+    RA (11:15)
+        Field used to specify a GPR to be used as a
+        source or as a target.
+        Formats: A, D, DQ, DQE, DS, M, MD, MDS, TX, VA, VX, X, XO, XS, SVL
+    RB (16:20)
+        Field used to specify a GPR to be used as a
+        source.
+        Formats: A, M, MDS, VA, X, XO
+    Rc (21)
+        RECORD bit.
+        0    Do not alter the Condition Register.
+        1    Set Condition Register Field 6 as described in
+             Section 2.3.1,     'Condition  Register'     on
+             page 30.
+        Formats: VC, XX3
+    RC (21:25)
+        Field used to specify a GPR to be used as a
+        source.
+        Formats: VA
+    Rc (31)
+        RECORD bit.
+        0    Do not alter the Condition Register.
+        1    Set Condition Register Field 0 or Field 1 as
+             described in Section 2.3.1, 'Condition Regis-
+             ter' on page 30.
+        Formats: A, M, MD, MDS, X, XFL, XO, XS, Z22, Z23, SVL
+    RIC (12:13)
+        Field used to specify what types of entries to inval-
+        idate for tlbie[l].
+        Formats: X
+    RM (19:20)
+        Immediate operand field used to specify new
+        binary floating-point rounding mode.
+        Formats: X
+    RMC (21:22)
+        Immediate field used for DFP rounding mode con-
+        trol.
+        Formats: Z23
+    RO (31)
+        Round to Odd override
+        Formats: X
+    RS (6:10)
+        Field used to specify a GPR to be used as a
+        source.
+        Formats: D, DS, M, MD, MDS, X, XFX, XS
+    RSp (6:10)
+        Field used to specify an even/odd pair of GPRs to
+        be concatenated and used as a source.
+        Formats: DS, X
+    RT (6:10)
+        Field used to specify a GPR to be used as a target.
+        Formats: A, D, DQE, DS, DX, VA, VX, X, XFX, XO, XX2, SVL
+    RTp (6:10)
+        Field used to specify an even/odd pair of GPRs to
+        be concatenated and used as a target.
+        Formats: DQ, X
+    S (11)
+        Immediate field that specifies signed versus
+        unsigned conversion.
+        Formats: X
+    S (20)
+        Immediate field that specifies whether or not the
+        rfebb     instruction   re-enables      event-based
+        branches.
+        Formats: XL
+    SH (16:20)
+        Field used to specify a shift amount.
+        Formats: M, X
+    SH (16:21)
+        Field used to specify a shift amount.
+        Formats: Z22
+    sh (30,16:20)
+        Fields that are concatenated to specify a shift
+        amount.
+        Formats: MD, XS
+    SHB (22:25)
+        Field used to specify a shift amount in bytes.
+        Formats: VA
+    SHW (22:23)
+         Field used to specify a shift amount in words.
+         Formats: XX3
+    SI (16:20)
+         Immediate field used to specify a 5-bit signed inte-
+         ger.
+         Formats: X
+    SI (16:31)
+         Immediate field used to specify a 16-bit signed
+         integer.
+         Formats: D
+    SIM (11:15)
+         Immediate field used to specify a 5-bit signed inte-
+         ger.
+         Formats: VX
+    SP (11:12)
+         Immediate field that specifies signed versus
+         unsigned conversion.
+         Formats: X
+    SPR (11:20)
+         Field used to specify a Special Purpose Register
+         for the mtspr and mfspr instructions.
+         Formats: XFX
+    SR (12:15)
+         Field used by the Segment Register Manipulation
+         instructions (see Book III).
+         Formats: X
+    SVi (16:23)
+         Simple-V immediate field for setting VL or MVL
+         Formats: SVL
+    SX,S (28,6:10)
+         Fields SX and S are concatenated to specify a
+         VSR to be used as a source.
+         Formats: DQ
+    SX,S (31,6:10)
+         Fields SX and S are concatenated to specify a
+         VSR to be used as a source.
+         Formats: X
+    T (9:10)
+          Field used to specify the type of invalidation done
+          by a TLB Invalidate Local instruction (see Book
+          III-E).
+         Formats: X
+    TBR (11:20)
+         Field used by the Move From Time Base instruc-
+         tion (see Section 6.1 of Book II).
+         Formats: X
+    TE (11:15)
+         Immediate field that specifies a DFP exponent.
+         Formats: Z23
+    TH (6:10)
+         Field used by the data stream variant of the dcbt
+         and dcbtst instructions (see Section 4.3.2 of Book
+         II).
+         Formats: X
+    TO (6:10)
+         Field used to specify the conditions on which to
+         trap.     The    encoding     is    described   in
+         Section 3.3.10.1,     'Character-Type     Compare
+         Instructions' on page 87.
+         Formats: D, X
+    TX,T (28,6:10)
+         Fields that are concatenated to specify a VSR to
+         be used as either a target.
+         Formats: DQ
+    TX,T (31,6:10)
+         Fields that are concatenated to specify a VSR to
+         be used as either a target or a source.
+         Formats: X, XX2, XX3, XX4
+    U (16:19)
+         Immediate field used as the data to be placed into
+         a field in the FPSCR.
+         Formats: X
+    UI (16:20)
+         Immediate field used to specify a 5-bit unsigned
+         integer.
+         Formats: TX
+    UI (16:31)
+         Immediate field used to specify a 16-bit unsigned
+         integer.
+         Formats: D
+    UIM (11:15)
+         Immediate field used to specify a 5-bit unsigned
+         integer.
+         Formats: VX, X
+    UIM (12:15)
+         Immediate field used to specify a 4-bit unsigned
+         integer.
+         Formats: VX, XX2
+    UIM (13:15)
+         Immediate field used to specify a 3-bit unsigned
+         integer.
+         Formats: VX
+    UIM (14:15)
+         Immediate field used to specify a 2-bit unsigned
+         integer.
+         Formats: VX, XX2
+    VRA (11:15)
+         Field used to specify a VR to be used as a source.
+         Formats: VA, VC, VX
+    VRB (16:20)
+        Field used to specify a VR to be used as a source.
+        Formats: VA, VC, VX
+    VRC (21:25)
+        Field used to specify a VR to be used as a source.
+        Formats: VA
+    VRS (6:10)
+        Field used to specify a VR to be used as a source.
+        Formats: DS, X
+    VRT (6:10)
+        Field used to specify a VR to be used as a target.
+        Formats: DS, VA, VC, VX, X
+    vs (24)
+        Field used in Simple-V to specify whether VL is to be set
+        Formats: SVL
+    W (15)
+        Field used by the mtfsfi and mtfsf instructions to
+        specify the target word in the FPSCR.
+        Formats: X, XFL
+    WC (9:10)
+        Field used to specify the condition or conditions
+        that cause instruction execution to resume after
+        executing a wait instruction (see Section 4.6.4 of
+        Book II).
+        Formats: X
+    XBI (21:24)
+        Field used to specify a bit in the XER.
+        Formats: MDS, MDS, TX
+    XO (21,23:31)
+        Extended opcode field.
+        Formats: VX
+    XO (21:24,26:28)
+        Extended opcode field.
+        Formats: XX2
+    XO (21:24:28)
+        Extended opcode field.
+        Formats: XX3
+    XO (21:28)
+        Extended opcode field.
+        Formats: XX3
+    XO (21:29)
+        Extended opcode field.
+        Formats: XS, XX2
+    XO (21:30)
+        Extended opcode field.
+        Formats: X, XFL, XFX, XL
+    XO (21:31)
+        Extended opcode field.
+        Formats: VX
+    XO (22:30)
+        Extended opcode field.
+        Formats: XO, XX3, Z22
+    XO (22:31)
+        Extended opcode field.
+        Formats: VC
+    XO (23:30)
+        Extended opcode field.
+        Formats: X, Z23
+    XO (25:30)
+        Extended opcode field.
+        Formats: TX
+    XO (26:27)
+        Extended opcode field.
+        Formats: XX4
+    XO (26:30)
+        Extended opcode field.
+        Formats: A, DX, SVL
+    XO (26:31)
+        Extended opcode field.
+        Formats: VA
+    XO (27:29)
+        Extended opcode field.
+        Formats: MD
+    XO (27:30)
+        Extended opcode field.
+        Formats: MDS
+    XO (29:31)
+        Extended opcode field.
+        Formats: DQ
+    XO (30)
+        Extended opcode field.
+        Formats: SC
+    XO (30:31)
+        Extended opcode field.
+        Formats: DQE, DS, SC
+

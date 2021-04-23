@@ -1,0 +1,2 @@
+insn,Ptype,Etype,0,1,2,3,in1,in2,in3,out,CR in,CR out,out2
+mtcrf/mtocrf,2P,EXTRA2,d:CR,s:RS,s:CR,0,RS,0,0,0,WHOLE_REG,WHOLE_REG,0

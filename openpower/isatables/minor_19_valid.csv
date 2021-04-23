@@ -1,0 +1,15 @@
+opcode,valid,comment
+-----00010,1,addpcis: 5 upper bits are part of constant
+1000010000,1,bcctr
+0000010000,1,bclr
+1000110000,0,bctar
+0100000001,1,crand
+0010000001,1,crandc
+0100100001,1,creqv
+0011100001,1,crnand
+0000100001,1,crnor
+0111000001,1,cror
+0110100001,1,crorc
+0011000001,1,crxor
+0010010110,1,isync
+0000000000,1,mcrf
