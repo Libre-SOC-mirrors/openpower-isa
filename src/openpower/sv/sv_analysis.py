@@ -17,23 +17,9 @@ import os
 from os.path import dirname, join
 from glob import glob
 from collections import OrderedDict
-from soc.decoder.power_svp64 import SVP64RM
+from openpower.decoder.power_svp64 import SVP64RM
+from openpower.decoder.power_enums import find_wiki_file, get_csv
 
-
-# Return absolute path (ie $PWD) + isatables + name
-def find_wiki_file(name):
-    filedir = os.path.dirname(os.path.abspath(__file__))
-    tabledir = join(filedir, 'isatables')
-    file_path = join(tabledir, name)
-    print ("find wiki file", name, file_path)
-    return file_path
-
-# Return an array of dictionaries from the CSV file name:
-def get_csv(name):
-    file_path = find_wiki_file(name)
-    with open(file_path, 'r') as csvfile:
-        reader = csv.DictReader(csvfile)
-        return list(reader)
 
 # Write an array of dictionaries to the CSV file name:
 def write_csv(name, items, headers):
@@ -188,7 +174,9 @@ def process_csvs():
 
     # Ignore those containing: valid test sprs
     for fname in glob(pth):
-        if '-' in fname:
+        print ("sv analysis checking", fname)
+        _, name = os.path.split(fname)
+        if '-' in name:
             continue
         if 'valid' in fname:
             continue
@@ -200,7 +188,6 @@ def process_csvs():
             continue
         if 'RM' in fname:
             continue
-        #print (fname)
         csvname = os.path.split(fname)[1]
         csvname_ = csvname.split(".")[0]
         # csvname is something like: minor_59.csv, fname the whole path
@@ -591,8 +578,9 @@ def process_csvs():
 
     # Ignore those containing: valid test sprs
     for fname in glob(pth):
-        print ("checking", fname)
-        if '-' in fname:
+        print ("post-checking", fname)
+        _, name = os.path.split(fname)
+        if '-' in name:
             continue
         if 'valid' in fname:
             continue
@@ -677,7 +665,7 @@ def process_csvs():
                     re = re.replace("1P", "P1")
                     re = re.replace("2P", "P2")
                     row.append(re)
-                print (sventry)
+                print ("sventry", sventry)
                 for colname in sv_cols:
                     if sventry is None:
                         re = 'NONE'
