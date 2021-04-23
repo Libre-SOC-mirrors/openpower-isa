@@ -7,7 +7,7 @@ README = open(os.path.join(here, 'README.md')).read()
 NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
 
-version = '0.0.1'
+version = '0.0.0'
 
 # using pip3 for ongoing development is a royal pain.  seriously not
 # recommended.  therefore a number of these dependencies have been
@@ -26,7 +26,7 @@ test_requires = [
 ]
 
 setup(
-    name='libresoc-openpower',
+    name='libresoc-openpower-isa',
     version=version,
     description="OpenPOWER ISA resources including a python-based simulator",
     long_description=README + '\n\n' + NEWS,
