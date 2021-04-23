@@ -25,6 +25,7 @@ def find_wiki_file(name):
     filedir = os.path.dirname(os.path.abspath(__file__))
     tabledir = join(filedir, 'isatables')
     file_path = join(tabledir, name)
+    print ("find wiki file", name, file_path)
     return file_path
 
 # Return an array of dictionaries from the CSV file name:
@@ -590,6 +591,7 @@ def process_csvs():
 
     # Ignore those containing: valid test sprs
     for fname in glob(pth):
+        print ("checking", fname)
         if '-' in fname:
             continue
         if 'valid' in fname:
