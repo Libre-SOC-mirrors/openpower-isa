@@ -288,6 +288,7 @@ class StateRegsEnum:
     PC = 0
     MSR = 1
     SVSTATE = 2
+    N_REGS = 3 # maximum number of regs
 
 # Fast SPRs Regfile
 class FastRegsEnum:
@@ -306,3 +307,4 @@ class XERRegsEnum:
     SO=0 # this is actually 2-bit but we ignore 1 bit of it
     CA=1 # CA and CA32
     OV=2 # OV and OV32
+    N_REGS = 3 # maximum number of regs
