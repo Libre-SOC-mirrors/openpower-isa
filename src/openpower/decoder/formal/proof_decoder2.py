@@ -5,7 +5,7 @@ from nmutil.formaltest import FHDLTestCase
 from openpower.decoder.power_decoder import create_pdecode, PowerOp
 from openpower.decoder.power_enums import (In1Sel, In2Sel, In3Sel,
                                      OutSel, RC, Form,
-                                     MicrOp, SPR)
+                                     MicrOp, SPRfull as SPR)
 from openpower.decoder.power_decoder2 import (PowerDecode2,
                                         Decode2ToExecute1Type)
 import unittest
