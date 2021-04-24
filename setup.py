@@ -32,7 +32,8 @@ setup(
     name='libresoc-openpower-isa',
     version=version,
     description="OpenPOWER ISA resources including a python-based simulator",
-    long_description=README + '\n\n' + NEWS,
+    long_description=README + '\n\n',
+    long_description_content_type='text/markdown',
     classifiers=[
         "Topic :: Software Development",
         "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",

@@ -22,11 +22,9 @@ and the following scripts:
 
 Once those are sorted, installation and setup is as follows:
 
-```
-    python3 setup.py develop
-    make svanalysis
-    make pywriter
-```
+* python3 setup.py develop
+* make svanalysis
+* make pywriter
 
 # Usage
 
@@ -61,7 +59,7 @@ https://git.libre-soc.org/?p=soc.git;a=blob;f=src/soc/simple/test/test_issuer.py
 The ISACaller itself of course needed to bootstrap up by having unit
 tests that explicitly and clearly checked against expected values.  Example:
 
-    python openpower/decoder/isa/test_caller.py
+* python openpower/decoder/isa/test_caller.py
 
 These tests pre-prepare the register files, then check afterwards that
 the result of operation is as expected.  In this way, at least basic
@@ -73,12 +71,12 @@ functionality of ISACaller can be confirmed in a stand-alone fashion
 Contributions are welcomed as this is a collaborative Libre Project.
 Libre-SOC is covered by the following dead-simple Charter:
 
-    https://libre-soc.org/charter/
+* https://libre-soc.org/charter/
 
 Contributions even to the Charter, in the form of appropriate Dilbert
 cartoons especially appreciated:
 
-    https://libre-soc.org/charter/discussion/
+* https://libre-soc.org/charter/discussion/
 
 # Copyrights
 
