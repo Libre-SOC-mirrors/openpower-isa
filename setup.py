@@ -19,6 +19,9 @@ install_requires = [
     # can be obtained with pip3, best done manually
     # https://git.libre-soc.org/?p=nmutil.git
     'nmutil',
+    # these should be fine
+    'pygdbmi', # gdb machine interfave
+    'ply',     # python lex yacc. very cool
 ]
 
 test_requires = [
