@@ -1,0 +1,106 @@
+Release Notes Version 0.0.1 23 April 2021
+-------------
+
+The Libre-SOC Project is pleased to announce the first release of an
+OpenPOWER ISA co-simulation test suite with its own built-in OpenPOWER
+ISA Simulator.
+
+https://git.libre-soc.org/?p=openpower-isa.git
+
+Available also on pypi:
+https://pypi.org/project/libresoc-openpower-isa/
+
+Containing thousands of unit tests for OpenPOWER v3.0 its purpose is
+to provide cross-emulator cross-simulator cross-HDL inter-verification,
+and to enable and accelerate research and collaboration in OpenPOWER.
+
+Currently included in co-simulation is:
+
+* an internal OpenPOWER simulator written in python (ISACaller)
+* a means to fire up qemu bare-metal programs using pygdbmi
+* single-stepping followed by extraction of registers and memory
+* comparison and reporting on any discrepancies
+
+in this fashion, obscure previously undiscovered bugs in qemu have been
+found and reported.
+
+Libre-SOC's HDL (written in nmigen) also runs the exact same unit
+tests, comparing through the same single-stepping, against ISACaller.
+Having cross-verified ISACaller against qemu, running the same unit tests
+against Libre-SOC HDL ensures that Libre-SOC's hardware implementation
+behaves the same (minus the qemu bug).
+
+https://git.libre-soc.org/?p=soc.git;a=blob;f=src/soc/simple/test/test_issuer.py;hb=HEAD
+
+The project provides a useful bootstrap methodology for testing extensions
+of the OpenPOWER ISA: currently, SVP64 (a Cray-style variable-length
+Vector Extension to OpenPOWER) is currently being developed in the
+simulator and in LibreSOC HDL.
+
+Future plans are to add Microwatt and power-gem5 into the mix, as well
+as ssh out to remote POWER9/10 compatible hardware, and also running
+native gdb (obviously, only on actual OpenPOWER compatible hardware).
+It would also be nice to receive patches adding IBM's proprietary
+OpenPOWER emulator as well.
+
+With power-gem5 having the exact same remote machine-driven gdb interface
+as qemu, this one should be easy. Microwatt will require external access
+via its DMI interface on a simulator of some kind (verilator, cocotb)
+in order to read memory and registers.
+
+The python-based simulator, ineptly named ISACaller, is noteworthy in
+that not one single line of hand-generated python simulator code was
+written, neither for the OpenPOWER ISA decoding nor for the emulated
+execution of actual instructions.
+
+Instead, information was extracted into human-readable machine-readable
+CSV, text, and markdown files, and a compiler (language translator)
+written. python-ply afficionados will love that the compiler was based
+on GardenSnake.py
+
+With the pseudocode and ISA Opcode fields having been extracted from the
+OpenPOWER v3.0B ISA Manual, this means that the *actual specification
+itself* (having been compiled to python) is what was tested by the
+several thousand unit tests.
+
+This gets particularly interesting when researching new extensions
+to OpenPOWER, because the very first thing required is to add the
+opcodes, fields, forms and pseudocode, for ISACaller to be able to
+use it.  This should make adding a proposed extension to the actual ISA
+considerably smoother.
+
+With the v3.0B pseusocode now proven as executable, there is no reason
+why in future additional compilers (c, c++) or Formal Correctness Proofs
+should not be at least partly auto-generated.  More details here, in
+the walkthrough:
+
+https://libre-soc.org/3d_gpu/architecture/decoder/
+
+Also potentially of huge value would be the addition of openocd support
+via JTAG / DMI for OpenPOWER, then using JTAG it would be possible
+not only to run the exact same unit tests against FPGAs and ASICSs, it
+would be possible to run the same unit tests through litex "jtagremote",
+and against cocotb as well.  Hints on that, here:
+
+https://git.libre-soc.org/?p=soc.git;a=blob;f=src/soc/debug/firmware_upload.py;h=05fe4879470c3fd3373f2ed68be21f740b46367d;hb=964a6afdf08fd924b75603b2d7bd3a31b9815561#l63
+
+https://git.libre-soc.org/?p=libresoc-litex.git;a=blob;f=sim.py;h=8cddb39c6d2a5509bde635e2987055264c423b84;hb=1d20454df8ccfb8ccdd8b32d7138f38553c23f1d#l480
+
+Note that the firmware_upload.py program speaks  the exact same jtagremote
+bitbanging protocol that is in upstream litex (and openocd).  A patch
+is available to litex which enables it for litex sim:
+
+https://ftp.libre-soc.org/litex-sim-jtagremote.patch
+
+Libre-SOC therefore cordially invites other parties interested
+in OpenPOWER to collaborate in this weird and wonderful
+cross-hardware-software project, which throws FPGAs, simulators,
+emulators, language translators and hardware into a melting pot and
+lights the blue touchpaper.
+
+Questions and contributions welcomed at the libre-soc-dev mailing list,
+and at #libre-soc on freenode.
+
+This work is sponsored by NLnet under its Privacy and Enhanced Trust
+Programme. http://nlnet.nl
+
