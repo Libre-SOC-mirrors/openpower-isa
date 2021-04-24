@@ -41,13 +41,13 @@ help:
 # copies all documentation to libre-soc (libre-soc admins only)
 htmlupload: clean html
 	rsync -HPavz --delete build/html/* \
-        libre-soc.org:/var/www/libre-soc.org/docs/soc/
+        libre-soc.org:/var/www/libre-soc.org/docs/openpower-isa/
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	echo "catch-all falling through to sphinx for document building"
 	mkdir -p "$(SOURCEDIR)"/src/gen
-	sphinx-apidoc --ext-autodoc -o "$(SOURCEDIR)"/src/gen ./src/soc
+	sphinx-apidoc --ext-autodoc -o "$(SOURCEDIR)"/src/gen ./src/openpower
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
