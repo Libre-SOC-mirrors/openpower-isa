@@ -1,7 +1,7 @@
-Welcome to Libre-SOC's documentation!
-=====================================
+Welcome to Libre-SOC's OpenPOWER ISA simulator
+=============================================
 
-.. automodule:: openpower.simulator.test_sim.DecoderTestCases
+.. automodule:: openpower.simulator.test_sim.DecoderTestCase
     :members:
 
 .. toctree:: gen/modules
