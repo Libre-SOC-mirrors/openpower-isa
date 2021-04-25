@@ -317,7 +317,7 @@ class DecoderTestCase(FHDLTestCase):
             print("cr%d", sim.crl[i])
             self.assertTrue(SelectableInt(expected, 4) == sim.crl[i])
             # check CR itself
-            self.assertEqual(sim.cr, SelectableInt(expected << ((7-i)*4), 32))
+            self.assertEqual(sim.cr, SelectableInt(expected << ((7-i)*4), 64))
 
     def run_tst_program(self, prog, initial_regs=[0] * 32):
         simulator = run_tst(prog, initial_regs)
