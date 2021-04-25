@@ -266,6 +266,27 @@ SV64P_MAJOR_SIZE = len(SVP64PrefixFields().major.br)
 SV64P_PID_SIZE = len(SVP64PrefixFields().pid.br)
 SV64P_RM_SIZE = len(SVP64PrefixFields().rm.br)
 
+
+# CR register fields
+# See PowerISA Version 3.0 B Book 1
+# Section 2.3.1 Condition Register pages 30 - 31
+class CRFields:
+    LT = FL = 0  # negative, less than, floating-point less than
+    GT = FG = 1  # positive, greater than, floating-point greater than
+    EQ = FE = 2  # equal, floating-point equal
+    SO = FU = 3  # summary overflow, floating-point unordered
+
+    def __init__(self, init=0):
+        # rev_cr = int('{:016b}'.format(initial_cr)[::-1], 2)
+        # self.cr = FieldSelectableInt(self._cr, list(range(32, 64)))
+        self.cr = SelectableInt(init, 64)  # underlying reg
+        # field-selectable versions of Condition Register TODO check bitranges?
+        self.crl = []
+        for i in range(8):
+            bits = tuple(range(i*4+32, (i+1)*4+32))
+            _cr = FieldSelectableInt(self.cr, bits)
+            self.crl.append(_cr)
+
 # decode SVP64 predicate integer to reg number and invert
 def get_predint(gpr, mask):
     r10 = gpr(10)
@@ -491,9 +512,8 @@ class ISACaller:
         # 3.2.3 p46 p232 VRSAVE (actually SPR #256)
 
         # create CR then allow portions of it to be "selectable" (below)
-        #rev_cr = int('{:016b}'.format(initial_cr)[::-1], 2)
-        self.cr = SelectableInt(initial_cr, 64)  # underlying reg
-        #self.cr = FieldSelectableInt(self._cr, list(range(32, 64)))
+        self.cr_fields = CRFields(initial_cr)
+        self.cr = self.cr_fields.cr
 
         # "undefined", just set to variable-bit-width int (use exts "max")
         #self.undefined = SelectableInt(0, 256)  # TODO, not hard-code 256!
@@ -517,13 +537,10 @@ class ISACaller:
         # update pc to requested start point
         self.set_pc(initial_pc)
 
-        # field-selectable versions of Condition Register TODO check bitranges?
-        self.crl = []
+        # field-selectable versions of Condition Register
+        self.crl = self.cr_fields.crl
         for i in range(8):
-            bits = tuple(range(i*4+32, (i+1)*4+32))  # errr... maybe?
-            _cr = FieldSelectableInt(self.cr, bits)
-            self.crl.append(_cr)
-            self.namespace["CR%d" % i] = _cr
+            self.namespace["CR%d" % i] = self.crl[i]
 
         self.decoder = decoder2.dec
         self.dec2 = decoder2
