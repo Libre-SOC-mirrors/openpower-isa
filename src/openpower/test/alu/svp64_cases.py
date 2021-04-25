@@ -1,7 +1,7 @@
 from openpower.test.common import (TestAccumulatorBase, skip_case)
 from openpower.endian import bigendian
 from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.caller import SVP64State, CRFields
 from openpower.sv.trans.svp64 import SVP64Asm
 
 
@@ -554,3 +554,52 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate, initial_cr=cr)
+
+    # checks reentrant CR predication
+    def case_19_crpred_reentrant(self):
+        #   reg num        0 1 2 3 4 5 6 7 8 9 10 11 12
+        #   srcstep=1                           v
+        #   src cr4.eq=1                     Y  N  Y  N
+        #       cr6.eq=1                     :     |
+        #                              + - - +     |
+        #                              :   +-------+
+        #   dest cr5.lt=1              :   |
+        #        cr7.lt=1            N Y N Y
+        #   dststep=2                    ^
+        #
+        # expected results:
+        # r5 = 0x0  skip
+        # r6 = 0x0  dststep starts at 3, so this gets skipped
+        # r7 = 0x0  skip
+        # r8 = 0xffff_ffff_ffff_ff92  this will be used
+
+        isa = SVP64Asm(['sv.extsb/sm=eq/dm=lt 5.v, 9.v'])
+        lst = list(isa)
+        print("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[9] = 0x90  # srcstep starts at 2, so this gets skipped
+        initial_regs[10] = 0x91  # skip
+        initial_regs[11] = 0x92  # this will be used
+        initial_regs[12] = 0x93  # skip
+
+        cr = CRFields()
+        # set up CR predicate
+        # CR4.eq=1 and CR6.eq=1
+        cr.crl[4][CRFields.EQ] = 1
+        cr.crl[6][CRFields.EQ] = 1
+        # CR5.lt=1 and CR7.lt=1
+        cr.crl[5][CRFields.LT] = 1
+        cr.crl[7][CRFields.LT] = 1
+        # SVSTATE (in this case, VL=4)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 4  # VL
+        svstate.maxvl[0:7] = 4  # MAXVL
+        # set src/dest step on the middle of the loop
+        svstate.srcstep[0:7] = 1
+        svstate.dststep[0:7] = 2
+        print("SVSTATE", bin(svstate.spr.asint()))
+
+        self.add_case(Program(lst, bigendian), initial_regs,
+                      initial_svstate=svstate, initial_cr=cr.cr.asint())
