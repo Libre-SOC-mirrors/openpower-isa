@@ -314,7 +314,7 @@ class DecoderTestCase(FHDLTestCase):
             print("cr", sim.cr)
             expected = (7-i)
             # check CR[0]/1/2/3 as well
-            print("cr%d", sim.crl[i])
+            print("cr%d" % i, sim.crl[i].asint(True))
             self.assertTrue(SelectableInt(expected, 4) == sim.crl[i])
             # check CR itself
             self.assertEqual(sim.cr, SelectableInt(expected << ((7-i)*4), 64))
