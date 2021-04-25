@@ -6,7 +6,7 @@ from openpower.decoder.isa.caller import ISACaller
 from openpower.decoder.power_decoder import (create_pdecode)
 from openpower.decoder.power_decoder2 import (PowerDecode2)
 from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State
+from openpower.decoder.isa.caller import ISACaller, SVP64State, CRFields
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
@@ -515,6 +515,57 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate)
+            self._check_regs(sim, expected_regs)
+
+    # checks reentrant CR predication
+    def test_crpred_reentrant(self):
+        #   reg num        0 1 2 3 4 5 6 7 8 9 10 11 12
+        #   srcstep=1                           v
+        #   src cr4.eq=1                     Y  N  Y  N
+        #       cr6.eq=1                     :     |
+        #                              + - - +     |
+        #                              :   +-------+
+        #   dest cr5.lt=1              :   |
+        #        cr7.lt=1            N Y N Y
+        #   dststep=2                    ^
+
+        isa = SVP64Asm(['sv.extsb/sm=eq/dm=lt 5.v, 9.v'])
+        lst = list(isa)
+        print("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[9] = 0x90  # srcstep starts at 2, so this gets skipped
+        initial_regs[10] = 0x91  # skip
+        initial_regs[11] = 0x92  # this will be used
+        initial_regs[12] = 0x93  # skip
+
+        cr = CRFields()
+        # set up CR predicate
+        # CR4.eq=1 and CR6.eq=1
+        cr.crl[4][CRFields.EQ] = 1
+        cr.crl[6][CRFields.EQ] = 1
+        # CR5.lt=1 and CR7.lt=1
+        cr.crl[5][CRFields.LT] = 1
+        cr.crl[7][CRFields.LT] = 1
+        # SVSTATE (in this case, VL=4)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 4  # VL
+        svstate.maxvl[0:7] = 4  # MAXVL
+        # set src/dest step on the middle of the loop
+        svstate.srcstep[0:7] = 1
+        svstate.dststep[0:7] = 2
+        print("SVSTATE", bin(svstate.spr.asint()))
+        # copy before running
+        expected_regs = deepcopy(initial_regs)
+        expected_regs[5] = 0x0  # skip
+        expected_regs[6] = 0x0  # dststep starts at 3, so this gets skipped
+        expected_regs[7] = 0x0  # skip
+        expected_regs[8] = 0xffff_ffff_ffff_ff92  # this will be used
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs, svstate,
+                                       initial_cr=cr.cr.asint())
             self._check_regs(sim, expected_regs)
 
     def run_tst_program(self, prog, initial_regs=None,
