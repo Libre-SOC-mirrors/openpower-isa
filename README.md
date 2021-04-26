@@ -84,3 +84,8 @@ All programs are written by Libre-SOC team members are LGPLv3+.
 However the specification and the CSV files came from their
 respective Copyright holders (IBM, OpenPOWER Foundation, Microwatt)
 
+# Other Unit Tests
+
+There do exist other unit tests for OpenPOWER.  List them here:
+
+* https://bitbucket.org/sandip4n/gem5-powerpc64le-tests/src/master/
