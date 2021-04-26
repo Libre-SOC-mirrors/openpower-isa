@@ -89,3 +89,6 @@ respective Copyright holders (IBM, OpenPOWER Foundation, Microwatt)
 There do exist other unit tests for OpenPOWER.  List them here:
 
 * https://bitbucket.org/sandip4n/gem5-powerpc64le-tests/src/master/
+* http://sources.buildroot.net/kvm-unit-tests/git/powerpc/
+* https://github.com/lioncash/DolphinPPCTests
+
