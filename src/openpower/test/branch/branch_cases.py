@@ -48,6 +48,18 @@ class BranchTestCase(TestAccumulatorBase):
                           initial_sprs=initial_sprs,
                           initial_cr=cr)
 
+    def case_bc_ctr_regression(self):
+        bc = 13116
+        bo = 8
+        bi = 6
+        cr = 0x100983
+        ctr = 0x420abd56
+        lst = [f"bc {bo}, {bi}, {bc}"]
+        initial_sprs = {9: SelectableInt(ctr, 64)}
+        self.add_case(Program(lst, bigendian),
+                      initial_sprs=initial_sprs,
+                      initial_cr=cr)
+
     def case_bc_reg(self):
         # XXX: bcctr and bcctrl time out (irony: they're counters)
         choices = ["bclr", "bclrl", "bcctr", "bcctrl", "bctar", "bctarl"]
