@@ -15,7 +15,7 @@ version = '0.0.1'
 
 install_requires = [
     # ok to install using pip3 as long as it is not with the rest of Libre-SOC.     # https://git.libre-soc.org/?p=nmigen.git
-    'nmigen', 
+    'nmigen',
     # can be obtained with pip3, best done manually
     # https://git.libre-soc.org/?p=nmutil.git
     'nmutil',
@@ -58,7 +58,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'pywriter=openpower.decoder.pseudo.pywriter:pywriter',
-            'sv_analysis=openpower.sv:sv_analysis'
+            'sv_analysis=openpower.sv.sv_analysis:process_csvs'
         ]
     }
 )

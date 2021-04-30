@@ -8,7 +8,7 @@ gitupdate:
 
 # now installed as a command (/usr/local/bin/svanalysis) by setup.py
 svanalysis:
-	svanalysis
+	sv_analysis
 
 # now installed as a command (/usr/local/bin/pywriter) by setup.py
 pywriter:
