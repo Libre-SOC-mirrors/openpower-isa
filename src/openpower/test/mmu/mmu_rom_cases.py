@@ -1,9 +1,5 @@
-from nmigen import Module, Signal
-from soc.simple.test.test_runner import TestRunner
 from openpower.simulator.program import Program
 from openpower.endian import bigendian
-import unittest
-
 from openpower.test.common import (TestAccumulatorBase, skip_case)
 
 def b(x):
@@ -55,14 +51,3 @@ class MMUTestCaseROM(TestAccumulatorBase):
                       initial_regs, initial_sprs)
 
 
-
-
-if __name__ == "__main__":
-    unittest.main(exit=False)
-    suite = unittest.TestSuite()
-    suite.addTest(TestRunner(MMUTestCaseROM().test_data, microwatt_mmu=True,
-                             rom=default_mem))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
-
-#  soc/simple/test/test_runner.py

@@ -476,6 +476,8 @@ if __name__ == '__main__':
     print(dir(Enum))
     print(SPRfull.__members__['TAR'])
     for x in SPRfull:
-        print(x, x.value, str(x), x.name)
+        print("full", x, x.value, str(x), x.name)
+    for x in SPRreduced:
+        print("reduced", x, x.value, str(x), x.name)
 
     print("function", Function.ALU.name)
