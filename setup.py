@@ -22,6 +22,7 @@ install_requires = [
     # these should be fine
     'pygdbmi', # gdb machine interfave
     'ply',     # python lex yacc. very cool
+    'astor',   # python AST manipulation
 ]
 
 test_requires = [
