@@ -196,8 +196,9 @@ class PowerOp:
             debug_report.add(field)
             fname = get_pname(field, name)
             setattr(self, field, Signal(reset_less=True, name=fname))
-        print("PowerOp debug", name, debug_report)
-        print("        fields", fields)
+        # comment out, bit too high debug level
+        #print("PowerOp debug", name, debug_report)
+        #print("        fields", fields)
 
     def _eq(self, row=None):
         if row is None:
