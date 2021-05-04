@@ -12,6 +12,7 @@ spr_to_fast = { SPR.CTR: FastRegsEnum.CTR,
                 SPR.XER: FastRegsEnum.XER,
                 SPR.DEC: FastRegsEnum.DEC,
                 SPR.TB: FastRegsEnum.TB,
+                SPR.SVSRR0: FastRegsEnum.SVSRR0,
                }
 
 sprstr_to_fast = {}
