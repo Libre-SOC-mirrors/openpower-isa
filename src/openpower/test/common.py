@@ -346,6 +346,11 @@ class ALUHelpers:
         if spr2_valid:
             res['fast2'] = yield alu.n.data_o.fast2.data
 
+    def get_fast_spr3(res, alu, dec2):
+        spr3_valid = yield alu.n.data_o.fast3.ok
+        if spr3_valid:
+            res['fast3'] = yield alu.n.data_o.fast3.data
+
     def get_cia(res, alu, dec2):
         res['cia'] = yield alu.p.data_i.cia
 
@@ -417,6 +422,14 @@ class ALUHelpers:
         if cridx_ok:
             cridx = yield dec2.e.write_cr.data
             res['cr_a'] = sim.crl[cridx].get_range().value
+
+    def get_wr_fast_spr3(res, sim, dec2):
+        ok = yield dec2.e.write_fast3.ok
+        if ok:
+            spr_num = yield dec2.e.write_fast3.data
+            spr_num = fast_reg_to_spr(spr_num)
+            spr_name = spr_dict[spr_num].SPR
+            res['fast3'] = sim.spr[spr_name].value
 
     def get_wr_fast_spr2(res, sim, dec2):
         ok = yield dec2.e.write_fast2.ok
