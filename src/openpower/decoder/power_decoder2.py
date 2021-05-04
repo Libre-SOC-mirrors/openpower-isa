@@ -416,6 +416,7 @@ class DecodeOut2(Elaboratable):
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o2")
         self.fast_out = Data(3, "fast_o2")
+        self.fast_out3 = Data(3, "fast_o3")
 
     def elaborate(self, platform):
         m = Module()
@@ -442,10 +443,12 @@ class DecodeOut2(Elaboratable):
                     comb += self.fast_out.data.eq(FastRegsEnum.LR)  # LR
                     comb += self.fast_out.ok.eq(1)
 
-            # RFID 2nd spr (fast)
+            # RFID 2nd and 3rd spr (fast)
             with m.Case(MicrOp.OP_RFID):
                 comb += self.fast_out.data.eq(FastRegsEnum.SRR1)  # SRR1
                 comb += self.fast_out.ok.eq(1)
+                comb += self.fast_out3.data.eq(FastRegsEnum.SVSRR0) # SVSRR0
+                comb += self.fast_out3.ok.eq(1)
 
         return m
 
@@ -1198,11 +1201,12 @@ class PowerDecode2(PowerDecodeSubset):
         comb += e.read_spr1.eq(dec_a.spr_out)
         comb += e.write_spr.eq(dec_o.spr_out)
 
-        # Fast regs out
+        # Fast regs out including SRR0/1/SVSRR0
         comb += e.read_fast1.eq(dec_a.fast_out)
         comb += e.read_fast2.eq(dec_b.fast_out)
-        comb += e.write_fast1.eq(dec_o.fast_out)
-        comb += e.write_fast2.eq(dec_o2.fast_out)
+        comb += e.write_fast1.eq(dec_o.fast_out)   # SRR0 (OP_RFID)
+        comb += e.write_fast2.eq(dec_o2.fast_out)  # SRR1 (ditto)
+        comb += e.write_fast3.eq(dec_o2.fast_out3) # SVSRR0 (ditto)
 
         if self.svp64_en:
             # connect up SVP64 RM Mode decoding
@@ -1305,6 +1309,9 @@ class PowerDecode2(PowerDecodeSubset):
             # TRAP write fast2 = SRR1
             comb += e_out.write_fast2.data.eq(FastRegsEnum.SRR1)  # SRR1
             comb += e_out.write_fast2.ok.eq(1)
+            # TRAP write fast2 = SRR1
+            comb += e_out.write_fast3.data.eq(FastRegsEnum.SVSRR0)  # SVSRR0
+            comb += e_out.write_fast3.ok.eq(1)
 
         # RFID: needs to read SRR0/1
         with m.If(do_out.insn_type == MicrOp.OP_RFID):
@@ -1314,6 +1321,9 @@ class PowerDecode2(PowerDecodeSubset):
             # TRAP read fast2 = SRR1
             comb += e_out.read_fast2.data.eq(FastRegsEnum.SRR1)  # SRR1
             comb += e_out.read_fast2.ok.eq(1)
+            # TRAP read fast2 = SVSRR0
+            comb += e_out.read_fast3.data.eq(FastRegsEnum.SVSRR0)  # SVSRR0
+            comb += e_out.read_fast3.ok.eq(1)
 
         # annoying simulator bug
         if hasattr(e_out, "asmcode") and hasattr(self.dec.op, "asmcode"):
