@@ -225,7 +225,7 @@ class PowerOp:
             if field not in power_op_csvmap:
                 continue
             csvname = power_op_csvmap[field]
-            print(field, ptype, csvname, row)
+            #print(field, ptype, csvname, row)
             val = row[csvname]
             if csvname == 'upd' and isinstance(val, int):  # LDSTMode different
                 val = ptype(val)
@@ -316,7 +316,7 @@ class PowerDecoder(Elaboratable):
     def divide_opcodes(self, d):
         divided = {}
         mask = self.suffix_mask(d)
-        print("mask", hex(mask))
+        #print("mask", hex(mask))
         for row in d.opcodes:
             opcode = row['opcode']
             if d.opint and '-' not in opcode:
@@ -400,9 +400,9 @@ class PowerDecoder(Elaboratable):
                 decs.append(cases)
             if case_does_something:
                 eqs += eq
-                print("submodule eqs", self.pname, eq)
+                #print("submodule eqs", self.pname, eq)
 
-        print("submodules", self.pname, submodules)
+        #print("submodules", self.pname, submodules)
 
         gc.collect()
         return self.actually_does_something
@@ -412,7 +412,7 @@ class PowerDecoder(Elaboratable):
         for dec in d.subdecoders:
             if isinstance(dec, list):  # XXX HACK: take first pattern
                 dec = dec[0]
-            print("subdec", dec.pattern, self.pname)
+            #print("subdec", dec.pattern, self.pname)
             mname = get_pname("dec%d" % dec.pattern, self.pname)
             subdecoder = PowerDecoder(self.width, dec,
                                       name=mname,
@@ -429,7 +429,7 @@ class PowerDecoder(Elaboratable):
         return eqs
 
     def elaborate(self, platform):
-        print("decoder elaborate", self.pname, self.submodules)
+        #print("decoder elaborate", self.pname, self.submodules)
         m = Module()
         comb = m.d.comb
 
