@@ -514,6 +514,13 @@ class ALUHelpers:
             print(f"expected {expected:x}, actual: {alu_out:x}")
             dut.assertEqual(expected, alu_out, msg)
 
+    def check_fast_spr3(dut, res, sim_o, msg):
+        if 'fast3' in res:
+            expected = sim_o['fast3']
+            alu_out = res['fast3']
+            print(f"expected {expected:x}, actual: {alu_out:x}")
+            dut.assertEqual(expected, alu_out, msg)
+
     def check_int_o1(dut, res, sim_o, msg):
         if 'o1' in res:
             expected = sim_o['o1']
