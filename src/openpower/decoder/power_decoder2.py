@@ -939,7 +939,7 @@ class PowerDecode2(PowerDecodeSubset):
                             state=None, svp64_en=True, regreduce_en=False):
         super().__init__(dec, opkls, fn_name, final, state, svp64_en,
                          regreduce_en=False)
-        self.exc = LDSTException("dec2_exc")
+        self.ldst_exc = LDSTException("dec2_exc")
 
         if self.svp64_en:
             self.cr_out_isvec = Signal(1, name="cr_out_isvec")
@@ -1243,7 +1243,7 @@ class PowerDecode2(PowerDecodeSubset):
         dec_irq_ok = Signal()
         priv_ok = Signal()
         illeg_ok = Signal()
-        exc = self.exc
+        ldst_exc = self.ldst_exc
 
         comb += ext_irq_ok.eq(ext_irq & msr[MSR.EE]) # v3.0B p944 (MSR.EE)
         comb += dec_irq_ok.eq(dec_spr[63] & msr[MSR.EE]) # 6.5.11 p1076
@@ -1252,17 +1252,17 @@ class PowerDecode2(PowerDecodeSubset):
 
         # LD/ST exceptions.  TestIssuer copies the exception info at us
         # after a failed LD/ST.
-        with m.If(exc.happened):
-            with m.If(exc.alignment):
+        with m.If(ldst_exc.happened):
+            with m.If(ldst_exc.alignment):
                 self.trap(m, TT.PRIV, 0x600)
-            with m.Elif(exc.instr_fault):
-                with m.If(exc.segment_fault):
+            with m.Elif(ldst_exc.instr_fault):
+                with m.If(ldst_exc.segment_fault):
                     self.trap(m, TT.PRIV, 0x480)
                 with m.Else():
                     # pass exception info to trap to create SRR1
-                    self.trap(m, TT.MEMEXC, 0x400, exc)
+                    self.trap(m, TT.MEMEXC, 0x400, ldst_exc)
             with m.Else():
-                with m.If(exc.segment_fault):
+                with m.If(ldst_exc.segment_fault):
                     self.trap(m, TT.PRIV, 0x380)
                 with m.Else():
                     self.trap(m, TT.PRIV, 0x300)
@@ -1320,7 +1320,7 @@ class PowerDecode2(PowerDecodeSubset):
 
         return m
 
-    def trap(self, m, traptype, trapaddr, exc=None):
+    def trap(self, m, traptype, trapaddr, ldst_exc=None):
         """trap: this basically "rewrites" the decoded instruction as a trap
         """
         comb = m.d.comb
@@ -1333,7 +1333,7 @@ class PowerDecode2(PowerDecodeSubset):
         comb += self.do_copy("fn_unit", Function.TRAP, True)
         comb += self.do_copy("trapaddr", trapaddr >> 4, True) # bottom 4 bits
         comb += self.do_copy("traptype", traptype, True)  # request type
-        comb += self.do_copy("ldst_exc", exc, True)  # request type
+        comb += self.do_copy("ldst_exc", ldst_exc, True)  # request type
         comb += self.do_copy("msr", self.state.msr, True) # copy of MSR "state"
         comb += self.do_copy("cia", self.state.pc, True)  # copy of PC "state"
 
