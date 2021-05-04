@@ -92,10 +92,13 @@ def regspec_decode_read(e, regfile, name):
         # STATE register numbering is *unary* encoded
         PC = 1<<StateRegsEnum.PC
         MSR = 1<<StateRegsEnum.MSR
+        SVSTATE = 1<<StateRegsEnum.SVSTATE
         if name in ['cia', 'nia']:
             return Const(1), PC # TODO: detect read-conditions
         if name == 'msr':
             return Const(1), MSR # TODO: detect read-conditions
+        if name == 'svstate':
+            return Const(1), SVSTATE # TODO: detect read-conditions
 
     # FAST regfile
 
@@ -161,10 +164,13 @@ def regspec_decode_write(e, regfile, name):
         # STATE register numbering is *unary* encoded
         PC = 1<<StateRegsEnum.PC
         MSR = 1<<StateRegsEnum.MSR
+        SVSTATE = 1<<StateRegsEnum.SVSTATE
         if name in ['cia', 'nia']:
             return None, PC # hmmm
         if name == 'msr':
             return None, MSR # hmmm
+        if name == 'svstate':
+            return None, SVSTATE # hmmm
 
     # FAST regfile
 
