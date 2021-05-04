@@ -796,7 +796,7 @@ class PowerDecodeSubset(Elaboratable):
         comb = m.d.comb
         state = self.state
         op, do = self.dec.op, self.do
-        msr, cia = state.msr, state.pc
+        msr, cia, svstate = state.msr, state.pc, state.svstate
         # fill in for a normal instruction (not an exception)
         # copy over if non-exception, non-privileged etc. is detected
         if not self.final:
@@ -823,6 +823,7 @@ class PowerDecodeSubset(Elaboratable):
         # copy "state" over
         comb += self.do_copy("msr", msr)
         comb += self.do_copy("cia", cia)
+        comb += self.do_copy("svstate", svstate)
 
         # set up instruction type
         # no op: defaults to OP_ILLEGAL
@@ -1336,6 +1337,7 @@ class PowerDecode2(PowerDecodeSubset):
         comb += self.do_copy("ldst_exc", ldst_exc, True)  # request type
         comb += self.do_copy("msr", self.state.msr, True) # copy of MSR "state"
         comb += self.do_copy("cia", self.state.pc, True)  # copy of PC "state"
+        comb += self.do_copy("svstate", self.state.svstate, True)  # SVSTATE
 
 
 

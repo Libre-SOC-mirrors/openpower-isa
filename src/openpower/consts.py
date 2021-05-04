@@ -300,7 +300,8 @@ class FastRegsEnum:
     XER = 5 # non-XER bits
     DEC = 6
     TB = 7
-    N_REGS = 8 # maximum number of regs
+    SVSRR0 = 8
+    N_REGS = 9 # maximum number of regs
 
 # XER Regfile
 class XERRegsEnum:
