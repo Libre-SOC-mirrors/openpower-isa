@@ -181,6 +181,14 @@ class ALUHelpers:
             spr2_data = sim.spr[spr2_sel].value
             res['fast2'] = spr2_data
 
+    def get_sim_fast_spr3(res, sim, dec2):
+        fast3_en = yield dec2.e.read_fast3.ok
+        if fast3_en:
+            fast3_sel = yield dec2.e.read_fast3.data
+            spr3_sel = fast_reg_to_spr(fast3_sel)
+            spr3_data = sim.spr[spr3_sel].value
+            res['fast3'] = spr3_data
+
     def get_sim_cr_a(res, sim, dec2):
         cridx_ok = yield dec2.e.read_cr1.ok
         if cridx_ok:
@@ -292,6 +300,10 @@ class ALUHelpers:
     def set_fast_spr2(alu, dec2, inp):
         if 'fast2' in inp:
             yield alu.p.data_i.fast2.eq(inp['fast2'])
+
+    def set_fast_spr3(alu, dec2, inp):
+        if 'fast3' in inp:
+            yield alu.p.data_i.fast3.eq(inp['fast3'])
 
     def set_cr_a(alu, dec2, inp):
         if 'cr_a' in inp:

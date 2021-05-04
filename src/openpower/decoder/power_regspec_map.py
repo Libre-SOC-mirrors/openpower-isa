@@ -105,6 +105,8 @@ def regspec_decode_read(e, regfile, name):
             return e.read_fast1.ok, e.read_fast1.data
         if name == 'fast2':
             return e.read_fast2.ok, e.read_fast2.data
+        if name == 'fast3':
+            return e.read_fast3.ok, e.read_fast3.data
 
     # SPR regfile
 
@@ -172,6 +174,8 @@ def regspec_decode_write(e, regfile, name):
             return e.write_fast1, e.write_fast1.data
         if name == 'fast2':
             return e.write_fast2, e.write_fast2.data
+        if name == 'fast3':
+            return e.write_fast3, e.write_fast3.data
 
     # SPR regfile
 

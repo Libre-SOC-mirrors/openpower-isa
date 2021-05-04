@@ -111,10 +111,13 @@ class Decode2ToExecute1Type(RecordObject):
         self.xer_in = Signal(3, reset_less=True)   # xer might be read
         self.xer_out = Signal(reset_less=True)  # xer might be written
 
+        # for the FAST regs (SRR1, SRR2, SVSRR0, CTR, LR etc.)
         self.read_fast1 = Data(3, name="fast1")
         self.read_fast2 = Data(3, name="fast2")
+        self.read_fast3 = Data(3, name="fast3")   # really only for SVSRR0
         self.write_fast1 = Data(3, name="fasto1")
         self.write_fast2 = Data(3, name="fasto2")
+        self.write_fast3 = Data(3, name="fasto3") # likewise
 
         self.read_cr1 = Data(7, name="cr_in1")
         self.read_cr2 = Data(7, name="cr_in2")
