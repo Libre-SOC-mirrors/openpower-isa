@@ -23,6 +23,16 @@ from openpower.consts import EXTRA3, SVP64MODE
 from openpower.sv.svp64 import SVP64Rec
 from nmutil.util import sel
 
+# a list of fields which need to be added to input records in order
+# pass on vital information needed by each pipeline.
+# make sure to keep these the same as SVP64RMModeDecode, in fact,
+# TODO, make SVP64RMModeDecode *use* this as a Record!
+sv_input_record_layout = [
+        ('sv_pred_sz', 1), # predicate source zeroing
+        ('sv_pred_dz', 1), # predicate dest zeroing
+        ('sv_saturate', SVP64sat),
+        #('sv_RC1', 1),
+    ]
 
 """RM Mode
 there are three Mode variants, two for LD/ST and one for everything else
@@ -74,7 +84,7 @@ class SVP64RMModeDecode(Elaboratable):
         self.dstpred = Signal(3) # destination predicate
         self.pred_sz = Signal(1) # predicate source zeroing
         self.pred_dz = Signal(1) # predicate dest zeroing
-        
+
         self.saturate = Signal(SVP64sat)
         self.RC1 = Signal()
         self.cr_sel = Signal(2)
