@@ -142,6 +142,16 @@ class SVP64RMModeDecode(Elaboratable):
                     comb += self.pred_sz.eq(mode[SVP64MODE.SZ])
                     comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
 
+        # extract saturate
+        with m.Switch(mode2):
+            with m.Case(2):
+                with m.If(mode[SVP64MODE.N]):
+                    comb += self.saturate.eq(SVP64sat.UNSIGNED)
+                with m.Else():
+                    comb += self.saturate.eq(SVP64sat.SIGNED)
+            with m.Default():
+                comb += self.saturate.eq(SVP64sat.NONE)
+
         # extract src/dest predicate.  use EXTRA3.MASK because EXTRA2.MASK
         # is in exactly the same bits
         srcmask = sel(m, self.rm_in.extra, EXTRA3.MASK)
