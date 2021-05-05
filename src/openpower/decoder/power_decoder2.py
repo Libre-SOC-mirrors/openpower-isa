@@ -780,13 +780,17 @@ class PowerDecodeSubset(Elaboratable):
             do = self.e_tmp.do
         return hasattr(do, field) and self.op_get(op_field) is not None
 
-    def do_copy(self, field, val, final=False):
+    def do_get(self, field, final=False):
         if final or self.final:
             do = self.do
         else:
             do = self.e_tmp.do
-        if hasattr(do, field) and val is not None:
-            return getattr(do, field).eq(val)
+        return getattr(do, field, None)
+
+    def do_copy(self, field, val, final=False):
+        df = self.do_get(field, final)
+        if df is not None and val is not None:
+            return df.eq(val)
         return []
 
     def op_get(self, op_field):
