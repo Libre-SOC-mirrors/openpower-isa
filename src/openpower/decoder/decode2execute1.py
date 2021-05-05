@@ -9,6 +9,7 @@ from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      SPRfull, SPRreduced, LDSTMode)
 from openpower.consts import TT
 from openpower.exceptions import LDSTException
+from openpower.decoder.power_svp64_rm import sv_input_record_layout
 
 
 class Data(Record):
@@ -37,7 +38,8 @@ class IssuerDecode2ToOperand(RecordObject):
 
     def __init__(self, name=None):
 
-        RecordObject.__init__(self, name=name)
+        RecordObject.__init__(self, layout=sv_input_record_layout,
+                                    name=name)
 
         # current "state" (TODO: this in its own Record)
         self.msr = Signal(64, reset_less=True)

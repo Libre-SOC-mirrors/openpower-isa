@@ -18,9 +18,11 @@ from openpower.exceptions import LDSTException
 
 from openpower.decoder.power_svp64_prefix import SVP64PrefixDecoder
 from openpower.decoder.power_svp64_extra import SVP64CRExtra, SVP64RegExtra
-from openpower.decoder.power_svp64_rm import SVP64RMModeDecode
+from openpower.decoder.power_svp64_rm import (SVP64RMModeDecode,
+                                              sv_input_record_layout)
+from openpower.sv.svp64 import SVP64Rec
+
 from openpower.decoder.power_regspec_map import regspec_decode_read
-from openpower.decoder.power_regspec_map import regspec_decode_write
 from openpower.decoder.power_decoder import create_pdecode
 from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      CRInSel, CROutSel,
@@ -29,14 +31,12 @@ from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      RC, LDSTMode,
                                      SVEXTRA, SVEtype, SVPtype)
 from openpower.decoder.decode2execute1 import (Decode2ToExecute1Type, Data,
-                                         Decode2ToOperand)
-from openpower.sv.svp64 import SVP64Rec
-from openpower.consts import (MSR, SPEC, EXTRA2, EXTRA3, SVP64P, field,
-                        SPEC_SIZE, SPECb, SPEC_AUG_SIZE, SVP64CROffs)
+                                               Decode2ToOperand)
 
-from openpower.consts import FastRegsEnum
-from openpower.consts import XERRegsEnum
-from openpower.consts import TT
+from openpower.consts import (MSR, SPEC, EXTRA2, EXTRA3, SVP64P, field,
+                              SPEC_SIZE, SPECb, SPEC_AUG_SIZE, SVP64CROffs,
+                              FastRegsEnum, XERRegsEnum, TT)
+
 from openpower.state import CoreState
 from openpower.util import spr_to_fast
 
@@ -681,6 +681,7 @@ class DecodeCROut(Elaboratable):
 # to be decoded (this includes the single bit names)
 record_names = {'insn_type': 'internal_op',
                 'fn_unit': 'function_unit',
+                'SV_Ptype': 'SV_Ptype',
                 'rc': 'rc_sel',
                 'oe': 'rc_sel',
                 'zero_a': 'in1_sel',
@@ -713,6 +714,7 @@ class PowerDecodeSubset(Elaboratable):
         self.regreduce_en = regreduce_en
         if svp64_en:
             self.sv_rm = SVP64Rec(name="dec_svp64") # SVP64 RM field
+            self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
         self.sv_a_nz = Signal(1)
         self.final = final
         self.opkls = opkls
@@ -815,6 +817,10 @@ class PowerDecodeSubset(Elaboratable):
         m.submodules.dec_rc = self.dec_rc = dec_rc = DecodeRC(self.dec)
         m.submodules.dec_oe = dec_oe = DecodeOE(self.dec)
 
+        if self.svp64_en:
+            # and SVP64 RM mode decoder
+            m.submodules.sv_rm_dec = rm_dec = self.rm_dec
+
         # copy instruction through...
         for i in [do.insn, dec_rc.insn_in, dec_oe.insn_in, ]:
             comb += i.eq(self.dec.opcode_in)
@@ -888,6 +894,14 @@ class PowerDecodeSubset(Elaboratable):
         comb += self.do_copy("input_cr", self.op_get("cr_in"))   # CR in
         comb += self.do_copy("output_cr", self.op_get("cr_out"))  # CR out
 
+        if self.svp64_en:
+            # connect up SVP64 RM Mode decoding
+            fn = self.op_get("function_unit")
+            comb += rm_dec.fn_in.eq(fn) # decode needs to know if LD/ST type
+            comb += rm_dec.ptype_in.eq(op.SV_Ptype) # Single/Twin predicated
+            comb += rm_dec.rc_in.eq(rc_out) # Rc=1
+            comb += rm_dec.rm_in.eq(self.sv_rm) # SVP64 RM mode
+
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
         comb += self.do_copy("invert_in", self.op_get("inv_a"))
@@ -905,6 +919,10 @@ class PowerDecodeSubset(Elaboratable):
         comb += self.do_copy("sign_extend", self.op_get("sgn_ext"))
         comb += self.do_copy("ldst_mode", self.op_get("upd"))  # LD/ST mode
 
+        # copy over SVP64 input record fields (if they exist)
+        if self.svp64_en:
+            for (field, _) in sv_input_record_layout:
+                comb += self.do_copy(field, self.op_get(field))
         return m
 
 
@@ -958,7 +976,6 @@ class PowerDecode2(PowerDecodeSubset):
             self.no_in_vec = Signal(1, name="no_in_vec") # no inputs vector
             self.no_out_vec = Signal(1, name="no_out_vec") # no outputs vector
             self.loop_continue = Signal(1, name="loop_continue")
-            self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
         else:
             self.no_in_vec = Const(1, 1)
             self.no_out_vec = Const(1, 1)
@@ -981,6 +998,9 @@ class PowerDecode2(PowerDecodeSubset):
             subset.add("sv_cr_out")
             subset.add("SV_Etype")
             subset.add("SV_Ptype")
+            # from SVP64RMModeDecode
+            for (field, _) in sv_input_record_layout:
+                subset.add(field)
         subset.add("lk")
         subset.add("internal_op")
         subset.add("form")
@@ -1023,9 +1043,6 @@ class PowerDecode2(PowerDecodeSubset):
 
             # debug access to crout_svdec (used in get_pdecode_cr_out)
             self.crout_svdec = crout_svdec
-
-            # and SVP64 RM mode decoder
-            m.submodules.sv_rm_dec = rm_dec = self.rm_dec
 
         # get the 5-bit reg data before svp64-munging it into 7-bit plus isvec
         reg = Signal(5, reset_less=True)
@@ -1207,14 +1224,6 @@ class PowerDecode2(PowerDecodeSubset):
         comb += e.write_fast1.eq(dec_o.fast_out)   # SRR0 (OP_RFID)
         comb += e.write_fast2.eq(dec_o2.fast_out)  # SRR1 (ditto)
         comb += e.write_fast3.eq(dec_o2.fast_out3) # SVSRR0 (ditto)
-
-        if self.svp64_en:
-            # connect up SVP64 RM Mode decoding
-            fn = self.op_get("function_unit")
-            comb += rm_dec.fn_in.eq(fn) # decode needs to know if LD/ST type
-            comb += rm_dec.ptype_in.eq(op.SV_Ptype) # Single/Twin predicated
-            comb += rm_dec.rc_in.eq(rc_out) # Rc=1
-            comb += rm_dec.rm_in.eq(self.sv_rm) # SVP64 RM mode
 
         # sigh this is exactly the sort of thing for which the
         # decoder is designed to not need.  MTSPR, MFSPR and others need

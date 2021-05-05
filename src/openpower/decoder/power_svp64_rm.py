@@ -31,6 +31,7 @@ sv_input_record_layout = [
         ('sv_pred_sz', 1), # predicate source zeroing
         ('sv_pred_dz', 1), # predicate dest zeroing
         ('sv_saturate', SVP64sat),
+        ('SV_Ptype', SVPtype),
         #('sv_RC1', 1),
     ]
 
