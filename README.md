@@ -82,7 +82,17 @@ cartoons especially appreciated:
 
 All programs are written by Libre-SOC team members are LGPLv3+.
 However the specification and the CSV files came from their
-respective Copyright holders (IBM, OpenPOWER Foundation, Microwatt)
+respective Copyright holders (IBM, OpenPOWER Foundation, Microwatt).
+
+Bear in mind that the *facts* in a specification may not be copyrighted,
+however the document (or source code) *containing* those facts can be and
+is copyrightable.  In this repository, the **facts** were extracted
+(from Microwatt and from the OpenPOWER ISA Technical Specification).
+
+Therefore, you, likewise, may *also* extract the **facts** from this
+source code, but for the actual source code itself you must respect the
+terms and conditions of the LGPLv3+ License in which those facts happen
+to be embedded.
 
 # Other Unit Tests
 
