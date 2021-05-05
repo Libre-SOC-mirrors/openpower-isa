@@ -921,8 +921,13 @@ class PowerDecodeSubset(Elaboratable):
 
         # copy over SVP64 input record fields (if they exist)
         if self.svp64_en:
-            for (field, _) in sv_input_record_layout:
-                comb += self.do_copy(field, self.op_get(field))
+            # TODO, really do we have to do these explicitly?? sigh
+            #for (field, _) in sv_input_record_layout:
+            #    comb += self.do_copy(field, self.rm_dec.op_get(field))
+            comb += self.do_copy("sv_pred_sz", self.rm_dec.pred_sz)
+            comb += self.do_copy("sv_pred_dz", self.rm_dec.pred_dz)
+            comb += self.do_copy("sv_saturate", self.rm_dec.saturate)
+            comb += self.do_copy("sv_Ptype", self.rm_dec.ptype_in)
         return m
 
 
