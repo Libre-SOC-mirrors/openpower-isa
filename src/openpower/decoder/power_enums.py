@@ -26,7 +26,7 @@ def find_wiki_dir():
     basedir = dirname(dirname(dirname(filedir)))
     tabledir = join(basedir, 'openpower')
     isatables = join(tabledir, 'isatables')
-    print ("find_wiki_dir", isatables)
+    #print ("find_wiki_dir", isatables)
     return isatables
 
 
