@@ -470,7 +470,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_15_intpred_reentrant(self):
-        lst = """['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
+        """lst = ['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
 
         checks that we are able to resume in the middle of a VL loop,
         after an interrupt, or after the user has updated src/dst step
