@@ -8,7 +8,7 @@ from openpower.sv.trans.svp64 import SVP64Asm
 class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_1_sv_add(self):
-        """lst = ['sv.add 1.v, 5.v, 9.v']
+        """>>> lst = ['sv.add 1.v, 5.v, 9.v']
         adds:
            1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
            2 = 6 + 10  => 0x3334 = 0x2223 + 0x1111
@@ -33,7 +33,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_2_sv_add_scalar(self):
-        """lst = ['sv.add 1, 5, 9']
+        """>>> lst = ['sv.add 1, 5, 9']
         adds:
            1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
         """
@@ -55,7 +55,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_3_sv_check_extra(self):
-        """lst = ['sv.add 13.v, 10.v, 7.v']
+        """>>> lst = ['sv.add 13.v, 10.v, 7.v']
         adds:
             13 = 10 + 7   => 0x4242 = 0x1230 + 0x3012
 
@@ -83,7 +83,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_4_sv_add_(self):
-        """lst = ['sv.add. 1.v, 5.v, 9.v']
+        """>>> lst = ['sv.add. 1.v, 5.v, 9.v']
         adds when Rc=1:                               TODO CRs higher up
             1 = 5 + 9   => 0 = -1+1                 CR0=0b100
             2 = 6 + 10  => 0x3334 = 0x2223+0x1111   CR1=0b010
@@ -109,7 +109,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_5_sv_check_vl_0(self):
-        """lst = [
+        """>>> lst = [
             'sv.add 13.v, 10.v, 7.v',  # skipped, because VL == 0
             'add 1, 5, 9'
         ]
@@ -140,7 +140,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     # checks that SRCSTEP was reset properly after an SV instruction
     def case_6_sv_add_multiple(self):
-        """lst = [
+        """>>> lst = [
             'sv.add 1.v, 5.v, 9.v',
             'sv.add 13.v, 10.v, 7.v'
         ]
@@ -177,7 +177,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_7_sv_add_2(self):
-        """lst = ['sv.add 1, 5.v, 9.v']
+        """>>> lst = ['sv.add 1, 5.v, 9.v']
         adds:
             1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
         """
@@ -201,7 +201,8 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_8_sv_add_3(self):
-        """lst = ['sv.add 1.v, 5, 9.v']
+        """>>> lst = ['sv.add 1.v, 5, 9.v']
+
         adds:
             1 = 5 + 9   => 0x5555 = 0x4321+0x1234
             2 = 5 + 10  => 0x5432 = 0x4321+0x1111
@@ -225,7 +226,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_13_sv_predicated_add(self):
-        """lst = [
+        """>>> lst = [
             'sv.add/m=r30 1.v, 5.v, 9.v',
             'sv.add/m=~r30 13.v, 10.v, 7.v'
         ]
@@ -272,7 +273,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_14_intpred_all_zeros_all_ones(self):
-        """lst = [
+        """>>> lst = [
             'sv.add/m=r30 1.v, 5.v, 9.v',
             'sv.add/m=~r30 13.v, 10.v, 7.v'
         ]
@@ -320,7 +321,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_18_sv_add_cr_pred(self):
-        """lst = ['sv.add/m=ne 1.v, 5.v, 9.v']
+        """>>> lst = ['sv.add/m=ne 1.v, 5.v, 9.v']
 
         adds, CR predicated mask CR4.eq = 1, CR5.eq = 0, invert (ne)
             1 = 5 + 9   => not to be touched (skipped)

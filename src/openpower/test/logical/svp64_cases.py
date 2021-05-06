@@ -8,7 +8,7 @@ from openpower.sv.trans.svp64 import SVP64Asm
 class SVP64LogicalTestCase(TestAccumulatorBase):
 
     def case_9_sv_extsw_intpred(self):
-        """lst = ['sv.extsb/sm=~r3/dm=r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=~r3/dm=r3 5.v, 9.v']
 
         extsb, integer twin-pred mask: source is ~r3 (0b01), dest r3 (0b10)
         works as follows, where any zeros indicate "skip element"
@@ -54,7 +54,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_10_intpred_vcompress(self):
-        """lst = ['sv.extsb/sm=r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=r3 5.v, 9.v']
 
            reg num                 0 1 2 3 4 5 6 7 8 9 10 11
            predicate src r3=0b101                     Y  N  Y
@@ -89,7 +89,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_11_intpred_vexpand(self):
-        """lst = ['sv.extsb/dm=r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/dm=r3 5.v, 9.v']
 
         reg num                  0 1 2 3 4 5 6 7 8 9 10 11
         predicate src always                       Y  Y  Y
@@ -124,7 +124,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_12_sv_twinpred(self):
-        """lst = ['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
 
         reg num        0 1 2 3 4 5 6 7 8 9 10 11
         predicate src r3=0b101                     Y  N  Y
@@ -158,7 +158,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_15_intpred_reentrant(self):
-        """lst = ['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
 
         checks that we are able to resume in the middle of a VL loop,
         after an interrupt, or after the user has updated src/dst step
@@ -211,7 +211,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_16_shift_one_by_r3_dest(self):
-        """lst = ['sv.extsb/dm=1<<r3/sm=r30 5.v, 9.v']
+        """>>> lst = ['sv.extsb/dm=1<<r3/sm=r30 5.v, 9.v']
 
         one option for predicate masks is a single-bit set: 1<<r3.
         lots of opportunity for hardware optimisation, it effectively
@@ -250,7 +250,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_17_shift_one_by_r3_source(self):
-        """lst = ['sv.extsb/sm=1<<r3/dm=r30 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=1<<r3/dm=r30 5.v, 9.v']
 
         reg num        0 1 2 3 4 5 6 7 8 9 10 11
         src r3=2: 1<<r3=0b100            N  N  Y
@@ -285,7 +285,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_19_crpred_reentrant(self):
-        """lst = ['sv.extsb/sm=eq/dm=lt 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=eq/dm=lt 5.v, 9.v']
 
         checks reentrant CR predication.  note that the source CR-mask
         and destination CR-mask use *different bits* of the CR fields,
