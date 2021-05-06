@@ -360,3 +360,32 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate, initial_cr=cr.cr.asint())
+
+    def case_sv_extsw_intpred_dz(self):
+        """>>> lst = ['sv.extsb/dm=r3/dz 5.v, 9.v']
+
+        extsb, integer twin-pred mask: dest is r3 (0b01), zeroing on dest.
+        this test will put a zero into the element where its corresponding
+        predicate dest mask bit is also zero.
+        """
+        isa = SVP64Asm(['sv.extsb/dm=r3/dz 5.v, 9.v'
+                       ])
+        lst = list(isa)
+        print ("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[3] = 0b01   # predicate mask (dest)
+        initial_regs[5] = 0xfeed # going to be overwritten
+        initial_regs[6] = 0xbeef # going to be overwritten (with zero)
+        initial_regs[9] = 0x91   # dest r3 is 0b01 so this will be used
+        initial_regs[10] = 0x90  # this gets read but the output gets zero'd
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 2 # VL
+        svstate.maxvl[0:7] = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        self.add_case(Program(lst, bigendian), initial_regs,
+                      initial_svstate=svstate)
+
