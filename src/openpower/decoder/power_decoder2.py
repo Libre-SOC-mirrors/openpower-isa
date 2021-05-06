@@ -715,6 +715,9 @@ class PowerDecodeSubset(Elaboratable):
         if svp64_en:
             self.sv_rm = SVP64Rec(name="dec_svp64") # SVP64 RM field
             self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
+            # set these to the predicate mask bits needed for the ALU
+            self.pred_sm = Signal() # TODO expand to SIMD mask width
+            self.pred_dm = Signal() # TODO expand to SIMD mask width
         self.sv_a_nz = Signal(1)
         self.final = final
         self.opkls = opkls
@@ -928,10 +931,15 @@ class PowerDecodeSubset(Elaboratable):
             # TODO, really do we have to do these explicitly?? sigh
             #for (field, _) in sv_input_record_layout:
             #    comb += self.do_copy(field, self.rm_dec.op_get(field))
-            comb += self.do_copy("sv_pred_sz", self.rm_dec.pred_sz)
-            comb += self.do_copy("sv_pred_dz", self.rm_dec.pred_dz)
             comb += self.do_copy("sv_saturate", self.rm_dec.saturate)
             comb += self.do_copy("sv_Ptype", self.rm_dec.ptype_in)
+            # these get set up based on incoming mask bits.  TODO:
+            # pass in multiple bits (later, when SIMD backends are enabled)
+            with m.If(self.rm_dec.pred_sz):
+                comb += self.do_copy("sv_pred_sz", ~self.pred_sm)
+            with m.If(self.rm_dec.pred_dz):
+                comb += self.do_copy("sv_pred_dz", ~self.pred_dm)
+
         return m
 
 
