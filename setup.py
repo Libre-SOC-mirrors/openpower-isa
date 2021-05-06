@@ -6,7 +6,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md')).read()
 NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
-version = '0.0.1'
+version = '0.0.2'
 
 # using pip3 for ongoing development is a royal pain.  seriously not
 # recommended.  therefore a number of these dependencies have been
