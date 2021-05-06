@@ -12,28 +12,30 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
 
         extsb, integer twin-pred mask: source is ~r3 (0b01), dest r3 (0b10)
         works as follows, where any zeros indicate "skip element"
-        - sources are 9 and 10
-        - dests are 5 and 6
-        - source mask says "pick first element from source (5)
-        - dest mask says "pick *second* element from dest (10)
 
-        therefore the operation that's carried out is:
+            * sources are 9 and 10
+            * dests are 5 and 6
+            * source mask says "pick first element from source (5)
+            * dest mask says "pick *second* element from dest (10)
+
+        therefore the operation that's carried out is::
+
              GPR(10) = extsb(GPR(5))
 
         this is a type of back-to-back VREDUCE and VEXPAND but it applies
         to *operations*, not just MVs like in traditional Vector ISAs
-        ascii graphic:
+        ascii graphic::
 
-           reg num                 0 1 2 3 4 5 6 7 8 9 10
-           predicate src ~r3=0b01                    Y N
-                                                     |
-                                               +-----+
-                                               |
-           predicate dest r3=0b10            N Y
+            reg num                 0 1 2 3 4 5 6 7 8 9 10
+            predicate src ~r3=0b01                    Y N
+                                                      |
+                                                +-----+
+                                                |
+            predicate dest r3=0b10            N Y
 
         expected results:
-        r5 = 0x0                   dest r3 is 0b10: skip
-        r6 = 0xffff_ffff_ffff_ff91 2nd bit of r3 is 1
+            * r5 = 0x0                   dest r3 is 0b10: skip
+            * r6 = 0xffff_ffff_ffff_ff91 2nd bit of r3 is 1
         """
         isa = SVP64Asm(['sv.extsb/sm=~r3/dm=r3 5.v, 9.v'])
         lst = list(isa)
@@ -56,18 +58,20 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
     def case_10_intpred_vcompress(self):
         """>>> lst = ['sv.extsb/sm=r3 5.v, 9.v']
 
-           reg num                 0 1 2 3 4 5 6 7 8 9 10 11
-           predicate src r3=0b101                     Y  N  Y
-                                                     |     |
-                                             +-------+     |
-                                             | +-----------+
-                                             | |
-           predicate dest always             Y Y Y
+        ascii graphic::
+
+            reg num                 0 1 2 3 4 5 6 7 8 9 10 11
+            predicate src r3=0b101                    Y  N  Y
+                                                      |     |
+                                              +-------+     |
+                                              | +-----------+
+                                              | |
+            predicate dest always             Y Y Y
 
         expected results:
-        r5 = 0xffff_ffff_ffff_ff90 (from r9)
-        r6 = 0xffff_ffff_ffff_ff92 (from r11)
-        r7 = 0x0 (VL loop runs out before we can use it)
+            * r5 = 0xffff_ffff_ffff_ff90 (from r9)
+            * r6 = 0xffff_ffff_ffff_ff92 (from r11)
+            * r7 = 0x0 (VL loop runs out before we can use it)
         """
         isa = SVP64Asm(['sv.extsb/sm=r3 5.v, 9.v'])
         lst = list(isa)
@@ -91,18 +95,20 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
     def case_11_intpred_vexpand(self):
         """>>> lst = ['sv.extsb/dm=r3 5.v, 9.v']
 
-        reg num                  0 1 2 3 4 5 6 7 8 9 10 11
-        predicate src always                       Y  Y  Y
-                                                   |  |
-                                           +-------+  |
-                                           |   +------+
-                                           |   |
-        predicate dest r3=0b101            Y N Y
+        ascii graphic::
+
+            reg num                  0 1 2 3 4 5 6 7 8 9 10 11
+            predicate src always                       Y  Y  Y
+                                                       |  |
+                                               +-------+  |
+                                               |   +------+
+                                               |   |
+            predicate dest r3=0b101            Y N Y
 
         expected results:
-        r5 = 0xffff_ffff_ffff_ff90 1st bit of r3 is 1
-        r6 = 0x0                   skip
-        r7 = 0xffff_ffff_ffff_ff91 3nd bit of r3 is 1
+            * r5 = 0xffff_ffff_ffff_ff90 1st bit of r3 is 1
+            * r6 = 0x0                   skip
+            * r7 = 0xffff_ffff_ffff_ff91 3nd bit of r3 is 1
         """
         isa = SVP64Asm(['sv.extsb/dm=r3 5.v, 9.v'])
         lst = list(isa)
@@ -126,17 +132,19 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
     def case_12_sv_twinpred(self):
         """>>> lst = ['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
 
-        reg num        0 1 2 3 4 5 6 7 8 9 10 11
-        predicate src r3=0b101                     Y  N  Y
-                                                   |
-                                             +-----+
-                                             |
-        predicate dest ~r3=0b010           N Y N
+        ascii graphic::
+
+            reg num        0 1 2 3 4 5 6 7 8 9 10 11
+            predicate src r3=0b101                     Y  N  Y
+                                                       |
+                                                 +-----+
+                                                 |
+            predicate dest ~r3=0b010           N Y N
 
         expected results:
-        r5 = 0x0                   dest ~r3 is 0b010: skip
-        r6 = 0xffff_ffff_ffff_ff90 2nd bit of ~r3 is 1
-        r7 = 0x0                   dest ~r3 is 0b010: skip
+            * r5 = 0x0                   dest ~r3 is 0b010: skip
+            * r6 = 0xffff_ffff_ffff_ff90 2nd bit of ~r3 is 1
+            * r7 = 0x0                   dest ~r3 is 0b010: skip
         """
         isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 5.v, 9.v'])
         lst = list(isa)
@@ -170,21 +178,23 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         make sure to skip mask bits before the initial step,
         to save clock cycles. or not. your choice.
 
-        reg num        0 1 2 3 4 5 6 7 8 9 10 11 12
-        srcstep=1                           v
-        src r3=0b0101                    Y  N  Y  N
-                                         :     |
-                                   + - - +     |
-                                   :   +-------+
-                                   :   |
-        dest ~r3=0b1010          N Y N Y
-        dststep=2                    ^
+        ascii graphic::
+
+            reg num        0 1 2 3 4 5 6 7 8 9 10 11 12
+            srcstep=1                           v
+            src r3=0b0101                    Y  N  Y  N
+                                             :     |
+                                       + - - +     |
+                                       :   +-------+
+                                       :   |
+            dest ~r3=0b1010          N Y N Y
+            dststep=2                    ^
 
         expected results:
-        r5 = 0x0  # skip
-        r6 = 0x0  # dststep starts at 3, so this gets skipped
-        r7 = 0x0  # skip
-        r8 = 0xffff_ffff_ffff_ff92  # this will be used
+            * r5 = 0x0  # skip
+            * r6 = 0x0  # dststep starts at 3, so this gets skipped
+            * r7 = 0x0  # skip
+            * r8 = 0xffff_ffff_ffff_ff92  # this will be used
         """
         isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 5.v, 9.v'])
         lst = list(isa)
@@ -217,17 +227,19 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         lots of opportunity for hardware optimisation, it effectively
         allows dynamic indexing of the register file
 
-        reg num        0 1 2 3 4 5 6 7 8 9 10 11
-        src r30=0b100                    N  N  Y
-                                               |
-                                   +-----------+
-                                   |
-        dest r3=1: 1<<r3=0b010   N Y N
+        ascii graphic::
+
+            reg num        0 1 2 3 4 5 6 7 8 9 10 11
+            src r30=0b100                    N  N  Y
+                                                   |
+                                       +-----------+
+                                       |
+            dest r3=1: 1<<r3=0b010   N Y N
 
         expected results:
-        r5 = 0x0                    skipped
-        r6 = 0xffff_ffff_ffff_ff92  r3 is 1, so this is used
-        r7 = 0x0                    skipped
+            * r5 = 0x0                    skipped
+            * r6 = 0xffff_ffff_ffff_ff92  r3 is 1, so this is used
+            * r7 = 0x0                    skipped
         """
         isa = SVP64Asm(['sv.extsb/dm=1<<r3/sm=r30 5.v, 9.v'])
         lst = list(isa)
@@ -252,17 +264,19 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
     def case_17_shift_one_by_r3_source(self):
         """>>> lst = ['sv.extsb/sm=1<<r3/dm=r30 5.v, 9.v']
 
-        reg num        0 1 2 3 4 5 6 7 8 9 10 11
-        src r3=2: 1<<r3=0b100            N  N  Y
-                                               |
-                                   +-----------+
-                                   |
-        dest r30=0b010           N Y N
+        ascii graphic::
+
+            reg num        0 1 2 3 4 5 6 7 8 9 10 11
+            src r3=2: 1<<r3=0b100            N  N  Y
+                                                   |
+                                       +-----------+
+                                       |
+            dest r30=0b010           N Y N
 
         expected results:
-        r5 = 0x0                    skipped
-        r6 = 0xffff_ffff_ffff_ff92  2nd bit of r30 is 1
-        r7 = 0x0                    skipped
+            * r5 = 0x0                    skipped
+            * r6 = 0xffff_ffff_ffff_ff92  2nd bit of r30 is 1
+            * r7 = 0x0                    skipped
         """
         isa = SVP64Asm(['sv.extsb/sm=1<<r3/dm=r30 5.v, 9.v'])
         lst = list(isa)
@@ -290,24 +304,27 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         checks reentrant CR predication.  note that the source CR-mask
         and destination CR-mask use *different bits* of the CR fields,
         despite both predicates starting from the same CR field number.
-        cr4.lt is zero, cr7.lt is zero AND
-        cr5.eq is zero, cr6.eq is zero.
 
-        reg num        0 1 2 3 4 5 6 7 8 9 10 11 12
-        srcstep=1                           v
-        src cr4.eq=1                     Y  N  Y  N
-            cr6.eq=1                     :     |
-                                   + - - +     |
-                                   :   +-------+
-        dest cr5.lt=1              :   |
-             cr7.lt=1            N Y N Y
-        dststep=2                    ^
+            * cr4.lt is zero, cr7.lt is zero AND
+            * cr5.eq is zero, cr6.eq is zero.
+
+        ascii graphic::
+
+            reg num        0 1 2 3 4 5 6 7 8 9 10 11 12
+            srcstep=1                           v
+            src cr4.eq=1                     Y  N  Y  N
+                cr6.eq=1                     :     |
+                                       + - - +     |
+                                       :   +-------+
+            dest cr5.lt=1              :   |
+                 cr7.lt=1            N Y N Y
+            dststep=2                    ^
 
         expected results:
-        r5 = 0x0  skip
-        r6 = 0x0  dststep starts at 3, so this gets skipped
-        r7 = 0x0  skip
-        r8 = 0xffff_ffff_ffff_ff92  this will be used
+            * r5 = 0x0  skip
+            * r6 = 0x0  dststep starts at 3, so this gets skipped
+            * r7 = 0x0  skip
+            * r8 = 0xffff_ffff_ffff_ff92  this will be used
         """
         isa = SVP64Asm(['sv.extsb/sm=eq/dm=lt 5.v, 9.v'])
         lst = list(isa)

@@ -43,7 +43,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
-    #'sphinx.ext.napoleon',
+    'sphinx.ext.napoleon',
     'sphinx.ext.coverage',
     'recommonmark',
     #'symbolator_sphinx',

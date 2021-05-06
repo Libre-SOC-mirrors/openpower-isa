@@ -9,9 +9,10 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_1_sv_add(self):
         """>>> lst = ['sv.add 1.v, 5.v, 9.v']
+
         adds:
-           1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
-           2 = 6 + 10  => 0x3334 = 0x2223 + 0x1111
+            * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
+            * 2 = 6 + 10  => 0x3334 = 0x2223 + 0x1111
         """
         isa = SVP64Asm(['sv.add 1.v, 5.v, 9.v'])
         lst = list(isa)
@@ -34,8 +35,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_2_sv_add_scalar(self):
         """>>> lst = ['sv.add 1, 5, 9']
+
         adds:
-           1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
+            * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
         """
         isa = SVP64Asm(['sv.add 1, 5, 9'])
         lst = list(isa)
@@ -56,8 +58,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_3_sv_check_extra(self):
         """>>> lst = ['sv.add 13.v, 10.v, 7.v']
+
         adds:
-            13 = 10 + 7   => 0x4242 = 0x1230 + 0x3012
+            * 13 = 10 + 7   => 0x4242 = 0x1230 + 0x3012
 
         This case helps checking the encoding of the Extra field
         It was built so the v3.0b registers are: 3, 2, 1
@@ -84,9 +87,10 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_4_sv_add_(self):
         """>>> lst = ['sv.add. 1.v, 5.v, 9.v']
+
         adds when Rc=1:                               TODO CRs higher up
-            1 = 5 + 9   => 0 = -1+1                 CR0=0b100
-            2 = 6 + 10  => 0x3334 = 0x2223+0x1111   CR1=0b010
+            * 1 = 5 + 9   => 0 = -1+1                 CR0=0b100
+            * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111   CR1=0b010
         """
         isa = SVP64Asm(['sv.add. 1.v, 5.v, 9.v'])
         lst = list(isa)
@@ -113,8 +117,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
             'sv.add 13.v, 10.v, 7.v',  # skipped, because VL == 0
             'add 1, 5, 9'
         ]
+
         adds:
-            1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
+            * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
         """
         isa = SVP64Asm([
             'sv.add 13.v, 10.v, 7.v',  # skipped, because VL == 0
@@ -144,13 +149,14 @@ class SVP64ALUTestCase(TestAccumulatorBase):
             'sv.add 1.v, 5.v, 9.v',
             'sv.add 13.v, 10.v, 7.v'
         ]
+
         adds:
-            1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
-            2 = 6 + 10  => 0x3334 = 0x2223 + 0x1111
-            3 = 7 + 11  => 0x4242 = 0x3012 + 0x1230
-            13 = 10 + 7  => 0x2341 = 0x1111 + 0x1230
-            14 = 11 + 8  => 0x3012 = 0x3012 + 0x0000
-            15 = 12 + 9  => 0x1234 = 0x0000 + 0x1234
+            * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
+            * 2 = 6 + 10  => 0x3334 = 0x2223 + 0x1111
+            * 3 = 7 + 11  => 0x4242 = 0x3012 + 0x1230
+            * 13 = 10 + 7  => 0x2341 = 0x1111 + 0x1230
+            * 14 = 11 + 8  => 0x3012 = 0x3012 + 0x0000
+            * 15 = 12 + 9  => 0x1234 = 0x0000 + 0x1234
         """
         isa = SVP64Asm([
             'sv.add 1.v, 5.v, 9.v',
@@ -178,8 +184,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_7_sv_add_2(self):
         """>>> lst = ['sv.add 1, 5.v, 9.v']
+
         adds:
-            1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
+            * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
         """
         #       r1 is scalar so ENDS EARLY
         isa = SVP64Asm(['sv.add 1, 5.v, 9.v'])
@@ -204,8 +211,8 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         """>>> lst = ['sv.add 1.v, 5, 9.v']
 
         adds:
-            1 = 5 + 9   => 0x5555 = 0x4321+0x1234
-            2 = 5 + 10  => 0x5432 = 0x4321+0x1111
+            * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
+            * 2 = 5 + 10  => 0x5432 = 0x4321+0x1111
         """
         isa = SVP64Asm(['sv.add 1.v, 5, 9.v'])
         lst = list(isa)
@@ -237,14 +244,14 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         mask was set up as part of a parallel If-Then-Else)
 
         first add:
-            1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
-            2 = 0 (skipped)
-            3 = 7 + 11  => 0x4242 = 0x3012 + 0x1230
+            * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
+            * 2 = 0 (skipped)
+            * 3 = 7 + 11  => 0x4242 = 0x3012 + 0x1230
 
         second add:
-           13 = 0 (skipped)
-           14 = 11 + 8  => 0xB063 = 0x3012 + 0x8051
-           15 = 0 (skipped)
+           * 13 = 0 (skipped)
+           * 14 = 11 + 8  => 0xB063 = 0x3012 + 0x8051
+           * 15 = 0 (skipped)
         """
         isa = SVP64Asm([
             'sv.add/m=r30 1.v, 5.v, 9.v',
@@ -284,14 +291,14 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         Vector operations with a fully-zero mask.
 
         first add:
-            1 = 0 (skipped)
-            2 = 0 (skipped)
-            3 = 0 (skipped)
+            * 1 = 0 (skipped)
+            * 2 = 0 (skipped)
+            * 3 = 0 (skipped)
 
         second add:
-           13 = 10 + 7  => 0x2341 = 0x1111 + 0x1230
-           14 = 11 + 8  => 0xB063 = 0x3012 + 0x8051
-           15 = 12 + 9  => 0x7736 = 0x6502 + 0x1234
+            * 13 = 10 + 7  => 0x2341 = 0x1111 + 0x1230
+            * 14 = 11 + 8  => 0xB063 = 0x3012 + 0x8051
+            * 15 = 12 + 9  => 0x7736 = 0x6502 + 0x1234
         """
         isa = SVP64Asm([
             'sv.add/m=r30 1.v, 5.v, 9.v',
@@ -324,12 +331,12 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         """>>> lst = ['sv.add/m=ne 1.v, 5.v, 9.v']
 
         adds, CR predicated mask CR4.eq = 1, CR5.eq = 0, invert (ne)
-            1 = 5 + 9   => not to be touched (skipped)
-            2 = 6 + 10  => 0x3334 = 0x2223+0x1111
+            * 1 = 5 + 9   => not to be touched (skipped)
+            * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111
 
         expected results:
-        r1 = 0xbeef skipped since CR4 is 1 and test is inverted
-        r2 = 0x3334 CR5 is 0, so this is used
+            * r1 = 0xbeef skipped since CR4 is 1 and test is inverted
+            * r2 = 0x3334 CR5 is 0, so this is used
         """
         isa = SVP64Asm(['sv.add/m=ne 1.v, 5.v, 9.v'])
         lst = list(isa)
