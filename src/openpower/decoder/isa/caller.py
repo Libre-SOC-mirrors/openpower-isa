@@ -563,8 +563,11 @@ class ISACaller:
         print("TRAP:", hex(trap_addr), hex(self.namespace['MSR'].value))
         # store CIA(+4?) in SRR0, set NIA to 0x700
         # store MSR in SRR1, set MSR to um errr something, have to check spec
+        # store SVSTATE (if enabled) in SVSRR0
         self.spr['SRR0'].value = self.pc.CIA.value
         self.spr['SRR1'].value = self.namespace['MSR'].value
+        if self.is_svp64_mode:
+            self.spr['SVSRR0'] = self.namespace['SVSTATE'].value
         self.trap_nia = SelectableInt(trap_addr, 64)
         self.spr['SRR1'][trap_bit] = 1  # change *copy* of MSR in SRR1
 
