@@ -10,6 +10,7 @@ from openpower.decoder.isa.caller import ISACaller, inject
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
+from openpower.consts import PIb
 
 
 class Register:
@@ -92,7 +93,13 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(1), SelectableInt(all1s, 64))
             self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
             print ("DAR", hex(sim.spr['DAR'].value))
-            self.assertEqual(sim.spr['DAR'], all1s)
+            print ("PC", hex(sim.pc.CIA.value))
+            # TODO get MSR, test that.
+            # TODO, test rest of SRR1 equal to zero
+            self.assertEqual(sim.spr['SRR1'][PIb.PRIV], 0x1) # expect priv bit
+            self.assertEqual(sim.spr['SRR0'], 0x4)   # expect to be 2nd op
+            self.assertEqual(sim.spr['DAR'], all1s)   # expect failed LD addr
+            self.assertEqual(sim.pc.CIA.value, 0x600) # align exception
 
     def run_tst_program(self, prog, initial_regs=[0] * 32, initial_mem=None):
         simulator = run_tst(prog, initial_regs, mem=initial_mem)
