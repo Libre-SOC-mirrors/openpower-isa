@@ -73,11 +73,12 @@ class Mem:
                  instr_fetch=False):
         print("ld from addr 0x{:x} width {:d}".format(address, width),
                 swap, check_in_mem, instr_fetch)
+        ldaddr = address
         remainder = address & (self.bytes_per_word - 1)
         address = address >> self.word_log2
         if remainder & (width - 1) != 0:
             exc = MemException("unaligned", "Unaligned access Error")
-            exc.dar = address
+            exc.dar = ldaddr
             raise exc
         if address in self.mem:
             val = self.mem[address]
@@ -105,7 +106,7 @@ class Mem:
               "memaddr 0x{:x}/{:x}".format(v, staddr, addr, remainder, swap))
         if remainder & (width - 1) != 0:
             exc = MemException("unaligned", "Unaligned access Error")
-            exc.dar = address
+            exc.dar = staddr
             raise exc
         if swap:
             v = swap_order(v, width)
