@@ -806,7 +806,7 @@ class ISACaller:
                 raise e                          # ... re-raise
             # run a Trap but set DAR first
             print ("memory unaligned exception, DAR", e.dar)
-            self.spr['DAR'] = e.dar
+            self.spr['DAR'] = SelectableInt(e.dar, 64)
             self.call_trap(0x600, PIb.PRIV)                # 0x600, privileged
             return
 

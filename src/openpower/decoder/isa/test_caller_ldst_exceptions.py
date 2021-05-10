@@ -76,10 +76,11 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_load_misalign(self):
         lst = ["addi 2, 0, 0x0010", # get PC off of zero
-               "ldx 3, 1, 0",
+               "ldx 3, 0, 1",
                ]
         initial_regs = [0] * 32
-        initial_regs[1] = 0xFFFFFFFFFFFFFFFF # deliberately misaligned
+        all1s = 0xFFFFFFFFFFFFFFFF
+        initial_regs[1] = all1s
         initial_regs[2] = 0x0008
         initial_mem = {0x0000: (0x5432123412345678, 8),
                        0x0008: (0xabcdef0187654321, 8),
@@ -88,9 +89,10 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, initial_mem)
-            self.assertEqual(sim.gpr(1), SelectableInt(-1, 64))
+            self.assertEqual(sim.gpr(1), SelectableInt(all1s, 64))
             self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
-            self.assertEqual(sim.spr['DAR'], SelectableInt(-1, 64))
+            print ("DAR", hex(sim.spr['DAR'].value))
+            self.assertEqual(sim.spr['DAR'], all1s)
 
     def run_tst_program(self, prog, initial_regs=[0] * 32, initial_mem=None):
         simulator = run_tst(prog, initial_regs, mem=initial_mem)
