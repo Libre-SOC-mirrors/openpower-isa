@@ -555,6 +555,12 @@ class SelectableIntTestCase(unittest.TestCase):
         self.assertTrue(a != b)
         self.assertFalse(a == b)
 
+    def test_maxint(self):
+        a = SelectableInt(0xffffffffffffffff, bits=64)
+        b = SelectableInt(0, bits=64)
+        result = a + b
+        self.assertTrue(result.value == 0xffffffffffffffff)
+
 
 if __name__ == "__main__":
     unittest.main()
