@@ -27,6 +27,9 @@ def swap_order(x, nbytes):
     return x
 
 
+class MemException(Exception):
+    pass
+
 
 class Mem:
 
@@ -72,7 +75,10 @@ class Mem:
                 swap, check_in_mem, instr_fetch)
         remainder = address & (self.bytes_per_word - 1)
         address = address >> self.word_log2
-        assert remainder & (width - 1) == 0, "Unaligned access unsupported!"
+        if remainder & (width - 1) != 0:
+            exc = MemException("unaligned", "Unaligned access unsupported!")
+            exc.dar = address
+            raise exc
         if address in self.mem:
             val = self.mem[address]
         elif check_in_mem:
@@ -97,7 +103,10 @@ class Mem:
         addr = addr >> self.word_log2
         print("Writing 0x{:x} to ST 0x{:x} "
               "memaddr 0x{:x}/{:x}".format(v, staddr, addr, remainder, swap))
-        assert remainder & (width - 1) == 0, "Unaligned access unsupported!"
+        if remainder & (width - 1) != 0:
+            exc = MemException("unaligned", "Unaligned access unsupported!")
+            exc.dar = address
+            raise exc
         if swap:
             v = swap_order(v, width)
         if width != self.bytes_per_word:
