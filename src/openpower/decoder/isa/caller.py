@@ -33,7 +33,7 @@ from openpower.consts import SVP64CROffs
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 
 from openpower.decoder.isa.radixmmu import RADIX
-from openpower.decoder.isa.mem import Mem, swap_order
+from openpower.decoder.isa.mem import Mem, swap_order, MemException
 
 from collections import namedtuple
 import math
@@ -782,7 +782,18 @@ class ISACaller:
             code = self.disassembly[self._pc]
             print("sim-execute", hex(self._pc), code)
         opname = code.split(' ')[0]
-        yield from self.call(opname)
+        try:
+            yield from self.call(opname)         # execute the instruction
+        except MemException as e:                # check for memory errors
+            if e.args[0] != 'unaligned':         # only doing aligned at the mo
+                raise e                          # ... re-raise
+            # run a Trap but set DAR first
+            print ("memory unaligned exception, DAR", e.dar)
+            self.spr['DAR'] = e.dar
+            self.TRAP(0x600, PIb.PRIV)
+            self.namespace['NIA'] = self.trap_nia
+            self.pc.update(self.namespace, self.is_svp64_mode)
+            return
 
         # don't use this except in special circumstances
         if not self.respect_pc:
