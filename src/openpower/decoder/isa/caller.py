@@ -545,7 +545,21 @@ class ISACaller:
         self.decoder = decoder2.dec
         self.dec2 = decoder2
 
+    def call_trap(self, trap_addr, trap_bit):
+        """calls TRAP and sets up NIA to the new execution location.
+        next instruction will begin at trap_addr.
+        """
+        self.TRAP(trap_addr, trap_bit)
+        self.namespace['NIA'] = self.trap_nia
+        self.pc.update(self.namespace, self.is_svp64_mode)
+
     def TRAP(self, trap_addr=0x700, trap_bit=PIb.TRAP):
+        """TRAP> saves PC, MSR (and TODO SVSTATE), and updates MSR
+
+        TRAP function is callable from inside the pseudocode itself,
+        hence the default arguments.  when calling from inside ISACaller
+        it is best to use call_trap()
+        """
         print("TRAP:", hex(trap_addr), hex(self.namespace['MSR'].value))
         # store CIA(+4?) in SRR0, set NIA to 0x700
         # store MSR in SRR1, set MSR to um errr something, have to check spec
@@ -790,9 +804,7 @@ class ISACaller:
             # run a Trap but set DAR first
             print ("memory unaligned exception, DAR", e.dar)
             self.spr['DAR'] = e.dar
-            self.TRAP(0x600, PIb.PRIV)
-            self.namespace['NIA'] = self.trap_nia
-            self.pc.update(self.namespace, self.is_svp64_mode)
+            self.call_trap(0x600, PIb.PRIV)                # 0x600, privileged
             return
 
         # don't use this except in special circumstances
@@ -896,9 +908,7 @@ class ISACaller:
               self.msr[MSRb.PR])
         # check MSR priv bit and whether op is privileged: if so, throw trap
         if instr_is_privileged and self.msr[MSRb.PR] == 1:
-            self.TRAP(0x700, PIb.PRIV)
-            self.namespace['NIA'] = self.trap_nia
-            self.pc.update(self.namespace, self.is_svp64_mode)
+            self.call_trap(0x700, PIb.PRIV)
             return
 
         # check halted condition
@@ -918,9 +928,7 @@ class ISACaller:
 
         if illegal:
             print("illegal", name, asmop)
-            self.TRAP(0x700, PIb.ILLEG)
-            self.namespace['NIA'] = self.trap_nia
-            self.pc.update(self.namespace, self.is_svp64_mode)
+            self.call_trap(0x700, PIb.ILLEG)
             print("name %s != %s - calling ILLEGAL trap, PC: %x" %
                   (name, asmop, self.pc.CIA.value))
             return
