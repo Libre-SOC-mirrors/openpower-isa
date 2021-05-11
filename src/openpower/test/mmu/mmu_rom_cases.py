@@ -1,6 +1,8 @@
 from openpower.simulator.program import Program
 from openpower.endian import bigendian
 from openpower.test.common import (TestAccumulatorBase, skip_case)
+from openpower.consts import MSR
+
 
 def b(x):
     return int.from_bytes(x.to_bytes(8, byteorder='little'),
@@ -45,9 +47,11 @@ class MMUTestCaseROM(TestAccumulatorBase):
         prtbl = 0x1000000
         initial_regs[1] = prtbl
         
+        initial_msr = 1 << MSR.PR # must set "problem" state for virtual memory
         initial_sprs = {'DSISR': 0, 'DAR': 0,
                          720: 0}
         self.add_case(Program(lst, bigendian),
-                      initial_regs, initial_sprs)
+                      initial_regs, initial_sprs,
+                      initial_msr=initial_msr)
 
 
