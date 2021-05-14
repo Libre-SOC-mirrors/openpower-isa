@@ -189,10 +189,10 @@ def identify_sint_mul_pattern(p):
     return True  # yippee!
 
 
-def apply_trailer(atom, trailer):
+def apply_trailer(atom, trailer, read_regs):
     if trailer[0] == "TLIST":
         # assume depth of one
-        atom = apply_trailer(atom, trailer[1])
+        atom = apply_trailer(atom, trailer[1], read_regs)
         trailer = trailer[2]
     if trailer[0] == "CALL":
         #p[0] = ast.Expr(ast.Call(p[1], p[2][1], []))
@@ -207,6 +207,8 @@ def apply_trailer(atom, trailer):
         subs = trailer[1]
         if len(subs) == 1:
             idx = subs[0]
+            if isinstance(idx, ast.Name) and idx.id in regs + fregs:
+                read_regs.add(idx.id)
             if isinstance(idx, ast.Name) and idx.id in regs:
                 print ("single atom subscript, underscored", idx.id)
                 idx = ast.Name("_%s" % idx.id, ast.Load())
@@ -678,7 +680,7 @@ class PowerParser:
             print(astor.dump_tree(p[1]))
             print("power dump trailerlist")
             print(astor.dump_tree(p[2]))
-            p[0] = apply_trailer(p[1], p[2])
+            p[0] = apply_trailer(p[1], p[2], self.read_regs)
             if isinstance(p[1], ast.Name):
                 name = p[1].id
                 if name in regs + fregs:
