@@ -1,4 +1,5 @@
 import unittest
+import struct
 from copy import copy
 from openpower.decoder.power_fields import BitRange
 from operator import (add, sub, mul, floordiv, truediv, mod, or_, and_, xor,
@@ -416,6 +417,14 @@ class SelectableInt:
     def asint(self):
         return self.value
 
+    def __float__(self):
+        """convert to double-precision float.  TODO, properly convert
+        rather than a hack-job: must actually support Power IEEE754 FP
+        """
+        assert self.bits == 64 # must be 64-bit
+        data = self.value.to_bytes(8, byteorder='little')
+        return struct.unpack('<d', data)[0]
+
 
 def onebit(bit):
     return SelectableInt(1 if bit else 0, 1)
@@ -560,6 +569,18 @@ class SelectableIntTestCase(unittest.TestCase):
         b = SelectableInt(0, bits=64)
         result = a + b
         self.assertTrue(result.value == 0xffffffffffffffff)
+
+    def test_double_1(self):
+        """use http://weitz.de/ieee/,
+        """
+        for asint, asfloat in [(0x4000000000000000, 2.0),
+                               (0x4056C00000000000, 91.0),
+                               (0xff80000000000000, -1.4044477616111843e+306),
+                              ]:
+            a = SelectableInt(asint, bits=64)
+            convert = float(a)
+            print ("test_double_1", asint, asfloat, convert)
+            self.assertTrue(asfloat == convert)
 
 
 if __name__ == "__main__":
