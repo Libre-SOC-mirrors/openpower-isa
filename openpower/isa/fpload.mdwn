@@ -1,0 +1,169 @@
+<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.6.1 Floating-point storage access instructions. P 140 - 143 -->
+
+# Load Floating-Point Single
+
+D-Form
+
+* lfs FRT,D(RA)
+
+Pseudo-code:
+
+    if RA = 0 then b <- 0
+    else           b <- (RA)
+    EA <- b + EXTS(D)
+    FRT <- DOUBLE(MEM(EA, 4))
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Single Indexed
+
+X-Form
+
+* lfsx FRT,RA,RB
+
+Pseudo-code:
+
+    if RA = 0 then b <- 0
+    else           b <- (RA)
+    EA <- b + (RB)
+    FRT <- DOUBLE(MEM(EA, 4))
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Single with Update
+
+D-Form
+
+* lfsu FRT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    FRT <- DOUBLE(MEM(EA, 4))
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Single with Update Indexed
+
+X-Form
+
+* lfsux FRT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    FRT <- DOUBLE(MEM(EA, 4))
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Double
+
+D-Form
+
+* lfd FRT,D(RA)
+
+Pseudo-code:
+
+    if RA = 0 then b <- 0
+    else           b <- (RA)
+    EA <- b + EXTS(D)
+    FRT <- MEM(EA, 8)
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Double Indexed
+
+X-Form
+
+* lfdx FRT,RA,RB
+
+Pseudo-code:
+
+    if RA = 0 then b <- 0
+    else           b <- (RA)
+    EA <- b + (RB)
+    FRT <- MEM(EA, 8)
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Double with Update
+
+D-Form
+
+* lfdu FRT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    FRT <- MEM(EA, 8)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Double with Update Indexed
+
+X-Form
+
+* lfdux FRT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    FRT <- MEM(EA, 8)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point as Integer Word Algebraic Indexed 
+
+X-Form
+
+* lfiwax FRT,RA,RB
+
+Pseudo-code:
+
+    if RA = 0 then b <- 0
+    else           b <- (RA)
+    EA <- b + (RB)
+    FRT <- EXTS(MEM(EA, 4))
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point as Integer Word Zero Indexed 
+
+X-Form
+
+* lfiwax FRT,RA,RB
+
+Pseudo-code:
+
+    if RA = 0 then b <- 0
+    else           b <- (RA)
+    EA <- b + (RB)
+    FRT <- [0]*32 || MEM(EA, 4)
+
+Special Registers Altered:
+
+    None
