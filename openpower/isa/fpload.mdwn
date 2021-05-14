@@ -10,9 +10,7 @@ D-Form
 
 Pseudo-code:
 
-    if RA = 0 then b <- 0
-    else           b <- (RA)
-    EA <- b + EXTS(D)
+    EA <- (RA|0) + EXTS(D)
     FRT <- DOUBLE(MEM(EA, 4))
 
 Special Registers Altered:
@@ -27,9 +25,7 @@ X-Form
 
 Pseudo-code:
 
-    if RA = 0 then b <- 0
-    else           b <- (RA)
-    EA <- b + (RB)
+    EA <- (RA|0) + (RB)
     FRT <- DOUBLE(MEM(EA, 4))
 
 Special Registers Altered:
@@ -76,9 +72,7 @@ D-Form
 
 Pseudo-code:
 
-    if RA = 0 then b <- 0
-    else           b <- (RA)
-    EA <- b + EXTS(D)
+    EA <- (RA|0) + EXTS(D)
     FRT <- MEM(EA, 8)
 
 Special Registers Altered:
@@ -93,9 +87,7 @@ X-Form
 
 Pseudo-code:
 
-    if RA = 0 then b <- 0
-    else           b <- (RA)
-    EA <- b + (RB)
+    EA <- (RA|0) + (RB)
     FRT <- MEM(EA, 8)
 
 Special Registers Altered:
@@ -142,9 +134,7 @@ X-Form
 
 Pseudo-code:
 
-    if RA = 0 then b <- 0
-    else           b <- (RA)
-    EA <- b + (RB)
+    EA <- (RA|0) + (RB)
     FRT <- EXTS(MEM(EA, 4))
 
 Special Registers Altered:
@@ -155,13 +145,11 @@ Special Registers Altered:
 
 X-Form
 
-* lfiwax FRT,RA,RB
+* lfiwix FRT,RA,RB
 
 Pseudo-code:
 
-    if RA = 0 then b <- 0
-    else           b <- (RA)
-    EA <- b + (RB)
+    EA <- (RA|0) + (RB)
     FRT <- [0]*32 || MEM(EA, 4)
 
 Special Registers Altered:
