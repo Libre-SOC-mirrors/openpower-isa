@@ -1,0 +1,143 @@
+<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.6.3 Floating-point store instructions. P 144 - 147 -->
+
+# Store Floating-Point Single
+
+D-Form
+
+* stfs FRS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA|0) + EXTS(D)
+    MEM(EA, 4)<- SINGLE( (FRS) )
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Single Indexed
+
+X-Form
+
+* stfsx FRS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA|0) + (RB)
+    MEM(EA, 4)<- SINGLE( (FRS) )
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Single with Update
+
+D-Form
+
+* stfsu FRS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    MEM(EA, 4)<- SINGLE( (FRS) )
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Single with Update Indexed
+
+X-Form
+
+* stfsux FRS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    MEM(EA, 4)<- SINGLE( (FRS) )
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Double
+
+D-Form
+
+* stfd FRS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA|0) + EXTS(D)
+    MEM(EA, 8)<- (FRS) 
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Double Indexed
+
+X-Form
+
+* stfdx FRS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA|0) + (RB)
+    MEM(EA, 8)<- (FRS) 
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Double with Update
+
+D-Form
+
+* stfdu FRS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    MEM(EA, 8)<- (FRS) 
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Double with Update Indexed
+
+X-Form
+
+* stfdux FRS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    MEM(EA, 8)<- (FRS) 
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point as Integer Word Indexed 
+
+X-Form
+
+* stfiwx FRS,RA,RB
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + (RB)
+    MEM(EA, 8)<- (FRS)[32:63]
+
+Special Registers Altered:
+
+    None
