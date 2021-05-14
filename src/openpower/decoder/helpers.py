@@ -1,4 +1,5 @@
 import unittest
+import struct
 from openpower.decoder.selectable_int import (SelectableInt, onebit,
                                               selectconcat)
 from nmutil.divmod import trunc_divs, trunc_rems
@@ -215,6 +216,37 @@ def SINGLE(FRS):
 
     return WORD
 
+def fp64toselectable(frt):
+    """convert FP number to 64 bit SelectableInt
+    """
+    b = struct.pack(">d", frt)
+    val = int.from_bytes(b, byteorder='big', signed=False)
+    return SelectableInt(val, 64)
+
+
+def FPADD(FRA, FRB):
+    result = float(FRA) + float(FRB)
+    cvt = fp64toselectable(result)
+    print ("FPADD", FRA, FRB, result, cvt)
+
+
+def FPSUB(FRA, FRB):
+    result = float(FRA) - float(FRB)
+    cvt = fp64toselectable(result)
+    print ("FPSUB", FRA, FRB, result, cvt)
+
+
+def FPMUL(FRA, FRB):
+    result = float(FRA) * float(FRB)
+    cvt = fp64toselectable(result)
+    print ("FPMUL", FRA, FRB, result, cvt)
+
+
+def FPDIV(FRA, FRB):
+    result = float(FRA) / float(FRB)
+    cvt = fp64toselectable(result)
+    print ("FPMUL", FRA, FRB, result, cvt)
+
 
 # For these tests I tried to find power instructions that would let me
 # isolate each of these helper operations. So for instance, when I was
@@ -282,6 +314,12 @@ class HelperTests(unittest.TestCase):
         self.assertHex(EXTS64(value_b), SelectableInt(value_b.value, 64))
         # extswsli reg, 3, 0
         self.assertHex(EXTS64(value_c), 0xffffffff80000000)
+
+    def test_FPADD(self):
+        value_a = SelectableInt(0x4014000000000000, 64)  # 5.0
+        value_b = SelectableInt(0x403B4CCCCCCCCCCD, 64)  # 27.3
+        result = FPADD(value_a, value_b)
+        self.assertHex(0x4040266666666666, result)
 
     def assertHex(self, a, b):
         a_val = a
