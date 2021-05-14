@@ -54,6 +54,11 @@ special_sprs = {
 REG_SORT_ORDER = {
     # TODO (lkcl): adjust other registers that should be in a particular order
     # probably CA, CA32, and CR
+    "FRT": 0,
+    "FRA": 0,
+    "FRB": 0,
+    "FRC": 0,
+    "FRS": 0,
     "RT": 0,
     "RA": 0,
     "RB": 0,

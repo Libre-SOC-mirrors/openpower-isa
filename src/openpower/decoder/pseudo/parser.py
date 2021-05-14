@@ -23,6 +23,8 @@ import ast
 
 # Helper function
 
+regs = ['RA', 'RS', 'RB', 'RC', 'RT']
+fregs = ['FRA', 'FRS', 'FRB', 'FRC', 'FRT']
 
 def Assign(autoassign, assignname, left, right, iea_mode):
     names = []
@@ -263,7 +265,7 @@ class PowerParser:
         print(form)
         formkeys = form._asdict().keys()
         self.declared_vars = set()
-        for rname in ['RA', 'RB', 'RC', 'RT', 'RS']:
+        for rname in regs + fregs:
             self.gprs[rname] = None
             self.declared_vars.add(rname)
         self.available_op_fields = set()
@@ -673,7 +675,7 @@ class PowerParser:
             p[0] = apply_trailer(p[1], p[2])
             if isinstance(p[1], ast.Name):
                 name = p[1].id
-                if name in ['RA', 'RS', 'RB', 'RC', 'RT']:
+                if name in regs + fregs:
                     self.read_regs.add(name)
 
     def p_atom_name(self, p):
