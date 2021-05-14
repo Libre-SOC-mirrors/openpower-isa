@@ -387,6 +387,20 @@ def get_pdecode_idx_in(dec2, name):
             return in2, in2_isvec
         if in3_sel == In3Sel.RS.value:
             return in3, in3_isvec
+    elif name == 'FRA':
+        if in1_sel == In1Sel.FRA.value:
+            return in1, in1_isvec
+    elif name == 'FRB':
+        if in2_sel == In2Sel.FRB.value:
+            return in2, in2_isvec
+    elif name == 'FRC':
+        if in3_sel == In3Sel.FRC.value:
+            return in3, in3_isvec
+    elif name == 'FRS':
+        if in1_sel == In1Sel.FRS.value:
+            return in1, in1_isvec
+        if in2_sel == In2Sel.FRS.value:
+            return in2, in2_isvec
     return None, False
 
 
@@ -429,6 +443,15 @@ def get_pdecode_idx_out(dec2, name):
                                       OutSel.RT_OR_ZERO.value, out, o_isvec)
         if out_sel == OutSel.RT.value:
             return out, o_isvec
+    elif name == 'FRA':
+        print ("get_pdecode_idx_out", out_sel, OutSel.FRA.value, out, o_isvec)
+        if out_sel == OutSel.FRA.value:
+            return out, o_isvec
+    elif name == 'FRT':
+        print ("get_pdecode_idx_out", out_sel, OutSel.FRT.value,
+                                      OutSel.FRT.value, out, o_isvec)
+        if out_sel == OutSel.FRT.value:
+            return out, o_isvec
     print ("get_pdecode_idx_out not found", name)
     return None, False
 
@@ -448,7 +471,7 @@ class ISACaller:
     def __init__(self, decoder2, regfile, initial_sprs=None, initial_cr=0,
                  initial_mem=None, initial_msr=0,
                  initial_svstate=0,
-                 initial_insns=None, 
+                 initial_insns=None,
                  fpregfile=None,
                  respect_pc=False,
                  disassembly=None,

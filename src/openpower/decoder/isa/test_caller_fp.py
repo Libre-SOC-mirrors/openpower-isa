@@ -35,7 +35,7 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=initial_mem)
-            print(sim.fpr(1))
+            print("FPR 1", sim.fpr(1))
             self.assertEqual(sim.fpr(1), SelectableInt(0x4040266666666666, 64))
 
     def run_tst_program(self, prog, initial_regs=None,
@@ -43,7 +43,9 @@ class DecoderTestCase(FHDLTestCase):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, mem=initial_mem)
+        print ("GPRs")
         simulator.gpr.dump()
+        print ("FPRs")
         simulator.fpr.dump()
         return simulator
 
