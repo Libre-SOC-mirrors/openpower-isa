@@ -1,5 +1,6 @@
 import unittest
-from openpower.decoder.selectable_int import SelectableInt, onebit
+from openpower.decoder.selectable_int import (SelectableInt, onebit,
+                                              selectconcat)
 from nmutil.divmod import trunc_divs, trunc_rems
 from operator import floordiv, mod
 from openpower.decoder.selectable_int import selectltu as ltu
@@ -147,6 +148,45 @@ def undefined(v):
         for clarification.
     """
     return v
+
+def DOUBLE(WORD):
+    """convert incoming WORD to double.  v3.0B p140 section 4.6.2
+    """
+    # result, FRT, start off all zeros
+    FRT = SelectableInt(0, 64)
+    z1 = SelectableInt(0, 1)
+    z29 = SelectableInt(0, 29)
+    # Normalized Operand
+    if WORD[1:9] > 0 and WORD[1:9] < 255:
+        FRT[0:2] = WORD[0:2]
+        FRT[2] = ~WORD[1]
+        FRT[3] = ~WORD[1]
+        FRT[4] = ~WORD[1]
+        FRT[5:64] = selectconcat(WORD[2:32], z29)
+
+    # Denormalized Operand
+    if WORD[1:9] == 0 and WORD[9:32] != 0:
+        sign = WORD[0]
+        exp = -126
+        frac[0:53] = selectconcat(z1, WORD[9:32], z29)
+        # normalize the operand
+        while frac[0] == 0:
+            frac[0:53] = selectconcat(frac[1:53], z1)
+            exp = exp - 1
+        FRT[0] = sign
+        FRT[1:12] = exp + 1023
+        FRT[12:64] = frac[1:53]
+
+    # Zero / Infinity / NaN
+    if WORD[1:9] == 255 or WORD[1:32] == 0:
+        FRT[0:2] = WORD[0:2]
+        FRT[2] = WORD[1]
+        FRT[3] = WORD[1]
+        FRT[4] = WORD[1]
+        FRT[5:64] = selectconcat(WORD[2:32], z29)
+
+    return FRT
+
 
 # For these tests I tried to find power instructions that would let me
 # isolate each of these helper operations. So for instance, when I was
