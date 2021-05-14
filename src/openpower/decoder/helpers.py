@@ -216,6 +216,9 @@ def SINGLE(FRS):
 
     return WORD
 
+# XXX NOTE: these are very quick hacked functions for utterly basic
+# FP support
+
 def fp64toselectable(frt):
     """convert FP number to 64 bit SelectableInt
     """
@@ -245,7 +248,7 @@ def FPMUL(FRA, FRB):
 def FPDIV(FRA, FRB):
     result = float(FRA) / float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPMUL", FRA, FRB, result, cvt)
+    print ("FPDIV", FRA, FRB, result, cvt)
 
 
 # For these tests I tried to find power instructions that would let me
