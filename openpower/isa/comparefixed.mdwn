@@ -126,7 +126,7 @@ X-Form
 
 Pseudo-code:
 
-    src1 <- GPR[RA]
+    src1 <- (RA)
     src1 <- src1[56:63]
     match <- ((src1 = (RB)[00:07]) |
               (src1 = (RB)[08:15]) |

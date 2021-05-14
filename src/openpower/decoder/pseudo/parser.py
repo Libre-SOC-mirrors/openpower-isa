@@ -207,6 +207,9 @@ def apply_trailer(atom, trailer):
         subs = trailer[1]
         if len(subs) == 1:
             idx = subs[0]
+            if isinstance(idx, ast.Name) and idx.id in regs:
+                print ("single atom subscript, underscored", idx.id)
+                idx = ast.Name("_%s" % idx.id, ast.Load())
         else:
             idx = ast.Slice(subs[0], subs[1], None)
         # if isinstance(atom, ast.Name) and atom.id == 'CR':
@@ -408,8 +411,10 @@ class PowerParser:
                             ['GPR', 'FPR', 'SPR']:
                 print(astor.dump_tree(p[1]))
                 # replace GPR(x) with GPR[x]
-                idx = p[1].args[0]
-                p[1] = ast.Subscript(p[1].func, idx, ast.Load())
+                idx = p[1].args[0].id
+                ridx = ast.Name("_%s" % idx, ast.Load())
+                p[1] = ast.Subscript(p[1].func, ridx, ast.Load())
+                self.read_regs.add(idx)  # add to list of regs to read
             elif isinstance(p[1], ast.Call) and p[1].func.id == 'MEM':
                 print("mem assign")
                 print(astor.dump_tree(p[1]))
