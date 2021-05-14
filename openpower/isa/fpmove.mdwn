@@ -1,0 +1,82 @@
+<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.6.5 Floating-point Move instructions. P 150 -->
+
+# Floating Move Register
+
+X-Form
+
+* fmr FRT,FRB (Rc=0)
+* fmr. FRT,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FRB
+
+Special Registers Altered:
+
+    CR1          (if Rc=1)
+
+# Floating Absolute Value Register
+
+X-Form
+
+* fabs FRT,FRB (Rc=0)
+* fabs. FRT,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FRB
+    FRT[0] <- 0b0
+
+Special Registers Altered:
+
+    CR1          (if Rc=1)
+
+# Floating Negative Absolute Value Register
+
+X-Form
+
+* fnabs FRT,FRB (Rc=0)
+* fnabs. FRT,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FRB
+    FRT[0] <- 0b1
+
+Special Registers Altered:
+
+    CR1          (if Rc=1)
+
+# Floating Negate Register
+
+X-Form
+
+* fneg FRT,FRB (Rc=0)
+* fneg. FRT,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FRB
+    FRT[0] <- ¬FRB[0]
+
+Special Registers Altered:
+
+    CR1          (if Rc=1)
+
+# Floating Copy Sign  Register
+
+X-Form
+
+* fcpsgn FRT,FRA,FRB (Rc=0)
+* fcpsgn. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FRB
+    FRT[0] <- FRA[0]
+
+Special Registers Altered:
+
+    CR1          (if Rc=1)
