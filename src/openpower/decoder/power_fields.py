@@ -137,6 +137,11 @@ class DecodeFields:
         # note: these are from microwatt insn_helpers.vhdl
         self.common_fields = {
             "PO": self.Formall.PO,
+            "FRS": self.FormX.FRS,
+            "FRT": self.FormX.FRT,
+            "FRA": self.FormX.FRA,
+            "FRB": self.FormX.FRB,
+            "FRC": self.FormX.FRB,
             "RS": self.FormX.RS,
             "RT": self.FormX.RT,
             "RA": self.FormX.RA,

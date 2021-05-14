@@ -154,11 +154,18 @@ def DOUBLE(WORD):
     """convert incoming WORD to double.  v3.0B p140 section 4.6.2
     """
     # result, FRT, start off all zeros
+    print ("WORD", WORD)
     FRT = SelectableInt(0, 64)
     z1 = SelectableInt(0, 1)
     z29 = SelectableInt(0, 29)
+    e = WORD[1:9]
+    m = WORD[9:32]
+    s = WORD[0]
+    print ("word s e m", s, e, m)
+
     # Normalized Operand
-    if WORD[1:9] > 0 and WORD[1:9] < 255:
+    if e.value > 0 and e.value  < 255:
+        print ("normalised")
         FRT[0:2] = WORD[0:2]
         FRT[2] = ~WORD[1]
         FRT[3] = ~WORD[1]
@@ -166,12 +173,13 @@ def DOUBLE(WORD):
         FRT[5:64] = selectconcat(WORD[2:32], z29)
 
     # Denormalized Operand
-    if WORD[1:9] == 0 and WORD[9:32] != 0:
+    if e.value  == 0 and m.value  != 0:
+        print ("denormalised")
         sign = WORD[0]
         exp = -126
         frac = selectconcat(z1, WORD[9:32], z29)
         # normalize the operand
-        while frac[0] == 0:
+        while frac[0].value  == 0:
             frac[0:53] = selectconcat(frac[1:53], z1)
             exp = exp - 1
         FRT[0] = sign
@@ -179,12 +187,16 @@ def DOUBLE(WORD):
         FRT[12:64] = frac[1:53]
 
     # Zero / Infinity / NaN
-    if WORD[1:9] == 255 or WORD[1:32] == 0:
+    if e.value  == 255 or m.value  == 0:
+        print ("z/inf/nan")
         FRT[0:2] = WORD[0:2]
         FRT[2] = WORD[1]
         FRT[3] = WORD[1]
         FRT[4] = WORD[1]
         FRT[5:64] = selectconcat(WORD[2:32], z29)
+
+    print ("Double s e m", FRT[0].value, FRT[1:12].value-1023,
+                           FRT[12:64].value)
 
     return FRT
 
@@ -196,17 +208,17 @@ def SINGLE(FRS):
     WORD = SelectableInt(0, 32)
 
     #No Denormalization Required (includes Zero / Infinity / NaN)
-    if FRS[1:12] > 896 or FRS[1:64] == 0:
+    if FRS[1:12].value > 896 or FRS[1:64].value  == 0:
           WORD[0:2] = FRS[0:2]
           WORD[2:32] = FRS[5:35]
 
     #Denormalization Required
-    if FRS[1:12] >= 874 and FRS[1:12] <= 896:
+    if FRS[1:12].value  >= 874 and FRS[1:12].value  <= 896:
           sign = FRS[0]
           exp = FRS[1:12] - 1023
           frac = selectconcat(SelectableInt(1, 1), FRS[12:64])
           # denormalize operand
-          while exp < -126:
+          while exp.value  < -126:
               frac[0:53] = selectconcat(SelectableInt(0, 1), frac[0:52])
               exp = exp + 1
           WORD[0] = sign

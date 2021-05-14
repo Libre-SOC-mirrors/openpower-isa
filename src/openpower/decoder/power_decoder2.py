@@ -138,6 +138,20 @@ class DecodeA(Elaboratable):
             comb += reg.data.eq(rs)
             comb += reg.ok.eq(1)
 
+        # select Register FRA field,
+        fra = Signal(5, reset_less=True)
+        comb += fra.eq(self.dec.FRA)
+        with m.If(self.sel_in == In1Sel.FRA):
+            comb += reg.data.eq(fra)
+            comb += reg.ok.eq(1)
+
+        # select Register FRS field,
+        frs = Signal(5, reset_less=True)
+        comb += frs.eq(self.dec.FRS)
+        with m.If(self.sel_in == In1Sel.FRS):
+            comb += reg.data.eq(frs)
+            comb += reg.ok.eq(1)
+
         # decode Fast-SPR based on instruction type
         with m.Switch(op.internal_op):
 
@@ -219,6 +233,9 @@ class DecodeB(Elaboratable):
 
         # select Register B field
         with m.Switch(self.sel_in):
+            with m.Case(In2Sel.FRB):
+                comb += reg.data.eq(self.dec.FRB)
+                comb += reg.ok.eq(1)
             with m.Case(In2Sel.RB):
                 comb += reg.data.eq(self.dec.RB)
                 comb += reg.ok.eq(1)
@@ -327,6 +344,12 @@ class DecodeC(Elaboratable):
                 # for M-Form shiftrot
                 comb += reg.data.eq(self.dec.RB)
                 comb += reg.ok.eq(1)
+            with m.Case(In3Sel.FRS):
+                comb += reg.data.eq(self.dec.FRS)
+                comb += reg.ok.eq(1)
+            with m.Case(In3Sel.FRC):
+                comb += reg.data.eq(self.dec.FRC)
+                comb += reg.ok.eq(1)
             with m.Case(In3Sel.RS):
                 comb += reg.data.eq(self.dec.RS)
                 comb += reg.ok.eq(1)
@@ -362,6 +385,9 @@ class DecodeOut(Elaboratable):
 
         # select Register out field
         with m.Switch(self.sel_in):
+            with m.Case(OutSel.FRT):
+                comb += reg.data.eq(self.dec.FRT)
+                comb += reg.ok.eq(1)
             with m.Case(OutSel.RT):
                 comb += reg.data.eq(self.dec.RT)
                 comb += reg.ok.eq(1)

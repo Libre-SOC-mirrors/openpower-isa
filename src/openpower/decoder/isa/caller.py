@@ -1193,7 +1193,11 @@ class ISACaller:
                                                      is_vec)
                         output = SelectableInt(0, 256)
                     else:
-                        print('writing reg %d %s' % (regnum, str(output)),
+                        if name in fregs:
+                            ftype = 'fpr'
+                        else:
+                            ftype = 'gpr'
+                        print('writing %s %s %s' % (regnum, ftype, str(output)),
                                                      is_vec)
                     if output.bits > 64:
                         output = SelectableInt(output.value, 64)
