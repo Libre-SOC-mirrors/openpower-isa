@@ -75,6 +75,8 @@ REG_SORT_ORDER = {
     "overflow": 1,
 }
 
+fregs = ['FRA', 'FRB', 'FRC', 'FRS', 'FRT']
+
 
 def create_args(reglist, extra=None):
     retval = list(OrderedSet(reglist))
@@ -446,7 +448,9 @@ class ISACaller:
     def __init__(self, decoder2, regfile, initial_sprs=None, initial_cr=0,
                  initial_mem=None, initial_msr=0,
                  initial_svstate=0,
-                 initial_insns=None, respect_pc=False,
+                 initial_insns=None, 
+                 fpregfile=None,
+                 respect_pc=False,
                  disassembly=None,
                  initial_pc=0,
                  bigendian=False,
@@ -461,6 +465,8 @@ class ISACaller:
             initial_sprs = {}
         if initial_mem is None:
             initial_mem = {}
+        if fpregfile is None:
+            fpregfile = [0] * 32
         if initial_insns is None:
             initial_insns = {}
             assert self.respect_pc == False, "instructions required to honor pc"
@@ -492,6 +498,7 @@ class ISACaller:
             initial_svstate = SVP64State(initial_svstate)
         self.svstate = initial_svstate
         self.gpr = GPR(decoder2, self, self.svstate, regfile)
+        self.fpr = GPR(decoder2, self, self.svstate, regfile)
         self.spr = SPR(decoder2, initial_sprs) # initialise SPRs before MMU
         self.mem = Mem(row_bytes=8, initial_mem=initial_mem)
         self.imem = Mem(row_bytes=4, initial_mem=initial_insns)
@@ -526,6 +533,7 @@ class ISACaller:
         self.namespace = {}
         self.namespace.update(self.spr)
         self.namespace.update({'GPR': self.gpr,
+                               'FPR': self.fpr,
                                'MEM': self.mem,
                                'SPR': self.spr,
                                'memassign': self.memassign,
@@ -1053,7 +1061,10 @@ class ISACaller:
             self.namespace[regname] = regnum
             if not self.is_svp64_mode or not pred_src_zero:
                 print('reading reg %s %s' % (name, str(regnum)), is_vec)
-                reg_val = self.gpr(regnum)
+                if name in fregs:
+                    reg_val = self.fpr(regnum)
+                else:
+                    reg_val = self.gpr(regnum)
             else:
                 print('zero input reg %s %s' % (name, str(regnum)), is_vec)
                 reg_val = 0
@@ -1163,7 +1174,10 @@ class ISACaller:
                                                      is_vec)
                     if output.bits > 64:
                         output = SelectableInt(output.value, 64)
-                    self.gpr[regnum] = output
+                    if name in fregs:
+                        self.fpr[regnum] = output
+                    else:
+                        self.gpr[regnum] = output
 
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
