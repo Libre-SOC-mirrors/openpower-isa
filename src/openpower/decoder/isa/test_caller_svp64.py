@@ -15,6 +15,7 @@ from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.consts import SVP64CROffs
 from copy import deepcopy
 
+
 class DecoderTestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):

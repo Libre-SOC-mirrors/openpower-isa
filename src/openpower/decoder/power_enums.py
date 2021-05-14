@@ -219,11 +219,16 @@ _insns = [
     "divdeuo", "divdo", "divdu", "divduo", "divw", "divwe", "divweo",
     "divweu", "divweuo", "divwo", "divwu", "divwuo", "eqv", "extsb",
     "extsh", "extsw", "extswsli", "hrfid", "icbi", "icbt", "isel", "isync",
-    "lbarx", "lbz", "lbzu", "lbzux", "lbzx", "ld", "ldarx", "ldbrx",
-    "ldu", "ldux", "ldx", "lha", "lharx", "lhau", "lhaux", "lhax",
-    "lhbrx", "lhz", "lhzu", "lhzux", "lhzx", "lwa", "lwarx", "lwaux",
-    "lwax", "lwbrx", "lwz", "lwzcix", "lwzu", "lwzux", "lwzx", "mcrf", "mcrxr",
-    "mcrxrx", "mfcr/mfocrf", "mfmsr", "mfspr", "modsd", "modsw", "modud",
+    "lbarx", "lbz", "lbzu", "lbzux", "lbzx", # load byte
+    "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx", # load double
+    "lfs", "lfsx", "lfsu", "lfsux", # FP load single
+    "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax", # FP load double
+    "lha", "lharx", "lhau", "lhaux", "lhax", # load half
+    "lhbrx", "lhz", "lhzu", "lhzux", "lhzx", # more load half
+    "lwa", "lwarx", "lwaux", "lwax", "lwbrx",  # load word
+    "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",  # more load word
+    "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",
+    "mfmsr", "mfspr", "modsd", "modsw", "modud",
     "moduw", "mtcrf/mtocrf", "mtmsr", "mtmsrd", "mtspr", "mulhd", "mulhdu",
     "mulhw", "mulhwu", "mulld", "mulldo", "mulli", "mullw", "mullwo",
     "nand", "neg", "nego", "nop", "nor", "or", "orc", "ori", "oris",
