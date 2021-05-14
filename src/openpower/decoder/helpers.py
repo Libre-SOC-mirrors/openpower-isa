@@ -168,7 +168,7 @@ def DOUBLE(WORD):
     if WORD[1:9] == 0 and WORD[9:32] != 0:
         sign = WORD[0]
         exp = -126
-        frac[0:53] = selectconcat(z1, WORD[9:32], z29)
+        frac = selectconcat(z1, WORD[9:32], z29)
         # normalize the operand
         while frac[0] == 0:
             frac[0:53] = selectconcat(frac[1:53], z1)
@@ -186,6 +186,34 @@ def DOUBLE(WORD):
         FRT[5:64] = selectconcat(WORD[2:32], z29)
 
     return FRT
+
+
+def SINGLE(FRS):
+    """convert incoming FRS into 32-bit word.  v3.0B p144 section 4.6.3
+    """
+    # result - WORD - start off all zeros
+    WORD = SelectableInt(0, 32)
+
+    #No Denormalization Required (includes Zero / Infinity / NaN)
+    if FRS[1:12] > 896 or FRS[1:64] == 0:
+          WORD[0:2] = FRS[0:2]
+          WORD[2:32] = FRS[5:35]
+
+    #Denormalization Required
+    if FRS[1:12] >= 874 and FRS[1:12] <= 896:
+          sign = FRS[0]
+          exp = FRS[1:12] - 1023
+          frac = selectconcat(SelectableInt(1, 1), FRS[12:64])
+          # denormalize operand
+          while exp < -126:
+              frac[0:53] = selectconcat(SelectableInt(0, 1), frac[0:52])
+              exp = exp + 1
+          WORD[0] = sign
+          WORD[1:9] = SelectableInt(0, 8)
+          WORD[9:32] = frac[1:24]
+    #else WORD = undefined # return zeros
+
+    return WORD
 
 
 # For these tests I tried to find power instructions that would let me
