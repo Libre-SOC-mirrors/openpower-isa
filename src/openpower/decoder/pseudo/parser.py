@@ -404,7 +404,8 @@ class PowerParser:
                         self.uninit_regs.add(name)
                     autoassign = (name not in self.declared_vars and
                                   name not in self.special_regs)
-            elif isinstance(p[1], ast.Call) and p[1].func.id in ['GPR', 'SPR']:
+            elif isinstance(p[1], ast.Call) and p[1].func.id in \
+                            ['GPR', 'FPR', 'SPR']:
                 print(astor.dump_tree(p[1]))
                 # replace GPR(x) with GPR[x]
                 idx = p[1].args[0]
@@ -736,8 +737,11 @@ class PowerParser:
                     p[2].left.id in self.gprs:
                 rid = p[2].left.id
                 self.read_regs.add(rid)  # add to list of regs to read
-                # create special call to GPR.getz
-                gprz = ast.Name("GPR", ast.Load())
+                # create special call to GPR.getz or FPR.getz
+                if rid in fregs:
+                    gprz = ast.Name("FPR", ast.Load())
+                else:
+                    gprz = ast.Name("GPR", ast.Load())
                 # get testzero function
                 gprz = ast.Attribute(gprz, "getz", ast.Load())
                 # *sigh* see class GPR.  we need index itself not reg value
