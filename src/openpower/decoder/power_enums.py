@@ -340,6 +340,8 @@ class In1Sel(Enum):
     RA_OR_ZERO = 2
     SPR = 3
     RS = 4  # for some ALU/Logical operations
+    FRA = 5
+    FRS = 6
 
 
 @unique
@@ -358,6 +360,7 @@ class In2Sel(Enum):
     CONST_SH32 = 11
     SPR = 12
     RS = 13  # for shiftrot (M-Form)
+    FRB = 14
 
 
 @unique
@@ -365,6 +368,8 @@ class In3Sel(Enum):
     NONE = 0
     RS = 1
     RB = 2  # for shiftrot (M-Form)
+    FRS = 3
+    FRC = 4
 
 
 @unique
@@ -374,6 +379,7 @@ class OutSel(Enum):
     RA = 2
     SPR = 3
     RT_OR_ZERO = 4
+    FRT = 5
 
 
 @unique
