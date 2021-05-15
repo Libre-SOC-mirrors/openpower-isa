@@ -227,6 +227,7 @@ _insns = [
     "divweu", "divweuo", "divwo", "divwu", "divwuo",
     "eqv",
     "extsb", "extsh", "extsw", "extswsli",
+    "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "hrfid", "icbi", "icbt", "isel", "isync",
     "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
     "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
