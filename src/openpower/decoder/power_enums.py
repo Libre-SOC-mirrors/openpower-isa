@@ -257,6 +257,8 @@ _insns = [
     "sraw", "srawi", "srd", "srw",
     "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
     "std", "stdbrx", "stdcx", "stdu", "stdux", "stdx",
+    "stfs", "stfsx", "stfsu", "stfux",                  # FP store single
+    "stfd", "stfdx", "stfdu", "stfdux", "stfiwx",       # FP store double
     "sth", "sthbrx", "sthcx", "sthu", "sthux", "sthx",
     "stw", "stwbrx", "stwcx", "stwu", "stwux", "stwx",
     "subf", "subfc", "subfco", "subfe", "subfeo", "subfic",
