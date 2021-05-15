@@ -22,7 +22,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.fpr(i), SelectableInt(expected_fpr[i], 64))
 
-    def test_fpload(self):
+    def tst_fpload(self):
         """>>> lst = ["lfsx 1, 0, 0",
                      ]
         """
@@ -38,7 +38,7 @@ class DecoderTestCase(FHDLTestCase):
             print("FPR 1", sim.fpr(1))
             self.assertEqual(sim.fpr(1), SelectableInt(0x4040266660000000, 64))
 
-    def test_fp_single_ldst(self):
+    def tst_fp_single_ldst(self):
         """>>> lst = ["lfsx 1, 1, 0",   # load fp 1 from mem location 0
                       "stfsu 1, 16(1)", # store fp 1 into mem 0x10, update RA
                       "lfsu 2, 0(1)",   # re-load from UPDATED r1
@@ -62,11 +62,30 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(1), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
 
+    def test_fp_mv(self):
+        """>>> lst = ["fmr 1, 2",
+                     ]
+        """
+        lst = ["fmr 1, 2",
+                     ]
+
+        fprs = [0] * 32
+        fprs[2] = 0x4040266660000000
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            print("FPR 1", sim.fpr(1))
+            print("FPR 2", sim.fpr(2))
+            self.assertEqual(sim.fpr(1), SelectableInt(0x4040266660000000, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
+
     def run_tst_program(self, prog, initial_regs=None,
-                              initial_mem=None):
+                              initial_mem=None,
+                              initial_fprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
-        simulator = run_tst(prog, initial_regs, mem=initial_mem)
+        simulator = run_tst(prog, initial_regs, mem=initial_mem,
+                                  initial_fprs=initial_fprs)
         print ("GPRs")
         simulator.gpr.dump()
         print ("FPRs")

@@ -858,10 +858,12 @@ class ISACaller:
         # TODO, asmregs is from the spec, e.g. add RT,RA,RB
         # see http://bugs.libre-riscv.org/show_bug.cgi?id=282
         dec_insn = yield self.dec2.e.do.insn
+        insn_1_11 = yield self.dec2.e.do.insn[1:11]
         asmcode = yield self.dec2.dec.op.asmcode
-        print("get assembly name asmcode", asmcode, hex(dec_insn))
-        asmop = insns.get(asmcode, None)
         int_op = yield self.dec2.dec.op.internal_op
+        print("get assembly name asmcode", asmcode, int_op,
+                            hex(dec_insn), bin(insn_1_11))
+        asmop = insns.get(asmcode, None)
 
         # sigh reconstruct the assembly instruction name
         if hasattr(self.dec2.e.do, "oe"):

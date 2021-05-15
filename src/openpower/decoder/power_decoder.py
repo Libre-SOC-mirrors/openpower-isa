@@ -236,6 +236,11 @@ class PowerOp:
         if False:
             print(row.keys())
         asmcode = row['comment']
+        # process the comment field, strip out "equals" for FP
+        if "=" in asmcode:
+            asmcode = asmcode.split("=")[-1]
+            print ("asmcode stripping =", asmcode,
+                    asmcode in asmidx, hasattr(self, "asmcode"))
         if hasattr(self, "asmcode") and asmcode in asmidx:
             res.append(self.asmcode.eq(asmidx[asmcode]))
         for bit in single_bit_flags:
@@ -410,26 +415,27 @@ class PowerDecoder(Elaboratable):
 
     def handle_subdecoders(self, switch_case, submodules, d):
         eqs = []
-        for dec in d.subdecoders:
-            if isinstance(dec, list):  # XXX HACK: take first pattern
-                dec = dec[0]
-            #print("subdec", dec.pattern, self.pname)
-            mname = get_pname("dec%d" % dec.pattern, self.pname)
-            if mname in submodules:
-                # sigh, HACK...
-                mname += "_1"
-                assert mname not in submodules
-            subdecoder = PowerDecoder(self.width, dec,
-                                      name=mname,
-                                      col_subset=self.col_subset,
-                                      row_subset=self.row_subsetfn)
-            if not subdecoder.tree_analyse():  # doesn't do anything
-                del subdecoder
-                continue                      # skip
-            submodules[mname] = subdecoder
-            eqs.append(subdecoder.opcode_in.eq(self.opcode_in))
-            switch_case[dec.pattern] = self.op.eq(subdecoder.op)
-            self.actually_does_something = True
+        for dlist in d.subdecoders:
+            if not isinstance(dlist, list):  # XXX HACK: take first pattern
+                dlist = [dlist]
+            for dec in dlist:
+                #print("subdec", dec.pattern, self.pname)
+                mname = get_pname("dec%d" % dec.pattern, self.pname)
+                if mname in submodules:
+                    # sigh, HACK...
+                    mname += "_1"
+                    assert mname not in submodules
+                subdecoder = PowerDecoder(self.width, dec,
+                                          name=mname,
+                                          col_subset=self.col_subset,
+                                          row_subset=self.row_subsetfn)
+                if not subdecoder.tree_analyse():  # doesn't do anything
+                    del subdecoder
+                    continue                      # skip
+                submodules[mname] = subdecoder
+                eqs.append(subdecoder.opcode_in.eq(self.opcode_in))
+                switch_case[dec.pattern] = self.op.eq(subdecoder.op)
+                self.actually_does_something = True
 
         return eqs
 
@@ -539,6 +545,7 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
 
     subsetting of the PowerOp decoding is possible by setting col_subset
     """
+    print ("create_pdecode", name, col_subset, row_subset, include_fp)
 
     # some alteration to the CSV files is required for SV so we use
     # a class to do it
@@ -571,12 +578,14 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
 
     # FP 63L/H decoders. TODO: move mffsfamily to separate subdecoder
     if include_fp:
-        pminor.append(Subdecoder(pattern=63, opcodes=get_csv("minor_63l.csv"),
-                                 opint=True, bitsel=(1, 11), suffix=None,
-                                 subdecoders=[]))
-        pminor.append(Subdecoder(pattern=63, opcodes=get_csv("minor_63h.csv"),
+        pminor.append(
+            [Subdecoder(pattern=63, opcodes=get_csv("minor_63h.csv"),
                                  opint=True, bitsel=(1, 6), suffix=None,
-                                 subdecoders=[]))
+                                 subdecoders=[]),
+             Subdecoder(pattern=63, opcodes=get_csv("minor_63l.csv"),
+                                 opint=True, bitsel=(1, 11), suffix=None,
+                                 subdecoders=[])
+            ])
 
     # top level: extra merged with major
     dec = []

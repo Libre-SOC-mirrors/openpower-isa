@@ -3,7 +3,7 @@ from nmigen.back.pysim import Simulator, Delay, Settle
 from nmutil.formaltest import FHDLTestCase
 import unittest
 from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
+from openpower.decoder.power_decoder import create_pdecode
 from openpower.decoder.power_decoder2 import (PowerDecode2)
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import ISACaller, inject
@@ -25,7 +25,7 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
     comb = m.d.comb
     instruction = Signal(32)
 
-    pdecode = create_pdecode()
+    pdecode = create_pdecode(include_fp=initial_fprs is not None)
 
     gen = list(generator.generate_instructions())
     insncode = generator.assembly.splitlines()
