@@ -1,0 +1,83 @@
+# A.3 FLoating-Point Convert from Integer Model
+
+The following describes algorithmically the operation of the Floating
+Convert From Integer instructions.
+
+<!-- Power ISA Book I Version 3.0B Section A.3 page 782 -->
+
+    def Round_Float( tgt_precision, sign, exp, frac, round_mode ):
+       inc <- 0
+       if tgt_precision = "single-precision" then
+           lsb <- frac[23]
+           gbit <- frac[24]
+           rbit <- frac[25]
+           xbit <- frac[26:63] > 0
+        else # tgt_precision = "double-precision"
+            lsb  <= frac[52]
+            gbit <= frac[53]
+            rbit <= frac[54]
+            xbit <= frac[55:63] > 0
+
+        if round_mode  = 0b00  then           # Round to Nearest
+            if lsb = 1 and gbit = 1              then inc <- 1
+            if lsb = 0 and gbit = 1 and rbit = 1 then inc <- 1
+            if lsb = 0 and gbit = 1 and xbit = 1 then inc <- 1
+        end
+        if round_mode  = 0b10  then           # Round toward + Infinity
+            if sign = 0 and gbit = 1 then inc <-1
+            if sign = 0 and rbit = 1 then inc <-1
+            if sign = 0 and xbit = 1 then inc <-1
+        end
+        if round_mode  = 0b11  then           # Round toward - Infinity
+            if sign = 1 and gbit = 1 then inc <-1
+            if sign = 1 and rbit = 1 then inc <-1
+            if sign = 1 and xbit = 1 then inc <-1
+        end
+        if tgt_precision = "single-precision" then
+            frac[0:23] <- frac[0:23] + inc
+        else # tgt_precision = "double-precision"
+            frac[0:52] <- frac[0:52] + inc
+        if carry_out = 1 then exp <- exp + 1
+        FPSCR[FR] <- inc
+        FPSCR[FI] <- gbit | rbit | xbit
+        FPSCR[XX] <- FPSCR[XX] | FPSCR[FI]
+
+    def INT2FP(FR, cvt, RN):
+        if cvt = "sint2double" then
+            tgt_precision = "double-precision"
+            sign       <- FR[0]
+        if cvt = "sint2single" then
+            tgt_precision <- "single-precision"
+            sign       <- FR[0]
+        if cvt = "uint2double" then
+            tgt_precision <- "double-precision"
+            sign       <- 0
+        if cvt = "uint2single" then
+            tgt_precision <- "single-precision"
+            sign       <- 0
+
+        result = [0] * 64
+        exp        <- 63
+        frac[0:63] <- FR
+
+        if frac[0:63] = 0 then
+            # Zero Operand
+            FPSCR[FR] <- 0b00
+            FPSCR[FI] <- 0b00
+            FPSCR[FPRF] <- "+ zero"
+        else
+            if sign = 1 then frac[0:63] <- ¬frac[0:63] + 1
+            # do the loop 0 times if FR = max negative 64-bit integer or
+            #                     if FR = max unsigned 64-bit integer 
+            do while frac[0] = 0
+                frac[0:63] <- frac[1:63] || 0b0
+                exp <- exp - 1
+            Round_Float( tgt_precision, sign, exp, frac0:63, RN )
+            if sign = 0 then FPSCR[FPRF] <- "+normal number"
+            if sign = 1 then FPSCR[FPRF] <- "-normal number"
+            result[0]    <- sign
+            result[1:11] <- exp + 1023     # exp + bias
+            result[12:63] <- frac[1:52]
+
+        return result
+
