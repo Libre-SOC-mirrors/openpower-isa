@@ -207,15 +207,22 @@ def SINGLE(FRS):
     # result - WORD - start off all zeros
     WORD = SelectableInt(0, 32)
 
+    e = FRS[1:12]
+    m = FRS[9:32]
+    s = FRS[0]
+
+    print ("SINGLE", FRS)
+    print ("s e m", s.value, e.value, m.value)
+
     #No Denormalization Required (includes Zero / Infinity / NaN)
-    if FRS[1:12].value > 896 or FRS[1:64].value  == 0:
+    if e.value > 896 or FRS[1:64].value  == 0:
           WORD[0:2] = FRS[0:2]
           WORD[2:32] = FRS[5:35]
 
     #Denormalization Required
-    if FRS[1:12].value  >= 874 and FRS[1:12].value  <= 896:
+    if e.value  >= 874 and e.value  <= 896:
           sign = FRS[0]
-          exp = FRS[1:12] - 1023
+          exp = e - 1023
           frac = selectconcat(SelectableInt(1, 1), FRS[12:64])
           # denormalize operand
           while exp.value  < -126:
@@ -225,6 +232,8 @@ def SINGLE(FRS):
           WORD[1:9] = SelectableInt(0, 8)
           WORD[9:32] = frac[1:24]
     #else WORD = undefined # return zeros
+
+    print ("WORD", WORD)
 
     return WORD
 
