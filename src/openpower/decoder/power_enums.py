@@ -229,6 +229,8 @@ _insns = [
     "eqv",
     "extsb", "extsh", "extsw", "extswsli",
     "fadd", "fadds", "fsub", "fsubs",                   # FP add / sub
+    "fcfids", "fcfidus", "fsqrts", "fres", "frsqrtes",  # FP stuff
+    "fmsubs", "fmadds", "fnmsubs", "fnmadds",           # FP 3-arg
     "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "hrfid", "icbi", "icbt", "isel", "isync",

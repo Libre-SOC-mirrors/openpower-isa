@@ -587,6 +587,11 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
                                  opint=False, bitsel=(1, 11), suffix=None,
                                  subdecoders=[]),
             )
+        pminor.append(
+            Subdecoder(pattern=59, opcodes=get_csv("minor_59.csv"),
+                                 opint=False, bitsel=(1, 11), suffix=None,
+                                 subdecoders=[]),
+            )
 
     # top level: extra merged with major
     dec = []
