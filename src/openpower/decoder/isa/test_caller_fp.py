@@ -144,6 +144,40 @@ class DecoderTestCase(FHDLTestCase):
             # 0 in MSB comes from reg 2, 1 in LSB comes from reg 1
             self.assertEqual(sim.fpr(4), SelectableInt(0x4040266660000001, 64))
 
+    def test_fp_adds(self):
+        """>>> lst = ["fadds 3, 1, 2",
+                     ]
+        """
+        lst = ["fadds 3, 1, 2", # -32.3 + 32.3 = 0
+                     ]
+
+        fprs = [0] * 32
+        fprs[1] = 0xC040266660000000
+        fprs[2] = 0x4040266660000000
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            self.assertEqual(sim.fpr(1), SelectableInt(0xC040266660000000, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
+            self.assertEqual(sim.fpr(3), SelectableInt(0, 64))
+
+    def test_fp_add(self):
+        """>>> lst = ["fadd 3, 1, 2",
+                     ]
+        """
+        lst = ["fadd 3, 1, 2", # 7.0 + -9.8 = -2.8
+                     ]
+
+        fprs = [0] * 32
+        fprs[1] = 0x401C000000000000  # 7.0
+        fprs[2] = 0xC02399999999999A  # -9.8
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            self.assertEqual(sim.fpr(1), SelectableInt(0x401C000000000000, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(0xC02399999999999A, 64))
+            self.assertEqual(sim.fpr(3), SelectableInt(0xC006666666666668, 64))
+
     def run_tst_program(self, prog, initial_regs=None,
                               initial_mem=None,
                               initial_fprs=None):

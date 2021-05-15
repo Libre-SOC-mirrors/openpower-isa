@@ -429,7 +429,9 @@ class PowerDecoder(Elaboratable):
                                           name=mname,
                                           col_subset=self.col_subset,
                                           row_subset=self.row_subsetfn)
+                print ("subdecoder", mname, subdecoder)
                 if not subdecoder.tree_analyse():  # doesn't do anything
+                    print ("analysed, DELETING", mname)
                     del subdecoder
                     continue                      # skip
                 submodules[mname] = subdecoder
@@ -557,9 +559,11 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
     m19.append(Subdecoder(pattern=19, opcodes=get_csv("minor_19.csv"),
                           opint=True, bitsel=(1, 11), suffix=None,
                           subdecoders=[]))
-    m19.append(Subdecoder(pattern=19, opcodes=get_csv("minor_19_00000.csv"),
-                          opint=True, bitsel=(1, 6), suffix=None,
-                          subdecoders=[]))
+    # XXX problem with sub-decoders (can only handle one),
+    # sort this another time
+    #m19.append(Subdecoder(pattern=19, opcodes=get_csv("minor_19_00000.csv"),
+    #                      opint=True, bitsel=(1, 6), suffix=None,
+    #                      subdecoders=[]))
 
     # minor opcodes.
     pminor = [
@@ -579,13 +583,10 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
     # FP 63L/H decoders. TODO: move mffsfamily to separate subdecoder
     if include_fp:
         pminor.append(
-            [Subdecoder(pattern=63, opcodes=get_csv("minor_63h.csv"),
-                                 opint=True, bitsel=(1, 6), suffix=None,
+            Subdecoder(pattern=63, opcodes=get_csv("minor_63.csv"),
+                                 opint=False, bitsel=(1, 11), suffix=None,
                                  subdecoders=[]),
-             Subdecoder(pattern=63, opcodes=get_csv("minor_63l.csv"),
-                                 opint=True, bitsel=(1, 11), suffix=None,
-                                 subdecoders=[])
-            ])
+            )
 
     # top level: extra merged with major
     dec = []
