@@ -228,6 +228,8 @@ _insns = [
     "divweu", "divweuo", "divwo", "divwu", "divwuo",
     "eqv",
     "extsb", "extsh", "extsw", "extswsli",
+    "fadd", "fadds", "fsub", "fsubs",                   # FP add / sub
+    "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "hrfid", "icbi", "icbt", "isel", "isync",
     "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
