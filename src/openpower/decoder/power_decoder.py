@@ -415,6 +415,10 @@ class PowerDecoder(Elaboratable):
                 dec = dec[0]
             #print("subdec", dec.pattern, self.pname)
             mname = get_pname("dec%d" % dec.pattern, self.pname)
+            if mname in submodules:
+                # sigh, HACK...
+                mname += "_1"
+                assert mname not in submodules
             subdecoder = PowerDecoder(self.width, dec,
                                       name=mname,
                                       col_subset=self.col_subset,
@@ -529,7 +533,8 @@ class TopPowerDecoder(PowerDecoder):
 ####################################################
 # PRIMARY FUNCTION SPECIFYING THE FULL POWER DECODER
 
-def create_pdecode(name=None, col_subset=None, row_subset=None):
+def create_pdecode(name=None, col_subset=None, row_subset=None,
+                   include_fp=False):
     """create_pdecode - creates a cascading hierarchical POWER ISA decoder
 
     subsetting of the PowerOp decoding is possible by setting col_subset
@@ -564,6 +569,15 @@ def create_pdecode(name=None, col_subset=None, row_subset=None):
                    opint=True, bitsel=(1, 5), suffix=None, subdecoders=[]),
     ]
 
+    # FP 63L/H decoders. TODO: move mffsfamily to separate subdecoder
+    if include_fp:
+        pminor.append(Subdecoder(pattern=63, opcodes=get_csv("minor_63l.csv"),
+                                 opint=True, bitsel=(1, 11), suffix=None,
+                                 subdecoders=[]))
+        pminor.append(Subdecoder(pattern=63, opcodes=get_csv("minor_63h.csv"),
+                                 opint=True, bitsel=(1, 6), suffix=None,
+                                 subdecoders=[]))
+
     # top level: extra merged with major
     dec = []
     opcodes = get_csv("major.csv")
@@ -584,11 +598,13 @@ if __name__ == '__main__':
 
         def rowsubsetfn(opcode, row):
             print("row_subset", opcode, row)
-            return row['unit'] == 'ALU'
+            return row['unit'] == 'FPU'
 
         pdecode = create_pdecode(name="rowsub",
-                                 col_subset={'function_unit', 'in1_sel'},
-                                 row_subset=rowsubsetfn)
+                                 col_subset={'opcode', 'function_unit',
+                                             'form'},
+                                 row_subset=rowsubsetfn,
+                                 include_fp=True)
         vl = rtlil.convert(pdecode, ports=pdecode.ports())
         with open("row_subset_decoder.il", "w") as f:
             f.write(vl)
@@ -602,7 +618,7 @@ if __name__ == '__main__':
 
     # full decoder
 
-    pdecode = create_pdecode()
+    pdecode = create_pdecode(include_fp=True)
     vl = rtlil.convert(pdecode, ports=pdecode.ports())
     with open("decoder.il", "w") as f:
         f.write(vl)

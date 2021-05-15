@@ -81,6 +81,7 @@ class Function(Enum):
     MMU = 1 << 11
     SV = 1 << 12  # Simple-V https://libre-soc.org/openpower/sv
     VL = 1 << 13  # setvl
+    FPU = 1 << 14  # FPU
 
 
 @unique
@@ -358,7 +359,7 @@ class MicrOp(Enum):
     OP_TLBIE = 75
     OP_SETVL = 76
     OP_FPOP = 77  # temporary: replace with actual ops
-    OP_FPOPI = 78 # temporary: replace with actual ops
+    OP_FPOP_I = 78 # temporary: replace with actual ops
 
 
 @unique
