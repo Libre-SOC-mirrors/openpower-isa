@@ -99,10 +99,14 @@ class DecoderTestCase(FHDLTestCase):
     def test_fp_abs(self):
         """>>> lst = ["fabs 3, 1",
                       "fabs 4, 2",
+                      "fnabs 5, 1",
+                      "fnabs 6, 2",
                      ]
         """
         lst = ["fabs 3, 1",
                "fabs 4, 2",
+               "fnabs 5, 1",
+               "fnabs 6, 2",
                      ]
 
         fprs = [0] * 32
@@ -111,14 +115,12 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            print("FPR 1", sim.fpr(1))
-            print("FPR 2", sim.fpr(2))
-            print("FPR 3", sim.fpr(3))
-            print("FPR 4", sim.fpr(4))
             self.assertEqual(sim.fpr(1), SelectableInt(0xC040266660000000, 64))
             self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(3), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(4), SelectableInt(0x4040266660000000, 64))
+            self.assertEqual(sim.fpr(5), SelectableInt(0xC040266660000000, 64))
+            self.assertEqual(sim.fpr(6), SelectableInt(0xC040266660000000, 64))
 
     def run_tst_program(self, prog, initial_regs=None,
                               initial_mem=None,

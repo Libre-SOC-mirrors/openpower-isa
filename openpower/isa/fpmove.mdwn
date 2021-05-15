@@ -41,7 +41,7 @@ X-Form
 
 Pseudo-code:
 
-    FRT[0] <- 0b1 || FRB[1:63]
+    FRT <- 0b1 || FRB[1:63]
 
 Special Registers Altered:
 
