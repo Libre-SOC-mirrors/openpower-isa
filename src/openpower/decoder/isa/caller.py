@@ -367,6 +367,8 @@ def get_pdecode_idx_in(dec2, name):
                                      in3, in3_isvec)
     print ("get_pdecode_idx_in FRS in3", name, in3_sel, In3Sel.FRS.value,
                                      in3, in3_isvec)
+    print ("get_pdecode_idx_in FRC in3", name, in3_sel, In3Sel.FRC.value,
+                                     in3, in3_isvec)
     # identify which regnames map to in1/2/3
     if name == 'RA':
         if (in1_sel == In1Sel.RA.value or
