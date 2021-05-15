@@ -132,14 +132,16 @@ class DecoderTestCase(FHDLTestCase):
                      ]
 
         fprs = [0] * 32
-        fprs[1] = 0xC040266660000001
-        fprs[2] = 0x4040266660000000
+        fprs[1] = 0xC040266660000001 # 1 in LSB, 1 in MSB
+        fprs[2] = 0x4040266660000000 # 0 in LSB, 0 in MSB
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
             self.assertEqual(sim.fpr(1), SelectableInt(0xC040266660000001, 64))
             self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
+            # 1 in MSB comes from reg 1, 0 in LSB comes from reg 2
             self.assertEqual(sim.fpr(3), SelectableInt(0xC040266660000000, 64))
+            # 0 in MSB comes from reg 2, 1 in LSB comes from reg 1
             self.assertEqual(sim.fpr(4), SelectableInt(0x4040266660000001, 64))
 
     def run_tst_program(self, prog, initial_regs=None,
