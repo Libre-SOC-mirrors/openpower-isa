@@ -429,7 +429,11 @@ class PowerParser:
             else:
                 print("help, help")
                 print(astor.dump_tree(p[1]))
-            print("expr assign", name, p[1])
+            print("expr assign", name, p[1], "to", p[3])
+            if isinstance(p[3], ast.Name):
+                toname = p[3].id
+                if toname in self.gprs:
+                    self.read_regs.add(toname)
             if name and name in self.gprs:
                 self.write_regs.add(name)  # add to list of regs to write
             p[0] = Assign(autoassign, name, p[1], p[3], iea_mode)
