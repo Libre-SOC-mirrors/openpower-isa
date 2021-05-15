@@ -292,24 +292,28 @@ def FPADD64(FRA, FRB):
     result = float(FRA) + float(FRB)
     cvt = fp64toselectable(result)
     print ("FPADD64", FRA, FRB, result, cvt)
+    return cvt
 
 
 def FPSUB64(FRA, FRB):
     result = float(FRA) - float(FRB)
     cvt = fp64toselectable(result)
     print ("FPSUB64", FRA, FRB, result, cvt)
+    return cvt
 
 
 def FPMUL64(FRA, FRB):
     result = float(FRA) * float(FRB)
     cvt = fp64toselectable(result)
     print ("FPMUL64", FRA, FRB, result, cvt)
+    return cvt
 
 
 def FPDIV64(FRA, FRB):
     result = float(FRA) / float(FRB)
     cvt = fp64toselectable(result)
     print ("FPDIV64", FRA, FRB, result, cvt)
+    return cvt
 
 
 # For these tests I tried to find power instructions that would let me
