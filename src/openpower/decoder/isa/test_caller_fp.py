@@ -122,6 +122,26 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(5), SelectableInt(0xC040266660000000, 64))
             self.assertEqual(sim.fpr(6), SelectableInt(0xC040266660000000, 64))
 
+    def test_fp_sgn(self):
+        """>>> lst = ["fcpsgn 3, 1, 2",
+                      "fcpsgn 4, 2, 1",
+                     ]
+        """
+        lst = ["fcpsgn 3, 1, 2",
+               "fcpsgn 4, 2, 1",
+                     ]
+
+        fprs = [0] * 32
+        fprs[1] = 0xC040266660000001
+        fprs[2] = 0x4040266660000000
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            self.assertEqual(sim.fpr(1), SelectableInt(0xC040266660000001, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
+            self.assertEqual(sim.fpr(3), SelectableInt(0xC040266660000000, 64))
+            self.assertEqual(sim.fpr(4), SelectableInt(0x4040266660000001, 64))
+
     def run_tst_program(self, prog, initial_regs=None,
                               initial_mem=None,
                               initial_fprs=None):
