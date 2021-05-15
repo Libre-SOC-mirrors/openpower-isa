@@ -141,7 +141,7 @@ class DecodeFields:
             "FRT": self.FormX.FRT,
             "FRA": self.FormX.FRA,
             "FRB": self.FormX.FRB,
-            "FRC": self.FormX.FRB,
+            "FRC": self.FormA.FRC,
             "RS": self.FormX.RS,
             "RT": self.FormX.RT,
             "RA": self.FormX.RA,
