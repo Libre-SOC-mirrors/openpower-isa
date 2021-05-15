@@ -78,12 +78,12 @@ Special Registers Altered:
 
 A-Form
 
-* fmuls FRT,FRA,FRB (Rc=0)
-* fmuls. FRT,FRA,FRB (Rc=0)
+* fmuls FRT,FRA,FRC (Rc=0)
+* fmuls. FRT,FRA,FRC (Rc=0)
 
 Pseudo-code:
 
-    FRT <- FPMUL32(FRA, FRB)
+    FRT <- FPMUL32(FRA, FRC)
 
 Special Registers Altered:
 
@@ -96,12 +96,12 @@ Special Registers Altered:
 
 A-Form
 
-* fmul FRT,FRA,FRB (Rc=0)
-* fmul. FRT,FRA,FRB (Rc=0)
+* fmul FRT,FRA,FRC (Rc=0)
+* fmul. FRT,FRA,FRC (Rc=0)
 
 Pseudo-code:
 
-    FRT <- FPMUL64(FRA, FRB)
+    FRT <- FPMUL64(FRA, FRC)
 
 Special Registers Altered:
 
