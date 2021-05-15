@@ -1,0 +1,147 @@
+<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.6.6.1 Floating-point Elementary Arithmetic p 152-156 -->
+
+# Floating Add [Single]
+
+A-Form
+
+* fadds FRT,FRA,FRB (Rc=0)
+* fadds. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPADD32(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI
+    CR1          (if Rc=1)
+
+# Floating Add [Double]
+
+A-Form
+
+* fadd FRT,FRA,FRB (Rc=0)
+* fadd. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPADD64(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI
+    CR1          (if Rc=1)
+
+# Floating Subtract [Single]
+
+A-Form
+
+* fsubs FRT,FRA,FRB (Rc=0)
+* fsubs. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPSUB32(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI
+    CR1          (if Rc=1)
+
+# Floating Subtract [Double]
+
+A-Form
+
+* fsub FRT,FRA,FRB (Rc=0)
+* fsub. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPSUB64(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI
+    CR1          (if Rc=1)
+
+# Floating Multiply [Single]
+
+A-Form
+
+* fmuls FRT,FRA,FRB (Rc=0)
+* fmuls. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPMUL32(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI
+    CR1          (if Rc=1)
+
+# Floating Multiply [Double]
+
+A-Form
+
+* fmul FRT,FRA,FRB (Rc=0)
+* fmul. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPMUL64(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI
+    CR1          (if Rc=1)
+
+# Floating Divide [Single]
+
+A-Form
+
+* fdivs FRT,FRA,FRB (Rc=0)
+* fdivs. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPDIV32(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI
+    CR1          (if Rc=1)
+
+# Floating Divide [Double]
+
+A-Form
+
+* fdiv FRT,FRA,FRB (Rc=0)
+* fdiv. FRT,FRA,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPDIV64(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI
+    CR1          (if Rc=1)

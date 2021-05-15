@@ -248,28 +248,68 @@ def fp64toselectable(frt):
     return SelectableInt(val, 64)
 
 
-def FPADD(FRA, FRB):
+def FPADD32(FRA, FRB):
+    FRA = DOUBLE(SINGLE(FRA))
+    FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) + float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPADD", FRA, FRB, result, cvt)
+    cvt = DOUBLE(SINGLE(cvt))
+    print ("FPADD32", FRA, FRB, result, cvt)
+    return cvt
 
 
-def FPSUB(FRA, FRB):
+def FPSUB32(FRA, FRB):
+    FRA = DOUBLE(SINGLE(FRA))
+    FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) - float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPSUB", FRA, FRB, result, cvt)
+    cvt = DOUBLE(SINGLE(cvt))
+    print ("FPSUB32", FRA, FRB, result, cvt)
+    return cvt
 
 
-def FPMUL(FRA, FRB):
+def FPMUL32(FRA, FRB):
+    FRA = DOUBLE(SINGLE(FRA))
+    FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) * float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPMUL", FRA, FRB, result, cvt)
+    cvt = DOUBLE(SINGLE(cvt))
+    print ("FPMUL32", FRA, FRB, result, cvt)
+    return cvt
 
 
-def FPDIV(FRA, FRB):
+def FPDIV32(FRA, FRB):
+    FRA = DOUBLE(SINGLE(FRA))
+    FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) / float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPDIV", FRA, FRB, result, cvt)
+    cvt = DOUBLE(SINGLE(cvt))
+    print ("FPDIV32", FRA, FRB, result, cvt)
+    return cvt
+
+
+def FPADD64(FRA, FRB):
+    result = float(FRA) + float(FRB)
+    cvt = fp64toselectable(result)
+    print ("FPADD64", FRA, FRB, result, cvt)
+
+
+def FPSUB64(FRA, FRB):
+    result = float(FRA) - float(FRB)
+    cvt = fp64toselectable(result)
+    print ("FPSUB64", FRA, FRB, result, cvt)
+
+
+def FPMUL64(FRA, FRB):
+    result = float(FRA) * float(FRB)
+    cvt = fp64toselectable(result)
+    print ("FPMUL64", FRA, FRB, result, cvt)
+
+
+def FPDIV64(FRA, FRB):
+    result = float(FRA) / float(FRB)
+    cvt = fp64toselectable(result)
+    print ("FPDIV64", FRA, FRB, result, cvt)
 
 
 # For these tests I tried to find power instructions that would let me
@@ -339,10 +379,10 @@ class HelperTests(unittest.TestCase):
         # extswsli reg, 3, 0
         self.assertHex(EXTS64(value_c), 0xffffffff80000000)
 
-    def test_FPADD(self):
+    def test_FPADD32(self):
         value_a = SelectableInt(0x4014000000000000, 64)  # 5.0
         value_b = SelectableInt(0x403B4CCCCCCCCCCD, 64)  # 27.3
-        result = FPADD(value_a, value_b)
+        result = FPADD32(value_a, value_b)
         self.assertHex(0x4040266666666666, result)
 
     def assertHex(self, a, b):
