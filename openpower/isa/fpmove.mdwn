@@ -11,7 +11,7 @@ X-Form
 
 Pseudo-code:
 
-    FRT <- FRB
+    FRT <- FRB[0:63]
 
 Special Registers Altered:
 
@@ -26,8 +26,7 @@ X-Form
 
 Pseudo-code:
 
-    FRT <- FRB
-    FRT[0] <- 0b0
+    FRT <- 0b0 || FRB[1:63]
 
 Special Registers Altered:
 
@@ -42,8 +41,7 @@ X-Form
 
 Pseudo-code:
 
-    FRT <- FRB
-    FRT[0] <- 0b1
+    FRT[0] <- 0b1 || FRB[1:63]
 
 Special Registers Altered:
 
@@ -58,8 +56,7 @@ X-Form
 
 Pseudo-code:
 
-    FRT <- FRB
-    FRT[0] <- ¬FRB[0]
+    FRT <- ¬FRB[0] || FRB[1:63]
 
 Special Registers Altered:
 
@@ -74,8 +71,7 @@ X-Form
 
 Pseudo-code:
 
-    FRT <- FRB
-    FRT[0] <- FRA[0]
+    FRT <- FRA[0] || FRB[1:63]
 
 Special Registers Altered:
 
