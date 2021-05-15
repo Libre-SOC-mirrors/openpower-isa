@@ -1,4 +1,4 @@
-# A.3 FLoating-Point Convert from Integer Model
+# A.3 Floating-Point Convert from Integer Model
 
 The following describes algorithmically the operation of the Floating
 Convert From Integer instructions.
