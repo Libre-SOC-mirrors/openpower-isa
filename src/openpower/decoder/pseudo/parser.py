@@ -196,6 +196,11 @@ def apply_trailer(atom, trailer, read_regs):
         trailer = trailer[2]
     if trailer[0] == "CALL":
         #p[0] = ast.Expr(ast.Call(p[1], p[2][1], []))
+        for arg in trailer[1]:
+            if isinstance(arg, ast.Name):
+                name = arg.id
+                if name in regs + fregs:
+                    read_regs.add(name)
         return ast.Call(atom, trailer[1], [])
         # if p[1].id == 'print':
         #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)
