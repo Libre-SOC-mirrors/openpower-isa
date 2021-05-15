@@ -209,40 +209,63 @@ class SVP64sat(Enum):
 # supported instructions: make sure to keep up-to-date with CSV files
 # just like everything else
 _insns = [
-    "NONE", "add", "addc", "addco", "adde", "addeo", "addi", "addic", "addic.",
-    "addis", "addme", "addmeo", "addo", "addze", "addzeo", "and", "andc",
-    "andi.", "andis.", "attn", "b", "bc", "bcctr", "bclr", "bctar",
-    "bpermd", "cmp", "cmpb", "cmpeqb", "cmpi", "cmpl", "cmpli", "cmprb",
-    "cntlzd", "cntlzw", "cnttzd", "cnttzw", "crand", "crandc", "creqv",
-    "crnand", "crnor", "cror", "crorc", "crxor", "darn", "dcbf", "dcbst",
-    "dcbt", "dcbtst", "dcbz", "divd", "divde", "divdeo", "divdeu",
+    "NONE", "add", "addc", "addco", "adde", "addeo",
+    "addi", "addic", "addic.", "addis",
+    "addme", "addmeo", "addo", "addze", "addzeo",
+    "and", "andc", "andi.", "andis.",
+    "attn",
+    "b", "bc", "bcctr", "bclr", "bctar",
+    "bpermd",
+    "cmp", "cmpb", "cmpeqb", "cmpi", "cmpl", "cmpli", "cmprb",
+    "cntlzd", "cntlzw", "cnttzd", "cnttzw",
+    "crand", "crandc", "creqv",
+    "crnand", "crnor", "cror", "crorc", "crxor",
+    "darn",
+    "dcbf", "dcbst", "dcbt", "dcbtst", "dcbz",
+    "divd", "divde", "divdeo", "divdeu",
     "divdeuo", "divdo", "divdu", "divduo", "divw", "divwe", "divweo",
-    "divweu", "divweuo", "divwo", "divwu", "divwuo", "eqv", "extsb",
-    "extsh", "extsw", "extswsli", "hrfid", "icbi", "icbt", "isel", "isync",
-    "lbarx", "lbz", "lbzu", "lbzux", "lbzx", # load byte
-    "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx", # load double
-    "lfs", "lfsx", "lfsu", "lfsux", # FP load single
+    "divweu", "divweuo", "divwo", "divwu", "divwuo",
+    "eqv",
+    "extsb", "extsh", "extsw", "extswsli",
+    "hrfid", "icbi", "icbt", "isel", "isync",
+    "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
+    "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
+    "lfs", "lfsx", "lfsu", "lfsux",                     # FP load single
     "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax", # FP load double
-    "lha", "lharx", "lhau", "lhaux", "lhax", # load half
-    "lhbrx", "lhz", "lhzu", "lhzux", "lhzx", # more load half
-    "lwa", "lwarx", "lwaux", "lwax", "lwbrx",  # load word
-    "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",  # more load word
-    "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",
-    "mfmsr", "mfspr", "modsd", "modsw", "modud",
-    "moduw", "mtcrf/mtocrf", "mtmsr", "mtmsrd", "mtspr", "mulhd", "mulhdu",
-    "mulhw", "mulhwu", "mulld", "mulldo", "mulli", "mullw", "mullwo",
-    "nand", "neg", "nego", "nop", "nor", "or", "orc", "ori", "oris",
-    "popcntb", "popcntd", "popcntw", "prtyd", "prtyw", "rfid", "rldcl",
-    "rldcr", "rldic", "rldicl", "rldicr", "rldimi", "rlwimi", "rlwinm",
-    "rlwnm", "setb",
+    "lha", "lharx", "lhau", "lhaux", "lhax",            # load half
+    "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
+    "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
+    "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
+    "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
+    "mfmsr", "mfspr",
+    "modsd", "modsw", "modud", "moduw",
+    "mtcrf/mtocrf", "mtmsr", "mtmsrd", "mtspr",
+    "mulhd", "mulhdu", "mulhw", "mulhwu", "mulld", "mulldo",
+    "mulli", "mullw", "mullwo",
+    "nand", "neg", "nego",
+    "nop",
+    "nor", "or", "orc", "ori", "oris",
+    "popcntb", "popcntd", "popcntw",
+    "prtyd", "prtyw",
+    "rfid",
+    "rldcl", "rldcr", "rldic", "rldicl", "rldicr", "rldimi",
+    "rlwimi", "rlwinm",    "rlwnm",
+    "setb",
     "setvl",  # https://libre-soc.org/openpower/sv/setvl
-    "sim_cfg", "slbia", "sld", "slw", "srad", "sradi", "sraw",
-    "srawi", "srd", "srw", "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
-    "std", "stdbrx", "stdcx", "stdu", "stdux", "stdx", "sth", "sthbrx", "sthcx",
-    "sthu", "sthux", "sthx", "stw", "stwbrx", "stwcx", "stwu", "stwux",
-    "stwx", "subf", "subfc", "subfco", "subfe", "subfeo", "subfic",
-    "subfme", "subfmeo", "subfo", "subfze", "subfzeo", "sync", "td",
-    "tdi", "tlbie", "tlbiel", "tw", "twi", "xor", "xori", "xoris",
+    "sim_cfg",
+    "slbia", "sld", "slw", "srad", "sradi",
+    "sraw", "srawi", "srd", "srw",
+    "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
+    "std", "stdbrx", "stdcx", "stdu", "stdux", "stdx",
+    "sth", "sthbrx", "sthcx", "sthu", "sthux", "sthx",
+    "stw", "stwbrx", "stwcx", "stwu", "stwux", "stwx",
+    "subf", "subfc", "subfco", "subfe", "subfeo", "subfic",
+    "subfme", "subfmeo", "subfo", "subfze", "subfzeo",
+    "sync",
+    "td", "tdi",
+    "tlbie", "tlbiel",
+    "tw", "twi",
+    "xor", "xori", "xoris",
 ]
 
 # two-way lookup of instruction-to-index and vice-versa
