@@ -1,4 +1,4 @@
-# Reads OpenPOWER ISA pages from http://libre-riscv.org/openpower/isa
+# Reads OpenPOWER ISA pages from http://libre-soc.org/openpower/isa
 """OpenPOWER ISA page parser
 
 returns an OrderedDict of namedtuple "Ops" containing details of all
