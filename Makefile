@@ -1,6 +1,7 @@
 PYTHON3 ?= "python3"
 
-.PHONY: help Makefile gitupdate svanalysis test htmlupload pypiupload pywriter
+.PHONY: help Makefile gitupdate svanalysis test htmlupload pypiupload \
+        pyfnwriter pywriter
 
 gitupdate:
 	git submodule init
@@ -14,6 +15,7 @@ svanalysis:
 pywriter:
 	pywriter
 
+# likewise
 pyfnwriter:
 	pyfnwriter
 

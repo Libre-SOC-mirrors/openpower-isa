@@ -25,6 +25,7 @@ Once those are sorted, installation and setup is as follows:
 * python3 setup.py develop
 * make svanalysis
 * make pywriter
+* make pyfnwriter
 
 # Usage
 
