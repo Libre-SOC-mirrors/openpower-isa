@@ -79,8 +79,8 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(1), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
 
-    def test_fp_mv(self):
-        """>>> lst = ["fmr 1, 2",
+    def test_fp_neg(self):
+        """>>> lst = ["fneg 1, 2",
                      ]
         """
         lst = ["fneg 1, 2",
@@ -194,6 +194,26 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(1), SelectableInt(0x401C000000000000, 64))
             self.assertEqual(sim.fpr(2), SelectableInt(0xC02399999999999A, 64))
             self.assertEqual(sim.fpr(3), SelectableInt(0xC051266666666667, 64))
+
+    def test_fp_fcfids(self):
+        """>>> lst = ["fcfids 1, 2",
+               lst = ["fcfids 3, 4",
+                     ]
+        """
+        lst = ["fcfids 1, 2",
+               "fcfids 3, 4",
+                     ]
+
+        fprs = [0] * 32
+        fprs[2] = 7
+        fprs[4] = -32
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            self.assertEqual(sim.fpr(1), SelectableInt(0x401C000000000000, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(7, 64))
+            self.assertEqual(sim.fpr(3), SelectableInt(0xC040000000000000, 64))
+            self.assertEqual(sim.fpr(4), SelectableInt(-32, 64))
 
     def run_tst_program(self, prog, initial_regs=None,
                               initial_mem=None,

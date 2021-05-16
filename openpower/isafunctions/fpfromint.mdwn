@@ -33,24 +33,24 @@ Convert From Integer instructions.
 
         # increase fraction, record the top bit as a 'carry out'
         if tgt_precision = 'single-precision' then
-            tmp       <- [0]*25
-            tmp[1:24] <- frac[0:23]
-            tmp[0:24] <- tmp[0:24] + inc
-            carry_out = tmp[24]
-            frac[0:23] = tmp[1:24]
+            tmp        <- [0]*25
+            tmp[1:24]  <- frac[0:23]
+            tmp[0:24]  <- tmp[0:24] + inc
+            carry_out  <- tmp[24]
+            frac[0:23] <- tmp[1:24]
         else # tgt_precision = 'double-precision'
-            tmp       <- [0]*54
-            tmp[1:53] <- frac[0:52]
-            tmp[0:53] <- tmp[0:53] + inc
-            carry_out = tmp[53]
-            frac[0:52] = tmp[1:54]
+            tmp        <- [0]*54
+            tmp[1:53]  <- frac[0:52]
+            tmp[0:53]  <- tmp[0:53] + inc
+            carry_out  <- tmp[53]
+            frac[0:52] <- tmp[1:54]
         if carry_out = 1 then exp <- exp + 1
         # TODO, later
         # FPSCR[FR] <- inc
         # FPSCR[FI] <- gbit | rbit | xbit
         # FPSCR[XX] <- FPSCR[XX] | FPSCR[FI]
 
-    def INT2FP(FR, cvt, RN):
+    def INT2FP(FR, cvt):
         if cvt = 'sint2double' then
             tgt_precision = 'double-precision'
             sign       <- FR[0]
@@ -64,9 +64,10 @@ Convert From Integer instructions.
             tgt_precision <- 'single-precision'
             sign       <- 0
 
-        result = [0] * 64
-        exp        <- 63
-        frac[0:63] <- FR
+        frac   <- [0] * 64
+        result <- [0] * 64
+        exp    <- 63
+        frac   <- FR[0:63]
 
         if frac[0:63] = 0 then
             # Zero Operand
@@ -74,7 +75,7 @@ Convert From Integer instructions.
             #FPSCR[FR] <- 0b00
             #FPSCR[FI] <- 0b00
             #FPSCR[FPRF] <- '+ zero'
-            result = [0] * 64
+            result <- [0] * 64
         else
             if sign = 1 then frac[0:63] <- ¬frac[0:63] + 1
             # do the loop 0 times if FR = max negative 64-bit integer or

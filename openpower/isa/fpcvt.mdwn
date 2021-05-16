@@ -1,0 +1,20 @@
+<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.6.7 Floating-point Rounding and Conversion instructions. P 159 - 166 -->
+
+# Floating Convert with round Signed Doubleword to Single-Precision format
+
+X-Form
+
+* fcfids  FRT,FRB (Rc=0)
+* fcfids. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- INT2FP(FRB, 'sint2single')
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX XX
+    CR1        (if Rc=1)

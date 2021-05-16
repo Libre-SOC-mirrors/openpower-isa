@@ -33,7 +33,16 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.selectable_int import selectconcat as concat
 from openpower.decoder.orderedset import OrderedSet
 
-class %s:
+"""
+
+fpheader = """
+from openpower.decoder.helpers import (
+                                 DOUBLE, SINGLE,
+                                 FPADD32, FPSUB32, FPMUL32, FPDIV32,
+                                 FPADD64, FPSUB64, FPMUL64, FPDIV64,
+                                )
+from openpower.decoder.isafunctions.fpfromint import INT2FP
+
 
 """
 
@@ -57,7 +66,12 @@ class PyISAWriter(ISA):
         fname = os.path.join(isadir, "%s.py" % pagename)
         with open(fname, "w") as f:
             iinf = ''
-            f.write(header % pagename)  # write out header
+            # write headers: FP gets extra imports
+            f.write(header)  # write out header
+            if pagename.startswith("fp"):
+                f.write(fpheader)
+            f.write("class %s:\n" % pagename)
+
             # go through all instructions
             for page in instrs:
                 d = self.instr[page]
