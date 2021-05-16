@@ -59,6 +59,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'pywriter=openpower.decoder.pseudo.pywriter:pywriter',
+            'pyfnwriter=openpower.decoder.pseudo.pyfnwriter:pyfnwriter',
             'sv_analysis=openpower.sv.sv_analysis:process_csvs'
         ]
     }

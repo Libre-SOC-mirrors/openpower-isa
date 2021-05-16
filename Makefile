@@ -14,6 +14,9 @@ svanalysis:
 pywriter:
 	pywriter
 
+pyfnwriter:
+	pyfnwriter
+
 develop:
 	python3 setup.py develop # yes, develop, not install
 
