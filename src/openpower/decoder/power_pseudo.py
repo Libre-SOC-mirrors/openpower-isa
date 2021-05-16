@@ -212,6 +212,15 @@ def get_reg_hex(reg):
     return hex(reg.value)
 
 
+def convert_to_pure_python(pcode):
+
+    gsc = GardenSnakeCompiler(form=None, incl_carry=False)
+
+    tree = gsc.compile(pcode, mode="exec", filename="string")
+    tree = ast.fix_missing_locations(tree)
+    return astor.to_source(tree)
+
+
 def convert_to_python(pcode, form, incl_carry):
 
     print("form", form)

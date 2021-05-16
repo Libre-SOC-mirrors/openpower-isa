@@ -271,9 +271,12 @@ class PowerParser:
     def __init__(self, form, include_carry_in_write=False):
         self.include_ca_in_write = include_carry_in_write
         self.gprs = {}
-        form = self.sd.sigforms[form]
-        print(form)
-        formkeys = form._asdict().keys()
+        if form is not None:
+            form = self.sd.sigforms[form]
+            print(form)
+            formkeys = form._asdict().keys()
+        else:
+            formkeys = []
         self.declared_vars = set()
         for rname in regs + fregs:
             self.gprs[rname] = None
@@ -341,7 +344,8 @@ class PowerParser:
         """varargslist : varargslist COMMA NAME
                        | NAME"""
         if len(p) == 4:
-            p[0] = p[1] + p[3]
+            print (p[1], p[3])
+            p[0] = p[1] + [p[3]]
         else:
             p[0] = [p[1]]
 
@@ -871,7 +875,8 @@ class PowerParser:
 
 class GardenSnakeParser(PowerParser):
     def __init__(self, lexer=None, debug=False, form=None, incl_carry=False):
-        self.sd = create_pdecode()
+        if form is not None:
+            self.sd = create_pdecode()
         PowerParser.__init__(self, form, incl_carry)
         self.debug = debug
         if lexer is None:

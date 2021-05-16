@@ -6,43 +6,41 @@ Convert From Integer instructions.
 <!-- Power ISA Book I Version 3.0B Section A.3 page 782 -->
 
     def Round_Float( tgt_precision, sign, exp, frac, round_mode ):
-       inc <- 0
-       if tgt_precision = "single-precision" then
-           lsb <- frac[23]
-           gbit <- frac[24]
-           rbit <- frac[25]
-           xbit <- frac[26:63] > 0
-        else # tgt_precision = "double-precision"
-            lsb  <= frac[52]
-            gbit <= frac[53]
-            rbit <= frac[54]
-            xbit <= frac[55:63] > 0
+        inc <- 0
+        if tgt_precision = 'single-precision' then
+            lsb  <- frac[23]
+            gbit <- frac[24]
+            rbit <- frac[25]
+            xbit <- frac[26:63] > 0
+        else # tgt_precision = 'double-precision'
+            lsb  <- frac[52]
+            gbit <- frac[53]
+            rbit <- frac[54]
+            xbit <- frac[55:63] > 0
 
         if round_mode  = 0b00  then           # Round to Nearest
-            if lsb = 1 and gbit = 1              then inc <- 1
-            if lsb = 0 and gbit = 1 and rbit = 1 then inc <- 1
-            if lsb = 0 and gbit = 1 and xbit = 1 then inc <- 1
-        end
+            if (lsb = 1) & (gbit = 1)              then inc <- 1
+            if (lsb = 0) & (gbit = 1) & (rbit = 1) then inc <- 1
+            if (lsb = 0) & (gbit = 1) & (xbit = 1) then inc <- 1
         if round_mode  = 0b10  then           # Round toward + Infinity
-            if sign = 0 and gbit = 1 then inc <-1
-            if sign = 0 and rbit = 1 then inc <-1
-            if sign = 0 and xbit = 1 then inc <-1
-        end
+            if (sign = 0) & (gbit = 1) then inc <-1
+            if (sign = 0) & (rbit = 1) then inc <-1
+            if (sign = 0) & (xbit = 1) then inc <-1
         if round_mode  = 0b11  then           # Round toward - Infinity
-            if sign = 1 and gbit = 1 then inc <-1
-            if sign = 1 and rbit = 1 then inc <-1
-            if sign = 1 and xbit = 1 then inc <-1
-        end
-        # increase fraction, record the top bit as a "carry out"
-        if tgt_precision = "single-precision" then
-            tmp = [0]*25
-            tmp[1:24] = frac[0:23]
+            if (sign = 1) & (gbit = 1) then inc <-1
+            if (sign = 1) & (rbit = 1) then inc <-1
+            if (sign = 1) & (xbit = 1) then inc <-1
+
+        # increase fraction, record the top bit as a 'carry out'
+        if tgt_precision = 'single-precision' then
+            tmp       <- [0]*25
+            tmp[1:24] <- frac[0:23]
             tmp[0:24] <- tmp[0:24] + inc
             carry_out = tmp[24]
             frac[0:23] = tmp[1:24]
-        else # tgt_precision = "double-precision"
-            tmp = [0]*54
-            tmp[1:53] = frac[0:52]
+        else # tgt_precision = 'double-precision'
+            tmp       <- [0]*54
+            tmp[1:53] <- frac[0:52]
             tmp[0:53] <- tmp[0:53] + inc
             carry_out = tmp[53]
             frac[0:52] = tmp[1:54]
@@ -53,17 +51,17 @@ Convert From Integer instructions.
         # FPSCR[XX] <- FPSCR[XX] | FPSCR[FI]
 
     def INT2FP(FR, cvt, RN):
-        if cvt = "sint2double" then
-            tgt_precision = "double-precision"
+        if cvt = 'sint2double' then
+            tgt_precision = 'double-precision'
             sign       <- FR[0]
-        if cvt = "sint2single" then
-            tgt_precision <- "single-precision"
+        if cvt = 'sint2single' then
+            tgt_precision <- 'single-precision'
             sign       <- FR[0]
-        if cvt = "uint2double" then
-            tgt_precision <- "double-precision"
+        if cvt = 'uint2double' then
+            tgt_precision <- 'double-precision'
             sign       <- 0
-        if cvt = "uint2single" then
-            tgt_precision <- "single-precision"
+        if cvt = 'uint2single' then
+            tgt_precision <- 'single-precision'
             sign       <- 0
 
         result = [0] * 64
@@ -75,7 +73,7 @@ Convert From Integer instructions.
             # TODO, FPSCR
             #FPSCR[FR] <- 0b00
             #FPSCR[FI] <- 0b00
-            #FPSCR[FPRF] <- "+ zero"
+            #FPSCR[FPRF] <- '+ zero'
             result = [0] * 64
         else
             if sign = 1 then frac[0:63] <- ¬frac[0:63] + 1
@@ -87,8 +85,8 @@ Convert From Integer instructions.
             # round to nearest
             Round_Float( tgt_precision, sign, exp, frac, 0b00 )
             # TODO, FPSCR
-            #if sign = 0 then FPSCR[FPRF] <- "+normal number"
-            #if sign = 1 then FPSCR[FPRF] <- "-normal number"
+            #if sign = 0 then FPSCR[FPRF] <- '+normal number'
+            #if sign = 1 then FPSCR[FPRF] <- '-normal number'
             result[0]    <- sign
             result[1:11] <- exp + 1023     # exp + bias
             result[12:63] <- frac[1:52]
