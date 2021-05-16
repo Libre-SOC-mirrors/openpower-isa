@@ -1,3 +1,18 @@
+Release Notes Version 0.0.2 16 May 2021
+-------------
+
+Version 0.0.2 adds preliminary pseudo-code and support for some basic
+scalar IEEE754 FP operations.  Additional Pseudo-code from the v3.0B
+Specification (specifically Section A.3 Book I p782) has been extracted
+and cleaned up to become executable through compilation into python.
+This provides the implementation of "fcfids".
+
+Additionally. a RADIX MMU implementation has been added plus associated
+unit tests, and Load/Store Exceptions are underway: misaligned exceptions
+are already generated; RADIX MMU exceptions will be added in a next
+release.
+
+
 Release Notes Version 0.0.1 23 April 2021
 -------------
 
