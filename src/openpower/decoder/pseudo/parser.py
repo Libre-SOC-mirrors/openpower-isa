@@ -425,7 +425,8 @@ class PowerParser:
                 idx = p[1].args[0].id
                 ridx = ast.Name("_%s" % idx, ast.Load())
                 p[1] = ast.Subscript(p[1].func, ridx, ast.Load())
-                self.read_regs.add(idx)  # add to list of regs to read
+                if idx in self.gprs:
+                    self.read_regs.add(idx)  # add to list of regs to read
             elif isinstance(p[1], ast.Call) and p[1].func.id == 'MEM':
                 print("mem assign")
                 print(astor.dump_tree(p[1]))

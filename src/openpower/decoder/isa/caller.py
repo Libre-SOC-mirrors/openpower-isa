@@ -73,7 +73,7 @@ REG_SORT_ORDER = {
     "MSR": 0,
     "SVSTATE": 0,
 
-    "overflow": 1,
+    "overflow": 1, # should definitely be last
 }
 
 fregs = ['FRA', 'FRB', 'FRC', 'FRS', 'FRT']
@@ -81,7 +81,7 @@ fregs = ['FRA', 'FRB', 'FRC', 'FRS', 'FRT']
 
 def create_args(reglist, extra=None):
     retval = list(OrderedSet(reglist))
-    retval.sort(key=lambda reg: REG_SORT_ORDER[reg])
+    retval.sort(key=lambda reg: REG_SORT_ORDER.get(reg, 0))
     if extra is not None:
         return [extra] + retval
     return retval
