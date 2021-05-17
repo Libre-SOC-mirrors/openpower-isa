@@ -62,6 +62,7 @@ REG_SORT_ORDER = {
     "RT": 0,
     "RA": 0,
     "RB": 0,
+    "RC": 0,
     "RS": 0,
     "CR": 0,
     "LR": 0,
