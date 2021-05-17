@@ -435,8 +435,6 @@ Special Registers Altered:
 
     None
 
-<!-- MISSING stq -->
-
 <!-- Section 3.3.5 Fixed-Point Load and Store with Byte Reversal Instructions page 60 -->
 
 # Load Halfword Byte-Reverse Indexed
@@ -456,8 +454,6 @@ Special Registers Altered:
 
     None
 
-<!-- MISSING sthbrx -->
-
 # Load Word Byte-Reverse Indexed
 
 X-Form
@@ -475,8 +471,6 @@ Pseudo-code:
 Special Registers Altered:
 
     None
-
-<!-- MISSING stwbrx -->
 
 
 <!-- Section 3.3.5.1 64-Bit Load and Store with Byte Reversal Instructions page 61 -->
@@ -501,8 +495,6 @@ Special Registers Altered:
 
     None
 
-<!-- MISSING stdbrx -->
-
 <!-- Section 3.3.6 Fixed-Point Load and Store Multiple Instructions page 62 -->
 
 # Load Multiple Word
@@ -515,7 +507,7 @@ Pseudo-code:
 
     b <- (RA|0)
     EA <- b + EXTS(D)
-    r <- RT
+    r <- RT[0:63]
     do while r <=  31
         GPR(r) <- [0]*32 || MEM(EA, 4)
         r <- r + 1
@@ -524,7 +516,4 @@ Pseudo-code:
 Special Registers Altered:
 
     None
-
-<!-- MISSING stmw -->
-
 
