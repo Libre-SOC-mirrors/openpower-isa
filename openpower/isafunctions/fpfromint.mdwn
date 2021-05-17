@@ -84,7 +84,7 @@ Convert From Integer instructions.
                 frac[0:63] <- frac[1:63] || 0b0
                 exp <- exp - 1
             # round to nearest
-            RN = 0b00 # TODO, FPSCR[RN]
+            RN <- 0b00 # TODO, FPSCR[RN]
             Round_Float( tgt_precision, sign, exp, frac, RN )
             # TODO, FPSCR
             #if sign = 0 then FPSCR[FPRF] <- '+normal number'
