@@ -118,3 +118,11 @@ class LogicalTestCase(TestAccumulatorBase):
             initial_regs[2] = 0xdeadbeefcafec0de
             self.add_case(Program(lst, bigendian), initial_regs)
 
+    def case_bpermd_morerandom(self):
+        lst = ["bpermd 3, 1, 2"]
+        for i in range(100):
+            initial_regs = [0] * 32
+            initial_regs[1] = random.randint(0, (1<<64)-1)
+            initial_regs[2] = random.randint(0, (1<<64)-1)
+            self.add_case(Program(lst, bigendian), initial_regs)
+
