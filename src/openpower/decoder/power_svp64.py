@@ -15,6 +15,9 @@ def is_CR_5bit(regname):
 def is_GPR(regname):
     return regname in ['RA', 'RB', 'RC', 'RS', 'RT']
 
+def is_FPR(regname):
+    return regname in ['FRA', 'FRB', 'FRC', 'FRS', 'FRT']
+
 def get_regtype(regname):
     if is_CR_3bit(regname):
         return "CR_3bit"
@@ -22,6 +25,8 @@ def get_regtype(regname):
         return "CR_5bit"
     if is_GPR(regname):
         return "GPR"
+    if is_FPR(regname):
+        return "FPR"
 
 
 def decode_extra(rm, prefix=''):

@@ -266,8 +266,8 @@ class SVP64Asm:
                 # XXX also TODO: the LD/ST modes which are different
                 # https://libre-soc.org/openpower/sv/ldst/
 
-                # encode SV-GPR field into extra, v3.0field
-                if rtype == 'GPR':
+                # encode SV-GPR and SV-FPR field into extra, v3.0field
+                if rtype in ['GPR', 'FPR']:
                     sv_extra, field = get_extra_gpr(etype, regmode, field)
                     # now sanity-check. EXTRA3 is ok, EXTRA2 has limits
                     # (and shrink to a single bit if ok)
