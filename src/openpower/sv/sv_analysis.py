@@ -372,53 +372,68 @@ def process_csvs():
                     else:
                         regs.append('')
 
+            # for LD/ST FP, use FRT/FRS not RT/RS, and use CR1 not CR0
+            if insn_name.startswith("lf"):
+                dRT = 'd:FRT'
+                dCR = 'd:CR1'
+            else:
+                dRT = 'd:RT'
+                dCR = 'd:CR0'
+            if insn_name.startswith("stf"):
+                sRS = 's:FRS'
+                dCR = 'd:CR1'
+            else:
+                sRS = 's:RS'
+                dCR = 'd:CR0'
+
             # sigh now the fun begins.  this isn't the sanest way to do it
             # but the patterns are pretty regular.
+
             if value == 'LDSTRM-2P-1S1D':
                 res['Etype'] = 'EXTRA3' # RM EXTRA3 type
-                res['0'] = 'd:RT' # RT: Rdest_EXTRA3
+                res['0'] = dRT    # RT: Rdest_EXTRA3
                 res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
 
             elif value == 'LDSTRM-2P-1S2D':
                 res['Etype'] = 'EXTRA2' # RM EXTRA2 type
-                res['0'] = 'd:RT' # RT: Rdest1_EXTRA2
+                res['0'] = dRT    # RT: Rdest_EXTRA3
                 res['1'] = 'd:RA' # RA: Rdest2_EXTRA2
                 res['2'] = 's:RA' # RA: Rsrc1_EXTRA2
 
             elif value == 'LDSTRM-2P-2S':
                 # stw, std, sth, stb
                 res['Etype'] = 'EXTRA3' # RM EXTRA2 type
-                res['0'] = 's:RS' # RT: Rdest1_EXTRA2
+                res['0'] = sRS    # RS: Rdest1_EXTRA2
                 res['1'] = 's:RA' # RA: Rsrc1_EXTRA2
 
             elif value == 'LDSTRM-2P-2S1D':
                 if 'st' in insn_name and 'x' not in insn_name: # stwu/stbu etc
                     res['Etype'] = 'EXTRA2' # RM EXTRA2 type
                     res['0'] = 'd:RA' # RA: Rdest1_EXTRA2
-                    res['1'] = 's:RS' # RS: Rdsrc1_EXTRA2
+                    res['1'] = sRS    # RS: Rdsrc1_EXTRA2
                     res['2'] = 's:RA' # RA: Rsrc2_EXTRA2
                 elif 'st' in insn_name and 'x' in insn_name: # stwux
                     res['Etype'] = 'EXTRA2' # RM EXTRA2 type
                     res['0'] = 'd:RA' # RA: Rdest1_EXTRA2
-                    res['1'] = 's:RS;s:RA' # RS: Rdest2_EXTRA2, RA: Rsrc1_EXTRA2
+                    res['1'] = sRS+'s:RA' # RS: Rdest2_EXTRA2, RA: Rsrc1_EXTRA2
                     res['2'] = 's:RB' # RB: Rsrc2_EXTRA2
                 elif 'u' in insn_name: # ldux etc.
                     res['Etype'] = 'EXTRA2' # RM EXTRA2 type
-                    res['0'] = 'd:RT' # RT: Rdest1_EXTRA2
+                    res['0'] = dRT    # RT: Rdest1_EXTRA2
                     res['1'] = 'd:RA' # RA: Rdest2_EXTRA2
                     res['2'] = 's:RB' # RB: Rsrc1_EXTRA2
                 else:
                     res['Etype'] = 'EXTRA2' # RM EXTRA2 type
-                    res['0'] = 'd:RT' # RT: Rdest1_EXTRA2
+                    res['0'] = dRT     # RT: Rdest1_EXTRA2
                     res['1'] = 's:RA' # RA: Rsrc1_EXTRA2
                     res['2'] = 's:RB' # RB: Rsrc2_EXTRA2
 
             elif value == 'LDSTRM-2P-3S':
                 res['Etype'] = 'EXTRA2' # RM EXTRA2 type
                 if 'cx' in insn_name:
-                    res['0'] = 's:RS;d:CR0' # RS: Rsrc1_EXTRA2 CR0: dest
+                    res['0'] = sRS+dCR # RS: Rsrc1_EXTRA2 CR0: dest
                 else:
-                    res['0'] = 's:RS' # RS: Rsrc1_EXTRA2
+                    res['0'] = sRS # RS: Rsrc1_EXTRA2
                 res['1'] = 's:RA' # RA: Rsrc2_EXTRA2
                 res['2'] = 's:RB' # RA: Rsrc3_EXTRA2
 
