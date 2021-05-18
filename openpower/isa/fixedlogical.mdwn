@@ -468,7 +468,7 @@ Pseudo-code:
     perm <- [0] * 8
     for i = 0 to 7
        index <- (RS)[8*i:8*i+7]
-       if index < 64 then
+       if index <u 64 then
             perm[i] <- (RB)[index]
        else
             perm[i] <- 0
