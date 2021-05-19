@@ -58,7 +58,7 @@ def get_isa_dir():
     fdir = os.path.split(fdir)[0]
     fdir = os.path.split(fdir)[0]
     fdir = os.path.split(fdir)[0]
-    print (fdir)
+    # print (fdir)
     return os.path.join(fdir, "openpower", "isa")
 
 
@@ -68,8 +68,10 @@ class ISA:
         self.instr = OrderedDict()
         self.forms = {}
         self.page = {}
+        self.verbose = False
         for pth in os.listdir(os.path.join(get_isa_dir())):
-            print("examining", get_isa_dir(), pth)
+            if self.verbose:
+                print("examining", get_isa_dir(), pth)
             if "swp" in pth:
                 continue
             if not pth.endswith(".mdwn"):
@@ -93,7 +95,8 @@ class ISA:
         l = lines.pop(0).rstrip()  # get first line
         rewrite.append(l)
         while lines:
-            print(l)
+            if self.verbose:
+                print(l)
             # look for HTML comment, if starting, skip line.
             # XXX this is braindead!  it doesn't look for the end
             # so please put ending of comments on one line:
@@ -113,7 +116,8 @@ class ISA:
 
             # whitespace expected
             l = lines.pop(0).strip()
-            print(repr(l))
+            if self.verbose:
+                print(repr(l))
             assert len(l) == 0, ("blank line not found %s" % l)
             rewrite.append(l)
 
@@ -187,7 +191,8 @@ class ISA:
 
         l = lines.pop(0).rstrip()  # get first line
         while lines:
-            print(l)
+            if self.verbose:
+                print(l)
             # look for HTML comment, if starting, skip line.
             # XXX this is braindead!  it doesn't look for the end
             # so please put ending of comments on one line:
@@ -209,7 +214,8 @@ class ISA:
 
             # whitespace expected
             l = lines.pop(0).strip()
-            print(repr(l))
+            if self.verbose:
+                print(repr(l))
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # Form expected
@@ -239,7 +245,8 @@ class ISA:
 
             # whitespace expected
             l = lines.pop(0).strip()
-            print(repr(l))
+            if self.verbose:
+                print(repr(l))
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # get pseudocode
