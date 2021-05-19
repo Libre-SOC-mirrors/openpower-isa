@@ -11,7 +11,7 @@ endif
 
 wget:
 	mkdir -p data
-	rm media-test-data.txz
+	rm -f media-test-data.txz
 	wget https://ftp.libre-soc.org/media-test-data.txz
 	tar -C data -xvf media-test-data.txz
 
