@@ -58,10 +58,38 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(3), SelectableInt(0xC004000000000000, 64))
 
     def test_fp_single_ldst(self):
-        """>>> lst = ["sv.lfsx 0.v, 0, 2.v",   # load fp 1/2 from mem 0/8
+        """>>> lst = ["sv.lfsx 0.v, 0, 4.v",   # load fp 1/2 from mem 0/8
                       "sv.stfsu 0.v, 16(4.v)", # store fp 1/2, update RA *twice*
                       "sv.lfs 3.v, 0(4.v)",   # re-load from UPDATED r4/r5
                      ]
+
+        This is quite an involved (deceptively simple looking) test.
+        The sv.stfsu is creating a *Vector* of Effective Addresses, and
+        consequently is updating (writing) a *Vector* of EAs into the GPR.
+
+        Walkthrough:
+
+        1) sv.lfsx 0.v, 0, 4.v    VL=2 so there are *two* lfsx operations
+                lfsx 0, 0, 4      loads from MEM[GPR(4)], stores in FPR(0)
+                lfsx 1, 0, 5      loads from MEM[GPR(5)], stores in FPR(1)
+
+        2) sv.stfsu 0.v, 16(4.v)  again, VL=2 so there are two ST-FP-update ops
+                stfsu 0, 16(4)    EA=GPR(4)+16, FPR(0) to MEM[EA], EA to GPR(4)
+                stfsu 1, 16(5)    EA=GPR(5)+16, FPR(0) to MEM[EA], EA to GPR(5)
+
+           note that there are **TWO** FP writes to memory, and **TWO**
+           writes of the calculated Effective Address to GPR, in regs 4 and 5
+           GPRs 4 and 5 are *overwritten*.
+
+        3) sv.lfs 3.v, 0(4.v)     VL=2, so two immediate-LDs
+                lfs 3, 0(4)       EA=GPR(4)+0, FPR(3) = MEM[EA]
+                lfs 4, 0(5)       EA=GPR(5)+0, FPR(4) = MEM[EA]
+
+           here we have loaded from the *overwritten* GPRs 4 and 5.
+
+        strictly speaking this unit test should also verify the contents
+        of the memory locations 0x10 and 0x18, which should contain the
+        single-precision FP numbers in the bottom 4 bytes.  TODO
         """
         lst = SVP64Asm(["sv.lfsx 0.v, 0, 4.v",
                         "sv.stfsu 0.v, 16(4.v)",
