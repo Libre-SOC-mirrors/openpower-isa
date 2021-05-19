@@ -232,6 +232,9 @@ class SVP64Asm:
             opregfields = zip(fields, v30b_regs) # err that was easy
 
             # now for each of those find its place in the EXTRA encoding
+            # note there is the possibility (for LD/ST-with-update) of
+            # RA occurring **TWICE**.  to avoid it getting added to the
+            # v3.0B suffix twice, we spot it as a duplicate, here
             extras = OrderedDict()
             for idx, (field, regname) in enumerate(opregfields):
                 imm, regname = decode_imm(regname)
@@ -239,13 +242,14 @@ class SVP64Asm:
                 log ("    idx find", idx, field, regname, imm)
                 extra = svp64_src.get(regname, None)
                 if extra is not None:
-                    extra = ('s', extra, False)
+                    extra = ('s', extra, False) # not a duplicate
                     extras[extra] = (idx, field, regname, rtype, imm)
                     log ("    idx src", idx, extra, extras[extra])
                 dextra = svp64_dest.get(regname, None)
                 log ("regname in", regname, dextra)
                 if dextra is not None:
-                    dextra = ('d', dextra, extra is not None)
+                    is_a_duplicate = extra is not None # duplicate spotted
+                    dextra = ('d', dextra, is_a_duplicate)
                     extras[dextra] = (idx, field, regname, rtype, imm)
                     log ("    idx dst", idx, extra, extras[dextra])
 
@@ -383,6 +387,8 @@ class SVP64Asm:
                 extras[extra_idx] = sv_extra
 
                 # append altered field value to v3.0b, differs for LDST
+                # note that duplicates are skipped e.g. EXTRA2 contains
+                # *BOTH* s:RA *AND* d:RA which happens on LD/ST-with-update
                 srcdest, idx, duplicate = extra_idx
                 if duplicate: # skip adding to v3.0b fields, already added
                     continue
