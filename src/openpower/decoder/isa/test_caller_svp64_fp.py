@@ -22,7 +22,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def tst_sv_fpload(self):
+    def test_sv_fpload(self):
         """>>> lst = ["sv.lfsx 2.v, 0, 0.v"
                         ]
         """
@@ -104,7 +104,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(4), SelectableInt(0xC004000000000000, 64))
 
 
-    def tst_sv_fpadd(self):
+    def test_sv_fpadd(self):
         """>>> lst = ["sv.fadds 6.v, 2.v, 4.v"
                         ]
         """
