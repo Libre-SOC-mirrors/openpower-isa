@@ -30,6 +30,9 @@ from openpower.decoder.power_svp64 import SVP64RM, get_regtype, decode_extra
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.consts import SVP64MODE
 
+# for debug logging
+from openpower.util import log
+
 
 # decode GPR into sv extra
 def  get_extra_gpr(etype, regmode, field):
@@ -161,7 +164,7 @@ class SVP64Asm:
             # now find opcode fields
             fields = ''.join(ls[1:]).split(',')
             fields = list(map(str.strip, fields))
-            print ("opcode, fields", ls, opcode, fields)
+            log ("opcode, fields", ls, opcode, fields)
 
             # sigh have to do setvl here manually for now...
             if opcode in ["setvl", "setvl."]:
@@ -175,7 +178,7 @@ class SVP64Asm:
                 insn |= 0b00000   << (31-30) # XO       , bits 26..30
                 if opcode == 'setvl.':
                     insn |= 1 << (31-31)     # Rc=1     , bit 31
-                print ("setvl", bin(insn))
+                log ("setvl", bin(insn))
                 yield ".long 0x%x" % insn
                 continue
 
@@ -201,9 +204,9 @@ class SVP64Asm:
                                 (v30b_op, insn))
             v30b_regs = isa.instr[v30b_op].regs[0] # get regs info "RT, RA, RB"
             rm = svp64.instrs[v30b_op]             # one row of the svp64 RM CSV
-            print ("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
-            print ("v3.0B regs", opcode, v30b_regs)
-            print ("RM", rm)
+            log ("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
+            log ("v3.0B regs", opcode, v30b_regs)
+            log ("RM", rm)
 
             # right.  the first thing to do is identify the ordering of
             # the registers, by name.  the EXTRA2/3 ordering is in
@@ -218,8 +221,8 @@ class SVP64Asm:
             decode = decode_extra(rm)
             dest_reg_cr, src_reg_cr, svp64_src, svp64_dest = decode
 
-            print ("EXTRA field index, src", svp64_src)
-            print ("EXTRA field index, dest", svp64_dest)
+            log ("EXTRA field index, src", svp64_src)
+            log ("EXTRA field index, dest", svp64_dest)
 
             # okaaay now we identify the field value (opcode N,N,N) with
             # the pseudo-code info (opcode RT, RA, RB)
@@ -233,18 +236,18 @@ class SVP64Asm:
             for idx, (field, regname) in enumerate(opregfields):
                 imm, regname = decode_imm(regname)
                 rtype = get_regtype(regname)
-                print ("    idx find", idx, field, regname, imm)
+                log ("    idx find", idx, field, regname, imm)
                 extra = svp64_src.get(regname, None)
                 if extra is not None:
                     extra = ('s', extra, False)
                     extras[extra] = (idx, field, regname, rtype, imm)
-                    print ("    idx src", idx, extra, extras[extra])
+                    log ("    idx src", idx, extra, extras[extra])
                 dextra = svp64_dest.get(regname, None)
-                print ("regname in", regname, dextra)
+                log ("regname in", regname, dextra)
                 if dextra is not None:
                     dextra = ('d', dextra, extra is not None)
                     extras[dextra] = (idx, field, regname, rtype, imm)
-                    print ("    idx dst", idx, extra, extras[dextra])
+                    log ("    idx dst", idx, extra, extras[dextra])
 
             # great! got the extra fields in their associated positions:
             # also we know the register type. now to create the EXTRA encodings
@@ -264,7 +267,7 @@ class SVP64Asm:
                     immed, field = field[:-1].split("(")
 
                 field, regmode = decode_reg(field)
-                print ("    ", extra_idx, rname, rtype,
+                log ("    ", extra_idx, rname, rtype,
                                regmode, iname, field, end=" ")
 
                 # see Mode field https://libre-soc.org/openpower/sv/svp64/
@@ -376,7 +379,7 @@ class SVP64Asm:
                     field = (field << 2) | cr_subfield
 
                 # capture the extra field info
-                print ("=>", "%5s" % bin(sv_extra), field)
+                log ("=>", "%5s" % bin(sv_extra), field)
                 extras[extra_idx] = sv_extra
 
                 # append altered field value to v3.0b, differs for LDST
@@ -388,8 +391,8 @@ class SVP64Asm:
                 else:
                     v30b_newfields.append(str(field))
 
-            print ("new v3.0B fields", v30b_op, v30b_newfields)
-            print ("extras", extras)
+            log ("new v3.0B fields", v30b_op, v30b_newfields)
+            log ("extras", extras)
 
             # rright.  now we have all the info. start creating SVP64 RM
             svp64_rm = SVP64RMFields()
@@ -397,7 +400,7 @@ class SVP64Asm:
             # begin with EXTRA fields
             for idx, sv_extra in extras.items():
                 if idx is None: continue
-                print (idx)
+                log (idx)
                 srcdest, idx, duplicate = idx
                 if etype == 'EXTRA2':
                     svp64_rm.extra2[idx].eq(
@@ -628,24 +631,24 @@ class SVP64Asm:
             # nice debug printout. (and now for something completely different)
             # https://youtu.be/u0WOIwlXE9g?t=146
             svp64_rm_value = svp64_rm.spr.value
-            print ("svp64_rm", hex(svp64_rm_value), bin(svp64_rm_value))
-            print ("    mmode  0    :", bin(mmode))
-            print ("    pmask  1-3  :", bin(pmask))
-            print ("    dstwid 4-5  :", bin(destwid))
-            print ("    srcwid 6-7  :", bin(srcwid))
-            print ("    subvl  8-9  :", bin(subvl))
-            print ("    mode   19-23:", bin(mode))
+            log ("svp64_rm", hex(svp64_rm_value), bin(svp64_rm_value))
+            log ("    mmode  0    :", bin(mmode))
+            log ("    pmask  1-3  :", bin(pmask))
+            log ("    dstwid 4-5  :", bin(destwid))
+            log ("    srcwid 6-7  :", bin(srcwid))
+            log ("    subvl  8-9  :", bin(subvl))
+            log ("    mode   19-23:", bin(mode))
             offs = 2 if etype == 'EXTRA2' else 3 # 2 or 3 bits
             for idx, sv_extra in extras.items():
                 if idx is None: continue
                 srcdest, idx, duplicate = idx
                 start = (10+idx*offs)
                 end = start + offs-1
-                print ("    extra%d %2d-%2d:" % (idx, start, end),
+                log ("    extra%d %2d-%2d:" % (idx, start, end),
                         bin(sv_extra))
             if ptype == '2P':
-                print ("    smask  16-17:", bin(smask))
-            print ()
+                log ("    smask  16-17:", bin(smask))
+            log ()
 
             # first, construct the prefix from its subfields
             svp64_prefix = SVP64PrefixFields()
@@ -657,7 +660,7 @@ class SVP64Asm:
             rc = '.' if rc_mode else ''
             yield ".long 0x%x" % svp64_prefix.insn.value
             yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
-            print ("new v3.0B fields", v30b_op, v30b_newfields)
+            log ("new v3.0B fields", v30b_op, v30b_newfields)
 
 if __name__ == '__main__':
     lst = ['slw 3, 1, 4',

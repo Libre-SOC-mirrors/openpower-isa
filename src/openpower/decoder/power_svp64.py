@@ -3,6 +3,7 @@
 # Funded by NLnet http://nlnet.nl
 
 from openpower.decoder.power_enums import get_csv, find_wiki_dir
+from openpower.util import log
 import os
 
 # identifies register by type
@@ -29,7 +30,7 @@ def get_regtype(regname):
         return "FPR"
 
 
-def decode_extra(rm, prefix='', verbose=True):
+def decode_extra(rm, prefix=''):
     # first turn the svp64 rm into a "by name" dict, recording
     # which position in the RM EXTRA it goes into
     # also: record if the src or dest was a CR, for sanity-checking
@@ -37,14 +38,12 @@ def decode_extra(rm, prefix='', verbose=True):
     dest_reg_cr, src_reg_cr = False, False
     svp64_srcreg_byname = {}
     svp64_destreg_byname = {}
-    if verbose:
-        print ("decode_extra RM", rm)
+    log ("decode_extra RM", rm)
     for i in range(4):
         rfield = rm[prefix+str(i)]
         if not rfield or rfield == '0':
             continue
-        if verbose:
-            print ("EXTRA field", i, rfield)
+        log ("EXTRA field", i, rfield)
         rfield = rfield.split(";") # s:RA;d:CR1 etc.
         for r in rfield:
             rtype = r[0]
@@ -75,7 +74,6 @@ class SVP64RM:
         """
         self.instrs = {}
         self.svp64_instrs = {}
-        self.verbose = False
         pth = find_wiki_dir()
         for fname in os.listdir(pth):
             if fname.startswith("RM") or fname.startswith("LDSTRM"):
@@ -123,7 +121,7 @@ class SVP64RM:
 
             # hmm, we need something more useful: a cross-association
             # of the in1/2/3 and CR in/out with the EXTRA0-3 fields
-            decode = decode_extra(entry, "EXTRA", self.verbose)
+            decode = decode_extra(entry, "EXTRA")
             dest_reg_cr, src_reg_cr, svp64_src, svp64_dest = decode
 
             # now examine in1/2/3/out, create sv_in1/2/3/out
@@ -132,8 +130,7 @@ class SVP64RM:
                 extra_index = None
                 if regfield == 'RA_OR_ZERO':
                     regfield = 'RA'
-                if self.verbose:
-                    print (asmcode, regfield, fname, svp64_dest, svp64_src)
+                log (asmcode, regfield, fname, svp64_dest, svp64_src)
                 # find the reg in the SVP64 extra map
                 if (fname in ['out', 'out2'] and regfield in svp64_dest):
                     extra_index = svp64_dest[regfield]

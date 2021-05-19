@@ -1,3 +1,4 @@
+import os
 import random
 from openpower.consts import FastRegsEnum
 from openpower.decoder.power_enums import SPRfull as SPR, spr_dict
@@ -51,9 +52,18 @@ def mask_extend(x, nbits, repeat):
         if x & (1<<i):
             res |= extended << (i*repeat)
     return res
-    
+
 
 # makes a logarithmically-skewed random number
 def log_rand(n, min_val=1):
     logrange = random.randint(1, n)
     return random.randint(min_val, (1 << logrange)-1)
+
+
+def log(*args, **kwargs):
+    """verbose printing, disabled if an ENV VAR "SILENCELOG" exists.
+    """
+    if 'SILENCELOG' in os.environ:
+        return
+    print(*args, **kwargs)
+
