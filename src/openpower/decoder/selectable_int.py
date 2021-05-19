@@ -4,6 +4,7 @@ from copy import copy
 from openpower.decoder.power_fields import BitRange
 from operator import (add, sub, mul, floordiv, truediv, mod, or_, and_, xor,
                       neg, inv, lshift, rshift)
+from openpower.util import log
 
 
 def check_extsign(a, b):
@@ -48,7 +49,7 @@ class FieldSelectableInt:
         return self.merge(vi)
 
     def __getitem__(self, key):
-        print("getitem", key, self.br)
+        log("getitem", key, self.br)
         if isinstance(key, SelectableInt):
             key = key.value
         if isinstance(key, int):
@@ -120,7 +121,7 @@ class FieldSelectableInt:
         brlen = len(self.br)
         for i, key in self.br.items():
             bit = self.si[key].value
-            #print("asint", i, key, bit)
+            #log("asint", i, key, bit)
             res |= bit << ((brlen-i-1) if msb0 else i)
         return res
 
@@ -135,7 +136,7 @@ class FieldSelectableIntTestCase(unittest.TestCase):
         br[2] = 3
         fs = FieldSelectableInt(a, br)
         c = fs + b
-        print(c)
+        log(c)
         #self.assertEqual(c.value, a.value + b.value)
 
     def test_select(self):
@@ -188,13 +189,13 @@ class SelectableInt:
         self.bits = b.bits
 
     def to_signed_int(self):
-        print ("to signed?", self.value & (1<<(self.bits-1)), self.value)
+        log ("to signed?", self.value & (1<<(self.bits-1)), self.value)
         if self.value & (1<<(self.bits-1)) != 0: # negative
             res = self.value - (1<<self.bits)
-            print ("    val -ve:", self.bits, res)
+            log ("    val -ve:", self.bits, res)
         else:
             res = self.value
-            print ("    val +ve:", res)
+            log ("    val +ve:", res)
         return res
 
     def _op(self, op, b):
@@ -214,7 +215,7 @@ class SelectableInt:
         # different case: mul result needs to fit the total bitsize
         if isinstance(b, int):
             b = SelectableInt(b, self.bits)
-        print("SelectableInt mul", hex(self.value), hex(b.value),
+        log("SelectableInt mul", hex(self.value), hex(b.value),
               self.bits, b.bits)
         return SelectableInt(self.value * b.value, self.bits + b.bits)
 
@@ -237,7 +238,7 @@ class SelectableInt:
         return self._op(xor, b)
 
     def __abs__(self):
-        print("abs", self.value & (1 << (self.bits-1)))
+        log("abs", self.value & (1 << (self.bits-1)))
         if self.value & (1 << (self.bits-1)) != 0:
             return -self
         return self
@@ -266,7 +267,7 @@ class SelectableInt:
 
     def __neg__(self):
         res = SelectableInt((~self.value) + 1, self.bits)
-        print ("neg", hex(self.value), hex(res.value))
+        log ("neg", hex(self.value), hex(res.value))
         return res
 
     def __lshift__(self, b):
@@ -288,7 +289,7 @@ class SelectableInt:
             key = self.bits - (key + 1)
 
             value = (self.value >> key) & 1
-            print("getitem", key, self.bits, hex(self.value), value)
+            log("getitem", key, self.bits, hex(self.value), value)
             return SelectableInt(value, 1)
         elif isinstance(key, slice):
             assert key.step is None or key.step == 1
@@ -300,16 +301,16 @@ class SelectableInt:
             start = self.bits - key.stop
 
             bits = stop - start
-            #print ("__getitem__ slice num bits", start, stop, bits)
+            #log ("__getitem__ slice num bits", start, stop, bits)
             mask = (1 << bits) - 1
             value = (self.value >> start) & mask
-            print("getitem", stop, start, self.bits, hex(self.value), value)
+            log("getitem", stop, start, self.bits, hex(self.value), value)
             return SelectableInt(value, bits)
 
     def __setitem__(self, key, value):
         if isinstance(key, SelectableInt):
             key = key.value
-        print("setitem", key, self.bits, hex(self.value))
+        log("setitem", key, self.bits, hex(self.value))
         if isinstance(key, int):
             assert key < self.bits
             assert key >= 0
@@ -331,7 +332,7 @@ class SelectableInt:
             start = self.bits - key.stop
 
             bits = stop - start
-            #print ("__setitem__ slice num bits", bits)
+            #log ("__setitem__ slice num bits", bits)
             if isinstance(value, SelectableInt):
                 assert value.bits == bits, "%d into %d" % (value.bits, bits)
                 value = value.value
@@ -373,7 +374,7 @@ class SelectableInt:
         assert False
 
     def __lt__(self, other):
-        print ("SelectableInt lt", self, other)
+        log ("SelectableInt lt", self, other)
         if isinstance(other, FieldSelectableInt):
             other = other.get_range()
         if isinstance(other, SelectableInt):
@@ -383,19 +384,19 @@ class SelectableInt:
         if isinstance(other, int):
             a = self.to_signed_int()
             res = onebit(a  < other)
-            print ("    a < b", a, other, res)
+            log ("    a < b", a, other, res)
             return res
         assert False
 
     def __eq__(self, other):
-        print("__eq__", self, other)
+        log("__eq__", self, other)
         if isinstance(other, FieldSelectableInt):
             other = other.get_range()
         if isinstance(other, SelectableInt):
             other = check_extsign(self, other)
             assert other.bits == self.bits
             other = other.value
-        print ("    eq", other, self.value, other == self.value)
+        log ("    eq", other, self.value, other == self.value)
         if isinstance(other, int):
             return onebit(other == self.value)
         assert False
@@ -478,7 +479,7 @@ def selectconcat(*args, repeat=1):
         assert isinstance(i, SelectableInt), "can only concat SIs, sorry"
         res.bits += i.bits
         res.value = (res.value << i.bits) | i.value
-    print("concat", repeat, res)
+    log("concat", repeat, res)
     return res
 
 
@@ -579,7 +580,7 @@ class SelectableIntTestCase(unittest.TestCase):
                               ]:
             a = SelectableInt(asint, bits=64)
             convert = float(a)
-            print ("test_double_1", asint, asfloat, convert)
+            log ("test_double_1", asint, asfloat, convert)
             self.assertTrue(asfloat == convert)
 
 
