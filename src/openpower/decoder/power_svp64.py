@@ -29,7 +29,7 @@ def get_regtype(regname):
         return "FPR"
 
 
-def decode_extra(rm, prefix='', verbose=False):
+def decode_extra(rm, prefix='', verbose=True):
     # first turn the svp64 rm into a "by name" dict, recording
     # which position in the RM EXTRA it goes into
     # also: record if the src or dest was a CR, for sanity-checking
@@ -37,9 +37,9 @@ def decode_extra(rm, prefix='', verbose=False):
     dest_reg_cr, src_reg_cr = False, False
     svp64_srcreg_byname = {}
     svp64_destreg_byname = {}
+    if verbose:
+        print ("decode_extra RM", rm)
     for i in range(4):
-        if verbose:
-            print (rm)
         rfield = rm[prefix+str(i)]
         if not rfield or rfield == '0':
             continue

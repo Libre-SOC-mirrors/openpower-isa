@@ -21,7 +21,7 @@ from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
                                      insns, MicrOp, In1Sel, In2Sel, In3Sel,
-                                     OutSel, CROutSel,
+                                     OutSel, CROutSel, LDSTMode,
                                      SVP64RMMode, SVP64PredMode,
                                      SVP64PredInt, SVP64PredCR)
 
@@ -458,14 +458,30 @@ def get_pdecode_idx_out(dec2, name):
                                       OutSel.FRT.value, out, o_isvec)
         if out_sel == OutSel.FRT.value:
             return out, o_isvec
-    print ("get_pdecode_idx_out not found", name)
+    print ("get_pdecode_idx_out not found", name, out_sel, out, o_isvec)
     return None, False
 
 
-# XXX TODO
 def get_pdecode_idx_out2(dec2, name):
+    # check first if register is activated for write
+    out_ok = yield dec2.e.write_ea.ok
+    if not out_ok:
+        return None, False
+
     op = dec2.dec.op
-    print ("TODO: get_pdecode_idx_out2", name)
+    out_sel = yield op.out_sel
+    out = yield dec2.e.write_ea.data
+    o_isvec = yield dec2.o2_isvec
+    print ("get_pdecode_idx_out2", name, out_sel, out, o_isvec)
+    if name == 'RA':
+        if hasattr(op, "upd"):
+            # update mode LD/ST uses read-reg A also as an output
+            upd = yield op.upd
+            print ("get_pdecode_idx_out2", upd, LDSTMode.update.value,
+                                           out_sel, OutSel.RA.value,
+                                           out, o_isvec)
+            if upd == LDSTMode.update.value:
+                return out, o_isvec
     return None, False
 
 
@@ -1086,6 +1102,9 @@ class ISACaller:
                 # doing this is not part of svp64, it's because output
                 # registers, to be modified, need to be in the namespace.
                 regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
+            if regnum is None:
+                regnum, is_vec = yield from get_pdecode_idx_out2(self.dec2,
+                                                                 name)
 
             # in case getting the register number is needed, _RA, _RB
             regname = "_" + name
@@ -1192,6 +1211,9 @@ class ISACaller:
                 else:
                     regnum, is_vec = yield from get_pdecode_idx_out(self.dec2,
                                                 name)
+                    if regnum is None:
+                        regnum, is_vec = yield from get_pdecode_idx_out2(
+                                                    self.dec2, name)
                     if regnum is None:
                         # temporary hack for not having 2nd output
                         regnum = yield getattr(self.decoder, name)
