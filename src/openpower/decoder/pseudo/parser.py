@@ -423,7 +423,10 @@ class PowerParser:
                 print(astor.dump_tree(p[1]))
                 # replace GPR(x) with GPR[x]
                 idx = p[1].args[0].id
-                ridx = ast.Name("_%s" % idx, ast.Load())
+                if idx in regs + fregs:
+                    ridx = ast.Name("_%s" % idx, ast.Load())
+                else:
+                    ridx = ast.Name(idx, ast.Load())
                 p[1] = ast.Subscript(p[1].func, ridx, ast.Load())
                 if idx in self.gprs:
                     self.read_regs.add(idx)  # add to list of regs to read
