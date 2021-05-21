@@ -166,8 +166,12 @@ def run_simulation():
                             initial_sprs=None, svstate=0, mmu=False,
                             initial_cr=0, mem=None,
                             initial_fprs=None)
+        print ("GPRs")
         simulator.gpr.dump()
+        print ("FPRs")
         simulator.fpr.dump()
+        print ("SPRs")
+        simulator.spr.dump()
 
 
 if __name__ == "__main__":

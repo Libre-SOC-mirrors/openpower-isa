@@ -191,6 +191,17 @@ class SPR(dict):
     def __call__(self, ridx):
         return self[ridx]
 
+    def dump(self):
+        keys = list(self.keys())
+        keys.sort()
+        for k in keys:
+            sprname = spr_dict.get(k, None)
+            if sprname is None:
+                sprname = k
+            else:
+                sprname = sprname.SPR
+            print("    ", sprname, hex(self[k].value))
+
 
 class PC:
     def __init__(self, pc_init=0):
