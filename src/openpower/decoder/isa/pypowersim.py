@@ -2,12 +2,28 @@ from nmigen import Module, Signal
 from nmigen.back.pysim import Simulator, Delay, Settle
 import sys
 import getopt
+import struct
 from openpower.decoder.power_decoder import create_pdecode
 from openpower.decoder.power_decoder2 import (PowerDecode2)
 from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
+
+
+def read_data(fname, offset=0):
+    """reads binary data and returns a dictionary of address: contents,
+    each entry is 8 bytes. input file *must* be 8-byte-aligned
+    """
+    res = {}
+    with open(fname, "rb") as f:
+        while True:
+            b = f.read(8)
+            print (repr(b))
+            if not b:
+                return res
+            res[offset] = struct.unpack('<Q', b)[0] # unsigned long
+            offset += 8
 
 
 def convert_to_num(num):
@@ -51,7 +67,7 @@ def read_entries(fname, listqty=None):
     return result
 
 
-def run_tst(args, generator, initial_regs, 
+def run_tst(args, generator, initial_regs,
                              initial_sprs=None, svstate=0, mmu=False,
                              initial_cr=0, mem=None,
                              initial_fprs=None):
@@ -132,13 +148,15 @@ def run_simulation():
     initial_regs = None
     initial_fprs = None
     initial_sprs = None
+    initial_mem = {}
     lst = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "i:l:g:f:s:", 
-                                   ["binary", "listing",
-                                    "intregs", "fpregs", "sprs"])
-      
+        opts, args = getopt.getopt(sys.argv[1:], "i:l:g:f:s:l:",
+                                   ["binary=", "listing=",
+                                    "intregs=", "fpregs=", "sprs=",
+                                    "load="])
+
     except:
         sys.stderr.write("Command-line Error\n")
         help()
@@ -154,6 +172,18 @@ def run_simulation():
             initial_fprs = read_entries(arg, 32)
         elif opt in ['-s', '--sprs']:
             initial_sprs = read_entries(arg, 32)
+        elif opt in ['-l', '--load']:
+            arg = list(map(str.strip, arg.split(":")))
+            if len(arg) == 1:
+                fname, offs = arg[0], 0
+            else:
+                fname, offs = arg
+            offs = int(offs)
+            print ("offs load", fname, offs)
+            mem = read_data(fname, offs)
+            initial_mem.update(mem)
+
+    print (initial_mem)
 
     if binaryname is None and lst is None:
         sys.stderr.write("Must give binary or listing\n")
@@ -172,7 +202,7 @@ def run_simulation():
                             initial_regs,
                             initial_sprs=initial_sprs,
                             svstate=0, mmu=False,
-                            initial_cr=0, mem=None,
+                            initial_cr=0, mem=initial_mem,
                             initial_fprs=initial_fprs)
         print ("GPRs")
         simulator.gpr.dump()
@@ -180,6 +210,8 @@ def run_simulation():
         simulator.fpr.dump()
         print ("SPRs")
         simulator.spr.dump()
+        print ("Mem")
+        simulator.mem.dump()
 
 
 if __name__ == "__main__":

@@ -132,4 +132,13 @@ class Mem:
         print("memassign", addr, sz, val)
         self.st(addr.value, val.value, sz, swap=False)
 
-
+    def dump(self, printout=True):
+        keys = list(self.mem.keys())
+        keys.sort()
+        res = []
+        for k in keys:
+            res.append(((k*8), self.mem[k]))
+            if not printout:
+                continue
+            print ("%016x: %016x" % ((k*8) & 0xffffffffffffffff, self.mem[k]))
+        return res
