@@ -1,6 +1,5 @@
 from nmigen import Module, Signal
 from nmigen.back.pysim import Simulator, Delay, Settle
-import string
 import sys
 import getopt
 from openpower.decoder.power_decoder import create_pdecode
@@ -31,7 +30,7 @@ def read_entries(fname, listqty=None):
     with open(fname) as f:
         for line in f.readlines():
             # split line "x : y" into ["x", "y"], remove spaces
-            line = map(string.strip, line.strip().split(":"))
+            line = map(str.strip, line.strip().split(":"))
             assert len(line) == 2, "regfile line must be formatted 'x : y'"
             reg, val = line
             reg = convert_to_num(reg)
@@ -69,6 +68,8 @@ def run_tst(args, generator, initial_regs,
     gen = list(generator.generate_instructions())
     insncode = generator.assembly.splitlines()
     instructions = list(zip(gen, insncode))
+
+    print ("instructions", instructions)
 
     m.submodules.pdecode2 = pdecode2 = PowerDecode2(pdecode)
     simulator = ISA(pdecode2, initial_regs, initial_sprs, initial_cr,
@@ -111,7 +112,12 @@ def run_tst(args, generator, initial_regs,
     return simulator
 
 
-if __name__ == "__main__":
+def help():
+    print ("TODO help")
+    exit(-1)
+
+
+def run_simulation():
 
     binaryname = None
     initial_regs = None
@@ -124,7 +130,7 @@ if __name__ == "__main__":
       
     except:
         sys.stderr.write("Command-line Error\n")
-        exit(-1)
+        help()
 
     for opt, arg in opts:
         if opt in ['-i', '--binary']:
@@ -136,11 +142,11 @@ if __name__ == "__main__":
 
     if binaryname is None and lst is None:
         sys.stderr.write("Must give binary or listing\n")
-        exit(-1)
+        help()
 
     if lst:
         with open(lst, "r") as f:
-            lst = list(f.readlines())
+            lst = list(map(str.strip, f.readlines()))
 
     if binaryname:
         with open(binaryname, "rb") as f:
@@ -154,3 +160,8 @@ if __name__ == "__main__":
                             initial_fprs=None)
         simulator.gpr.dump()
         simulator.fpr.dump()
+
+
+if __name__ == "__main__":
+    run_simulation()
+
