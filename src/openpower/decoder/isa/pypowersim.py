@@ -93,7 +93,7 @@ def run_tst(args, generator, initial_regs,
         yield pdecode2.dec.bigendian.eq(0)  # little / big?
         pc = simulator.pc.CIA.value
         index = pc//4
-        while index < len(instructions):
+        while index < len(instructions) and not simulator.halted:
             print("instr pc", pc)
             try:
                 yield from simulator.setup_one()

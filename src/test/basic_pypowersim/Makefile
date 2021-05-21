@@ -11,7 +11,7 @@ sim: kernel.bin
 clean:
 	rm *.o *.elf *.bin
 
-kernel.elf: testloop.o
+kernel.elf: square.o
 	$(TOOLCHAIN)-ld $^ -EL -o $@ -T memmap
 
 kernel.bin: kernel.elf
