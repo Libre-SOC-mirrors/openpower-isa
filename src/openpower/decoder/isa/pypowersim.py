@@ -13,11 +13,11 @@ from openpower.decoder.isa.all import ISA
 def convert_to_num(num):
     # detect number types
     if num.isdigit():
-        return int(reg)
+        return int(num)
     if num.startswith("0b"):
-        return int(value[2], 2)
-    if value.startswith("0x"):
-        return int(value[2], 16)
+        return int(num[2:], 2)
+    if num.startswith("0x"):
+        return int(num[2:], 16)
     return num
 
 
@@ -30,8 +30,9 @@ def read_entries(fname, listqty=None):
     with open(fname) as f:
         for line in f.readlines():
             # split line "x : y" into ["x", "y"], remove spaces
-            line = map(str.strip, line.strip().split(":"))
+            line = list(map(str.strip, line.strip().split(":")))
             assert len(line) == 2, "regfile line must be formatted 'x : y'"
+            # check and convert format
             reg, val = line
             reg = convert_to_num(reg)
             val = convert_to_num(val)
@@ -129,12 +130,14 @@ def run_simulation():
 
     binaryname = None
     initial_regs = None
+    initial_fprs = None
+    initial_sprs = None
     lst = None
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "i:l:g:f:", 
+        opts, args = getopt.getopt(sys.argv[1:], "i:l:g:f:s:", 
                                    ["binary", "listing",
-                                    "intregs"])
+                                    "intregs", "fpregs", "sprs"])
       
     except:
         sys.stderr.write("Command-line Error\n")
@@ -145,8 +148,12 @@ def run_simulation():
             binaryname = arg
         elif opt in ['-l', '--listing']:
             lst = arg
-        elif opt in ['g', '--intregs']:
+        elif opt in ['-g', '--intregs']:
             initial_regs = read_entries(arg, 32)
+        elif opt in ['-f', '--fpregs']:
+            initial_fprs = read_entries(arg, 32)
+        elif opt in ['-s', '--sprs']:
+            initial_sprs = read_entries(arg, 32)
 
     if binaryname is None and lst is None:
         sys.stderr.write("Must give binary or listing\n")
@@ -163,9 +170,10 @@ def run_simulation():
     with Program(lst, bigendian=False) as prog:
         simulator = run_tst(None, prog,
                             initial_regs,
-                            initial_sprs=None, svstate=0, mmu=False,
+                            initial_sprs=initial_sprs,
+                            svstate=0, mmu=False,
                             initial_cr=0, mem=None,
-                            initial_fprs=None)
+                            initial_fprs=initial_fprs)
         print ("GPRs")
         simulator.gpr.dump()
         print ("FPRs")

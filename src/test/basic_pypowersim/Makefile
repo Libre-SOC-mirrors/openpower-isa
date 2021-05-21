@@ -6,7 +6,7 @@ AFLAGS=-mpwr9
 all: sim
 
 sim: kernel.bin
-	pypowersim -i kernel.bin
+	pypowersim -g gpr.list -i kernel.bin
 
 clean:
 	rm *.o *.elf *.bin
