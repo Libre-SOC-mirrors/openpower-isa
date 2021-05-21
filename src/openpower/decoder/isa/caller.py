@@ -124,13 +124,18 @@ class GPR(dict):
         print("GPR getitem", attr, rnum, "srcoffs", offs)
         return self.regfile[rnum]
 
-    def dump(self):
-        for i in range(0, len(self), 8):
-            s = []
-            for j in range(8):
-                s.append("%08x" % self[i+j].value)
-            s = ' '.join(s)
-            print("reg", "%2d" % i, s)
+    def dump(self, printout=True):
+        res = []
+        for i in range(len(self)):
+            res.append(self[i].value)
+        if printout:
+            for i in range(0, len(res), 8):
+                s = []
+                for j in range(8):
+                    s.append("%08x" % res[i+j])
+                s = ' '.join(s)
+                print("reg", "%2d" % i, s)
+        return res
 
 
 class SPR(dict):
