@@ -66,8 +66,12 @@ def run_tst(args, generator, initial_regs,
     pdecode = create_pdecode(include_fp=initial_fprs is not None)
 
     gen = list(generator.generate_instructions())
+    print ("instructions gen", gen)
     insncode = generator.assembly.splitlines()
-    instructions = list(zip(gen, insncode))
+    if insncode:
+        instructions = list(zip(gen, insncode))
+    else:
+        instructions = gen
 
     print ("instructions", instructions)
 
@@ -96,10 +100,14 @@ def run_tst(args, generator, initial_regs,
                 break
             yield Settle()
 
-            ins, code = instructions[index]
-            print("    0x{:X}".format(ins & 0xffffffff))
-            opname = code.split(' ')[0]
-            print(code, opname)
+            ins = instructions[index]
+            if isinstance(ins, list):
+                ins, code = ins
+                print("    0x{:X}".format(ins & 0xffffffff))
+                opname = code.split(' ')[0]
+                print(code, opname)
+            else:
+                print("    0x{:X}".format(ins & 0xffffffff))
 
             # ask the decoder to decode this binary data (endian'd)
             yield from simulator.execute_one()

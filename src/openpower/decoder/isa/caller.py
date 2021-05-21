@@ -851,10 +851,16 @@ class ISACaller:
         """
         # get the disassembly code for this instruction
         if self.is_svp64_mode:
-            code = self.disassembly[self._pc+4]
+            if not self.disassembly:
+                code = yield from self.get_assembly_name()
+            else:
+                code = self.disassembly[self._pc+4]
             print("    svp64 sim-execute", hex(self._pc), code)
         else:
-            code = self.disassembly[self._pc]
+            if not self.disassembly:
+                code = yield from self.get_assembly_name()
+            else:
+                code = self.disassembly[self._pc]
             print("sim-execute", hex(self._pc), code)
         opname = code.split(' ')[0]
         try:

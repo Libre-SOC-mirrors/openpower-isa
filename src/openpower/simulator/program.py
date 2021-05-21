@@ -37,6 +37,7 @@ class Program:
             self.binfile = BytesIO(instructions)
             self.binfile.name = "assembly"
             self.assembly = ''  # noo disassemble number fiiive
+            print("binary", self.binfile)
         elif isinstance(instructions, str):  # filename
             # read instructions into a BytesIO to avoid "too many open files"
             with open(instructions, "rb") as f:
