@@ -191,7 +191,8 @@ class SPR(dict):
     def __call__(self, ridx):
         return self[ridx]
 
-    def dump(self):
+    def dump(self, printout=True):
+        res = []
         keys = list(self.keys())
         keys.sort()
         for k in keys:
@@ -200,7 +201,11 @@ class SPR(dict):
                 sprname = k
             else:
                 sprname = sprname.SPR
-            print("    ", sprname, hex(self[k].value))
+            res.append((sprname, self[k].value))
+        if printout:
+            for sprname, value in res:
+                print("    ", sprname, hex(value))
+        return res
 
 
 class PC:
