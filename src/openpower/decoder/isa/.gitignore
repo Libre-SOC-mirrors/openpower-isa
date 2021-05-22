@@ -10,6 +10,11 @@
 /fixedshift.py
 /fixedstore.py
 /fixedtrap.py
+/fparith.py
+/fpcvt.py
+/fpload.py
+/fpmove.py
+/fpstore.py
 /sprset.py
 /stringldst.py
 /system.py
