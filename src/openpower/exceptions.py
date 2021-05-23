@@ -11,5 +11,5 @@ class LDSTException(RecordObject):
     def __init__(self, name=None):
         RecordObject.__init__(self, name=name)
         for f in self._exc_types:
-            setattr(self, f, Signal())
+            setattr(self, f, Signal(name=f))
 
