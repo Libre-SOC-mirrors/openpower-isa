@@ -61,7 +61,8 @@ setup(
             'pywriter=openpower.decoder.pseudo.pywriter:pywriter',
             'pyfnwriter=openpower.decoder.pseudo.pyfnwriter:pyfnwriter',
             'sv_analysis=openpower.sv.sv_analysis:process_csvs',
-            'pypowersim=openpower.decoder.isa.pypowersim:run_simulation'
+            'pypowersim=openpower.decoder.isa.pypowersim:run_simulation',
+            'pysvp64asm=openpower.sv.trans.svp64:asm_process'
         ]
     }
 )

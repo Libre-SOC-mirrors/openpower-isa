@@ -149,524 +149,575 @@ class SVP64Asm:
     def __init__(self, lst, bigendian=False):
         self.lst = lst
         self.trans = self.translate(lst)
+        self.isa = ISA() # reads the v3.0B pseudo-code markdown files
+        self.svp64 = SVP64RM() # reads the svp64 Remap entries for registers
         assert bigendian == False, "error, bigendian not supported yet"
 
     def __iter__(self):
         yield from self.trans
 
-    def translate(self, lst):
-        isa = ISA() # reads the v3.0B pseudo-code markdown files
-        svp64 = SVP64RM() # reads the svp64 Remap entries for registers
-        for insn in lst:
-            # find first space, to get opcode
-            ls = insn.split(' ')
-            opcode = ls[0]
-            # now find opcode fields
-            fields = ''.join(ls[1:]).split(',')
-            fields = list(map(str.strip, fields))
-            log ("opcode, fields", ls, opcode, fields)
+    def translate_one(self, insn):
+        isa = self.isa
+        svp64 = self.svp64
+        # find first space, to get opcode
+        ls = insn.split(' ')
+        opcode = ls[0]
+        # now find opcode fields
+        fields = ''.join(ls[1:]).split(',')
+        fields = list(map(str.strip, fields))
+        log ("opcode, fields", ls, opcode, fields)
 
-            # sigh have to do setvl here manually for now...
-            if opcode in ["setvl", "setvl."]:
-                insn = 22 << (31-5)          # opcode 22, bits 0-5
-                fields = list(map(int, fields))
-                insn |= fields[0] << (31-10) # RT       , bits 6-10
-                insn |= fields[1] << (31-15) # RA       , bits 11-15
-                insn |= fields[2] << (31-23) # SVi      , bits 16-23
-                insn |= fields[3] << (31-24) # vs       , bit  24
-                insn |= fields[4] << (31-25) # ms       , bit  25
-                insn |= 0b00000   << (31-30) # XO       , bits 26..30
-                if opcode == 'setvl.':
-                    insn |= 1 << (31-31)     # Rc=1     , bit 31
-                log ("setvl", bin(insn))
-                yield ".long 0x%x" % insn
-                continue
+        # sigh have to do setvl here manually for now...
+        if opcode in ["setvl", "setvl."]:
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            fields = list(map(int, fields))
+            insn |= fields[0] << (31-10) # RT       , bits 6-10
+            insn |= fields[1] << (31-15) # RA       , bits 11-15
+            insn |= fields[2] << (31-23) # SVi      , bits 16-23
+            insn |= fields[3] << (31-24) # vs       , bit  24
+            insn |= fields[4] << (31-25) # ms       , bit  25
+            insn |= 0b00000   << (31-30) # XO       , bits 26..30
+            if opcode == 'setvl.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log ("setvl", bin(insn))
+            yield ".long 0x%x" % insn
+            return
 
-            # identify if is a svp64 mnemonic
-            if not opcode.startswith('sv.'):
-                yield insn  # unaltered
-                continue
-            opcode = opcode[3:] # strip leading "sv"
+        # identify if is a svp64 mnemonic
+        if not opcode.startswith('sv.'):
+            yield insn  # unaltered
+            return
+        opcode = opcode[3:] # strip leading "sv"
 
-            # start working on decoding the svp64 op: sv.basev30Bop/vec2/mode
-            opmodes = opcode.split("/") # split at "/"
-            v30b_op = opmodes.pop(0)    # first is the v3.0B
-            # check instruction ends with dot
-            rc_mode = v30b_op.endswith('.')
-            if rc_mode:
-                v30b_op = v30b_op[:-1]
+        # start working on decoding the svp64 op: sv.basev30Bop/vec2/mode
+        opmodes = opcode.split("/") # split at "/"
+        v30b_op = opmodes.pop(0)    # first is the v3.0B
+        # check instruction ends with dot
+        rc_mode = v30b_op.endswith('.')
+        if rc_mode:
+            v30b_op = v30b_op[:-1]
 
-            if v30b_op not in isa.instr:
-                raise Exception("opcode %s of '%s' not supported" % \
-                                (v30b_op, insn))
-            if v30b_op not in svp64.instrs:
-                raise Exception("opcode %s of '%s' not an svp64 instruction" % \
-                                (v30b_op, insn))
-            v30b_regs = isa.instr[v30b_op].regs[0] # get regs info "RT, RA, RB"
-            rm = svp64.instrs[v30b_op]             # one row of the svp64 RM CSV
-            log ("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
-            log ("v3.0B regs", opcode, v30b_regs)
-            log ("RM", rm)
+        if v30b_op not in isa.instr:
+            raise Exception("opcode %s of '%s' not supported" % \
+                            (v30b_op, insn))
+        if v30b_op not in svp64.instrs:
+            raise Exception("opcode %s of '%s' not an svp64 instruction" % \
+                            (v30b_op, insn))
+        v30b_regs = isa.instr[v30b_op].regs[0] # get regs info "RT, RA, RB"
+        rm = svp64.instrs[v30b_op]             # one row of the svp64 RM CSV
+        log ("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
+        log ("v3.0B regs", opcode, v30b_regs)
+        log ("RM", rm)
 
-            # right.  the first thing to do is identify the ordering of
-            # the registers, by name.  the EXTRA2/3 ordering is in
-            # rm['0']..rm['3'] but those fields contain the names RA, BB
-            # etc.  we have to read the pseudocode to understand which
-            # reg is which in our instruction. sigh.
+        # right.  the first thing to do is identify the ordering of
+        # the registers, by name.  the EXTRA2/3 ordering is in
+        # rm['0']..rm['3'] but those fields contain the names RA, BB
+        # etc.  we have to read the pseudocode to understand which
+        # reg is which in our instruction. sigh.
 
-            # first turn the svp64 rm into a "by name" dict, recording
-            # which position in the RM EXTRA it goes into
-            # also: record if the src or dest was a CR, for sanity-checking
-            # (elwidth overrides on CRs are banned)
-            decode = decode_extra(rm)
-            dest_reg_cr, src_reg_cr, svp64_src, svp64_dest = decode
+        # first turn the svp64 rm into a "by name" dict, recording
+        # which position in the RM EXTRA it goes into
+        # also: record if the src or dest was a CR, for sanity-checking
+        # (elwidth overrides on CRs are banned)
+        decode = decode_extra(rm)
+        dest_reg_cr, src_reg_cr, svp64_src, svp64_dest = decode
 
-            log ("EXTRA field index, src", svp64_src)
-            log ("EXTRA field index, dest", svp64_dest)
+        log ("EXTRA field index, src", svp64_src)
+        log ("EXTRA field index, dest", svp64_dest)
 
-            # okaaay now we identify the field value (opcode N,N,N) with
-            # the pseudo-code info (opcode RT, RA, RB)
-            assert len(fields) == len(v30b_regs), \
-                "length of fields %s must match insn `%s`" % \
-                        (str(v30b_regs), insn)
-            opregfields = zip(fields, v30b_regs) # err that was easy
+        # okaaay now we identify the field value (opcode N,N,N) with
+        # the pseudo-code info (opcode RT, RA, RB)
+        assert len(fields) == len(v30b_regs), \
+            "length of fields %s must match insn `%s`" % \
+                    (str(v30b_regs), insn)
+        opregfields = zip(fields, v30b_regs) # err that was easy
 
-            # now for each of those find its place in the EXTRA encoding
-            # note there is the possibility (for LD/ST-with-update) of
-            # RA occurring **TWICE**.  to avoid it getting added to the
-            # v3.0B suffix twice, we spot it as a duplicate, here
-            extras = OrderedDict()
-            for idx, (field, regname) in enumerate(opregfields):
-                imm, regname = decode_imm(regname)
-                rtype = get_regtype(regname)
-                log ("    idx find", idx, field, regname, imm)
-                extra = svp64_src.get(regname, None)
-                if extra is not None:
-                    extra = ('s', extra, False) # not a duplicate
-                    extras[extra] = (idx, field, regname, rtype, imm)
-                    log ("    idx src", idx, extra, extras[extra])
-                dextra = svp64_dest.get(regname, None)
-                log ("regname in", regname, dextra)
-                if dextra is not None:
-                    is_a_duplicate = extra is not None # duplicate spotted
-                    dextra = ('d', dextra, is_a_duplicate)
-                    extras[dextra] = (idx, field, regname, rtype, imm)
-                    log ("    idx dst", idx, extra, extras[dextra])
+        # now for each of those find its place in the EXTRA encoding
+        # note there is the possibility (for LD/ST-with-update) of
+        # RA occurring **TWICE**.  to avoid it getting added to the
+        # v3.0B suffix twice, we spot it as a duplicate, here
+        extras = OrderedDict()
+        for idx, (field, regname) in enumerate(opregfields):
+            imm, regname = decode_imm(regname)
+            rtype = get_regtype(regname)
+            log ("    idx find", idx, field, regname, imm)
+            extra = svp64_src.get(regname, None)
+            if extra is not None:
+                extra = ('s', extra, False) # not a duplicate
+                extras[extra] = (idx, field, regname, rtype, imm)
+                log ("    idx src", idx, extra, extras[extra])
+            dextra = svp64_dest.get(regname, None)
+            log ("regname in", regname, dextra)
+            if dextra is not None:
+                is_a_duplicate = extra is not None # duplicate spotted
+                dextra = ('d', dextra, is_a_duplicate)
+                extras[dextra] = (idx, field, regname, rtype, imm)
+                log ("    idx dst", idx, extra, extras[dextra])
 
-            # great! got the extra fields in their associated positions:
-            # also we know the register type. now to create the EXTRA encodings
-            etype = rm['Etype'] # Extra type: EXTRA3/EXTRA2
-            ptype = rm['Ptype'] # Predication type: Twin / Single
-            extra_bits = 0
-            v30b_newfields = []
-            for extra_idx, (idx, field, rname, rtype, iname) in extras.items():
-                # is it a field we don't alter/examine?  if so just put it
-                # into newfields
-                if rtype is None:
-                    v30b_newfields.append(field)
+        # great! got the extra fields in their associated positions:
+        # also we know the register type. now to create the EXTRA encodings
+        etype = rm['Etype'] # Extra type: EXTRA3/EXTRA2
+        ptype = rm['Ptype'] # Predication type: Twin / Single
+        extra_bits = 0
+        v30b_newfields = []
+        for extra_idx, (idx, field, rname, rtype, iname) in extras.items():
+            # is it a field we don't alter/examine?  if so just put it
+            # into newfields
+            if rtype is None:
+                v30b_newfields.append(field)
 
-                # identify if this is a ld/st immediate(reg) thing
-                ldst_imm = "(" in field and field[-1] == ')'
-                if ldst_imm:
-                    immed, field = field[:-1].split("(")
+            # identify if this is a ld/st immediate(reg) thing
+            ldst_imm = "(" in field and field[-1] == ')'
+            if ldst_imm:
+                immed, field = field[:-1].split("(")
 
-                field, regmode = decode_reg(field)
-                log ("    ", extra_idx, rname, rtype,
-                               regmode, iname, field, end=" ")
+            field, regmode = decode_reg(field)
+            log ("    ", extra_idx, rname, rtype,
+                           regmode, iname, field, end=" ")
 
-                # see Mode field https://libre-soc.org/openpower/sv/svp64/
-                # XXX TODO: the following is a bit of a laborious repeated
-                # mess, which could (and should) easily be parameterised.
-                # XXX also TODO: the LD/ST modes which are different
-                # https://libre-soc.org/openpower/sv/ldst/
+            # see Mode field https://libre-soc.org/openpower/sv/svp64/
+            # XXX TODO: the following is a bit of a laborious repeated
+            # mess, which could (and should) easily be parameterised.
+            # XXX also TODO: the LD/ST modes which are different
+            # https://libre-soc.org/openpower/sv/ldst/
 
-                # encode SV-GPR and SV-FPR field into extra, v3.0field
-                if rtype in ['GPR', 'FPR']:
-                    sv_extra, field = get_extra_gpr(etype, regmode, field)
-                    # now sanity-check. EXTRA3 is ok, EXTRA2 has limits
-                    # (and shrink to a single bit if ok)
-                    if etype == 'EXTRA2':
-                        if regmode == 'scalar':
-                            # range is r0-r63 in increments of 1
-                            assert (sv_extra >> 1) == 0, \
-                                "scalar GPR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as scalar
-                            sv_extra = sv_extra & 0b01
-                        else:
-                            # range is r0-r127 in increments of 4
-                            assert sv_extra & 0b01 == 0, \
-                                "%s: vector field %s cannot fit " \
-                                "into EXTRA2 %s" % \
-                                    (insn, rname, str(extras[extra_idx]))
-                            # all good: encode as vector (bit 2 set)
-                            sv_extra = 0b10 | (sv_extra >> 1)
-                    elif regmode == 'vector':
-                        # EXTRA3 vector bit needs marking
-                        sv_extra |= 0b100
-
-                # encode SV-CR 3-bit field into extra, v3.0field
-                elif rtype == 'CR_3bit':
-                    sv_extra, field = get_extra_cr_3bit(etype, regmode, field)
-                    # now sanity-check (and shrink afterwards)
-                    if etype == 'EXTRA2':
-                        if regmode == 'scalar':
-                            # range is CR0-CR15 in increments of 1
-                            assert (sv_extra >> 1) == 0, \
-                                "scalar CR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as scalar
-                            sv_extra = sv_extra & 0b01
-                        else:
-                            # range is CR0-CR127 in increments of 16
-                            assert sv_extra & 0b111 == 0, \
-                                "vector CR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as vector (bit 2 set)
-                            sv_extra = 0b10 | (sv_extra >> 3)
-                    else:
-                        if regmode == 'scalar':
-                            # range is CR0-CR31 in increments of 1
-                            assert (sv_extra >> 2) == 0, \
-                                "scalar CR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as scalar
-                            sv_extra = sv_extra & 0b11
-                        else:
-                            # range is CR0-CR127 in increments of 8
-                            assert sv_extra & 0b11 == 0, \
-                                "vector CR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as vector (bit 3 set)
-                            sv_extra = 0b100 | (sv_extra >> 2)
-
-                # encode SV-CR 5-bit field into extra, v3.0field
-                # *sigh* this is the same as 3-bit except the 2 LSBs are
-                # passed through
-                elif rtype == 'CR_5bit':
-                    cr_subfield = field & 0b11
-                    field = field >> 2 # strip bottom 2 bits
-                    sv_extra, field = get_extra_cr_3bit(etype, regmode, field)
-                    # now sanity-check (and shrink afterwards)
-                    if etype == 'EXTRA2':
-                        if regmode == 'scalar':
-                            # range is CR0-CR15 in increments of 1
-                            assert (sv_extra >> 1) == 0, \
-                                "scalar CR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as scalar
-                            sv_extra = sv_extra & 0b01
-                        else:
-                            # range is CR0-CR127 in increments of 16
-                            assert sv_extra & 0b111 == 0, \
-                                "vector CR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as vector (bit 2 set)
-                            sv_extra = 0b10 | (sv_extra >> 3)
-                    else:
-                        if regmode == 'scalar':
-                            # range is CR0-CR31 in increments of 1
-                            assert (sv_extra >> 2) == 0, \
-                                "scalar CR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as scalar
-                            sv_extra = sv_extra & 0b11
-                        else:
-                            # range is CR0-CR127 in increments of 8
-                            assert sv_extra & 0b11 == 0, \
-                                "vector CR %s cannot fit into EXTRA2 %s" % \
-                                    (rname, str(extras[extra_idx]))
-                            # all good: encode as vector (bit 3 set)
-                            sv_extra = 0b100 | (sv_extra >> 2)
-
-                    # reconstruct the actual 5-bit CR field
-                    field = (field << 2) | cr_subfield
-
-                # capture the extra field info
-                log ("=>", "%5s" % bin(sv_extra), field)
-                extras[extra_idx] = sv_extra
-
-                # append altered field value to v3.0b, differs for LDST
-                # note that duplicates are skipped e.g. EXTRA2 contains
-                # *BOTH* s:RA *AND* d:RA which happens on LD/ST-with-update
-                srcdest, idx, duplicate = extra_idx
-                if duplicate: # skip adding to v3.0b fields, already added
-                    continue
-                if ldst_imm:
-                    v30b_newfields.append(("%s(%s)" % (immed, str(field))))
-                else:
-                    v30b_newfields.append(str(field))
-
-            log ("new v3.0B fields", v30b_op, v30b_newfields)
-            log ("extras", extras)
-
-            # rright.  now we have all the info. start creating SVP64 RM
-            svp64_rm = SVP64RMFields()
-
-            # begin with EXTRA fields
-            for idx, sv_extra in extras.items():
-                if idx is None: continue
-                log (idx)
-                srcdest, idx, duplicate = idx
+            # encode SV-GPR and SV-FPR field into extra, v3.0field
+            if rtype in ['GPR', 'FPR']:
+                sv_extra, field = get_extra_gpr(etype, regmode, field)
+                # now sanity-check. EXTRA3 is ok, EXTRA2 has limits
+                # (and shrink to a single bit if ok)
                 if etype == 'EXTRA2':
-                    svp64_rm.extra2[idx].eq(
-                        SelectableInt(sv_extra, SVP64RM_EXTRA2_SPEC_SIZE))
+                    if regmode == 'scalar':
+                        # range is r0-r63 in increments of 1
+                        assert (sv_extra >> 1) == 0, \
+                            "scalar GPR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as scalar
+                        sv_extra = sv_extra & 0b01
+                    else:
+                        # range is r0-r127 in increments of 4
+                        assert sv_extra & 0b01 == 0, \
+                            "%s: vector field %s cannot fit " \
+                            "into EXTRA2 %s" % \
+                                (insn, rname, str(extras[extra_idx]))
+                        # all good: encode as vector (bit 2 set)
+                        sv_extra = 0b10 | (sv_extra >> 1)
+                elif regmode == 'vector':
+                    # EXTRA3 vector bit needs marking
+                    sv_extra |= 0b100
+
+            # encode SV-CR 3-bit field into extra, v3.0field
+            elif rtype == 'CR_3bit':
+                sv_extra, field = get_extra_cr_3bit(etype, regmode, field)
+                # now sanity-check (and shrink afterwards)
+                if etype == 'EXTRA2':
+                    if regmode == 'scalar':
+                        # range is CR0-CR15 in increments of 1
+                        assert (sv_extra >> 1) == 0, \
+                            "scalar CR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as scalar
+                        sv_extra = sv_extra & 0b01
+                    else:
+                        # range is CR0-CR127 in increments of 16
+                        assert sv_extra & 0b111 == 0, \
+                            "vector CR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as vector (bit 2 set)
+                        sv_extra = 0b10 | (sv_extra >> 3)
                 else:
-                    svp64_rm.extra3[idx].eq(
-                        SelectableInt(sv_extra, SVP64RM_EXTRA3_SPEC_SIZE))
+                    if regmode == 'scalar':
+                        # range is CR0-CR31 in increments of 1
+                        assert (sv_extra >> 2) == 0, \
+                            "scalar CR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as scalar
+                        sv_extra = sv_extra & 0b11
+                    else:
+                        # range is CR0-CR127 in increments of 8
+                        assert sv_extra & 0b11 == 0, \
+                            "vector CR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as vector (bit 3 set)
+                        sv_extra = 0b100 | (sv_extra >> 2)
 
-            # parts of svp64_rm
-            mmode = 0  # bit 0
-            pmask = 0  # bits 1-3
-            destwid = 0 # bits 4-5
-            srcwid = 0 # bits 6-7
-            subvl = 0   # bits 8-9
-            smask = 0 # bits 16-18 but only for twin-predication
-            mode = 0 # bits 19-23
-
-            mask_m_specified = False
-            has_pmask = False
-            has_smask = False
-
-            saturation = None
-            src_zero = 0
-            dst_zero = 0
-            sv_mode = None
-
-            mapreduce = False
-            mapreduce_crm = False
-            mapreduce_svm = False
-
-            predresult = False
-            failfirst = False
-
-            # ok let's start identifying opcode augmentation fields
-            for encmode in opmodes:
-                # predicate mask (src and dest)
-                if encmode.startswith("m="):
-                    pme = encmode
-                    pmmode, pmask = decode_predicate(encmode[2:])
-                    smmode, smask = pmmode, pmask
-                    mmode = pmmode
-                    mask_m_specified = True
-                # predicate mask (dest)
-                elif encmode.startswith("dm="):
-                    pme = encmode
-                    pmmode, pmask = decode_predicate(encmode[3:])
-                    mmode = pmmode
-                    has_pmask = True
-                # predicate mask (src, twin-pred)
-                elif encmode.startswith("sm="):
-                    sme = encmode
-                    smmode, smask = decode_predicate(encmode[3:])
-                    mmode = smmode
-                    has_smask = True
-                # vec2/3/4
-                elif encmode.startswith("vec"):
-                    subvl = decode_subvl(encmode[3:])
-                # elwidth
-                elif encmode.startswith("ew="):
-                    destwid = decode_elwidth(encmode[3:])
-                elif encmode.startswith("sw="):
-                    srcwid = decode_elwidth(encmode[3:])
-                # saturation
-                elif encmode == 'sats':
-                    assert sv_mode is None
-                    saturation = 1
-                    sv_mode = 0b10
-                elif encmode == 'satu':
-                    assert sv_mode is None
-                    sv_mode = 0b10
-                    saturation = 0
-                # predicate zeroing
-                elif encmode == 'sz':
-                    src_zero = 1
-                elif encmode == 'dz':
-                    dst_zero = 1
-                # failfirst
-                elif encmode.startswith("ff="):
-                    assert sv_mode is None
-                    sv_mode = 0b01
-                    failfirst = decode_ffirst(encmode[3:])
-                # predicate-result, interestingly same as fail-first
-                elif encmode.startswith("pr="):
-                    assert sv_mode is None
-                    sv_mode = 0b11
-                    predresult = decode_ffirst(encmode[3:])
-                # map-reduce mode
-                elif encmode == 'mr':
-                    assert sv_mode is None
-                    sv_mode = 0b00
-                    mapreduce = True
-                elif encmode == 'crm': # CR on map-reduce
-                    assert sv_mode is None
-                    sv_mode = 0b00
-                    mapreduce_crm = True
-                elif encmode == 'svm': # sub-vector mode
-                    mapreduce_svm = True
+            # encode SV-CR 5-bit field into extra, v3.0field
+            # *sigh* this is the same as 3-bit except the 2 LSBs are
+            # passed through
+            elif rtype == 'CR_5bit':
+                cr_subfield = field & 0b11
+                field = field >> 2 # strip bottom 2 bits
+                sv_extra, field = get_extra_cr_3bit(etype, regmode, field)
+                # now sanity-check (and shrink afterwards)
+                if etype == 'EXTRA2':
+                    if regmode == 'scalar':
+                        # range is CR0-CR15 in increments of 1
+                        assert (sv_extra >> 1) == 0, \
+                            "scalar CR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as scalar
+                        sv_extra = sv_extra & 0b01
+                    else:
+                        # range is CR0-CR127 in increments of 16
+                        assert sv_extra & 0b111 == 0, \
+                            "vector CR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as vector (bit 2 set)
+                        sv_extra = 0b10 | (sv_extra >> 3)
                 else:
-                    raise AssertionError("unknown encmode %s" % encmode)
+                    if regmode == 'scalar':
+                        # range is CR0-CR31 in increments of 1
+                        assert (sv_extra >> 2) == 0, \
+                            "scalar CR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as scalar
+                        sv_extra = sv_extra & 0b11
+                    else:
+                        # range is CR0-CR127 in increments of 8
+                        assert sv_extra & 0b11 == 0, \
+                            "vector CR %s cannot fit into EXTRA2 %s" % \
+                                (rname, str(extras[extra_idx]))
+                        # all good: encode as vector (bit 3 set)
+                        sv_extra = 0b100 | (sv_extra >> 2)
 
-            if ptype == '2P':
-                # since m=xx takes precedence (overrides) sm=xx and dm=xx,
-                # treat them as mutually exclusive
-                if mask_m_specified:
-                    assert not has_smask,\
-                        "cannot have both source-mask and predicate mask"
-                    assert not has_pmask,\
-                        "cannot have both dest-mask and predicate mask"
-                # since the default is INT predication (ALWAYS), if you
-                # specify one CR mask, you must specify both, to avoid
-                # mixing INT and CR reg types
-                if has_pmask and pmmode == 1:
-                    assert has_smask, \
-                        "need explicit source-mask in CR twin predication"
-                if has_smask and smmode == 1:
-                    assert has_pmask, \
-                        "need explicit dest-mask in CR twin predication"
-                # sanity-check that 2Pred mask is same mode
-                if has_pmask and has_smask:
-                    assert smmode == pmmode, \
-                        "predicate masks %s and %s must be same reg type" % \
-                            (pme, sme)
+                # reconstruct the actual 5-bit CR field
+                field = (field << 2) | cr_subfield
 
-            # sanity-check that twin-predication mask only specified in 2P mode
-            if ptype == '1P':
-                assert not has_smask, \
-                    "source-mask can only be specified on Twin-predicate ops"
-                assert not has_pmask, \
-                    "dest-mask can only be specified on Twin-predicate ops"
+            # capture the extra field info
+            log ("=>", "%5s" % bin(sv_extra), field)
+            extras[extra_idx] = sv_extra
 
-            # construct the mode field, doing sanity-checking along the way
+            # append altered field value to v3.0b, differs for LDST
+            # note that duplicates are skipped e.g. EXTRA2 contains
+            # *BOTH* s:RA *AND* d:RA which happens on LD/ST-with-update
+            srcdest, idx, duplicate = extra_idx
+            if duplicate: # skip adding to v3.0b fields, already added
+                continue
+            if ldst_imm:
+                v30b_newfields.append(("%s(%s)" % (immed, str(field))))
+            else:
+                v30b_newfields.append(str(field))
 
-            if mapreduce_svm:
-                assert sv_mode == 0b00, "sub-vector mode in mapreduce only"
-                assert subvl != 0, "sub-vector mode not possible on SUBVL=1"
+        log ("new v3.0B fields", v30b_op, v30b_newfields)
+        log ("extras", extras)
 
-            if src_zero:
-                assert has_smask or mask_m_specified, \
-                    "src zeroing requires a source predicate"
-            if dst_zero:
-                assert has_pmask or mask_m_specified, \
-                    "dest zeroing requires a dest predicate"
+        # rright.  now we have all the info. start creating SVP64 RM
+        svp64_rm = SVP64RMFields()
 
-            # "normal" mode
-            if sv_mode is None:
-                mode |= src_zero << SVP64MODE.SZ # predicate zeroing
-                mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
+        # begin with EXTRA fields
+        for idx, sv_extra in extras.items():
+            if idx is None: continue
+            log (idx)
+            srcdest, idx, duplicate = idx
+            if etype == 'EXTRA2':
+                svp64_rm.extra2[idx].eq(
+                    SelectableInt(sv_extra, SVP64RM_EXTRA2_SPEC_SIZE))
+            else:
+                svp64_rm.extra3[idx].eq(
+                    SelectableInt(sv_extra, SVP64RM_EXTRA3_SPEC_SIZE))
+
+        # parts of svp64_rm
+        mmode = 0  # bit 0
+        pmask = 0  # bits 1-3
+        destwid = 0 # bits 4-5
+        srcwid = 0 # bits 6-7
+        subvl = 0   # bits 8-9
+        smask = 0 # bits 16-18 but only for twin-predication
+        mode = 0 # bits 19-23
+
+        mask_m_specified = False
+        has_pmask = False
+        has_smask = False
+
+        saturation = None
+        src_zero = 0
+        dst_zero = 0
+        sv_mode = None
+
+        mapreduce = False
+        mapreduce_crm = False
+        mapreduce_svm = False
+
+        predresult = False
+        failfirst = False
+
+        # ok let's start identifying opcode augmentation fields
+        for encmode in opmodes:
+            # predicate mask (src and dest)
+            if encmode.startswith("m="):
+                pme = encmode
+                pmmode, pmask = decode_predicate(encmode[2:])
+                smmode, smask = pmmode, pmask
+                mmode = pmmode
+                mask_m_specified = True
+            # predicate mask (dest)
+            elif encmode.startswith("dm="):
+                pme = encmode
+                pmmode, pmask = decode_predicate(encmode[3:])
+                mmode = pmmode
+                has_pmask = True
+            # predicate mask (src, twin-pred)
+            elif encmode.startswith("sm="):
+                sme = encmode
+                smmode, smask = decode_predicate(encmode[3:])
+                mmode = smmode
+                has_smask = True
+            # vec2/3/4
+            elif encmode.startswith("vec"):
+                subvl = decode_subvl(encmode[3:])
+            # elwidth
+            elif encmode.startswith("ew="):
+                destwid = decode_elwidth(encmode[3:])
+            elif encmode.startswith("sw="):
+                srcwid = decode_elwidth(encmode[3:])
+            # saturation
+            elif encmode == 'sats':
+                assert sv_mode is None
+                saturation = 1
+                sv_mode = 0b10
+            elif encmode == 'satu':
+                assert sv_mode is None
+                sv_mode = 0b10
+                saturation = 0
+            # predicate zeroing
+            elif encmode == 'sz':
+                src_zero = 1
+            elif encmode == 'dz':
+                dst_zero = 1
+            # failfirst
+            elif encmode.startswith("ff="):
+                assert sv_mode is None
+                sv_mode = 0b01
+                failfirst = decode_ffirst(encmode[3:])
+            # predicate-result, interestingly same as fail-first
+            elif encmode.startswith("pr="):
+                assert sv_mode is None
+                sv_mode = 0b11
+                predresult = decode_ffirst(encmode[3:])
+            # map-reduce mode
+            elif encmode == 'mr':
+                assert sv_mode is None
                 sv_mode = 0b00
+                mapreduce = True
+            elif encmode == 'crm': # CR on map-reduce
+                assert sv_mode is None
+                sv_mode = 0b00
+                mapreduce_crm = True
+            elif encmode == 'svm': # sub-vector mode
+                mapreduce_svm = True
+            else:
+                raise AssertionError("unknown encmode %s" % encmode)
 
-            # "mapreduce" modes
-            elif sv_mode == 0b00:
-                mode |= (0b1<<SVP64MODE.REDUCE) # sets mapreduce
-                assert dst_zero == 0, "dest-zero not allowed in mapreduce mode"
-                if mapreduce_crm:
-                    mode |= (0b1<<SVP64MODE.CRM) # sets CRM mode
-                    assert rc_mode, "CRM only allowed when Rc=1"
-                # bit of weird encoding to jam zero-pred or SVM mode in.
-                # SVM mode can be enabled only when SUBVL=2/3/4 (vec2/3/4)
-                if subvl == 0:
-                    mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
-                elif mapreduce_svm:
-                    mode |= (0b1<<SVP64MODE.SVM) # sets SVM mode
+        if ptype == '2P':
+            # since m=xx takes precedence (overrides) sm=xx and dm=xx,
+            # treat them as mutually exclusive
+            if mask_m_specified:
+                assert not has_smask,\
+                    "cannot have both source-mask and predicate mask"
+                assert not has_pmask,\
+                    "cannot have both dest-mask and predicate mask"
+            # since the default is INT predication (ALWAYS), if you
+            # specify one CR mask, you must specify both, to avoid
+            # mixing INT and CR reg types
+            if has_pmask and pmmode == 1:
+                assert has_smask, \
+                    "need explicit source-mask in CR twin predication"
+            if has_smask and smmode == 1:
+                assert has_pmask, \
+                    "need explicit dest-mask in CR twin predication"
+            # sanity-check that 2Pred mask is same mode
+            if has_pmask and has_smask:
+                assert smmode == pmmode, \
+                    "predicate masks %s and %s must be same reg type" % \
+                        (pme, sme)
 
-            # "failfirst" modes
-            elif sv_mode == 0b01:
-                assert src_zero == 0, "dest-zero not allowed in failfirst mode"
-                if failfirst == 'RC1':
-                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                    assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
-                elif failfirst == '~RC1':
-                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                    mode |= (0b1<<SVP64MODE.INV) # ... with inversion
-                    assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
-                else:
-                    assert dst_zero == 0, "dst-zero not allowed in ffirst BO"
-                    assert rc_mode, "ffirst BO only possible when Rc=1"
-                    mode |= (failfirst << SVP64MODE.BO_LSB) # set BO
+        # sanity-check that twin-predication mask only specified in 2P mode
+        if ptype == '1P':
+            assert not has_smask, \
+                "source-mask can only be specified on Twin-predicate ops"
+            assert not has_pmask, \
+                "dest-mask can only be specified on Twin-predicate ops"
 
-            # "saturation" modes
-            elif sv_mode == 0b10:
-                mode |= src_zero << SVP64MODE.SZ # predicate zeroing
+        # construct the mode field, doing sanity-checking along the way
+
+        if mapreduce_svm:
+            assert sv_mode == 0b00, "sub-vector mode in mapreduce only"
+            assert subvl != 0, "sub-vector mode not possible on SUBVL=1"
+
+        if src_zero:
+            assert has_smask or mask_m_specified, \
+                "src zeroing requires a source predicate"
+        if dst_zero:
+            assert has_pmask or mask_m_specified, \
+                "dest zeroing requires a dest predicate"
+
+        # "normal" mode
+        if sv_mode is None:
+            mode |= src_zero << SVP64MODE.SZ # predicate zeroing
+            mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
+            sv_mode = 0b00
+
+        # "mapreduce" modes
+        elif sv_mode == 0b00:
+            mode |= (0b1<<SVP64MODE.REDUCE) # sets mapreduce
+            assert dst_zero == 0, "dest-zero not allowed in mapreduce mode"
+            if mapreduce_crm:
+                mode |= (0b1<<SVP64MODE.CRM) # sets CRM mode
+                assert rc_mode, "CRM only allowed when Rc=1"
+            # bit of weird encoding to jam zero-pred or SVM mode in.
+            # SVM mode can be enabled only when SUBVL=2/3/4 (vec2/3/4)
+            if subvl == 0:
                 mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
-                mode |= (saturation << SVP64MODE.N) # signed/unsigned saturation
+            elif mapreduce_svm:
+                mode |= (0b1<<SVP64MODE.SVM) # sets SVM mode
 
-            # "predicate-result" modes.  err... code-duplication from ffirst
-            elif sv_mode == 0b11:
-                assert src_zero == 0, "dest-zero not allowed in predresult mode"
-                if predresult == 'RC1':
-                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                    assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
-                elif predresult == '~RC1':
-                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                    mode |= (0b1<<SVP64MODE.INV) # ... with inversion
-                    assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
-                else:
-                    assert dst_zero == 0, "dst-zero not allowed in pr-mode BO"
-                    assert rc_mode, "pr-mode BO only possible when Rc=1"
-                    mode |= (predresult << SVP64MODE.BO_LSB) # set BO
+        # "failfirst" modes
+        elif sv_mode == 0b01:
+            assert src_zero == 0, "dest-zero not allowed in failfirst mode"
+            if failfirst == 'RC1':
+                mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
+                mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
+                assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
+            elif failfirst == '~RC1':
+                mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
+                mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
+                mode |= (0b1<<SVP64MODE.INV) # ... with inversion
+                assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
+            else:
+                assert dst_zero == 0, "dst-zero not allowed in ffirst BO"
+                assert rc_mode, "ffirst BO only possible when Rc=1"
+                mode |= (failfirst << SVP64MODE.BO_LSB) # set BO
 
-            # whewww.... modes all done :)
-            # now put into svp64_rm
-            mode |= sv_mode
-            # mode: bits 19-23
-            svp64_rm.mode.eq(SelectableInt(mode, SVP64RM_MODE_SIZE))
+        # "saturation" modes
+        elif sv_mode == 0b10:
+            mode |= src_zero << SVP64MODE.SZ # predicate zeroing
+            mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
+            mode |= (saturation << SVP64MODE.N) # signed/unsigned saturation
 
-            # put in predicate masks into svp64_rm
-            if ptype == '2P':
-                # source pred: bits 16-18
-                svp64_rm.smask.eq(SelectableInt(smask, SVP64RM_SMASK_SIZE))
-            # mask mode: bit 0
-            svp64_rm.mmode.eq(SelectableInt(mmode, SVP64RM_MMODE_SIZE))
-            # 1-pred: bits 1-3
-            svp64_rm.mask.eq(SelectableInt(pmask, SVP64RM_MASK_SIZE))
+        # "predicate-result" modes.  err... code-duplication from ffirst
+        elif sv_mode == 0b11:
+            assert src_zero == 0, "dest-zero not allowed in predresult mode"
+            if predresult == 'RC1':
+                mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
+                mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
+                assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
+            elif predresult == '~RC1':
+                mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
+                mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
+                mode |= (0b1<<SVP64MODE.INV) # ... with inversion
+                assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
+            else:
+                assert dst_zero == 0, "dst-zero not allowed in pr-mode BO"
+                assert rc_mode, "pr-mode BO only possible when Rc=1"
+                mode |= (predresult << SVP64MODE.BO_LSB) # set BO
 
-            # and subvl: bits 8-9
-            svp64_rm.subvl.eq(SelectableInt(subvl, SVP64RM_SUBVL_SIZE))
+        # whewww.... modes all done :)
+        # now put into svp64_rm
+        mode |= sv_mode
+        # mode: bits 19-23
+        svp64_rm.mode.eq(SelectableInt(mode, SVP64RM_MODE_SIZE))
 
-            # put in elwidths
-            # srcwid: bits 6-7
-            svp64_rm.ewsrc.eq(SelectableInt(srcwid, SVP64RM_EWSRC_SIZE))
-            # destwid: bits 4-5
-            svp64_rm.elwidth.eq(SelectableInt(destwid, SVP64RM_ELWIDTH_SIZE))
+        # put in predicate masks into svp64_rm
+        if ptype == '2P':
+            # source pred: bits 16-18
+            svp64_rm.smask.eq(SelectableInt(smask, SVP64RM_SMASK_SIZE))
+        # mask mode: bit 0
+        svp64_rm.mmode.eq(SelectableInt(mmode, SVP64RM_MMODE_SIZE))
+        # 1-pred: bits 1-3
+        svp64_rm.mask.eq(SelectableInt(pmask, SVP64RM_MASK_SIZE))
 
-            # nice debug printout. (and now for something completely different)
-            # https://youtu.be/u0WOIwlXE9g?t=146
-            svp64_rm_value = svp64_rm.spr.value
-            log ("svp64_rm", hex(svp64_rm_value), bin(svp64_rm_value))
-            log ("    mmode  0    :", bin(mmode))
-            log ("    pmask  1-3  :", bin(pmask))
-            log ("    dstwid 4-5  :", bin(destwid))
-            log ("    srcwid 6-7  :", bin(srcwid))
-            log ("    subvl  8-9  :", bin(subvl))
-            log ("    mode   19-23:", bin(mode))
-            offs = 2 if etype == 'EXTRA2' else 3 # 2 or 3 bits
-            for idx, sv_extra in extras.items():
-                if idx is None: continue
-                srcdest, idx, duplicate = idx
-                start = (10+idx*offs)
-                end = start + offs-1
-                log ("    extra%d %2d-%2d:" % (idx, start, end),
-                        bin(sv_extra))
-            if ptype == '2P':
-                log ("    smask  16-17:", bin(smask))
-            log ()
+        # and subvl: bits 8-9
+        svp64_rm.subvl.eq(SelectableInt(subvl, SVP64RM_SUBVL_SIZE))
 
-            # first, construct the prefix from its subfields
-            svp64_prefix = SVP64PrefixFields()
-            svp64_prefix.major.eq(SelectableInt(0x1, SV64P_MAJOR_SIZE))
-            svp64_prefix.pid.eq(SelectableInt(0b11, SV64P_PID_SIZE))
-            svp64_prefix.rm.eq(svp64_rm.spr)
+        # put in elwidths
+        # srcwid: bits 6-7
+        svp64_rm.ewsrc.eq(SelectableInt(srcwid, SVP64RM_EWSRC_SIZE))
+        # destwid: bits 4-5
+        svp64_rm.elwidth.eq(SelectableInt(destwid, SVP64RM_ELWIDTH_SIZE))
 
-            # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
-            rc = '.' if rc_mode else ''
-            yield ".long 0x%x" % svp64_prefix.insn.value
-            yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
-            log ("new v3.0B fields", v30b_op, v30b_newfields)
+        # nice debug printout. (and now for something completely different)
+        # https://youtu.be/u0WOIwlXE9g?t=146
+        svp64_rm_value = svp64_rm.spr.value
+        log ("svp64_rm", hex(svp64_rm_value), bin(svp64_rm_value))
+        log ("    mmode  0    :", bin(mmode))
+        log ("    pmask  1-3  :", bin(pmask))
+        log ("    dstwid 4-5  :", bin(destwid))
+        log ("    srcwid 6-7  :", bin(srcwid))
+        log ("    subvl  8-9  :", bin(subvl))
+        log ("    mode   19-23:", bin(mode))
+        offs = 2 if etype == 'EXTRA2' else 3 # 2 or 3 bits
+        for idx, sv_extra in extras.items():
+            if idx is None: continue
+            srcdest, idx, duplicate = idx
+            start = (10+idx*offs)
+            end = start + offs-1
+            log ("    extra%d %2d-%2d:" % (idx, start, end),
+                    bin(sv_extra))
+        if ptype == '2P':
+            log ("    smask  16-17:", bin(smask))
+        log ()
+
+        # first, construct the prefix from its subfields
+        svp64_prefix = SVP64PrefixFields()
+        svp64_prefix.major.eq(SelectableInt(0x1, SV64P_MAJOR_SIZE))
+        svp64_prefix.pid.eq(SelectableInt(0b11, SV64P_PID_SIZE))
+        svp64_prefix.rm.eq(svp64_rm.spr)
+
+        # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
+        rc = '.' if rc_mode else ''
+        yield ".long 0x%x" % svp64_prefix.insn.value
+        yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
+        log ("new v3.0B fields", v30b_op, v30b_newfields)
+
+    def translate(self, lst):
+        for insn in lst:
+            yield from self.translate_one(insn)
+
+
+def asm_process():
+
+    # get an input file and an output file
+    args = sys.argv[1:]
+    if len(args) == 0:
+        infile = sys.stdin
+        outfile = sys.stdout
+    elif len(args) != 2:
+        print ("pysvp64asm [infile | -] [outfile | -]")
+        exit(0)
+    else:
+        if args[0] == '--':
+            infile = sys.stdin
+        else:
+            infile = open(args[0], "r")
+        if args[1] == '--':
+            outfile = sys.stdout
+        else:
+            outfile = open(args[1], "w")
+
+    # read the line, look for "sv", process it
+    isa = SVP64Asm([])
+    for line in infile.readlines():
+        ls = line.split("#")
+        if len(ls) != 2:
+            outfile.write(line)
+            continue
+        potential= ls[1].strip()
+        if not potential.startswith("sv."):
+            outfile.write(line)
+            continue
+        # find whitespace
+        ws = ''
+        while line:
+            if not line[0].isspace():
+                break
+            ws += line[0]
+            line = line[1:]
+
+        # SV line indentified
+        lst = list(isa.translate_one(potential))
+        lst = '; '.join(lst)
+        outfile.write("%s%s # %s\n" % (ws, lst, potential))
+
 
 if __name__ == '__main__':
     lst = ['slw 3, 1, 4',
@@ -696,3 +747,4 @@ if __name__ == '__main__':
     isa = SVP64Asm(lst)
     print ("list", list(isa))
     csvs = SVP64RM()
+    asm_process()

@@ -1,4 +1,4 @@
-	lis 1, 0xdead
+	lis 1, 0xdead     # test comment
 	ori 1, 1, 0xbeef
 	lis 2, 0x2000
 	ori 2, 2, 0x0100
