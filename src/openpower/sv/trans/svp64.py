@@ -681,6 +681,8 @@ def asm_process():
     if len(args) == 0:
         infile = sys.stdin
         outfile = sys.stdout
+        # read the whole lot in advance in case of in-place
+        lines = list(infile.readlines())
     elif len(args) != 2:
         print ("pysvp64asm [infile | -] [outfile | -]")
         exit(0)
@@ -689,6 +691,9 @@ def asm_process():
             infile = sys.stdin
         else:
             infile = open(args[0], "r")
+        # read the whole lot in advance in case of in-place overwrite
+        lines = list(infile.readlines())
+
         if args[1] == '--':
             outfile = sys.stdout
         else:
@@ -696,7 +701,7 @@ def asm_process():
 
     # read the line, look for "sv", process it
     isa = SVP64Asm([])
-    for line in infile.readlines():
+    for line in lines:
         ls = line.split("#")
         if len(ls) != 2:
             outfile.write(line)
