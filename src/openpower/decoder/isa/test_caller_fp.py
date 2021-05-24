@@ -183,6 +183,7 @@ class DecoderTestCase(FHDLTestCase):
                      ]
         """
         lst = ["fmuls 3, 1, 2", # 7.0 * -9.8 = -68.6
+               "fmuls 29,12,8", # test
                      ]
 
         fprs = [0] * 32
