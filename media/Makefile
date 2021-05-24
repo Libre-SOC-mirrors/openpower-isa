@@ -33,3 +33,4 @@ wget:
 
 tests: $(OBJ)
 	echo juuh
+	# TODO pypowersim -i testname.bin
