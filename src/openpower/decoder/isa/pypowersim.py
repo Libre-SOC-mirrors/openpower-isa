@@ -145,8 +145,8 @@ def help():
 def run_simulation():
 
     binaryname = None
-    initial_regs = None
-    initial_fprs = None
+    initial_regs = [0]*32
+    initial_fprs = [0]*32
     initial_sprs = None
     initial_mem = {}
     lst = None
