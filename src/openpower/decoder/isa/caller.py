@@ -1023,6 +1023,12 @@ class ISACaller:
                   (name, asmop, self.pc.CIA.value))
             return
 
+        # nop has to be supported, we could let the actual op calculate
+        # but PowerDecoder has a pattern for nop
+        if name is 'nop':
+            self.update_pc_next()
+            return
+
         info = self.instrs[name]
         yield from self.prep_namespace(info.form, info.op_fields)
 
