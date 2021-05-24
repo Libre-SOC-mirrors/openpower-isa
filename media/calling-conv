@@ -1,0 +1,287 @@
+tl;dr r1 stack, r2 TOC if used, r3-r10 args
+
+
+   Table 2.19. Register Roles
+
+   +--------------------------------------------------------------------------------------------+
+   |    Register     |   Preservation Rules   |                     Purpose                     |
+   |-----------------+------------------------+-------------------------------------------------|
+   |                 |                        | Optional use in function linkage.               |
+   | r0              | Volatile               |                                                 |
+   |                 |                        | Used in function prologues.                     |
+   |-----------------+------------------------+-------------------------------------------------|
+   | r1              | Nonvolatile            | Stack frame pointer.                            |
+   |-----------------+------------------------+-------------------------------------------------|
+   | r2              | Nonvolatile[a]         | TOC pointer.                                    |
+   |-----------------+------------------------+-------------------------------------------------|
+   | r3-r10          | Volatile               | Parameter and return values.                    |
+   |-----------------+------------------------+-------------------------------------------------|
+   |                 |                        | Optional use in function linkage.               |
+   | r11             | Volatile               |                                                 |
+   |                 |                        | Used as an environment pointer in languages     |
+   |                 |                        | that require environment pointers.              |
+   |-----------------+------------------------+-------------------------------------------------|
+   |                 |                        | Optional use in function linkage.               |
+   | r12             | Volatile               |                                                 |
+   |                 |                        | Function entry address at the global entry      |
+   |                 |                        | point.                                          |
+   |-----------------+------------------------+-------------------------------------------------|
+   | r13             | Reserved               | Thread pointer (see Section 3.7, "Thread Local  |
+   |                 |                        | Storage ABI").                                  |
+   |-----------------+------------------------+-------------------------------------------------|
+   | r14-r31[b]      | Nonvolatile            | Local variables.                                |
+   |-----------------+------------------------+-------------------------------------------------|
+   | LR              | Volatile               | Link register.                                  |
+   |-----------------+------------------------+-------------------------------------------------|
+   | CTR             | Volatile               | Loop count register.                            |
+   |-----------------+------------------------+-------------------------------------------------|
+   | TAR             | Reserved               | Reserved for system use. This register should   |
+   |                 |                        | not be read or written by application software. |
+   |-----------------+------------------------+-------------------------------------------------|
+   | XER             | Volatile               | Fixed-point exception register.                 |
+   |-----------------+------------------------+-------------------------------------------------|
+   | CR0-CR1         | Volatile               | Condition register fields.                      |
+   |-----------------+------------------------+-------------------------------------------------|
+   | CR2-CR4         | Nonvolatile            | Condition register fields.                      |
+   |-----------------+------------------------+-------------------------------------------------|
+   | CR5-CR7         | Volatile               | Condition register fields.                      |
+   |-----------------+------------------------+-------------------------------------------------|
+   | DSCR            | Limited Access         | Data stream prefetch control.                   |
+   |-----------------+------------------------+-------------------------------------------------|
+   | VRSAVE          | Reserved               | Reserved for system use. This register should   |
+   |                 |                        | not be read or written by application software. |
+   |--------------------------------------------------------------------------------------------|
+   | [a] Register r2 is nonvolatile with respect to calls between functions in the same         |
+   | compilation unit. It is saved and restored by code inserted by the linker resolving a call |
+   | to an external function. For more information, see Section 2.2.1.1, "TOC Pointer Usage".   |
+   |                                                                                            |
+   | [b] If a function needs a frame pointer, assigning r31 to the role of the frame pointer is |
+   | recommended.                                                                               |
+   +--------------------------------------------------------------------------------------------+
+
+    
+
+       TOC Pointer Usage
+
+   As described in Section 3.4, "Symbol Table", the TOC pointer, r2, is commonly initialized by
+   the global function entry point when a function is called through the global entry point. It
+   may be called from a module other than the current function's module or from an unknown call
+   point, such as through a function pointer. (For more information, see Section 2.3.2.1,
+   "Function Prologue".)
+
+   In those instances, it is the caller's responsibility to store the TOC pointer, r2, in the TOC
+   pointer doubleword of the caller's stack frame. For references external to the compilation
+   unit, this code is inserted by the static linker if a function is to be resolved by the
+   dynamic linker. For references through function pointers, it is the compiler's or assembler
+   programmer's responsibility to insert appropriate TOC save and restore code. If the function
+   is called from the same module as the callee, the callee must preserve the value of r2. (See
+   Section 3.6.1, "Function Call" for a description of function entry conventions.)
+
+   When a function calls another function, the TOC pointer must have a legal value pointing to
+   the TOC base, which may be initialized as described in Section 4.2.3, "Global Offset Table".
+
+   When global data is accessed, the TOC pointer must be available for dereference at the point
+   of all uses of values derived from the TOC pointer in conjunction with the @l operator. This
+   property is used by the linker to optimize TOC pointer accesses. In addition, all reaching
+   definitions for a TOC-pointer-derived access must compute the same definition for code to be
+   ABI compliant. (See the Section 3.6.3.1, "TOC Pointer Usage".)
+
+   In some implementations, non ABI-compliant code may be processed by providing additional
+   linker options; for example, linker options disabling linker optimization. However, this
+   behavior in support of non-ABI compliant code is not guaranteed to be portable and supported
+   in all systems. For examples of compliant and noncompliant code, see Section 3.6.3.1, "TOC
+   Pointer Usage".
+
+    
+
+       Optional Function Linkage
+
+   Except as follows, a function cannot depend on the values of those registers that are optional
+   in the function linkage (r0, r11, and r12) because they may be altered by interlibrary calls:
+
+     o When a function is entered in a way to initialize its environment pointer, register r11
+       contains the environment pointer. It is used to support languages with access to
+       additional environment context; for example, for languages that support lexical nesting to
+       access its lexically nested outer context.
+
+     o When a function is entered through its global entry point, register r12 contains the
+       entry-point address. For more information, see the description of dual entry points in
+       Section 2.3.2.1, "Function Prologue" and Section 2.3.2.2, "Function Epilogue".
+
+    
+
+       Stack Frame Pointer
+
+   The stack pointer always points to the lowest allocated valid stack frame. It must maintain
+   quadword alignment and grow toward the lower addresses. The contents of the word at that
+   address point to the previously allocated stack frame when the code has been compiled to
+   maintain back chains. A called function is permitted to decrement it if required. For more
+   information, see Section 2.3.8, "Dynamic Stack Space Allocation".
+
+    
+
+       Link Register
+
+   The link register contains the address that a called function normally returns to. It is
+   volatile across function calls.
+
+    
+
+       Condition Register Fields
+
+   In the condition register, the bit fields CR2, CR3, and CR4 are nonvolatile. The value on
+   entry must be restored on exit. The other bit fields are volatile.
+
+   This ABI requires OpenPOWER-compliant processors to implement mfocr instructions in a manner
+   that initializes undefined bits of the RT result register of mfocr instructions to one of the
+   following values:
+
+     o 0, in accordance with OpenPOWER-compliant processor implementation practice
+
+     o The architected value of the corresponding CR field in the mfocr instruction
+
+   [Note] Note                                                                                    
+          When executing an mfocr instruction, the POWER8 processor does not implement the        
+          behavior described in the "Fixed-Point Invalid Forms and Undefined Conditions" section  
+          of POWER8 Processor User's Manual for the Single-Chip Module. Instead, it replicates    
+          the selected condition register field within the byte that contains it rather than      
+          initializing to 0 the bits corresponding to the nonselected bits of the byte that       
+          contains it. When generating code to save two condition register fields that are stored 
+          in the same byte, the compiler must mask the value received from mfocr to avoid         
+          corruption of the resulting (partial) condition register word.                          
+                                                                                                  
+          This erratum does not apply to the POWER9 processor.                                    
+
+    For more information, see Power ISA, version 3.0 and "Fixed-Point Invalid Forms and Undefined
+   Conditions" in POWER9 Processor User's Manual.
+
+       Floating-Point Registers
+
+    In OpenPOWER-compliant processors, floating-point and vector functions are implemented using
+   a unified vector-scalar model. As shown in Figure 2.16, "Floating-Point Registers as Part of
+   VSRs" and Figure 2.17, "Vector Registers as Part of VSRs", there are 64 vector-scalar
+   registers; each is 128 bits wide.
+
+   The vector-scalar registers can be addressed with vector-scalar instructions, for vector and
+   scalar processing of all 64 registers, or with the "classic" Power floating-point instructions
+   to refer to a 32-register subset of 64 bits per register. They can also be addressed with VMX
+   instructions to refer to a 32-register subset of 128-bit wide registers.
+
+    
+
+   Figure 2.16. Floating-Point Registers as Part of VSRs
+
+    
+
+   Figure 2.17. Vector Registers as Part of VSRs
+
+   The classic floating-point repertoire consists of 32 floating-point registers, each 64 bits
+   wide, and an associated special-purpose register to provide floating-point status and control.
+   Throughout this document, the symbol fN is used, where N is a register number, to refer to
+   floating-point register N.
+
+   For the purpose of function calls, the right half of VSX registers, corresponding to the
+   classic floating-point registers (that is, vsr0-vsr31), is volatile.
+
+    
+
+   Table 2.20. Floating-Point Register Roles for Binary Floating-Point Types
+
+   +--------------------------------------------------------------------------------------------+
+   | Register | Preservation Rules |                          Purpose                           |
+   |----------+--------------------+------------------------------------------------------------|
+   | f0       | Volatile           | Local variables.                                           |
+   |----------+--------------------+------------------------------------------------------------|
+   | f1-f13   | Volatile           | Used for parameter passing and return values of binary     |
+   |          |                    | float types.                                               |
+   |----------+--------------------+------------------------------------------------------------|
+   | f14-f31  | Nonvolatile        | Local variables.                                           |
+   |----------+--------------------+------------------------------------------------------------|
+   |          |                    | Floating-Point Status and Control Register limited-access  |
+   | FPSCR    | Limited-access     | bits. Preservation rules governing the limited-access bits |
+   |          |                    | for the bit fields [VE], [OE], [UE], [ZE], [XE], and [RN]  |
+   |          |                    | are presented in Section 2.2.1.2, "Limited-Access Bits".   |
+   +--------------------------------------------------------------------------------------------+
+
+    
+
+       DFP Support
+
+   The OpenPOWER ABI supports the decimal floating-point (DFP) format and DFP language
+   extensions. The default implementation of DFP types shall be an implementation of the IEEE DFP
+   standard (IEEE Standard 754-2008). The default may be either a hardware or a software
+   implementation.
+
+   The Power ISA decimal floating-point category extends the Power Architecture by adding a
+   decimal floating-point unit. It uses the existing 64-bit floating-point registers and extends
+   the FPSCR register to 64 bits, where it defines a decimal rounding-control field in the
+   extended space.
+
+   Single-precision, double-precision, and quad-precision decimal floating-point parameters shall
+   be passed in the floating-point registers. Single-precision decimal floating-point shall
+   occupy the lower half of a floating-point register. Quad-precision floating-point values shall
+   occupy an even/odd register pair. When passing quad-precision decimal floating-point
+   parameters in accordance with this ABI, an odd floating-point register may be skipped in
+   allocation order to align quad-precision parameters and results in an even/odd register pair.
+   When a floating-point register is skipped during input parameter allocation, words in the
+   corresponding GPR or memory doubleword in the parameter list are not skipped.
+
+    
+
+   Table 2.21. Floating-Point Register Roles for Decimal Floating-Point Types
+
+   +--------------------------------------------------------------------------------------------+
+   | Register | Preservation Rules |                          Purpose                           |
+   |----------+--------------------+------------------------------------------------------------|
+   |          |                    | Floating-Point Status and Control Register limited-access  |
+   | FPSCR    | Limited-access     | bits. Preservation rules governing the limited-access bits |
+   |          |                    | for the bit field [DRN] are presented in Section 2.2.1.2,  |
+   |          |                    | "Limited-Access Bits".                                     |
+   +--------------------------------------------------------------------------------------------+
+
+       Vector Registers
+
+   The OpenPOWER vector-category instruction repertoire provides the ability to reference 32
+   vector registers, each 128 bits wide, of the vector-scalar register file, and a
+   special-purpose register VSCR. Throughout this document, the symbol vN is used, where N is a
+   register number, to refer to vector register N.
+
+    
+
+   Table 2.22. Vector Register Roles
+
+   +--------------------------------------------------------------------------------------------+
+   | Register | Preservation Rules |                          Purpose                           |
+   |----------+--------------------+------------------------------------------------------------|
+   | v0-v1    | Volatile           | Local variables.                                           |
+   |----------+--------------------+------------------------------------------------------------|
+   | v2-v13   | Volatile           | Used for parameter passing and return values.              |
+   |----------+--------------------+------------------------------------------------------------|
+   | v14-v19  | Volatile           | Local variables.                                           |
+   |----------+--------------------+------------------------------------------------------------|
+   | v20-v31  | Nonvolatile        | Local variables.                                           |
+   |----------+--------------------+------------------------------------------------------------|
+   |          |                    | 32-bit Vector Status and Control Register. Preservation    |
+   | VSCR     | Limited-access     | rules governing the limited-access bits for the bit field  |
+   |          |                    | [NJ] are presented in Section 2.2.1.2, "Limited-Access     |
+   |          |                    | Bits".                                                     |
+   +--------------------------------------------------------------------------------------------+
+
+    
+
+       IEEE BINARY 128 QUADRUPLE PRECISION
+
+   Parameters and function results in IEEE BINARY 128 QUADRUPLE PRECISION format shall be passed
+   in a single 128-bit vector register as if they were vector values.
+
+    
+
+       IBM EXTENDED PRECISION
+
+   Parameters and function results in the IBM EXTENDED PRECISION format with a pair of two
+   double-precision floating-point values shall be passed in two successive floating-point
+   registers.
+
+   If only one value can be passed in a floating-point register, the second parameter will be
+   passed in a GPR or in memory in accordance with the parameter passing rules for structure
+   aggregates.
