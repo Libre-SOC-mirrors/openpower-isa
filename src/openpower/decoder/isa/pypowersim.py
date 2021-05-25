@@ -9,6 +9,7 @@ from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
+from openpower.util import log
 
 
 def read_data(fname, offset=0):
@@ -19,7 +20,7 @@ def read_data(fname, offset=0):
     with open(fname, "rb") as f:
         while True:
             b = f.read(8)
-            print (repr(b))
+            log (repr(b))
             if not b:
                 return res
             res[offset] = struct.unpack('<Q', b)[0] # unsigned long
@@ -98,14 +99,14 @@ def run_tst(args, generator, initial_regs,
     pdecode = create_pdecode(include_fp=initial_fprs is not None)
 
     gen = list(generator.generate_instructions())
-    print ("instructions gen", gen)
+    log ("instructions gen", gen)
     insncode = generator.assembly.splitlines()
     if insncode:
         instructions = list(zip(gen, insncode))
     else:
         instructions = gen
 
-    print ("instructions", instructions)
+    log ("instructions", instructions)
 
     m.submodules.pdecode2 = pdecode2 = PowerDecode2(pdecode)
     simulator = ISA(pdecode2, initial_regs, initial_sprs, initial_cr,
@@ -125,7 +126,7 @@ def run_tst(args, generator, initial_regs,
         pc = simulator.pc.CIA.value
         index = pc//4
         while index < len(instructions) and not simulator.halted:
-            print("instr pc", pc)
+            log("instr pc", pc)
             try:
                 yield from simulator.setup_one()
             except KeyError:  # indicates instruction not in imem: stop
@@ -135,11 +136,11 @@ def run_tst(args, generator, initial_regs,
             ins = instructions[index]
             if isinstance(ins, list):
                 ins, code = ins
-                print("    0x{:X}".format(ins & 0xffffffff))
+                log("    0x{:X}".format(ins & 0xffffffff))
                 opname = code.split(' ')[0]
-                print(code, opname)
+                log(code, opname)
             else:
-                print("    0x{:X}".format(ins & 0xffffffff))
+                log("    0x{:X}".format(ins & 0xffffffff))
 
             # ask the decoder to decode this binary data (endian'd)
             yield from simulator.execute_one()
@@ -169,6 +170,7 @@ def help():
     print ("running ELF binaries: load SPRs, LR set to 0xffffffffffffffff")
     print ("TODO: dump registers")
     print ("TODO: load/dump PC, MSR, CR")
+    print ("TODO: print exec and sub-exec counters at end")
     exit(-1)
 
 
@@ -213,7 +215,7 @@ def run_simulation():
             else:
                 fname, offs = arg
             offs = convert_to_num(offs)
-            print ("offs load", fname, offs)
+            log ("offs load", fname, offs)
             mem = read_data(fname, offs)
             initial_mem.update(mem)
         elif opt in ['-d', '--dump']:
@@ -224,10 +226,10 @@ def run_simulation():
             offs = convert_to_num(offs)
             length = convert_to_num(length)
             assert length % 8 == 0, "length %d must align on 8-byte" % length
-            print ("dump", fname, offs, length)
+            log ("dump", fname, offs, length)
             write_to.append((fname, offs, length))
 
-    print (initial_mem)
+    log (initial_mem)
 
     if binaryname is None and lst is None:
         sys.stderr.write("Must give binary or listing\n")
