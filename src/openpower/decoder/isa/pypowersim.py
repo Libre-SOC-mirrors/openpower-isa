@@ -43,6 +43,7 @@ def read_entries(fname, listqty=None):
     start with "0x" or "0b" for hex or binary
     """
     regs = {}
+    allints = True
     with open(fname) as f:
         for line in f.readlines():
             # split line "x : y" into ["x", "y"], remove spaces
@@ -53,7 +54,12 @@ def read_entries(fname, listqty=None):
             reg = convert_to_num(reg)
             val = convert_to_num(val)
             assert reg not in regs, "duplicate entry %s" % (repr(reg))
+            allints = allints and isinstance(reg, int)
             regs[reg] = val
+
+    # SPRs can be named
+    if not allints:
+        return regs
 
     # post-process into a list.
     if listqty is None:

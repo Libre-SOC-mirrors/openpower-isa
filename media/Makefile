@@ -34,4 +34,5 @@ wget:
 tests: $(OBJ)
 	echo juuh
 	pypowersim -g audio/mp3/mp3_0.gpr \
+	           -s audio/mp3/mp3_0.spr \
                 -i audio/mp3/mp3_0_apply_window_float.bin
