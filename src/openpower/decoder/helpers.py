@@ -8,6 +8,8 @@ from openpower.decoder.selectable_int import selectltu as ltu
 from openpower.decoder.selectable_int import selectgtu as gtu
 from openpower.decoder.selectable_int import check_extsign
 
+from openpower.util import log
+
 trunc_div = floordiv
 trunc_rem = mod
 DIVS = trunc_divs
@@ -27,7 +29,7 @@ def exts(value, bits):
 def EXTS(value):
     """ extends sign bit out from current MSB to all 256 bits
     """
-    print ("EXTS", value, type(value))
+    log ("EXTS", value, type(value))
     assert isinstance(value, SelectableInt)
     return SelectableInt(exts(value.value, value.bits) & ((1 << 256)-1), 256)
 
@@ -54,7 +56,7 @@ def MULS(a, b):
     a_s = a.value & (1 << (a.bits-1)) != 0
     b_s = b.value & (1 << (b.bits-1)) != 0
     result = abs(a) * abs(b)
-    print("MULS", result, a_s, b_s)
+    log("MULS", result, a_s, b_s)
     if a_s == b_s:
         return result
     return -result
@@ -154,18 +156,18 @@ def DOUBLE(WORD):
     """convert incoming WORD to double.  v3.0B p140 section 4.6.2
     """
     # result, FRT, start off all zeros
-    print ("WORD", WORD)
+    log ("WORD", WORD)
     FRT = SelectableInt(0, 64)
     z1 = SelectableInt(0, 1)
     z29 = SelectableInt(0, 29)
     e = WORD[1:9]
     m = WORD[9:32]
     s = WORD[0]
-    print ("word s e m", s, e, m)
+    log ("word s e m", s, e, m)
 
     # Normalized Operand
     if e.value > 0 and e.value  < 255:
-        print ("normalised")
+        log ("normalised")
         FRT[0:2] = WORD[0:2]
         FRT[2] = ~WORD[1]
         FRT[3] = ~WORD[1]
@@ -174,7 +176,7 @@ def DOUBLE(WORD):
 
     # Denormalized Operand
     if e.value  == 0 and m.value  != 0:
-        print ("denormalised")
+        log ("denormalised")
         sign = WORD[0]
         exp = -126
         frac = selectconcat(z1, WORD[9:32], z29)
@@ -188,14 +190,14 @@ def DOUBLE(WORD):
 
     # Zero / Infinity / NaN
     if e.value  == 255 or m.value  == 0:
-        print ("z/inf/nan")
+        log ("z/inf/nan")
         FRT[0:2] = WORD[0:2]
         FRT[2] = WORD[1]
         FRT[3] = WORD[1]
         FRT[4] = WORD[1]
         FRT[5:64] = selectconcat(WORD[2:32], z29)
 
-    print ("Double s e m", FRT[0].value, FRT[1:12].value-1023,
+    log ("Double s e m", FRT[0].value, FRT[1:12].value-1023,
                            FRT[12:64].value)
 
     return FRT
@@ -211,8 +213,8 @@ def SINGLE(FRS):
     m = FRS[9:32]
     s = FRS[0]
 
-    print ("SINGLE", FRS)
-    print ("s e m", s.value, e.value, m.value)
+    log ("SINGLE", FRS)
+    log ("s e m", s.value, e.value, m.value)
 
     #No Denormalization Required (includes Zero / Infinity / NaN)
     if e.value > 896 or FRS[1:64].value  == 0:
@@ -233,7 +235,7 @@ def SINGLE(FRS):
           WORD[9:32] = frac[1:24]
     #else WORD = undefined # return zeros
 
-    print ("WORD", WORD)
+    log ("WORD", WORD)
 
     return WORD
 
@@ -254,7 +256,7 @@ def FPADD32(FRA, FRB):
     result = float(FRA) + float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE(SINGLE(cvt))
-    print ("FPADD32", FRA, FRB, result, cvt)
+    log ("FPADD32", FRA, FRB, result, cvt)
     return cvt
 
 
@@ -264,7 +266,7 @@ def FPSUB32(FRA, FRB):
     result = float(FRA) - float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE(SINGLE(cvt))
-    print ("FPSUB32", FRA, FRB, result, cvt)
+    log ("FPSUB32", FRA, FRB, result, cvt)
     return cvt
 
 
@@ -274,7 +276,7 @@ def FPMUL32(FRA, FRB):
     result = float(FRA) * float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE(SINGLE(cvt))
-    print ("FPMUL32", FRA, FRB, result, cvt)
+    log ("FPMUL32", FRA, FRB, result, cvt)
     return cvt
 
 
@@ -284,35 +286,35 @@ def FPDIV32(FRA, FRB):
     result = float(FRA) / float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE(SINGLE(cvt))
-    print ("FPDIV32", FRA, FRB, result, cvt)
+    log ("FPDIV32", FRA, FRB, result, cvt)
     return cvt
 
 
 def FPADD64(FRA, FRB):
     result = float(FRA) + float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPADD64", FRA, FRB, result, cvt)
+    log ("FPADD64", FRA, FRB, result, cvt)
     return cvt
 
 
 def FPSUB64(FRA, FRB):
     result = float(FRA) - float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPSUB64", FRA, FRB, result, cvt)
+    log ("FPSUB64", FRA, FRB, result, cvt)
     return cvt
 
 
 def FPMUL64(FRA, FRB):
     result = float(FRA) * float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPMUL64", FRA, FRB, result, cvt)
+    log ("FPMUL64", FRA, FRB, result, cvt)
     return cvt
 
 
 def FPDIV64(FRA, FRB):
     result = float(FRA) / float(FRB)
     cvt = fp64toselectable(result)
-    print ("FPDIV64", FRA, FRB, result, cvt)
+    log ("FPDIV64", FRA, FRB, result, cvt)
     return cvt
 
 
@@ -401,5 +403,5 @@ class HelperTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    print(SelectableInt.__bases__)
+    log(SelectableInt.__bases__)
     unittest.main()
