@@ -35,6 +35,8 @@ from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.decoder.isa.mem import Mem, swap_order, MemException
 
+from openpower.util import log
+
 from collections import namedtuple
 import math
 import sys
@@ -106,7 +108,7 @@ class GPR(dict):
 
     def getz(self, rnum):
         # rnum = rnum.value # only SelectableInt allowed
-        print("GPR getzero?", rnum)
+        log("GPR getzero?", rnum)
         if rnum == 0:
             return SelectableInt(0, 64)
         return self[rnum]
@@ -121,7 +123,7 @@ class GPR(dict):
         """
         rnum = self._get_regnum(attr)
         offs = self.svstate.srcstep
-        print("GPR getitem", attr, rnum, "srcoffs", offs)
+        log("GPR getitem", attr, rnum, "srcoffs", offs)
         return self.regfile[rnum]
 
     def dump(self, printout=True):
@@ -134,7 +136,7 @@ class GPR(dict):
                 for j in range(8):
                     s.append("%08x" % res[i+j])
                 s = ' '.join(s)
-                print("reg", "%2d" % i, s)
+                log("reg", "%2d" % i, s)
         return res
 
 
@@ -155,8 +157,8 @@ class SPR(dict):
             self[key] = v
 
     def __getitem__(self, key):
-        print("get spr", key)
-        print("dict", self.items())
+        log("get spr", key)
+        log("dict", self.items())
         # if key in special_sprs get the special spr, otherwise return key
         if isinstance(key, SelectableInt):
             key = key.value
@@ -176,7 +178,7 @@ class SPR(dict):
                 info = spr_byname[key]
             dict.__setitem__(self, key, SelectableInt(0, info.length))
             res = dict.__getitem__(self, key)
-        print("spr returning", key, res)
+        log("spr returning", key, res)
         return res
 
     def __setitem__(self, key, value):
@@ -184,13 +186,13 @@ class SPR(dict):
             key = key.value
         if isinstance(key, int):
             key = spr_dict[key].SPR
-            print("spr key", key)
+            log("spr key", key)
         key = special_sprs.get(key, key)
         if key == 'HSRR0':  # HACK!
             self.__setitem__('SRR0', value)
         if key == 'HSRR1':  # HACK!
             self.__setitem__('SRR1', value)
-        print("setting spr", key, value)
+        log("setting spr", key, value)
         dict.__setitem__(self, key, value)
 
     def __call__(self, ridx):
@@ -209,7 +211,7 @@ class SPR(dict):
             res.append((sprname, self[k].value))
         if printout:
             for sprname, value in res:
-                print("    ", sprname, hex(value))
+                log("    ", sprname, hex(value))
         return res
 
 
@@ -321,7 +323,7 @@ class CRFields:
 def get_predint(gpr, mask):
     r10 = gpr(10)
     r30 = gpr(30)
-    print ("get_predint", mask, SVP64PredInt.ALWAYS.value)
+    log ("get_predint", mask, SVP64PredInt.ALWAYS.value)
     if mask == SVP64PredInt.ALWAYS.value:
         return 0xffff_ffff_ffff_ffff
     if mask == SVP64PredInt.R3_UNARY.value:
@@ -382,15 +384,15 @@ def get_pdecode_idx_in(dec2, name):
     in1_isvec = yield dec2.in1_isvec
     in2_isvec = yield dec2.in2_isvec
     in3_isvec = yield dec2.in3_isvec
-    print ("get_pdecode_idx_in in1", name, in1_sel, In1Sel.RA.value,
+    log ("get_pdecode_idx_in in1", name, in1_sel, In1Sel.RA.value,
                                      in1, in1_isvec)
-    print ("get_pdecode_idx_in in2", name, in2_sel, In2Sel.RB.value,
+    log ("get_pdecode_idx_in in2", name, in2_sel, In2Sel.RB.value,
                                      in2, in2_isvec)
-    print ("get_pdecode_idx_in in3", name, in3_sel, In3Sel.RS.value,
+    log ("get_pdecode_idx_in in3", name, in3_sel, In3Sel.RS.value,
                                      in3, in3_isvec)
-    print ("get_pdecode_idx_in FRS in3", name, in3_sel, In3Sel.FRS.value,
+    log ("get_pdecode_idx_in FRS in3", name, in3_sel, In3Sel.FRS.value,
                                      in3, in3_isvec)
-    print ("get_pdecode_idx_in FRC in3", name, in3_sel, In3Sel.FRC.value,
+    log ("get_pdecode_idx_in FRC in3", name, in3_sel, In3Sel.FRC.value,
                                      in3, in3_isvec)
     # identify which regnames map to in1/2/3
     if name == 'RA':
@@ -441,16 +443,16 @@ def get_pdecode_cr_out(dec2, name):
     # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
     out = yield dec2.e.write_cr.data
     o_isvec = yield dec2.o_isvec
-    print ("get_pdecode_cr_out", out_sel, CROutSel.CR0.value, out, o_isvec)
-    print ("    sv_cr_out", sv_cr_out)
-    print ("    cr_bf", out_bitfield)
-    print ("    spec", spec)
-    print ("    override", sv_override)
+    log ("get_pdecode_cr_out", out_sel, CROutSel.CR0.value, out, o_isvec)
+    log ("    sv_cr_out", sv_cr_out)
+    log ("    cr_bf", out_bitfield)
+    log ("    spec", spec)
+    log ("    override", sv_override)
     # identify which regnames map to out / o2
     if name == 'CR0':
         if out_sel == CROutSel.CR0.value:
             return out, o_isvec
-    print ("get_pdecode_cr_out not found", name)
+    log ("get_pdecode_cr_out not found", name)
     return None, False
 
 
@@ -462,24 +464,24 @@ def get_pdecode_idx_out(dec2, name):
     o_isvec = yield dec2.o_isvec
     # identify which regnames map to out / o2
     if name == 'RA':
-        print ("get_pdecode_idx_out", out_sel, OutSel.RA.value, out, o_isvec)
+        log ("get_pdecode_idx_out", out_sel, OutSel.RA.value, out, o_isvec)
         if out_sel == OutSel.RA.value:
             return out, o_isvec
     elif name == 'RT':
-        print ("get_pdecode_idx_out", out_sel, OutSel.RT.value,
+        log ("get_pdecode_idx_out", out_sel, OutSel.RT.value,
                                       OutSel.RT_OR_ZERO.value, out, o_isvec)
         if out_sel == OutSel.RT.value:
             return out, o_isvec
     elif name == 'FRA':
-        print ("get_pdecode_idx_out", out_sel, OutSel.FRA.value, out, o_isvec)
+        log ("get_pdecode_idx_out", out_sel, OutSel.FRA.value, out, o_isvec)
         if out_sel == OutSel.FRA.value:
             return out, o_isvec
     elif name == 'FRT':
-        print ("get_pdecode_idx_out", out_sel, OutSel.FRT.value,
+        log ("get_pdecode_idx_out", out_sel, OutSel.FRT.value,
                                       OutSel.FRT.value, out, o_isvec)
         if out_sel == OutSel.FRT.value:
             return out, o_isvec
-    print ("get_pdecode_idx_out not found", name, out_sel, out, o_isvec)
+    log ("get_pdecode_idx_out not found", name, out_sel, out, o_isvec)
     return None, False
 
 
@@ -493,12 +495,12 @@ def get_pdecode_idx_out2(dec2, name):
     out_sel = yield op.out_sel
     out = yield dec2.e.write_ea.data
     o_isvec = yield dec2.o2_isvec
-    print ("get_pdecode_idx_out2", name, out_sel, out, o_isvec)
+    log ("get_pdecode_idx_out2", name, out_sel, out, o_isvec)
     if name == 'RA':
         if hasattr(op, "upd"):
             # update mode LD/ST uses read-reg A also as an output
             upd = yield op.upd
-            print ("get_pdecode_idx_out2", upd, LDSTMode.update.value,
+            log ("get_pdecode_idx_out2", upd, LDSTMode.update.value,
                                            out_sel, OutSel.RA.value,
                                            out, o_isvec)
             if upd == LDSTMode.update.value:
@@ -537,8 +539,8 @@ class ISACaller:
             initial_insns = {}
             assert self.respect_pc == False, "instructions required to honor pc"
 
-        print("ISACaller insns", respect_pc, initial_insns, disassembly)
-        print("ISACaller initial_msr", initial_msr)
+        log("ISACaller insns", respect_pc, initial_insns, disassembly)
+        log("ISACaller initial_msr", initial_msr)
 
         # "fake program counter" mode (for unit testing)
         self.fake_pc = 0
@@ -639,7 +641,7 @@ class ISACaller:
         hence the default arguments.  when calling from inside ISACaller
         it is best to use call_trap()
         """
-        print("TRAP:", hex(trap_addr), hex(self.namespace['MSR'].value))
+        log("TRAP:", hex(trap_addr), hex(self.namespace['MSR'].value))
         # store CIA(+4?) in SRR0, set NIA to 0x700
         # store MSR in SRR1, set MSR to um errr something, have to check spec
         # store SVSTATE (if enabled) in SVSRR0
@@ -710,23 +712,23 @@ class ISACaller:
             imm = yield self.dec2.e.do.imm_data.data
             inputs.append(SelectableInt(imm, 64))
         assert len(outputs) >= 1
-        print("outputs", repr(outputs))
+        log("outputs", repr(outputs))
         if isinstance(outputs, list) or isinstance(outputs, tuple):
             output = outputs[0]
         else:
             output = outputs
         gts = []
         for x in inputs:
-            print("gt input", x, output)
+            log("gt input", x, output)
             gt = (gtu(x, output))
             gts.append(gt)
-        print(gts)
+        log(gts)
         cy = 1 if any(gts) else 0
-        print("CA", cy, gts)
+        log("CA", cy, gts)
         if not (1 & already_done):
             self.spr['XER'][XER_bits['CA']] = cy
 
-        print("inputs", already_done, inputs)
+        log("inputs", already_done, inputs)
         # 32 bit carry
         # ARGH... different for OP_ADD... *sigh*...
         op = yield self.dec2.e.do.insn_type
@@ -738,17 +740,17 @@ class ISACaller:
             else:
                 b32 = False
             cy32 = res32 ^ a32 ^ b32
-            print("CA32 ADD", cy32)
+            log("CA32 ADD", cy32)
         else:
             gts = []
             for x in inputs:
-                print("input", x, output)
-                print("     x[32:64]", x, x[32:64])
-                print("     o[32:64]", output, output[32:64])
+                log("input", x, output)
+                log("     x[32:64]", x, x[32:64])
+                log("     o[32:64]", output, output[32:64])
                 gt = (gtu(x[32:64], output[32:64])) == SelectableInt(1, 1)
                 gts.append(gt)
             cy32 = 1 if any(gts) else 0
-            print("CA32", cy32, gts)
+            log("CA32", cy32, gts)
         if not (2 & already_done):
             self.spr['XER'][XER_bits['CA32']] = cy32
 
@@ -763,7 +765,7 @@ class ISACaller:
             imm = yield self.dec2.e.do.imm_data.data
             inputs.append(SelectableInt(imm, 64))
         assert len(outputs) >= 1
-        print("handle_overflow", inputs, outputs, div_overflow)
+        log("handle_overflow", inputs, outputs, div_overflow)
         if len(inputs) < 2 and div_overflow is None:
             return
 
@@ -797,19 +799,19 @@ class ISACaller:
         out = outputs[0]
         assert isinstance(out, SelectableInt), \
             "out zero not a SelectableInt %s" % repr(outputs)
-        print("handle_comparison", out.bits, hex(out.value))
+        log("handle_comparison", out.bits, hex(out.value))
         # TODO - XXX *processor* in 32-bit mode
         # https://bugs.libre-soc.org/show_bug.cgi?id=424
         # if is_32bit:
         #    o32 = exts(out.value, 32)
         #    print ("handle_comparison exts 32 bit", hex(o32))
         out = exts(out.value, out.bits)
-        print("handle_comparison exts", hex(out))
+        log("handle_comparison exts", hex(out))
         zero = SelectableInt(out == 0, 1)
         positive = SelectableInt(out > 0, 1)
         negative = SelectableInt(out < 0, 1)
         SO = self.spr['XER'][XER_bits['SO']]
-        print("handle_comparison SO", SO)
+        log("handle_comparison SO", SO)
         cr_field = selectconcat(negative, positive, zero, SO)
         self.crl[cr_idx].eq(cr_field)
 
@@ -828,8 +830,8 @@ class ISACaller:
         ins = self.imem.ld(pc, 4, False, True, instr_fetch=True)
         if ins is None:
             raise KeyError("no instruction at 0x%x" % pc)
-        print("setup: 0x%x 0x%x %s" % (pc, ins & 0xffffffff, bin(ins)))
-        print("CIA NIA", self.respect_pc, self.pc.CIA.value, self.pc.NIA.value)
+        log("setup: 0x%x 0x%x %s" % (pc, ins & 0xffffffff, bin(ins)))
+        log("CIA NIA", self.respect_pc, self.pc.CIA.value, self.pc.NIA.value)
 
         yield self.dec2.sv_rm.eq(0)
         yield self.dec2.dec.raw_opcode_in.eq(ins & 0xffffffff)
@@ -845,7 +847,7 @@ class ISACaller:
         pfx = SVP64PrefixFields() # TODO should probably use SVP64PrefixDecoder
         pfx.insn.value = opcode
         major = pfx.major.asint(msb0=True) # MSB0 inversion
-        print ("prefix test: opcode:", major, bin(major),
+        log ("prefix test: opcode:", major, bin(major),
                 pfx.insn[7] == 0b1, pfx.insn[9] == 0b1)
         self.is_svp64_mode = ((major == 0b000001) and
                               pfx.insn[7].value == 0b1 and
@@ -857,12 +859,12 @@ class ISACaller:
             return
 
         # in SVP64 mode.  decode/print out svp64 prefix, get v3.0B instruction
-        print ("svp64.rm", bin(pfx.rm.asint(msb0=True)))
-        print ("    svstate.vl", self.svstate.vl.asint(msb0=True))
-        print ("    svstate.mvl", self.svstate.maxvl.asint(msb0=True))
+        log ("svp64.rm", bin(pfx.rm.asint(msb0=True)))
+        log ("    svstate.vl", self.svstate.vl.asint(msb0=True))
+        log ("    svstate.mvl", self.svstate.maxvl.asint(msb0=True))
         sv_rm = pfx.rm.asint(msb0=True)
         ins = self.imem.ld(pc+4, 4, False, True, instr_fetch=True)
-        print("     svsetup: 0x%x 0x%x %s" % (pc+4, ins & 0xffffffff, bin(ins)))
+        log("     svsetup: 0x%x 0x%x %s" % (pc+4, ins & 0xffffffff, bin(ins)))
         yield self.dec2.dec.raw_opcode_in.eq(ins & 0xffffffff) # v3.0B suffix
         yield self.dec2.sv_rm.eq(sv_rm)                        # svp64 prefix
         yield Settle()
@@ -876,13 +878,13 @@ class ISACaller:
                 code = yield from self.get_assembly_name()
             else:
                 code = self.disassembly[self._pc+4]
-            print("    svp64 sim-execute", hex(self._pc), code)
+            log("    svp64 sim-execute", hex(self._pc), code)
         else:
             if not self.disassembly:
                 code = yield from self.get_assembly_name()
             else:
                 code = self.disassembly[self._pc]
-            print("sim-execute", hex(self._pc), code)
+            log("sim-execute", hex(self._pc), code)
         opname = code.split(' ')[0]
         try:
             yield from self.call(opname)         # execute the instruction
@@ -899,7 +901,7 @@ class ISACaller:
         if not self.respect_pc:
             self.fake_pc += 4
 
-        print("execute one, CIA NIA", self.pc.CIA.value, self.pc.NIA.value)
+        log("execute one, CIA NIA", self.pc.CIA.value, self.pc.NIA.value)
 
     def get_assembly_name(self):
         # TODO, asmregs is from the spec, e.g. add RT,RA,RB
@@ -908,7 +910,7 @@ class ISACaller:
         insn_1_11 = yield self.dec2.e.do.insn[1:11]
         asmcode = yield self.dec2.dec.op.asmcode
         int_op = yield self.dec2.dec.op.internal_op
-        print("get assembly name asmcode", asmcode, int_op,
+        log("get assembly name asmcode", asmcode, int_op,
                             hex(dec_insn), bin(insn_1_11))
         asmop = insns.get(asmcode, None)
 
@@ -926,10 +928,10 @@ class ISACaller:
             rc_en = False
             rc_ok = False
         # grrrr have to special-case MUL op (see DecodeOE)
-        print("ov %d en %d rc %d en %d op %d" %
+        log("ov %d en %d rc %d en %d op %d" %
               (ov_ok, ov_en, rc_ok, rc_en, int_op))
         if int_op in [MicrOp.OP_MUL_H64.value, MicrOp.OP_MUL_H32.value]:
-            print("mul op")
+            log("mul op")
             if rc_en & rc_ok:
                 asmop += "."
         else:
@@ -940,10 +942,10 @@ class ISACaller:
             lk = yield self.dec2.e.do.lk
             if lk:
                 asmop += "l"
-        print("int_op", int_op)
+        log("int_op", int_op)
         if int_op in [MicrOp.OP_B.value, MicrOp.OP_BC.value]:
             AA = yield self.dec2.dec.fields.FormI.AA[0:-1]
-            print("AA", AA)
+            log("AA", AA)
             if AA:
                 asmop += "a"
         spr_msb = yield from self.get_spr_msb()
@@ -970,13 +972,13 @@ class ISACaller:
         """
         name = name.strip()  # remove spaces if not already done so
         if self.halted:
-            print("halted - not executing", name)
+            log("halted - not executing", name)
             return
 
         # TODO, asmregs is from the spec, e.g. add RT,RA,RB
         # see http://bugs.libre-riscv.org/show_bug.cgi?id=282
         asmop = yield from self.get_assembly_name()
-        print("call", name, asmop)
+        log("call", name, asmop)
 
         # check privileged
         int_op = yield self.dec2.dec.op.internal_op
@@ -994,7 +996,7 @@ class ISACaller:
                       MicrOp.OP_MTSPR.value] and spr_msb:
             instr_is_privileged = True
 
-        print("is priv", instr_is_privileged, hex(self.msr.value),
+        log("is priv", instr_is_privileged, hex(self.msr.value),
               self.msr[MSRb.PR])
         # check MSR priv bit and whether op is privileged: if so, throw trap
         if instr_is_privileged and self.msr[MSRb.PR] == 1:
@@ -1035,7 +1037,7 @@ class ISACaller:
         # preserve order of register names
         input_names = create_args(list(info.read_regs) +
                                   list(info.uninit_regs))
-        print(input_names)
+        log(input_names)
 
         # get SVP64 entry for the current instruction
         sv_rm = self.svp64rm.instrs.get(name)
@@ -1043,7 +1045,7 @@ class ISACaller:
             dest_cr, src_cr, src_byname, dest_byname = decode_extra(sv_rm)
         else:
             dest_cr, src_cr, src_byname, dest_byname = False, False, {}, {}
-        print ("sv rm", sv_rm, dest_cr, src_cr, src_byname, dest_byname)
+        log ("sv rm", sv_rm, dest_cr, src_cr, src_byname, dest_byname)
 
         # get SVSTATE VL (oh and print out some debug stuff)
         if self.is_svp64_mode:
@@ -1052,7 +1054,7 @@ class ISACaller:
             dststep = self.svstate.dststep.asint(msb0=True)
             sv_a_nz = yield self.dec2.sv_a_nz
             in1 = yield self.dec2.e.read_reg1.data
-            print ("SVP64: VL, srcstep, dststep, sv_a_nz, in1",
+            log ("SVP64: VL, srcstep, dststep, sv_a_nz, in1",
                     vl, srcstep, dststep, sv_a_nz, in1)
 
         # get predicate mask
@@ -1072,26 +1074,26 @@ class ISACaller:
                 srcmask = dstmask = get_predcr(self.crl, dstpred, vl)
                 if sv_ptype == SVPtype.P2.value:
                     srcmask = get_predcr(self.crl, srcpred, vl)
-            print ("    pmode", pmode)
-            print ("    ptype", sv_ptype)
-            print ("    srcpred", bin(srcpred))
-            print ("    dstpred", bin(dstpred))
-            print ("    srcmask", bin(srcmask))
-            print ("    dstmask", bin(dstmask))
-            print ("    pred_sz", bin(pred_src_zero))
-            print ("    pred_dz", bin(pred_dst_zero))
+            log ("    pmode", pmode)
+            log ("    ptype", sv_ptype)
+            log ("    srcpred", bin(srcpred))
+            log ("    dstpred", bin(dstpred))
+            log ("    srcmask", bin(srcmask))
+            log ("    dstmask", bin(dstmask))
+            log ("    pred_sz", bin(pred_src_zero))
+            log ("    pred_dz", bin(pred_dst_zero))
 
             # okaaay, so here we simply advance srcstep (TODO dststep)
             # until the predicate mask has a "1" bit... or we run out of VL
             # let srcstep==VL be the indicator to move to next instruction
             if not pred_src_zero:
                 while (((1<<srcstep) & srcmask) == 0) and (srcstep != vl):
-                    print ("      skip", bin(1<<srcstep))
+                    log ("      skip", bin(1<<srcstep))
                     srcstep += 1
             # same for dststep
             if not pred_dst_zero:
                 while (((1<<dststep) & dstmask) == 0) and (dststep != vl):
-                    print ("      skip", bin(1<<dststep))
+                    log ("      skip", bin(1<<dststep))
                     dststep += 1
 
             # now work out if the relevant mask bits require zeroing
@@ -1108,8 +1110,8 @@ class ISACaller:
             yield Settle() # let decoder update
             srcstep = self.svstate.srcstep.asint(msb0=True)
             dststep = self.svstate.dststep.asint(msb0=True)
-            print ("    srcstep", srcstep)
-            print ("    dststep", dststep)
+            log ("    srcstep", srcstep)
+            log ("    dststep", dststep)
 
             # check if end reached (we let srcstep overrun, above)
             # nothing needs doing (TODO zeroing): just do next instruction
@@ -1121,7 +1123,7 @@ class ISACaller:
         # VL=0 in SVP64 mode means "do nothing: skip instruction"
         if self.is_svp64_mode and vl == 0:
             self.pc.update(self.namespace, self.is_svp64_mode)
-            print("SVP64: VL=0, end of call", self.namespace['CIA'],
+            log("SVP64: VL=0, end of call", self.namespace['CIA'],
                                        self.namespace['NIA'])
             return
 
@@ -1143,13 +1145,13 @@ class ISACaller:
             regname = "_" + name
             self.namespace[regname] = regnum
             if not self.is_svp64_mode or not pred_src_zero:
-                print('reading reg %s %s' % (name, str(regnum)), is_vec)
+                log('reading reg %s %s' % (name, str(regnum)), is_vec)
                 if name in fregs:
                     reg_val = self.fpr(regnum)
                 else:
                     reg_val = self.gpr(regnum)
             else:
-                print('zero input reg %s %s' % (name, str(regnum)), is_vec)
+                log('zero input reg %s %s' % (name, str(regnum)), is_vec)
                 reg_val = 0
             inputs.append(reg_val)
 
@@ -1164,16 +1166,16 @@ class ISACaller:
         self.trap_nia = None
 
         # execute actual instruction here
-        print("inputs", inputs)
+        log("inputs", inputs)
         results = info.func(self, *inputs)
-        print("results", results)
+        log("results", results)
 
         # "inject" decorator takes namespace from function locals: we need to
         # overwrite NIA being overwritten (sigh)
         if self.trap_nia is not None:
             self.namespace['NIA'] = self.trap_nia
 
-        print("after func", self.namespace['CIA'], self.namespace['NIA'])
+        log("after func", self.namespace['CIA'], self.namespace['NIA'])
 
         # detect if CA/CA32 already in outputs (sra*, basically)
         already_done = 0
@@ -1185,7 +1187,7 @@ class ISACaller:
                 if name == 'CA32':
                     already_done |= 2
 
-        print("carry already done?", bin(already_done))
+        log("carry already done?", bin(already_done))
         if hasattr(self.dec2.e.do, "output_carry"):
             carry_en = yield self.dec2.e.do.output_carry
         else:
@@ -1207,7 +1209,7 @@ class ISACaller:
             else:
                 ov_en = False
                 ov_ok = False
-            print("internal overflow", overflow, ov_en, ov_ok)
+            log("internal overflow", overflow, ov_en, ov_ok)
             if ov_en & ov_ok:
                 yield from self.handle_overflow(inputs, results, overflow)
 
@@ -1229,18 +1231,18 @@ class ISACaller:
                     output = SelectableInt(output, 256)
                 if name in ['CA', 'CA32']:
                     if carry_en:
-                        print("writing %s to XER" % name, output)
+                        log("writing %s to XER" % name, output)
                         self.spr['XER'][XER_bits[name]] = output.value
                     else:
-                        print("NOT writing %s to XER" % name, output)
+                        log("NOT writing %s to XER" % name, output)
                 elif name in info.special_regs:
-                    print('writing special %s' % name, output, special_sprs)
+                    log('writing special %s' % name, output, special_sprs)
                     if name in special_sprs:
                         self.spr[name] = output
                     else:
                         self.namespace[name].eq(output)
                     if name == 'MSR':
-                        print('msr written', hex(self.msr.value))
+                        log('msr written', hex(self.msr.value))
                 else:
                     regnum, is_vec = yield from get_pdecode_idx_out(self.dec2,
                                                 name)
@@ -1252,7 +1254,7 @@ class ISACaller:
                         regnum = yield getattr(self.decoder, name)
                         is_vec = False
                     if self.is_svp64_mode and pred_dst_zero:
-                        print('zeroing reg %d %s' % (regnum, str(output)),
+                        log('zeroing reg %d %s' % (regnum, str(output)),
                                                      is_vec)
                         output = SelectableInt(0, 256)
                     else:
@@ -1260,7 +1262,7 @@ class ISACaller:
                             ftype = 'fpr'
                         else:
                             ftype = 'gpr'
-                        print('writing %s %s %s' % (regnum, ftype, str(output)),
+                        log('writing %s %s %s' % (regnum, ftype, str(output)),
                                                      is_vec)
                     if output.bits > 64:
                         output = SelectableInt(output.value, 64)
@@ -1280,13 +1282,13 @@ class ISACaller:
             sv_ptype = yield self.dec2.dec.op.SV_Ptype
             no_out_vec = not (yield self.dec2.no_out_vec)
             no_in_vec = not (yield self.dec2.no_in_vec)
-            print ("    svstate.vl", vl)
-            print ("    svstate.mvl", mvl)
-            print ("    svstate.srcstep", srcstep)
-            print ("    svstate.dststep", dststep)
-            print ("    no_out_vec", no_out_vec)
-            print ("    no_in_vec", no_in_vec)
-            print ("    sv_ptype", sv_ptype, sv_ptype == SVPtype.P2.value)
+            log ("    svstate.vl", vl)
+            log ("    svstate.mvl", mvl)
+            log ("    svstate.srcstep", srcstep)
+            log ("    svstate.dststep", dststep)
+            log ("    no_out_vec", no_out_vec)
+            log ("    no_in_vec", no_in_vec)
+            log ("    sv_ptype", sv_ptype, sv_ptype == SVPtype.P2.value)
             # check if srcstep needs incrementing by one, stop PC advancing
             # svp64 loop can end early if the dest is scalar for single-pred
             # but for 2-pred both src/dest have to be checked.
@@ -1301,7 +1303,7 @@ class ISACaller:
                 self.pc.NIA.value = self.pc.CIA.value
                 self.namespace['NIA'] = self.pc.NIA
                 self.namespace['SVSTATE'] = self.svstate.spr
-                print("end of sub-pc call", self.namespace['CIA'],
+                log("end of sub-pc call", self.namespace['CIA'],
                                      self.namespace['NIA'])
                 return # DO NOT allow PC to update whilst Sub-PC loop running
             # reset loop to zero
@@ -1313,14 +1315,14 @@ class ISACaller:
         # UPDATE program counter
         self.pc.update(self.namespace, self.is_svp64_mode)
         self.svstate.spr = self.namespace['SVSTATE']
-        print("end of call", self.namespace['CIA'],
+        log("end of call", self.namespace['CIA'],
                              self.namespace['NIA'],
                              self.namespace['SVSTATE'])
 
     def svp64_reset_loop(self):
         self.svstate.srcstep[0:7] = 0
         self.svstate.dststep[0:7] = 0
-        print ("    svstate.srcstep loop end (PC to update)")
+        log ("    svstate.srcstep loop end (PC to update)")
         self.pc.update_nia(self.is_svp64_mode)
         self.namespace['NIA'] = self.pc.NIA
         self.namespace['SVSTATE'] = self.svstate.spr
@@ -1349,8 +1351,8 @@ def inject():
             saved_values = func_globals.copy()  # Shallow copy of dict.
             func_globals.update(context)
             result = func(*args, **kwargs)
-            print("globals after", func_globals['CIA'], func_globals['NIA'])
-            print("args[0]", args[0].namespace['CIA'],
+            log("globals after", func_globals['CIA'], func_globals['NIA'])
+            log("args[0]", args[0].namespace['CIA'],
                   args[0].namespace['NIA'],
                   args[0].namespace['SVSTATE'])
             args[0].namespace = func_globals
