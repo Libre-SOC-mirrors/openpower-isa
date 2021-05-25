@@ -161,7 +161,14 @@ def help():
     print ("-l --load=     filename:address to load binary into memory")
     print ("-d --dump=     filename:address:len to binary save from memory")
     print ("-h --help      prints this message")
+    print ("notes:")
     print ("load and dump may be given multiple times")
+    print ("load and dump must be 8-byte aligned sizes")
+    print ("loading SPRs accepts SPR names (e.g. LR, CTR, SRR0)")
+    print ("numbers may be integer, binary (0bNNN) or hex (0xMMM) but not FP")
+    print ("running ELF binaries: load SPRs, LR set to 0xffffffffffffffff")
+    print ("TODO: dump registers")
+    print ("TODO: load/dump PC, MSR, CR")
     exit(-1)
 
 
