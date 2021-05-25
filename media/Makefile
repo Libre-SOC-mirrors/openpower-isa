@@ -35,4 +35,7 @@ tests: $(OBJ)
 	echo juuh
 	pypowersim -g audio/mp3/mp3_0.gpr \
 	           -s audio/mp3/mp3_0.spr \
+	           -l data/audio/mp3/mp3_0_data/buf0:0x100000 \
+	           -l data/audio/mp3/mp3_0_data/win0:0x200000 \
+	           -d data/audio/mp3/mp3_0_data/out_samples0:0x400000:256 \
                 -i audio/mp3/mp3_0_apply_window_float.bin
