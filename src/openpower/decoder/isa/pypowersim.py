@@ -25,6 +25,15 @@ def read_data(fname, offset=0):
             res[offset] = struct.unpack('<Q', b)[0] # unsigned long
             offset += 8
 
+def write_data(mem, fname, offset, sz):
+    """writes binary data to a file, each entry must be 8 bytes
+    """
+    with open(fname, "wb") as f:
+        for i in range(0, sz, 8):
+            addr = offset + i
+            val = mem.ld(addr, 8)
+            f.write(struct.pack('<Q', val)) # unsigned long
+
 
 def convert_to_num(num):
     # detect number types
@@ -144,7 +153,15 @@ def run_tst(args, generator, initial_regs,
 
 
 def help():
-    print ("TODO help")
+    print ("-i --binary=   raw (non-ELF) bare metal executable, loaded at 0x0")
+    print ("-l --listing=  file containing bare-metal assembler (no macros)")
+    print ("-g --intregs=  colon-separated file with GPR values")
+    print ("-f --fpregs=   colon-separated file with FPR values")
+    print ("-s --spregs=   colon-separated file with SPR values")
+    print ("-l --load=     filename:address to load binary into memory")
+    print ("-d --dump=     filename:address:len to binary save from memory")
+    print ("-h --help      prints this message")
+    print ("load and dump may be given multiple times")
     exit(-1)
 
 
@@ -156,19 +173,23 @@ def run_simulation():
     initial_sprs = None
     initial_mem = {}
     lst = None
+    write_to = []
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "i:l:g:f:s:l:",
-                                   ["binary=", "listing=",
+        opts, args = getopt.getopt(sys.argv[1:], "hi:l:g:f:s:l:d:",
+                                   ["help",
+                                    "binary=", "listing=",
                                     "intregs=", "fpregs=", "sprs=",
-                                    "load="])
+                                    "load=", "dump="])
 
     except:
         sys.stderr.write("Command-line Error\n")
         help()
 
     for opt, arg in opts:
-        if opt in ['-i', '--binary']:
+        if opt in ['-h', '--help']:
+            help()
+        elif opt in ['-i', '--binary']:
             binaryname = arg
         elif opt in ['-l', '--listing']:
             lst = arg
@@ -184,10 +205,20 @@ def run_simulation():
                 fname, offs = arg[0], 0
             else:
                 fname, offs = arg
-            offs = int(offs)
+            offs = convert_to_num(offs)
             print ("offs load", fname, offs)
             mem = read_data(fname, offs)
             initial_mem.update(mem)
+        elif opt in ['-d', '--dump']:
+            arg = list(map(str.strip, arg.split(":")))
+            assert len(arg) == 3, \
+                   "dump '%s' must contain file:offset:length" % repr(arg)
+            fname, offs, length = arg
+            offs = convert_to_num(offs)
+            length = convert_to_num(length)
+            assert length % 8 == 0, "length %d must align on 8-byte" % length
+            print ("dump", fname, offs, length)
+            write_to.append((fname, offs, length))
 
     print (initial_mem)
 
@@ -218,6 +249,9 @@ def run_simulation():
         simulator.spr.dump()
         print ("Mem")
         simulator.mem.dump()
+
+        for fname, offs, length in write_to:
+            write_data(simulator.mem, fname, offs, length)
 
 
 if __name__ == "__main__":
