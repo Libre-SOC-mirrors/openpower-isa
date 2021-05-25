@@ -14,7 +14,8 @@ from openpower.util import log
 
 def read_data(fname, offset=0):
     """reads binary data and returns a dictionary of address: contents,
-    each entry is 8 bytes. input file *must* be 8-byte-aligned
+    each entry is 8 bytes: input file *must* contain a multiple of 8 bytes.
+    data to be considered *binary* (raw)
     """
     res = {}
     with open(fname, "rb") as f:
@@ -33,7 +34,7 @@ def write_data(mem, fname, offset, sz):
         for i in range(0, sz, 8):
             addr = offset + i
             val = mem.ld(addr, 8)
-            f.write(struct.pack('<Q', val)) # unsigned long
+            f.write(struct.pack('>Q', val)) # unsigned long
 
 
 def convert_to_num(num):
