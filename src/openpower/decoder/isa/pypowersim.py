@@ -56,6 +56,10 @@ def read_entries(fname, listqty=None):
     allints = True
     with open(fname) as f:
         for line in f.readlines():
+            # split out comments
+            if line.startswith("#"):
+                continue
+            line = line.split("#")[0]
             # split line "x : y" into ["x", "y"], remove spaces
             line = list(map(str.strip, line.strip().split(":")))
             assert len(line) == 2, "regfile line must be formatted 'x : y'"
