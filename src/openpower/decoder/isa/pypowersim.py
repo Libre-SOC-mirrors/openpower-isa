@@ -159,7 +159,7 @@ def run_tst(args, generator, initial_regs,
 
 def help():
     print ("-i --binary=   raw (non-ELF) bare metal executable, loaded at 0x0")
-    print ("-l --listing=  file containing bare-metal assembler (no macros)")
+    print ("-a --listing=  file containing bare-metal assembler (no macros)")
     print ("-g --intregs=  colon-separated file with GPR values")
     print ("-f --fpregs=   colon-separated file with FPR values")
     print ("-s --spregs=   colon-separated file with SPR values")
@@ -189,7 +189,7 @@ def run_simulation():
     write_to = []
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:l:g:f:s:l:d:",
+        opts, args = getopt.getopt(sys.argv[1:], "hi:a:g:f:s:l:d:",
                                    ["help",
                                     "binary=", "listing=",
                                     "intregs=", "fpregs=", "sprs=",
@@ -204,7 +204,7 @@ def run_simulation():
             help()
         elif opt in ['-i', '--binary']:
             binaryname = arg
-        elif opt in ['-l', '--listing']:
+        elif opt in ['-a', '--listing']:
             lst = arg
         elif opt in ['-g', '--intregs']:
             initial_regs = read_entries(arg, 32)
