@@ -17,6 +17,7 @@ from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 
 from openpower.decoder.helpers import exts, gtu, ltu, undefined
+from openpower.util import log
 import math
 import sys
 
@@ -37,7 +38,7 @@ class Mem:
         self.mem = {}
         self.bytes_per_word = row_bytes
         self.word_log2 = math.ceil(math.log2(row_bytes))
-        print("Sim-Mem", initial_mem, self.bytes_per_word, self.word_log2)
+        log("Sim-Mem", initial_mem, self.bytes_per_word, self.word_log2)
         if not initial_mem:
             return
 
@@ -65,13 +66,13 @@ class Mem:
         # BE/LE mode?
         shifter = remainder * 8
         mask = (1 << (wid * 8)) - 1
-        print("width,rem,shift,mask", wid, remainder, hex(shifter), hex(mask))
+        log("width,rem,shift,mask", wid, remainder, hex(shifter), hex(mask))
         return shifter, mask
 
     # TODO: Implement ld/st of lesser width
     def ld(self, address, width=8, swap=True, check_in_mem=False,
                  instr_fetch=False):
-        print("ld from addr 0x{:x} width {:d}".format(address, width),
+        log("ld from addr 0x{:x} width {:d}".format(address, width),
                 swap, check_in_mem, instr_fetch)
         ldaddr = address
         remainder = address & (self.bytes_per_word - 1)
@@ -86,23 +87,23 @@ class Mem:
             return None
         else:
             val = 0
-        print("mem @ 0x{:x} rem {:d} : 0x{:x}".format(address, remainder, val))
+        log("mem @ 0x{:x} rem {:d} : 0x{:x}".format(address, remainder, val))
 
         if width != self.bytes_per_word:
             shifter, mask = self._get_shifter_mask(width, remainder)
-            print("masking", hex(val), hex(mask << shifter), shifter)
+            log("masking", hex(val), hex(mask << shifter), shifter)
             val = val & (mask << shifter)
             val >>= shifter
         if swap:
             val = swap_order(val, width)
-        print("Read 0x{:x} from addr 0x{:x}".format(val, address))
+        log("Read 0x{:x} from addr 0x{:x}".format(val, address))
         return val
 
     def st(self, addr, v, width=8, swap=True):
         staddr = addr
         remainder = addr & (self.bytes_per_word - 1)
         addr = addr >> self.word_log2
-        print("Writing 0x{:x} to ST 0x{:x} "
+        log("Writing 0x{:x} to ST 0x{:x} "
               "memaddr 0x{:x}/{:x}".format(v, staddr, addr, remainder, swap))
         if remainder & (width - 1) != 0:
             exc = MemException("unaligned", "Unaligned access Error")
@@ -121,15 +122,15 @@ class Mem:
             self.mem[addr] = val
         else:
             self.mem[addr] = v
-        print("mem @ 0x{:x}: 0x{:x}".format(addr, self.mem[addr]))
+        log("mem @ 0x{:x}: 0x{:x}".format(addr, self.mem[addr]))
 
     def __call__(self, addr, sz):
         val = self.ld(addr.value, sz, swap=False)
-        print("memread", addr, sz, val)
+        log("memread", addr, sz, val)
         return SelectableInt(val, sz*8)
 
     def memassign(self, addr, sz, val):
-        print("memassign", addr, sz, val)
+        log("memassign", addr, sz, val)
         self.st(addr.value, val.value, sz, swap=False)
 
     def dump(self, printout=True):
@@ -140,5 +141,5 @@ class Mem:
             res.append(((k*8), self.mem[k]))
             if not printout:
                 continue
-            print ("%016x: %016x" % ((k*8) & 0xffffffffffffffff, self.mem[k]))
+            log ("%016x: %016x" % ((k*8) & 0xffffffffffffffff, self.mem[k]))
         return res
