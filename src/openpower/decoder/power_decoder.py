@@ -101,6 +101,8 @@ from openpower.decoder.power_fields import DecodeFields
 from openpower.decoder.power_fieldsn import SigDecode, SignalBitRange
 from openpower.decoder.power_svp64 import SVP64RM
 
+from openpower.util import log
+
 # key data structure in which the POWER decoder is specified,
 # in a hierarchical fashion
 Subdecoder = namedtuple(  # fix autoformatter
@@ -210,12 +212,12 @@ class PowerOp:
             if row['CR in'] == '1':
                 import pdb
                 pdb.set_trace()
-                print(row)
+                log(row)
             if row['CR out'] == '0':
                 import pdb
                 pdb.set_trace()
-                print(row)
-            print(row)
+                log(row)
+            log(row)
         ldst_mode = row['upd']
         if ldst_mode.isdigit():
             row['upd'] = int(ldst_mode)
@@ -234,12 +236,12 @@ class PowerOp:
                 val = ptype[val]
             res.append(getattr(self, field).eq(val))
         if False:
-            print(row.keys())
+            log(row.keys())
         asmcode = row['comment']
         # process the comment field, strip out "equals" for FP
         if "=" in asmcode:
             asmcode = asmcode.split("=")[-1]
-            print ("asmcode stripping =", asmcode,
+            log ("asmcode stripping =", asmcode,
                     asmcode in asmidx, hasattr(self, "asmcode"))
         if hasattr(self, "asmcode") and asmcode in asmidx:
             res.append(self.asmcode.eq(asmidx[asmcode]))
@@ -429,9 +431,9 @@ class PowerDecoder(Elaboratable):
                                           name=mname,
                                           col_subset=self.col_subset,
                                           row_subset=self.row_subsetfn)
-                print ("subdecoder", mname, subdecoder)
+                log ("subdecoder", mname, subdecoder)
                 if not subdecoder.tree_analyse():  # doesn't do anything
-                    print ("analysed, DELETING", mname)
+                    log ("analysed, DELETING", mname)
                     del subdecoder
                     continue                      # skip
                 submodules[mname] = subdecoder
@@ -547,7 +549,7 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
 
     subsetting of the PowerOp decoding is possible by setting col_subset
     """
-    print ("create_pdecode", name, col_subset, row_subset, include_fp)
+    log ("create_pdecode", name, col_subset, row_subset, include_fp)
 
     # some alteration to the CSV files is required for SV so we use
     # a class to do it
@@ -612,7 +614,7 @@ if __name__ == '__main__':
         # row subset
 
         def rowsubsetfn(opcode, row):
-            print("row_subset", opcode, row)
+            log("row_subset", opcode, row)
             return row['unit'] == 'FPU'
 
         pdecode = create_pdecode(name="rowsub",

@@ -11,6 +11,7 @@ from openpower.consts import TT
 from openpower.exceptions import LDSTException
 from openpower.decoder.power_svp64_rm import sv_input_record_layout
 
+from openpower.util import log
 
 class Data(Record):
 
@@ -128,7 +129,7 @@ class Decode2ToExecute1Type(RecordObject):
         self.write_cr = Data(7, name="cr_out")
 
         # decode operand data
-        print ("decode2execute init", name, opkls, do)
+        log ("decode2execute init", name, opkls, do)
         #assert name is not None, str(opkls)
         if do is not None:
             self.do = do

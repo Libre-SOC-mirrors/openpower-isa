@@ -38,7 +38,7 @@ from openpower.consts import (MSR, SPEC, EXTRA2, EXTRA3, SVP64P, field,
                               FastRegsEnum, XERRegsEnum, TT)
 
 from openpower.state import CoreState
-from openpower.util import spr_to_fast
+from openpower.util import (spr_to_fast, log)
 
 
 def decode_spr_num(spr):
@@ -774,7 +774,7 @@ class PowerDecodeSubset(Elaboratable):
         for k, v in record_names.items():
             if hasattr(do, k):
                 subset.add(v)
-        print ("get_col_subset", self.fn_name, do.fields, subset)
+        log ("get_col_subset", self.fn_name, do.fields, subset)
         return subset
 
     def rowsubsetfn(self, opcode, row):
@@ -1409,7 +1409,7 @@ def get_rdflags(e, cu):
         regfile, regname, _ = cu.get_in_spec(idx)
         rdflag, read = regspec_decode_read(e, regfile, regname)
         rdl.append(rdflag)
-    print("rdflags", rdl)
+    log("rdflags", rdl)
     return Cat(*rdl)
 
 
