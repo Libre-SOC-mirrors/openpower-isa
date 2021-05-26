@@ -116,3 +116,15 @@ tests: $(OBJ)
 		-d $(DUMP):0x400000:128 \
 		-i audio/mp3/mp3_0_apply_window_float.bin
 	cmp $(DUMP) data/audio/mp3/mp3_0_data/samples9000
+
+	##
+
+	pypowersim -g audio/mp3/mp3_1.gpr \
+		-s common.spr \
+		-l data/audio/mp3/mp3_1_data/beforeout0:0x100000 \
+		-l data/audio/mp3/mp3_1_data/buf0:0x200000 \
+		-l data/audio/mp3/mp3_1_data/in0:0x300000 \
+		-l data/audio/mp3/mp3_1_data/win0:0x400000 \
+		-d $(DUMP):0x100000:2304 \
+		-i audio/mp3/mp3_1_imdct36_float.bin
+	cmp $(DUMP) data/audio/mp3/mp3_1_data/out0
