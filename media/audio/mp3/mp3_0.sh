@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -xe
 
 pypowersim -g audio/mp3/mp3_0.gpr \
 	-s common.spr \
