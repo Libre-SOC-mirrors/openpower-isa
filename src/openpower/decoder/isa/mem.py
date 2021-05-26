@@ -141,5 +141,5 @@ class Mem:
             res.append(((k*8), self.mem[k]))
             if not printout:
                 continue
-            log ("%016x: %016x" % ((k*8) & 0xffffffffffffffff, self.mem[k]))
+            print ("%016x: %016x" % ((k*8) & 0xffffffffffffffff, self.mem[k]))
         return res
