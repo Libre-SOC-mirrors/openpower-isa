@@ -136,7 +136,7 @@ class GPR(dict):
                 for j in range(8):
                     s.append("%08x" % res[i+j])
                 s = ' '.join(s)
-                log("reg", "%2d" % i, s)
+                print("reg", "%2d" % i, s)
         return res
 
 
@@ -211,7 +211,7 @@ class SPR(dict):
             res.append((sprname, self[k].value))
         if printout:
             for sprname, value in res:
-                log("    ", sprname, hex(value))
+                print("    ", sprname, hex(value))
         return res
 
 
