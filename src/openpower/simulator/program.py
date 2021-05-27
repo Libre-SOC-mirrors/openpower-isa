@@ -22,7 +22,7 @@ memmap = os.path.join(filedir, "memmap")
 
 
 class Program:
-    def __init__(self, instructions, bigendian):
+    def __init__(self, instructions, bigendian, orig_filename=None):
         self.bigendian = bigendian
         if self.bigendian:
             self.endian_fmt = "elf64-big"
@@ -35,7 +35,10 @@ class Program:
 
         if isinstance(instructions, bytes):  # actual bytes
             self.binfile = BytesIO(instructions)
-            self.binfile.name = "assembly"
+            if orig_filename is None:
+                self.binfile.name = "bytes"
+            else:
+                self.binfile.name = orig_filename
             self.assembly = ''  # noo disassemble number fiiive
             print("binary", self.binfile)
         elif isinstance(instructions, str):  # filename

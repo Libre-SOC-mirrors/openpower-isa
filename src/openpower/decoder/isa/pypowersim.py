@@ -10,6 +10,7 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
 from openpower.util import log
+from openpower.simulator.qemu import run_program
 
 
 def read_data(fname, offset=0):
@@ -87,15 +88,44 @@ def read_entries(fname, listqty=None):
 
     return result
 
+def qemu_register_compare(sim, qemu, regs):
+    qpc, qxer, qcr = qemu.get_pc(), qemu.get_xer(), qemu.get_cr()
+    sim_cr = sim.cr.value
+    sim_pc = sim.pc.CIA.value
+    sim_xer = sim.spr['XER'].value
+    print("qemu pc", hex(qpc))
+    print("qemu cr", hex(qcr))
+    print("qemu xer", bin(qxer))
+    print("sim nia", hex(sim.pc.NIA.value))
+    print("sim pc", hex(sim.pc.CIA.value))
+    print("sim cr", hex(sim_cr))
+    print("sim xer", hex(sim_xer))
+    #self.assertEqual(qpc, sim_pc)
+    for reg in regs:
+        qemu_val = qemu.get_register(reg)
+        sim_val = sim.gpr(reg).value
+        log("expect %x got %x" % (qemu_val, sim_val))
+        #self.assertEqual(qemu_val, sim_val,
+        #                 "expect %x got %x" % (qemu_val, sim_val))
+    #self.assertEqual(qcr, sim_cr)
 
-def run_tst(args, generator, initial_regs,
+
+def run_tst(args, generator, qemu,
+                             initial_regs,
                              initial_sprs=None, svstate=0, mmu=False,
                              initial_cr=0, mem=None,
-                             initial_fprs=None):
+                             initial_fprs=None,
+                             initial_pc=0):
     if initial_regs is None:
         initial_regs = [0] * 32
     if initial_sprs is None:
         initial_sprs = {}
+
+    if qemu:
+        log("qemu program", generator.binfile.name)
+        qemu = run_program(generator, initial_mem=mem, 
+                bigendian=False, start_addr=initial_pc,
+                continuous_run=False)
 
     m = Module()
     comb = m.d.comb
@@ -115,9 +145,10 @@ def run_tst(args, generator, initial_regs,
 
     m.submodules.pdecode2 = pdecode2 = PowerDecode2(pdecode)
     simulator = ISA(pdecode2, initial_regs, initial_sprs, initial_cr,
-                    initial_insns=gen, respect_pc=True,
+                    initial_insns=(initial_pc, gen), respect_pc=True,
                     initial_svstate=svstate,
                     initial_mem=mem,
+                    initial_pc=initial_pc,
                     fpregfile=initial_fprs,
                     disassembly=insncode,
                     bigendian=0,
@@ -130,7 +161,7 @@ def run_tst(args, generator, initial_regs,
         yield pdecode2.dec.bigendian.eq(0)  # little / big?
         pc = simulator.pc.CIA.value
         index = pc//4
-        while index < len(instructions) and not simulator.halted:
+        while not simulator.halted:
             log("instr pc", pc)
             try:
                 yield from simulator.setup_one()
@@ -138,19 +169,31 @@ def run_tst(args, generator, initial_regs,
                 break
             yield Settle()
 
-            ins = instructions[index]
-            if isinstance(ins, list):
-                ins, code = ins
-                log("    0x{:X}".format(ins & 0xffffffff))
-                opname = code.split(' ')[0]
-                log(code, opname)
-            else:
-                log("    0x{:X}".format(ins & 0xffffffff))
+            if False:
+                ins = instructions[index]
+                if isinstance(ins, list):
+                    ins, code = ins
+                    log("    0x{:X}".format(ins & 0xffffffff))
+                    opname = code.split(' ')[0]
+                    log(code, opname)
+                else:
+                    log("    0x{:X}".format(ins & 0xffffffff))
 
             # ask the decoder to decode this binary data (endian'd)
             yield from simulator.execute_one()
-            pc = simulator.pc.CIA.value
-            index = pc//4
+            #pc = simulator.pc.CIA.value
+            #index = pc//4
+
+            if not qemu:
+                continue
+
+            # check qemu co-sim: run one instruction
+            qemu.step()
+            qemu_register_compare(simulator, qemu, range(32))
+
+        # cleanup
+        if qemu:
+            qemu.exit()
 
     sim.add_process(process)
     sim.run()
@@ -166,6 +209,8 @@ def help():
     print ("-s --spregs=   colon-separated file with SPR values")
     print ("-l --load=     filename:address to load binary into memory")
     print ("-d --dump=     filename:address:len to binary save from memory")
+    print ("-q --qemu=     run qemu co-simulation")
+    print ("-p --pc=       set initial program counter")
     print ("-h --help      prints this message")
     print ("notes:")
     print ("load and dump may be given multiple times")
@@ -186,12 +231,14 @@ def run_simulation():
     initial_fprs = [0]*32
     initial_sprs = None
     initial_mem = {}
+    initial_pc = 0x0
     lst = None
+    qemu_cosim = False
     write_to = []
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:a:g:f:s:l:d:",
-                                   ["help",
+        opts, args = getopt.getopt(sys.argv[1:], "qhi:a:g:f:s:l:d:p:",
+                                   ["qemu", "help", "pc=",
                                     "binary=", "listing=",
                                     "intregs=", "fpregs=", "sprs=",
                                     "load=", "dump="])
@@ -203,8 +250,12 @@ def run_simulation():
     for opt, arg in opts:
         if opt in ['-h', '--help']:
             help()
+        elif opt in ['-q', '--qemu']:
+            qemu_cosim = True
         elif opt in ['-i', '--binary']:
             binaryname = arg
+        elif opt in ['-p', '--pc']:
+            initial_pc = convert_to_num(arg)
         elif opt in ['-a', '--listing']:
             lst = arg
         elif opt in ['-g', '--intregs']:
@@ -248,13 +299,14 @@ def run_simulation():
         with open(binaryname, "rb") as f:
             lst = f.read()
 
-    with Program(lst, bigendian=False) as prog:
-        simulator = run_tst(None, prog,
+    with Program(lst, bigendian=False, orig_filename=binaryname) as prog:
+        simulator = run_tst(None, prog, qemu_cosim,
                             initial_regs,
                             initial_sprs=initial_sprs,
                             svstate=0, mmu=False,
                             initial_cr=0, mem=initial_mem,
-                            initial_fprs=initial_fprs)
+                            initial_fprs=initial_fprs,
+                            initial_pc=initial_pc)
         print ("GPRs")
         simulator.gpr.dump()
         print ("FPRs")

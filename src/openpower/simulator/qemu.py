@@ -106,7 +106,7 @@ class QemuController:
         return self._get_register('x {}'.format(num))
 
     def step(self):
-        return self.gdb.write('-exec-next-instruction')
+        return self.gdb.write('-exec-step-instruction')
 
     def gdb_continue(self):
         return self.gdb.write('-exec-continue')
@@ -121,22 +121,29 @@ class QemuController:
         self.qemu_popen.stdout.close()
         self.qemu_popen.stdin.close()
 
-
-def run_program(program, initial_mem=None, extra_break_addr=None,
-                bigendian=False):
-    q = QemuController(program.binfile.name, bigendian)
-    q.connect()
-    q.set_endian(True)  # easier to set variables this way
-
-    # Run to the start of the program
-    if initial_mem:
+    def upload_mem(self, initial_mem):
         for addr, (v, wid) in initial_mem.items():
             for i in range(wid):
-                q.set_byte(addr+i, (v >> i*8) & 0xff)
+                # sigh byte-level loads, veery slow
+                self.set_byte(addr+i, (v >> i*8) & 0xff)
 
-    # set breakpoint at start
-    q.break_address(0x20000000)
+
+def run_program(program, initial_mem=None, extra_break_addr=None,
+                bigendian=False, start_addr=0x20000000, init_endian=True,
+                continuous_run=True):
+    q = QemuController(program.binfile.name, bigendian)
+    q.connect()
+    q.set_endian(init_endian)  # easier to set variables this way
+    if initial_mem:
+        q.upload_mem(initial_mem)
+
+    # Run to the start of the program
+    q.gdb_eval('$pc=%d' % start_addr)
+    pc = q.get_pc()
+    print("pc", bigendian, hex(pc))
+    q.break_address(start_addr) # set breakpoint at start
     q.gdb_continue()
+
     # set the MSR bit 63, to set bigendian/littleendian mode
     msr = q.get_msr()
     print("msr", bigendian, hex(msr))
@@ -151,14 +158,17 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     q.gdb_eval('$cr=0')
     # delete the previous breakpoint so loops don't screw things up
     q.delete_breakpoint()
-    # run to completion
-    q.break_address(0x20000000 + program.size())
-    # or to trap
+    # allow run to end
+    q.break_address(start_addr + program.size())
+    # or to trap (not ideal)
     q.break_address(0x700)
     # or to alternative (absolute) address)
-    if extra_break_addr:
+    if extra_break_addr is not None:
         q.break_address(extra_break_addr)
-    q.gdb_continue()
+    if continuous_run:
+        q.gdb_continue()
+    else:
+        q.step()
     q.set_endian(bigendian)
 
     return q
