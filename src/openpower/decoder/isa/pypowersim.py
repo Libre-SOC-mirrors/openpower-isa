@@ -142,7 +142,7 @@ def run_tst(args, generator, qemu,
             for fpr, val in enumerate(initial_fprs):
                 qemu.set_fpr(fpr, val)
         for reg, val in qemu._get_registers().items():
-            print (reg, val)
+            print (reg, hex(val))
 
     m = Module()
     comb = m.d.comb
