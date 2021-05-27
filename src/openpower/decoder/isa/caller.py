@@ -835,7 +835,7 @@ class ISACaller:
         """set up one instruction
         """
         pc, insn = self.get_next_insn()
-        self.setup_next_insn(pc, insn)
+        yield from self.setup_next_insn(pc, insn)
 
     def setup_next_insn(self, pc, ins):
         """set up next instruction
