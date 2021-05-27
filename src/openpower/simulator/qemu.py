@@ -247,6 +247,16 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     # delete the previous breakpoint so loops don't screw things up
     q.delete_breakpoint()
 
+    # allow run to end
+    q.break_address(start_addr + program.size())
+    # or to trap (not ideal)
+    q.break_address(0x700)
+    # or to alternative (absolute) address)
+    if extra_break_addr is not None:
+        q.break_address(extra_break_addr)
+    # set endian before SPR set
+    q.set_endian(bigendian)
+
     # can't do many of these - lr, ctr, etc. etc. later, just LR for now
     if initial_sprs:
         lr = initial_sprs.get('lr', None)
@@ -255,19 +265,15 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
         if lr is not None:
             q.set_lr(lr)
 
-    # allow run to end
-    q.break_address(start_addr + program.size())
-    # or to trap (not ideal)
-    q.break_address(0x700)
-    # or to alternative (absolute) address)
-    if extra_break_addr is not None:
-        q.break_address(extra_break_addr)
-    if continuous_run:
-        q.gdb_continue()
-    q.set_endian(bigendian)
+    # disassemble and dump 
     d = q.disasm(start_addr, start_addr + program.size())
     for line in d:
         print ("qemu disasm", line)
+
+    # start running
+    if continuous_run:
+        q.gdb_continue()
+
     return q
 
 

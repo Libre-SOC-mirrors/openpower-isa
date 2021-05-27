@@ -96,7 +96,7 @@ def qemu_register_compare(sim, q, regs, fprs):
     sim_lr = sim.spr['LR'].value
     print("qemu pc", hex(qpc))
     print("qemu cr", hex(qcr))
-    print("qemu lr", bin(qlr))
+    print("qemu lr", hex(qlr))
     print("qemu xer", bin(qxer))
     print("sim nia", hex(sim.pc.NIA.value))
     print("sim pc", hex(sim.pc.CIA.value))
