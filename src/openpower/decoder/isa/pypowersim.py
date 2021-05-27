@@ -104,13 +104,15 @@ def qemu_register_compare(sim, qemu, regs, fprs):
     for reg in regs:
         qemu_val = qemu.get_gpr(reg)
         sim_val = sim.gpr(reg).value
-        log("expect %x got %x" % (qemu_val, sim_val))
+        if qemu_val != sim_val:
+            log("expect gpr %d %x got %x" % (gpr, qemu_val, sim_val))
         #self.assertEqual(qemu_val, sim_val,
         #                 "expect %x got %x" % (qemu_val, sim_val))
     for fpr in fprs:
         qemu_val = qemu.get_fpr(fpr)
         sim_val = sim.fpr(fpr).value
-        log("expect fpr %x got %x" % (qemu_val, sim_val))
+        if qemu_val != sim_val:
+            log("expect fpr %d %x got %x" % (fpr, qemu_val, sim_val))
         #self.assertEqual(qemu_val, sim_val,
         #                 "expect %x got %x" % (qemu_val, sim_val))
     #self.assertEqual(qcr, sim_cr)
