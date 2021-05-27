@@ -134,7 +134,13 @@ def run_tst(args, generator, qemu,
         qemu = run_program(generator, initial_mem=mem, 
                 bigendian=False, start_addr=initial_pc,
                 continuous_run=False)
-        # TODO: SPRs.  how??
+        # TODO: SPRs.  how?? sigh, by cheating
+        if initial_sprs:
+            lr = initial_sprs.get('lr', None)
+            if lr is None:
+                lr = initial_sprs.get('LR', None)
+            if lr is not None:
+                qemu.set_lr(lr)
         if initial_regs is not None:
             for reg, val in enumerate(initial_regs):
                 qemu.set_gpr(reg, val)

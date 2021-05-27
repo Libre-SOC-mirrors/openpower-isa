@@ -168,6 +168,10 @@ class QemuController:
         self._rcache_trash('x 66')
         self.gdb_eval('$cr=%d' % cr)
 
+    def set_lr(self, lr):
+        self._rcache_trash('x 67')
+        self.gdb_eval('$lr=%d' % lr)
+
     def step(self):
         self._rcache_trash()
         return self.gdb.write('-exec-step-instruction')
@@ -185,6 +189,11 @@ class QemuController:
         outs, errs = self.qemu_popen.communicate()
         self.qemu_popen.stdout.close()
         self.qemu_popen.stdin.close()
+
+    def disasm(self, start, end):
+        res = self.gdb.write('-data-disassemble -s "%d" -e "%d" -- 0' % \
+                        (start, end))
+        return res[0]['payload']['asm_insns']
 
     def upload_mem(self, initial_mem, skip_zeros=False):
         if isinstance(initial_mem, tuple):
@@ -247,7 +256,9 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     if continuous_run:
         q.gdb_continue()
     q.set_endian(bigendian)
-
+    d = q.disasm(start_addr, start_addr + program.size())
+    for line in d:
+        print ("qemu disasm", line)
     return q
 
 
