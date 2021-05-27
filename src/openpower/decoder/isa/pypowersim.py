@@ -88,8 +88,8 @@ def read_entries(fname, listqty=None):
 
     return result
 
-def qemu_register_compare(sim, qemu, regs, fprs):
-    qpc, qxer, qcr = qemu.get_pc(), qemu.get_xer(), qemu.get_cr()
+def qemu_register_compare(sim, q, regs, fprs):
+    qpc, qxer, qcr, qlr = q.get_pc(), q.get_xer(), q.get_cr(), q.get_lr()
     sim_cr = sim.cr.value
     sim_pc = sim.pc.CIA.value
     sim_xer = sim.spr['XER'].value
@@ -102,14 +102,14 @@ def qemu_register_compare(sim, qemu, regs, fprs):
     print("sim xer", hex(sim_xer))
     #self.assertEqual(qpc, sim_pc)
     for reg in regs:
-        qemu_val = qemu.get_gpr(reg)
+        qemu_val = q.get_gpr(reg)
         sim_val = sim.gpr(reg).value
         if qemu_val != sim_val:
             log("expect gpr %d %x got %x" % (reg, qemu_val, sim_val))
         #self.assertEqual(qemu_val, sim_val,
         #                 "expect %x got %x" % (qemu_val, sim_val))
     for fpr in fprs:
-        qemu_val = qemu.get_fpr(fpr)
+        qemu_val = q.get_fpr(fpr)
         sim_val = sim.fpr(fpr).value
         if qemu_val != sim_val:
             log("expect fpr %d %x got %x" % (fpr, qemu_val, sim_val))
@@ -133,14 +133,7 @@ def run_tst(args, generator, qemu,
         log("qemu program", generator.binfile.name)
         qemu = run_program(generator, initial_mem=mem, 
                 bigendian=False, start_addr=initial_pc,
-                continuous_run=False)
-        # TODO: SPRs.  how?? sigh, by cheating
-        if initial_sprs:
-            lr = initial_sprs.get('lr', None)
-            if lr is None:
-                lr = initial_sprs.get('LR', None)
-            if lr is not None:
-                qemu.set_lr(lr)
+                continuous_run=False, initial_sprs=initial_sprs)
         if initial_regs is not None:
             for reg, val in enumerate(initial_regs):
                 qemu.set_gpr(reg, val)

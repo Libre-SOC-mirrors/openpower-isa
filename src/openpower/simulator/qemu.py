@@ -218,7 +218,7 @@ class QemuController:
 
 def run_program(program, initial_mem=None, extra_break_addr=None,
                 bigendian=False, start_addr=0x20000000, init_endian=True,
-                continuous_run=True):
+                continuous_run=True, initial_sprs=None):
     q = QemuController(program.binfile.name, bigendian)
     q.connect()
     q.set_endian(init_endian)  # easier to set variables this way
@@ -246,6 +246,15 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     q.set_cr(0)
     # delete the previous breakpoint so loops don't screw things up
     q.delete_breakpoint()
+
+    # can't do many of these - lr, ctr, etc. etc. later, just LR for now
+    if initial_sprs:
+        lr = initial_sprs.get('lr', None)
+        if lr is None:
+            lr = initial_sprs.get('LR', None)
+        if lr is not None:
+            q.set_lr(lr)
+
     # allow run to end
     q.break_address(start_addr + program.size())
     # or to trap (not ideal)
