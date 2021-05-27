@@ -132,6 +132,13 @@ def run_tst(args, generator, qemu,
         qemu = run_program(generator, initial_mem=mem, 
                 bigendian=False, start_addr=initial_pc,
                 continuous_run=False)
+        # TODO: SPRs.  how??
+        if initial_regs is not None:
+            for reg, val in enumerate(initial_regs):
+                qemu.set_gpr(reg, val)
+        if initial_fprs is not None:
+            for fpr, val in enumerate(initial_fprs):
+                qemu.set_fpr(fpr, val)
 
     m = Module()
     comb = m.d.comb
