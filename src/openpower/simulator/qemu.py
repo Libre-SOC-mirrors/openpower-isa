@@ -128,7 +128,7 @@ class QemuController:
         self.gdb_eval('$r%d=%d' % (reg, pc))
 
     def set_fpr(self, reg, val):
-        self._rcache_trash('x %d' % (reg+32)
+        self._rcache_trash('x %d' % (reg+32))
         self.gdb_eval('$fp%d=%d' % (reg, pc))
 
     def set_pc(self, pc):
