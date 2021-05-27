@@ -65,11 +65,19 @@ class QemuController:
             breakstring = f' {breakpoint}'
         return self.gdb.write('-break-delete' + breakstring)
 
+    def set_bytes(self, addr, v, wid):
+        print("qemu set bytes", hex(addr), hex(v))
+        faddr = '&{int}0x%x' % addr
+        fmt = '"%%0%dx"' % (wid * 2)
+        cmd = '-data-write-memory-bytes %s ' + fmt
+        res = self.gdb.write(cmd % (faddr, v))
+        #print("confirm (byterev'd)", hex(self.get_mem(addr, 8)[0]))
+
     def set_byte(self, addr, v):
         print("qemu set byte", hex(addr), hex(v))
         faddr = '&{int}0x%x' % addr
         res = self.gdb.write('-data-write-memory-bytes %s "%02x"' % (faddr, v))
-        print("confirm", self.get_mem(addr, 1))
+        print("confirm", hex(self.get_mem(addr, 1)[0]))
 
     def get_mem(self, addr, nbytes):
         res = self.gdb.write("-data-read-memory %d u 1 1 %d" %
@@ -178,7 +186,21 @@ class QemuController:
         self.qemu_popen.stdout.close()
         self.qemu_popen.stdin.close()
 
-    def upload_mem(self, initial_mem):
+    def upload_mem(self, initial_mem, skip_zeros=False):
+        if isinstance(initial_mem, tuple):
+            addr, mem = initial_mem # assume 8-byte width
+            for j, v in enumerate(mem):
+                for i in range(8):
+                    # sigh byte-level loads, veery slow
+                    self.set_byte(addr+i+j*8, (v >> i*8) & 0xff)
+            return
+        if isinstance(initial_mem, dict):
+            for addr, v in initial_mem.items(): # assume 8-byte width
+                if skip_zeros and v == 0:
+                    continue
+                # sigh byte-level loads, veery slow
+                self.set_bytes(addr, v, 8)
+            return
         for addr, (v, wid) in initial_mem.items():
             for i in range(wid):
                 # sigh byte-level loads, veery slow
@@ -192,7 +214,7 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     q.connect()
     q.set_endian(init_endian)  # easier to set variables this way
     if initial_mem:
-        q.upload_mem(initial_mem)
+        q.upload_mem(initial_mem, skip_zeros=True)
 
     # Run to the start of the program
     q.set_pc(start_addr)
