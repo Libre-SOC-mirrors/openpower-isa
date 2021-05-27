@@ -93,13 +93,16 @@ def qemu_register_compare(sim, q, regs, fprs):
     sim_cr = sim.cr.value
     sim_pc = sim.pc.CIA.value
     sim_xer = sim.spr['XER'].value
+    sim_lr = sim.spr['LR'].value
     print("qemu pc", hex(qpc))
     print("qemu cr", hex(qcr))
+    print("qemu lr", bin(qlr))
     print("qemu xer", bin(qxer))
     print("sim nia", hex(sim.pc.NIA.value))
     print("sim pc", hex(sim.pc.CIA.value))
     print("sim cr", hex(sim_cr))
     print("sim xer", hex(sim_xer))
+    print("sim lr", hex(sim_lr))
     #self.assertEqual(qpc, sim_pc)
     for reg in regs:
         qemu_val = q.get_gpr(reg)
