@@ -219,8 +219,8 @@ def run_tst(args, generator, qemu,
             except KeyError:  # indicates instruction not in imem: stop
                 _pc, _insn = (None, None)
             qemu.step()
-            if _pc and not simulator.halted:
-                qemu.set_endian(True)
+            if not _pc or simulator.halted:
+                qemu.set_endian(False)
             qemu_register_compare(simulator, qemu, range(32), range(32))
             if _pc is None:
                 break
