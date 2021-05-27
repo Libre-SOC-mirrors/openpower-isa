@@ -29,6 +29,15 @@ class QemuController:
                                            stdin=subprocess.PIPE)
         self.gdb = GdbController(gdb_path='powerpc64-linux-gnu-gdb')
         self.bigendian = bigendian
+        self._reg_cache = {}
+
+    def _rcache_trash(self, key=None):
+        """cache of register values, trash it on call to step or continue
+        """
+        if key is None:
+            self._reg_cache = {}
+            return
+        self._reg_cache.pop(key, None)
 
     def __enter__(self):
         return self
@@ -82,12 +91,15 @@ class QemuController:
         return self.gdb.write('-data-list-register-values x')
 
     def _get_register(self, fmt):
+        if fmt in self._reg_cache:
+            return self._reg_cache[fmt] # return cached reg value
         res = self.gdb.write('-data-list-register-values '+fmt,
                              timeout_sec=1.0)  # increase this timeout if needed
         for x in res:
             if(x["type"] == "result"):
                 assert 'register-values' in x['payload']
                 res = int(x['payload']['register-values'][0]['value'], 0)
+                self._reg_cache[fmt] = res # cache reg value
                 return res
                 # return swap_order(res, 8)
         return None
@@ -105,10 +117,30 @@ class QemuController:
     def get_register(self, num):
         return self._get_register('x {}'.format(num))
 
+    def get_gpr(self, num):
+        return self.get_register(num)
+
+    def get_fpr(self, num):
+        return self.get_register(num+32)
+
+    def set_pc(self, pc):
+        self._rcache_trash('x 64')
+        self.gdb_eval('$pc=%d' % pc)
+
+    def set_msr(self, msr):
+        self._rcache_trash('x 65')
+        self.gdb_eval('$msr=%d' % msr)
+
+    def set_cr(self, cr):
+        self._rcache_trash('x 66')
+        self.gdb_eval('$cr=%d' % cr)
+
     def step(self):
+        self._rcache_trash()
         return self.gdb.write('-exec-step-instruction')
 
     def gdb_continue(self):
+        self._rcache_trash()
         return self.gdb.write('-exec-continue')
 
     def gdb_eval(self, expr):
@@ -138,7 +170,7 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
         q.upload_mem(initial_mem)
 
     # Run to the start of the program
-    q.gdb_eval('$pc=%d' % start_addr)
+    q.set_pc(start_addr)
     pc = q.get_pc()
     print("pc", bigendian, hex(pc))
     q.break_address(start_addr) # set breakpoint at start
@@ -152,10 +184,10 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
         msr = msr & ((1 << 64)-1)
     else:
         msr |= (1 << 0)
-    q.gdb_eval('$msr=%d' % msr)
+    q.set_msr(msr)
     print("msr set to", hex(msr))
     # set the CR to 0, matching the simulator
-    q.gdb_eval('$cr=0')
+    q.set_cr(0)
     # delete the previous breakpoint so loops don't screw things up
     q.delete_breakpoint()
     # allow run to end
@@ -179,7 +211,7 @@ if __name__ == '__main__':
     q.connect()
     q.break_address(0x20000000)
     q.gdb_continue()
-    print(q.get_register(1))
+    print(q.get_gpr(1))
     print(q.step())
-    print(q.get_register(1))
+    print(q.get_gpr(1))
     q.exit()

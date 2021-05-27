@@ -102,7 +102,7 @@ def qemu_register_compare(sim, qemu, regs):
     print("sim xer", hex(sim_xer))
     #self.assertEqual(qpc, sim_pc)
     for reg in regs:
-        qemu_val = qemu.get_register(reg)
+        qemu_val = qemu.get_gpr(reg)
         sim_val = sim.gpr(reg).value
         log("expect %x got %x" % (qemu_val, sim_val))
         #self.assertEqual(qemu_val, sim_val,

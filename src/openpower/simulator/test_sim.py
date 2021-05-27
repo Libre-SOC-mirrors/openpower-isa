@@ -549,7 +549,7 @@ class DecoderBase:
         print("sim xer", hex(sim_xer))
         self.assertEqual(qpc, sim_pc)
         for reg in regs:
-            qemu_val = qemu.get_register(reg)
+            qemu_val = qemu.get_gpr(reg)
             sim_val = sim.gpr(reg).value
             self.assertEqual(qemu_val, sim_val,
                              "expect %x got %x" % (qemu_val, sim_val))
