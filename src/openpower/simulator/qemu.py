@@ -246,8 +246,6 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
         q.break_address(extra_break_addr)
     if continuous_run:
         q.gdb_continue()
-    else:
-        q.step()
     q.set_endian(bigendian)
 
     return q
