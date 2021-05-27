@@ -4,12 +4,12 @@ import subprocess
 launch_args_be = ['qemu-system-ppc64',
                   '-machine', 'powernv9',
                   '-nographic',
-                  '-s', '-S']
+                  '-s', '-S', '-m', 'size=4096']
 
 launch_args_le = ['qemu-system-ppc64le',
                   '-machine', 'powernv9',
                   '-nographic',
-                  '-s', '-S']
+                  '-s', '-S', '-m', 'size=4096']
 
 
 def swap_order(x, nbytes):
