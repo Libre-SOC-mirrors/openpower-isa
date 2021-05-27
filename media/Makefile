@@ -39,11 +39,10 @@ wget:
 tests: $(OBJ)
 	@echo audio/mp3_0
 	for i in `seq 0 1000 9000`; do \
-		audio/mp3/mp3_0.sh $$i || exit 1; \
+		audio/mp3/mp3_0.sh $$i $$DUMP$$i || exit 1; \
 	done
-
 	@echo audio/mp3_1
 	for i in `seq 0 23`; do \
-		audio/mp3/mp3_1.sh $$i || exit 1; \
+		audio/mp3/mp3_1.sh $$i $$DUMP$$i || exit 1; \
 	done
 
