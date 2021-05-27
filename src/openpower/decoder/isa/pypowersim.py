@@ -88,7 +88,7 @@ def read_entries(fname, listqty=None):
 
     return result
 
-def qemu_register_compare(sim, qemu, regs):
+def qemu_register_compare(sim, qemu, regs, fprs):
     qpc, qxer, qcr = qemu.get_pc(), qemu.get_xer(), qemu.get_cr()
     sim_cr = sim.cr.value
     sim_pc = sim.pc.CIA.value
@@ -105,6 +105,12 @@ def qemu_register_compare(sim, qemu, regs):
         qemu_val = qemu.get_gpr(reg)
         sim_val = sim.gpr(reg).value
         log("expect %x got %x" % (qemu_val, sim_val))
+        #self.assertEqual(qemu_val, sim_val,
+        #                 "expect %x got %x" % (qemu_val, sim_val))
+    for fpr in fprs:
+        qemu_val = qemu.get_fpr(fpr)
+        sim_val = sim.fpr(fpr).value
+        log("expect fpr %x got %x" % (qemu_val, sim_val))
         #self.assertEqual(qemu_val, sim_val,
         #                 "expect %x got %x" % (qemu_val, sim_val))
     #self.assertEqual(qcr, sim_cr)
@@ -161,12 +167,19 @@ def run_tst(args, generator, qemu,
         yield pdecode2.dec.bigendian.eq(0)  # little / big?
         pc = simulator.pc.CIA.value
         index = pc//4
+
+        # rather awkward: qemu will go wonky if stepped over the
+        # last instruction.  use ISACaller to check if this is
+        # the last instruction, and leave qemu pointing at it
+        # rather than trigger an exception in the remote-qemu program
+        try:
+            _pc, _ins = simulator.get_next_insn()
+        except KeyError:  # indicates instruction not in imem: stop
+            return
+
         while not simulator.halted:
             log("instr pc", pc)
-            try:
-                yield from simulator.setup_one()
-            except KeyError:  # indicates instruction not in imem: stop
-                break
+            yield from simulator.setup_next_insn(_pc, _ins)
             yield Settle()
 
             if False:
@@ -185,11 +198,25 @@ def run_tst(args, generator, qemu,
             #index = pc//4
 
             if not qemu:
+                try:
+                    _pc, _ins = simulator.get_next_insn()
+                except KeyError:  # indicates instruction not in imem: stop
+                    return
                 continue
 
-            # check qemu co-sim: run one instruction
+            # check qemu co-sim: run one instruction, but first check
+            # in ISACaller if there *is* a next instruction.  if there
+            # is, "recover" qemu by switching bigendian back
+            try:
+                _pc, _ins = simulator.get_next_insn()
+            except KeyError:  # indicates instruction not in imem: stop
+                _pc, _insn = (None, None)
             qemu.step()
-            qemu_register_compare(simulator, qemu, range(32))
+            if _pc and not simulator.halted:
+                qemu.set_endian(True)
+            qemu_register_compare(simulator, qemu, range(32), range(32))
+            if _pc is None:
+                break
 
         # cleanup
         if qemu:

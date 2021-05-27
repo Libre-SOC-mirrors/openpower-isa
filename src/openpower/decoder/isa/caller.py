@@ -819,17 +819,28 @@ class ISACaller:
         self.namespace['NIA'] = SelectableInt(pc_val, 64)
         self.pc.update(self.namespace, self.is_svp64_mode)
 
-    def setup_one(self):
-        """set up one instruction
+    def get_next_insn(self):
+        """check instruction
         """
         if self.respect_pc:
             pc = self.pc.CIA.value
         else:
             pc = self.fake_pc
-        self._pc = pc
         ins = self.imem.ld(pc, 4, False, True, instr_fetch=True)
         if ins is None:
             raise KeyError("no instruction at 0x%x" % pc)
+        return pc, ins
+
+    def setup_one(self):
+        """set up one instruction
+        """
+        pc, insn = self.get_next_insn()
+        self.setup_next_insn(pc, insn)
+
+    def setup_next_insn(self, pc, ins):
+        """set up next instruction
+        """
+        self._pc = pc
         log("setup: 0x%x 0x%x %s" % (pc, ins & 0xffffffff, bin(ins)))
         log("CIA NIA", self.respect_pc, self.pc.CIA.value, self.pc.NIA.value)
 
