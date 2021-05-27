@@ -105,7 +105,7 @@ def qemu_register_compare(sim, qemu, regs, fprs):
         qemu_val = qemu.get_gpr(reg)
         sim_val = sim.gpr(reg).value
         if qemu_val != sim_val:
-            log("expect gpr %d %x got %x" % (gpr, qemu_val, sim_val))
+            log("expect gpr %d %x got %x" % (reg, qemu_val, sim_val))
         #self.assertEqual(qemu_val, sim_val,
         #                 "expect %x got %x" % (qemu_val, sim_val))
     for fpr in fprs:
@@ -141,6 +141,8 @@ def run_tst(args, generator, qemu,
         if initial_fprs is not None:
             for fpr, val in enumerate(initial_fprs):
                 qemu.set_fpr(fpr, val)
+        for reg, val in qemu._get_registers().items():
+            print (reg, val)
 
     m = Module()
     comb = m.d.comb

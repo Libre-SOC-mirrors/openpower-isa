@@ -87,10 +87,27 @@ class QemuController:
                 return res
         return None
 
-    def get_registers(self):
-        return self.gdb.write('-data-list-register-values x')
+    def _get_registers(self):
+        res = self.gdb.write('-data-list-register-values x')
+        self._reg_cache = {}
+        for x in res:
+            if(x["type"] == "result"):
+                assert 'register-values' in x['payload']
+                rlist = x['payload']['register-values']
+                for rdict in rlist:
+                    regnum = int(rdict['number'])
+                    regval = rdict['value']
+                    if regval.startswith("{"): # TODO, VSX
+                        continue
+                    self._reg_cache["x %d" % regnum] = int(regval, 0)
+        return self._reg_cache
 
     def _get_register(self, fmt):
+        if fmt not in self._reg_cache:
+            self._get_registers()
+        return self._reg_cache[fmt] # return cached reg value
+
+    def _get_single_register(self, fmt):
         if fmt in self._reg_cache:
             return self._reg_cache[fmt] # return cached reg value
         res = self.gdb.write('-data-list-register-values '+fmt,
