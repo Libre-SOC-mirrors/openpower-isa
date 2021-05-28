@@ -311,7 +311,7 @@ def run_simulation():
             else:
                 fname, offs = arg
             offs = convert_to_num(offs)
-            log ("offs load", fname, offs)
+            log ("offs load", fname, hex(offs))
             mem = read_data(fname, offs)
             initial_mem.update(mem)
         elif opt in ['-d', '--dump']:
