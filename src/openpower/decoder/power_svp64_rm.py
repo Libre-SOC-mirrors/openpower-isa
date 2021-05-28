@@ -41,7 +41,7 @@ https://libre-soc.org/openpower/sv/svp64/
 https://libre-soc.org/openpower/sv/ldst/
 
 LD/ST immed:
-00	str	sz dz	normal mode
+00	els	sz dz	normal mode
 01	inv	CR-bit	Rc=1: ffirst CR sel
 01	inv	els RC1	Rc=0: ffirst z/nonz
 10	N	dz els	sat mode: N=0/1 u/s

@@ -206,6 +206,12 @@ class SVP64sat(Enum):
     SIGNED = 1
     UNSIGNED = 2
 
+@unique
+class SVP64LDSTmode(Enum):
+    NORMAL = 0
+    ELSTRIDE = 1
+    UNITSTRIDE = 2
+
 
 # supported instructions: make sure to keep up-to-date with CSV files
 # just like everything else
