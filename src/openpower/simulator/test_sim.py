@@ -453,6 +453,14 @@ class GeneralTestCases(FHDLTestCase):
         with Program(lst, bigendian) as program:
             self.run_tst_program(program, [0, 1, 2])
 
+    def test_stfd(self):
+        """test FP store
+        """
+        lst = ["stfd f29, 0(1)",
+               ]
+        with Program(lst, bigendian) as program:
+            self.run_tst_program(program, [9], initial_mem={})
+
     def run_tst_program(self, prog, initial_regs=None, initial_sprs=None,
                         initial_mem=None):
         initial_regs = [0] * 32
