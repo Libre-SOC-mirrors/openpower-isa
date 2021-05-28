@@ -3,11 +3,13 @@ import subprocess
 
 launch_args_be = ['qemu-system-ppc64',
                   '-machine', 'powernv9',
+                  '-cpu', 'power9',
                   '-nographic',
                   '-s', '-S', '-m', 'size=4096']
 
 launch_args_le = ['qemu-system-ppc64le',
                   '-machine', 'powernv9',
+                  '-cpu', 'power9',
                   '-nographic',
                   '-s', '-S', '-m', 'size=4096']
 
@@ -236,12 +238,14 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     msr = q.get_msr()
     print("msr", bigendian, hex(msr))
     if bigendian:
+        # XXX this is probably wrong
         msr &= ~(1 << 0)
         msr = msr & ((1 << 64)-1)
     else:
         msr |= (1 << 0)
     q.set_msr(msr)
     print("msr set to", hex(msr))
+
     # set the CR to 0, matching the simulator
     q.set_cr(0)
     # delete the previous breakpoint so loops don't screw things up
@@ -257,6 +261,18 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     # set endian before SPR set
     q.set_endian(bigendian)
 
+    # dump msr after endian set
+    msr = q.get_msr()
+    print("msr", bigendian, hex(msr), bin(msr))
+    # set the MSR bit 13, to set FPU
+    if bigendian:
+        # XXX this is probably wrong
+        msr = msr & ((1 << 53)-1)
+    else:
+        msr |= (1 << 13)
+    q.set_msr(msr)
+    print("msr set to", hex(msr), bin(msr))
+
     # can't do many of these - lr, ctr, etc. etc. later, just LR for now
     if initial_sprs:
         lr = initial_sprs.get('lr', None)
@@ -265,7 +281,7 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
         if lr is not None:
             q.set_lr(lr)
 
-    # disassemble and dump 
+    # disassemble and dump
     d = q.disasm(start_addr, start_addr + program.size())
     for line in d:
         print ("qemu disasm", line)
