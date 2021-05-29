@@ -29,6 +29,13 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 6, 0, 0x1235",
                         "sv.stw 5.v, 8(1)",
                         "sv.lwz 9.v, 8(1)"]
+
+        note: unit stride mode is only enabled when RA is a scalar.
+
+        unit stride is computed as:
+        for i in range(VL):
+            EA = (RA|0) + EXTS(D) + LDSTsize * i
+        where for stw and lwz, LDSTsize is 4 because it is 32-bit words
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0008",
@@ -48,6 +55,11 @@ class DecoderTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, svstate=svstate)
             mem = sim.mem.dump(printout=False)
             print (mem)
+            # contents of memory expected at:
+            #    element 0:   r1=0x10, D=8, wordlen=4 => EA = 0x10+8+4*0 = 0x24
+            #    element 1:   r1=0x10, D=8, wordlen=4 => EA = 0x10+8+4*8 = 0x28
+            # therefore, at address 0x24 ==> 0x1234
+            # therefore, at address 0x28 ==> 0x1235
             self.assertEqual(mem, [(24, 0x123500001234)])
             print(sim.gpr(1))
             self.assertEqual(sim.gpr(9), SelectableInt(0x1234, 64))
