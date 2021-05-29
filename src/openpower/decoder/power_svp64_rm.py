@@ -93,8 +93,8 @@ class SVP64RMModeDecode(Elaboratable):
 
         self.saturate = Signal(SVP64sat)
         self.RC1 = Signal()
-        self.cr_sel = Signal(2)
-        self.inv = Signal(1)
+        self.cr_sel = Signal(2)  # bit of CR to test (index 0-3)
+        self.inv = Signal(1)     # and whether it's inverted (like branch BO)
         self.map_evm = Signal(1)
         self.map_crm = Signal(1)
         self.ldstmode = Signal(SVP64LDSTmode) # LD/ST Mode (strided type)
