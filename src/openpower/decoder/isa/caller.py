@@ -23,7 +23,8 @@ from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
                                      insns, MicrOp, In1Sel, In2Sel, In3Sel,
                                      OutSel, CROutSel, LDSTMode,
                                      SVP64RMMode, SVP64PredMode,
-                                     SVP64PredInt, SVP64PredCR)
+                                     SVP64PredInt, SVP64PredCR,
+                                     SVP64LDSTmode)
 
 from openpower.decoder.power_enums import SVPtype
 
@@ -1137,6 +1138,35 @@ class ISACaller:
             log("SVP64: VL=0, end of call", self.namespace['CIA'],
                                        self.namespace['NIA'])
             return
+
+        # in SVP64 mode for LD/ST work out immediate
+        replace_d = False # replace constant in pseudocode
+        if self.is_svp64_mode:
+            D = yield self.dec2.dec.fields.FormD.D[0:16]
+            D = exts(D, 16) # sign-extend to integer
+            ldstmode = yield self.dec2.rm_dec.ldstmode
+            # get the right step. LD is from srcstep, ST is dststep
+            op = yield self.dec2.e.do.insn_type
+            offsmul = 0
+            if op == MicrOp.OP_LOAD.value:
+                offsmul = srcstep
+                log("D-field src", D, offsmul)
+            elif op == MicrOp.OP_STORE.value:
+                offsmul = dststep
+                log("D-field dst", D, offsmul)
+            # Unit-Strided LD/ST adds offset*width to immediate
+            if ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
+                ldst_len = yield self.dec2.e.do.data_len
+                D = SelectableInt(D + offsmul * ldst_len, 32)
+                replace_d = True
+            # Element-strided multiplies the immediate by element step
+            elif ldstmode == SVP64LDSTmode.ELSTRIDE.value:
+                D = SelectableInt(D * offsmul, 32)
+                replace_d = True
+            log("LDSTmode", ldstmode, offsmul, D)
+        # new replacement D
+        if replace_d:
+            self.namespace['D'] = D
 
         # main input registers (RT, RA ...)
         inputs = []
