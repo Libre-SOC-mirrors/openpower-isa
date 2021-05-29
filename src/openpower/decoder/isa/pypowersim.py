@@ -88,6 +88,7 @@ def read_entries(fname, listqty=None):
 
     return result
 
+
 def qemu_register_compare(sim, q, regs, fprs):
     qpc, qxer, qcr, qlr = q.get_pc(), q.get_xer(), q.get_cr(), q.get_lr()
     sim_cr = sim.cr.value
@@ -231,14 +232,10 @@ def run_tst(args, generator, qemu,
             if _pc is None:
                 break
 
-        # cleanup
-        if qemu:
-            qemu.exit()
-
     sim.add_process(process)
     sim.run()
 
-    return simulator
+    return simulator, qemu
 
 
 def help():
@@ -340,7 +337,7 @@ def run_simulation():
             lst = f.read()
 
     with Program(lst, bigendian=False, orig_filename=binaryname) as prog:
-        simulator = run_tst(None, prog, qemu_cosim,
+        simulator, qemu = run_tst(None, prog, qemu_cosim,
                             initial_regs,
                             initial_sprs=initial_sprs,
                             svstate=0, mmu=False,
@@ -358,7 +355,14 @@ def run_simulation():
 
         for fname, offs, length in write_to:
             write_data(simulator.mem, fname, offs, length)
+            if qemu:
+                qmem = qemu.get_mem(offs, length)
+                for i, mem in enumerate(qmem):
+                    log(hex(offs+i*8), hex(mem))
 
+        # cleanup
+        if qemu:
+            qemu.exit()
 
 if __name__ == "__main__":
     run_simulation()

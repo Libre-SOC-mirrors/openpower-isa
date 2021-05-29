@@ -69,6 +69,7 @@ class QemuController:
 
     def set_bytes(self, addr, v, wid):
         print("qemu set bytes", hex(addr), hex(v))
+        v = swap_order(v, wid)
         faddr = '&{int}0x%x' % addr
         fmt = '"%%0%dx"' % (wid * 2)
         cmd = '-data-write-memory-bytes %s ' + fmt
@@ -83,7 +84,7 @@ class QemuController:
 
     def get_mem(self, addr, nbytes):
         res = self.gdb.write("-data-read-memory %d u 1 1 %d" %
-                             (addr, 8*nbytes))
+                             (addr, nbytes))
         #print ("get_mem", res)
         for x in res:
             if(x["type"] == "result"):
@@ -224,8 +225,6 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     q = QemuController(program.binfile.name, bigendian)
     q.connect()
     q.set_endian(init_endian)  # easier to set variables this way
-    if initial_mem:
-        q.upload_mem(initial_mem, skip_zeros=True)
 
     # Run to the start of the program
     q.set_pc(start_addr)
@@ -260,6 +259,10 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
         q.break_address(extra_break_addr)
     # set endian before SPR set
     q.set_endian(bigendian)
+
+    # upload memory
+    if initial_mem:
+        q.upload_mem(initial_mem, skip_zeros=True)
 
     # dump msr after endian set
     msr = q.get_msr()
