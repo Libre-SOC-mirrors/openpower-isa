@@ -208,9 +208,10 @@ class SVP64sat(Enum):
 
 @unique
 class SVP64LDSTmode(Enum):
-    NORMAL = 0
-    ELSTRIDE = 1
-    UNITSTRIDE = 2
+    NONE = 0
+    INDEXED = 1
+    ELSTRIDE = 2
+    UNITSTRIDE = 3
 
 
 # supported instructions: make sure to keep up-to-date with CSV files

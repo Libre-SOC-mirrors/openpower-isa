@@ -18,7 +18,7 @@ https://libre-soc.org/openpower/sv/svp64/
 
 from nmigen import Elaboratable, Module, Signal, Const
 from openpower.decoder.power_enums import (SVP64RMMode, Function, SVPtype,
-                                    SVP64PredMode, SVP64sat)
+                                    SVP64PredMode, SVP64sat, SVP64LDSTmode)
 from openpower.consts import EXTRA3, SVP64MODE
 from openpower.sv.svp64 import SVP64Rec
 from nmutil.util import sel
@@ -31,6 +31,7 @@ sv_input_record_layout = [
         ('sv_pred_sz', 1), # predicate source zeroing
         ('sv_pred_dz', 1), # predicate dest zeroing
         ('sv_saturate', SVP64sat),
+        ('sv_ldstmode', SVP64LDSTmode),
         ('SV_Ptype', SVPtype),
         #('sv_RC1', 1),
     ]
@@ -70,11 +71,15 @@ Arithmetic:
 
 class SVP64RMModeDecode(Elaboratable):
     def __init__(self, name=None):
+        ##### inputs #####
         self.rm_in = SVP64Rec(name=name)
         self.fn_in = Signal(Function) # LD/ST is different
         self.ptype_in = Signal(SVPtype)
         self.rc_in = Signal()
-        self.ldst_idx = Signal()
+        self.ldst_ra_vec = Signal() # set when RA is vec, indicate Index mode
+        self.ldst_imz_in = Signal() # set when LD/ST immediate is zero
+
+        ##### outputs #####
 
         # main mode (normal, reduce, saturate, ffirst, pred-result)
         self.mode = Signal(SVP64RMMode)
@@ -92,6 +97,7 @@ class SVP64RMModeDecode(Elaboratable):
         self.inv = Signal(1)
         self.map_evm = Signal(1)
         self.map_crm = Signal(1)
+        self.ldstmode = Signal(SVP64LDSTmode) # LD/ST Mode (strided type)
 
     def elaborate(self, platform):
         m = Module()
@@ -131,12 +137,12 @@ class SVP64RMModeDecode(Elaboratable):
                     comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
             with m.Case(1, 3):
                 with m.If(is_ldst):
-                    with m.If(~self.ldst_idx):
+                    with m.If(~self.ldst_ra_vec):
                         comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
                 with m.Elif(self.rc_in):
                     comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
             with m.Case(2):
-                with m.If(is_ldst & ~self.ldst_idx):
+                with m.If(is_ldst & ~self.ldst_ra_vec):
                     comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
                 with m.Else():
                     comb += self.pred_sz.eq(mode[SVP64MODE.SZ])
@@ -151,6 +157,30 @@ class SVP64RMModeDecode(Elaboratable):
                     comb += self.saturate.eq(SVP64sat.SIGNED)
             with m.Default():
                 comb += self.saturate.eq(SVP64sat.NONE)
+
+        # extract els (element strided mode bit)
+        # see https://libre-soc.org/openpower/sv/ldst/
+        els = Signal()
+        with m.If(is_ldst):
+            with m.Switch(mode2):
+                with m.Case(0):
+                    comb += els.eq(mode[SVP64MODE.ELS_NORMAL])
+                with m.Case(2):
+                    comb += els.eq(mode[SVP64MODE.ELS_SAT])
+                with m.Case(1, 3):
+                    with m.If(self.rc_in):
+                        comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
+
+            # RA is vectorised
+            with m.If(self.ldst_ra_vec):
+                comb += self.ldstmode.eq(SVP64LDSTmode.INDEXED)
+            # not element-strided, therefore unit...
+            with m.Elif(~els):
+                comb += self.ldstmode.eq(SVP64LDSTmode.UNITSTRIDE)
+            # but if the LD/ST immediate is zero, allow cache-inhibited
+            # loads from same location, therefore don't do element-striding
+            with m.Elif(self.ldst_imz_in):
+                comb += self.ldstmode.eq(SVP64LDSTmode.ELSTRIDE)
 
         # extract src/dest predicate.  use EXTRA3.MASK because EXTRA2.MASK
         # is in exactly the same bits
