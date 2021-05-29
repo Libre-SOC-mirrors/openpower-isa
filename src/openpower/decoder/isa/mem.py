@@ -72,7 +72,7 @@ class Mem:
     # TODO: Implement ld/st of lesser width
     def ld(self, address, width=8, swap=True, check_in_mem=False,
                  instr_fetch=False):
-        log("ld from addr 0x{:x} width {:d}".format(address, width),
+        log("ld from addr 0x%x width %d" % (address, width),
                 swap, check_in_mem, instr_fetch)
         ldaddr = address
         remainder = address & (self.bytes_per_word - 1)
@@ -87,7 +87,7 @@ class Mem:
             return None
         else:
             val = 0
-        log("mem @ 0x{:x} rem {:d} : 0x{:x}".format(address, remainder, val))
+        log("ld mem @ 0x%x rem %d : 0x%x" % (ldaddr, remainder, val))
 
         if width != self.bytes_per_word:
             shifter, mask = self._get_shifter_mask(width, remainder)
@@ -96,15 +96,15 @@ class Mem:
             val >>= shifter
         if swap:
             val = swap_order(val, width)
-        log("Read 0x{:x} from addr 0x{:x}".format(val, address))
+        log("Read 0x%x from addr 0x%x" % (val, ldaddr))
         return val
 
     def st(self, addr, v, width=8, swap=True):
         staddr = addr
         remainder = addr & (self.bytes_per_word - 1)
         addr = addr >> self.word_log2
-        log("Writing 0x{:x} to ST 0x{:x} "
-              "memaddr 0x{:x}/{:x}".format(v, staddr, addr, remainder, swap))
+        log("Writing 0x%x to ST 0x%x memaddr 0x%x/%x swap %s" % \
+            (v, staddr, addr, remainder, str(swap)))
         if remainder & (width - 1) != 0:
             exc = MemException("unaligned", "Unaligned access Error")
             exc.dar = staddr
@@ -122,7 +122,7 @@ class Mem:
             self.mem[addr] = val
         else:
             self.mem[addr] = v
-        log("mem @ 0x{:x}: 0x{:x}".format(addr, self.mem[addr]))
+        log("mem @ 0x%x: 0x%x" % (staddr, self.mem[addr]))
 
     def __call__(self, addr, sz):
         val = self.ld(addr.value, sz, swap=False)
