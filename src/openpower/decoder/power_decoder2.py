@@ -934,6 +934,9 @@ class PowerDecodeSubset(Elaboratable):
             comb += rm_dec.ptype_in.eq(op.SV_Ptype) # Single/Twin predicated
             comb += rm_dec.rc_in.eq(rc_out) # Rc=1
             comb += rm_dec.rm_in.eq(self.sv_rm) # SVP64 RM mode
+            bzero = dec_bi.imm_out.ok & ~dec_bi.imm_out.data.bool()
+            comb += rm_dec.ldst_imz_in.eq(bzero) # B immediate is zero
+            comb += rm_dec.ldst_ra_vec.eq(self.in1_isvec) # RA is vector
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
@@ -959,6 +962,7 @@ class PowerDecodeSubset(Elaboratable):
             #    comb += self.do_copy(field, self.rm_dec.op_get(field))
             comb += self.do_copy("sv_saturate", self.rm_dec.saturate)
             comb += self.do_copy("sv_Ptype", self.rm_dec.ptype_in)
+            comb += self.do_copy("sv_ldstmode", self.rm_dec.ldstmode)
             # these get set up based on incoming mask bits.  TODO:
             # pass in multiple bits (later, when SIMD backends are enabled)
             with m.If(self.rm_dec.pred_sz):
