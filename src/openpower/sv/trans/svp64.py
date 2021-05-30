@@ -4,13 +4,14 @@
 
 """SVP64 OpenPOWER v3.0B assembly translator
 
-This class takes raw svp64 assembly mnemonics (aliases excluded) and
-creates an EXT001-encoded "svp64 prefix" followed by a v3.0B opcode.
+This class takes raw svp64 assembly mnemonics (aliases excluded) and creates
+an EXT001-encoded "svp64 prefix" (as a .long) followed by a v3.0B opcode.
 
 It is very simple and straightforward, the only weirdness being the
 extraction of the register information and conversion to v3.0B numbering.
 
 Encoding format of svp64: https://libre-soc.org/openpower/sv/svp64/
+Encoding format of LDST: https://libre-soc.org/openpower/sv/ldst/
 Bugtracker: https://bugs.libre-soc.org/show_bug.cgi?id=578
 """
 
@@ -143,6 +144,7 @@ def decode_imm(field):
         return field[:-1].split("(")
     else:
         return None, field
+
 
 # decodes svp64 assembly listings and creates EXT001 svp64 prefixes
 class SVP64Asm:
@@ -416,6 +418,30 @@ class SVP64Asm:
                 svp64_rm.extra3[idx].eq(
                     SelectableInt(sv_extra, SVP64RM_EXTRA3_SPEC_SIZE))
 
+        # identify if the op is a LD/ST. the "blegh" way. copied
+        # from power_enums.  TODO, split the list _insns down.
+        is_ld = v30b_op in [
+        "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
+        "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
+        "lfs", "lfsx", "lfsu", "lfsux",                     # FP load single
+        "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax", # FP load double
+        "lha", "lharx", "lhau", "lhaux", "lhax",            # load half
+        "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
+        "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
+        "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
+        ]
+        is_st = v30b_op in [
+        "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
+        "std", "stdbrx", "stdcx", "stdu", "stdux", "stdx",
+        "stfs", "stfsx", "stfsu", "stfux",                  # FP store single
+        "stfd", "stfdx", "stfdu", "stfdux", "stfiwx",       # FP store double
+        "sth", "sthbrx", "sthcx", "sthu", "sthux", "sthx",
+        "stw", "stwbrx", "stwcx", "stwu", "stwux", "stwx",
+        ]
+        # use this to determine if the SVP64 RM format is different.
+        # see https://libre-soc.org/openpower/sv/ldst/
+        is_ldst = is_ld or is_st
+
         # parts of svp64_rm
         mmode = 0  # bit 0
         pmask = 0  # bits 1-3
@@ -440,6 +466,7 @@ class SVP64Asm:
 
         predresult = False
         failfirst = False
+        ldst_elstride = 0
 
         # ok let's start identifying opcode augmentation fields
         for encmode in opmodes:
@@ -470,6 +497,9 @@ class SVP64Asm:
                 destwid = decode_elwidth(encmode[3:])
             elif encmode.startswith("sw="):
                 srcwid = decode_elwidth(encmode[3:])
+            # element-strided LD/ST
+            elif encmode == 'els':
+                ldst_elstride = 1
             # saturation
             elif encmode == 'sats':
                 assert sv_mode is None
@@ -539,7 +569,6 @@ class SVP64Asm:
                 "dest-mask can only be specified on Twin-predicate ops"
 
         # construct the mode field, doing sanity-checking along the way
-
         if mapreduce_svm:
             assert sv_mode == 0b00, "sub-vector mode in mapreduce only"
             assert subvl != 0, "sub-vector mode not possible on SUBVL=1"
@@ -551,12 +580,22 @@ class SVP64Asm:
             assert has_pmask or mask_m_specified, \
                 "dest zeroing requires a dest predicate"
 
+        ######################################
         # "normal" mode
         if sv_mode is None:
             mode |= src_zero << SVP64MODE.SZ # predicate zeroing
             mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
+            if is_ldst:
+                # TODO: for now, LD/ST-indexed is ignored.
+                mode |= ldst_elstride << SVP64MODE.ELS_NORMAL # element-strided
+            else:
+                # TODO, reduce and subvector mode
+                # 00  1   dz CRM  reduce mode (mapreduce), SUBVL=1
+                # 00  1   SVM CRM subvector reduce mode, SUBVL>1
+                pass
             sv_mode = 0b00
 
+        ######################################
         # "mapreduce" modes
         elif sv_mode == 0b00:
             mode |= (0b1<<SVP64MODE.REDUCE) # sets mapreduce
@@ -571,6 +610,7 @@ class SVP64Asm:
             elif mapreduce_svm:
                 mode |= (0b1<<SVP64MODE.SVM) # sets SVM mode
 
+        ######################################
         # "failfirst" modes
         elif sv_mode == 0b01:
             assert src_zero == 0, "dest-zero not allowed in failfirst mode"
@@ -588,12 +628,14 @@ class SVP64Asm:
                 assert rc_mode, "ffirst BO only possible when Rc=1"
                 mode |= (failfirst << SVP64MODE.BO_LSB) # set BO
 
+        ######################################
         # "saturation" modes
         elif sv_mode == 0b10:
             mode |= src_zero << SVP64MODE.SZ # predicate zeroing
             mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
             mode |= (saturation << SVP64MODE.N) # signed/unsigned saturation
 
+        ######################################
         # "predicate-result" modes.  err... code-duplication from ffirst
         elif sv_mode == 0b11:
             assert src_zero == 0, "dest-zero not allowed in predresult mode"
@@ -749,7 +791,10 @@ if __name__ == '__main__':
     lst = [
             "sv.stfsu 0.v, 16(4.v)",
     ]
+    lst = [
+            "sv.stfsu/els 0.v, 16(4)",
+    ]
     isa = SVP64Asm(lst)
     print ("list", list(isa))
     csvs = SVP64RM()
-    asm_process()
+    #asm_process()

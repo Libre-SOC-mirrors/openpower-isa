@@ -1163,7 +1163,9 @@ class ISACaller:
             elif ldstmode == SVP64LDSTmode.ELSTRIDE.value:
                 D = SelectableInt(D * offsmul, 32)
                 replace_d = True
-            log("LDSTmode", ldstmode, offsmul, D)
+            ldst_ra_vec = yield self.dec2.rm_dec.ldst_ra_vec
+            ldst_imz_in = yield self.dec2.rm_dec.ldst_imz_in
+            log("LDSTmode", ldstmode, offsmul, D, ldst_ra_vec, ldst_imz_in)
         # new replacement D
         if replace_d:
             self.namespace['D'] = D

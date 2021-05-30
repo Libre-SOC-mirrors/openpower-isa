@@ -179,7 +179,7 @@ class SVP64RMModeDecode(Elaboratable):
                 comb += self.ldstmode.eq(SVP64LDSTmode.UNITSTRIDE)
             # but if the LD/ST immediate is zero, allow cache-inhibited
             # loads from same location, therefore don't do element-striding
-            with m.Elif(self.ldst_imz_in):
+            with m.Elif(~self.ldst_imz_in):
                 comb += self.ldstmode.eq(SVP64LDSTmode.ELSTRIDE)
 
         # extract src/dest predicate.  use EXTRA3.MASK because EXTRA2.MASK
