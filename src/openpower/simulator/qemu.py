@@ -117,7 +117,7 @@ class QemuController:
                 for rdict in rlist:
                     regnum = int(rdict['number'])
                     regval = rdict['value']
-                    print ("reg get", regnum, rdict)
+                    #print ("reg get", regnum, rdict)
                     if regval.startswith("{"): # TODO, VSX
                         regval = find_uint128(regval)
                     else:
