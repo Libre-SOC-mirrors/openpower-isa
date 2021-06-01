@@ -137,15 +137,10 @@ def run_tst(args, generator, qemu,
         log("qemu program", generator.binfile.name)
         qemu = run_program(generator, initial_mem=mem, 
                 bigendian=False, start_addr=initial_pc,
-                continuous_run=False, initial_sprs=initial_sprs)
-        if initial_regs is not None:
-            for reg, val in enumerate(initial_regs):
-                qemu.set_gpr(reg, val)
-        if initial_fprs is not None:
-            for fpr, val in enumerate(initial_fprs):
-                qemu.set_fpr(fpr, val)
+                continuous_run=False, initial_sprs=initial_sprs,
+                initial_regs=initial_regs, initial_fprs=initial_fprs)
         for reg, val in qemu._get_registers().items():
-            print (reg, hex(val))
+            log ("qemu reg", reg, hex(val))
 
     m = Module()
     comb = m.d.comb
@@ -359,6 +354,8 @@ def run_simulation():
                 qmem = qemu.get_mem(offs, length)
                 for i, mem in enumerate(qmem):
                     log(hex(offs+i*8), hex(mem))
+                for reg, val in qemu._get_registers().items():
+                    log ("qemu reg", reg, hex(val))
 
         # cleanup
         if qemu:

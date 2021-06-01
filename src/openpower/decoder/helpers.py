@@ -175,7 +175,7 @@ def DOUBLE(WORD):
         FRT[5:64] = selectconcat(WORD[2:32], z29)
 
     # Denormalized Operand
-    if e.value  == 0 and m.value  != 0:
+    if e.value  == 0 and m.value != 0:
         log ("denormalised")
         sign = WORD[0]
         exp = -126
@@ -210,7 +210,7 @@ def SINGLE(FRS):
     WORD = SelectableInt(0, 32)
 
     e = FRS[1:12]
-    m = FRS[9:32]
+    m = FRS[12:64]
     s = FRS[0]
 
     log ("SINGLE", FRS)
@@ -218,16 +218,18 @@ def SINGLE(FRS):
 
     #No Denormalization Required (includes Zero / Infinity / NaN)
     if e.value > 896 or FRS[1:64].value  == 0:
+          log("nodenorm", FRS[0:2].value, hex(FRS[5:35].value))
           WORD[0:2] = FRS[0:2]
           WORD[2:32] = FRS[5:35]
 
     #Denormalization Required
-    if e.value  >= 874 and e.value  <= 896:
+    if e.value  >= 874 and e.value <= 896:
           sign = FRS[0]
-          exp = e - 1023
+          exp = e.value - 1023
           frac = selectconcat(SelectableInt(1, 1), FRS[12:64])
+          log("exp, fract", exp, hex(frac.value))
           # denormalize operand
-          while exp.value  < -126:
+          while exp < -126:
               frac[0:53] = selectconcat(SelectableInt(0, 1), frac[0:52])
               exp = exp + 1
           WORD[0] = sign

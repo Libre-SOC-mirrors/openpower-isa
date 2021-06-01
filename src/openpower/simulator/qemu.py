@@ -20,6 +20,15 @@ def swap_order(x, nbytes):
     return x
 
 
+def find_uint128(val):
+    print (val[1:])
+    assert val[1:].startswith('uint128 =')
+    val = val.split("=")[1]
+    val = val.split(',')[0].strip()
+    val = int(val, 0)
+    return swap_order(val, 16)
+
+
 class QemuController:
     def __init__(self, kernel, bigendian):
         if bigendian:
@@ -108,9 +117,12 @@ class QemuController:
                 for rdict in rlist:
                     regnum = int(rdict['number'])
                     regval = rdict['value']
+                    print ("reg get", regnum, rdict)
                     if regval.startswith("{"): # TODO, VSX
-                        continue
-                    self._reg_cache["x %d" % regnum] = int(regval, 0)
+                        regval = find_uint128(regval)
+                    else:
+                        regval = int(regval, 0)
+                    self._reg_cache["x %d" % regnum] = regval
         return self._reg_cache
 
     def _get_register(self, fmt):
@@ -157,7 +169,19 @@ class QemuController:
 
     def set_fpr(self, reg, val):
         self._rcache_trash('x %d' % (reg+32))
-        self.gdb_eval('$fp%d=%d' % (reg, val))
+        self._rcache_trash('x %d' % (reg+471))
+        # grr, fp set cannot enter raw data
+        #val = swap_order(val, 8)
+        #val = 1<<31
+        valhi = (val >> 32) & 0xffffffff
+        vallo = val & 0xffffffff
+        res = self.gdb_eval('$vs%d.v4_int32={0,0,0x%x,0x%x}' % \
+                            (reg, vallo, valhi))
+        #res = self.gdb_eval('$fp%d=1.0')
+        #res = self.gdb_eval('$vs%d.uint128=0x%x' % \
+        #                    (reg, val))
+        print ("set fpr", reg, hex(val), res)
+        print ("get fpr", hex(self.get_fpr(reg)))
 
     def set_pc(self, pc):
         self._rcache_trash('x 64')
@@ -221,7 +245,8 @@ class QemuController:
 
 def run_program(program, initial_mem=None, extra_break_addr=None,
                 bigendian=False, start_addr=0x20000000, init_endian=True,
-                continuous_run=True, initial_sprs=None):
+                continuous_run=True, initial_sprs=None,
+                initial_regs=None, initial_fprs=None):
     q = QemuController(program.binfile.name, bigendian)
     q.connect()
     q.set_endian(init_endian)  # easier to set variables this way
@@ -273,8 +298,24 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
         msr = msr & ((1 << 53)-1)
     else:
         msr |= (1 << 13)
+    #msr = 0x4000000000009
+
     q.set_msr(msr)
     print("msr set to", hex(msr), bin(msr))
+
+    # upload regs
+    if initial_regs:
+        for i, reg in enumerate(initial_regs):
+            if reg != 0:
+                q.set_gpr(i, reg)
+    if initial_fprs:
+        if isinstance(initial_fprs, dict):
+            for i, reg in initial_fprs.items():
+                q.set_fpr(i, reg)
+        else:
+            for i, reg in enumerate(initial_fprs):
+                if reg != 0:
+                    q.set_fpr(i, reg)
 
     # can't do many of these - lr, ctr, etc. etc. later, just LR for now
     if initial_sprs:
