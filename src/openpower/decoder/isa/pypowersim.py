@@ -37,6 +37,14 @@ def write_data(mem, fname, offset, sz):
             val = mem.ld(addr, 8)
             f.write(struct.pack('>Q', val)) # unsigned long
 
+def sim_check_data(simulator, qemu, check_addr):
+    addr = check_addr & ~0x7 # align
+    sim_data = simulator.mem.ld(addr, 8, swap=False)
+    qdata = qemu.get_mem(addr, 8)[0]
+    log ("last", msg, hex(check_addr), hex(sim_data), hex(qdata))
+    if sim_data != qdata:
+        log("expect mem %x, %x got %x" % (addr, qdata, sim_data))
+        exit(0)
 
 def convert_to_num(num):
     # detect number types
@@ -233,12 +241,7 @@ def run_tst(args, generator, qemu,
                 check_addr = simulator.last_ld_addr
                 msg = "ld"
             if check_addr is not None:
-                addr = check_addr & ~0x7 # align
-                sim_data = simulator.mem.ld(addr, 8, swap=False)
-                qdata = qemu.get_mem(addr, 8)[0]
-                log ("last", msg, hex(check_addr), hex(sim_data), hex(qdata))
-                if sim_data != qdata:
-                    log("expect mem %x, %x got %x" % (addr, qdata, sim_data))
+                sim_check_data(simulator, qemu, check_addr)
             if _pc is None:
                 break
 
