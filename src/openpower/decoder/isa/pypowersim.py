@@ -37,7 +37,7 @@ def write_data(mem, fname, offset, sz):
             val = mem.ld(addr, 8)
             f.write(struct.pack('>Q', val)) # unsigned long
 
-def sim_check_data(simulator, qemu, check_addr):
+def sim_check_data(simulator, qemu, check_addr, msg):
     addr = check_addr & ~0x7 # align
     sim_data = simulator.mem.ld(addr, 8, swap=False)
     qdata = qemu.get_mem(addr, 8)[0]
@@ -241,7 +241,7 @@ def run_tst(args, generator, qemu,
                 check_addr = simulator.last_ld_addr
                 msg = "ld"
             if check_addr is not None:
-                sim_check_data(simulator, qemu, check_addr)
+                sim_check_data(simulator, qemu, check_addr, msg)
             if _pc is None:
                 break
 
