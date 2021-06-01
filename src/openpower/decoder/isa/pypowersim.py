@@ -225,12 +225,18 @@ def run_tst(args, generator, qemu,
                 qemu.set_endian(False)
             qemu_register_compare(simulator, qemu, range(32), range(32))
             # check last store address
+            check_addr = None
             if simulator.last_st_addr is not None:
-                addr = simulator.last_st_addr & ~0x7 # align
+                check_addr = simulator.last_st_addr
+                msg = "st"
+            if simulator.last_ld_addr is not None:
+                check_addr = simulator.last_ld_addr
+                msg = "ld"
+            if check_addr is not None:
+                addr = check_addr & ~0x7 # align
                 sim_data = simulator.mem.ld(addr, 8, swap=False)
                 qdata = qemu.get_mem(addr, 8)[0]
-                log ("last st", hex(simulator.last_st_addr),
-                                hex(sim_data), hex(qdata))
+                log ("last", msg, hex(check_addr), hex(sim_data), hex(qdata))
                 if sim_data != qdata:
                     log("expect mem %x, %x got %x" % (addr, qdata, sim_data))
             if _pc is None:
