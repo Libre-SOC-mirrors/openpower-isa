@@ -559,25 +559,28 @@ class ISACaller:
             for i, code in enumerate(disassembly):
                 self.disassembly[i*4 + disasm_start] = code
 
-        # set up registers, instruction memory, data memory, PC, SPRs, MSR
+        # set up registers, instruction memory, data memory, PC, SPRs, MSR, CR
         self.svp64rm = SVP64RM()
         if initial_svstate is None:
             initial_svstate = 0
         if isinstance(initial_svstate, int):
             initial_svstate = SVP64State(initial_svstate)
+        # SVSTATE, MSR and PC
         self.svstate = initial_svstate
+        self.msr = SelectableInt(initial_msr, 64)  # underlying reg
+        self.pc = PC()
+        # GPR FPR SPR registers
         self.gpr = GPR(decoder2, self, self.svstate, regfile)
         self.fpr = GPR(decoder2, self, self.svstate, fpregfile)
         self.spr = SPR(decoder2, initial_sprs) # initialise SPRs before MMU
+        # "raw" memory
         self.mem = Mem(row_bytes=8, initial_mem=initial_mem)
         self.imem = Mem(row_bytes=4, initial_mem=initial_insns)
         # MMU mode, redirect underlying Mem through RADIX
-        self.msr = SelectableInt(initial_msr, 64)  # underlying reg
         if mmu:
             self.mem = RADIX(self.mem, self)
             if icachemmu:
                 self.imem = RADIX(self.imem, self)
-        self.pc = PC()
 
         # TODO, needed here:
         # FPR (same as GPR except for FP nums)
@@ -982,6 +985,9 @@ class ISACaller:
     def call(self, name):
         """call(opcode) - the primary execution point for instructions
         """
+        self.last_st_addr = None # reset the last known store address
+        self.last_ld_addr = None # etc.
+
         name = name.strip()  # remove spaces if not already done so
         if self.halted:
             log("halted - not executing", name)
@@ -1208,7 +1214,7 @@ class ISACaller:
         # clear trap (trap) NIA
         self.trap_nia = None
 
-        # execute actual instruction here
+        # execute actual instruction here (finally)
         log("inputs", inputs)
         results = info.func(self, *inputs)
         log("results", results)
@@ -1219,6 +1225,17 @@ class ISACaller:
             self.namespace['NIA'] = self.trap_nia
 
         log("after func", self.namespace['CIA'], self.namespace['NIA'])
+
+        # check if op was a LD/ST so that debugging can check the
+        # address
+        if int_op in [MicrOp.OP_STORE.value,
+                     ]:
+            self.last_st_addr = self.mem.last_st_addr
+        if int_op in [MicrOp.OP_LOAD.value,
+                     ]:
+            self.last_st_addr = self.mem.last_st_addr
+        log ("op", int_op, MicrOp.OP_STORE.value, MicrOp.OP_LOAD.value,
+                   self.last_st_addr, self.last_ld_addr)
 
         # detect if CA/CA32 already in outputs (sra*, basically)
         already_done = 0

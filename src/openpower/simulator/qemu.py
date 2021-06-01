@@ -21,7 +21,7 @@ def swap_order(x, nbytes):
 
 
 def find_uint128(val):
-    print (val[1:])
+    #print (val[1:])
     assert val[1:].startswith('uint128 =')
     val = val.split("=")[1]
     val = val.split(',')[0].strip()

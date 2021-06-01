@@ -308,9 +308,11 @@ class RADIX:
             return 0
 
         # use pte to load from phys address
-        return self.mem.ld(pte.value, width, swap, check_in_mem)
+        data = self.mem.ld(pte.value, width, swap, check_in_mem)
+        self.last_ld_addr = self.mem.last_ld_addr
 
         # XXX set SPRs on error
+        return data
 
     # TODO implement
     def st(self, address, v, width=8, swap=True):
@@ -322,9 +324,11 @@ class RADIX:
         pte = self._walk_tree(addr, mode, priv)
 
         # use pte to store at phys address
-        return self.mem.st(pte.value, v, width, swap)
+        res = self.mem.st(pte.value, v, width, swap)
+        self.last_st_addr = self.mem.last_st_addr
 
         # XXX set SPRs on error
+        return res
 
     def memassign(self, addr, sz, val):
         print("memassign", addr, sz, val)

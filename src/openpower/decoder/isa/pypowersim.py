@@ -224,6 +224,14 @@ def run_tst(args, generator, qemu,
             if not _pc or simulator.halted:
                 qemu.set_endian(False)
             qemu_register_compare(simulator, qemu, range(32), range(32))
+            # check last store address
+            if simulator.last_st_addr is not None:
+                addr = simulator.last_st_addr & ~0x7 # align
+                sim_data = simulator.mem.ld(addr, 8, swap=False)
+                qdata = qemu.get_mem(addr, 8)[0]
+                log ("last st", simulator.last_st_addr, sim_data, qdata)
+                if sim_data !=qdata :
+                    log("expect mem %x, %x got %x" % (addr, qdata, sim_data))
             if _pc is None:
                 break
 

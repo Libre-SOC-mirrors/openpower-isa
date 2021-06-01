@@ -8,7 +8,7 @@ all: sim
 sim: kernel.bin
 	echo -n -e \\0060\\0000\\0061\\0000 > test.bin
 	echo -n -e \\0060\\0000\\0061\\0000 >> test.bin
-	pypowersim --load test.bin:0 -g gpr.list -i kernel.bin
+	pypowersim -q --load test.bin:0 -g gpr.list -i kernel.bin
 
 clean:
 	rm *.o *.elf *.bin

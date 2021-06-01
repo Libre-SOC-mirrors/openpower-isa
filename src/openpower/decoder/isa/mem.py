@@ -38,6 +38,8 @@ class Mem:
         self.mem = {}
         self.bytes_per_word = row_bytes
         self.word_log2 = math.ceil(math.log2(row_bytes))
+        self.last_ld_addr = None
+        self.last_st_addr = None
         log("Sim-Mem", initial_mem, self.bytes_per_word, self.word_log2)
         if not initial_mem:
             return
@@ -74,6 +76,7 @@ class Mem:
                  instr_fetch=False):
         log("ld from addr 0x%x width %d" % (address, width),
                 swap, check_in_mem, instr_fetch)
+        self.last_ld_addr = address # record last load
         ldaddr = address
         remainder = address & (self.bytes_per_word - 1)
         address = address >> self.word_log2
@@ -101,6 +104,7 @@ class Mem:
 
     def st(self, addr, v, width=8, swap=True):
         staddr = addr
+        self.last_st_addr = addr # record last store
         remainder = addr & (self.bytes_per_word - 1)
         addr = addr >> self.word_log2
         log("Writing 0x%x to ST 0x%x memaddr 0x%x/%x swap %s" % \
