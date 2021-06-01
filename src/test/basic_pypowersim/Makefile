@@ -1,4 +1,4 @@
-TOOLCHAIN=powerpc64-linux-gnu
+TOOLCHAIN=powerpc64le-linux-gnu
 CC=$(TOOLCHAIN)-gcc
 AS=$(TOOLCHAIN)-as
 AFLAGS=-mpwr9
@@ -9,6 +9,7 @@ sim: kernel.bin
 	echo -n -e \\0060\\0000\\0061\\0000 > test.bin
 	echo -n -e \\0060\\0000\\0061\\0000 >> test.bin
 	pypowersim -q --load test.bin:0 \
+	              -p 0x20000000 \
                   --dump testout.bin:0:8 \
                   --dump testout2.bin:0x20000100:8 \
                 -g gpr.list -i kernel.bin
