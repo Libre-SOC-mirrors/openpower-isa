@@ -306,8 +306,7 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
     # upload regs
     if initial_regs:
         for i, reg in enumerate(initial_regs):
-            if reg != 0:
-                q.set_gpr(i, reg)
+            q.set_gpr(i, reg)
     if initial_fprs:
         if isinstance(initial_fprs, dict):
             for i, reg in initial_fprs.items():
