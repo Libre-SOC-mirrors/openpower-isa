@@ -1233,7 +1233,7 @@ class ISACaller:
             self.last_st_addr = self.mem.last_st_addr
         if int_op in [MicrOp.OP_LOAD.value,
                      ]:
-            self.last_st_addr = self.mem.last_st_addr
+            self.last_ld_addr = self.mem.last_ld_addr
         log ("op", int_op, MicrOp.OP_STORE.value, MicrOp.OP_LOAD.value,
                    self.last_st_addr, self.last_ld_addr)
 

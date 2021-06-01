@@ -229,8 +229,9 @@ def run_tst(args, generator, qemu,
                 addr = simulator.last_st_addr & ~0x7 # align
                 sim_data = simulator.mem.ld(addr, 8, swap=False)
                 qdata = qemu.get_mem(addr, 8)[0]
-                log ("last st", simulator.last_st_addr, sim_data, qdata)
-                if sim_data !=qdata :
+                log ("last st", hex(simulator.last_st_addr),
+                                hex(sim_data), hex(qdata))
+                if sim_data != qdata:
                     log("expect mem %x, %x got %x" % (addr, qdata, sim_data))
             if _pc is None:
                 break
@@ -360,10 +361,13 @@ def run_simulation():
             write_data(simulator.mem, fname, offs, length)
             if qemu:
                 qmem = qemu.get_mem(offs, length)
+                log("qemu mem", hex(offs), length)
                 for i, mem in enumerate(qmem):
                     log(hex(offs+i*8), hex(mem))
-                for reg, val in qemu._get_registers().items():
-                    log ("qemu reg", reg, hex(val))
+        if qemu:
+            log("final complete qemu reg dump")
+            for reg, val in qemu._get_registers().items():
+                log ("qemu reg", reg, hex(val))
 
         # cleanup
         if qemu:

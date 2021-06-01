@@ -94,7 +94,7 @@ class QemuController:
     def get_mem(self, addr, nbytes):
         res = self.gdb.write("-data-read-memory %d u 1 1 %d" %
                              (addr, nbytes))
-        #print ("get_mem", res)
+        print ("get_mem", res)
         for x in res:
             if(x["type"] == "result"):
                 l = list(map(int, x['payload']['memory'][0]['data']))
