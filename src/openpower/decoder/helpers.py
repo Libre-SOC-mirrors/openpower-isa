@@ -253,8 +253,9 @@ def fp64toselectable(frt):
 
 
 def FPADD32(FRA, FRB):
-    FRA = DOUBLE(SINGLE(FRA))
-    FRB = DOUBLE(SINGLE(FRB))
+    #return FPADD64(FRA, FRB)
+    #FRA = DOUBLE(SINGLE(FRA))
+    #FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) + float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE(SINGLE(cvt))
@@ -263,8 +264,9 @@ def FPADD32(FRA, FRB):
 
 
 def FPSUB32(FRA, FRB):
-    FRA = DOUBLE(SINGLE(FRA))
-    FRB = DOUBLE(SINGLE(FRB))
+    #return FPSUB64(FRA, FRB)
+    #FRA = DOUBLE(SINGLE(FRA))
+    #FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) - float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE(SINGLE(cvt))
@@ -273,8 +275,9 @@ def FPSUB32(FRA, FRB):
 
 
 def FPMUL32(FRA, FRB):
-    FRA = DOUBLE(SINGLE(FRA))
-    FRB = DOUBLE(SINGLE(FRB))
+    #return FPMUL64(FRA, FRB)
+    #FRA = DOUBLE(SINGLE(FRA))
+    #FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) * float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE(SINGLE(cvt))
@@ -283,8 +286,9 @@ def FPMUL32(FRA, FRB):
 
 
 def FPDIV32(FRA, FRB):
-    FRA = DOUBLE(SINGLE(FRA))
-    FRB = DOUBLE(SINGLE(FRB))
+    #return FPDIV64(FRA, FRB)
+    #FRA = DOUBLE(SINGLE(FRA))
+    #FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) / float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE(SINGLE(cvt))
