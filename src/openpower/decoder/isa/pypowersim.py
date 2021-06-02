@@ -149,6 +149,12 @@ def run_tst(args, generator, qemu,
                 initial_regs=initial_regs, initial_fprs=initial_fprs)
         for reg, val in qemu._get_registers().items():
             log ("qemu reg", reg, hex(val))
+        if True:
+            offs, length = 0x200000, 0x200
+            qmem = qemu.get_mem(offs, length)
+            log("qemu mem pre-dump", hex(offs), length)
+            for i, data in enumerate(qmem):
+                log(hex(offs+i*8), hex(data))
 
     m = Module()
     comb = m.d.comb
@@ -242,6 +248,7 @@ def run_tst(args, generator, qemu,
                 msg = "ld"
             if check_addr is not None:
                 sim_check_data(simulator, qemu, check_addr, msg)
+            sim_check_data(simulator, qemu, 0x600800, "dbgld")
             if _pc is None:
                 break
 
