@@ -1,4 +1,6 @@
+	fadds  5, 9, 10
 	lfsx 1, 1, 0
-	stfsu 1, 16(1)
-	stfsu 9, 32(2)
-	stfsu 10, 8(3)
+	lfs  2, 12(1)
+	fadds  4, 1, 2
+	stfsu 1, 0(1)
+	stfsu 9, 4(2)

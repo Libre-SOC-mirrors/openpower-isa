@@ -7,10 +7,10 @@ all: sim
 
 sim: kernel.bin
 	./writefp.sh
-	pypowersim -q --load testdata.bin:0 \
+	pypowersim -q --load testin.bin:0 \
 	           -p 0x20000000 \
-               --dump testout.bin:0x20000100:8 \
-               --dump testout2.bin:0x0:16 \
+               --dump testout.bin:0x20000100:32 \
+               --dump testout2.bin:0x0:32 \
                -g gpr.list -f fpr.list -i kernel.bin
 
 clean:
