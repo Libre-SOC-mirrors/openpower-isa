@@ -174,22 +174,22 @@ def DOUBLE(WORD):
         FRT[4] = ~WORD[1]
         FRT[5:64] = selectconcat(WORD[2:32], z29)
 
-    # Denormalized Operand
-    if e.value  == 0 and m.value != 0:
-        log ("denormalised")
-        sign = WORD[0]
-        exp = -126
-        frac = selectconcat(z1, WORD[9:32], z29)
-        # normalize the operand
-        while frac[0].value  == 0:
-            frac[0:53] = selectconcat(frac[1:53], z1)
-            exp = exp - 1
-        FRT[0] = sign
-        FRT[1:12] = exp + 1023
-        FRT[12:64] = frac[1:53]
+        # Denormalized Operand
+        if e.value  == 0 and m.value != 0:
+            log ("denormalised")
+            sign = WORD[0]
+            exp = -126
+            frac = selectconcat(z1, WORD[9:32], z29)
+            # normalize the operand
+            while frac[0].value  == 0:
+                frac[0:53] = selectconcat(frac[1:53], z1)
+                exp = exp - 1
+            FRT[0] = sign
+            FRT[1:12] = exp + 1023
+            FRT[12:64] = frac[1:53]
 
     # Zero / Infinity / NaN
-    if e.value  == 255 or m.value  == 0:
+    if e.value  == 255 or WORD[1:32].value  == 0:
         log ("z/inf/nan")
         FRT[0:2] = WORD[0:2]
         FRT[2] = WORD[1]
