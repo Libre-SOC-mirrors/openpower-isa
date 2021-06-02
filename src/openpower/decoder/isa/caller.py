@@ -202,7 +202,7 @@ class SPR(dict):
     def dump(self, printout=True):
         res = []
         keys = list(self.keys())
-        keys.sort()
+        #keys.sort()
         for k in keys:
             sprname = spr_dict.get(k, None)
             if sprname is None:
