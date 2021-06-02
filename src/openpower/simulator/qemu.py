@@ -26,7 +26,9 @@ def find_uint128(val):
     val = val.split("=")[1]
     val = val.split(',')[0].strip()
     val = int(val, 0)
-    return swap_order(val, 16)
+    val = swap_order(val, 16)
+    val = swap_order(val, 8)
+    return val
 
 
 class QemuController:
@@ -161,7 +163,7 @@ class QemuController:
         return self.get_register(num)
 
     def get_fpr(self, num):
-        return self.get_register(num+32)
+        return self.get_register(num+471)
 
     def set_gpr(self, reg, val):
         self._rcache_trash('x %d' % reg)
