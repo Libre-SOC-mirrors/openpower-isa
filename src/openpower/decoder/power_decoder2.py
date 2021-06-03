@@ -934,9 +934,9 @@ class PowerDecodeSubset(Elaboratable):
             comb += rm_dec.ptype_in.eq(op.SV_Ptype) # Single/Twin predicated
             comb += rm_dec.rc_in.eq(rc_out) # Rc=1
             comb += rm_dec.rm_in.eq(self.sv_rm) # SVP64 RM mode
-            bzero = dec_bi.imm_out.ok & ~dec_bi.imm_out.data.bool()
-            comb += rm_dec.ldst_imz_in.eq(bzero) # B immediate is zero
-            comb += rm_dec.ldst_ra_vec.eq(self.in1_isvec) # RA is vector
+            if self.needs_field("imm_data", "in2_sel"):
+                bzero = dec_bi.imm_out.ok & ~dec_bi.imm_out.data.bool()
+                comb += rm_dec.ldst_imz_in.eq(bzero) # B immediate is zero
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
@@ -1260,6 +1260,9 @@ class PowerDecode2(PowerDecodeSubset):
                 fromreg = getattr(cr, name)
                 comb += to_reg.data.eq(fromreg.data)
                 comb += to_reg.ok.eq(fromreg.ok)
+
+        if self.svp64_en:
+            comb += self.rm_dec.ldst_ra_vec.eq(self.in1_isvec) # RA is vector
 
         # SPRs out
         comb += e.read_spr1.eq(dec_a.spr_out)
