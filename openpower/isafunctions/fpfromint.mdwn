@@ -43,7 +43,7 @@ Convert From Integer instructions.
             tmp[1:53]  <- frac[0:52]
             tmp[0:53]  <- tmp[0:53] + inc
             carry_out  <- tmp[53]
-            frac[0:52] <- tmp[1:54]
+            frac[0:52] <- tmp[1:53]
         if carry_out = 1 then exp <- exp + 1
         # TODO, later
         # FPSCR[FR] <- inc
