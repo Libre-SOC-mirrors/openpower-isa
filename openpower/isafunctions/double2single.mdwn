@@ -114,11 +114,11 @@ Round to Single-Precision instruction.
 
         if mode = 'zero_operand':
             # Zero Operand
+            result[0]  <- FR[0] # copy sign, the rest is zero
             # TODO, FPSCR
             #FPSCR[FR] <- 0b00
             #FPSCR[FI] <- 0b00
             #FPSCR[FPRF] <- '+ zero'
-            result <- [0] * 64
 
         if mode = 'disabled_exp_underflow':
             if sign = 1 then frac[0:63] <- ¬frac[0:63] + 1
