@@ -310,14 +310,15 @@ class SelectableInt:
     def __setitem__(self, key, value):
         if isinstance(key, SelectableInt):
             key = key.value
-        log("setitem", key, self.bits, hex(self.value))
         if isinstance(key, int):
-            assert key < self.bits
-            assert key >= 0
-            key = self.bits - (key + 1)
             if isinstance(value, SelectableInt):
                 assert value.bits == 1
                 value = value.value
+            log("setitem", key, self.bits, hex(self.value), hex(value))
+
+            assert key < self.bits
+            assert key >= 0
+            key = self.bits - (key + 1)
 
             value = value << key
             mask = 1 << key
@@ -326,7 +327,8 @@ class SelectableInt:
             assert key.step is None or key.step == 1
             assert key.start < key.stop
             assert key.start >= 0
-            assert key.stop <= self.bits
+            assert key.stop <= self.bits, \
+                   "key stop %d bits %d" % (key.stop, self.bits)
 
             stop = self.bits - key.start
             start = self.bits - key.stop
@@ -336,6 +338,7 @@ class SelectableInt:
             if isinstance(value, SelectableInt):
                 assert value.bits == bits, "%d into %d" % (value.bits, bits)
                 value = value.value
+            log("setitem", key, self.bits, hex(self.value), hex(value))
             mask = ((1 << bits) - 1) << start
             value = value << start
             self.value = (self.value & ~mask) | (value & mask)
