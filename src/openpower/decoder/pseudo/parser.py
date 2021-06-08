@@ -278,6 +278,7 @@ class PowerParser:
         else:
             formkeys = []
         self.declared_vars = set()
+        self.fnparm_vars = set()
         for rname in regs + fregs:
             self.gprs[rname] = None
             self.declared_vars.add(rname)
@@ -325,6 +326,8 @@ class PowerParser:
     def p_funcdef(self, p):
         "funcdef : DEF NAME parameters COLON suite"
         p[0] = ast.FunctionDef(p[2], p[3], p[5], ())
+        # reset function parameters after suite is identified
+        self.fnparm_vars = set()
 
     # parameters: '(' [varargslist] ')'
     def p_parameters(self, p):
@@ -335,6 +338,13 @@ class PowerParser:
         else:
             args = p[2]
         p[0] = ast.arguments(args=args, vararg=None, kwarg=None, defaults=[])
+        # during the time between parameters identified and suite is not
+        # there is a window of opportunity to declare the function parameters
+        # in-scope, for use to not overwrite them with auto-assign
+        self.fnparm_vars = set()
+        for arg in args:
+            print ("adding fn parm", arg)
+            self.fnparm_vars.add(arg)
 
     # varargslist: (fpdef ['=' test] ',')* ('*' NAME [',' '**' NAME] |
     # '**' NAME) |
@@ -416,7 +426,10 @@ class PowerParser:
                     if name in self.gprs:
                         # add to list of uninitialised
                         self.uninit_regs.add(name)
+                    # work out if this is an ininitialised variable
+                    # that should be auto-assigned simply by being "sliced"
                     autoassign = (name not in self.declared_vars and
+                                  name not in self.fnparm_vars and
                                   name not in self.special_regs)
             elif isinstance(p[1], ast.Call) and p[1].func.id in \
                             ['GPR', 'FPR', 'SPR']:
