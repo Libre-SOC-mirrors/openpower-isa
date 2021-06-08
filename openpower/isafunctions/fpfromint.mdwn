@@ -36,13 +36,13 @@ Convert From Integer instructions.
             tmp        <- [0]*25
             tmp[1:24]  <- frac[0:23]
             tmp[0:24]  <- tmp[0:24] + inc
-            carry_out  <- tmp[24]
+            carry_out  <- tmp[0]
             frac[0:23] <- tmp[1:24]
         else # tgt_precision = 'double-precision'
             tmp        <- [0]*54
             tmp[1:53]  <- frac[0:52]
             tmp[0:53]  <- tmp[0:53] + inc
-            carry_out  <- tmp[53]
+            carry_out  <- tmp[0]
             frac[0:52] <- tmp[1:53]
         if carry_out = 1 then exp <- exp + 1
         # TODO, later

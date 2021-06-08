@@ -257,6 +257,21 @@ class DecoderTestCase(FHDLTestCase):
             # result should be -ve zero not +ve zero
             self.assertEqual(sim.fpr(3), SelectableInt(0x8000000000000000, 64))
 
+    def test_fp_muls5(self):
+        """>>> lst = ["fmuls 3, 1, 2",
+                     ]
+        """
+        lst = ["fmuls 3, 1, 2", #
+                     ]
+
+        fprs = [0] * 32
+        fprs[1] = 0xbfb0ab5100000000
+        fprs[2] = 0xbdca000000000000
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            self.assertEqual(sim.fpr(3), SelectableInt(0x3d8b1663a0000000, 64))
+
     def test_fp_mul(self):
         """>>> lst = ["fmul 3, 1, 2",
                      ]

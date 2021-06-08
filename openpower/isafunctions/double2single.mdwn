@@ -29,7 +29,7 @@ Round to Single-Precision instruction.
         tmp        <- [0]*25
         tmp[1:24]  <- frac[0:23]
         tmp[0:24]  <- tmp[0:24] + inc
-        carry_out  <- tmp[24]
+        carry_out  <- tmp[0]
         frac[0:23] <- tmp[1:24]
         if carry_out = 1 then
             exp[0:10] <- exp + 1
