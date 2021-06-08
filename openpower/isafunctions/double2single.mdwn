@@ -1,0 +1,141 @@
+# A.1 Floating-Point Round to Single-Precision Model
+
+The following describes algorithmically the operation of the Floating
+Round to Single-Precision instruction.
+
+<!-- Power ISA Book I Version 3.0B Section A.1 page 775-778 -->
+
+    def Round_Single( sign, exp, frac, G, R, X, round_mode ):
+        inc <- 0
+        lsb  <- frac[23]
+        gbit <- frac[24]
+        rbit <- frac[25]
+        xbit <- (frac[26:52] || G || R || X) != 0
+
+        if round_mode  = 0b00  then           # Round to Nearest
+            if (lsb = 1) & (gbit = 1)              then inc <- 1
+            if (lsb = 0) & (gbit = 1) & (rbit = 1) then inc <- 1
+            if (lsb = 0) & (gbit = 1) & (xbit = 1) then inc <- 1
+        if round_mode  = 0b10  then           # Round toward + Infinity
+            if (sign = 0) & (gbit = 1) then inc <-1
+            if (sign = 0) & (rbit = 1) then inc <-1
+            if (sign = 0) & (xbit = 1) then inc <-1
+        if round_mode  = 0b11  then           # Round toward - Infinity
+            if (sign = 1) & (gbit = 1) then inc <-1
+            if (sign = 1) & (rbit = 1) then inc <-1
+            if (sign = 1) & (xbit = 1) then inc <-1
+
+        # add with carry-out
+        tmp        <- [0]*25
+        tmp[1:24]  <- frac[0:23]
+        tmp[0:24]  <- tmp[0:24] + inc
+        carry_out  <- tmp[24]
+        frac[0:23] <- tmp[1:24]
+        if carry_out = 1 then
+            exp[0:11] <- exp + 1
+            frac[0:23] <- 0b1 || frac[0:22]
+        frac[24:52] <- [0]*29
+        # TODO, later
+        # FPSCR[FR] <- inc
+        # FPSCR[FI] <- gbit || rbit || xbit
+
+    def DOUBLE2SINGLE(FR):
+        if (FR[1:11] <u 897) & (FR[1:63] >u 0) then
+            # exponent underflow
+            mode = 'disabled_exp_underflow'
+            # TODO if FPSCR_UE = 0 then mode = 'disabled_exp_underflow'
+            # TODO if FPSCR_UE = 1 then mode = 'enabled_exp_underflow'
+        else if (FR[1:11] >u 1150) & (FR[1:11] <u 2047) then
+            # exponent overflow
+            mode = 'disabled_exp_overflow'
+            # TODO if FPSCR_OE = 0 then mode = 'disabled_exp_overflow'
+            # TODO if FPSCR_OE = 1 then mode = 'enabled_exp_overflow'
+        else if (FR[1:11] >u 896) & (FR[1:11] <u 1151) then
+            # normal operand
+            mode <- 'normal_operand'
+        else if (FR[1:63] = 0) then
+            # zero operand
+            mode <- 'zero_operand'
+        else if (FR[1:11] = 2047) then
+            # inf / nan
+            if (FR[12:63] = 0) then
+                mode <- 'inf_operand'
+            else if (FR[12] = 1) then
+                mode <- 'qnan_operand'
+            else if (FR[12] = 0) & (FR[13:63] >u 0) then
+                mode <- 'snan_operand'
+
+        frac <- [0]*53
+        exp <- [0]*12
+        result <- [0] * 64
+
+        if mode = 'normal_operand' then
+            sign       <- FR[0]
+            exp <- FR[1:11] - 1023
+            frac[0:52] <- 0b1 || FR[12:63]
+            RN <- 0b00 # TODO
+            Round_Single(sign, exp, frac, 0b0, 0b0, 0b0, RN)
+            # TODO FPSCR[XX] <- FPSCR[XX] || FPSCR[FI]
+            if exp > 127 then
+                mode = 'disabled_exp_overflow'
+                #   if FPSCR_OE = 0 then mode = 'disabled_exp_overflow'
+                #   if FPSCR_OE = 1 then mode = 'enabled_overflow'
+            else
+                result[0] <- sign
+                result[1:11] <- exp + 1023
+                result[12:63] <- frac[1:52]
+                # if sign = 0 then 
+                #    FPSCR[FPRF] <- '+ normal number'
+                # else
+                #    FPSCR[FPRF] <- '- normal number'
+
+        if mode = 'enabled_exp_underflow':
+            sign       <- FR[0]
+            if FR[1:11] = 0 then
+                exp <- 1022
+                frac[0:52] <- 0b0 || FRB[12:63]
+            if FR[1:11] >u 0 then
+                exp <- FRB[1:11] - 1023
+                frac[0:52] <- 0b1 || FRB[12:63]
+            # denormalise operand
+            G = 0b0
+            R = 0b0
+            X = 0b0
+            do while exp < -126
+                exp <- exp + 1
+                X <- R | X
+                R <- G
+                G <- frac[52]
+                frac[0:52] <- frac[1:52] || 0b0
+            # TODO
+            # FPCSR_UX <- (frac[0:52] || G || R || X) >u 0)
+            RN <- 0b00 # TODO
+            Round_Single(sign, exp, frac, G, R, X, RN)
+
+        if mode = 'zero_operand':
+            # Zero Operand
+            # TODO, FPSCR
+            #FPSCR[FR] <- 0b00
+            #FPSCR[FI] <- 0b00
+            #FPSCR[FPRF] <- '+ zero'
+            result <- [0] * 64
+
+        if mode = 'disabled_exp_underflow':
+            if sign = 1 then frac[0:63] <- ¬frac[0:63] + 1
+            # do the loop 0 times if FR = max negative 64-bit integer or
+            #                     if FR = max unsigned 64-bit integer 
+            do while frac[0] = 0
+                frac[0:63] <- frac[1:63] || 0b0
+                exp <- exp - 1
+            # round to nearest
+            RN <- 0b00 # TODO, FPSCR[RN]
+            Round_Float( tgt_precision, sign, exp, frac, RN )
+            # TODO, FPSCR
+            #if sign = 0 then FPSCR[FPRF] <- '+normal number'
+            #if sign = 1 then FPSCR[FPRF] <- '-normal number'
+            result[0]    <- sign
+            result[1:11] <- exp + 1023     # exp + bias
+            result[12:63] <- frac[1:52]
+
+        return result
+
