@@ -32,7 +32,7 @@ Round to Single-Precision instruction.
         carry_out  <- tmp[24]
         frac[0:23] <- tmp[1:24]
         if carry_out = 1 then
-            exp[0:11] <- exp + 1
+            exp[0:10] <- exp + 1
             frac[0:23] <- 0b1 || frac[0:22]
         frac[24:52] <- [0]*29
         # TODO, later
@@ -66,7 +66,7 @@ Round to Single-Precision instruction.
                 mode <- 'snan_operand'
 
         frac <- [0]*53
-        exp <- [0]*12
+        exp <- [0]*11
         result <- [0] * 64
 
         if mode = 'normal_operand' then
