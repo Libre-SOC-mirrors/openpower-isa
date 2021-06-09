@@ -1198,7 +1198,7 @@ class PowerDecode2(PowerDecodeSubset):
             comb += self.no_in_vec.eq(~Cat(*l).bool()) # all input scalar
             l = map(lambda svdec: svdec.isvec, [o2_svdec, o_svdec, crout_svdec])
             # in mapreduce mode, scalar out is *allowed*
-            with m.If(self.rm_dec.mode == SVP64RMMode.MAPREDUCE):
+            with m.If(self.rm_dec.mode == SVP64RMMode.MAPREDUCE.value):
                 comb += self.no_out_vec.eq(0)
             with m.Else():
                 comb += self.no_out_vec.eq(~Cat(*l).bool()) # all output scalar

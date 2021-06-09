@@ -1339,24 +1339,26 @@ class ISACaller:
             mvl = self.svstate.maxvl.asint(msb0=True)
             srcstep = self.svstate.srcstep.asint(msb0=True)
             dststep = self.svstate.dststep.asint(msb0=True)
+            rm_mode = yield self.dec2.rm_dec.mode
             sv_ptype = yield self.dec2.dec.op.SV_Ptype
-            no_out_vec = not (yield self.dec2.no_out_vec)
-            no_in_vec = not (yield self.dec2.no_in_vec)
+            out_vec = not (yield self.dec2.no_out_vec)
+            in_vec = not (yield self.dec2.no_in_vec)
             log ("    svstate.vl", vl)
             log ("    svstate.mvl", mvl)
             log ("    svstate.srcstep", srcstep)
             log ("    svstate.dststep", dststep)
-            log ("    no_out_vec", no_out_vec)
-            log ("    no_in_vec", no_in_vec)
+            log ("    mode", rm_mode)
+            log ("    out_vec", out_vec)
+            log ("    in_vec", in_vec)
             log ("    sv_ptype", sv_ptype, sv_ptype == SVPtype.P2.value)
             # check if srcstep needs incrementing by one, stop PC advancing
             # svp64 loop can end early if the dest is scalar for single-pred
             # but for 2-pred both src/dest have to be checked.
             # XXX this might not be true! it may just be LD/ST
             if sv_ptype == SVPtype.P2.value:
-                svp64_is_vector = (no_out_vec or no_in_vec)
+                svp64_is_vector = (out_vec or in_vec)
             else:
-                svp64_is_vector = no_out_vec
+                svp64_is_vector = out_vec
             if svp64_is_vector and srcstep != vl-1 and dststep != vl-1:
                 self.svstate.srcstep += SelectableInt(1, 7)
                 self.svstate.dststep += SelectableInt(1, 7)
