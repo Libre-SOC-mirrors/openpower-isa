@@ -794,6 +794,9 @@ if __name__ == '__main__':
     lst = [
             "sv.stfsu/els 0.v, 16(4)",
     ]
+    lst = [
+             'sv.add./mr 5.v, 2.v, 1.v',
+    ]
     isa = SVP64Asm(lst)
     print ("list", list(isa))
     csvs = SVP64RM()

@@ -19,7 +19,8 @@ from openpower.exceptions import LDSTException
 from openpower.decoder.power_svp64_prefix import SVP64PrefixDecoder
 from openpower.decoder.power_svp64_extra import SVP64CRExtra, SVP64RegExtra
 from openpower.decoder.power_svp64_rm import (SVP64RMModeDecode,
-                                              sv_input_record_layout)
+                                              sv_input_record_layout,
+                                              SVP64RMMode)
 from openpower.sv.svp64 import SVP64Rec
 
 from openpower.decoder.power_regspec_map import regspec_decode_read
@@ -1196,7 +1197,11 @@ class PowerDecode2(PowerDecodeSubset):
                                         crin_svdec, crin_svdec_b, crin_svdec_o])
             comb += self.no_in_vec.eq(~Cat(*l).bool()) # all input scalar
             l = map(lambda svdec: svdec.isvec, [o2_svdec, o_svdec, crout_svdec])
-            comb += self.no_out_vec.eq(~Cat(*l).bool()) # all output scalar
+            # in mapreduce mode, scalar out is *allowed*
+            with m.If(self.rm_dec.mode == SVP64RMMode.MAPREDUCE):
+                comb += self.no_out_vec.eq(0)
+            with m.Else():
+                comb += self.no_out_vec.eq(~Cat(*l).bool()) # all output scalar
             # now create a general-purpose "test" as to whether looping
             # should continue.  this doesn't include predication bit-tests
             loop = self.loop_continue
