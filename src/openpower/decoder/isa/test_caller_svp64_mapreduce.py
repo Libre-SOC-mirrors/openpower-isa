@@ -51,15 +51,52 @@ class DecoderTestCase(FHDLTestCase):
                             initial_regs[6])  # 0x0707
 
         with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, initial_regs, svstate)
+            sim = self.run_tst_program(program, initial_regs,
+                                                svstate=svstate)
             self._check_regs(sim, expected_regs)
 
-    def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None):
+    def test_fp_muls_reduce(self):
+        """>>> lst = ["sv.fmuls/mr 1, 2.v, 1",
+                     ]
+        """
+        isa = SVP64Asm(["sv.fmuls/mr 1, 2.v, 1",
+                     ])
+        lst = list(isa)
+        print ("listing", lst)
+
+        fprs = [0] * 32
+        fprs[1] = 0x401C000000000000  # 7.0
+        fprs[2] = 0xC02399999999999A  # -9.8
+        fprs[3] = 0xC02399999999999A  # -9.8
+        fprs[4] = 0x4000000000000000  # 2.0
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 3 # VL
+        svstate.maxvl[0:7] = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                                initial_fprs=fprs)
+            self.assertEqual(sim.fpr(1), SelectableInt(0x4095023d60000000, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(0xC02399999999999A, 64))
+            self.assertEqual(sim.fpr(3), SelectableInt(0xC02399999999999A, 64))
+            self.assertEqual(sim.fpr(4), SelectableInt(0x4000000000000000, 64))
+
+
+    def run_tst_program(self, prog, initial_regs=None, svstate=None,
+                              initial_mem=None,
+                              initial_fprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
-        simulator = run_tst(prog, initial_regs, svstate=svstate)
+        simulator = run_tst(prog, initial_regs, mem=initial_mem,
+                                  initial_fprs=initial_fprs,
+                                  svstate=svstate)
+        print ("GPRs")
         simulator.gpr.dump()
+        print ("FPRs")
+        simulator.fpr.dump()
         return simulator
 
 
