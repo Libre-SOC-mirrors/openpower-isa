@@ -47,6 +47,7 @@ class DecoderTestCase(FHDLTestCase):
         print ("SVSTATE", bin(svstate.spr.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
+        # r1 = r1 + r5 + r6
         expected_regs[1] = (initial_regs[1] + initial_regs[5] +
                             initial_regs[6])  # 0x0707
 
@@ -79,7 +80,9 @@ class DecoderTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                                 initial_fprs=fprs)
+            # answer should be 7.0 * -9.8 * -9.8 * 2.0 = 1344.56
             self.assertEqual(sim.fpr(1), SelectableInt(0x4095023d60000000, 64))
+            # these should not have been changed
             self.assertEqual(sim.fpr(2), SelectableInt(0xC02399999999999A, 64))
             self.assertEqual(sim.fpr(3), SelectableInt(0xC02399999999999A, 64))
             self.assertEqual(sim.fpr(4), SelectableInt(0x4000000000000000, 64))
