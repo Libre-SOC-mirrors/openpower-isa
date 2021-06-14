@@ -11,12 +11,18 @@
 .set out2, 10
 
 # SV ints, so we don't have to play with the stack
-.set win2, 32
+#.set win2, 32
+# for now... TODO, add 128 regs to simulator
+.set win2, 16
 
 # SV floats
-.set fv0, 32
-.set fv1, 40
-.set fv2, 48
+#.set fv0, 32
+#.set fv1, 40
+#.set fv2, 48
+# for now... TODO, add 128 regs to simulator
+.set fv0, 0
+.set fv1, 8
+.set fv2, 16
 
 # floats
 .set sum, 0
@@ -44,7 +50,7 @@ ff_mpadsp_apply_window_float_sv:
 	mulli 0, incr, 31
 	add out2, out, 0
 
-	# setvl 0, 0, 8, 1, 1 # setvli MVL=8, VL=8
+	setvl 0, 0, 8, 1, 1 # setvli MVL=8, VL=8
 	# sv.addi win2, win, 124
 
 	lfiwax sum, 0, 9 # zero it
