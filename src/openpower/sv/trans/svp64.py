@@ -773,6 +773,17 @@ def macro_subst(macros, txt):
     return txt
 
 
+def get_ws(line):
+    # find whitespace
+    ws = ''
+    while line:
+        if not line[0].isspace():
+            break
+        ws += line[0]
+        line = line[1:]
+    return ws, line
+
+
 def asm_process():
 
     # get an input file and an output file
@@ -804,6 +815,12 @@ def asm_process():
     for line in lines:
         ls = line.split("#")
         # identify macros
+        if ls[0].strip().startswith("setvl"):
+            ws, line = get_ws(ls[0])
+            lst = list(isa.translate_one(ls[0].strip(), macros))
+            lst = '; '.join(lst)
+            outfile.write("%s%s # %s\n" % (ws, lst, ls[0]))
+            continue
         if ls[0].startswith(".set"):
             macro = ls[0][4:].split(",")
             macro, value = list(map(str.strip, macro))
@@ -815,14 +832,8 @@ def asm_process():
         if not potential.startswith("sv."):
             outfile.write(line)
             continue
-        # find whitespace
-        ws = ''
-        while line:
-            if not line[0].isspace():
-                break
-            ws += line[0]
-            line = line[1:]
 
+        ws, line = get_ws(line)
         # SV line indentified
         lst = list(isa.translate_one(potential, macros))
         lst = '; '.join(lst)
