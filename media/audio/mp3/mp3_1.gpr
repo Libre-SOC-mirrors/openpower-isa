@@ -1,6 +1,6 @@
 # void imdct36(float *out, float *buf, float *in, const float *win);
 1: 0x8000        # stack pointer
-3: 0x100000      # param 1: float *out
-4: 0x200000      # param 2: float *buf
-5: 0x300000      # param 3: float *in
-6: 0x400000      # param 3: const float *win
+3: 0x600000      # param 1: float *out
+4: 0x700000      # param 2: float *buf
+5: 0x800000      # param 3: float *in
+6: 0x900000      # param 3: const float *win
