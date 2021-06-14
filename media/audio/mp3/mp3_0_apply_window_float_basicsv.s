@@ -8,9 +8,11 @@
 
 .set p, 5
 .set i, 8
+.set out2, 10
 
 # floats
 .set sum, 0
+.set sum2, 1
 
 	.machine power9
 	.abiversion 2
@@ -29,23 +31,45 @@ ff_mpadsp_apply_window_float_sv:
 
 	slwi incr, incr, 2 # incr *= 4, sizeof float
 
-	# Loop 32 times
-	li 0, 32
+	mulli 0, incr, 31
+	add out2, out, 0
+
+	# w2 = window + 31; TODO
+	lfiwax sum, 0, 9 # zero it
+	addi p, buf, 64
+	# SUM8(MACS, sum, w, p); TODO
+	addi p, buf, 192
+	# SUM8(MLSS, sum, w + 32, p); TODO
+	stfs sum, 0(out)
+	add out, out, incr
+	addi win, win, 4
+
+	# Loop 15 times
+	li 0, 15
 	mtctr 0
-	li i, 0
+	li i, 4
 .Lloop:
 		lfiwax sum, 0, 9 # zero it
 		addi p, buf, 64
 		add p, p, i
-		# SUM8(MACS, sum, w, p) TODO
+		# SUM8P2(sum, MACS, sum2, MLSS, w, w2, p);TODO
 		addi p, buf, 192
 		subf p, i, p
-		# SUM8(MLSS, sum, w + 32, p) TODO
+		# SUM8P2(sum, MLSS, sum2, MLSS, w + 32, w2 + 32, p); TODO
+
 		stfs sum, 0(out)
 		add out, out, incr
+		stfs sum2, 0(out2)
+		subf out2, incr, out2
+
 		addi i, i, 4
 		addi win, win, 4
+		subi win2, win2, 4
 	bdnz .Lloop
+
+	addi p, buf, 128
+	# SUM8(MLSS, sum, w + 32, p); TODO
+	stfs sum, 0(out)
 
 	blr
 
