@@ -742,12 +742,33 @@ def macro_subst(macros, txt):
     while again:
         again = False
         for macro, value in macros.items():
-            if macro == txt or ('(' in txt and macro in txt) or \
-                               (txt.endswith('.v') and macro in txt):
+            if macro == txt:
                 again = True
                 replaced = txt.replace(macro, value)
                 print ("macro", txt, "replaced", replaced, macro, value)
                 txt = replaced
+                continue
+            toreplace = '%s.s' % macro
+            if toreplace == txt:
+                again = True
+                replaced = txt.replace(toreplace, value)
+                print ("macro", txt, "replaced", replaced, toreplace, value)
+                txt = replaced
+                continue
+            toreplace = '%s.v' % macro
+            if toreplace == txt:
+                again = True
+                replaced = txt.replace(toreplace, value)
+                print ("macro", txt, "replaced", replaced, toreplace, value)
+                txt = replaced
+                continue
+            toreplace = '(%s)' % macro
+            if toreplace == txt:
+                again = True
+                replaced = txt.replace(toreplace, value)
+                print ("macro", txt, "replaced", replaced, toreplace, value)
+                txt = replaced
+                continue
     print ("    processed", txt)
     return txt
 
