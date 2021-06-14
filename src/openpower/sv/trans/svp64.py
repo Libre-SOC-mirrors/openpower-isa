@@ -751,21 +751,21 @@ def macro_subst(macros, txt):
             toreplace = '%s.s' % macro
             if toreplace == txt:
                 again = True
-                replaced = txt.replace(toreplace, value)
+                replaced = txt.replace(toreplace, "%s.s" % value)
                 print ("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
             toreplace = '%s.v' % macro
             if toreplace == txt:
                 again = True
-                replaced = txt.replace(toreplace, value)
+                replaced = txt.replace(toreplace, "%s.v" % value)
                 print ("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
             toreplace = '(%s)' % macro
-            if toreplace == txt:
+            if toreplace in txt:
                 again = True
-                replaced = txt.replace(toreplace, value)
+                replaced = txt.replace(toreplace, '(%s)' % value)
                 print ("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
