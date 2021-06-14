@@ -280,9 +280,10 @@ def FPMUL32(FRA, FRB):
     #FRA = DOUBLE(SINGLE(FRA))
     #FRB = DOUBLE(SINGLE(FRB))
     result = float(FRA) * float(FRB)
+    log ("FPMUL32", FRA, FRB, float(FRA), float(FRB), result)
     cvt = fp64toselectable(result)
     cvt = DOUBLE2SINGLE(cvt)
-    log ("FPMUL32", FRA, FRB, result, cvt)
+    log ("      cvt", cvt)
     return cvt
 
 
