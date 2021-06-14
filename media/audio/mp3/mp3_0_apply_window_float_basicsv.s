@@ -51,7 +51,7 @@ ff_mpadsp_apply_window_float_sv:
 	add out2, out, 0
 
 	setvl 0, 0, 8, 1, 1 # setvli MVL=8, VL=8
-	# sv.addi win2, win, 128
+	# sv.addi win2, win, 124
 
 	lfiwax sum, 0, 9 # zero it
 	addi p, buf, 64
