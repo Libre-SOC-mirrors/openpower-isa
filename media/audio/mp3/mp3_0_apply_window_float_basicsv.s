@@ -44,7 +44,7 @@ ff_mpadsp_apply_window_float_sv:
 	mulli 0, incr, 31
 	add out2, out, 0
 
-	# sv.setvli 0, MVL=8, VL=8
+	# setvl 0, 0, 8, 1, 1 # setvli MVL=8, VL=8
 	# sv.addi win2, win, 124
 
 	lfiwax sum, 0, 9 # zero it
@@ -104,7 +104,7 @@ ff_mpadsp_apply_window_float_sv:
 		fsubs sum2, sum2, tmpsum2
 
 		subi win, win, 128
-		# sv.subi win2, win2, 128
+		# sv.addi win2, win2, -128
 
 		stfs sum, 0(out)
 		add out, out, incr
@@ -113,7 +113,7 @@ ff_mpadsp_apply_window_float_sv:
 
 		addi i, i, 4
 		addi win, win, 4
-		# sv.subi win2, win2, 4
+		# sv.addi win2, win2, -4
 	bdnz .Lloop
 
 	addi p, buf, 128

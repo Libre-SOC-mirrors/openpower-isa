@@ -148,7 +148,10 @@ def decode_imm(field):
 
 # decodes svp64 assembly listings and creates EXT001 svp64 prefixes
 class SVP64Asm:
-    def __init__(self, lst, bigendian=False):
+    def __init__(self, lst, bigendian=False, macros=None):
+        if macros is None:
+            macros = {}
+        self.macros = macros
         self.lst = lst
         self.trans = self.translate(lst)
         self.isa = ISA() # reads the v3.0B pseudo-code markdown files
@@ -158,7 +161,10 @@ class SVP64Asm:
     def __iter__(self):
         yield from self.trans
 
-    def translate_one(self, insn):
+    def translate_one(self, insn, macros=None):
+        if macros is None:
+            macros = {}
+        macros.update(self.macros)
         isa = self.isa
         svp64 = self.svp64
         # find first space, to get opcode
@@ -166,8 +172,13 @@ class SVP64Asm:
         opcode = ls[0]
         # now find opcode fields
         fields = ''.join(ls[1:]).split(',')
-        fields = list(map(str.strip, fields))
-        log ("opcode, fields", ls, opcode, fields)
+        mfields = list(map(str.strip, fields))
+        log ("opcode, fields", ls, opcode, mfields)
+        fields = []
+        # macro substitution
+        for field in mfields:
+            fields.append(macro_subst(macros, field))
+        log ("opcode, fields substed", ls, opcode, fields)
 
         # sigh have to do setvl here manually for now...
         if opcode in ["setvl", "setvl."]:
@@ -242,7 +253,11 @@ class SVP64Asm:
         for idx, (field, regname) in enumerate(opregfields):
             imm, regname = decode_imm(regname)
             rtype = get_regtype(regname)
-            log ("    idx find", idx, field, regname, imm)
+            log ("    idx find", rtype, idx, field, regname, imm)
+            if rtype is None:
+                # probably an immediate field, append it straight
+                extras[('imm', idx, False)] = (idx, field, None, None, None)
+                continue
             extra = svp64_src.get(regname, None)
             if extra is not None:
                 extra = ('s', extra, False) # not a duplicate
@@ -267,6 +282,7 @@ class SVP64Asm:
             # into newfields
             if rtype is None:
                 v30b_newfields.append(field)
+                continue
 
             # identify if this is a ld/st immediate(reg) thing
             ldst_imm = "(" in field and field[-1] == ')'
@@ -381,9 +397,11 @@ class SVP64Asm:
                                 (rname, str(extras[extra_idx]))
                         # all good: encode as vector (bit 3 set)
                         sv_extra = 0b100 | (sv_extra >> 2)
-
                 # reconstruct the actual 5-bit CR field
                 field = (field << 2) | cr_subfield
+
+            else:
+                print ("no type match", rtype)
 
             # capture the extra field info
             log ("=>", "%5s" % bin(sv_extra), field)
@@ -408,8 +426,9 @@ class SVP64Asm:
 
         # begin with EXTRA fields
         for idx, sv_extra in extras.items():
-            if idx is None: continue
             log (idx)
+            if idx is None: continue
+            if idx[0] == 'imm': continue
             srcdest, idx, duplicate = idx
             if etype == 'EXTRA2':
                 svp64_rm.extra2[idx].eq(
@@ -690,6 +709,7 @@ class SVP64Asm:
         offs = 2 if etype == 'EXTRA2' else 3 # 2 or 3 bits
         for idx, sv_extra in extras.items():
             if idx is None: continue
+            if idx[0] == 'imm': continue
             srcdest, idx, duplicate = idx
             start = (10+idx*offs)
             end = start + offs-1
@@ -714,6 +734,22 @@ class SVP64Asm:
     def translate(self, lst):
         for insn in lst:
             yield from self.translate_one(insn)
+
+
+def macro_subst(macros, txt):
+    again = True
+    print ("subst", txt, macros)
+    while again:
+        again = False
+        for macro, value in macros.items():
+            if macro == txt or ('(' in txt and macro in txt) or \
+                               (txt.endswith('.v') and macro in txt):
+                again = True
+                replaced = txt.replace(macro, value)
+                print ("macro", txt, "replaced", replaced, macro, value)
+                txt = replaced
+    print ("    processed", txt)
+    return txt
 
 
 def asm_process():
@@ -742,9 +778,15 @@ def asm_process():
             outfile = open(args[1], "w")
 
     # read the line, look for "sv", process it
+    macros = {} # macros which start ".set"
     isa = SVP64Asm([])
     for line in lines:
         ls = line.split("#")
+        # identify macros
+        if ls[0].startswith(".set"):
+            macro = ls[0][4:].split(",")
+            macro, value = list(map(str.strip, macro))
+            macros[macro] = value
         if len(ls) != 2:
             outfile.write(line)
             continue
@@ -761,7 +803,7 @@ def asm_process():
             line = line[1:]
 
         # SV line indentified
-        lst = list(isa.translate_one(potential))
+        lst = list(isa.translate_one(potential, macros))
         lst = '; '.join(lst)
         outfile.write("%s%s # %s\n" % (ws, lst, potential))
 
@@ -797,7 +839,11 @@ if __name__ == '__main__':
     lst = [
              'sv.add./mr 5.v, 2.v, 1.v',
     ]
-    isa = SVP64Asm(lst)
+    macros = {'win2': '50', 'win': '60'}
+    lst = [
+             'sv.addi win2.v, win.v, -1',
+    ]
+    isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))
     csvs = SVP64RM()
     #asm_process()
