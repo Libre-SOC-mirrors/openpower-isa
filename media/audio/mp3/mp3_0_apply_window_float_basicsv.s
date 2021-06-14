@@ -28,7 +28,7 @@
 .set sum, 0
 .set sum2, 1
 .set tmpsum, 2
-.set tmpsum2, 2
+.set tmpsum2, 3
 
 	.machine power9
 	.abiversion 2
