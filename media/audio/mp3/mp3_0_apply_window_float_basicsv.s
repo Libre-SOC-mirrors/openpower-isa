@@ -63,9 +63,7 @@ ff_mpadsp_apply_window_float_sv:
 	# SUM8(MACS, sum, w, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
-	# TODO sv.fmadds/mr sum, fv0.v, fv1.v
-	# sv.fmuls fv0.v, fv0.v, fv1.v
-	# sv.fadds/mr/m=r30 sum, fv0.v, sum
+	# sv.fmadds/mr sum, fv0.v, fv1.v, sum
 
 	lfiwax tmpsum, 0, 9 # zero it
 	addi p, buf, 192
@@ -73,9 +71,7 @@ ff_mpadsp_apply_window_float_sv:
 	# SUM8(MLSS, sum, w + 32, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
-	# TODO sv.fmadds/mr tmpsum, fv0.v, fv1.v
-	# sv.fmuls fv0.v, fv0.v, fv1.v
-	# sv.fadds/mr/m=r30 tmpsum, fv0.v, tmpsum
+	# sv.fmadds/mr tmpsum, fv0.v, fv1.v, tmpsum
 	fsubs sum, sum, tmpsum
 	subi win, win, 128
 
@@ -97,13 +93,8 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.lfs/els fv0.v, 256(p)
 		# sv.lfs/els fv1.v, 256(win)
 		# sv.lfs/els fv2.v, 256(win2)
-		# TODO sv.fmadds/mr sum, fv0.v, fv1.v
-		# sv.fmuls fv1.v, fv0.v, fv1.v
-		# sv.fadds/mr/m=r30 sum, fv1.v, sum
-		# TODO sv.fmadds/mr sum2, fv0.v, fv2.v
-		# sv.fmuls fv0.v, fv0.v, fv2.v
-		# sv.fadds/mr/m=r30 sum2, fv0.v, sum2
-		fneg sum2, sum2
+		# sv.fmadds/mr sum, fv0.v, fv1.v, sum
+		# sv.fmsubs/mr sum2, fv0.v, fv2.v, sum2
 
 		addi p, buf, 192
 		subf p, i, p
@@ -116,12 +107,8 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.lfs/els fv0.v, 256(p)
 		# sv.lfs/els fv1.v, 256(win)
 		# sv.lfs/els fv2.v, 256(win2)
-		# TODO sv.fmadds/mr tmpsum, fv0.v, fv1.v
-		# sv.fmuls fv1.v, fv0.v, fv1.v
-		# sv.fadds/mr/m=r30 tmpsum, fv1.v, tmpsum
-		# TODO sv.fmadds/mr tmpsum2, fv0.v, fv2.v
-		# sv.fmuls fv0.v, fv0.v, fv2.v
-		# sv.fadds/mr/m=r30 tmpsum2, fv0.v, tmpsum2
+		# sv.fmadds/mr tmpsum, fv0.v, fv1.v, tmpsum
+		# sv.fmadds/mr tmpsum2, fv0.v, fv2.v, tmpsum2
 		fsubs sum, sum, tmpsum
 		fsubs sum2, sum2, tmpsum2
 
@@ -144,9 +131,7 @@ ff_mpadsp_apply_window_float_sv:
 	# SUM8(MLSS, sum, w + 32, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
-	# TODO sv.fmadds/mr sum, fv0.v, fv1.v
-	# sv.fmuls fv0.v, fv0.v, fv1.v
-	# sv.fadds/mr/m=r30 sum, fv0.v, sum
+	# sv.fmadds/mr sum, fv0.v, fv1.v, sum
 	# XXX no? possible bug? fneg sum, sum
 
 	stfs sum, 0(out)
