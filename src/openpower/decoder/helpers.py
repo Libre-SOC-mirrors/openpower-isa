@@ -287,6 +287,26 @@ def FPMUL32(FRA, FRB):
     return cvt
 
 
+def FPMULADD32(FRA, FRB, FRC, sign):
+    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+    #return FPMUL64(FRA, FRB)
+    #FRA = DOUBLE(SINGLE(FRA))
+    #FRB = DOUBLE(SINGLE(FRB))
+    if sign == 1:
+        result = float(FRA) * float(FRB) + float(FRC)
+    elif sign == -1:
+        result = float(FRA) * float(FRB) - float(FRC)
+    elif sign == 0:
+        result = float(FRA) * float(FRB)
+    log ("FPMULADD32", FRA, FRB, FRC,
+                       float(FRA), float(FRB), float(FRC),
+                       result)
+    cvt = fp64toselectable(result)
+    cvt = DOUBLE2SINGLE(cvt)
+    log ("      cvt", cvt)
+    return cvt
+
+
 def FPDIV32(FRA, FRB):
     #return FPDIV64(FRA, FRB)
     #FRA = DOUBLE(SINGLE(FRA))

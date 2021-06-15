@@ -211,21 +211,6 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(2), SelectableInt(0xC02399999999999A, 64))
             self.assertEqual(sim.fpr(3), SelectableInt(0xc051266640000000, 64))
 
-    def test_fp_muls2(self):
-        """>>> lst = ["fmuls 3, 1, 2",
-                     ]
-        """
-        lst = ["fmuls 3, 1, 2", #
-                     ]
-
-        fprs = [0] * 32
-        fprs[1] = 0xbfc4e9d700000000
-        fprs[2] = 0xbdc5000000000000
-
-        with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, initial_fprs=fprs)
-            self.assertEqual(sim.fpr(3), SelectableInt(0x3d9b72ea40000000, 64))
-
     def test_fp_muls3(self):
         """>>> lst = ["fmuls 3, 1, 2",
                      ]
@@ -288,6 +273,38 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(1), SelectableInt(0x401C000000000000, 64))
             self.assertEqual(sim.fpr(2), SelectableInt(0xC02399999999999A, 64))
             self.assertEqual(sim.fpr(3), SelectableInt(0xC051266666666667, 64))
+
+    def test_fp_madd1(self):
+        """>>> lst = ["fmadds 3, 1, 2, 4",
+                     ]
+        """
+        lst = ["fmadds 3, 1, 2, 4", # 7.0 * -9.8 + 2 = -66.6
+                     ]
+
+        fprs = [0] * 32
+        fprs[1] = 0x401C000000000000  # 7.0
+        fprs[2] = 0xC02399999999999A  # -9.8
+        fprs[4] = 0x4000000000000000  # 2.0
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            self.assertEqual(sim.fpr(3), SelectableInt(0xC050A66660000000, 64))
+
+    def test_fp_msub1(self):
+        """>>> lst = ["fmsubs 3, 1, 2, 4",
+                     ]
+        """
+        lst = ["fmsubs 3, 1, 2, 4", # 7.0 * -9.8 + 2 = -70.6
+                     ]
+
+        fprs = [0] * 32
+        fprs[1] = 0x401C000000000000  # 7.0
+        fprs[2] = 0xC02399999999999A  # -9.8
+        fprs[4] = 0x4000000000000000  # 2.0
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            self.assertEqual(sim.fpr(3), SelectableInt(0xc051a66660000000, 64))
 
     def test_fp_fcfids(self):
         """>>> lst = ["fcfids 1, 2",

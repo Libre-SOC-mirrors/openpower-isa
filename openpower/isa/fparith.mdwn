@@ -145,3 +145,40 @@ Special Registers Altered:
     FX OX UX XX
     VXSNAN VXISI
     CR1          (if Rc=1)
+
+# Floating Multiply-Add [Single]
+
+A-Form
+
+* fmadds FRT,FRA,FRC,FRB (Rc=0)
+* fmadds. FRT,FRA,FRC,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPMULADD32(FRA, FRC, FRB, 1)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# Floating Multiply-Sub [Single]
+
+A-Form
+
+* fmsubs FRT,FRA,FRC,FRB (Rc=0)
+* fmsubs. FRT,FRA,FRC,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPMULADD32(FRA, FRC, FRB, -1)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+

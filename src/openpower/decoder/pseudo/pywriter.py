@@ -40,6 +40,7 @@ from openpower.decoder.helpers import (
                                  DOUBLE, SINGLE,
                                  FPADD32, FPSUB32, FPMUL32, FPDIV32,
                                  FPADD64, FPSUB64, FPMUL64, FPDIV64,
+                                 FPMULADD32,
                                 )
 from openpower.decoder.isafunctions.fpfromint import INT2FP
 
