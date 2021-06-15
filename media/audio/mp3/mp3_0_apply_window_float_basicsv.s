@@ -50,6 +50,10 @@ ff_mpadsp_apply_window_float_sv:
 	mulli 0, incr, 31
 	add out2, out, 0
 
+	# set predicate mask (for taking out one add in mapreduce)
+	addi 30, 0, 127 # 127 = 0b0111_1111 - 7 bits
+
+	# set Vector Length
 	setvl 0, 0, 7, 1, 1 # setvli MVL=8, VL=8
 	# sv.addi win2, win, 124
 
@@ -59,7 +63,9 @@ ff_mpadsp_apply_window_float_sv:
 	# SUM8(MACS, sum, w, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
-	# sv.fmuls/mr sum, fv0.v, fv1.v
+	# TODO sv.fmadds/mr sum, fv0.v, fv1.v
+	# sv.fmuls fv0.v, fv0.v, fv1.v
+	# sv.fadds/mr/m=r30 sum, fv0.v, sum
 
 	lfiwax tmpsum, 0, 9 # zero it
 	addi p, buf, 192
@@ -67,7 +73,9 @@ ff_mpadsp_apply_window_float_sv:
 	# SUM8(MLSS, sum, w + 32, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
-	# sv.fmuls/mr tmpsum, fv0.v, fv1.v
+	# TODO sv.fmadds/mr tmpsum, fv0.v, fv1.v
+	# sv.fmuls fv0.v, fv0.v, fv1.v
+	# sv.fadds/mr/m=r30 tmpsum, fv0.v, tmpsum
 	fsubs sum, sum, tmpsum
 	subi win, win, 128
 
@@ -89,8 +97,12 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.lfs/els fv0.v, 256(p)
 		# sv.lfs/els fv1.v, 256(win)
 		# sv.lfs/els fv2.v, 256(win2)
-		# sv.fmuls/mr sum, fv0.v, fv1.v
-		# sv.fmuls/mr sum2, fv0.v, fv2.v
+		# TODO sv.fmadds/mr sum, fv0.v, fv1.v
+		# sv.fmuls fv1.v, fv0.v, fv1.v
+		# sv.fadds/mr/m=r30 sum, fv1.v, sum
+		# TODO sv.fmadds/mr sum2, fv0.v, fv2.v
+		# sv.fmuls fv0.v, fv0.v, fv2.v
+		# sv.fadds/mr/m=r30 sum2, fv0.v, sum2
 		fneg sum2, sum2
 
 		addi p, buf, 192
@@ -104,8 +116,12 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.lfs/els fv0.v, 256(p)
 		# sv.lfs/els fv1.v, 256(win)
 		# sv.lfs/els fv2.v, 256(win2)
-		# sv.fmuls/mr tmpsum, fv0.v, fv1.v
-		# sv.fmuls/mr tmpsum2, fv0.v, fv2.v
+		# TODO sv.fmadds/mr tmpsum, fv0.v, fv1.v
+		# sv.fmuls fv1.v, fv0.v, fv1.v
+		# sv.fadds/mr/m=r30 tmpsum, fv1.v, tmpsum
+		# TODO sv.fmadds/mr tmpsum2, fv0.v, fv2.v
+		# sv.fmuls fv0.v, fv0.v, fv2.v
+		# sv.fadds/mr/m=r30 tmpsum2, fv0.v, tmpsum2
 		fsubs sum, sum, tmpsum
 		fsubs sum2, sum2, tmpsum2
 
@@ -128,7 +144,9 @@ ff_mpadsp_apply_window_float_sv:
 	# SUM8(MLSS, sum, w + 32, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
-	# sv.fmuls/mr sum, fv0.v, fv1.v
+	# TODO sv.fmadds/mr sum, fv0.v, fv1.v
+	# sv.fmuls fv0.v, fv0.v, fv1.v
+	# sv.fadds/mr/m=r30 sum, fv0.v, sum
 	fneg sum, sum
 
 	stfs sum, 0(out)
