@@ -147,7 +147,6 @@ ff_mpadsp_apply_window_float_sv:
 	# TODO sv.fmadds/mr sum, fv0.v, fv1.v
 	# sv.fmuls fv0.v, fv0.v, fv1.v
 	# sv.fadds/mr/m=r30 sum, fv0.v, sum
-	fneg sum, sum
 
 	stfs sum, 0(out)
 
