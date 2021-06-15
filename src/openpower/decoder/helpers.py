@@ -253,6 +253,7 @@ def fp64toselectable(frt):
 
 
 def FPADD32(FRA, FRB):
+    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
     #return FPADD64(FRA, FRB)
     #FRA = DOUBLE(SINGLE(FRA))
     #FRB = DOUBLE(SINGLE(FRB))
@@ -264,6 +265,7 @@ def FPADD32(FRA, FRB):
 
 
 def FPSUB32(FRA, FRB):
+    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
     #return FPSUB64(FRA, FRB)
     #FRA = DOUBLE(SINGLE(FRA))
     #FRB = DOUBLE(SINGLE(FRB))
@@ -308,6 +310,7 @@ def FPMULADD32(FRA, FRB, FRC, sign):
 
 
 def FPDIV32(FRA, FRB):
+    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
     #return FPDIV64(FRA, FRB)
     #FRA = DOUBLE(SINGLE(FRA))
     #FRB = DOUBLE(SINGLE(FRB))
