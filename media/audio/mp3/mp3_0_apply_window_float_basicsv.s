@@ -27,8 +27,6 @@
 # floats
 .set sum, 0
 .set sum2, 1
-.set tmpsum, 2
-.set tmpsum2, 3
 
 	.machine power9
 	.abiversion 2
@@ -65,14 +63,12 @@ ff_mpadsp_apply_window_float_sv:
 	# sv.lfs/els fv1.v, 256(p)
 	# sv.fmadds/mr sum, fv0.v, fv1.v, sum
 
-	lfiwax tmpsum, 0, 9 # zero it
 	addi p, buf, 192
 	addi win, win, 128
 	# SUM8(MLSS, sum, w + 32, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
-	# sv.fmadds/mr tmpsum, fv0.v, fv1.v, tmpsum
-	fsubs sum, sum, tmpsum
+	# sv.fmsubs/mr sum, fv0.v, fv1.v, sum
 	subi win, win, 128
 
 	stfs sum, 0(out)
@@ -98,8 +94,6 @@ ff_mpadsp_apply_window_float_sv:
 
 		addi p, buf, 192
 		subf p, i, p
-		lfiwax tmpsum, 0, 9 # zero it
-		lfiwax tmpsum2, 0, 9 # zero it
 		addi win, win, 128
 		# sv.addi win2, win2, 128
 
@@ -107,10 +101,8 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.lfs/els fv0.v, 256(p)
 		# sv.lfs/els fv1.v, 256(win)
 		# sv.lfs/els fv2.v, 256(win2)
-		# sv.fmadds/mr tmpsum, fv0.v, fv1.v, tmpsum
-		# sv.fmadds/mr tmpsum2, fv0.v, fv2.v, tmpsum2
-		fsubs sum, sum, tmpsum
-		fsubs sum2, sum2, tmpsum2
+		# sv.fmsubs/mr sum, fv0.v, fv1.v, sum
+		# sv.fmsubs/mr sum2, fv0.v, fv2.v, sum2
 
 		subi win, win, 128
 		# sv.addi win2, win2, -128
@@ -131,7 +123,7 @@ ff_mpadsp_apply_window_float_sv:
 	# SUM8(MLSS, sum, w + 32, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
-	# sv.fmadds/mr sum, fv0.v, fv1.v, sum
+	# sv.fmsubs/mr sum, fv0.v, fv1.v, sum
 	# XXX no? possible bug? fneg sum, sum
 
 	stfs sum, 0(out)
