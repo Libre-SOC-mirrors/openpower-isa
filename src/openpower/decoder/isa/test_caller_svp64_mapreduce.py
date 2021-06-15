@@ -25,6 +25,7 @@ class DecoderTestCase(FHDLTestCase):
     def test_sv_add_scalar_reduce(self):
         """>>> lst = ['sv.add/mr 1, 5.v, 1'
                        ]
+        note: there are 2 adds (VL=2) but *three values involved*
         adds:
             * 1 starts at 0x0101
             * 1 = 5 + 1  => 0x101 + 0x202 => 0x303
@@ -59,6 +60,13 @@ class DecoderTestCase(FHDLTestCase):
     def test_fp_muls_reduce(self):
         """>>> lst = ["sv.fmuls/mr 1, 2.v, 1",
                      ]
+        note that VL=3 but *four values are involved*
+        answer should be 7.0 * -9.8 * -9.8 * 2.0 = 1344.56
+
+        * FPR 1 starts at 7.0
+        * FPR 1 multiplied by FPR 2, -9.8
+        * FPR 1 multiplied by FPR 3, -9.8
+        * FPR 1 multiplied by FPR 4, 2.0
         """
         isa = SVP64Asm(["sv.fmuls/mr 1, 2.v, 1",
                      ])
