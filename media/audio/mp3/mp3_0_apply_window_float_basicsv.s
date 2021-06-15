@@ -48,9 +48,6 @@ ff_mpadsp_apply_window_float_sv:
 	mulli 0, incr, 31
 	add out2, out, 0
 
-	# set predicate mask (for taking out one add in mapreduce)
-	addi 30, 0, 127 # 127 = 0b0111_1111 - 7 bits
-
 	# set Vector Length
 	setvl 0, 0, 7, 1, 1 # setvli MVL=8, VL=8
 	# sv.addi win2, win, 124
