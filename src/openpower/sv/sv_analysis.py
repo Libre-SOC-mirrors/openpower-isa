@@ -229,7 +229,7 @@ def process_csvs():
     primarykeys.sort()
 
     # mapping to old SVPrefix "Forms"
-    mapsto = {'3R-1W-CRio': 'RM-1P-3S1D',
+    mapsto = {'3R-1W-CRo': 'RM-1P-3S1D',
               '2R-1W-CRio': 'RM-1P-2S1D',
               '2R-1W-CRi': 'RM-1P-3S1D',
               '2R-1W-CRo': 'RM-1P-2S1D',

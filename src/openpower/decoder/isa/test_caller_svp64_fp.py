@@ -131,7 +131,6 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(3), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(4), SelectableInt(0xC004000000000000, 64))
 
-
     def test_sv_fpadd(self):
         """>>> lst = ["sv.fadds 6.v, 2.v, 4.v"
                         ]
@@ -157,6 +156,38 @@ class DecoderTestCase(FHDLTestCase):
                                        initial_fprs=fprs)
             self.assertEqual(sim.fpr(6), SelectableInt(0x0, 64))
             self.assertEqual(sim.fpr(7), SelectableInt(0xc050266660000000, 64))
+
+    def test_sv_fpmadds(self):
+        """>>> lst = ["sv.fmadds 6.v, 2.v, 4.v, 8"
+                        ]
+            two vector mul-adds with a scalar in f8
+            * fp6 = fp2 * fp4 + f8 = 7.0 * 2.0 - 2.0 = 12.0
+            * fp7 = fp3 * fp5 + f8 = 7.0 * 2.0 - 2.0 = 12.0
+        """
+        lst = SVP64Asm(["sv.fmadds 6.v, 2.v, 4.v, 8"
+                        ])
+        lst = list(lst)
+
+        fprs = [0] * 32
+        fprs[2] = 0x401C000000000000  # 7.0
+        fprs[3] = 0xC02399999999999A  # -9.8
+        fprs[4] = 0x4000000000000000  # 2.0
+        fprs[5] = 0xC040266660000000 # -32.3
+        fprs[6] = 0x4000000000000000  # 2.0
+        fprs[7] = 0x4000000000000000  # 2.0
+        fprs[8] = 0xc000000000000000  # -2.0
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 2 # VL
+        svstate.maxvl[0:7] = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_fprs=fprs)
+            self.assertEqual(sim.fpr(6), SelectableInt(0x4028000000000000, 64))
+            self.assertEqual(sim.fpr(7), SelectableInt(0x4073a8a3c0000000, 64))
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
