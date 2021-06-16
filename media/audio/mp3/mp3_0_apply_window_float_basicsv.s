@@ -43,30 +43,30 @@ ff_mpadsp_apply_window_float_sv:
 	addis 9,2,.LC0@toc@ha
 	addi 9,9,.LC0@toc@l
 
+	# samples2 = samples + 31 * incr;
 	slwi incr, incr, 2 # incr *= 4, sizeof float
-
 	mulli 0, incr, 31
 	add out2, out, 0
 
 	# set Vector Length
 	setvl 0, 0, 7, 1, 1 # setvli MVL=8, VL=8
-	# sv.addi win2, win, 124
+	addi win2, win, 124 # w2 = window + 31
 
 	lfiwax sum, 0, 9 # zero it
-	addi p, buf, 64
+	addi p, buf, 64  # p = synth_buf+16
 
 	# SUM8(MACS, sum, w, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
 	# sv.fmadds/mr sum, fv0.v, fv1.v, sum
 
-	addi p, buf, 192
-	addi win, win, 128
+	addi p, buf, 192      # p = synth_buf + 48;
+	addi win, win, 128    # w = w + 32
 	# SUM8(MLSS, sum, w + 32, p)
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
 	# sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
-	subi win, win, 128
+	addi win, win, -128   # w = w - 32
 
 	stfs sum, 0(out)
 	add out, out, incr
@@ -92,7 +92,7 @@ ff_mpadsp_apply_window_float_sv:
 		addi p, buf, 192
 		subf p, i, p
 		addi win, win, 128
-		# sv.addi win2, win2, 128
+		addi win2, win2, 128
 
 		# SUM8P2(sum, MLSS, sum2, MLSS, w + 32, w2 + 32, p)
 		# sv.lfs/els fv0.v, 256(p)
@@ -101,8 +101,8 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
 		# sv.fnmsubs/mr sum2, fv0.v, fv2.v, sum2
 
-		subi win, win, 128
-		# sv.addi win2, win2, -128
+		addi win, win, -128
+		addi win2, win2, -128
 
 		stfs sum, 0(out)
 		add out, out, incr
@@ -111,7 +111,7 @@ ff_mpadsp_apply_window_float_sv:
 
 		addi i, i, 4
 		addi win, win, 4
-		# sv.addi win2, win2, -4
+		addi win2, win2, -4
 	bdnz .Lloop
 
 	addi p, buf, 128
