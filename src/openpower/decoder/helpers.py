@@ -289,7 +289,7 @@ def FPMUL32(FRA, FRB):
     return cvt
 
 
-def FPMULADD32(FRA, FRC, FRB, addsign, mulsign):
+def FPMULADD32(FRA, FRC, FRB, mulsign, addsign):
     from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
     #return FPMUL64(FRA, FRB)
     #FRA = DOUBLE(SINGLE(FRA))
@@ -298,12 +298,12 @@ def FPMULADD32(FRA, FRC, FRB, addsign, mulsign):
         if mulsign == 1:
             result = float(FRA) * float(FRC) + float(FRB) # fmadds
         elif mulsign == -1:
-            result = -(float(FRA) * float(FRC) + float(FRB))  # fnmadds
+            result = -(float(FRA) * float(FRC) - float(FRB))  # fnmsubs
     elif addsign == -1:
         if mulsign == 1:
             result = float(FRA) * float(FRC) - float(FRB) # fmsubs
         elif mulsign == -1:
-            result = -(float(FRA) * float(FRC) - float(FRB))  # fnmsubs
+            result = -(float(FRA) * float(FRC) + float(FRB))  # fnmadds
     elif addsign == 0:
         result = 0.0
     log ("FPMULADD32", FRA, FRB, FRC,
