@@ -155,7 +155,7 @@ A-Form
 
 Pseudo-code:
 
-    FRT <- FPMULADD32(FRA, FRC, FRB, 1)
+    FRT <- FPMULADD32(FRA, FRC, FRB, 1, 1)
 
 Special Registers Altered:
 
@@ -173,7 +173,43 @@ A-Form
 
 Pseudo-code:
 
-    FRT <- FPMULADD32(FRA, FRC, FRB, -1)
+    FRT <- FPMULADD32(FRA, FRC, FRB, 1, -1)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# Floating Negative Multiply-Add [Single]
+
+A-Form
+
+* fnmadds FRT,FRA,FRC,FRB (Rc=0)
+* fnmadds. FRT,FRA,FRC,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPMULADD32(FRA, FRC, FRB, -1, 1)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# Floating Negative Multiply-Sub [Single]
+
+A-Form
+
+* fnmsubs FRT,FRA,FRC,FRB (Rc=0)
+* fnmsubs. FRT,FRA,FRC,FRB (Rc=0)
+
+Pseudo-code:
+
+    FRT <- FPMULADD32(FRA, FRC, FRB, -1, -1)
 
 Special Registers Altered:
 
