@@ -50,10 +50,10 @@ ff_mpadsp_apply_window_float_sv:
 
 	# set Vector Length
 	setvl 0, 0, 7, 1, 1 # setvli MVL=8, VL=8
-	addi win2, win, 124 # w2 = window + 31
+	addi win2, win, 124   # w2 = window + 31
 
-	lfiwax sum, 0, 5 # sum = *dither_state
-	addi p, buf, 64  # p = synth_buf+16
+	lfiwax sum, 0, 5      # sum = *dither_state
+	addi p, buf, 64       # p = synth_buf+16
 
 	# SUM8(MACS, sum, w, p)
 	# sv.lfs/els fv0.v, 256(win)
@@ -68,9 +68,9 @@ ff_mpadsp_apply_window_float_sv:
 	# sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
 	addi win, win, -128   # w = w - 32
 
-	stfs sum, 0(out)
-	add out, out, incr
-	addi win, win, 4
+	stfs sum, 0(out)      # *samples = &sum
+	add out, out, incr    # samples += incr
+	addi win, win, 4      # w++
 
 	# Loop 15 times
 	li 0, 15
