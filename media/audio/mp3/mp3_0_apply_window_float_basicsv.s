@@ -75,10 +75,12 @@ ff_mpadsp_apply_window_float_sv:
 	# Loop 15 times
 	li 0, 15
 	mtctr 0
-	li i, 4
+	li i, 4  # loop starts at 1: (for j=1;j<16;j++)
 .Lloop:
 		lfiwax sum, 0, 9 # zero it
 		lfiwax sum2, 0, 9 # zero it
+
+		# p = synth_buf + 16 + j
 		addi p, buf, 64
 		add p, p, i
 
@@ -89,8 +91,11 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.fmadds/mr sum, fv0.v, fv1.v, sum
 		# sv.fnmsubs/mr sum2, fv0.v, fv2.v, sum2
 
+		# p = synth_buf + 48 - j
 		addi p, buf, 192
 		subf p, i, p
+
+        # win and win2 += 32
 		addi win, win, 128
 		addi win2, win2, 128
 
@@ -101,21 +106,22 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
 		# sv.fnmsubs/mr sum2, fv0.v, fv2.v, sum2
 
+        # win and win2 -= 32
 		addi win, win, -128
 		addi win2, win2, -128
 
 		stfs sum, 0(out)
-		add out, out, incr
+		add out, out, incr    # samples += incr
 		stfs sum2, 0(out2)
-		subf out2, incr, out2
+		subf out2, incr, out2 # samples2 -= incr
 
-		addi i, i, 4
-		addi win, win, 4
-		addi win2, win2, -4
+		addi i, i, 4          # for-loop j=1..15
+		addi win, win, 4      # w++
+		addi win2, win2, -4   # w2--
 	bdnz .Lloop
 
-	addi p, buf, 128
-	addi win, win, 128
+	addi p, buf, 128        # p = synth_buf + 32
+	addi win, win, 128      # w += 32
 	lfiwax sum, 0, 9 # zero it
 	# SUM8(MLSS, sum, w + 32, p)
 	# sv.lfs/els fv0.v, 256(win)
