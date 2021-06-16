@@ -295,15 +295,17 @@ def FPMULADD32(FRA, FRC, FRB, addsign, mulsign):
     #FRA = DOUBLE(SINGLE(FRA))
     #FRB = DOUBLE(SINGLE(FRB))
     if addsign == 1:
-        result = float(FRB)
+        if mulsign == 1:
+            result = float(FRA) * float(FRC) + float(FRB) # fmadds
+        elif mulsign == -1:
+            result = -(float(FRA) * float(FRC) + float(FRB))  # fnmadds
     elif addsign == -1:
-        result = -float(FRB)
+        if mulsign == 1:
+            result = float(FRA) * float(FRC) - float(FRB) # fmsubs
+        elif mulsign == -1:
+            result = -(float(FRA) * float(FRC) - float(FRB))  # fnmsubs
     elif addsign == 0:
         result = 0.0
-    if mulsign == 1:
-        result += float(FRA) * float(FRC)
-    elif mulsign == -1:
-        result -= float(FRA) * float(FRC)
     log ("FPMULADD32", FRA, FRB, FRC,
                        float(FRA), float(FRB), float(FRC),
                        result)
