@@ -52,7 +52,7 @@ ff_mpadsp_apply_window_float_sv:
 	setvl 0, 0, 7, 1, 1 # setvli MVL=8, VL=8
 	addi win2, win, 124 # w2 = window + 31
 
-	lfiwax sum, 0, 9 # zero it
+	lfiwax sum, 0, 5 # sum = *dither_state
 	addi p, buf, 64  # p = synth_buf+16
 
 	# SUM8(MACS, sum, w, p)
