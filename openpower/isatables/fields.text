@@ -255,6 +255,10 @@
    |0     |6    |11    |16   |22 |24 |25 |26    |31 |
    | PO   |  RT |   RA | SVi |// |vs |ms |   XO |Rc |
 
+# 1.6.29 SVC-FORM
+   |0     |6    |9    |11     |
+   | PO   | SCi | SCm | SCimm |
+
 # 1.6.28 Instruction Fields
     A (6)
         Field used by the tbegin. instruction to specify an
@@ -669,6 +673,15 @@
         rfebb     instruction   re-enables      event-based
         branches.
         Formats: XL
+    SCi (6:8)
+        Index to SV Context Propagation SPR
+        Formats: SVC
+    SCm (9:10)
+        SV Context Propagation Mode
+        Formats: SVC
+    SCimm (11:31)
+        SV Context Propagation immediate FIFO bitfield
+        Formats: SVC
     SH (16:20)
         Field used to specify a shift amount.
         Formats: M, X
