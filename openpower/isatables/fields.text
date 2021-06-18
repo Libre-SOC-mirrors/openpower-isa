@@ -259,6 +259,10 @@
    |0     |6    |9    |11     |
    | PO   | SCi | SCm | SCimm |
 
+# 1.6.30 SVR-FORM
+   |0     |6    |9    |11    | 15     |
+   | PO   | SCi | SCm | SRbr | SRimm  |
+
 # 1.6.28 Instruction Fields
     A (6)
         Field used by the tbegin. instruction to specify an
@@ -675,12 +679,18 @@
         Formats: XL
     SCi (6:8)
         Index to SV Context Propagation SPR
-        Formats: SVC
+        Formats: SVC, SVR
     SCm (9:10)
         SV Context Propagation Mode
-        Formats: SVC
+        Formats: SVC, SVR
     SCimm (11:31)
-        SV Context Propagation immediate FIFO bitfield
+        SV Context Propagation immediate bitfield
+        Formats: SVC
+    SRbr (11:14)
+        SV REMAP byte-reversal field.
+        Formats: SVC
+    SRimm (15:31)
+        SV REMAP immediate FIFO bitfield
         Formats: SVC
     SH (16:20)
         Field used to specify a shift amount.
