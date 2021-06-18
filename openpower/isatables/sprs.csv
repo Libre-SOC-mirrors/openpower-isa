@@ -66,6 +66,10 @@ Idx,SPR,priv_mtspr,priv_mfspr,len
 704,SVSTATE,no,no,32
 720,PRTBL,yes,yes,64
 721,SVSRR0,yes,yes,32
+722,SVSHAPE0,yes,yes,32
+723,SVSHAPE1,yes,yes,32
+724,SVSHAPE2,yes,yes,32
+725,SVSHAPE3,yes,yes,32
 768,SIER,-,no,64
 769,MMCR2,no,no,64
 770,MMCRA,no,no,64
