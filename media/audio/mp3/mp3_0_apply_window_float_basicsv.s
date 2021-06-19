@@ -24,13 +24,9 @@
 .set win2, 16
 
 # SV floats
-#.set fv0, 32
-#.set fv1, 40
-#.set fv2, 48
-# for now... TODO, add 128 regs to simulator
-.set fv0, 8
-.set fv1, 16
-.set fv2, 24
+.set fv0, 32
+.set fv1, 40
+.set fv2, 48
 
 # floats
 .set sum, 0
