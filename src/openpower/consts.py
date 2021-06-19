@@ -227,8 +227,10 @@ class SVP64MODEb:
     SZ = 4  # for source
     # reduce mode
     REDUCE = 2  # 0=normal predication 1=reduce mode
+    PARALLEL = 3 # 1=parallel reduce, 0=scalar reduce
     SVM = 3  # subvector reduce mode 0=independent 1=horizontal
     CRM = 4  # CR mode on reduce (Rc=1) 0=some 1=all
+    RG = 4   # Reverse-gear on reduce
     # saturation mode
     N = 2  # saturation signed mode 0=signed 1=unsigned
     # ffirst and predicate result modes
