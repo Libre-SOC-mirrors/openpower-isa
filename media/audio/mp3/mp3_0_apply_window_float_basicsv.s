@@ -147,8 +147,8 @@ ff_mpadsp_apply_window_float_sv:
 	# sv.lfs/els fv0.v, 256(win)
 	# sv.lfs/els fv1.v, 256(p)
 	# TOO ACCURATE! hilarious sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
-	# sv.fmuls fv1.v, fv0.v, fv1.v
-	# sv.fsubs/mr sum, sum, fv1.v  # sum = sum - vector fv1
+	# sv.fmuls fv0.v, fv0.v, fv1.v
+	# sv.fsubs/mr sum, sum, fv0.v
 
 	stfs sum, 0(out)
 
