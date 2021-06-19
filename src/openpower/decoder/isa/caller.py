@@ -98,7 +98,7 @@ class GPR(dict):
         self.sd = decoder
         self.isacaller = isacaller
         self.svstate = svstate
-        for i in range(32):
+        for i in range(len(regfile)):
             self[i] = SelectableInt(regfile[i], 64)
 
     def __call__(self, ridx):
@@ -123,12 +123,7 @@ class GPR(dict):
         """ XXX currently not used
         """
         rnum = self._get_regnum(attr)
-        # XXX TODO, this needs sorting! (1) reverse gear for mapreduce
-        # and (2) when doing element-width overrides.  used by
-        # GPR(x) or GPR[x] in pseudocode
-        offs = self.svstate.srcstep
-        log("GPR getitem TODO mapreduce reverse-gear", attr, rnum,
-             "srcoffs", offs)
+        log("GPR getitem", attr, rnum)
         return self.regfile[rnum]
 
     def dump(self, printout=True):
