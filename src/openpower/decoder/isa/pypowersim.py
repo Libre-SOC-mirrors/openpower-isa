@@ -284,8 +284,8 @@ def help():
 def run_simulation():
 
     binaryname = None
-    initial_regs = [0]*32
-    initial_fprs = [0]*32
+    initial_regs = [0]*128
+    initial_fprs = [0]*128
     initial_sprs = None
     initial_mem = {}
     initial_pc = 0x0
@@ -316,9 +316,9 @@ def run_simulation():
         elif opt in ['-a', '--listing']:
             lst = arg
         elif opt in ['-g', '--intregs']:
-            initial_regs = read_entries(arg, 32)
+            initial_regs = read_entries(arg, 128)
         elif opt in ['-f', '--fpregs']:
-            initial_fprs = read_entries(arg, 32)
+            initial_fprs = read_entries(arg, 128)
         elif opt in ['-s', '--sprs']:
             initial_sprs = read_entries(arg, 32)
         elif opt in ['-l', '--load']:
