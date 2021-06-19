@@ -1153,8 +1153,10 @@ class PowerDecode2(PowerDecodeSubset):
             comb += crin_svdec_o.idx.eq(op.sv_cr_out) # SVP64 CR out
 
             # get SVSTATE srcstep (TODO: elwidth etc.) needed below
+            vl = Signal.like(self.state.svstate.vl)
             srcstep = Signal.like(self.state.svstate.srcstep)
             dststep = Signal.like(self.state.svstate.dststep)
+            comb += vl.eq(self.state.svstate.vl)
             comb += srcstep.eq(self.state.svstate.srcstep)
             comb += dststep.eq(self.state.svstate.dststep)
 
@@ -1173,7 +1175,11 @@ class PowerDecode2(PowerDecodeSubset):
                 # to_reg is 7-bits, outs get dststep added, ins get srcstep
                 with m.If(svdec.isvec):
                     step = dststep if out else srcstep
-                    comb += to_reg.data.eq(step+svdec.reg_out)
+                    # reverse gear goes the opposite way
+                    with m.If(self.rm_dec.reverse_gear):
+                        comb += to_reg.data.eq(step+svdec.reg_out)
+                    with m.Else():
+                        comb += to_reg.data.eq(svdec.reg_out+(vl-1-step))
                 with m.Else():
                     comb += to_reg.data.eq(svdec.reg_out)
 

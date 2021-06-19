@@ -123,8 +123,12 @@ class GPR(dict):
         """ XXX currently not used
         """
         rnum = self._get_regnum(attr)
+        # XXX TODO, this needs sorting! (1) reverse gear for mapreduce
+        # and (2) when doing element-width overrides.  used by
+        # GPR(x) or GPR[x] in pseudocode
         offs = self.svstate.srcstep
-        log("GPR getitem", attr, rnum, "srcoffs", offs)
+        log("GPR getitem TODO mapreduce reverse-gear", attr, rnum,
+             "srcoffs", offs)
         return self.regfile[rnum]
 
     def dump(self, printout=True):
