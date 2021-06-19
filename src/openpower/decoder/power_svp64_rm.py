@@ -97,6 +97,7 @@ class SVP64RMModeDecode(Elaboratable):
         self.inv = Signal(1)     # and whether it's inverted (like branch BO)
         self.map_evm = Signal(1)
         self.map_crm = Signal(1)
+        self.reverse_gear = Signal(1)  # elements to go VL-1..0
         self.ldstmode = Signal(SVP64LDSTmode) # LD/ST Mode (strided type)
 
     def elaborate(self, platform):
@@ -122,6 +123,13 @@ class SVP64RMModeDecode(Elaboratable):
                 comb += self.mode.eq(SVP64RMMode.SATURATE) # saturate
             with m.Case(3):
                 comb += self.mode.eq(SVP64RMMode.PREDRES) # predicate result
+
+        # extract "reverse gear" for mapreduce mode
+        with m.If((~is_ldst) &                     # not for LD/ST
+                    (mode2 == 0) &                 # first 2 bits == 0
+                    mode[SVP64MODE.REDUCE] &       # bit 2 == 1
+                   (~mode[SVP64MODE.PARALLEL])):   # not parallel mapreduce
+            comb += self.reverse_gear.eq(1)        # theeeen finally, whew
 
         # extract zeroing
         with m.Switch(mode2):
