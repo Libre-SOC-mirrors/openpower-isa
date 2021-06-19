@@ -1083,6 +1083,7 @@ class ISACaller:
         srcmask = dstmask = 0xffff_ffff_ffff_ffff
         if self.is_svp64_mode:
             pmode = yield self.dec2.rm_dec.predmode
+            reverse_gear = yield self.dec2.rm_dec.reverse_gear
             sv_ptype = yield self.dec2.dec.op.SV_Ptype
             srcpred = yield self.dec2.rm_dec.srcpred
             dstpred = yield self.dec2.rm_dec.dstpred
@@ -1097,6 +1098,7 @@ class ISACaller:
                 if sv_ptype == SVPtype.P2.value:
                     srcmask = get_predcr(self.crl, srcpred, vl)
             log ("    pmode", pmode)
+            log ("    reverse", reverse_gear)
             log ("    ptype", sv_ptype)
             log ("    srcpred", bin(srcpred))
             log ("    dstpred", bin(dstpred))
@@ -1344,6 +1346,7 @@ class ISACaller:
             srcstep = self.svstate.srcstep.asint(msb0=True)
             dststep = self.svstate.dststep.asint(msb0=True)
             rm_mode = yield self.dec2.rm_dec.mode
+            reverse_gear = yield self.dec2.rm_dec.reverse_gear
             sv_ptype = yield self.dec2.dec.op.SV_Ptype
             out_vec = not (yield self.dec2.no_out_vec)
             in_vec = not (yield self.dec2.no_in_vec)
@@ -1352,6 +1355,7 @@ class ISACaller:
             log ("    svstate.srcstep", srcstep)
             log ("    svstate.dststep", dststep)
             log ("    mode", rm_mode)
+            log ("    reverse", reverse_gear)
             log ("    out_vec", out_vec)
             log ("    in_vec", in_vec)
             log ("    sv_ptype", sv_ptype, sv_ptype == SVPtype.P2.value)

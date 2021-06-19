@@ -480,6 +480,7 @@ class SVP64Asm:
         sv_mode = None
 
         mapreduce = False
+        reverse_gear = False
         mapreduce_crm = False
         mapreduce_svm = False
 
@@ -543,6 +544,12 @@ class SVP64Asm:
                 assert sv_mode is None
                 sv_mode = 0b11
                 predresult = decode_ffirst(encmode[3:])
+            # map-reduce mode, reverse-gear
+            elif encmode == 'mrr':
+                assert sv_mode is None
+                sv_mode = 0b00
+                mapreduce = True
+                reverse_gear = True
             # map-reduce mode
             elif encmode == 'mr':
                 assert sv_mode is None
@@ -619,6 +626,8 @@ class SVP64Asm:
         elif sv_mode == 0b00:
             mode |= (0b1<<SVP64MODE.REDUCE) # sets mapreduce
             assert dst_zero == 0, "dest-zero not allowed in mapreduce mode"
+            if reverse_gear:
+                mode |= (0b1<<SVP64MODE.RG) # sets Reverse-gear mode
             if mapreduce_crm:
                 mode |= (0b1<<SVP64MODE.CRM) # sets CRM mode
                 assert rc_mode, "CRM only allowed when Rc=1"
@@ -874,6 +883,7 @@ if __name__ == '__main__':
     macros = {'win2': '50', 'win': '60'}
     lst = [
              'sv.addi win2.v, win.v, -1',
+             'sv.add./mrr 5.v, 2.v, 1.v',
     ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

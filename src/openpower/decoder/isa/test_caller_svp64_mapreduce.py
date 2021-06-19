@@ -57,6 +57,83 @@ class DecoderTestCase(FHDLTestCase):
                                                 svstate=svstate)
             self._check_regs(sim, expected_regs)
 
+    def test_sv_add_prefix_sum(self):
+        """>>> lst = ['sv.add/mr 2.v, 2.v, 1.v'
+                       ]
+            adds performed - not in reverse
+            * 2 = 2 + 1  => 1 + 2  =>  3
+            * 3 = 3 + 2  => 3 + 3  =>  6
+            * 4 = 4 + 3  => 4 + 6  =>  10
+
+            pascal's triangle!
+        """
+        isa = SVP64Asm(['sv.add/mr 2.v, 2.v, 1.v'
+                       ])
+        lst = list(isa)
+        print ("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x1
+        initial_regs[2] = 0x2
+        initial_regs[3] = 0x3
+        initial_regs[4] = 0x4
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 3 # VL
+        svstate.maxvl[0:7] = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+        # copy before running, then compute answers
+        expected_regs = deepcopy(initial_regs)
+        for i in range(3):
+            print ("%d += %d" % (2+i, 1+i))
+            expected_regs[2+i] += expected_regs[1+i]
+        for i in range(5):
+            print ("expected", i, expected_regs[i])
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs,
+                                                svstate=svstate)
+            self._check_regs(sim, expected_regs)
+
+    def test_sv_add_prefix_sum_reverse(self):
+        """>>> lst = ['sv.add/mrr 2.v, 2.v, 1.v'
+                       ]
+            adds performed - *in reverse order*
+            * 4 = 4 + 3  => 1 + 2  =>  3
+            * 3 = 3 + 2  => 3 + 2  =>  5
+            * 2 = 2 + 1  => 3 + 4  =>  7
+        """
+        isa = SVP64Asm(['sv.add/mrr 2.v, 2.v, 1.v'
+                       ])
+        lst = list(isa)
+        print ("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x4
+        initial_regs[2] = 0x3
+        initial_regs[3] = 0x2
+        initial_regs[4] = 0x1
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 3 # VL
+        svstate.maxvl[0:7] = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+        # copy before running, then compute answers
+        expected_regs = deepcopy(initial_regs)
+        for i in range(3):
+            j = 2-i
+            print ("%d += %d" % (2+j, 1+j))
+            expected_regs[2+j] += expected_regs[1+j]
+        for i in range(5):
+            print ("expected", i, expected_regs[i])
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs,
+                                                svstate=svstate)
+            self._check_regs(sim, expected_regs)
+
     def test_fp_muls_reduce(self):
         """>>> lst = ["sv.fmuls/mr 1, 2.v, 1",
                      ]

@@ -1177,9 +1177,9 @@ class PowerDecode2(PowerDecodeSubset):
                     step = dststep if out else srcstep
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
-                        comb += to_reg.data.eq(step+svdec.reg_out)
-                    with m.Else():
                         comb += to_reg.data.eq(svdec.reg_out+(vl-1-step))
+                    with m.Else():
+                        comb += to_reg.data.eq(step+svdec.reg_out)
                 with m.Else():
                     comb += to_reg.data.eq(svdec.reg_out)
 

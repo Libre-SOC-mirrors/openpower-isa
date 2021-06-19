@@ -129,7 +129,7 @@ class SVP64RMModeDecode(Elaboratable):
                     (mode2 == 0) &                 # first 2 bits == 0
                     mode[SVP64MODE.REDUCE] &       # bit 2 == 1
                    (~mode[SVP64MODE.PARALLEL])):   # not parallel mapreduce
-            comb += self.reverse_gear.eq(1)        # theeeen finally, whew
+            comb += self.reverse_gear.eq(mode[SVP64MODE.RG]) # finally, whew
 
         # extract zeroing
         with m.Switch(mode2):
