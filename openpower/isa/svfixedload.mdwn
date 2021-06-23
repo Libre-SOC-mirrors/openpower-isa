@@ -1,0 +1,178 @@
+<!-- This defines Load instructions described in SVP64 -->
+
+# Load Byte and Zero
+
+SVD-Form
+
+* lbz RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    RT <- [0]*56 || MEM(EA, 1)
+
+Special Registers Altered:
+
+    None
+
+# Load Byte and Zero with Update
+
+D-Form
+
+* lbzu RT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    RT <- [0] * 56 || MEM(EA, 1)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword and Zero
+
+D-Form
+
+* lhz RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    RT <- [0] * 48 || MEM(EA, 2)
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword and Zero with Update
+
+D-Form
+
+* lhzu RT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    RT <- [0] * 48 || MEM(EA, 2)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword Algebraic
+
+D-Form
+
+* lha RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    RT <- EXTS(MEM(EA, 2))
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword Algebraic with Update
+
+D-Form
+
+* lhau RT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    RT <- EXTS(MEM(EA, 2))
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Word and Zero
+
+D-Form
+
+* lwz RT,D(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(D)
+    RT <- [0] * 32 || MEM(EA, 4)
+
+Special Registers Altered:
+
+    None
+
+# Load Word and Zero with Update
+
+D-Form
+
+* lwzu RT,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    RT <- [0]*32 || MEM(EA, 4)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Load Word Algebraic
+
+DS-Form
+
+* lwa RT,DS(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(DS || 0b00)
+    RT <- EXTS(MEM(EA, 4))
+
+Special Registers Altered:
+
+    None
+
+# Load Doubleword
+
+DS-Form
+
+* ld RT,DS(RA)
+
+Pseudo-code:
+
+    b <- (RA|0)
+    EA <- b + EXTS(DS || 0b00)
+    RT <- MEM(EA, 8)
+
+Special Registers Altered:
+
+    None
+
+# Load Doubleword with Update Indexed
+
+DS-Form
+
+* ldu RT,DS(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(DS || 0b00)
+    RT <- MEM(EA, 8)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
