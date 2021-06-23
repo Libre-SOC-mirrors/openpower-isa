@@ -77,6 +77,14 @@ def rotl(value, bits, wordlen):
     return ((value << bits) | (value >> (wordlen-bits))) & mask
 
 
+def SHL64(value, bits, wordlen=64):
+    if isinstance(bits, SelectableInt):
+        bits = bits.value
+    mask = (1 << wordlen) - 1
+    bits = bits & (wordlen - 1)
+    return (value << bits) & mask
+
+
 def ROTL64(value, bits):
     return rotl(value, bits, 64)
 
