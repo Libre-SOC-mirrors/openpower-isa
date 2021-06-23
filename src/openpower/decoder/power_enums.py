@@ -249,6 +249,7 @@ _insns = [
     "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
     "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
     "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
+    "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
     "modsd", "modsw", "modud", "moduw",
