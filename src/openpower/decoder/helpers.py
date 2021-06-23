@@ -82,7 +82,7 @@ def SHL64(value, bits, wordlen=64):
         bits = bits.value
     mask = (1 << wordlen) - 1
     bits = bits & (wordlen - 1)
-    return (value << bits) & mask
+    return SelectableInt((value << bits) & mask, 64)
 
 
 def ROTL64(value, bits):

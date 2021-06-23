@@ -705,6 +705,12 @@ class ISACaller:
         self.namespace['CA'] = self.spr['XER'][XER_bits['CA']].value
         self.namespace['CA32'] = self.spr['XER'][XER_bits['CA32']].value
 
+        # add some SVSTATE convenience variables
+        vl = self.svstate.vl.asint(msb0=True)
+        srcstep = self.svstate.srcstep.asint(msb0=True)
+        self.namespace['VL'] = vl
+        self.namespace['srcstep'] = srcstep
+
     def handle_carry_(self, inputs, outputs, already_done):
         inv_a = yield self.dec2.e.do.invert_in
         if inv_a:
@@ -1391,6 +1397,7 @@ class ISACaller:
         self.pc.update_nia(self.is_svp64_mode)
         self.namespace['NIA'] = self.pc.NIA
         self.namespace['SVSTATE'] = self.svstate.spr
+
 
 def inject():
     """Decorator factory.
