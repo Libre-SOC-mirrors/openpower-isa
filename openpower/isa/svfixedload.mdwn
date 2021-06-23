@@ -9,7 +9,7 @@ SVD-Form
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + EXTS(D)
+    EA <- b + (bitrev(srcstep, VL) * EXTS(D)) << RC
     RT <- [0]*56 || MEM(EA, 1)
 
 Special Registers Altered:
@@ -24,7 +24,7 @@ SVD-Form
 
 Pseudo-code:
 
-    EA <- (RA) + EXTS(D)
+    EA <- (RA) + (bitrev(srcstep, VL) * EXTS(D)) << RC
     RT <- [0] * 56 || MEM(EA, 1)
     RA <- EA
 
@@ -41,7 +41,7 @@ SVD-Form
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + EXTS(D)
+    EA <- b + (bitrev(srcstep, VL) * EXTS(D)) << RC
     RT <- [0] * 48 || MEM(EA, 2)
 
 Special Registers Altered:
@@ -56,7 +56,7 @@ SVD-Form
 
 Pseudo-code:
 
-    EA <- (RA) + EXTS(D)
+    EA <- (RA) + (bitrev(srcstep, VL) * EXTS(D)) << RC
     RT <- [0] * 48 || MEM(EA, 2)
     RA <- EA
 
@@ -73,7 +73,7 @@ SVD-Form
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + EXTS(D)
+    EA <- b + (bitrev(srcstep, VL) * EXTS(D)) << RC
     RT <- EXTS(MEM(EA, 2))
 
 Special Registers Altered:
@@ -88,7 +88,7 @@ SVD-Form
 
 Pseudo-code:
 
-    EA <- (RA) + EXTS(D)
+    EA <- (RA) + (bitrev(srcstep, VL) * EXTS(D)) << RC
     RT <- EXTS(MEM(EA, 2))
     RA <- EA
 
@@ -105,7 +105,7 @@ SVD-Form
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + EXTS(D)
+    EA <- b + (bitrev(srcstep, VL) * EXTS(D)) << RC
     RT <- [0] * 32 || MEM(EA, 4)
 
 Special Registers Altered:
@@ -120,7 +120,7 @@ SVD-Form
 
 Pseudo-code:
 
-    EA <- (RA) + EXTS(D)
+    EA <- (RA) + (bitrev(srcstep, VL) * EXTS(D)) << RC
     RT <- [0]*32 || MEM(EA, 4)
     RA <- EA
 
@@ -137,7 +137,7 @@ SVDS-Form
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + EXTS(DS || 0b00)
+    EA <- b + (bitrev(srcstep, VL) * EXTS(DS || 0b00)) << RC
     RT <- EXTS(MEM(EA, 4))
 
 Special Registers Altered:
@@ -153,7 +153,7 @@ SVDS-Form
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + EXTS(DS || 0b00)
+    EA <- b + (bitrev(srcstep, VL) * EXTS(DS || 0b00)) << RC
     RT <- MEM(EA, 8)
 
 Special Registers Altered:
@@ -168,7 +168,7 @@ SVDS-Form
 
 Pseudo-code:
 
-    EA <- (RA) + EXTS(DS || 0b00)
+    EA <- (RA) + (bitrev(srcstep, VL) * EXTS(DS || 0b00)) << RC
     RT <- MEM(EA, 8)
     RA <- EA
 
