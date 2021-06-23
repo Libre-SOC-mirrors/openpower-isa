@@ -369,12 +369,12 @@ def bitrev(val, VL):
     """Returns the integer whose value is the reverse of the lowest
     'width' bits of the integer 'val'
     """
-	result = 0
+    result = 0
     width = VL.bit_length()
-	for _ in range(width):
-		result = (result << 1) | (val & 1)
-		val >>= 1
-	return result
+    for _ in range(width):
+        result = (result << 1) | (val & 1)
+        val >>= 1
+    return result
 
 
 # For these tests I tried to find power instructions that would let me
