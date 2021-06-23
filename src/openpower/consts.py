@@ -222,6 +222,7 @@ class SVP64MODEb:
     # mode bits
     MOD2_MSB = 0
     MOD2_LSB = 1
+    LDST_BITREV = 2 # set =1 for bitreverse mode
     # when predicate not set: 0=ignore/skip 1=zero
     DZ = 3  # for destination
     SZ = 4  # for source
@@ -239,7 +240,7 @@ class SVP64MODEb:
     CR_LSB = 4
     RC1 = 4  # update CR as if Rc=1 (when Rc=0)
     # LD immediate els (element-stride) locations, depending on mode
-    ELS_NORMAL = 2
+    ELS_NORMAL = 4
     ELS_FFIRST_PRED = 3
     ELS_SAT = 4
     # BO bits

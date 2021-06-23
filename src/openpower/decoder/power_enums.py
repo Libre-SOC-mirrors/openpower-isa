@@ -212,6 +212,7 @@ class SVP64LDSTmode(Enum):
     INDEXED = 1
     ELSTRIDE = 2
     UNITSTRIDE = 3
+    BITREVERSE = 4
 
 
 # supported instructions: make sure to keep up-to-date with CSV files

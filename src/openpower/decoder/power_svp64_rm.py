@@ -42,7 +42,8 @@ https://libre-soc.org/openpower/sv/svp64/
 https://libre-soc.org/openpower/sv/ldst/
 
 LD/ST immed:
-00	els	sz dz	normal mode
+00	0	dz els	normal mode (with element-stride)
+00	1	dz rsvd	bit-reversed mode
 01	inv	CR-bit	Rc=1: ffirst CR sel
 01	inv	els RC1	Rc=0: ffirst z/nonz
 10	N	dz els	sat mode: N=0/1 u/s
@@ -135,7 +136,9 @@ class SVP64RMModeDecode(Elaboratable):
         with m.Switch(mode2):
             with m.Case(0): # needs further decoding (LDST no mapreduce)
                 with m.If(is_ldst):
-                    comb += self.pred_sz.eq(mode[SVP64MODE.SZ])
+                    # XXX TODO, work out which of these is most appropriate
+                    # set both? or just the one? or one if LD, the other if ST?
+                    comb += self.pred_sz.eq(mode[SVP64MODE.DZ])
                     comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
                 with m.Elif(mode[SVP64MODE.REDUCE]):
                     with m.If(self.rm_in.subvl == Const(0, 2)): # no SUBVL
@@ -179,8 +182,11 @@ class SVP64RMModeDecode(Elaboratable):
                     with m.If(self.rc_in):
                         comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
 
+            # Bit-reversed Mode
+            with m.If(mode[SVP64MODE.LDST_BITREV]):
+                comb += self.ldstmode.eq(SVP64LDSTmode.BITREVERSE)
             # RA is vectorised
-            with m.If(self.ldst_ra_vec):
+            with m.Elif(self.ldst_ra_vec):
                 comb += self.ldstmode.eq(SVP64LDSTmode.INDEXED)
             # not element-strided, therefore unit...
             with m.Elif(~els):

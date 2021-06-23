@@ -481,6 +481,7 @@ class SVP64Asm:
 
         mapreduce = False
         reverse_gear = False
+        bitreverse = False
         mapreduce_crm = False
         mapreduce_svm = False
 
@@ -509,6 +510,9 @@ class SVP64Asm:
                 smmode, smask = decode_predicate(encmode[3:])
                 mmode = smmode
                 has_smask = True
+            # bitreverse LD/ST
+            elif encmode.startswith("br"):
+                bitreverse = True
             # vec2/3/4
             elif encmode.startswith("vec"):
                 subvl = decode_subvl(encmode[3:])
@@ -614,6 +618,9 @@ class SVP64Asm:
             if is_ldst:
                 # TODO: for now, LD/ST-indexed is ignored.
                 mode |= ldst_elstride << SVP64MODE.ELS_NORMAL # element-strided
+                # bitreverse mode
+                if bitreverse:
+                    mode |= 1 << SVP64MODE.LDST_BITREV
             else:
                 # TODO, reduce and subvector mode
                 # 00  1   dz CRM  reduce mode (mapreduce), SUBVL=1
