@@ -613,7 +613,7 @@ Special Registers Altered:
 
 VA-Form
 
-* maddhd RT,RA.RB,RC
+* maddhd RT,RA,RB,RC
 
 Pseudo-code:
 
@@ -629,7 +629,7 @@ Special Registers Altered:
 
 VA-Form
 
-* maddhdu RT,RA.RB,RC
+* maddhdu RT,RA,RB,RC
 
 Pseudo-code:
 
@@ -645,7 +645,7 @@ Special Registers Altered:
 
 VA-Form
 
-* maddld RT,RA.RB,RC
+* maddld RT,RA,RB,RC
 
 Pseudo-code:
 
