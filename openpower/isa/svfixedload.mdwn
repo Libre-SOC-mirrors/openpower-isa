@@ -4,7 +4,7 @@
 
 SVD-Form
 
-* lbz RT,D(RA)
+* lbz RT,D(RA),RC
 
 Pseudo-code:
 
@@ -18,9 +18,9 @@ Special Registers Altered:
 
 # Load Byte and Zero with Update
 
-D-Form
+SVD-Form
 
-* lbzu RT,D(RA)
+* lbzu RT,D(RA),RC
 
 Pseudo-code:
 
@@ -34,9 +34,9 @@ Special Registers Altered:
 
 # Load Halfword and Zero
 
-D-Form
+SVD-Form
 
-* lhz RT,D(RA)
+* lhz RT,D(RA),RC
 
 Pseudo-code:
 
@@ -50,9 +50,9 @@ Special Registers Altered:
 
 # Load Halfword and Zero with Update
 
-D-Form
+SVD-Form
 
-* lhzu RT,D(RA)
+* lhzu RT,D(RA),RC
 
 Pseudo-code:
 
@@ -66,9 +66,9 @@ Special Registers Altered:
 
 # Load Halfword Algebraic
 
-D-Form
+SVD-Form
 
-* lha RT,D(RA)
+* lha RT,D(RA),RC
 
 Pseudo-code:
 
@@ -82,9 +82,9 @@ Special Registers Altered:
 
 # Load Halfword Algebraic with Update
 
-D-Form
+SVD-Form
 
-* lhau RT,D(RA)
+* lhau RT,D(RA),RC
 
 Pseudo-code:
 
@@ -98,9 +98,9 @@ Special Registers Altered:
 
 # Load Word and Zero
 
-D-Form
+SVD-Form
 
-* lwz RT,D(RA)
+* lwz RT,D(RA),RC
 
 Pseudo-code:
 
@@ -114,9 +114,9 @@ Special Registers Altered:
 
 # Load Word and Zero with Update
 
-D-Form
+SVD-Form
 
-* lwzu RT,D(RA)
+* lwzu RT,D(RA),RC
 
 Pseudo-code:
 
@@ -130,9 +130,9 @@ Special Registers Altered:
 
 # Load Word Algebraic
 
-DS-Form
+SVDS-Form
 
-* lwa RT,DS(RA)
+* lwa RT,DS(RA),RC
 
 Pseudo-code:
 
@@ -146,9 +146,9 @@ Special Registers Altered:
 
 # Load Doubleword
 
-DS-Form
+SVDS-Form
 
-* ld RT,DS(RA)
+* ld RT,DS(RA),RC
 
 Pseudo-code:
 
@@ -162,9 +162,9 @@ Special Registers Altered:
 
 # Load Doubleword with Update Indexed
 
-DS-Form
+SVDS-Form
 
-* ldu RT,DS(RA)
+* ldu RT,DS(RA),RC
 
 Pseudo-code:
 
