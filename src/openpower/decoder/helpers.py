@@ -276,13 +276,13 @@ def FPSUB32(FRA, FRB):
     return cvt
 
 
-def FPMUL32(FRA, FRB):
+def FPMUL32(FRA, FRB, sign=1):
     from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
     #return FPMUL64(FRA, FRB)
     #FRA = DOUBLE(SINGLE(FRA))
     #FRB = DOUBLE(SINGLE(FRB))
-    result = float(FRA) * float(FRB)
-    log ("FPMUL32", FRA, FRB, float(FRA), float(FRB), result)
+    result = float(FRA) * float(FRB) * float(sign)
+    log ("FPMUL32", FRA, FRB, float(FRA), float(FRB), result, sign)
     cvt = fp64toselectable(result)
     cvt = DOUBLE2SINGLE(cvt)
     log ("      cvt", cvt)
@@ -315,12 +315,12 @@ def FPMULADD32(FRA, FRC, FRB, mulsign, addsign):
     return cvt
 
 
-def FPDIV32(FRA, FRB):
+def FPDIV32(FRA, FRB, sign=1):
     from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
     #return FPDIV64(FRA, FRB)
     #FRA = DOUBLE(SINGLE(FRA))
     #FRB = DOUBLE(SINGLE(FRB))
-    result = float(FRA) / float(FRB)
+    result = float(sign) * float(FRA) / float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE2SINGLE(cvt)
     log ("FPDIV32", FRA, FRB, result, cvt)
@@ -341,17 +341,17 @@ def FPSUB64(FRA, FRB):
     return cvt
 
 
-def FPMUL64(FRA, FRB):
-    result = float(FRA) * float(FRB)
+def FPMUL64(FRA, FRB, sign=1):
+    result = float(FRA) * float(FRB) * float(sign)
     cvt = fp64toselectable(result)
-    log ("FPMUL64", FRA, FRB, result, cvt)
+    log ("FPMUL64", FRA, FRB, result, cvt, sign)
     return cvt
 
 
-def FPDIV64(FRA, FRB):
-    result = float(FRA) / float(FRB)
+def FPDIV64(FRA, FRB, sign=1):
+    result = float(sign) * float(FRA) / float(FRB)
     cvt = fp64toselectable(result)
-    log ("FPDIV64", FRA, FRB, result, cvt)
+    log ("FPDIV64", FRA, FRB, result, cvt, sign)
     return cvt
 
 
