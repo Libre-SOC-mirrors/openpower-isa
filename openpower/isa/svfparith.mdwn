@@ -1,7 +1,7 @@
 <!-- SVP64 FP Instructions here described are based on -->
 <!--  PowerISA Version 3.0 B Book 1 -->
 
-# Floating Add [Single]
+# Floating Add FFT/DCT [Single]
 
 A-Form
 
@@ -20,7 +20,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Add [Double]
+# Floating Add FFT/DCT [Double]
 
 A-Form
 
@@ -39,7 +39,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Subtract [Single]
+# Floating Subtract FFT/DCT [Single]
 
 A-Form
 
@@ -58,7 +58,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Subtract [Double]
+# Floating Subtract FFT/DCT [Double]
 
 A-Form
 
@@ -77,7 +77,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Multiply [Single]
+# Floating Multiply FFT/DCT [Single]
 
 A-Form
 
@@ -96,7 +96,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Multiply [Double]
+# Floating Multiply FFT/DCT [Double]
 
 A-Form
 
@@ -115,7 +115,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Divide [Single]
+# Floating Divide FFT/DCT [Single]
 
 A-Form
 
@@ -134,7 +134,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Divide [Double]
+# Floating Divide FFT/DCT [Double]
 
 A-Form
 
@@ -153,7 +153,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Multiply-Add [Single]
+# Floating Multiply-Add FFT/DCT [Single]
 
 A-Form
 
@@ -172,7 +172,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Multiply-Sub [Single]
+# Floating Multiply-Sub FFT/DCT [Single]
 
 A-Form
 
@@ -191,7 +191,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Negative Multiply-Add [Single]
+# Floating Negative Multiply-Add FFT/DCT [Single]
 
 A-Form
 
@@ -210,7 +210,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Negative Multiply-Sub [Single]
+# Floating Negative Multiply-Sub FFT/DCT [Single]
 
 A-Form
 
