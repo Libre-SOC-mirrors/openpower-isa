@@ -120,6 +120,13 @@ class DecoderTestCase(FHDLTestCase):
         # adds, integer predicated mask r3=0b10
         #       1 = 5 + 9   => not to be touched (skipped)
         #       2 = 6 + 10  => 0x3334 = 0x2223+0x1111
+        #   reg num        0 1 2 3 4 5 6 7 8 9 10 11
+        #   src r3=0b10              N Y     N Y
+        #                            | |     | |
+        #                    +-------+ | add + |
+        #                    | +-------+ add --+
+        #                    | |
+        #   dest r3=0b10     N Y
         isa = SVP64Asm(['sv.add/m=r3 1.v, 5.v, 9.v'
                        ])
         lst = list(isa)
