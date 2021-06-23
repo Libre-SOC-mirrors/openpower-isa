@@ -102,13 +102,14 @@ class DecodeA(Elaboratable):
     decodes register RA, implicit and explicit CSRs
     """
 
-    def __init__(self, dec, regreduce_en):
+    def __init__(self, dec, op, regreduce_en):
         self.regreduce_en = regreduce_en
         if self.regreduce_en:
             SPR = SPRreduced
         else:
             SPR = SPRfull
         self.dec = dec
+        self.op = op
         self.sel_in = Signal(In1Sel, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, name="reg_a")
@@ -119,7 +120,7 @@ class DecodeA(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
-        op = self.dec.op
+        op = self.op
         reg = self.reg_out
         m.submodules.sprmap = sprmap = SPRMap(self.regreduce_en)
 
@@ -219,8 +220,9 @@ class DecodeB(Elaboratable):
     immediates are muxed in.
     """
 
-    def __init__(self, dec):
+    def __init__(self, dec, op):
         self.dec = dec
+        self.op = op
         self.sel_in = Signal(In2Sel, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(7, "reg_b")
@@ -230,7 +232,7 @@ class DecodeB(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
-        op = self.dec.op
+        op = self.op
         reg = self.reg_out
 
         # select Register B field
@@ -328,8 +330,9 @@ class DecodeC(Elaboratable):
     decodes register RC.  this is "lane 3" into some CompUnits (not many)
     """
 
-    def __init__(self, dec):
+    def __init__(self, dec, op):
         self.dec = dec
+        self.op = op
         self.sel_in = Signal(In3Sel, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_c")
@@ -337,7 +340,7 @@ class DecodeC(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
-        op = self.dec.op
+        op = self.op
         reg = self.reg_out
 
         # select Register C field
@@ -368,13 +371,14 @@ class DecodeOut(Elaboratable):
     decodes output register RA, RT or SPR
     """
 
-    def __init__(self, dec, regreduce_en):
+    def __init__(self, dec, op, regreduce_en):
         self.regreduce_en = regreduce_en
         if self.regreduce_en:
             SPR = SPRreduced
         else:
             SPR = SPRfull
         self.dec = dec
+        self.op = op
         self.sel_in = Signal(OutSel, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o")
@@ -385,7 +389,7 @@ class DecodeOut(Elaboratable):
         m = Module()
         comb = m.d.comb
         m.submodules.sprmap = sprmap = SPRMap(self.regreduce_en)
-        op = self.dec.op
+        op = self.op
         reg = self.reg_out
 
         # select Register out field
@@ -440,8 +444,9 @@ class DecodeOut2(Elaboratable):
     but there are others.
     """
 
-    def __init__(self, dec):
+    def __init__(self, dec, op):
         self.dec = dec
+        self.op = op
         self.sel_in = Signal(OutSel, reset_less=True)
         self.lk = Signal(reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
@@ -452,15 +457,15 @@ class DecodeOut2(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
-        op = self.dec.op
+        op = self.op
         #m.submodules.svdec = svdec = SVP64RegExtra()
 
         # get the 5-bit reg data before svp64-munging it into 7-bit plus isvec
         #reg = Signal(5, reset_less=True)
 
-        if hasattr(self.dec.op, "upd"):
+        if hasattr(op, "upd"):
             # update mode LD/ST uses read-reg A also as an output
-            with m.If(self.dec.op.upd == LDSTMode.update):
+            with m.If(op.upd == LDSTMode.update):
                 comb += self.reg_out.data.eq(self.dec.RA)
                 comb += self.reg_out.ok.eq(1)
 
@@ -527,8 +532,9 @@ class DecodeOE(Elaboratable):
     -- test that further down when assigning to the multiplier oe input.
     """
 
-    def __init__(self, dec):
+    def __init__(self, dec, op):
         self.dec = dec
+        self.op = op
         self.sel_in = Signal(RC, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.oe_out = Data(1, "oe")
@@ -536,7 +542,7 @@ class DecodeOE(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
-        op = self.dec.op
+        op = self.op
 
         with m.Switch(op.internal_op):
 
@@ -570,8 +576,9 @@ class DecodeCRIn(Elaboratable):
     bits because they refer to CR0-CR7
     """
 
-    def __init__(self, dec):
+    def __init__(self, dec, op):
         self.dec = dec
+        self.op = op
         self.sel_in = Signal(CRInSel, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.cr_bitfield = Data(3, "cr_bitfield")
@@ -583,7 +590,7 @@ class DecodeCRIn(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
-        op = self.dec.op
+        op = self.op
         m.submodules.ppick = ppick = PriorityPicker(8, reverse_i=True,
                                                        reverse_o=True)
 
@@ -644,8 +651,9 @@ class DecodeCROut(Elaboratable):
     bits because they refer to CR0-CR7
     """
 
-    def __init__(self, dec):
+    def __init__(self, dec, op):
         self.dec = dec
+        self.op = op
         self.rc_in = Signal(reset_less=True)
         self.sel_in = Signal(CROutSel, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
@@ -656,7 +664,7 @@ class DecodeCROut(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
-        op = self.dec.op
+        op = self.op
         m.submodules.ppick = ppick = PriorityPicker(8, reverse_i=True,
                                                        reverse_o=True)
 
@@ -864,7 +872,7 @@ class PowerDecodeSubset(Elaboratable):
         # set up submodule decoders
         m.submodules.dec = self.dec
         m.submodules.dec_rc = self.dec_rc = dec_rc = DecodeRC(self.dec)
-        m.submodules.dec_oe = dec_oe = DecodeOE(self.dec)
+        m.submodules.dec_oe = dec_oe = DecodeOE(self.dec, op)
 
         if self.svp64_en:
             # and SVP64 RM mode decoder
@@ -877,8 +885,8 @@ class PowerDecodeSubset(Elaboratable):
             comb += i.eq(self.dec.opcode_in)
 
         # ...and subdecoders' input fields
-        comb += dec_rc.sel_in.eq(op.rc_sel)
-        comb += dec_oe.sel_in.eq(op.rc_sel)  # XXX should be OE sel
+        comb += dec_rc.sel_in.eq(self.op_get("rc_sel"))
+        comb += dec_oe.sel_in.eq(self.op_get("rc_sel"))  # XXX should be OE sel
 
         # copy "state" over
         comb += self.do_copy("msr", msr)
@@ -922,11 +930,11 @@ class PowerDecodeSubset(Elaboratable):
         if self.needs_field("zero_a", "in1_sel"):
             m.submodules.dec_ai = dec_ai = DecodeAImm(self.dec)
             comb += dec_ai.sv_nz.eq(self.sv_a_nz)
-            comb += dec_ai.sel_in.eq(op.in1_sel)
+            comb += dec_ai.sel_in.eq(self.op_get("in1_sel"))
             comb += self.do_copy("zero_a", dec_ai.immz_out)  # RA==0 detected
         if self.needs_field("imm_data", "in2_sel"):
             m.submodules.dec_bi = dec_bi = DecodeBImm(self.dec)
-            comb += dec_bi.sel_in.eq(op.in2_sel)
+            comb += dec_bi.sel_in.eq(self.op_get("in2_sel"))
             comb += self.do_copy("imm_data", dec_bi.imm_out) # imm in RB
 
         # rc and oe out
@@ -936,7 +944,7 @@ class PowerDecodeSubset(Elaboratable):
         # CR in/out - note: these MUST match with what happens in
         # DecodeCROut!
         rc_out = self.dec_rc.rc_out.data
-        with m.Switch(op.cr_out):
+        with m.Switch(self.op_get("cr_out")):
             with m.Case(CROutSel.CR0, CROutSel.CR1):
                 comb += self.do_copy("write_cr0", rc_out) # only when RC=1
             with m.Case(CROutSel.BF, CROutSel.BT):
@@ -947,9 +955,10 @@ class PowerDecodeSubset(Elaboratable):
 
         if self.svp64_en:
             # connect up SVP64 RM Mode decoding
+            sv_ptype = self.op_get("SV_Ptype")
             fn = self.op_get("function_unit")
             comb += rm_dec.fn_in.eq(fn) # decode needs to know if LD/ST type
-            comb += rm_dec.ptype_in.eq(op.SV_Ptype) # Single/Twin predicated
+            comb += rm_dec.ptype_in.eq(sv_ptype) # Single/Twin predicated
             comb += rm_dec.rc_in.eq(rc_out) # Rc=1
             comb += rm_dec.rm_in.eq(self.sv_rm) # SVP64 RM mode
             if self.needs_field("imm_data", "in2_sel"):
@@ -1085,13 +1094,13 @@ class PowerDecode2(PowerDecodeSubset):
         # copy over if non-exception, non-privileged etc. is detected
 
         # set up submodule decoders
-        m.submodules.dec_a = dec_a = DecodeA(self.dec, self.regreduce_en)
-        m.submodules.dec_b = dec_b = DecodeB(self.dec)
-        m.submodules.dec_c = dec_c = DecodeC(self.dec)
-        m.submodules.dec_o = dec_o = DecodeOut(self.dec, self.regreduce_en)
-        m.submodules.dec_o2 = dec_o2 = DecodeOut2(self.dec)
-        m.submodules.dec_cr_in = self.dec_cr_in = DecodeCRIn(self.dec)
-        m.submodules.dec_cr_out = self.dec_cr_out = DecodeCROut(self.dec)
+        m.submodules.dec_a = dec_a = DecodeA(self.dec, op, self.regreduce_en)
+        m.submodules.dec_b = dec_b = DecodeB(self.dec, op)
+        m.submodules.dec_c = dec_c = DecodeC(self.dec, op)
+        m.submodules.dec_o = dec_o = DecodeOut(self.dec, op, self.regreduce_en)
+        m.submodules.dec_o2 = dec_o2 = DecodeOut2(self.dec, op)
+        m.submodules.dec_cr_in = self.dec_cr_in = DecodeCRIn(self.dec, op)
+        m.submodules.dec_cr_out = self.dec_cr_out = DecodeCROut(self.dec, op)
         comb += dec_a.sv_nz.eq(self.sv_a_nz)
 
         if self.svp64_en:
@@ -1119,8 +1128,8 @@ class PowerDecode2(PowerDecodeSubset):
             comb += i.eq(self.dec.opcode_in)
 
         # CR setup
-        comb += self.dec_cr_in.sel_in.eq(op.cr_in)
-        comb += self.dec_cr_out.sel_in.eq(op.cr_out)
+        comb += self.dec_cr_in.sel_in.eq(self.op_get("cr_in"))
+        comb += self.dec_cr_out.sel_in.eq(self.op_get("cr_out"))
         comb += self.dec_cr_out.rc_in.eq(rc_out)
 
         # CR register info
@@ -1128,11 +1137,11 @@ class PowerDecode2(PowerDecodeSubset):
         comb += self.do_copy("write_cr_whole", self.dec_cr_out.whole_reg)
 
         # ...and subdecoders' input fields
-        comb += dec_a.sel_in.eq(op.in1_sel)
-        comb += dec_b.sel_in.eq(op.in2_sel)
-        comb += dec_c.sel_in.eq(op.in3_sel)
-        comb += dec_o.sel_in.eq(op.out_sel)
-        comb += dec_o2.sel_in.eq(op.out_sel)
+        comb += dec_a.sel_in.eq(self.op_get("in1_sel"))
+        comb += dec_b.sel_in.eq(self.op_get("in2_sel"))
+        comb += dec_c.sel_in.eq(self.op_get("in3_sel"))
+        comb += dec_o.sel_in.eq(self.op_get("out_sel"))
+        comb += dec_o2.sel_in.eq(self.op_get("out_sel"))
         if hasattr(do, "lk"):
             comb += dec_o2.lk.eq(do.lk)
 
@@ -1144,7 +1153,7 @@ class PowerDecode2(PowerDecodeSubset):
 
             #######
             # CR out
-            comb += crout_svdec.idx.eq(op.sv_cr_out)  # SVP64 CR out
+            comb += crout_svdec.idx.eq(self.op_get("sv_cr_out")) # SVP64 CR out
             comb += self.cr_out_isvec.eq(crout_svdec.isvec)
 
             #######
@@ -1154,9 +1163,9 @@ class PowerDecode2(PowerDecodeSubset):
 
             # these change slightly, when decoding BA/BB.  really should have
             # their own separate CSV column: sv_cr_in1 and sv_cr_in2, but hey
-            comb += cr_a_idx.eq(op.sv_cr_in)
+            comb += cr_a_idx.eq(self.op_get("sv_cr_in"))
             comb += cr_b_idx.eq(SVEXTRA.NONE)
-            with m.If(op.sv_cr_in == SVEXTRA.Idx_1_2.value):
+            with m.If(self.op_get("sv_cr_in") == SVEXTRA.Idx_1_2.value):
                 comb += cr_a_idx.eq(SVEXTRA.Idx1)
                 comb += cr_b_idx.eq(SVEXTRA.Idx2)
 
@@ -1167,7 +1176,7 @@ class PowerDecode2(PowerDecodeSubset):
             # indices are slightly different, BA/BB mess sorted above
             comb += crin_svdec.idx.eq(cr_a_idx)       # SVP64 CR in A
             comb += crin_svdec_b.idx.eq(cr_b_idx)     # SVP64 CR in B
-            comb += crin_svdec_o.idx.eq(op.sv_cr_out) # SVP64 CR out
+            comb += crin_svdec_o.idx.eq(self.op_get("sv_cr_out")) # SVP64 CR out
 
             # get SVSTATE srcstep (TODO: elwidth etc.) needed below
             vl = Signal.like(self.state.svstate.vl)
@@ -1178,14 +1187,15 @@ class PowerDecode2(PowerDecodeSubset):
             comb += dststep.eq(self.state.svstate.dststep)
 
             # registers a, b, c and out and out2 (LD/ST EA)
+            sv_etype = self.op_get("SV_Etype")
             for to_reg, fromreg, svdec, out in (
                 (e.read_reg1, dec_a.reg_out, in1_svdec, False),
                 (e.read_reg2, dec_b.reg_out, in2_svdec, False),
                 (e.read_reg3, dec_c.reg_out, in3_svdec, False),
                 (e.write_reg, dec_o.reg_out, o_svdec, True),
                 (e.write_ea, dec_o2.reg_out, o2_svdec, True)):
-                comb += svdec.extra.eq(extra)        # EXTRA field of SVP64 RM
-                comb += svdec.etype.eq(op.SV_Etype)  # EXTRA2/3 for this insn
+                comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
+                comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
                 comb += svdec.reg_in.eq(fromreg.data) # 3-bit (CR0/BC/BFA)
                 comb += to_reg.ok.eq(fromreg.ok)
                 # detect if Vectorised: add srcstep/dststep if yes.
@@ -1200,11 +1210,12 @@ class PowerDecode2(PowerDecodeSubset):
                 with m.Else():
                     comb += to_reg.data.eq(svdec.reg_out)
 
-            comb += in1_svdec.idx.eq(op.sv_in1)  # SVP64 reg #1 (in1_sel)
-            comb += in2_svdec.idx.eq(op.sv_in2)  # SVP64 reg #2 (in2_sel)
-            comb += in3_svdec.idx.eq(op.sv_in3)  # SVP64 reg #3 (in3_sel)
-            comb += o_svdec.idx.eq(op.sv_out)    # SVP64 output (out_sel)
-            comb += o2_svdec.idx.eq(op.sv_out2)  # SVP64 output (implicit)
+            # SVP64 in/out fields
+            comb += in1_svdec.idx.eq(self.op_get("sv_in1")) # reg #1 (in1_sel)
+            comb += in2_svdec.idx.eq(self.op_get("sv_in2"))  # reg #2 (in2_sel)
+            comb += in3_svdec.idx.eq(self.op_get("sv_in3"))  # reg #3 (in3_sel)
+            comb += o_svdec.idx.eq(self.op_get("sv_out"))    # output (out_sel)
+            comb += o2_svdec.idx.eq(self.op_get("sv_out2"))  # output (implicit)
             # XXX TODO - work out where this should come from.  the problem is
             # that LD-with-update is implied (computed from "is instruction in
             # "update mode" rather than specified cleanly as its own CSV column
@@ -1228,7 +1239,7 @@ class PowerDecode2(PowerDecodeSubset):
             # now create a general-purpose "test" as to whether looping
             # should continue.  this doesn't include predication bit-tests
             loop = self.loop_continue
-            with m.Switch(op.SV_Ptype):
+            with m.Switch(self.op_get("SV_Ptype")):
                 with m.Case(SVPtype.P2.value):
                     # twin-predication
                     # TODO: *and cache-inhibited LD/ST!*
@@ -1247,8 +1258,8 @@ class PowerDecode2(PowerDecodeSubset):
                 (e.read_cr3, self.dec_cr_in, "cr_bitfield_o", crin_svdec_o, 0),
                 (e.write_cr, self.dec_cr_out, "cr_bitfield", crout_svdec, 1)):
                 fromreg = getattr(cr, name)
-                comb += svdec.extra.eq(extra)        # EXTRA field of SVP64 RM
-                comb += svdec.etype.eq(op.SV_Etype)  # EXTRA2/3 for this insn
+                comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
+                comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
                 comb += svdec.cr_in.eq(fromreg.data) # 3-bit (CR0/BC/BFA)
                 with m.If(svdec.isvec):
                     # check if this is CR0 or CR1: treated differently
@@ -1413,8 +1424,9 @@ class PowerDecode2(PowerDecodeSubset):
             comb += e_out.read_fast3.ok.eq(1)
 
         # annoying simulator bug
-        if hasattr(e_out, "asmcode") and hasattr(self.dec.op, "asmcode"):
-            comb += e_out.asmcode.eq(self.dec.op.asmcode)
+        asmcode = self.op_get("asmcode")
+        if hasattr(e_out, "asmcode") and asmcode is not None:
+            comb += e_out.asmcode.eq(asmcode)
 
         return m
 
@@ -1422,7 +1434,7 @@ class PowerDecode2(PowerDecodeSubset):
         """trap: this basically "rewrites" the decoded instruction as a trap
         """
         comb = m.d.comb
-        op, e = self.dec.op, self.e
+        e = self.e
         comb += e.eq(0)  # reset eeeeeverything
 
         # start again
