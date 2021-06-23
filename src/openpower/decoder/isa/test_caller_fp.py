@@ -224,7 +224,7 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            self.assertEqual(sim.fpr(3), SelectableInt(0x3d9d8b31c0000000, 64))
+            self.assertEqual(sim.fpr(3), SelectableInt(0x3d8b1663a0000000, 64))
 
     def test_fp_muls4(self):
         """>>> lst = ["fmuls 3, 1, 2",
