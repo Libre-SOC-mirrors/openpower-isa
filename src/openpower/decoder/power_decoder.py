@@ -179,8 +179,13 @@ class PowerOp:
     which generates an awful lot of wires, hence the subsetting
     """
 
-    def __init__(self, incl_asm=True, name=None, subset=None):
+    def __init__(self, incl_asm=True, name=None, subset=None, fields=None):
+        self.name = name
         self.subset = subset
+        if fields is not None:
+            for k, v in fields:
+                setattr(self, k, v)
+            return
         debug_report = set()
         fields = set()
         for field, ptype in power_op_types.items():
@@ -198,9 +203,18 @@ class PowerOp:
             debug_report.add(field)
             fname = get_pname(field, name)
             setattr(self, field, Signal(reset_less=True, name=fname))
+        self._fields = fields
         # comment out, bit too high debug level
         #print("PowerOp debug", name, debug_report)
         #print("        fields", fields)
+
+    @staticmethod
+    def like(other):
+        fields = {}
+        for fname in other._fields:
+            sig = getattr(other, fname)
+            fields[fname] = sig.__class__.like(sig)
+        return PowerOp(subset=other.subset, fields=fields)
 
     def _eq(self, row=None):
         if row is None:
