@@ -1,6 +1,10 @@
 <!-- SVP64 FP Instructions here described are based on -->
 <!--  PowerISA Version 3.0 B Book 1 -->
 
+<!-- FRS in each of these does not need to be explicitly declared -->
+<!-- FRS is automatically calculated by SVP64 to FRT+VL (default elwidth) -->
+<!-- (Vector FRS data sequentially starts immediately after FRT vectors) -->
+
 # Floating Add FFT/DCT [Single]
 
 A-Form
