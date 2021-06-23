@@ -364,6 +364,19 @@ def FPDIV64(FRA, FRB, sign=1):
     return cvt
 
 
+
+def bitrev(val, VL):
+    """Returns the integer whose value is the reverse of the lowest
+    'width' bits of the integer 'val'
+    """
+	result = 0
+    width = VL.bit_length()
+	for _ in range(width):
+		result = (result << 1) | (val & 1)
+		val >>= 1
+	return result
+
+
 # For these tests I tried to find power instructions that would let me
 # isolate each of these helper operations. So for instance, when I was
 # testing the MASK() function, I chose rlwinm and rldicl because if I
