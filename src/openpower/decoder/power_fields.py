@@ -146,6 +146,7 @@ class DecodeFields:
             "RT": self.FormX.RT,
             "RA": self.FormX.RA,
             "RB": self.FormX.RB,
+            "RC": self.FormVA.RB,
             "SI": self.FormD.SI,
             "UI": self.FormD.UI,
             "L": self.FormD.L,

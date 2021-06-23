@@ -116,6 +116,8 @@ class Form(Enum):
     Z22 = 27
     Z23 = 28
     SVL = 29  # Simple-V for setvl instruction
+    SVD = 30  # Simple-V for LD/ST bit-reverse, variant of D-Form
+    SVDS = 31  # Simple-V for LD/ST bit-reverse, variant of DS-Form
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
@@ -403,8 +405,8 @@ class In2Sel(Enum):
     SPR = 12
     RS = 13  # for shiftrot (M-Form)
     FRB = 14
-    CONST_SSI = 15 # for SVD-Form
-    CONST_SDS = 16 # for SVDS-Form
+    CONST_SVD = 15 # for SVD-Form
+    CONST_SVDS = 16 # for SVDS-Form
 
 
 @unique
@@ -414,6 +416,7 @@ class In3Sel(Enum):
     RB = 2  # for shiftrot (M-Form)
     FRS = 3
     FRC = 4
+    RC = 5  # for SVP64 bit-reverse LD/ST
 
 
 @unique

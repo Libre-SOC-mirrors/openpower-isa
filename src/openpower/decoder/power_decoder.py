@@ -228,7 +228,7 @@ class PowerOp:
             if field not in power_op_csvmap:
                 continue
             csvname = power_op_csvmap[field]
-            #print(field, ptype, csvname, row)
+            # log(field, ptype, csvname, row)
             val = row[csvname]
             if csvname == 'upd' and isinstance(val, int):  # LDSTMode different
                 val = ptype(val)
@@ -540,6 +540,54 @@ class TopPowerDecoder(PowerDecoder):
         return [self.raw_opcode_in, self.bigendian] + PowerDecoder.ports(self)
 
 
+#############################################################
+# PRIMARY FUNCTION SPECIFYING ALTERNATIVE SVP64 POWER DECODER
+
+def create_pdecode_svp64(name=None, col_subset=None, row_subset=None,
+                   include_fp=False):
+    """create_pdecode - creates a cascading hierarchical POWER ISA decoder
+
+    subsetting of the PowerOp decoding is possible by setting col_subset
+    """
+    log ("create_pdecode_svp64", name, col_subset, row_subset, include_fp)
+
+    # some alteration to the CSV files is required for SV so we use
+    # a class to do it
+    isa = SVP64RM()
+    get_csv = isa.get_svp64_csv
+
+    # minor opcodes.
+    pminor = [
+        Subdecoder(pattern=58, opcodes=get_csv("svldst_minor_58.csv"),
+                   opint=True, bitsel=(0, 2), suffix=None, subdecoders=[]),
+        # nope - needs 4-in regs
+        #Subdecoder(pattern=62, opcodes=get_csv("svldst_minor_62.csv"),
+        #           opint=True, bitsel=(0, 2), suffix=None, subdecoders=[]),
+    ]
+
+    # FP 63L/H decoders. TODO: move mffsfamily to separate subdecoder
+    if False and include_fp:
+        pminor.append(
+            Subdecoder(pattern=63, opcodes=get_csv("minor_63.csv"),
+                                 opint=False, bitsel=(1, 11), suffix=None,
+                                 subdecoders=[]),
+            )
+        pminor.append(
+            Subdecoder(pattern=59, opcodes=get_csv("minor_59.csv"),
+                                 opint=False, bitsel=(1, 11), suffix=None,
+                                 subdecoders=[]),
+            )
+
+    # top level: extra merged with major
+    dec = []
+    opcodes = get_csv("svldst_major.csv")
+    dec.append(Subdecoder(pattern=None, opint=True, opcodes=opcodes,
+                          bitsel=(26, 32), suffix=None, subdecoders=pminor))
+
+    return TopPowerDecoder(32, dec, name=name, col_subset=col_subset,
+                           row_subset=row_subset)
+
+
 ####################################################
 # PRIMARY FUNCTION SPECIFYING THE FULL POWER DECODER
 
@@ -634,8 +682,13 @@ if __name__ == '__main__':
             f.write(vl)
 
     # full decoder
-
     pdecode = create_pdecode(include_fp=True)
     vl = rtlil.convert(pdecode, ports=pdecode.ports())
     with open("decoder.il", "w") as f:
+        f.write(vl)
+
+    # full SVP64 decoder
+    pdecode = create_pdecode_svp64(include_fp=True)
+    vl = rtlil.convert(pdecode, ports=pdecode.ports())
+    with open("decoder_svp64.il", "w") as f:
         f.write(vl)

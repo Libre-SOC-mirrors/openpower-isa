@@ -642,7 +642,7 @@
     RC (21:25)
         Field used to specify a GPR to be used as a
         source.
-        Formats: VA
+        Formats: VA, SVD, SVDS
     Rc (31)
         RECORD bit.
         0    Do not alter the Condition Register.

@@ -354,6 +354,9 @@ class DecodeC(Elaboratable):
             with m.Case(In3Sel.RS):
                 comb += reg.data.eq(self.dec.RS)
                 comb += reg.ok.eq(1)
+            with m.Case(In3Sel.RC):
+                comb += reg.data.eq(self.dec.RC)
+                comb += reg.ok.eq(1)
 
         return m
 
