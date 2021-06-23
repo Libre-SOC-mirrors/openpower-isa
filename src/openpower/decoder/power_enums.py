@@ -404,6 +404,7 @@ class In2Sel(Enum):
     RS = 13  # for shiftrot (M-Form)
     FRB = 14
     CONST_SSI = 15 # for SVD-Form
+    CONST_SDS = 16 # for SVDS-Form
 
 
 @unique
