@@ -24,7 +24,8 @@ from openpower.decoder.power_svp64_rm import (SVP64RMModeDecode,
 from openpower.sv.svp64 import SVP64Rec
 
 from openpower.decoder.power_regspec_map import regspec_decode_read
-from openpower.decoder.power_decoder import create_pdecode
+from openpower.decoder.power_decoder import (create_pdecode,
+                                             create_pdecode_svp64,)
 from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      CRInSel, CROutSel,
                                      LdstLen, In1Sel, In2Sel, In3Sel,
@@ -767,6 +768,16 @@ class PowerDecodeSubset(Elaboratable):
             dec = create_pdecode(name=fn_name, col_subset=col_subset,
                                       row_subset=self.rowsubsetfn)
         self.dec = dec
+        # create SVP64 decoder
+        if svp64_en:
+            if fn_name:
+                name = "sv_"+fn_name
+            else:
+                name = "svdec"
+            svdec = create_pdecode(name=name,
+                                      col_subset=col_subset,
+                                      row_subset=self.rowsubsetfn)
+            self.svdec = svdec
 
         # state information needed by the Decoder
         if state is None:
@@ -804,6 +815,7 @@ class PowerDecodeSubset(Elaboratable):
         ports = self.dec.ports() + self.e.ports()
         if self.svp64_en:
             ports += self.sv_rm.ports()
+            ports += self.svdec.ports()
         return ports
 
     def needs_field(self, field, op_field):
@@ -857,6 +869,8 @@ class PowerDecodeSubset(Elaboratable):
         if self.svp64_en:
             # and SVP64 RM mode decoder
             m.submodules.sv_rm_dec = rm_dec = self.rm_dec
+            # and SVP64 decoder
+            m.submodules.svdec = svdec = self.svdec
 
         # copy instruction through...
         for i in [do.insn, dec_rc.insn_in, dec_oe.insn_in, ]:
