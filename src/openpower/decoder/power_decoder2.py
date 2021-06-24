@@ -832,6 +832,8 @@ class PowerDecodeSubset(Elaboratable):
         ports = self.dec.ports() + self.e.ports()
         if self.svp64_en:
             ports += self.sv_rm.ports()
+            ports.append(self.is_svp64_mode)
+            ports.append(self.use_svp64_ldst_dec )
         if self.svdecldst:
             ports += self.svdecldst.ports()
         return ports
@@ -880,13 +882,9 @@ class PowerDecodeSubset(Elaboratable):
                                            regreduce_en=self.regreduce_en)
 
         # set up submodule decoders
-        m.submodules.dec = self.dec
+        m.submodules.dec = dec = self.dec
         m.submodules.dec_rc = self.dec_rc = dec_rc = DecodeRC(self.dec)
         m.submodules.dec_oe = dec_oe = DecodeOE(self.dec, op)
-
-        # use op from first decoder (self.dec.op) if not in SVP64-LDST mode
-        # (TODO)
-        comb += self.op.eq(self.dec.op)
 
         if self.svp64_en:
             # and SVP64 RM mode decoder
@@ -894,6 +892,11 @@ class PowerDecodeSubset(Elaboratable):
         if self.svdecldst:
             # and SVP64 decoder
             m.submodules.svdecldst = svdecldst = self.svdecldst
+            comb += svdecldst.raw_opcode_in.eq(dec.raw_opcode_in)
+            comb += svdecldst.bigendian.eq(dec.bigendian)
+
+        # copy op from decoder
+        comb += self.op.eq(self.dec.op)
 
         # copy instruction through...
         for i in [do.insn, dec_rc.insn_in, dec_oe.insn_in, ]:
@@ -1502,7 +1505,7 @@ def get_rdflags(e, cu):
 
 if __name__ == '__main__':
     pdecode = create_pdecode()
-    dec2 = PowerDecode2(pdecode)
+    dec2 = PowerDecode2(pdecode, svp64_en=True)
     vl = rtlil.convert(dec2, ports=dec2.ports() + pdecode.ports())
     with open("dec2.il", "w") as f:
         f.write(vl)
