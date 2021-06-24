@@ -434,7 +434,8 @@ class PowerDecoder(Elaboratable):
                     subdecoder = PowerDecoder(width=32, dec=sd,
                                               name=mname,
                                               col_subset=self.col_subset,
-                                              row_subset=self.row_subsetfn)
+                                              row_subset=self.row_subsetfn,
+                                              conditions=self.conditions)
                     if not subdecoder.tree_analyse():
                         del subdecoder
                         continue
@@ -511,7 +512,8 @@ class PowerDecoder(Elaboratable):
                 subdecoder = PowerDecoder(self.width, dec,
                                           name=mname,
                                           col_subset=self.col_subset,
-                                          row_subset=self.row_subsetfn)
+                                          row_subset=self.row_subsetfn,
+                                          conditions=self.conditions)
                 log ("subdecoder", mname, subdecoder)
                 if not subdecoder.tree_analyse():  # doesn't do anything
                     log ("analysed, DELETING", mname)
