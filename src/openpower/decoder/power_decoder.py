@@ -480,6 +480,7 @@ class PowerDecoder(Elaboratable):
                     if is_conditions:
                         switch_case[opcode] = {}
                         for k, crow in row.items():
+                            # log("ordered", k, crow)
                             switch_case[opcode][k] = self.op._eq(crow)
                     else:
                         switch_case[opcode] = self.op._eq(row)
@@ -638,7 +639,10 @@ class TopPowerDecoder(PowerDecoder):
         return m
 
     def ports(self):
-        return [self.raw_opcode_in, self.bigendian] + PowerDecoder.ports(self)
+        res = [self.raw_opcode_in, self.bigendian] + PowerDecoder.ports(self)
+        for condition in self.conditions.values():
+            res.append(condition)
+        return res
 
 
 #############################################################
@@ -693,7 +697,7 @@ def create_pdecode_svp64_ldst(name=None, col_subset=None, row_subset=None,
 # PRIMARY FUNCTION SPECIFYING THE FULL POWER DECODER
 
 def create_pdecode(name=None, col_subset=None, row_subset=None,
-                   include_fp=False):
+                   include_fp=False, conditions=None):
     """create_pdecode - creates a cascading hierarchical POWER ISA decoder
 
     subsetting of the PowerOp decoding is possible by setting col_subset
@@ -754,7 +758,8 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
                           bitsel=(0, 32), suffix=None, subdecoders=[]))
 
     return TopPowerDecoder(32, dec, name=name, col_subset=col_subset,
-                           row_subset=row_subset)
+                           row_subset=row_subset,
+                           conditions=conditions)
 
 
 if __name__ == '__main__':
@@ -764,13 +769,17 @@ if __name__ == '__main__':
 
         def rowsubsetfn(opcode, row):
             log("row_subset", opcode, row)
-            return row['unit'] == 'FPU'
+            return row['unit'] == 'LDST'
 
+        conditions = {'SVP64BREV': Signal(name="svp64brev", reset_less=True),
+                      '~SVP64BREV': Signal(name="svp64brevN", reset_less=True)
+                     }
         pdecode = create_pdecode(name="rowsub",
                                  col_subset={'opcode', 'function_unit',
                                              'form'},
                                  row_subset=rowsubsetfn,
-                                 include_fp=True)
+                                 include_fp=True,
+                                 conditions=conditions)
         vl = rtlil.convert(pdecode, ports=pdecode.ports())
         with open("row_subset_decoder.il", "w") as f:
             f.write(vl)
