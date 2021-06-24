@@ -769,6 +769,12 @@ class PowerDecodeSubset(Elaboratable):
         self.do = opkls(fn_name)
         col_subset = self.get_col_subset(self.do)
 
+        # "conditions" for Decoders, to enable some weird and wonderful
+        # alternatives.  useful for PCR (Program Compatibility Register)
+        # amongst other things
+        conditions = {'SVP64BREV': self.use_svp64_ldst_dec,
+                      '~SVP64BREV': ~self.use_svp64_ldst_dec
+                     }
         # only needed for "main" PowerDecode2
         if not self.final:
             self.e = Decode2ToExecute1Type(name=self.fn_name, do=self.do,
@@ -777,7 +783,8 @@ class PowerDecodeSubset(Elaboratable):
         # create decoder if one not already given
         if dec is None:
             dec = create_pdecode(name=fn_name, col_subset=col_subset,
-                                      row_subset=self.rowsubsetfn)
+                                      row_subset=self.rowsubsetfn,
+                                      conditions=conditions)
         self.dec = dec
 
         # set up a copy of the PowerOp
