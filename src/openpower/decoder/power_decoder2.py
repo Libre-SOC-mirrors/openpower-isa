@@ -25,7 +25,7 @@ from openpower.sv.svp64 import SVP64Rec
 
 from openpower.decoder.power_regspec_map import regspec_decode_read
 from openpower.decoder.power_decoder import (create_pdecode,
-                                             create_pdecode_svp64,)
+                                             create_pdecode_svp64_ldst,)
 from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      CRInSel, CROutSel,
                                      LdstLen, In1Sel, In2Sel, In3Sel,
@@ -752,6 +752,7 @@ class PowerDecodeSubset(Elaboratable):
         self.svp64_en = svp64_en
         self.regreduce_en = regreduce_en
         if svp64_en:
+            self.is_svp64_mode = Signal() # mark decoding as SVP64 Mode
             self.sv_rm = SVP64Rec(name="dec_svp64") # SVP64 RM field
             self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
             # set these to the predicate mask bits needed for the ALU
@@ -782,10 +783,10 @@ class PowerDecodeSubset(Elaboratable):
                 name = "sv_"+fn_name
             else:
                 name = "svdec"
-            svdec = create_pdecode(name=name,
-                                      col_subset=col_subset,
-                                      row_subset=self.rowsubsetfn)
-            self.svdec = svdec
+            svdecldst = create_pdecode_svp64_ldst(name=name,
+                                              col_subset=col_subset,
+                                              row_subset=self.rowsubsetfn)
+            self.svdecldst = svdecldst
 
         # state information needed by the Decoder
         if state is None:
@@ -823,7 +824,7 @@ class PowerDecodeSubset(Elaboratable):
         ports = self.dec.ports() + self.e.ports()
         if self.svp64_en:
             ports += self.sv_rm.ports()
-            ports += self.svdec.ports()
+            ports += self.svdecldst.ports()
         return ports
 
     def needs_field(self, field, op_field):
@@ -878,7 +879,7 @@ class PowerDecodeSubset(Elaboratable):
             # and SVP64 RM mode decoder
             m.submodules.sv_rm_dec = rm_dec = self.rm_dec
             # and SVP64 decoder
-            m.submodules.svdec = svdec = self.svdec
+            m.submodules.svdecldst = svdecldst = self.svdecldst
 
         # copy instruction through...
         for i in [do.insn, dec_rc.insn_in, dec_oe.insn_in, ]:
@@ -954,10 +955,29 @@ class PowerDecodeSubset(Elaboratable):
         comb += self.do_copy("output_cr", self.op_get("cr_out"))  # CR out
 
         if self.svp64_en:
-            # connect up SVP64 RM Mode decoding
+            # connect up SVP64 RM Mode decoding.  however... we need a shorter
+            # path, for the LDST bit-reverse detection.  so perform partial
+            # decode when SVP64 is detected.  then, bit-reverse mode can be
+            # quickly determined, and the Decoder result MUXed over to
+            # the alternative decoder, svdecldst. what a mess... *sigh*
             sv_ptype = self.op_get("SV_Ptype")
             fn = self.op_get("function_unit")
-            comb += rm_dec.fn_in.eq(fn) # decode needs to know if LD/ST type
+            # detect major opcode for LDs: include 58 here. from CSV files.
+            is_major_ld = Signal()
+            major = Signal(6) # bits... errr... MSB0 0..5 which is 26:32 python
+            comb += major.eq(self.dec.opcode_in[26:32])
+            comb += is_major_ld.eq((major == 34) | (major == 35) |
+                                   (major == 50) | (major == 51) |
+                                   (major == 48) | (major == 49) |
+                                   (major == 42) | (major == 43) |
+                                   (major == 40) | (major == 41) |
+                                   (major == 32) | (major == 33) |
+                                   (major == 58))
+            with m.If(self.is_svp64_mode & is_major_ld):
+                # straight-up: "it's a LD"
+                comb += rm_dec.fn_in.eq(Function.LDST)
+            with m.Else():
+                comb += rm_dec.fn_in.eq(fn) # decode needs to know Fn type
             comb += rm_dec.ptype_in.eq(sv_ptype) # Single/Twin predicated
             comb += rm_dec.rc_in.eq(rc_out) # Rc=1
             comb += rm_dec.rm_in.eq(self.sv_rm) # SVP64 RM mode
