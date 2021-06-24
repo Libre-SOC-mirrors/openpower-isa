@@ -210,6 +210,8 @@ class PowerOp:
 
     @staticmethod
     def like(other):
+        """PowerOp.like: creates a duplicate of a given PowerOp instance
+        """
         fields = {}
         for fname in other._fields:
             sig = getattr(other, fname)
@@ -364,8 +366,8 @@ class PowerDecoder(Elaboratable):
                                    reset_less=True)
             eq = []
             case_does_something = False
-            eq.append(opcode_switch.eq(
-                self.opcode_in[d.bitsel[0]:d.bitsel[1]]))
+            look_for = self.opcode_in[d.bitsel[0]:d.bitsel[1]]
+            eq.append(opcode_switch.eq(look_for))
             if d.suffix:
                 opcodes = self.divide_opcodes(d)
                 opc_in = Signal(d.suffix, reset_less=True)
@@ -557,13 +559,13 @@ class TopPowerDecoder(PowerDecoder):
 #############################################################
 # PRIMARY FUNCTION SPECIFYING ALTERNATIVE SVP64 POWER DECODER
 
-def create_pdecode_svp64(name=None, col_subset=None, row_subset=None,
+def create_pdecode_svp64_ldst(name=None, col_subset=None, row_subset=None,
                    include_fp=False):
     """create_pdecode - creates a cascading hierarchical POWER ISA decoder
 
     subsetting of the PowerOp decoding is possible by setting col_subset
     """
-    log ("create_pdecode_svp64", name, col_subset, row_subset, include_fp)
+    log ("create_pdecode_svp64_ldst", name, col_subset, row_subset, include_fp)
 
     # some alteration to the CSV files is required for SV so we use
     # a class to do it
@@ -702,7 +704,7 @@ if __name__ == '__main__':
         f.write(vl)
 
     # full SVP64 decoder
-    pdecode = create_pdecode_svp64(include_fp=True)
+    pdecode = create_pdecode_svp64_ldst(include_fp=True)
     vl = rtlil.convert(pdecode, ports=pdecode.ports())
     with open("decoder_svp64.il", "w") as f:
         f.write(vl)
