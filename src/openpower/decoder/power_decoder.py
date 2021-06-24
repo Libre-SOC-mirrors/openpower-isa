@@ -319,9 +319,13 @@ class PowerDecoder(Elaboratable):
     the constructor is called.  all quite messy.
     """
 
-    def __init__(self, width, dec, name=None, col_subset=None, row_subset=None):
+    def __init__(self, width, dec, name=None, col_subset=None,
+                       row_subset=None, conditions=None):
+        if conditions is None:
+            conditions = {}
         self.actually_does_something = False
         self.pname = name
+        self.conditions = conditions
         self.col_subset = col_subset
         self.row_subsetfn = row_subset
         if not isinstance(dec, list):
@@ -334,6 +338,22 @@ class PowerDecoder(Elaboratable):
             if d.suffix is not None and d.suffix >= width:
                 d.suffix = None
         self.width = width
+
+        # create some case statement condition patterns for matching
+        # a single condition.  "1----" for the first condition,
+        # "-1----" for the 2nd etc.
+        # also create a matching ordered list of conditions, for the switch,
+        # which will Cat() them together
+        self.ccases = {}
+        self.ckeys = list(conditions.keys())
+        self.ckeys.sort()
+        cswitch = []
+        for i, ckey in enumerate(self.ckeys):
+            case = '-' * len(self.ckeys)
+            case[i] = '1'
+            self.ccases[ckey] = case
+            cswitch.append(conditions[ckey])
+        self.cswitch = cswitch
 
     def suffix_mask(self, d):
         return ((1 << d.suffix) - 1)
@@ -475,8 +495,24 @@ class PowerDecoder(Elaboratable):
                 with m.Switch(switch):
                     for key, eqs in cases.items():
                         with m.Case(key):
-                            comb += eqs
+                            # "conditions" are a further switch statement
+                            if isinstance(eqs, dict):
+                                self.condition_switch(m, eqs)
+                            else:
+                                comb += eqs
         return m
+
+    def condition_switch(self, m, cases):
+        """against the global list of "conditions", having matched against
+        bits of the opcode, we FINALLY now have to match against some
+        additional "conditions".  this is because there can be **MULTIPLE**
+        entries for a given opcode match. here we discern them.
+        """
+        comb = m.d.comb
+        with m.Switch(Cat(*self.ccswitch)):
+            for ckey, eqs in cases.items():
+                with m.Case(self.ccases[key]):
+                    comb += eqs
 
     def ports(self):
         return [self.opcode_in] + self.op.ports()
@@ -490,8 +526,10 @@ class TopPowerDecoder(PowerDecoder):
     (reverses byte order).  See V3.0B p44 1.11.2
     """
 
-    def __init__(self, width, dec, name=None, col_subset=None, row_subset=None):
-        PowerDecoder.__init__(self, width, dec, name, col_subset, row_subset)
+    def __init__(self, width, dec, name=None, col_subset=None,
+                                   row_subset=None, conditions=None):
+        PowerDecoder.__init__(self, width, dec, name,
+                              col_subset, row_subset, conditions)
         self.fields = df = DecodeFields(SignalBitRange, [self.opcode_in])
         self.fields.create_specs()
         self.raw_opcode_in = Signal.like(self.opcode_in, reset_less=True)
