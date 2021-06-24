@@ -31,7 +31,7 @@ from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      CRInSel, CROutSel,
                                      LdstLen, In1Sel, In2Sel, In3Sel,
                                      OutSel, SPRfull, SPRreduced,
-                                     RC, LDSTMode,
+                                     RC, SVP64LDSTmode, LDSTMode,
                                      SVEXTRA, SVEtype, SVPtype)
 from openpower.decoder.decode2execute1 import (Decode2ToExecute1Type, Data,
                                                Decode2ToOperand)
@@ -754,6 +754,7 @@ class PowerDecodeSubset(Elaboratable):
         self.regreduce_en = regreduce_en
         if svp64_en:
             self.is_svp64_mode = Signal() # mark decoding as SVP64 Mode
+            self.use_svp64_ldst_dec = Signal() # must use LDST decoder
             self.sv_rm = SVP64Rec(name="dec_svp64") # SVP64 RM field
             self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
             # set these to the predicate mask bits needed for the ALU
@@ -992,6 +993,10 @@ class PowerDecodeSubset(Elaboratable):
             if self.needs_field("imm_data", "in2_sel"):
                 bzero = dec_bi.imm_out.ok & ~dec_bi.imm_out.data.bool()
                 comb += rm_dec.ldst_imz_in.eq(bzero) # B immediate is zero
+            # main PowerDecoder2 determines if bit-reverse mode requested
+            if not self.final:
+                bitrev = rm_dec.ldstmode == SVP64LDSTmode.BITREVERSE
+                comb += self.use_svp64_ldst_dec.eq(bitrev)
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
