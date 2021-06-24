@@ -1423,7 +1423,8 @@ class PowerDecode2(PowerDecodeSubset):
             comb += e_out.read_fast3.data.eq(FastRegsEnum.SVSRR0)  # SVSRR0
             comb += e_out.read_fast3.ok.eq(1)
 
-        # annoying simulator bug
+        # annoying simulator bug.
+        # asmcode may end up getting used for perfcounters?
         asmcode = self.op_get("asmcode")
         if hasattr(e_out, "asmcode") and asmcode is not None:
             comb += e_out.asmcode.eq(asmcode)
