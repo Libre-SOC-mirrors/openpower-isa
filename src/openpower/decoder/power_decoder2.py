@@ -25,7 +25,8 @@ from openpower.sv.svp64 import SVP64Rec
 
 from openpower.decoder.power_regspec_map import regspec_decode_read
 from openpower.decoder.power_decoder import (create_pdecode,
-                                             create_pdecode_svp64_ldst,)
+                                             create_pdecode_svp64_ldst,
+                                             PowerOp)
 from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                      CRInSel, CROutSel,
                                      LdstLen, In1Sel, In2Sel, In3Sel,
@@ -788,6 +789,9 @@ class PowerDecodeSubset(Elaboratable):
                                               row_subset=self.rowsubsetfn)
             self.svdecldst = svdecldst
 
+        # set up a copy of the PowerOp
+        self.op = PowerOp.like(self.dec.op)
+
         # state information needed by the Decoder
         if state is None:
             state = CoreState("dec2")
@@ -874,6 +878,10 @@ class PowerDecodeSubset(Elaboratable):
         m.submodules.dec = self.dec
         m.submodules.dec_rc = self.dec_rc = dec_rc = DecodeRC(self.dec)
         m.submodules.dec_oe = dec_oe = DecodeOE(self.dec, op)
+
+        # use op from first decoder (self.dec.op) if not in SVP64-LDST mode
+        # (TODO)
+        comb += self.op.eq(self.dec.op)
 
         if self.svp64_en:
             # and SVP64 RM mode decoder
@@ -1104,7 +1112,7 @@ class PowerDecode2(PowerDecodeSubset):
         m = super().elaborate(platform)
         comb = m.d.comb
         state = self.state
-        e_out, op, do_out = self.e, self.dec.op, self.e.do
+        op, e_out, do_out = self.op, self.e, self.e.do
         dec_spr, msr, cia, ext_irq = state.dec, state.msr, state.pc, state.eint
         rc_out = self.dec_rc.rc_out.data
         e = self.e_tmp

@@ -183,7 +183,7 @@ class PowerOp:
         self.name = name
         self.subset = subset
         if fields is not None:
-            for k, v in fields:
+            for k, v in fields.items():
                 setattr(self, k, v)
             return
         debug_report = set()
@@ -214,8 +214,9 @@ class PowerOp:
         """
         fields = {}
         for fname in other._fields:
-            sig = getattr(other, fname)
-            fields[fname] = sig.__class__.like(sig)
+            sig = getattr(other, fname, None)
+            if sig is not None:
+                fields[fname] = sig.__class__.like(sig)
         return PowerOp(subset=other.subset, fields=fields)
 
     def _eq(self, row=None):
