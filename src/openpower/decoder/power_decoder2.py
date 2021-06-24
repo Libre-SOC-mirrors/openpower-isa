@@ -779,8 +779,9 @@ class PowerDecodeSubset(Elaboratable):
             dec = create_pdecode(name=fn_name, col_subset=col_subset,
                                       row_subset=self.rowsubsetfn)
         self.dec = dec
-        # create SVP64 decoder
-        if svp64_en:
+
+        # create SVP64 LDST decoder
+        if svp64_en and (not final or fn_name.lower().startswith("ldst")):
             if fn_name:
                 name = "sv_"+fn_name
             else:
@@ -789,6 +790,8 @@ class PowerDecodeSubset(Elaboratable):
                                               col_subset=col_subset,
                                               row_subset=self.rowsubsetfn)
             self.svdecldst = svdecldst
+        else:
+            self.svdecldst = None
 
         # set up a copy of the PowerOp
         self.op = PowerOp.like(self.dec.op)
@@ -829,6 +832,7 @@ class PowerDecodeSubset(Elaboratable):
         ports = self.dec.ports() + self.e.ports()
         if self.svp64_en:
             ports += self.sv_rm.ports()
+        if self.svdecldst:
             ports += self.svdecldst.ports()
         return ports
 
@@ -887,6 +891,7 @@ class PowerDecodeSubset(Elaboratable):
         if self.svp64_en:
             # and SVP64 RM mode decoder
             m.submodules.sv_rm_dec = rm_dec = self.rm_dec
+        if self.svdecldst:
             # and SVP64 decoder
             m.submodules.svdecldst = svdecldst = self.svdecldst
 
