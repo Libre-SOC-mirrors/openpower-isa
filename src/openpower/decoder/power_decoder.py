@@ -87,7 +87,7 @@ Top Level:
 """
 
 import gc
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from nmigen import Module, Elaboratable, Signal, Cat, Mux
 from nmigen.cli import rtlil
 from openpower.decoder.power_enums import (Function, Form, MicrOp,
@@ -322,7 +322,10 @@ class PowerDecoder(Elaboratable):
     def __init__(self, width, dec, name=None, col_subset=None,
                        row_subset=None, conditions=None):
         if conditions is None:
-            conditions = {}
+            # XXX conditions = {}
+            conditions = {'SVP64BREV': 0,
+                          '~SVP64BREV': 1,
+                         }
         self.actually_does_something = False
         self.pname = name
         self.conditions = conditions
@@ -337,6 +340,7 @@ class PowerDecoder(Elaboratable):
         for d in dec:
             if d.suffix is not None and d.suffix >= width:
                 d.suffix = None
+
         self.width = width
 
         # create some case statement condition patterns for matching
@@ -349,11 +353,34 @@ class PowerDecoder(Elaboratable):
         self.ckeys.sort()
         cswitch = []
         for i, ckey in enumerate(self.ckeys):
-            case = '-' * len(self.ckeys)
+            case = ['-'] * len(self.ckeys)
             case[i] = '1'
-            self.ccases[ckey] = case
+            self.ccases[ckey] = ''.join(case)
             cswitch.append(conditions[ckey])
         self.cswitch = cswitch
+
+    def find_conditions(self, opcodes):
+        # look for conditions, create dictionary entries for them
+        # sorted by opcode
+        rows = OrderedDict() # start as a dictionary, get as list (after)
+        for row in opcodes:
+            condition = row['CONDITIONS']
+            opcode = row['opcode']
+            if condition:
+                # check it's expected
+                assert condition in self.conditions, \
+                    "condition %s not in %s" % (condition, str(conditions))
+                if opcode not in rows:
+                    rows[opcode] = {}
+                rows[opcode][condition] = row
+            else:
+                # check it's unique
+                assert opcode not in rows, \
+                    "opcode %s already in rows for %s" % \
+                                        (opcode, self.pname)
+                rows[opcode] = row
+        # after checking for conditions, get just the values (ordered)
+        return list(rows.values())
 
     def suffix_mask(self, d):
         return ((1 << d.suffix) - 1)
@@ -391,6 +418,7 @@ class PowerDecoder(Elaboratable):
             eq.append(opcode_switch.eq(look_for))
             if d.suffix:
                 opcodes = self.divide_opcodes(d)
+                # TODO opcodes = self.find_conditions(opcodes)
                 opc_in = Signal(d.suffix, reset_less=True)
                 eq.append(opc_in.eq(opcode_switch[:d.suffix]))
                 # begin the dynamic Switch statement here
@@ -427,17 +455,33 @@ class PowerDecoder(Elaboratable):
                 if seqs:
                     case_does_something = True
                 eq += seqs
-                for row in d.opcodes:
-                    opcode = row['opcode']
+                opcodes = self.find_conditions(d.opcodes)
+                for row in opcodes:
+                    # urrr this is an awful hack. if "conditions" are active
+                    # get the FIRST item (will be the same opcode), and it
+                    # had BETTER have the same unit and also pass other
+                    # row subset conditions.
+                    if 'opcode' not in row: # must be a "CONDITIONS" dict...
+                        is_conditions = True
+                        _row = row[list(row.keys())[0]]
+                    else:
+                        is_conditions = False
+                        _row = row
+                    opcode = _row['opcode']
                     if d.opint and '-' not in opcode:
                         opcode = int(opcode, 0)
-                    if not row['unit']:
+                    if not _row['unit']:
                         continue
                     if self.row_subsetfn:
-                        if not self.row_subsetfn(opcode, row):
+                        if not self.row_subsetfn(opcode, _row):
                             continue
                     # add in the dynamic Case statement here
-                    switch_case[opcode] = self.op._eq(row)
+                    if is_conditions:
+                        switch_case[opcode] = {}
+                        for k, crow in row.items():
+                            switch_case[opcode][k] = self.op._eq(crow)
+                    else:
+                        switch_case[opcode] = self.op._eq(row)
                     self.actually_does_something = True
                     case_does_something = True
 
@@ -509,9 +553,9 @@ class PowerDecoder(Elaboratable):
         entries for a given opcode match. here we discern them.
         """
         comb = m.d.comb
-        with m.Switch(Cat(*self.ccswitch)):
+        with m.Switch(Cat(*self.cswitch)):
             for ckey, eqs in cases.items():
-                with m.Case(self.ccases[key]):
+                with m.Case(self.ccases[ckey]):
                     comb += eqs
 
     def ports(self):
