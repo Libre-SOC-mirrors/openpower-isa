@@ -853,7 +853,7 @@ class PowerDecodeSubset(Elaboratable):
         return []
 
     def op_get(self, op_field):
-        return getattr(self.dec.op, op_field, None)
+        return getattr(self.op, op_field, None)
 
     def elaborate(self, platform):
         if self.regreduce_en:
