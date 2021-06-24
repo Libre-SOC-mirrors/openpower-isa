@@ -166,7 +166,7 @@ class DecoderTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, svstate=svstate,
                                                 initial_fprs=fprs)
             # answer should be 7.0 * -9.8 * -9.8 * 2.0 = 1344.56
-            self.assertEqual(sim.fpr(1), SelectableInt(0x4095023d60000000, 64))
+            self.assertEqual(sim.fpr(1), SelectableInt(0x4095023d20000000, 64))
             # these should not have been changed
             self.assertEqual(sim.fpr(2), SelectableInt(0xC02399999999999A, 64))
             self.assertEqual(sim.fpr(3), SelectableInt(0xC02399999999999A, 64))
