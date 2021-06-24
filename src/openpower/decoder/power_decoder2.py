@@ -1337,11 +1337,12 @@ class PowerDecode2(PowerDecodeSubset):
         # sigh this is exactly the sort of thing for which the
         # decoder is designed to not need.  MTSPR, MFSPR and others need
         # access to the XER bits.  however setting e.oe is not appropriate
-        with m.If(op.internal_op == MicrOp.OP_MFSPR):
+        internal_op = self.op_get("internal_op")
+        with m.If(internal_op == MicrOp.OP_MFSPR):
             comb += e.xer_in.eq(0b111) # SO, CA, OV
-        with m.If(op.internal_op == MicrOp.OP_CMP):
+        with m.If(internal_op == MicrOp.OP_CMP):
             comb += e.xer_in.eq(1<<XERRegsEnum.SO) # SO
-        with m.If(op.internal_op == MicrOp.OP_MTSPR):
+        with m.If(internal_op == MicrOp.OP_MTSPR):
             comb += e.xer_out.eq(1)
 
         # set the trapaddr to 0x700 for a td/tw/tdi/twi operation
