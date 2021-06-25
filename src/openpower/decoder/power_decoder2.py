@@ -777,9 +777,12 @@ class PowerDecodeSubset(Elaboratable):
         # "conditions" for Decoders, to enable some weird and wonderful
         # alternatives.  useful for PCR (Program Compatibility Register)
         # amongst other things
-        conditions = {'SVP64BREV': self.use_svp64_ldst_dec,
-                      '~SVP64BREV': ~self.use_svp64_ldst_dec
-                     }
+        if svp64_en:
+            conditions = {'SVP64BREV': self.use_svp64_ldst_dec,
+                          '~SVP64BREV': ~self.use_svp64_ldst_dec
+                         }
+        else:
+            conditions = None
 
         # only needed for "main" PowerDecode2
         if not self.final:
