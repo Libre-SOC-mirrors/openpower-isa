@@ -6,7 +6,7 @@
 
 SVD-Form
 
-* lbz RT,SVD(RA),RC
+* lbzbr RT,SVD(RA),RC
 
 Pseudo-code:
 
@@ -23,7 +23,7 @@ Special Registers Altered:
 
 SVD-Form
 
-* lbzu RT,SVD(RA),RC
+* lbzubr RT,SVD(RA),RC
 
 Pseudo-code:
 
@@ -40,7 +40,7 @@ Special Registers Altered:
 
 SVD-Form
 
-* lhz RT,SVD(RA),RC
+* lhzbr RT,SVD(RA),RC
 
 Pseudo-code:
 
@@ -57,7 +57,7 @@ Special Registers Altered:
 
 SVD-Form
 
-* lhzu RT,SVD(RA),RC
+* lhzubr RT,SVD(RA),RC
 
 Pseudo-code:
 
@@ -74,7 +74,7 @@ Special Registers Altered:
 
 SVD-Form
 
-* lha RT,SVD(RA),RC
+* lhabr RT,SVD(RA),RC
 
 Pseudo-code:
 
@@ -91,7 +91,7 @@ Special Registers Altered:
 
 SVD-Form
 
-* lhau RT,SVD(RA),RC
+* lhaubr RT,SVD(RA),RC
 
 Pseudo-code:
 
@@ -108,7 +108,7 @@ Special Registers Altered:
 
 SVD-Form
 
-* lwz RT,SVD(RA),RC
+* lwzbr RT,SVD(RA),RC
 
 Pseudo-code:
 
@@ -125,7 +125,7 @@ Special Registers Altered:
 
 SVD-Form
 
-* lwzu RT,SVD(RA),RC
+* lwzubr RT,SVD(RA),RC
 
 Pseudo-code:
 
@@ -142,7 +142,7 @@ Special Registers Altered:
 
 SVDS-Form
 
-* lwa RT,SVDS(RA),RC
+* lwabr RT,SVDS(RA),RC
 
 Pseudo-code:
 
@@ -159,7 +159,7 @@ Special Registers Altered:
 
 SVDS-Form
 
-* ld RT,SVDS(RA),RC
+* ldbr RT,SVDS(RA),RC
 
 Pseudo-code:
 
@@ -176,7 +176,7 @@ Special Registers Altered:
 
 SVDS-Form
 
-* ldu RT,SVDS(RA),RC
+* ldubr RT,SVDS(RA),RC
 
 Pseudo-code:
 

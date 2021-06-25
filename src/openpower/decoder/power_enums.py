@@ -246,12 +246,18 @@ _insns = [
     "hrfid", "icbi", "icbt", "isel", "isync",
     "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
     "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
+    "lbzbr", "lbzubr",  # load byte SVP64 bit-reversed
+    "ldbr", "ldubr",    # load double SVP64 bit-reversed
     "lfs", "lfsx", "lfsu", "lfsux",                     # FP load single
     "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax", # FP load double
     "lha", "lharx", "lhau", "lhaux", "lhax",            # load half
     "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
+    "lhabr", "lhaubr",  # load half SVP64 bit-reversed
+    "lhzbr", "lhzubr",  # more load half SVP64 bit-reversed
     "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
     "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
+    "lwabr",           # load word SVP64 bit-reversed
+    "lwzbr", "lwzubr", # more load word SVP64 bit-reversed
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
