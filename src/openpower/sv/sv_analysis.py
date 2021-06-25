@@ -197,7 +197,9 @@ def process_csvs():
         for row in csv:
             if blank_key(row):
                 continue
+            print ("row", row)
             insn_name = row['comment']
+            condition = row['CONDITIONS']
             # skip instructions that are not suitable
             if insn_name in ['mcrxr', 'mcrxrx', 'darn']:
                 continue
@@ -206,7 +208,7 @@ def process_csvs():
             if insn_name in ['setvl',]: # SVP64 opcodes
                 continue
 
-            insns[insn_name] = row # accumulate csv data by instruction
+            insns[(insn_name, condition)] = row # accumulate csv data 
             insn_to_csv[insn_name] = csvname_ # CSV file name by instruction
             dkey = create_key(row)
             key = tuple(dkey.values())
@@ -215,7 +217,7 @@ def process_csvs():
             primarykeys.add(key)
             if key not in bykey:
                 bykey[key] = []
-            bykey[key].append((csvname, row['opcode'], insn_name,
+            bykey[key].append((csvname, row['opcode'], insn_name, condition,
                                row['form'].upper() + '-Form'))
 
             # detect immediates, collate them (useful info)
@@ -315,7 +317,7 @@ def process_csvs():
     # create a CSV file, per category, with SV "augmentation" info
     # XXX note: 'out2' not added here, needs to be added to CSV files
     # KEEP TRACK OF THESE https://bugs.libre-soc.org/show_bug.cgi?id=619
-    csvcols = ['insn', 'Ptype', 'Etype', '0', '1', '2', '3']
+    csvcols = ['insn', 'CONDITIONS', 'Ptype', 'Etype', '0', '1', '2', '3']
     csvcols += ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out'] # temporary
     for key in primarykeys:
         # get the decoded key containing row-analysis, and name/value
@@ -340,11 +342,14 @@ def process_csvs():
             #    if row[idx] == 'NONE':
             #        row[idx] = ''
             # get the instruction
+            print (key, row)
             insn_name = row[2]
-            insn = insns[insn_name]
+            condition = row[3]
+            insn = insns[(insn_name, condition)]
             # start constructing svp64 CSV row
             res = OrderedDict()
             res['insn'] = insn_name
+            res['CONDITIONS'] = condition
             res['Ptype'] = value.split('-')[1] # predication type (RM-xN-xxx)
             # get whether R_xxx_EXTRAn fields are 2-bit or 3-bit
             res['Etype'] = 'EXTRA2'
@@ -563,6 +568,8 @@ def process_csvs():
             #    del res[k]
             #if res['0'] != 'TODO':
             for k in res:
+                if k == 'CONDITIONS':
+                    continue
                 if res[k] == 'NONE' or res[k] == '':
                     res[k] = '0'
             svp64[value].append(res)
@@ -665,8 +672,9 @@ def process_csvs():
             vhdl.write(hdr % (value, value, "  ".join(fullcols)))
             for entry in csv:
                 insn = str(entry['insn'])
+                condition = str(entry['CONDITIONS'])
                 sventry = svt.svp64_instrs.get(insn, None)
-                op = insns[insn]['opcode']
+                op = insns[(insn, condition)]['opcode']
                 # binary-to-vhdl-binary
                 if op.startswith("0b"):
                     op = "2#%s#" % op[2:]
