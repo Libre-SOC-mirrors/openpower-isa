@@ -210,9 +210,51 @@ class SVP64Asm:
         if rc_mode:
             v30b_op = v30b_op[:-1]
 
+        # sigh again, have to recognised LD/ST bit-reverse instructions
+        # this has to be "processed" to fit into a v3.0B without the "br"
+        # e.g. ldbr is actually ld
+        ldst_bitreverse = v30b_op.startswith("l") and v30b_op.endswith("br")
+
         if v30b_op not in isa.instr:
             raise Exception("opcode %s of '%s' not supported" % \
                             (v30b_op, insn))
+
+        if ldst_bitreverse:
+            # okaay we need to process the fields and make this:
+            #     ldbr RT, SVD(RA), RC  - 11 bits for SVD, 5 for RC
+            # into this:
+            #     ld RT, D(RA)          - 16 bits
+            # likewise same for SVDS (9 bits for SVDS, 5 for RC, 14 bits for DS)
+            form = isa.instr[v30b_op].form # get form (SVD-Form, SVDS-Form)
+
+            newfields = []
+            for field in fields:
+                # identify if this is a ld/st immediate(reg) thing
+                ldst_imm = "(" in field and field[-1] == ')'
+                if ldst_imm:
+                    newfields.append(field[:-1].split("("))
+                else:
+                    newfields.append(field)
+
+            immed, RA = newfields[1]
+            immed = int(immed)
+            RC = int(newfields.pop(2)) # better be an integer number!
+            if form == 'SVD': # 16 bit: immed 11 bits, RC shift up 11
+                immed = (immed & 0b11111111111) | (RC<<11)
+                if immed & (1<<15): # should be negative
+                    immed -= 1<<16
+            if form == 'SVDS': # 14 bit: immed 9 bits, RC shift up 9
+                immed = (immed & 0b111111111) | (RC<<9)
+                if immed & (1<<13): # should be negative
+                    immed -= 1<<14
+            newfields[1] = "%d(%s)" % (immed, RA)
+            fields = newfields
+
+            # and strip off "br" from end, and add "br" to opmodes, instead
+            v30b_op = v30b_op[:-2]
+            opmodes.append("br")
+            log ("rewritten", v30b_op, opmodes, fields)
+
         if v30b_op not in svp64.instrs:
             raise Exception("opcode %s of '%s' not an svp64 instruction" % \
                             (v30b_op, insn))
@@ -481,7 +523,6 @@ class SVP64Asm:
 
         mapreduce = False
         reverse_gear = False
-        bitreverse = False
         mapreduce_crm = False
         mapreduce_svm = False
 
@@ -512,7 +553,7 @@ class SVP64Asm:
                 has_smask = True
             # bitreverse LD/ST
             elif encmode.startswith("br"):
-                bitreverse = True
+                ldst_bitreverse = True
             # vec2/3/4
             elif encmode.startswith("vec"):
                 subvl = decode_subvl(encmode[3:])
@@ -610,6 +651,11 @@ class SVP64Asm:
             assert has_pmask or mask_m_specified, \
                 "dest zeroing requires a dest predicate"
 
+        # check LDST bitreverse, only available in "normal" mode
+        if is_ldst and ldst_bitreverse:
+            assert sv_mode is None, \
+                "LD bit-reverse cannot have modes (%s) applied" % sv_mode
+
         ######################################
         # "normal" mode
         if sv_mode is None:
@@ -619,7 +665,7 @@ class SVP64Asm:
                 # TODO: for now, LD/ST-indexed is ignored.
                 mode |= ldst_elstride << SVP64MODE.ELS_NORMAL # element-strided
                 # bitreverse mode
-                if bitreverse:
+                if ldst_bitreverse:
                     mode |= 1 << SVP64MODE.LDST_BITREV
             else:
                 # TODO, reduce and subvector mode
@@ -744,6 +790,7 @@ class SVP64Asm:
         # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
         rc = '.' if rc_mode else ''
         yield ".long 0x%x" % svp64_prefix.insn.value
+        log(v30b_newfields)
         yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
         log ("new v3.0B fields", v30b_op, v30b_newfields)
 
@@ -891,6 +938,7 @@ if __name__ == '__main__':
     lst = [
              'sv.addi win2.v, win.v, -1',
              'sv.add./mrr 5.v, 2.v, 1.v',
+             'sv.lhzbr 5.v, 11(9.v), 15',
     ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

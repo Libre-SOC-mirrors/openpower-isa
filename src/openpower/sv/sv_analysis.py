@@ -201,6 +201,8 @@ def process_csvs():
             insn_name = row['comment']
             condition = row['CONDITIONS']
             # skip instructions that are not suitable
+            if insn_name.startswith("l") and insn_name.endswith("br"):
+                continue # skip pseudo-alias lxxxbr
             if insn_name in ['mcrxr', 'mcrxrx', 'darn']:
                 continue
             if insn_name.startswith('bc') or 'rfid' in insn_name:
