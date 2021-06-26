@@ -88,8 +88,8 @@ Top Level:
 
 import gc
 from collections import namedtuple, OrderedDict
-from nmigen import Module, Elaboratable, Signal, Cat, Mux
-from nmigen.cli import rtlil
+from nmigen import Module, Elaboratable, Signal, Cat, Mux, Const
+from nmigen.cli import rtlil, verilog
 from openpower.decoder.power_enums import (Function, Form, MicrOp,
                                      In1Sel, In2Sel, In3Sel, OutSel,
                                      SVEXTRA, SVEtype, SVPtype,  # Simple-V
@@ -323,8 +323,7 @@ class PowerDecoder(Elaboratable):
                        row_subset=None, conditions=None):
         if conditions is None:
             # XXX conditions = {}
-            conditions = {'SVP64BREV': 0,
-                          '~SVP64BREV': 1,
+            conditions = {'SVP64BREV': Const(0, 1),
                          }
         self.actually_does_something = False
         self.pname = name
@@ -351,13 +350,6 @@ class PowerDecoder(Elaboratable):
         self.ccases = {}
         self.ckeys = list(conditions.keys())
         self.ckeys.sort()
-        cswitch = []
-        for i, ckey in enumerate(self.ckeys):
-            case = ['-'] * len(self.ckeys)
-            case[i] = '1'
-            self.ccases[ckey] = ''.join(case)
-            cswitch.append(conditions[ckey])
-        self.cswitch = cswitch
 
     def find_conditions(self, opcodes):
         # look for conditions, create dictionary entries for them
@@ -368,7 +360,9 @@ class PowerDecoder(Elaboratable):
             opcode = row['opcode']
             if condition:
                 # check it's expected
-                assert condition in self.conditions, \
+                assert (condition in self.conditions or
+                       (condition[0] == '~' and
+                        condition[1:] in self.conditions)), \
                     "condition %s not in %s" % (condition, str(conditions))
                 if opcode not in rows:
                     rows[opcode] = {}
@@ -556,9 +550,14 @@ class PowerDecoder(Elaboratable):
         entries for a given opcode match. here we discern them.
         """
         comb = m.d.comb
-        with m.Switch(Cat(*self.cswitch)):
-            for ckey, eqs in cases.items():
-                with m.Case(self.ccases[ckey]):
+        cswitch = []
+        ccases = []
+        for casekey, eqs in cases.items():
+            if casekey.startswith('~'):
+                with m.If(~self.conditions[casekey[1:]]):
+                    comb += eqs
+            else:
+                with m.If(self.conditions[casekey]):
                     comb += eqs
 
     def ports(self):
@@ -772,17 +771,22 @@ if __name__ == '__main__':
             return row['unit'] == 'LDST'
 
         conditions = {'SVP64BREV': Signal(name="svp64brev", reset_less=True),
-                      '~SVP64BREV': Signal(name="svp64brevN", reset_less=True)
                      }
         pdecode = create_pdecode(name="rowsub",
                                  col_subset={'opcode', 'function_unit',
-                                             'form'},
+                                             'in2_sel', 'in3_sel'},
                                  row_subset=rowsubsetfn,
                                  include_fp=True,
                                  conditions=conditions)
         vl = rtlil.convert(pdecode, ports=pdecode.ports())
         with open("row_subset_decoder.il", "w") as f:
             f.write(vl)
+
+        vl = verilog.convert(pdecode, ports=pdecode.ports())
+        with open("row_subset_decoder.v", "w") as f:
+            f.write(vl)
+
+        exit(0)
 
         # col subset
 

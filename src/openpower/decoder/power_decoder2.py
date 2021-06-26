@@ -779,10 +779,10 @@ class PowerDecodeSubset(Elaboratable):
         # amongst other things
         if svp64_en:
             conditions = {'SVP64BREV': self.use_svp64_ldst_dec,
-                          '~SVP64BREV': ~self.use_svp64_ldst_dec
                          }
         else:
-            conditions = None
+            conditions = {'SVP64BREV': Const(0, 1),
+                         }
 
         # only needed for "main" PowerDecode2
         if not self.final:
