@@ -378,7 +378,7 @@ def bitrev(val, VL):
     'width' bits of the integer 'val'
     """
     result = 0
-    width = VL.bit_length()
+    width = VL.bit_length()-1
     for _ in range(width):
         result = (result << 1) | (val & 1)
         val >>= 1

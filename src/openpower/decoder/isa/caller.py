@@ -28,7 +28,7 @@ from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
 
 from openpower.decoder.power_enums import SVPtype
 
-from openpower.decoder.helpers import exts, gtu, ltu, undefined
+from openpower.decoder.helpers import (exts, gtu, ltu, undefined, bitrev)
 from openpower.consts import PIb, MSRb  # big-endian (PowerISA versions)
 from openpower.consts import SVP64CROffs
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
@@ -1185,33 +1185,51 @@ class ISACaller:
         # use info.form to detect
         replace_d = False # update / replace constant in pseudocode
         if self.is_svp64_mode:
-            D = yield self.dec2.dec.fields.FormD.D[0:16]
-            D = exts(D, 16) # sign-extend to integer
             ldstmode = yield self.dec2.rm_dec.ldstmode
+            # bitreverse mode reads SVD (or SVDS - TODO)
+            # *BUT*... because this is "overloading" of LD operations,
+            # it gets *STORED* into D (or DS, TODO)
+            if ldstmode == SVP64LDSTmode.BITREVERSE.value:
+                imm = yield self.dec2.dec.fields.FormSVD.SVD[0:11]
+                imm = exts(imm, 11) # sign-extend to integer
+                print ("bitrev SVD", imm)
+                replace_d = True
+            else:
+                imm = yield self.dec2.dec.fields.FormD.D[0:16]
+                imm = exts(imm, 16) # sign-extend to integer
             # get the right step. LD is from srcstep, ST is dststep
             op = yield self.dec2.e.do.insn_type
             offsmul = 0
             if op == MicrOp.OP_LOAD.value:
                 offsmul = srcstep
-                log("D-field src", D, offsmul)
+                log("D-field src", imm, offsmul)
             elif op == MicrOp.OP_STORE.value:
                 offsmul = dststep
-                log("D-field dst", D, offsmul)
+                log("D-field dst", imm, offsmul)
+            # bit-reverse mode
+            if ldstmode == SVP64LDSTmode.BITREVERSE.value:
+                # manually look up RC, sigh
+                RC = yield self.dec2.dec.RC[0:5]
+                RC = self.gpr(RC)
+                log ("RC", RC.value, "imm", imm, "offs", bin(offsmul),
+                     "rev", bin(bitrev(offsmul, vl)))
+                imm = SelectableInt((imm * bitrev(offsmul, vl)) << RC.value, 32)
             # Unit-Strided LD/ST adds offset*width to immediate
-            if ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
+            elif ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
                 ldst_len = yield self.dec2.e.do.data_len
-                D = SelectableInt(D + offsmul * ldst_len, 32)
+                imm = SelectableInt(imm + offsmul * ldst_len, 32)
                 replace_d = True
             # Element-strided multiplies the immediate by element step
             elif ldstmode == SVP64LDSTmode.ELSTRIDE.value:
-                D = SelectableInt(D * offsmul, 32)
+                imm = SelectableInt(imm * offsmul, 32)
                 replace_d = True
             ldst_ra_vec = yield self.dec2.rm_dec.ldst_ra_vec
             ldst_imz_in = yield self.dec2.rm_dec.ldst_imz_in
-            log("LDSTmode", ldstmode, offsmul, D, ldst_ra_vec, ldst_imz_in)
+            log("LDSTmode", ldstmode, SVP64LDSTmode.BITREVERSE.value,
+                            offsmul, imm, ldst_ra_vec, ldst_imz_in)
         # new replacement D
         if replace_d:
-            self.namespace['D'] = D
+            self.namespace['D'] = imm
 
         # "special" registers
         for special in info.special_regs:

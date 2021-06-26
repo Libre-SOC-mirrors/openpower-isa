@@ -939,6 +939,7 @@ if __name__ == '__main__':
              'sv.addi win2.v, win.v, -1',
              'sv.add./mrr 5.v, 2.v, 1.v',
              'sv.lhzbr 5.v, 11(9.v), 15',
+             'sv.lwzbr 5.v, 11(9.v), 15',
     ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))
