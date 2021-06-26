@@ -1152,8 +1152,38 @@ class ISACaller:
                                        self.namespace['NIA'])
             return
 
+        # main input registers (RT, RA ...)
+        inputs = []
+        for name in input_names:
+            # using PowerDecoder2, first, find the decoder index.
+            # (mapping name RA RB RC RS to in1, in2, in3)
+            regnum, is_vec = yield from get_pdecode_idx_in(self.dec2, name)
+            if regnum is None:
+                # doing this is not part of svp64, it's because output
+                # registers, to be modified, need to be in the namespace.
+                regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
+            if regnum is None:
+                regnum, is_vec = yield from get_pdecode_idx_out2(self.dec2,
+                                                                 name)
+
+            # in case getting the register number is needed, _RA, _RB
+            regname = "_" + name
+            self.namespace[regname] = regnum
+            if not self.is_svp64_mode or not pred_src_zero:
+                log('reading reg %s %s' % (name, str(regnum)), is_vec)
+                if name in fregs:
+                    reg_val = self.fpr(regnum)
+                else:
+                    reg_val = self.gpr(regnum)
+            else:
+                log('zero input reg %s %s' % (name, str(regnum)), is_vec)
+                reg_val = 0
+            inputs.append(reg_val)
+
         # in SVP64 mode for LD/ST work out immediate
-        replace_d = False # replace constant in pseudocode
+        # XXX TODO: replace_ds for DS-Form rather than D-Form.
+        # use info.form to detect
+        replace_d = False # update / replace constant in pseudocode
         if self.is_svp64_mode:
             D = yield self.dec2.dec.fields.FormD.D[0:16]
             D = exts(D, 16) # sign-extend to integer
@@ -1182,34 +1212,6 @@ class ISACaller:
         # new replacement D
         if replace_d:
             self.namespace['D'] = D
-
-        # main input registers (RT, RA ...)
-        inputs = []
-        for name in input_names:
-            # using PowerDecoder2, first, find the decoder index.
-            # (mapping name RA RB RC RS to in1, in2, in3)
-            regnum, is_vec = yield from get_pdecode_idx_in(self.dec2, name)
-            if regnum is None:
-                # doing this is not part of svp64, it's because output
-                # registers, to be modified, need to be in the namespace.
-                regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
-            if regnum is None:
-                regnum, is_vec = yield from get_pdecode_idx_out2(self.dec2,
-                                                                 name)
-
-            # in case getting the register number is needed, _RA, _RB
-            regname = "_" + name
-            self.namespace[regname] = regnum
-            if not self.is_svp64_mode or not pred_src_zero:
-                log('reading reg %s %s' % (name, str(regnum)), is_vec)
-                if name in fregs:
-                    reg_val = self.fpr(regnum)
-                else:
-                    reg_val = self.gpr(regnum)
-            else:
-                log('zero input reg %s %s' % (name, str(regnum)), is_vec)
-                reg_val = 0
-            inputs.append(reg_val)
 
         # "special" registers
         for special in info.special_regs:
