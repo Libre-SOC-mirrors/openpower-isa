@@ -449,6 +449,7 @@ class DecodeOut2(Elaboratable):
         self.dec = dec
         self.op = op
         self.sel_in = Signal(OutSel, reset_less=True)
+        self.svp64_fft_mode = Signal(reset_less=True) # SVP64 FFT mode
         self.lk = Signal(reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o2")
@@ -486,6 +487,13 @@ class DecodeOut2(Elaboratable):
                 comb += self.fast_out.ok.eq(1)
                 comb += self.fast_out3.data.eq(FastRegsEnum.SVSRR0) # SVSRR0
                 comb += self.fast_out3.ok.eq(1)
+
+            # SVP64 FFT mode, FP mul-add: 2nd output reg (FRS) same as FRT
+            # will be offset by VL in hardware
+            with m.Case(MicrOp.OP_FP_MADD):
+                with m.If(self.svp64_fft_mode):
+                    comb += self.reg_out.data.eq(self.dec.FRT)
+                    comb += self.reg_out.ok.eq(1)
 
         return m
 
@@ -1194,6 +1202,8 @@ class PowerDecode2(PowerDecodeSubset):
         comb += dec_c.sel_in.eq(self.op_get("in3_sel"))
         comb += dec_o.sel_in.eq(self.op_get("out_sel"))
         comb += dec_o2.sel_in.eq(self.op_get("out_sel"))
+        if self.svp64_en:
+            comb += dec_o2.svp64_fft_mode.eq(self.use_svp64_fft)
         if hasattr(do, "lk"):
             comb += dec_o2.lk.eq(do.lk)
 
