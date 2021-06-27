@@ -983,6 +983,8 @@ class PowerDecodeSubset(Elaboratable):
             sv_ptype = self.op_get("SV_Ptype")
             fn = self.op_get("function_unit")
             # detect major opcode for LDs: include 58 here. from CSV files.
+            # BLECH! TODO: these should be done using "mini decoders",
+            # using row and column subsets
             is_major_ld = Signal()
             major = Signal(6) # bits... errr... MSB0 0..5 which is 26:32 python
             comb += major.eq(self.dec.opcode_in[26:32])
@@ -994,7 +996,9 @@ class PowerDecodeSubset(Elaboratable):
                                    (major == 32) | (major == 33) |
                                    (major == 58))
             with m.If(self.is_svp64_mode & is_major_ld):
-                # straight-up: "it's a LD"
+                # straight-up: "it's a LD".  this gives enough info
+                # for SVP64 RM Mode decoding to detect LD/ST, and
+                # consequently detect the BITREVERSE mode. sigh
                 comb += rm_dec.fn_in.eq(Function.LDST)
             with m.Else():
                 comb += rm_dec.fn_in.eq(fn) # decode needs to know Fn type
@@ -1004,6 +1008,7 @@ class PowerDecodeSubset(Elaboratable):
             if self.needs_field("imm_data", "in2_sel"):
                 bzero = dec_bi.imm_out.ok & ~dec_bi.imm_out.data.bool()
                 comb += rm_dec.ldst_imz_in.eq(bzero) # B immediate is zero
+
             # main PowerDecoder2 determines if different SVP64 modes enabled
             if not self.final:
                 # if bit-reverse mode requested
