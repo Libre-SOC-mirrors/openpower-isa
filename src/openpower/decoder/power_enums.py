@@ -381,6 +381,7 @@ class MicrOp(Enum):
     OP_SETVL = 76
     OP_FPOP = 77  # temporary: replace with actual ops
     OP_FPOP_I = 78 # temporary: replace with actual ops
+    OP_FP_MADD = 79
 
 
 @unique
