@@ -372,6 +372,7 @@ def get_predcr(crl, mask, vl):
     return mask
 
 
+# TODO, really should just be using PowerDecoder2
 def get_pdecode_idx_in(dec2, name):
     op = dec2.dec.op
     in1_sel = yield op.in1_sel
@@ -433,6 +434,7 @@ def get_pdecode_idx_in(dec2, name):
     return None, False
 
 
+# TODO, really should just be using PowerDecoder2
 def get_pdecode_cr_out(dec2, name):
     op = dec2.dec.op
     out_sel = yield op.cr_out
@@ -456,6 +458,7 @@ def get_pdecode_cr_out(dec2, name):
     return None, False
 
 
+# TODO, really should just be using PowerDecoder2
 def get_pdecode_idx_out(dec2, name):
     op = dec2.dec.op
     out_sel = yield op.out_sel
@@ -485,6 +488,7 @@ def get_pdecode_idx_out(dec2, name):
     return None, False
 
 
+# TODO, really should just be using PowerDecoder2
 def get_pdecode_idx_out2(dec2, name):
     # check first if register is activated for write
     out_ok = yield dec2.e.write_ea.ok

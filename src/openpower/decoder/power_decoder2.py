@@ -1288,6 +1288,22 @@ class PowerDecode2(PowerDecodeSubset):
             comb += self.in3_isvec.eq(in3_svdec.isvec)
             comb += self.o_isvec.eq(o_svdec.isvec)
             comb += self.o2_isvec.eq(o2_svdec.isvec)
+
+            # urrr... don't ask... the implicit register FRS in FFT mode
+            # "tracks" FRT exactly except it's offset by VL.  rather than
+            # mess up the above with if-statements, override it here
+            with m.If(dec_o2.reg_out.ok & self.use_svp64_fft):
+                svdec = o_svdec # yes take source as o_svdec...
+                with m.If(svdec.isvec):
+                    # reverse gear goes the opposite way
+                    with m.If(self.rm_dec.reverse_gear):
+                        comb += to_reg.data.eq(vl+svdec.reg_out+(vl-1-dststep))
+                    with m.Else():
+                        comb += to_reg.data.eq(vl+dststep+svdec.reg_out)
+                # ... but write to *second* output
+                comb += self.o2_isvec.eq(svdec.isvec)
+                comb += o2_svdec.idx.eq(self.op_get("sv_out"))
+
             # TODO add SPRs here.  must be True when *all* are scalar
             l = map(lambda svdec: svdec.isvec, [in1_svdec, in2_svdec, in3_svdec,
                                         crin_svdec, crin_svdec_b, crin_svdec_o])
