@@ -755,6 +755,7 @@ class PowerDecodeSubset(Elaboratable):
         if svp64_en:
             self.is_svp64_mode = Signal() # mark decoding as SVP64 Mode
             self.use_svp64_ldst_dec = Signal() # must use LDST decoder
+            self.use_svp64_fft = Signal()      # FFT Mode
             self.sv_rm = SVP64Rec(name="dec_svp64") # SVP64 RM field
             self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
             # set these to the predicate mask bits needed for the ALU
@@ -779,10 +780,10 @@ class PowerDecodeSubset(Elaboratable):
         # amongst other things
         if svp64_en:
             conditions = {'SVP64BREV': self.use_svp64_ldst_dec,
+                          'SVP64FFT': self.use_svp64_fft,
                          }
         else:
-            conditions = {'SVP64BREV': Const(0, 1),
-                         }
+            conditions = None
 
         # only needed for "main" PowerDecode2
         if not self.final:
@@ -837,6 +838,7 @@ class PowerDecodeSubset(Elaboratable):
             ports += self.sv_rm.ports()
             ports.append(self.is_svp64_mode)
             ports.append(self.use_svp64_ldst_dec )
+            ports.append(self.use_svp64_fft )
         return ports
 
     def needs_field(self, field, op_field):
@@ -953,7 +955,12 @@ class PowerDecodeSubset(Elaboratable):
 
         # rc and oe out
         comb += self.do_copy("rc", dec_rc.rc_out)
-        comb += self.do_copy("oe", dec_oe.oe_out)
+        if self.svp64_en:
+            # OE only enabled when SVP64 not active
+            with m.If(~self.is_svp64_mode):
+                comb += self.do_copy("oe", dec_oe.oe_out)
+        else:
+            comb += self.do_copy("oe", dec_oe.oe_out)
 
         # CR in/out - note: these MUST match with what happens in
         # DecodeCROut!
@@ -997,10 +1004,13 @@ class PowerDecodeSubset(Elaboratable):
             if self.needs_field("imm_data", "in2_sel"):
                 bzero = dec_bi.imm_out.ok & ~dec_bi.imm_out.data.bool()
                 comb += rm_dec.ldst_imz_in.eq(bzero) # B immediate is zero
-            # main PowerDecoder2 determines if bit-reverse mode requested
+            # main PowerDecoder2 determines if different SVP64 modes enabled
             if not self.final:
+                # if bit-reverse mode requested
                 bitrev = rm_dec.ldstmode == SVP64LDSTmode.BITREVERSE
                 comb += self.use_svp64_ldst_dec.eq(bitrev)
+                # if SVP64 FFT mode enabled (overload OE ha ha)
+                comb += self.use_svp64_fft.eq(self.dec.OE)
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))

@@ -324,6 +324,7 @@ class PowerDecoder(Elaboratable):
         if conditions is None:
             # XXX conditions = {}
             conditions = {'SVP64BREV': Const(0, 1),
+                          'SVP64FFT': Const(0, 1),
                          }
         self.actually_does_something = False
         self.pname = name
@@ -768,9 +769,10 @@ if __name__ == '__main__':
 
         def rowsubsetfn(opcode, row):
             log("row_subset", opcode, row)
-            return row['unit'] == 'LDST'
+            return row['unit'] in ['LDST', 'FPU']
 
         conditions = {'SVP64BREV': Signal(name="svp64brev", reset_less=True),
+                      'SVP64FFT': Signal(name="svp64fft", reset_less=True),
                      }
         pdecode = create_pdecode(name="rowsub",
                                  col_subset={'opcode', 'function_unit',
