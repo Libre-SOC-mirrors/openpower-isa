@@ -776,6 +776,7 @@ if __name__ == '__main__':
                      }
         pdecode = create_pdecode(name="rowsub",
                                  col_subset={'opcode', 'function_unit',
+                                              'asmcode',
                                              'in2_sel', 'in3_sel'},
                                  row_subset=rowsubsetfn,
                                  include_fp=True,

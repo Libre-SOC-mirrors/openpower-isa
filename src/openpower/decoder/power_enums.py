@@ -241,6 +241,7 @@ _insns = [
     "fadd", "fadds", "fsub", "fsubs",                   # FP add / sub
     "fcfids", "fcfidus", "fsqrts", "fres", "frsqrtes",  # FP stuff
     "fmsubs", "fmadds", "fnmsubs", "fnmadds",           # FP 3-arg
+    "ffmsubs", "ffmadds", "ffnmsubs", "ffnmadds",       # FFT FP 3-arg
     "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "hrfid", "icbi", "icbt", "isel", "isync",
@@ -434,6 +435,7 @@ class OutSel(Enum):
     SPR = 3
     RT_OR_ZERO = 4
     FRT = 5
+    FRS = 6
 
 
 @unique

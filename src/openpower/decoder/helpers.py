@@ -323,9 +323,11 @@ def FPMULADD32(FRA, FRC, FRB, mulsign, addsign):
             result = -(float(FRA) * float(FRC) + float(FRB))  # fnmadds
     elif addsign == 0:
         result = 0.0
-    log ("FPMULADD32", FRA, FRB, FRC,
-                       float(FRA), float(FRB), float(FRC),
-                       result)
+    log ("FPMULADD32 FRA FRC FRB", FRA, FRC, FRB)
+    log ("      FRA", float(FRA))
+    log ("      FRC", float(FRC))
+    log ("      FRB", float(FRB))
+    log ("      (FRA*FRC)+FRB=", mulsign, addsign, result)
     cvt = fp64toselectable(result)
     cvt = DOUBLE2SINGLE(cvt)
     log ("      cvt", cvt)

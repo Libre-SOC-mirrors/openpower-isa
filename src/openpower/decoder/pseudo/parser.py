@@ -24,7 +24,7 @@ import ast
 # Helper function
 
 regs = ['RA', 'RS', 'RB', 'RC', 'RT']
-fregs = ['FRA', 'FRS', 'FRB', 'FRC', 'FRT']
+fregs = ['FRA', 'FRS', 'FRB', 'FRC', 'FRT', 'FRS']
 
 def Assign(autoassign, assignname, left, right, iea_mode):
     names = []

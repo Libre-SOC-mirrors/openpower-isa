@@ -491,15 +491,15 @@ def get_pdecode_idx_out(dec2, name):
 # TODO, really should just be using PowerDecoder2
 def get_pdecode_idx_out2(dec2, name):
     # check first if register is activated for write
-    out_ok = yield dec2.e.write_ea.ok
-    if not out_ok:
-        return None, False
-
     op = dec2.dec.op
     out_sel = yield op.out_sel
     out = yield dec2.e.write_ea.data
     o_isvec = yield dec2.o2_isvec
-    log ("get_pdecode_idx_out2", name, out_sel, out, o_isvec)
+    out_ok = yield dec2.e.write_ea.ok
+    log ("get_pdecode_idx_out2", name, out_sel, out, out_ok, o_isvec)
+    if not out_ok:
+        return None, False
+
     if name == 'RA':
         if hasattr(op, "upd"):
             # update mode LD/ST uses read-reg A also as an output
@@ -509,6 +509,13 @@ def get_pdecode_idx_out2(dec2, name):
                                            out, o_isvec)
             if upd == LDSTMode.update.value:
                 return out, o_isvec
+    if name == 'FRS':
+        int_op = yield dec2.dec.op.internal_op
+        fft_en = yield dec2.use_svp64_fft
+        if int_op == MicrOp.OP_FP_MADD.value and fft_en:
+            log ("get_pdecode_idx_out2", out_sel, OutSel.FRS.value,
+                                           out, o_isvec)
+            return out, o_isvec
     return None, False
 
 
@@ -877,6 +884,7 @@ class ISACaller:
                               pfx.insn[7].value == 0b1 and
                               pfx.insn[9].value == 0b1)
         self.pc.update_nia(self.is_svp64_mode)
+        yield self.dec2.is_svp64_mode.eq(self.is_svp64_mode) # set SVP64 decode
         self.namespace['NIA'] = self.pc.NIA
         self.namespace['SVSTATE'] = self.svstate.spr
         if not self.is_svp64_mode:
@@ -1045,6 +1053,11 @@ class ISACaller:
             illegal = False
             name = 'setvl'
 
+        # sigh also deal with ffmadds not being supported by binutils (.long)
+        if asmop == 'ffmadds':
+            illegal = False
+            name = 'ffmadds'
+
         if illegal:
             print("illegal", name, asmop)
             self.call_trap(0x700, PIb.ILLEG)
@@ -1080,9 +1093,10 @@ class ISACaller:
             srcstep = self.svstate.srcstep.asint(msb0=True)
             dststep = self.svstate.dststep.asint(msb0=True)
             sv_a_nz = yield self.dec2.sv_a_nz
+            fft_mode = yield self.dec2.use_svp64_fft
             in1 = yield self.dec2.e.read_reg1.data
-            log ("SVP64: VL, srcstep, dststep, sv_a_nz, in1",
-                    vl, srcstep, dststep, sv_a_nz, in1)
+            log ("SVP64: VL, srcstep, dststep, sv_a_nz, in1 fft",
+                    vl, srcstep, dststep, sv_a_nz, in1, fft_mode)
 
         # get predicate mask
         srcmask = dstmask = 0xffff_ffff_ffff_ffff

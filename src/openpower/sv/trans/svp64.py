@@ -791,7 +791,19 @@ class SVP64Asm:
         rc = '.' if rc_mode else ''
         yield ".long 0x%x" % svp64_prefix.insn.value
         log(v30b_newfields)
-        yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
+        # argh, sv.fmaddso etc. need to be done manually
+        if v30b_op == 'ffmadds':
+            opcode = 59 << (32-6)    # bits 0..6 (MSB0)
+            opcode |= int(v30b_newfields[0]) << (32-11) # FRT
+            opcode |= int(v30b_newfields[1]) << (32-16) # FRA
+            opcode |= int(v30b_newfields[2]) << (32-21) # FRB
+            opcode |= int(v30b_newfields[3]) << (32-26) # FRC
+            opcode |= 5 << (32-31)   # bits 26-30
+            if rc:
+                opcode |= 1  # Rc, bit 31.
+            yield ".long 0x%x" % opcode
+        else:
+            yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
         log ("new v3.0B fields", v30b_op, v30b_newfields)
 
     def translate(self, lst):
@@ -938,8 +950,9 @@ if __name__ == '__main__':
     lst = [
              'sv.addi win2.v, win.v, -1',
              'sv.add./mrr 5.v, 2.v, 1.v',
-             'sv.lhzbr 5.v, 11(9.v), 15',
-             'sv.lwzbr 5.v, 11(9.v), 15',
+             #'sv.lhzbr 5.v, 11(9.v), 15',
+             #'sv.lwzbr 5.v, 11(9.v), 15',
+             'sv.ffmadds 6.v, 2.v, 4.v, 6.v',
     ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

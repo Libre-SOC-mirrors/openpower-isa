@@ -67,7 +67,8 @@ class PyISAWriter(ISA):
             iinf = ''
             # write headers: FP gets extra imports
             f.write(header)  # write out header
-            if pagename.startswith("fp"):
+            if (pagename.startswith("fp") or
+                pagename.startswith("svfp")):
                 f.write(fpheader)
             f.write("class %s:\n" % pagename)
 

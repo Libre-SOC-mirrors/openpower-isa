@@ -9,8 +9,8 @@
 
 A-Form
 
-* faddso FRT,FRA,FRB (Rc=0)
-* faddso. FRT,FRA,FRB (Rc=1)
+* ffadds FRT,FRA,FRB (Rc=0)
+* ffadds. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -28,8 +28,8 @@ Special Registers Altered:
 
 A-Form
 
-* faddo FRT,FRA,FRB (Rc=0)
-* faddo. FRT,FRA,FRB (Rc=1)
+* ffadd FRT,FRA,FRB (Rc=0)
+* ffadd. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -47,8 +47,8 @@ Special Registers Altered:
 
 A-Form
 
-* fsubso FRT,FRA,FRB (Rc=0)
-* fsubso. FRT,FRA,FRB (Rc=1)
+* ffsubs FRT,FRA,FRB (Rc=0)
+* ffsubs. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -66,8 +66,8 @@ Special Registers Altered:
 
 A-Form
 
-* fsubo FRT,FRA,FRB (Rc=0)
-* fsubo. FRT,FRA,FRB (Rc=1)
+* ffsub FRT,FRA,FRB (Rc=0)
+* ffsub. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -85,8 +85,8 @@ Special Registers Altered:
 
 A-Form
 
-* fmulso FRT,FRA,FRC (Rc=0)
-* fmulso. FRT,FRA,FRC (Rc=1)
+* ffmuls FRT,FRA,FRC (Rc=0)
+* ffmuls. FRT,FRA,FRC (Rc=1)
 
 Pseudo-code:
 
@@ -104,8 +104,8 @@ Special Registers Altered:
 
 A-Form
 
-* fmulo FRT,FRA,FRC (Rc=0)
-* fmulo. FRT,FRA,FRC (Rc=1)
+* ffmul FRT,FRA,FRC (Rc=0)
+* ffmul. FRT,FRA,FRC (Rc=1)
 
 Pseudo-code:
 
@@ -123,8 +123,8 @@ Special Registers Altered:
 
 A-Form
 
-* fdivso FRT,FRA,FRB (Rc=0)
-* fdivso. FRT,FRA,FRB (Rc=1)
+* ffdivs FRT,FRA,FRB (Rc=0)
+* ffdivs. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -142,8 +142,8 @@ Special Registers Altered:
 
 A-Form
 
-* fdivo FRT,FRA,FRB (Rc=0)
-* fdivo. FRT,FRA,FRB (Rc=1)
+* ffdiv FRT,FRA,FRB (Rc=0)
+* ffdiv. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -161,13 +161,13 @@ Special Registers Altered:
 
 A-Form
 
-* fmaddso FRT,FRA,FRC,FRB (Rc=0)
-* fmaddso. FRT,FRA,FRC,FRB (Rc=1)
+* ffmadds FRT,FRA,FRC,FRB (Rc=0)
+* ffmadds. FRT,FRA,FRC,FRB (Rc=1)
 
 Pseudo-code:
 
     FRT <- FPMULADD32(FRA, FRC, FRB, 1, 1)
-    FRS <- FPMULADD32(FRA, FRC, FRB, 1, -1)
+    FRS <- FPMULADD32(FRA, FRC, FRB, -1, 1)
 
 Special Registers Altered:
 
@@ -180,13 +180,13 @@ Special Registers Altered:
 
 A-Form
 
-* fmsubso FRT,FRA,FRC,FRB (Rc=0)
-* fmsubso. FRT,FRA,FRC,FRB (Rc=1)
+* ffmsubs FRT,FRA,FRC,FRB (Rc=0)
+* ffmsubs. FRT,FRA,FRC,FRB (Rc=1)
 
 Pseudo-code:
 
     FRT <- FPMULADD32(FRA, FRC, FRB, 1, -1)
-    FRS <- FPMULADD32(FRA, FRC, FRB, 1, 1)
+    FRS <- FPMULADD32(FRA, FRC, FRB, -1, -1)
 
 Special Registers Altered:
 
@@ -199,13 +199,13 @@ Special Registers Altered:
 
 A-Form
 
-* fnmaddso FRT,FRA,FRC,FRB (Rc=0)
-* fnmaddso. FRT,FRA,FRC,FRB (Rc=1)
+* ffnmadds FRT,FRA,FRC,FRB (Rc=0)
+* ffnmadds. FRT,FRA,FRC,FRB (Rc=1)
 
 Pseudo-code:
 
     FRT <- FPMULADD32(FRA, FRC, FRB, -1, -1)
-    FRS <- FPMULADD32(FRA, FRC, FRB, -1, 1)
+    FRS <- FPMULADD32(FRA, FRC, FRB, 1, -1)
 
 Special Registers Altered:
 
@@ -218,13 +218,13 @@ Special Registers Altered:
 
 A-Form
 
-* fnmsubso FRT,FRA,FRC,FRB (Rc=0)
-* fnmsubso. FRT,FRA,FRC,FRB (Rc=1)
+* ffnmsubs FRT,FRA,FRC,FRB (Rc=0)
+* ffnmsubs. FRT,FRA,FRC,FRB (Rc=1)
 
 Pseudo-code:
 
     FRT <- FPMULADD32(FRA, FRC, FRB, -1, 1)
-    FRS <- FPMULADD32(FRA, FRC, FRB, -1, -1)
+    FRS <- FPMULADD32(FRA, FRC, FRB, 1, 1)
 
 Special Registers Altered:
 

@@ -1022,8 +1022,8 @@ class PowerDecodeSubset(Elaboratable):
                 # if bit-reverse mode requested
                 bitrev = rm_dec.ldstmode == SVP64LDSTmode.BITREVERSE
                 comb += self.use_svp64_ldst_dec.eq(bitrev)
-                # if SVP64 FFT mode enabled (overload OE ha ha)
-                comb += self.use_svp64_fft.eq(self.dec.OE)
+            # if SVP64 FFT mode enabled
+            comb += self.use_svp64_fft.eq(self.is_svp64_mode)
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
@@ -1300,6 +1300,8 @@ class PowerDecode2(PowerDecodeSubset):
                         comb += to_reg.data.eq(vl+svdec.reg_out+(vl-1-dststep))
                     with m.Else():
                         comb += to_reg.data.eq(vl+dststep+svdec.reg_out)
+                with m.Else():
+                    comb += to_reg.data.eq(vl+svdec.reg_out)
                 # ... but write to *second* output
                 comb += self.o2_isvec.eq(svdec.isvec)
                 comb += o2_svdec.idx.eq(self.op_get("sv_out"))
