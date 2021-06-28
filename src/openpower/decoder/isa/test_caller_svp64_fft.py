@@ -14,7 +14,8 @@ from openpower.decoder.isa.test_caller import Register, run_tst
 from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.consts import SVP64CROffs
 from copy import deepcopy
-
+from openpower.decoder.helpers import fp64toselectable
+from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
 
 class DecoderTestCase(FHDLTestCase):
 
@@ -22,44 +23,59 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test_sv_fpmadds(self):
-        """>>> lst = ["sv.ffmadds 12.v, 2.v, 4.v, 12.v"
+    def test_sv_fpmadds_fft(self):
+        """>>> lst = ["sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                         ]
-            two vector mul-adds, two vector mul-subs
-            * fp12 = fp2 * fp4 + f12 = 7.0 * -2.0 + 2.0 = -12.0
-            * fp13 = fp3 * fp5 + f13 = (-9.8 * 2.0) + -32.3 = -51.9
-            * fp14 = -(fp2 * fp4) + f14 = -(7.0 * -2.0) + 2.0 = -16.0
-            * fp15 = -(fp3 * fp5) + f15 = -(-9.8 * 2) + -32.3 = -12.7
+            four in-place vector mul-adds, four in-place vector mul-subs
+
+            this is the twin "butterfly" mul-add-sub from Cooley-Tukey
+            https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
+
+            there is the *option* to target a different location (non-in-place)
+            just in case.
+
+            SVP64 "FFT" mode will *automatically* offset FRB and an implicit
+            FRS to perform the two multiplies.  one add, one subtract.
+
+            sv.ffmadds FRT, FRA, FRC, FRB  actually does:
+                fmadds  FRT   , FRA, FRC, FRA
+                fnmsubs FRT+vl, FRA, FRC, FRB+vl
         """
-        lst = SVP64Asm(["sv.ffmadds 12.v, 2.v, 4.v, 12.v"
+        lst = SVP64Asm(["sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                         ])
         lst = list(lst)
 
         fprs = [0] * 32
-        fprs[2] = 0x401C000000000000  # 7.0
-        fprs[3] = 0xC02399999999999A  # -9.8
-        fprs[4] = 0x4000000000000000  # 2.0
-        fprs[5] = 0xC040266660000000 # -32.3
-        fprs[6] = 0x4000000000000000  # 2.0
-        fprs[7] = 0x4000000000000000  # 2.0
-        fprs[12] = 0xc000000000000000  # -2.0
-        fprs[13] = 0x4000000000000000  # 2.0
-        fprs[14] = 0xC02399999999999A  # -9.8
-        fprs[15] = 0xC040266660000000 # -32.3
+        av = [7.0, -9.8, 2.0, -32.3] # first half of array 0..3
+        bv = [-2.0, 2.0, -9.8, 32.3] # second half of array 4..7
+        coe = [-1.0, 4.0, 3.1, 6.2]  # coefficients
+        res = []
+        # work out the results with the twin mul/add-sub
+        for i, (a, b, c) in enumerate(zip(av, bv, coe)):
+            fprs[i+2] = fp64toselectable(a)
+            fprs[i+6] = fp64toselectable(b)
+            fprs[i+10] = fp64toselectable(c)
+            mul = a * c
+            t = a + mul
+            u = b - mul
+            t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            res.append((t, u))
+            print ("FFT", i, "in", a, b, "coeff", c, "mul", mul, "res", t, u)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
+        svstate.vl[0:7] = 4 # VL
+        svstate.maxvl[0:7] = 4 # MAXVL
         print ("SVSTATE", bin(svstate.spr.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_fprs=fprs)
-            self.assertEqual(sim.fpr(12), SelectableInt(0xC028000000000000, 64))
-            self.assertEqual(sim.fpr(13), SelectableInt(0xC049F33320000000, 64))
-            self.assertEqual(sim.fpr(14), SelectableInt(0x4030000000000000, 64))
-            self.assertEqual(sim.fpr(15), SelectableInt(0xc029666640000000, 64))
+            # confirm that the results are as expected
+            for i, (t, u) in enumerate(res):
+                self.assertEqual(sim.fpr(i+2), t)
+                self.assertEqual(sim.fpr(i+6), u)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,

@@ -453,6 +453,7 @@ class DecodeOut2(Elaboratable):
         self.lk = Signal(reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o2")
+        self.fp_madd_en = Signal(reset_less=True) # FFT instruction detected
         self.fast_out = Data(3, "fast_o2")
         self.fast_out3 = Data(3, "fast_o3")
 
@@ -494,6 +495,7 @@ class DecodeOut2(Elaboratable):
                 with m.If(self.svp64_fft_mode):
                     comb += self.reg_out.data.eq(self.dec.FRT)
                     comb += self.reg_out.ok.eq(1)
+                    comb += self.fp_madd_en.eq(1)
 
         return m
 
@@ -1250,27 +1252,34 @@ class PowerDecode2(PowerDecodeSubset):
 
             # registers a, b, c and out and out2 (LD/ST EA)
             sv_etype = self.op_get("SV_Etype")
-            for to_reg, fromreg, svdec, out in (
-                (e.read_reg1, dec_a.reg_out, in1_svdec, False),
-                (e.read_reg2, dec_b.reg_out, in2_svdec, False),
-                (e.read_reg3, dec_c.reg_out, in3_svdec, False),
-                (e.write_reg, dec_o.reg_out, o_svdec, True),
-                (e.write_ea, dec_o2.reg_out, o2_svdec, True)):
+            for rname, to_reg, fromreg, svdec, out in (
+                ("RA", e.read_reg1, dec_a.reg_out, in1_svdec, False),
+                ("RB", e.read_reg2, dec_b.reg_out, in2_svdec, False),
+                ("RC", e.read_reg3, dec_c.reg_out, in3_svdec, False),
+                ("RT", e.write_reg, dec_o.reg_out, o_svdec, True),
+                ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, True)):
                 comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
                 comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
                 comb += svdec.reg_in.eq(fromreg.data) # 3-bit (CR0/BC/BFA)
                 comb += to_reg.ok.eq(fromreg.ok)
+                # *screaam* FFT mode needs an extra offset for RB
+                # similar to FRS/FRT (below).  all of this needs cleanup
+                offs = Signal(7, name="offs_"+rname, reset_less=True)
+                comb += offs.eq(0)
+                if rname == 'RB':
+                    with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
+                        comb += offs.eq(vl)
                 # detect if Vectorised: add srcstep/dststep if yes.
                 # to_reg is 7-bits, outs get dststep added, ins get srcstep
                 with m.If(svdec.isvec):
                     step = dststep if out else srcstep
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
-                        comb += to_reg.data.eq(svdec.reg_out+(vl-1-step))
+                        comb += to_reg.data.eq(offs+svdec.reg_out+(vl-1-step))
                     with m.Else():
-                        comb += to_reg.data.eq(step+svdec.reg_out)
+                        comb += to_reg.data.eq(offs+step+svdec.reg_out)
                 with m.Else():
-                    comb += to_reg.data.eq(svdec.reg_out)
+                    comb += to_reg.data.eq(offs+svdec.reg_out)
 
             # SVP64 in/out fields
             comb += in1_svdec.idx.eq(self.op_get("sv_in1")) # reg #1 (in1_sel)
@@ -1291,8 +1300,9 @@ class PowerDecode2(PowerDecodeSubset):
 
             # urrr... don't ask... the implicit register FRS in FFT mode
             # "tracks" FRT exactly except it's offset by VL.  rather than
-            # mess up the above with if-statements, override it here
-            with m.If(dec_o2.reg_out.ok & self.use_svp64_fft):
+            # mess up the above with if-statements, override it here.
+            # same trick is applied to FRA, above, but it's a lot cleaner, there
+            with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
                 svdec = o_svdec # yes take source as o_svdec...
                 with m.If(svdec.isvec):
                     # reverse gear goes the opposite way
