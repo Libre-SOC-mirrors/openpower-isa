@@ -82,7 +82,7 @@ static const float icos36h[9] = {
 /* using Lee like decomposition followed by hand coded 9 points DCT */
 void imdct36(float *out, float *buf, float *in, const float *win)
 {
-    int i, j;
+    int i, j, predicate;
     float t0, t1, t2, t3, s0, s1, s2, s3;
     float tmp[18], *tmp1, *in1;
 
@@ -123,16 +123,17 @@ void imdct36(float *out, float *buf, float *in, const float *win)
     }
 
     i = 0;
-    for (j = 0; j < 4; j++) {
+    for (j = 0; j < 5; j++) {
+        predicate = (j != 4);
         t0 = tmp[i];
-        t1 = tmp[i + 2];
+        if (predicate) t1 = tmp[i + 2]; else t1 = 0.0;
         s0 = t1 + t0;
-        s2 = t1 - t0;
+        if (predicate) s2 = t1 - t0; else t1 = 0.0;
 
         t2 = tmp[i + 1];
-        t3 = tmp[i + 3];
+        if (predicate) t3 = tmp[i + 3]; else t3 = 0.0;
         s1 = MULH3(t3 + t2, icos36h[    j], 2);
-        s3 = MULLx(t3 - t2, icos36 [8 - j], FRAC_BITS);
+        if (predicate) s3 = MULLx(t3 - t2, icos36 [8 - j], FRAC_BITS);
 
         t0 = s0 + s1;
         t1 = s0 - s1;
@@ -141,21 +142,12 @@ void imdct36(float *out, float *buf, float *in, const float *win)
         buf[4 * ( 9 + j     )] = MULH3(t0, win[MDCT_BUF_SIZE/2 + 9 + j], 1);
         buf[4 * ( 8 - j     )] = MULH3(t0, win[MDCT_BUF_SIZE/2 + 8 - j], 1);
 
-        t0 = s2 + s3;
-        t1 = s2 - s3;
-        out[(9 + 8 - j) * SBLIMIT] = MULH3(t1, win[     9 + 8 - j], 1) + buf[4*(9 + 8 - j)];
-        out[         j  * SBLIMIT] = MULH3(t1, win[             j], 1) + buf[4*(        j)];
-        buf[4 * ( 9 + 8 - j     )] = MULH3(t0, win[MDCT_BUF_SIZE/2 + 9 + 8 - j], 1);
-        buf[4 * (         j     )] = MULH3(t0, win[MDCT_BUF_SIZE/2         + j], 1);
+        if (predicate) t0 = s2 + s3;
+        if (predicate) t1 = s2 - s3;
+        if (predicate) out[(9 + 8 - j) * SBLIMIT] = MULH3(t1, win[     9 + 8 - j], 1) + buf[4*(9 + 8 - j)];
+        if (predicate) out[         j  * SBLIMIT] = MULH3(t1, win[             j], 1) + buf[4*(        j)];
+        if (predicate) buf[4 * ( 9 + 8 - j     )] = MULH3(t0, win[MDCT_BUF_SIZE/2 + 9 + 8 - j], 1);
+        if (predicate) buf[4 * (         j     )] = MULH3(t0, win[MDCT_BUF_SIZE/2         + j], 1);
         i += 4;
     }
-
-    s0 = tmp[16];
-    s1 = MULH3(tmp[17], icos36h[4], 2);
-    t0 = s0 + s1;
-    t1 = s0 - s1;
-    out[(9 + 4) * SBLIMIT] = MULH3(t1, win[     9 + 4], 1) + buf[4*(9 + 4)];
-    out[(8 - 4) * SBLIMIT] = MULH3(t1, win[     8 - 4], 1) + buf[4*(8 - 4)];
-    buf[4 * ( 9 + 4     )] = MULH3(t0, win[MDCT_BUF_SIZE/2 + 9 + 4], 1);
-    buf[4 * ( 8 - 4     )] = MULH3(t0, win[MDCT_BUF_SIZE/2 + 8 - 4], 1);
 }
