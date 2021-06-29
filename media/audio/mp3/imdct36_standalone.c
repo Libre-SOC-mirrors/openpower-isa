@@ -86,9 +86,9 @@ void imdct36(float *out, float *buf, float *in, const float *win)
     float t0, t1, t2, t3, s0, s1, s2, s3;
     float tmp[18], *tmp1, *in1;
 
-    /* straight sv.fadds/mr for this one, should do a pascal's triangle
-       (prefix sum)
-        sv.fadds/mrr 10.v, 11.v, 10.v
+    /* straight sv.fadds/mr for this one, should do write-hazard-free
+       overlapping adds:
+        sv.fadds/mrr 11.v, 10.v, 10.v
      */
     for (i = 17; i >= 1; i--)
         in[i] += in[i-1];
@@ -97,15 +97,15 @@ void imdct36(float *out, float *buf, float *in, const float *win)
        it will do the job, something like:
         li r30, 0b010101010101
         setvl 16
-        sv.fadds/mrr/m=r30 10.v, 12.v, 10.v
+        sv.fadds/mrr/m=r30 12.v, 10.v, 10.v
         which will issue adds *in reverse* order
               fadds 24, 26, 24  - not predicated (active)
               fadds 23, 25, 23  - predicated (masked out)
               fadds 22, 24, 22  - not predicated (active)
               fadds 21, 23, 21  - predicated (masked out)
               ...
-        should result in pascal's triangle for this one but
-        skipping every other element
+        should result in write-hazard-free overlapping adds,
+        skipping every other element because of the predication
     */
     for (i = 17; i >= 3; i -= 2)
         in[i] += in[i-2];
