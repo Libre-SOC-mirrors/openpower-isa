@@ -22,7 +22,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def tst_sv_load_store_elementstride(self):
+    def test_sv_load_store_elementstride(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0008",
                         "addi 5, 0, 0x1234",
@@ -67,7 +67,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(9), SelectableInt(0x1234, 64))
             self.assertEqual(sim.gpr(10), SelectableInt(0x1235, 64))
 
-    def tst_sv_load_store_unitstride(self):
+    def test_sv_load_store_unitstride(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0008",
                         "addi 5, 0, 0x1234",
