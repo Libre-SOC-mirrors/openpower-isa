@@ -98,16 +98,16 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.lfs/els fv2.v, 256(win2)
 		# TOO ACCURATE! hilarious sv.fmadds/mr sum, fv0.v, fv1.v, sum
 		# TOO ACCURATE! hilarious sv.fnmsubs/mr sum2, fv0.v, fv2.v, sum2
-	    # sv.fmuls fv1.v, fv0.v, fv1.v
-	    # sv.fadds/mr sum, sum, fv1.v
-	    # sv.fmuls fv0.v, fv0.v, fv2.v
-	    # sv.fsubs/mr sum2, sum2, fv0.v
+		# sv.fmuls fv1.v, fv0.v, fv1.v
+		# sv.fadds/mr sum, sum, fv1.v
+		# sv.fmuls fv0.v, fv0.v, fv2.v
+		# sv.fsubs/mr sum2, sum2, fv0.v
 
 		# p = synth_buf + 48 - j
 		addi p, buf, 192
 		subf p, i, p
 
-	    # win and win2 += 32
+		# win and win2 += 32
 		addi win, win, 128
 		addi win2, win2, 128
 
@@ -117,12 +117,12 @@ ff_mpadsp_apply_window_float_sv:
 		# sv.lfs/els fv2.v, 256(win2)
 		# TOO ACCURATE! hilarious sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
 		# TOO ACCURATE! hilarious sv.fnmsubs/mr sum2, fv0.v, fv2.v, sum2
-	    # sv.fmuls fv1.v, fv0.v, fv1.v
-	    # sv.fsubs/mr sum, sum, fv1.v
-	    # sv.fmuls fv0.v, fv0.v, fv2.v
-	    # sv.fsubs/mr sum2, sum2, fv0.v
+		# sv.fmuls fv1.v, fv0.v, fv1.v
+		# sv.fsubs/mr sum, sum, fv1.v
+		# sv.fmuls fv0.v, fv0.v, fv2.v
+		# sv.fsubs/mr sum2, sum2, fv0.v
 
-	    # win and win2 -= 32
+		# win and win2 -= 32
 		addi win, win, -128
 		addi win2, win2, -128
 
