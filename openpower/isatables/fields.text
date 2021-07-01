@@ -275,6 +275,10 @@
    | PO   |   RT  |   RA | RC  | SVDS |  XO    |
    | PO   |   RS  |   RA | RC  | SVDS |  XO    |
 
+# 1.6.33 SVM-FORM
+   |0     |6        |11      |16     |21    |31  |
+   | PO   |  SVxd   |   SXyd |  SVRM |   XO |  / |
+
 # 1.6.28 Instruction Fields
     A (6)
         Field used by the tbegin. instruction to specify an
@@ -757,6 +761,15 @@
     SVi (16:23)
          Simple-V immediate field for setting VL or MVL
          Formats: SVL
+    SVRM (16:20)
+         Simple-V "REMAP" Mode
+         Formats: SVM
+    SVxd (6:10)
+         Simple-V "REMAP" x-dimension size
+         Formats: SVM
+    SVyd (11:15)
+         Simple-V "REMAP" y-dimension size
+         Formats: SVM
     SX,S (28,6:10)
          Fields SX and S are concatenated to specify a
          VSR to be used as a source.
