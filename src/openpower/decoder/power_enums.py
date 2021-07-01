@@ -277,6 +277,7 @@ _insns = [
     "rlwimi", "rlwinm",    "rlwnm",
     "setb",
     "setvl",  # https://libre-soc.org/openpower/sv/setvl
+    "svremap",  # https://libre-soc.org/openpower/sv/remap - TEMPORARY
     "sim_cfg",
     "slbia", "sld", "slw", "srad", "sradi",
     "sraw", "srawi", "srd", "srw",

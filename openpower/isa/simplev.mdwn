@@ -33,3 +33,28 @@ Special Registers Altered:
 
     CR0                     (if Rc=1)
 
+# svremap
+
+SVM-Form
+
+* svstate SVxd, SVyd, SVRM
+
+Pseudo-code:
+
+    # hack: clear out all SVSHAPEs and set them up for multiply
+    SVSHAPE0[0:31] <- [0] * 32
+    SVSHAPE1[0:31] <- [0] * 32
+    SVSHAPE2[0:31] <- [0] * 32
+    SVSHAPE3[0:31] <- [0] * 32
+    # set up FRT and FRB
+    SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
+    SVSHAPE3[0:5] <- (0b0 || SVxd)   # xdim
+    # set up FRA
+    SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
+    SVSHAPE0[6:11] <- (0b0 || SVyd)  # ydim
+    SVSHAPE0[18:20] <- 0b010          # permute y,x,z
+
+Special Registers Altered:
+
+    None
+
