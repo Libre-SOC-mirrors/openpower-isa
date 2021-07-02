@@ -37,7 +37,7 @@ Special Registers Altered:
 
 SVM-Form
 
-* svstate SVxd, SVyd, SVRM
+* svstate SVxd, SVyd, SVzd, SVRM
 
 Pseudo-code:
 
