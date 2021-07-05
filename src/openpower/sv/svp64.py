@@ -68,6 +68,15 @@ class SVP64REMAP(Record):
                                       ("ydimsz"  , 6),
                                       ("xdimsz"  , 6)], name=name)
 
+    def order(self, permute):
+        options = {0b000: [0,1,2],
+                   0b001: [0,2,1],
+                   0b010: [1,0,2],
+                   0b011: [1,2,0],
+                   0b100: [2,0,1],
+                   0b101: [2,1,0]}
+        return options[permute]
+
     def ports(self):
         return [self.mode, self.skip, self.offset, self.invxyz, self.permute,
                 self.zdimsz, self.ydimsz, self.xdimsz]
