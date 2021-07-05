@@ -37,7 +37,7 @@ Special Registers Altered:
 
 SVM-Form
 
-* svstate SVxd, SVyd, SVzd, SVRM
+* svremap SVxd, SVyd, SVzd, SVRM
 
 Pseudo-code:
 
@@ -46,13 +46,21 @@ Pseudo-code:
     SVSHAPE1[0:31] <- [0] * 32
     SVSHAPE2[0:31] <- [0] * 32
     SVSHAPE3[0:31] <- [0] * 32
-    # set up FRT and FRB
+    # set up template in SVSHAPE0, then copy to 1-3
     SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
-    SVSHAPE3[0:5] <- (0b0 || SVxd)   # xdim
+    SVSHAPE0[6:11] <- (0b0 || SVyd)   # ydim
+    SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim
+    SVSHAPE0[28:29] <- 0b11           # skip z
+    # copy
+    SVSHAPE1[0:31] <- SVSHAPE0[0:31]
+    SVSHAPE2[0:31] <- SVSHAPE0[0:31]
+    SVSHAPE3[0:31] <- SVSHAPE0[0:31]
     # set up FRA
-    SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
-    SVSHAPE0[6:11] <- (0b0 || SVyd)  # ydim
-    SVSHAPE0[18:20] <- 0b010          # permute y,x,z
+    SVSHAPE1[18:20] <- 0b001          # permute x,z,y
+    SVSHAPE1[28:29] <- 0b01           # skip z
+    # FRC
+    SVSHAPE2[18:20] <- 0b001          # permute x,z,y
+    SVSHAPE2[28:29] <- 0b11           # skip y
 
 Special Registers Altered:
 

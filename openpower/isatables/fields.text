@@ -770,6 +770,9 @@
     SVyd (11:15)
          Simple-V "REMAP" y-dimension size
          Formats: SVM
+    SVzd (16:20)
+         Simple-V "REMAP" z-dimension size
+         Formats: SVM
     SX,S (28,6:10)
          Fields SX and S are concatenated to specify a
          VSR to be used as a source.

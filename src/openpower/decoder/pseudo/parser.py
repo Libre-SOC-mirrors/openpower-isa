@@ -726,7 +726,8 @@ class PowerParser:
         if self.include_ca_in_write:
             if name in ['CA', 'CA32']:
                 self.write_regs.add(name)
-        if name in ['CR', 'LR', 'CTR', 'TAR', 'FPSCR', 'MSR', 'SVSTATE']:
+        if name in ['CR', 'LR', 'CTR', 'TAR', 'FPSCR', 'MSR',
+                     'SVSTATE', 'SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3']:
             self.special_regs.add(name)
             self.write_regs.add(name)  # and add to list to write
         p[0] = ast.Name(id=name, ctx=ast.Load())

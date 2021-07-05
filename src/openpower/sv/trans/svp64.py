@@ -196,6 +196,19 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
+        # and svremap
+        if opcode == 'svremap':
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            fields = list(map(int, fields))
+            insn |= fields[0] << (31-10) # SVxd       , bits 6-10
+            insn |= fields[1] << (31-15) # SVyd       , bits 11-15
+            insn |= fields[2] << (31-16) # SVzd       , bits 16-20
+            insn |= fields[3] << (31-21) # SVRM       , bits 21-25
+            insn |= 0b00001   << (31-30) # XO       , bits 26..30
+            log ("svremap", bin(insn))
+            yield ".long 0x%x" % insn
+            return
+
         # identify if is a svp64 mnemonic
         if not opcode.startswith('sv.'):
             yield insn  # unaltered
@@ -890,7 +903,8 @@ def asm_process():
     for line in lines:
         ls = line.split("#")
         # identify macros
-        if ls[0].strip().startswith("setvl"):
+        op = ls[0].strip()
+        if op.startswith("setvl") or op.startswith("svremap"):
             ws, line = get_ws(ls[0])
             lst = list(isa.translate_one(ls[0].strip(), macros))
             lst = '; '.join(lst)
@@ -953,6 +967,7 @@ if __name__ == '__main__':
              #'sv.lhzbr 5.v, 11(9.v), 15',
              #'sv.lwzbr 5.v, 11(9.v), 15',
              'sv.ffmadds 6.v, 2.v, 4.v, 6.v',
+             'svremap 2, 2, 3, 0',
     ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

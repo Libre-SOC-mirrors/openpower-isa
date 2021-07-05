@@ -74,6 +74,10 @@ REG_SORT_ORDER = {
     "TAR": 0,
     "MSR": 0,
     "SVSTATE": 0,
+    "SVSHAPE0": 0,
+    "SVSHAPE1": 0,
+    "SVSHAPE2": 0,
+    "SVSHAPE3": 0,
 
     "CA": 0,
     "CA32": 0,
@@ -584,6 +588,11 @@ class ISACaller:
         self.gpr = GPR(decoder2, self, self.svstate, regfile)
         self.fpr = GPR(decoder2, self, self.svstate, fpregfile)
         self.spr = SPR(decoder2, initial_sprs) # initialise SPRs before MMU
+        for i in range(4):
+            sname = 'SVSHAPE%d' % i
+            if sname not in self.spr:
+                self.spr[sname] = SVSHAPE(0)
+
         # "raw" memory
         self.mem = Mem(row_bytes=8, initial_mem=initial_mem)
         self.imem = Mem(row_bytes=4, initial_mem=initial_insns)
@@ -623,6 +632,10 @@ class ISACaller:
                                'NIA': self.pc.NIA,
                                'CIA': self.pc.CIA,
                                'SVSTATE': self.svstate.spr,
+                               'SVSHAPE0': self.spr['SVSHAPE0'],
+                               'SVSHAPE1': self.spr['SVSHAPE1'],
+                               'SVSHAPE2': self.spr['SVSHAPE2'],
+                               'SVSHAPE3': self.spr['SVSHAPE3'],
                                'CR': self.cr,
                                'MSR': self.msr,
                                'undefined': undefined,
@@ -1053,6 +1066,11 @@ class ISACaller:
         if asmop.startswith('setvl'):
             illegal = False
             name = 'setvl'
+
+        # and svremap not being supported by binutils (.long)
+        if asmop.startswith('svremap'):
+            illegal = False
+            name = 'svremap'
 
         # sigh also deal with ffmadds not being supported by binutils (.long)
         if asmop == 'ffmadds':

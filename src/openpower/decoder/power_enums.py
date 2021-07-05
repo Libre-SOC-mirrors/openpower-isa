@@ -505,6 +505,7 @@ def get_spr_enum(full_file):
     this saves drastically on the size of the regfile
     """
     short_list = {'PIDR', 'DAR', 'PRTBL', 'DSISR', 'SVSRR0', 'SVSTATE',
+                  'SVSTATE0', 'SVSTATE1', 'SVSTATE2', 'SVSTATE3',
                   'SPRG0_priv', 'SPRG1_priv', 'SPRG2_priv', 'SPRG3_priv',
                   'SPRG3'
                  }
