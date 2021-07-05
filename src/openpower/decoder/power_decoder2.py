@@ -1285,9 +1285,9 @@ class PowerDecode2(PowerDecodeSubset):
                     selectstep = dststep if out else srcstep
                     step = Signal(7, name="step_%s" % rname.lower())
                     with m.If(self.remap_active):
-                        comb += step.eq(selectstep)
-                    with m.Else():
                         comb += step.eq(remapstep)
+                    with m.Else():
+                        comb += step.eq(selectstep)
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
                         comb += to_reg.data.eq(offs+svdec.reg_out+(vl-1-step))

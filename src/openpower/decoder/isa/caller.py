@@ -1240,6 +1240,8 @@ class ISACaller:
         # after that, settle down (combinatorial) to let Vector reg numbers
         # work themselves out
         yield Settle()
+        remap_active = yield self.dec2.remap_active
+        print ("remap active", remap_active)
 
         # main input registers (RT, RA ...)
         inputs = []
