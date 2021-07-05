@@ -47,26 +47,28 @@ class SVP64REMAP(Record):
 
     https://libre-soc.org/openpower/sv/remap/
 
-    | Field Name  | Field bits | Description                            |
-    |-------------|------------|----------------------------------------|
-    | XDIMSZ      | `0:5`      | X Dimension size                       |
-    | YDIMSZ      | `6:11`     | Y Dimension size                       |
-    | ZDIMSZ      | `12:17`    | Z Dimension size                       |
-    | PERMUTE     | `18:20`    | Permutation order (XYZ, XZY, YXZ...)   |
-    | INVXYZ      | `21:23`    | Invert order of X or Y or Z            |
-    | OFFSET      | `24:29`    | Adds to index before modulo            |
-    | APPLYDIM    | `30:31`    | how many dimensions in use             |
+    | Field Name | Field bits | Description                            |
+    |------------|------------|----------------------------------------|
+    | XDIMSZ     | `0:5`      | X Dimension size                       |
+    | YDIMSZ     | `6:11`     | Y Dimension size                       |
+    | ZDIMSZ     | `12:17`    | Z Dimension size                       |
+    | PERMUTE    | `18:20`    | Permutation order (XYZ, XZY, YXZ...)   |
+    | INVXYZ     | `21:23`    | Invert order of X or Y or Z            |
+    | OFFSET     | `24:27`    | Adds to index after REMAP (offsets)    |
+    | SKIP       | `28:29`    | Skips dimension numbered SKIP          |
+    | MODE       | `30:31`    | Selects Mode: Matrix, FFT, DCT         |
     """
     def __init__(self, name=None):
-        Record.__init__(self, layout=[("applydim" , 2),
-                                      ("offset"   , 6),
-                                      ("invxyz"   , 3),
-                                      ("permute"  , 3),
-                                      ("zdimsz"   , 6),
-                                      ("ydimsz"   , 6),
-                                      ("xdimsz"   , 6)], name=name)
+        Record.__init__(self, layout=[("mode"    , 2),
+                                      ("skip"    , 2),
+                                      ("offset"  , 4),
+                                      ("invxyz"  , 3),
+                                      ("permute" , 3),
+                                      ("zdimsz"  , 6),
+                                      ("ydimsz"  , 6),
+                                      ("xdimsz"  , 6)], name=name)
 
     def ports(self):
-        return [self.applydim, self.offset, self.invxyz, self.permute,
+        return [self.mode, self.skip, self.offset, self.invxyz, self.permute,
                 self.zdimsz, self.ydimsz, self.xdimsz]
 
