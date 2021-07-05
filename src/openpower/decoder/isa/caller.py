@@ -588,10 +588,17 @@ class ISACaller:
         self.gpr = GPR(decoder2, self, self.svstate, regfile)
         self.fpr = GPR(decoder2, self, self.svstate, fpregfile)
         self.spr = SPR(decoder2, initial_sprs) # initialise SPRs before MMU
+
+        # set up 4 dummy SVSHAPEs if they aren't already set up
         for i in range(4):
             sname = 'SVSHAPE%d' % i
             if sname not in self.spr:
                 self.spr[sname] = SVSHAPE(0)
+            else:
+                # make sure it's an SVSHAPE
+                val = self.spr[sname].value
+                self.spr[sname] = SVSHAPE(val)
+        self.last_op_svshape = False
 
         # "raw" memory
         self.mem = Mem(row_bytes=8, initial_mem=initial_mem)
@@ -1436,6 +1443,13 @@ class ISACaller:
                 return # DO NOT allow PC to update whilst Sub-PC loop running
             # reset loop to zero
             self.svp64_reset_loop()
+
+        # XXX only in non-SVP64 mode!
+        # record state of whether the current operation was an svshape,
+        # to be able to know if it should apply in the next instruction.
+        # also (if going to use this instruction) should disable ability
+        # to interrupt in between. sigh.
+        self.last_op_svshape = name == 'svshape'
 
         self.update_pc_next()
 
