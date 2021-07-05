@@ -1107,8 +1107,14 @@ class PowerDecode2(PowerDecodeSubset):
             self.in1_isvec = Signal(1, name="reg_a_isvec")
             self.in2_isvec = Signal(1, name="reg_b_isvec")
             self.in3_isvec = Signal(1, name="reg_c_isvec")
-            self.o_isvec = Signal(1, name="reg_o_isvec")
-            self.o2_isvec = Signal(1, name="reg_o2_isvec")
+            self.o_isvec = Signal(7, name="reg_o_isvec")
+            self.o2_isvec = Signal(7, name="reg_o2_isvec")
+            self.in1_step = Signal(7, name="reg_a_step")
+            self.in2_step = Signal(7, name="reg_b_step")
+            self.in3_step = Signal(7, name="reg_c_step")
+            self.o_step = Signal(7, name="reg_o_step")
+            self.o2_step = Signal(7, name="reg_o2_step")
+            self.remap_active = Signal(1, name="remap_active")
             self.no_in_vec = Signal(1, name="no_in_vec") # no inputs vector
             self.no_out_vec = Signal(1, name="no_out_vec") # no outputs vector
             self.loop_continue = Signal(1, name="loop_continue")
@@ -1250,14 +1256,18 @@ class PowerDecode2(PowerDecodeSubset):
             comb += srcstep.eq(self.state.svstate.srcstep)
             comb += dststep.eq(self.state.svstate.dststep)
 
+            in1_step, in2_step = self.in1_step, self.in2_step
+            in3_step = self.in3_step
+            o_step, o2_step = self.o_step, self.o2_step
+
             # registers a, b, c and out and out2 (LD/ST EA)
             sv_etype = self.op_get("SV_Etype")
-            for rname, to_reg, fromreg, svdec, out in (
-                ("RA", e.read_reg1, dec_a.reg_out, in1_svdec, False),
-                ("RB", e.read_reg2, dec_b.reg_out, in2_svdec, False),
-                ("RC", e.read_reg3, dec_c.reg_out, in3_svdec, False),
-                ("RT", e.write_reg, dec_o.reg_out, o_svdec, True),
-                ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, True)):
+            for rname, to_reg, fromreg, svdec, remapstep, out in (
+                ("RA", e.read_reg1, dec_a.reg_out, in1_svdec, in1_step, False),
+                ("RB", e.read_reg2, dec_b.reg_out, in2_svdec, in2_step, False),
+                ("RC", e.read_reg3, dec_c.reg_out, in3_svdec, in3_step, False),
+                ("RT", e.write_reg, dec_o.reg_out, o_svdec, o_step, True),
+                ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, o2_step, True)):
                 comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
                 comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
                 comb += svdec.reg_in.eq(fromreg.data) # 3-bit (CR0/BC/BFA)
@@ -1272,7 +1282,12 @@ class PowerDecode2(PowerDecodeSubset):
                 # detect if Vectorised: add srcstep/dststep if yes.
                 # to_reg is 7-bits, outs get dststep added, ins get srcstep
                 with m.If(svdec.isvec):
-                    step = dststep if out else srcstep
+                    selectstep = dststep if out else srcstep
+                    step = Signal(7, name="step_%s" % rname.lower())
+                    with m.If(self.remap_active):
+                        comb += step.eq(selectstep)
+                    with m.Else():
+                        comb += step.eq(remapstep)
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
                         comb += to_reg.data.eq(offs+svdec.reg_out+(vl-1-step))
