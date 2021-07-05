@@ -12,7 +12,9 @@ class SVSHAPE(SelectableInt):
         offs = 0
         # set up sub-fields from Record layout
         self.fsi = {}
-        for field, width in SVP64REMAP.layout:
+        l = deepcopy(SVP64REMAP.layout)
+        l.reverse()
+        for field, width in l:
             v = FieldSelectableInt(self, tuple(range(offs, offs+width)))
             self.fsi[field] = v
             offs += width

@@ -1199,7 +1199,7 @@ class ISACaller:
         # for when SVSHAPE is active, a very bad hack here (to be replaced)
         # using pre-arranged schedule.  all of this is awful but it is a
         # start.  next job will be to put the proper activation in place
-        yield self.dec2.remap_active.eq(self.last_op_svshape)
+        yield self.dec2.remap_active.eq(1 if self.last_op_svshape else 0)
         if self.last_op_svshape:
             # get four SVSHAPEs. here we are hard-coding
             # SVSHAPE0 to FRT, SVSHAPE1 to FRA, SVSHAPE2 to FRC and
@@ -1217,24 +1217,26 @@ class ISACaller:
                       SVSHAPE2.get_iterator(),
                       SVSHAPE3.get_iterator(),
                      ]
+            rremaps = []
             for i, remap in enumerate(remaps):
                 # XXX hardcoded! pick dststep for out (i==0) else srcstep
                 step = dststep if (i == 0) else srcstep
                 # this is terrible.  O(N^2) looking for the match. but hey.
-                print ("remap", i, step)
                 for idx, remap_idx in enumerate(remap):
                     if idx == step:
                         break
                 if i == 0:
-                    yield self.dec2.o_step.eq(step)
-                    yield self.dec2.o2_step.eq(step)
+                    yield self.dec2.o_step.eq(remap_idx)
+                    yield self.dec2.o2_step.eq(remap_idx)
                 elif i == 1:
-                    yield self.dec2.in1_step.eq(step)
+                    yield self.dec2.in1_step.eq(remap_idx)
                 elif i == 2:
-                    yield self.dec2.in2_step.eq(step)
+                    yield self.dec2.in2_step.eq(remap_idx)
                 elif i == 3:
-                    yield self.dec2.in3_step.eq(step)
-                print ("\t", idx, remap_idx)
+                    yield self.dec2.in3_step.eq(remap_idx)
+                rremaps.append((i, idx, remap_idx))
+            for x in rremaps:
+                print ("shape remap", x)
         # after that, settle down (combinatorial) to let Vector reg numbers
         # work themselves out
         yield Settle()

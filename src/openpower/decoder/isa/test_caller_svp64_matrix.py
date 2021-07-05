@@ -58,7 +58,7 @@ class DecoderTestCase(FHDLTestCase):
         print ("\t", yf)
 
         # and create a linear result2, same scheme
-        #result2 = [0] * (ydim1*xdim2)
+        #result1 = [0] * (ydim1*xdim2)
 
 
         res = []
@@ -83,6 +83,9 @@ class DecoderTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_fprs=fprs)
             print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
             print ("spr svshape1", sim.spr['SVSHAPE1'])
             print ("spr svshape2", sim.spr['SVSHAPE2'])
             print ("spr svshape3", sim.spr['SVSHAPE3'])
