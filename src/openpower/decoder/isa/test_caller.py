@@ -45,6 +45,11 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
 
     def process():
 
+        print ("GPRs")
+        simulator.gpr.dump()
+        print ("FPRs")
+        simulator.fpr.dump()
+
         yield pdecode2.dec.bigendian.eq(0)  # little / big?
         pc = simulator.pc.CIA.value
         index = pc//4
