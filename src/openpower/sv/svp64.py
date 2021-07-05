@@ -40,9 +40,28 @@ class SVP64Rec(Record):
                 self.subvl, self.extra, self.mode]
 
 
+options = {0b000: (0,1,2),
+           0b001: (0,2,1),
+           0b010: (1,0,2),
+           0b011: (1,2,0),
+           0b100: (2,0,1),
+           0b101: (2,1,0)}
+roptions = {}
+for k, v in options.items():
+    roptions[v] = k
+
 # in nMigen, Record begins at the LSB and fills upwards
 # however in OpenPOWER, numbering is MSB0.  sigh.
 class SVP64REMAP(Record):
+    layout=[("mode"    , 2),
+            ("skip"    , 2),
+            ("offset"  , 4),
+            ("invxyz"  , 3),
+            ("permute" , 3),
+            ("zdimsz"  , 6),
+            ("ydimsz"  , 6),
+            ("xdimsz"  , 6)]
+
     """SVP64 SHAPE (REMAP) Record.
 
     https://libre-soc.org/openpower/sv/remap/
@@ -59,23 +78,15 @@ class SVP64REMAP(Record):
     | MODE       | `30:31`    | Selects Mode: Matrix, FFT, DCT         |
     """
     def __init__(self, name=None):
-        Record.__init__(self, layout=[("mode"    , 2),
-                                      ("skip"    , 2),
-                                      ("offset"  , 4),
-                                      ("invxyz"  , 3),
-                                      ("permute" , 3),
-                                      ("zdimsz"  , 6),
-                                      ("ydimsz"  , 6),
-                                      ("xdimsz"  , 6)], name=name)
+        Record.__init__(self, layout=self.layout, name=name)
 
-    def order(self, permute):
-        options = {0b000: [0,1,2],
-                   0b001: [0,2,1],
-                   0b010: [1,0,2],
-                   0b011: [1,2,0],
-                   0b100: [2,0,1],
-                   0b101: [2,1,0]}
+    @staticmethod
+    def order(permute):
         return options[permute]
+
+    @staticmethod
+    def rorder(order):
+        return roptions[tuple(order)]
 
     def ports(self):
         return [self.mode, self.skip, self.offset, self.invxyz, self.permute,

@@ -31,7 +31,13 @@ class FieldSelectableInt:
         self.br = br  # map of indices.
 
     def eq(self, b):
-        if isinstance(b, SelectableInt):
+        if isinstance(b, int):
+            # convert integer to same SelectableInt of same bitlength as range
+            blen = len(self.br)
+            b = SelectableInt(b, blen)
+            for i in range(b.bits):
+                self[i] = b[i]
+        elif isinstance(b, SelectableInt):
             for i in range(b.bits):
                 self[i] = b[i]
         else:

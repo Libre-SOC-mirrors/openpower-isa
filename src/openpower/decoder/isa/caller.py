@@ -35,6 +35,7 @@ from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.decoder.isa.mem import Mem, swap_order, MemException
+from openpower.decoder.isa.svshape import SVSHAPE
 
 from openpower.util import log
 
