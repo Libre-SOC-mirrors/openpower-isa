@@ -3,6 +3,8 @@ from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 from openpower.sv.svp64 import SVP64REMAP
 import os
+from copy import deepcopy
+
 
 class SVSHAPE(SelectableInt):
     def __init__(self, value):
@@ -76,7 +78,8 @@ class SVSHAPE(SelectableInt):
         self.fsi['offset'].eq(value)
 
     def get_iterator(self):
-        return iterate_indices(self)
+        # create a **NEW** iterator each time this is called
+        return iterate_indices(deepcopy(self))
 
 
 if __name__ == '__main__':

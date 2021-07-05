@@ -1196,6 +1196,39 @@ class ISACaller:
                                        self.namespace['NIA'])
             return
 
+        # for when SVSHAPE is active, a very bad hack here (to be replaced)
+        # using pre-arranged schedule.  all of this is awful but it is a
+        # start.  next job will be to put the proper activation in place
+        yield self.dec2.remap_active.eq(self.last_op_svshape)
+        if self.last_op_svshape:
+            # get four SVSHAPEs. here we are hard-coding
+            # SVSHAPE0 to FRT, SVSHAPE1 to FRA, SVSHAPE2 to FRC and
+            # SVSHAPE3 to FRB, assuming "fmadd FRT, FRA, FRC, FRB."
+            remaps = [self.spr['SVSHAPE0'].get_iterator(),
+                      self.spr['SVSHAPE1'].get_iterator(),
+                      self.spr['SVSHAPE2'].get_iterator(),
+                      self.spr['SVSHAPE3'].get_iterator(),
+                     ]
+            for i, remap in enumerate(remaps):
+                # XXX hardcoded! pick dststep for out (i==0) else srcstep
+                step = dststep if (i == 0) else srcstep
+                # this is terrible.  O(N^2) looking for the match. but hey.
+                for idx, remap_idx in remap:
+                    if idx == step:
+                        break
+                if i == 0:
+                    yield self.dec2.o_step.eq(step)
+                    yield self.dec2.o2_step.eq(step)
+                elif i == 1:
+                    yield self.dec2.in1_step.eq(step)
+                elif i == 2:
+                    yield self.dec2.in2_step.eq(step)
+                elif i == 3:
+                    yield self.dec2.in3_step.eq(step)
+        # after that, settle down (combinatorial) to let Vector reg numbers
+        # work themselves out
+        yield Settle()
+
         # main input registers (RT, RA ...)
         inputs = []
         for name in input_names:
