@@ -969,6 +969,9 @@ if __name__ == '__main__':
              'sv.ffmadds 6.v, 2.v, 4.v, 6.v',
              'svremap 2, 2, 3, 0',
     ]
+    lst = [
+             'sv.fmadds 0.v, 8.v, 16.v, 4.v',
+            ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))
     csvs = SVP64RM()

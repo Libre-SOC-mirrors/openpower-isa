@@ -33,8 +33,7 @@ class DecoderTestCase(FHDLTestCase):
                 REMAP fmadds FRT, FRA, FRC, FRB
         """
         lst = SVP64Asm(["svremap 2, 2, 3, 0",
-                       "sv.fmadds 0.v, 8.v, 16.v, 0.v"
-                       #"fmadds 0, 0, 0, 4"
+                       "sv.fmadds 0.v, 16.v, 32.v, 0.v"
                         ])
         lst = list(lst)
 
@@ -65,8 +64,8 @@ class DecoderTestCase(FHDLTestCase):
         res = []
         # store FPs
         for i, (x, y) in enumerate(zip(xf, yf)):
-            fprs[i+8] = fp64toselectable(float(x))  # X matrix
-            fprs[i+16] = fp64toselectable(float(y)) # Y matrix
+            fprs[i+16] = fp64toselectable(float(x))  # X matrix
+            fprs[i+32] = fp64toselectable(float(y)) # Y matrix
             continue
             #t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
             #u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
