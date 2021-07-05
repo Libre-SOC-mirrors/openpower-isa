@@ -34,6 +34,7 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["svremap 2, 2, 3, 0",
                        "sv.fmadds 0.v, 8.v, 16.v, 0.v"
+                       #"fmadds 0, 0, 0, 4"
                         ])
         lst = list(lst)
 

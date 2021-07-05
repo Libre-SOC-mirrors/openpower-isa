@@ -276,8 +276,8 @@
    | PO   |   RS  |   RA | RC  | SVDS |  XO    |
 
 # 1.6.33 SVM-FORM
-   |0     |6        |11      |16     |21    |31  |
-   | PO   |  SVxd   |   SXyd |  SVRM |   XO |  / |
+   |0     |6        |11      |16    |21    |26    |31  |
+   | PO   |  SVxd   |   SVyd | SVzd | SVRM |   XO |  / |
 
 # 1.6.28 Instruction Fields
     A (6)

@@ -398,6 +398,8 @@ def get_pdecode_idx_in(dec2, name):
                                      in3, in3_isvec)
     log ("get_pdecode_idx_in FRS in3", name, in3_sel, In3Sel.FRS.value,
                                      in3, in3_isvec)
+    log ("get_pdecode_idx_in FRB in2", name, in2_sel, In2Sel.FRB.value,
+                                     in2, in2_isvec)
     log ("get_pdecode_idx_in FRC in3", name, in3_sel, In3Sel.FRC.value,
                                      in3, in3_isvec)
     # identify which regnames map to in1/2/3
@@ -1200,7 +1202,7 @@ class ISACaller:
         # using pre-arranged schedule.  all of this is awful but it is a
         # start.  next job will be to put the proper activation in place
         yield self.dec2.remap_active.eq(1 if self.last_op_svshape else 0)
-        if self.last_op_svshape:
+        if self.is_svp64_mode and self.last_op_svshape:
             # get four SVSHAPEs. here we are hard-coding
             # SVSHAPE0 to FRT, SVSHAPE1 to FRA, SVSHAPE2 to FRC and
             # SVSHAPE3 to FRB, assuming "fmadd FRT, FRA, FRC, FRB."
@@ -1208,10 +1210,14 @@ class ISACaller:
             SVSHAPE1 = self.spr['SVSHAPE1']
             SVSHAPE2 = self.spr['SVSHAPE2']
             SVSHAPE3 = self.spr['SVSHAPE3']
-            print ("svshape0", bin(SVSHAPE0.value))
-            print ("    xdim", SVSHAPE0.xdimsz)
-            print ("    ydim", SVSHAPE0.ydimsz)
-            print ("    zdim", SVSHAPE0.zdimsz)
+            for i in range(4):
+                sname = 'SVSHAPE%d' % i
+                shape = self.spr[sname]
+                print (sname, bin(shape.value))
+                print ("    lims", shape.lims)
+                print ("    mode", shape.mode)
+                print ("    skip", shape.skip)
+
             remaps = [SVSHAPE0.get_iterator(),
                       SVSHAPE1.get_iterator(),
                       SVSHAPE2.get_iterator(),
@@ -1231,9 +1237,9 @@ class ISACaller:
                 elif i == 1:
                     yield self.dec2.in1_step.eq(remap_idx)
                 elif i == 2:
-                    yield self.dec2.in2_step.eq(remap_idx)
-                elif i == 3:
                     yield self.dec2.in3_step.eq(remap_idx)
+                elif i == 3:
+                    yield self.dec2.in2_step.eq(remap_idx)
                 rremaps.append((i, idx, remap_idx))
             for x in rremaps:
                 print ("shape remap", x)
