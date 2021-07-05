@@ -29,27 +29,27 @@ class SVSHAPE(SelectableInt):
 
     @property
     def xdimsz(self):
-        return self.fsi['xdimsz'].asint(msb0=True)
+        return self.fsi['xdimsz'].asint(msb0=True)+1
 
     @xdimsz.setter
     def xdimsz(self, value):
-        self.fsi['xdimsz'].eq(value)
+        self.fsi['xdimsz'].eq(value-1)
 
     @property
     def ydimsz(self):
-        return self.fsi['ydimsz'].asint(msb0=True)
+        return self.fsi['ydimsz'].asint(msb0=True)+1
 
     @ydimsz.setter
     def ydimsz(self, value):
-        self.fsi['ydimsz'].eq(value)
+        self.fsi['ydimsz'].eq(value-1)
 
     @property
     def zdimsz(self):
-        return self.fsi['zdimsz'].asint(msb0=True)
+        return self.fsi['zdimsz'].asint(msb0=True)+1
 
     @zdimsz.setter
     def zdimsz(self, value):
-        self.fsi['zdimsz'].eq(value)
+        self.fsi['zdimsz'].eq(value-1)
 
     @property
     def lims(self):
@@ -60,7 +60,16 @@ class SVSHAPE(SelectableInt):
         self.xdimsz = value[0]
         self.ydimsz = value[1]
         self.zdimsz = value[2]
-        
+
+    @property
+    def invxyz(self):
+        inv = self.fsi['invxyz'].asint(msb0=True)
+        return [(inv & 0b1), (inv & 0b10) >> 1, (inv & 0b100) >> 2]
+
+    @invxyz.setter
+    def invxyz(self, value):
+        self.fsi['invxyz'].eq(value[0] | (value[1]<<1) | (value[2]<<2))
+
     @property
     def mode(self):
         return self.fsi['mode'].asint(msb0=True)
@@ -68,6 +77,14 @@ class SVSHAPE(SelectableInt):
     @mode.setter
     def mode(self, value):
         self.fsi['mode'].eq(value)
+
+    @property
+    def skip(self):
+        return self.fsi['skip'].asint(msb0=True)
+
+    @skip.setter
+    def skip(self, value):
+        self.fsi['skip'].eq(value)
 
     @property
     def offset(self):

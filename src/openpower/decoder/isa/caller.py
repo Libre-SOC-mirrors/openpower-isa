@@ -1204,16 +1204,25 @@ class ISACaller:
             # get four SVSHAPEs. here we are hard-coding
             # SVSHAPE0 to FRT, SVSHAPE1 to FRA, SVSHAPE2 to FRC and
             # SVSHAPE3 to FRB, assuming "fmadd FRT, FRA, FRC, FRB."
-            remaps = [self.spr['SVSHAPE0'].get_iterator(),
-                      self.spr['SVSHAPE1'].get_iterator(),
-                      self.spr['SVSHAPE2'].get_iterator(),
-                      self.spr['SVSHAPE3'].get_iterator(),
+            SVSHAPE0 = self.spr['SVSHAPE0']
+            SVSHAPE1 = self.spr['SVSHAPE1']
+            SVSHAPE2 = self.spr['SVSHAPE2']
+            SVSHAPE3 = self.spr['SVSHAPE3']
+            print ("svshape0", bin(SVSHAPE0.value))
+            print ("    xdim", SVSHAPE0.xdimsz)
+            print ("    ydim", SVSHAPE0.ydimsz)
+            print ("    zdim", SVSHAPE0.zdimsz)
+            remaps = [SVSHAPE0.get_iterator(),
+                      SVSHAPE1.get_iterator(),
+                      SVSHAPE2.get_iterator(),
+                      SVSHAPE3.get_iterator(),
                      ]
             for i, remap in enumerate(remaps):
                 # XXX hardcoded! pick dststep for out (i==0) else srcstep
                 step = dststep if (i == 0) else srcstep
                 # this is terrible.  O(N^2) looking for the match. but hey.
-                for idx, remap_idx in remap:
+                print ("remap", i, step)
+                for idx, remap_idx in enumerate(remap):
                     if idx == step:
                         break
                 if i == 0:
@@ -1225,6 +1234,7 @@ class ISACaller:
                     yield self.dec2.in2_step.eq(step)
                 elif i == 3:
                     yield self.dec2.in3_step.eq(step)
+                print ("\t", idx, remap_idx)
         # after that, settle down (combinatorial) to let Vector reg numbers
         # work themselves out
         yield Settle()
@@ -1482,7 +1492,7 @@ class ISACaller:
         # to be able to know if it should apply in the next instruction.
         # also (if going to use this instruction) should disable ability
         # to interrupt in between. sigh.
-        self.last_op_svshape = name == 'svshape'
+        self.last_op_svshape = asmop == 'svremap'
 
         self.update_pc_next()
 

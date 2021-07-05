@@ -196,14 +196,14 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
-        # and svremap
+        # and svremap.  note that the dimension fields one subtracted from each
         if opcode == 'svremap':
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
-            insn |= fields[0] << (31-10) # SVxd       , bits 6-10
-            insn |= fields[1] << (31-15) # SVyd       , bits 11-15
-            insn |= fields[2] << (31-16) # SVzd       , bits 16-20
-            insn |= fields[3] << (31-21) # SVRM       , bits 21-25
+            insn |= (fields[0]-1) << (31-10) # SVxd       , bits 6-10
+            insn |= (fields[1]-1) << (31-15) # SVyd       , bits 11-15
+            insn |= (fields[2]-1) << (31-16) # SVzd       , bits 16-20
+            insn |= (fields[3]) << (31-21) # SVRM       , bits 21-25
             insn |= 0b00001   << (31-30) # XO       , bits 26..30
             log ("svremap", bin(insn))
             yield ".long 0x%x" % insn

@@ -16,6 +16,9 @@ from openpower.consts import SVP64CROffs
 from copy import deepcopy
 from openpower.decoder.helpers import fp64toselectable
 from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+from functools import reduce
+import operator
+
 
 class DecoderTestCase(FHDLTestCase):
 
@@ -24,32 +27,51 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_remap(self):
-        """>>> lst = ["svremap 2, 2, 3, 0"
+        """>>> lst = ["svremap 2, 2, 3, 0",
+                       "sv.fmadds 0.v, 8.v, 16.v, 0.v"
                         ]
+                REMAP fmadds FRT, FRA, FRC, FRB
         """
-        lst = SVP64Asm(["svremap 2, 2, 3, 0"
+        lst = SVP64Asm(["svremap 2, 2, 3, 0",
+                       "sv.fmadds 0.v, 8.v, 16.v, 0.v"
                         ])
         lst = list(lst)
 
-        fprs = [0] * 32
-        if False:
-            av = [7.0, -9.8, 2.0, -32.3] # first half of array 0..3
-            bv = [-2.0, 2.0, -9.8, 32.3] # second half of array 4..7
-            coe = [-1.0, 4.0, 3.1, 6.2]  # coefficients
-            res = []
-            # work out the results with the twin mul/add-sub
-            for i, (a, b, c) in enumerate(zip(av, bv, coe)):
-                fprs[i+2] = fp64toselectable(a)
-                fprs[i+6] = fp64toselectable(b)
-                fprs[i+10] = fp64toselectable(c)
-                mul = a * c
-                t = a + mul
-                u = b - mul
-                t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
-                u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
-                res.append((t, u))
-                print ("FFT", i, "in", a, b, "coeff", c, "mul",
-                       mul, "res", t, u)
+        fprs = [0] * 64
+        # 3x2 matrix
+        X1 = [[1, 2, 3],
+              [3, 4, 5],
+             ]
+        # 2x3 matrix
+        Y1 = [[6, 7],
+              [8, 9],
+              [10, 11],
+             ]
+
+        X = X1
+        Y = Y1
+
+        xf = reduce(operator.add, X)
+        yf = reduce(operator.add, Y)
+        print ("flattened X,Y")
+        print ("\t", xf)
+        print ("\t", yf)
+
+        # and create a linear result2, same scheme
+        #result2 = [0] * (ydim1*xdim2)
+
+
+        res = []
+        # store FPs
+        for i, (x, y) in enumerate(zip(xf, yf)):
+            fprs[i+8] = fp64toselectable(float(x))  # X matrix
+            fprs[i+16] = fp64toselectable(float(y)) # Y matrix
+            continue
+            #t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            #u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            #res.append((t, u))
+            #print ("FFT", i, "in", a, b, "coeff", c, "mul",
+            #       mul, "res", t, u)
 
         # SVSTATE (in this case, VL=12, to cover all of matrix)
         svstate = SVP64State()
@@ -64,6 +86,8 @@ class DecoderTestCase(FHDLTestCase):
             print ("spr svshape1", sim.spr['SVSHAPE1'])
             print ("spr svshape2", sim.spr['SVSHAPE2'])
             print ("spr svshape3", sim.spr['SVSHAPE3'])
+            for i in range(4):
+                print ("i", i, float(sim.fpr(i)))
             # confirm that the results are as expected
             #for i, (t, u) in enumerate(res):
             #    self.assertEqual(sim.fpr(i+2), t)
