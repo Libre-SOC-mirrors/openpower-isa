@@ -205,6 +205,7 @@ class SVP64Asm:
             insn |= (fields[2]-1) << (31-20) # SVzd       , bits 16-20
             insn |= (fields[3])   << (31-25) # SVRM       , bits 21-25
             insn |= 0b00001   << (31-30) # XO       , bits 26..30
+            #insn &= ((1<<32)-1)
             log ("svremap", bin(insn))
             yield ".long 0x%x" % insn
             return
@@ -967,10 +968,10 @@ if __name__ == '__main__':
              #'sv.lhzbr 5.v, 11(9.v), 15',
              #'sv.lwzbr 5.v, 11(9.v), 15',
              'sv.ffmadds 6.v, 2.v, 4.v, 6.v',
-             'svremap 2, 2, 3, 0',
     ]
     lst = [
              'sv.fmadds 0.v, 8.v, 16.v, 4.v',
+             'svremap 8, 1, 1, 1',
             ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

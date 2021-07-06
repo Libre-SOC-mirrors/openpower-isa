@@ -761,7 +761,7 @@
     SVi (16:23)
          Simple-V immediate field for setting VL or MVL
          Formats: SVL
-    SVRM (16:20)
+    SVRM (21:25)
          Simple-V "REMAP" Mode
          Formats: SVM
     SVxd (6:10)

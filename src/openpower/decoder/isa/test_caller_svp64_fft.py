@@ -23,7 +23,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test_sv_fpmadds_fft(self):
+    def tst_sv_fpmadds_fft(self):
         """>>> lst = ["sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                         ]
             four in-place vector mul-adds, four in-place vector mul-subs
@@ -72,6 +72,91 @@ class DecoderTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_fprs=fprs)
+            # confirm that the results are as expected
+            for i, (t, u) in enumerate(res):
+                self.assertEqual(sim.fpr(i+2), t)
+                self.assertEqual(sim.fpr(i+6), u)
+
+    def test_sv_remap_fpmadds_fft(self):
+        """>>> lst = ["svremap 8, 1, 1, 1",
+                      "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
+                     ]
+            four in-place vector mul-adds, four in-place vector mul-subs
+
+            this is the twin "butterfly" mul-add-sub from Cooley-Tukey
+            https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
+
+            there is the *option* to target a different location (non-in-place)
+            just in case.
+
+            SVP64 "FFT" mode will *automatically* offset FRB and an implicit
+            FRS to perform the two multiplies.  one add, one subtract.
+
+            sv.ffmadds FRT, FRA, FRC, FRB  actually does:
+                fmadds  FRT   , FRA, FRC, FRA
+                fnmsubs FRT+vl, FRA, FRC, FRB+vl
+        """
+        lst = SVP64Asm( ["svremap 8, 1, 1, 1",
+                        "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
+                        ])
+        lst = list(lst)
+
+        fprs = [0] * 32
+        av = [7.0, -9.8, 2.0, -32.3,
+              -2.0, 2.0, -9.8, 32.3] # array 0..7
+        coe = [-1.0, 4.0, 3.1, 6.2] # coefficients
+        # store in regfile
+        for i, c in enumerate(coe):
+            fprs[i+10] = fp64toselectable(c)
+        for i, a in enumerate(av):
+            fprs[i+2] = fp64toselectable(a)
+        # work out the results with the twin mul/add-sub
+        res = []
+        for i, (a, c) in enumerate(zip(av, coe)):
+            continue
+            fprs[i+2] = fp64toselectable(a)
+            fprs[i+10] = fp64toselectable(c)
+            mul = a * c
+            t = a + mul
+            u = b - mul
+            t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            res.append((t, u))
+            print ("FFT", i, "in", a, b, "coeff", c, "mul", mul, "res", t, u)
+
+        # set total. err don't know how to calculate how many there are...
+        # do it manually for now
+        VL = 0
+        size = 2
+        n = len(av)
+        while size <= n:
+            halfsize = size // 2
+            tablestep = n // size
+            for i in range(0, n, size):
+                for j in range(i, i + halfsize):
+                    VL += 1
+            size *= 2
+
+        # SVSTATE (calculated VL)
+        svstate = SVP64State()
+        svstate.vl[0:7] = VL # VL
+        svstate.maxvl[0:7] = VL # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_fprs=fprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            for i in range(8):
+                print ("i", i, float(sim.fpr(i)))
+
+            return
             # confirm that the results are as expected
             for i, (t, u) in enumerate(res):
                 self.assertEqual(sim.fpr(i+2), t)

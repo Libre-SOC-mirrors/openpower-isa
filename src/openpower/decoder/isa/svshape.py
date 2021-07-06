@@ -5,6 +5,7 @@ from openpower.decoder.isa.remap_fft_yield import iterate_butterfly_indices
 from openpower.sv.svp64 import SVP64REMAP
 import os
 from copy import deepcopy
+from openpower.util import log
 
 
 class SVSHAPE(SelectableInt):
@@ -16,9 +17,12 @@ class SVSHAPE(SelectableInt):
         l = deepcopy(SVP64REMAP.layout)
         l.reverse()
         for field, width in l:
-            v = FieldSelectableInt(self, tuple(range(offs, offs+width)))
+            end =  offs+width
+            fs = tuple(range(offs, end))
+            v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
-            offs += width
+            #log("SVSHAPE setup field", field, offs, end)
+            offs = end
 
     @property
     def order(self):
