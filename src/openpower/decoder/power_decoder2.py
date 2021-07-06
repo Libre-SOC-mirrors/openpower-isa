@@ -1325,15 +1325,24 @@ class PowerDecode2(PowerDecodeSubset):
             # mess up the above with if-statements, override it here.
             # same trick is applied to FRA, above, but it's a lot cleaner, there
             with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
+                comb += offs.eq(0)
+                with m.If(~self.remap_active):
+                    comb += offs.eq(vl)
                 svdec = o_svdec # yes take source as o_svdec...
                 with m.If(svdec.isvec):
+                    step = Signal(7, name="step_%s" % rname.lower())
+                    with m.If(self.remap_active):
+                        comb += step.eq(o2_step)
+                    with m.Else():
+                        comb += step.eq(dststep)
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
-                        comb += to_reg.data.eq(vl+svdec.reg_out+(vl-1-dststep))
+                        roffs = offs+(vl-1-step)
+                        comb += to_reg.data.eq(roffs+svdec.reg_out)
                     with m.Else():
-                        comb += to_reg.data.eq(vl+dststep+svdec.reg_out)
+                        comb += to_reg.data.eq(offs+step+svdec.reg_out)
                 with m.Else():
-                    comb += to_reg.data.eq(vl+svdec.reg_out)
+                    comb += to_reg.data.eq(offs+svdec.reg_out)
                 # ... but write to *second* output
                 comb += self.o2_isvec.eq(svdec.isvec)
                 comb += o2_svdec.idx.eq(self.op_get("sv_out"))
