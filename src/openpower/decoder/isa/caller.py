@@ -1218,29 +1218,43 @@ class ISACaller:
                 print ("    mode", shape.mode)
                 print ("    skip", shape.skip)
 
-            remaps = [SVSHAPE0.get_iterator(),
-                      SVSHAPE1.get_iterator(),
-                      SVSHAPE2.get_iterator(),
-                      SVSHAPE3.get_iterator(),
+            remaps = [(SVSHAPE0, SVSHAPE0.get_iterator()),
+                      (SVSHAPE1, SVSHAPE1.get_iterator()),
+                      (SVSHAPE2, SVSHAPE2.get_iterator()),
+                      (SVSHAPE3, SVSHAPE3.get_iterator()),
                      ]
             rremaps = []
-            for i, remap in enumerate(remaps):
+            for i, (shape, remap) in enumerate(remaps):
                 # XXX hardcoded! pick dststep for out (i==0) else srcstep
                 step = dststep if (i == 0) else srcstep
                 # this is terrible.  O(N^2) looking for the match. but hey.
                 for idx, remap_idx in enumerate(remap):
                     if idx == step:
                         break
-                if i == 0:
-                    yield self.dec2.o_step.eq(remap_idx)
-                    yield self.dec2.o2_step.eq(remap_idx)
-                elif i == 1:
-                    yield self.dec2.in1_step.eq(remap_idx)
-                elif i == 2:
-                    yield self.dec2.in3_step.eq(remap_idx)
-                elif i == 3:
-                    yield self.dec2.in2_step.eq(remap_idx)
-                rremaps.append((i, idx, remap_idx))
+                # multiply mode
+                if shape.mode == 0b00:
+                    if i == 0:
+                        yield self.dec2.o_step.eq(remap_idx)   # RT
+                        yield self.dec2.o2_step.eq(remap_idx)  # EA
+                    elif i == 1:
+                        yield self.dec2.in1_step.eq(remap_idx) # RA
+                    elif i == 2:
+                        yield self.dec2.in3_step.eq(remap_idx) # RB
+                    elif i == 3:
+                        yield self.dec2.in2_step.eq(remap_idx) # RC
+                # FFT butterfly mode
+                if shape.mode == 0b01:
+                    if i == 0:
+                        yield self.dec2.o_step.eq(remap_idx)   # RT
+                        yield self.dec2.in1_step.eq(remap_idx) # RA
+                    elif i == 1:
+                        yield self.dec2.in2_step.eq(remap_idx) # RB
+                        yield self.dec2.o2_step.eq(remap_idx)  # EA (FRS)
+                    elif i == 2:
+                        yield self.dec2.in3_step.eq(remap_idx) # RC
+                    elif i == 3:
+                        pass # no SVSHAPE3
+                rremaps.append((i, idx, remap_idx)) # debug printing
             for x in rremaps:
                 print ("shape remap", x)
         # after that, settle down (combinatorial) to let Vector reg numbers
