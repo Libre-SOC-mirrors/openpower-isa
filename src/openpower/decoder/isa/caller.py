@@ -1225,8 +1225,14 @@ class ISACaller:
                      ]
             rremaps = []
             for i, (shape, remap) in enumerate(remaps):
+                # zero is "disabled"
+                if shape.value == 0x0:
+                    continue
                 # XXX hardcoded! pick dststep for out (i==0) else srcstep
-                step = dststep if (i == 0) else srcstep
+                if shape.mode == 0b00: # multiply mode
+                    step = dststep if (i == 0) else srcstep
+                if shape.mode == 0b01: # FFT butterfly mode
+                    step = srcstep # XXX HACK - for now only use srcstep
                 # this is terrible.  O(N^2) looking for the match. but hey.
                 for idx, remap_idx in enumerate(remap):
                     if idx == step:
@@ -1254,7 +1260,7 @@ class ISACaller:
                         yield self.dec2.in3_step.eq(remap_idx) # RC
                     elif i == 3:
                         pass # no SVSHAPE3
-                rremaps.append((i, idx, remap_idx)) # debug printing
+                rremaps.append((shape.mode, i, idx, remap_idx)) # debug printing
             for x in rremaps:
                 print ("shape remap", x)
         # after that, settle down (combinatorial) to let Vector reg numbers
