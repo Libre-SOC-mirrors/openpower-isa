@@ -97,25 +97,23 @@ class DecoderTestCase(FHDLTestCase):
                 fnmsubs FRT+vl, FRA, FRC, FRB+vl
         """
         lst = SVP64Asm( ["svremap 8, 1, 1, 1",
-                        "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
+                        "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
                         ])
         lst = list(lst)
 
         fprs = [0] * 32
-        av = [7.0, -9.8, 2.0, -32.3,
-              -2.0, 2.0, -9.8, 32.3] # array 0..7
-        coe = [-1.0, 4.0, 3.1, 6.2] # coefficients
+        av = [7.0, -9.8, 3.0, -32.3,
+              -2.0, 5.0, -9.8, 31.3] # array 0..7
+        coe = [-0.25, 0.5, 3.1, 6.2] # coefficients
         # store in regfile
         for i, c in enumerate(coe):
-            fprs[i+10] = fp64toselectable(c)
+            fprs[i+8] = fp64toselectable(c)
         for i, a in enumerate(av):
-            fprs[i+2] = fp64toselectable(a)
+            fprs[i+0] = fp64toselectable(a)
         # work out the results with the twin mul/add-sub
         res = []
         for i, (a, c) in enumerate(zip(av, coe)):
             continue
-            fprs[i+2] = fp64toselectable(a)
-            fprs[i+10] = fp64toselectable(c)
             mul = a * c
             t = a + mul
             u = b - mul
