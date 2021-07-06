@@ -1279,8 +1279,13 @@ class PowerDecode2(PowerDecodeSubset):
                 offs = Signal(7, name="offs_"+rname, reset_less=True)
                 comb += offs.eq(0)
                 if rname == 'RB':
+                    # when FFT sv.ffmadd detected, and REMAP not in use,
+                    # automagically add on an extra offset to RB.
+                    # however when REMAP is active, the FFT REMAP
+                    # schedule takes care of this offset.
                     with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
-                        comb += offs.eq(vl)
+                        with m.If(~self.remap_active):
+                            comb += offs.eq(vl)
                 # detect if Vectorised: add srcstep/dststep if yes.
                 # to_reg is 7-bits, outs get dststep added, ins get srcstep
                 with m.If(svdec.isvec):
