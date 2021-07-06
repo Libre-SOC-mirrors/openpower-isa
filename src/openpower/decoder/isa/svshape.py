@@ -1,6 +1,7 @@
-from openpower.decoder.isa.remapyield import iterate_indices
 from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
+from openpower.decoder.isa.remapyield import iterate_indices
+from openpower.decoder.isa.remap_fft_yield import iterate_butterfly_indices
 from openpower.sv.svp64 import SVP64REMAP
 import os
 from copy import deepcopy
@@ -97,8 +98,12 @@ class SVSHAPE(SelectableInt):
         self.fsi['offset'].eq(value)
 
     def get_iterator(self):
+        if self.mode == 0b00:
+            iterate_fn = iterate_indices
+        elif self.mode == 0b01:
+            iterate_fn = iterate_butterfly_indices
         # create a **NEW** iterator each time this is called
-        return iterate_indices(deepcopy(self))
+        return iterate_fn(deepcopy(self))
 
 
 if __name__ == '__main__':
@@ -116,8 +121,83 @@ if __name__ == '__main__':
 
     VL = xdim * ydim * zdim
 
+    print ("Matrix Mode")
     for idx, new_idx in enumerate(SVSHAPE0.get_iterator()):
         if idx >= VL:
             break
         print ("%d->%d" % (idx, new_idx))
+
+    print ("")
+    print ("FFT Mode")
+
+    # set the dimension sizes here
+    xdim = 8
+    ydim = 0 # not needed
+    zdim = 0 # again, not needed
+
+    # set total. err don't know how to calculate how many there are...
+    # do it manually for now
+
+    VL = 0
+    size = 2
+    n = xdim
+    while size <= n:
+        halfsize = size // 2
+        tablestep = n // size
+        for i in range(0, n, size):
+            for j in range(i, i + halfsize):
+                VL += 1
+        size *= 2
+
+    # j schedule
+    SVSHAPE0 = SVSHAPE(0)
+    SVSHAPE0.lims = [xdim, ydim, zdim]
+    SVSHAPE0.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE0.mode = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+    # j+halfstep schedule
+    SVSHAPE1 = SVSHAPE(0)
+    SVSHAPE1.lims = [xdim, ydim, zdim]
+    SVSHAPE1.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE1.mode = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [0,0,0] # inversion if desired
+    # k schedule
+    SVSHAPE2 = SVSHAPE(0)
+    SVSHAPE2.lims = [xdim, ydim, zdim]
+    SVSHAPE2.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE2.mode = 0b10
+    SVSHAPE2.offset = 0       # experiment with different offset, here
+    SVSHAPE2.invxyz = [0,0,0] # inversion if desired
+
+    # enumerate over the iterator function, getting new indices
+    schedule = []
+    for idx, (jl, jh, k) in enumerate(zip(iterate_indices(SVSHAPE0),
+                                          iterate_indices(SVSHAPE1),
+                                          iterate_indices(SVSHAPE2))):
+        if idx >= VL:
+            break
+        schedule.append((jl, jh, k))
+
+    # ok now pretty-print the results, with some debug output
+    size = 2
+    idx = 0
+    while size <= n:
+        halfsize = size // 2
+        tablestep = n // size
+        print ("size %d halfsize %d tablestep %d" % \
+                (size, halfsize, tablestep))
+        for i in range(0, n, size):
+            prefix = "i %d\t" % i
+            k = 0
+            for j in range(i, i + halfsize):
+                jl, jh, ks = schedule[idx]
+                print ("  %-3d\t%s j=%-2d jh=%-2d k=%-2d -> "
+                        "j[jl=%-2d] j[jh=%-2d] exptable[k=%d]" % \
+                                (idx, prefix, j, j+halfsize, k,
+                                      jl, jh, ks))
+                k += tablestep
+                idx += 1
+        size *= 2
 
