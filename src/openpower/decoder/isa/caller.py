@@ -1252,9 +1252,9 @@ class ISACaller:
                 if shape.mode == 0b01:
                     if i == 0:
                         yield self.dec2.o_step.eq(remap_idx)   # RT
-                        yield self.dec2.in1_step.eq(remap_idx) # RA
-                    elif i == 1:
                         yield self.dec2.in2_step.eq(remap_idx) # RB
+                    elif i == 1:
+                        yield self.dec2.in1_step.eq(remap_idx) # RA
                         yield self.dec2.o2_step.eq(remap_idx)  # EA (FRS)
                     elif i == 2:
                         yield self.dec2.in3_step.eq(remap_idx) # RC

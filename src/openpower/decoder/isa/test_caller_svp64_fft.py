@@ -51,12 +51,14 @@ def transform_radix2(vec, exptable):
                 # exact same actual computation, just embedded in
                 # triple-nested for-loops
                 jl, jh = j, j+halfsize
+                vjh = vec[jh]
                 temp1 = vec[jh] * exptable[k]
                 temp2 = vec[jl]
                 vec[jh] = temp2 - temp1
                 vec[jl] = temp2 + temp1
-                print ("transform_radix2 jl jh k", jl, jh, k,
-                       "temp1, temp2", temp1, temp2,
+                print ("xform jl jh k", jl, jh, k,
+                       "vj vjh ek", temp2, vjh, exptable[k],
+                       "t1, t2", temp1, temp2,
                        "v[jh] v[jl]", vec[jh], vec[jl])
                 k += tablestep
         size *= 2
@@ -103,9 +105,6 @@ class DecoderTestCase(FHDLTestCase):
         for i, a in enumerate(av):
             fprs[i+0] = fp64toselectable(a)
 
-        # work out the results with the twin mul/add-sub
-        res = transform_radix2(av, coe)
-
         # set total. err don't know how to calculate how many there are...
         # do it manually for now
         VL = 0
@@ -135,12 +134,22 @@ class DecoderTestCase(FHDLTestCase):
             print ("spr svshape1", sim.spr['SVSHAPE1'])
             print ("spr svshape2", sim.spr['SVSHAPE2'])
             print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            # work out the results with the twin mul/add-sub
+            res = transform_radix2(av, coe)
+
             for i, expected in enumerate(res):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = DOUBLE2SINGLE(fp64toselectable(expected))
-                self.assertEqual(sim.fpr(i), expected)
+                expected = float(expected)
+                actual = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs(actual - expected) / expected
+                self.assertTrue(err < 1e-7)
 
 
     def test_sv_fpmadds_fft(self):
