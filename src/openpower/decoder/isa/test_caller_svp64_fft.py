@@ -185,7 +185,7 @@ class DecoderTestCase(FHDLTestCase):
             fprs[i+6] = fp64toselectable(b)
             fprs[i+10] = fp64toselectable(c)
             mul = a * c
-            t = a + mul
+            t = b + mul
             u = b - mul
             t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
             u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
