@@ -2,17 +2,12 @@ from nmigen import Module, Signal
 from nmigen.back.pysim import Simulator, Delay, Settle
 from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
 from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
 from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State
+from openpower.decoder.isa.caller import SVP64State
 from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
+from openpower.decoder.isa.test_caller import run_tst
 from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
 from copy import deepcopy
 from openpower.decoder.helpers import fp64toselectable
 from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
@@ -66,7 +61,7 @@ def transform_radix2(vec, exptable):
     return vec
 
 
-class DecoderTestCase(FHDLTestCase):
+class FFTTestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
         for i in range(32):
