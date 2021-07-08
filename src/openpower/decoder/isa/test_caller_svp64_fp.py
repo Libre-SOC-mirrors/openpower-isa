@@ -60,7 +60,7 @@ class DecoderTestCase(FHDLTestCase):
     def test_fp_single_ldst(self):
         """>>> lst = ["sv.lfsx 0.v, 0, 4.v",   # load fp 1/2 from mem 0/8
                       "sv.stfsu 0.v, 16(4.v)", # store fp 1/2, update RA *twice*
-                      "sv.lfs 3.v, 0(4.v)",   # re-load from UPDATED r4/r5
+                      "sv.lfs 2.v, 0(4.v)",   # re-load from UPDATED r4/r5
                      ]
 
         This is quite an involved (deceptively simple looking) test.
@@ -93,7 +93,7 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["sv.lfsx 0.v, 0, 4.v",
                         "sv.stfsu 0.v, 16(4.v)",
-                        "sv.lfs 3.v, 0(4.v)",
+                        "sv.lfs 2.v, 0(4.v)",
                      ])
         lst = list(lst)
 
@@ -128,8 +128,8 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(5), SelectableInt(0x18, 64))
             self.assertEqual(sim.fpr(0), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(1), SelectableInt(0xC004000000000000, 64))
-            self.assertEqual(sim.fpr(3), SelectableInt(0x4040266660000000, 64))
-            self.assertEqual(sim.fpr(4), SelectableInt(0xC004000000000000, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
+            self.assertEqual(sim.fpr(3), SelectableInt(0xC004000000000000, 64))
 
     def test_sv_fpadd(self):
         """>>> lst = ["sv.fadds 6.v, 2.v, 4.v"
