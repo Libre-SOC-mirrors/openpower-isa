@@ -107,10 +107,19 @@ class GPR(dict):
             self[i] = SelectableInt(regfile[i], 64)
 
     def __call__(self, ridx):
+        if isinstance(ridx, SelectableInt):
+            ridx = ridx.value
         return self[ridx]
 
     def set_form(self, form):
         self.form = form
+
+    def __setitem__(self, rnum, value):
+        # rnum = rnum.value # only SelectableInt allowed
+        log("GPR setitem", rnum, value)
+        if isinstance(rnum, SelectableInt):
+            rnum = rnum.value
+        dict.__setitem__(self, rnum, value)
 
     def getz(self, rnum):
         # rnum = rnum.value # only SelectableInt allowed
@@ -479,7 +488,8 @@ def get_pdecode_idx_out(dec2, name):
             return out, o_isvec
     elif name == 'RT':
         log ("get_pdecode_idx_out", out_sel, OutSel.RT.value,
-                                      OutSel.RT_OR_ZERO.value, out, o_isvec)
+                                      OutSel.RT_OR_ZERO.value, out, o_isvec,
+                                      dec2.dec.RT)
         if out_sel == OutSel.RT.value:
             return out, o_isvec
     elif name == 'FRA':
@@ -1115,81 +1125,19 @@ class ISACaller:
             dest_cr, src_cr, src_byname, dest_byname = False, False, {}, {}
         log ("sv rm", sv_rm, dest_cr, src_cr, src_byname, dest_byname)
 
-        # get SVSTATE VL (oh and print out some debug stuff)
+        # see if srcstep/dststep need skipping over masked-out predicate bits
         if self.is_svp64_mode:
-            vl = self.svstate.vl.asint(msb0=True)
-            srcstep = self.svstate.srcstep.asint(msb0=True)
-            dststep = self.svstate.dststep.asint(msb0=True)
-            sv_a_nz = yield self.dec2.sv_a_nz
-            fft_mode = yield self.dec2.use_svp64_fft
-            in1 = yield self.dec2.e.read_reg1.data
-            log ("SVP64: VL, srcstep, dststep, sv_a_nz, in1 fft",
-                    vl, srcstep, dststep, sv_a_nz, in1, fft_mode)
-
-        # get predicate mask
-        srcmask = dstmask = 0xffff_ffff_ffff_ffff
-        if self.is_svp64_mode:
-            pmode = yield self.dec2.rm_dec.predmode
-            reverse_gear = yield self.dec2.rm_dec.reverse_gear
-            sv_ptype = yield self.dec2.dec.op.SV_Ptype
-            srcpred = yield self.dec2.rm_dec.srcpred
-            dstpred = yield self.dec2.rm_dec.dstpred
-            pred_src_zero = yield self.dec2.rm_dec.pred_sz
-            pred_dst_zero = yield self.dec2.rm_dec.pred_dz
-            if pmode == SVP64PredMode.INT.value:
-                srcmask = dstmask = get_predint(self.gpr, dstpred)
-                if sv_ptype == SVPtype.P2.value:
-                    srcmask = get_predint(self.gpr, srcpred)
-            elif pmode == SVP64PredMode.CR.value:
-                srcmask = dstmask = get_predcr(self.crl, dstpred, vl)
-                if sv_ptype == SVPtype.P2.value:
-                    srcmask = get_predcr(self.crl, srcpred, vl)
-            log ("    pmode", pmode)
-            log ("    reverse", reverse_gear)
-            log ("    ptype", sv_ptype)
-            log ("    srcpred", bin(srcpred))
-            log ("    dstpred", bin(dstpred))
-            log ("    srcmask", bin(srcmask))
-            log ("    dstmask", bin(dstmask))
-            log ("    pred_sz", bin(pred_src_zero))
-            log ("    pred_dz", bin(pred_dst_zero))
-
-            # okaaay, so here we simply advance srcstep (TODO dststep)
-            # until the predicate mask has a "1" bit... or we run out of VL
-            # let srcstep==VL be the indicator to move to next instruction
-            if not pred_src_zero:
-                while (((1<<srcstep) & srcmask) == 0) and (srcstep != vl):
-                    log ("      skip", bin(1<<srcstep))
-                    srcstep += 1
-            # same for dststep
-            if not pred_dst_zero:
-                while (((1<<dststep) & dstmask) == 0) and (dststep != vl):
-                    log ("      skip", bin(1<<dststep))
-                    dststep += 1
-
-            # now work out if the relevant mask bits require zeroing
-            if pred_dst_zero:
-                pred_dst_zero = ((1<<dststep) & dstmask) == 0
-            if pred_src_zero:
-                pred_src_zero = ((1<<srcstep) & srcmask) == 0
-
-            # update SVSTATE with new srcstep
-            self.svstate.srcstep[0:7] = srcstep
-            self.svstate.dststep[0:7] = dststep
-            self.namespace['SVSTATE'] = self.svstate.spr
-            yield self.dec2.state.svstate.eq(self.svstate.spr.value)
-            yield Settle() # let decoder update
-            srcstep = self.svstate.srcstep.asint(msb0=True)
-            dststep = self.svstate.dststep.asint(msb0=True)
-            log ("    srcstep", srcstep)
-            log ("    dststep", dststep)
-
-            # check if end reached (we let srcstep overrun, above)
-            # nothing needs doing (TODO zeroing): just do next instruction
-            if srcstep == vl or dststep == vl:
+            self.update_new_svstate_steps()
+            pre = yield from self.svstate_pre_inc()
+            if pre:
                 self.svp64_reset_loop()
+                self.update_nia()
                 self.update_pc_next()
                 return
+            srcstep, dststep = self.new_srcstep, self.new_dststep
+            vl = self.svstate.vl.asint(msb0=True)
+            pred_src_zero = yield self.dec2.rm_dec.pred_sz
+            pred_dst_zero = yield self.dec2.rm_dec.pred_dz
 
         # VL=0 in SVP64 mode means "do nothing: skip instruction"
         if self.is_svp64_mode and vl == 0:
@@ -1290,12 +1238,17 @@ class ISACaller:
                 log('reading reg %s %s' % (name, str(regnum)), is_vec)
                 if name in fregs:
                     reg_val = self.fpr(regnum)
-                else:
+                elif name is not None:
                     reg_val = self.gpr(regnum)
             else:
                 log('zero input reg %s %s' % (name, str(regnum)), is_vec)
                 reg_val = 0
             inputs.append(reg_val)
+        # arrrrgh, awful hack, to get _RT into namespace
+        if asmop == 'setvl':
+            regname = "_RT"
+            RT = yield self.dec2.dec.RT
+            self.namespace[regname] = SelectableInt(RT, 5)
 
         # in SVP64 mode for LD/ST work out immediate
         # XXX TODO: replace_ds for DS-Form rather than D-Form.
@@ -1478,44 +1431,11 @@ class ISACaller:
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
         if self.is_svp64_mode:
-            # XXX twin predication TODO
-            vl = self.svstate.vl.asint(msb0=True)
-            mvl = self.svstate.maxvl.asint(msb0=True)
-            srcstep = self.svstate.srcstep.asint(msb0=True)
-            dststep = self.svstate.dststep.asint(msb0=True)
-            rm_mode = yield self.dec2.rm_dec.mode
-            reverse_gear = yield self.dec2.rm_dec.reverse_gear
-            sv_ptype = yield self.dec2.dec.op.SV_Ptype
-            out_vec = not (yield self.dec2.no_out_vec)
-            in_vec = not (yield self.dec2.no_in_vec)
-            log ("    svstate.vl", vl)
-            log ("    svstate.mvl", mvl)
-            log ("    svstate.srcstep", srcstep)
-            log ("    svstate.dststep", dststep)
-            log ("    mode", rm_mode)
-            log ("    reverse", reverse_gear)
-            log ("    out_vec", out_vec)
-            log ("    in_vec", in_vec)
-            log ("    sv_ptype", sv_ptype, sv_ptype == SVPtype.P2.value)
-            # check if srcstep needs incrementing by one, stop PC advancing
-            # svp64 loop can end early if the dest is scalar for single-pred
-            # but for 2-pred both src/dest have to be checked.
-            # XXX this might not be true! it may just be LD/ST
-            if sv_ptype == SVPtype.P2.value:
-                svp64_is_vector = (out_vec or in_vec)
-            else:
-                svp64_is_vector = out_vec
-            if svp64_is_vector and srcstep != vl-1 and dststep != vl-1:
-                self.svstate.srcstep += SelectableInt(1, 7)
-                self.svstate.dststep += SelectableInt(1, 7)
-                self.pc.NIA.value = self.pc.CIA.value
-                self.namespace['NIA'] = self.pc.NIA
-                self.namespace['SVSTATE'] = self.svstate.spr
-                log("end of sub-pc call", self.namespace['CIA'],
-                                     self.namespace['NIA'])
-                return # DO NOT allow PC to update whilst Sub-PC loop running
-            # reset loop to zero
-            self.svp64_reset_loop()
+            post = yield from self.svstate_post_inc()
+            if post:
+                # reset loop to zero
+                self.svp64_reset_loop()
+                self.update_nia()
 
         # XXX only in non-SVP64 mode!
         # record state of whether the current operation was an svshape,
@@ -1525,6 +1445,136 @@ class ISACaller:
         self.last_op_svshape = asmop == 'svremap'
 
         self.update_pc_next()
+
+    def SVSTATE_NEXT(self):
+        """explicitly moves srcstep/dststep on to next element, for
+        "Vertical-First" mode.  this function is called from
+        setvl pseudo-code, as a pseudo-op "svstep"
+        """
+        log("SVSTATE_NEXT")
+        self.allow_next_step_inc = True
+
+    def svstate_pre_inc(self):
+        """check if srcstep/dststep need to skip over masked-out predicate bits
+        """
+        # get SVSTATE VL (oh and print out some debug stuff)
+        vl = self.svstate.vl.asint(msb0=True)
+        srcstep = self.svstate.srcstep.asint(msb0=True)
+        dststep = self.svstate.dststep.asint(msb0=True)
+        sv_a_nz = yield self.dec2.sv_a_nz
+        fft_mode = yield self.dec2.use_svp64_fft
+        in1 = yield self.dec2.e.read_reg1.data
+        log ("SVP64: VL, srcstep, dststep, sv_a_nz, in1 fft",
+                vl, srcstep, dststep, sv_a_nz, in1, fft_mode)
+
+        # get predicate mask
+        srcmask = dstmask = 0xffff_ffff_ffff_ffff
+
+        pmode = yield self.dec2.rm_dec.predmode
+        reverse_gear = yield self.dec2.rm_dec.reverse_gear
+        sv_ptype = yield self.dec2.dec.op.SV_Ptype
+        srcpred = yield self.dec2.rm_dec.srcpred
+        dstpred = yield self.dec2.rm_dec.dstpred
+        pred_src_zero = yield self.dec2.rm_dec.pred_sz
+        pred_dst_zero = yield self.dec2.rm_dec.pred_dz
+        if pmode == SVP64PredMode.INT.value:
+            srcmask = dstmask = get_predint(self.gpr, dstpred)
+            if sv_ptype == SVPtype.P2.value:
+                srcmask = get_predint(self.gpr, srcpred)
+        elif pmode == SVP64PredMode.CR.value:
+            srcmask = dstmask = get_predcr(self.crl, dstpred, vl)
+            if sv_ptype == SVPtype.P2.value:
+                srcmask = get_predcr(self.crl, srcpred, vl)
+        log ("    pmode", pmode)
+        log ("    reverse", reverse_gear)
+        log ("    ptype", sv_ptype)
+        log ("    srcpred", bin(srcpred))
+        log ("    dstpred", bin(dstpred))
+        log ("    srcmask", bin(srcmask))
+        log ("    dstmask", bin(dstmask))
+        log ("    pred_sz", bin(pred_src_zero))
+        log ("    pred_dz", bin(pred_dst_zero))
+
+        # okaaay, so here we simply advance srcstep (TODO dststep)
+        # until the predicate mask has a "1" bit... or we run out of VL
+        # let srcstep==VL be the indicator to move to next instruction
+        if not pred_src_zero:
+            while (((1<<srcstep) & srcmask) == 0) and (srcstep != vl):
+                log ("      skip", bin(1<<srcstep))
+                srcstep += 1
+        # same for dststep
+        if not pred_dst_zero:
+            while (((1<<dststep) & dstmask) == 0) and (dststep != vl):
+                log ("      skip", bin(1<<dststep))
+                dststep += 1
+
+        # now work out if the relevant mask bits require zeroing
+        if pred_dst_zero:
+            pred_dst_zero = ((1<<dststep) & dstmask) == 0
+        if pred_src_zero:
+            pred_src_zero = ((1<<srcstep) & srcmask) == 0
+
+        # store new srcstep / dststep
+        self.new_srcstep, self.new_dststep = srcstep, dststep
+
+    def update_new_svstate_steps(self):
+        srcstep, dststep = self.new_srcstep, self.new_dststep
+
+        # update SVSTATE with new srcstep
+        self.svstate.srcstep[0:7] = srcstep
+        self.svstate.dststep[0:7] = dststep
+        self.namespace['SVSTATE'] = self.svstate.spr
+        yield self.dec2.state.svstate.eq(self.svstate.spr.value)
+        yield Settle() # let decoder update
+        srcstep = self.svstate.srcstep.asint(msb0=True)
+        dststep = self.svstate.dststep.asint(msb0=True)
+        log ("    srcstep", srcstep)
+        log ("    dststep", dststep)
+
+        # check if end reached (we let srcstep overrun, above)
+        # nothing needs doing (TODO zeroing): just do next instruction
+        return srcstep == vl or dststep == vl
+
+    def svstate_post_inc(self):
+        # check if it is the SVSTATE.src/dest step that needs incrementing
+        # this is our Sub-Program-Counter loop from 0 to VL-1
+        # XXX twin predication TODO
+        vl = self.svstate.vl.asint(msb0=True)
+        mvl = self.svstate.maxvl.asint(msb0=True)
+        srcstep = self.svstate.srcstep.asint(msb0=True)
+        dststep = self.svstate.dststep.asint(msb0=True)
+        rm_mode = yield self.dec2.rm_dec.mode
+        reverse_gear = yield self.dec2.rm_dec.reverse_gear
+        sv_ptype = yield self.dec2.dec.op.SV_Ptype
+        out_vec = not (yield self.dec2.no_out_vec)
+        in_vec = not (yield self.dec2.no_in_vec)
+        log ("    svstate.vl", vl)
+        log ("    svstate.mvl", mvl)
+        log ("    svstate.srcstep", srcstep)
+        log ("    svstate.dststep", dststep)
+        log ("    mode", rm_mode)
+        log ("    reverse", reverse_gear)
+        log ("    out_vec", out_vec)
+        log ("    in_vec", in_vec)
+        log ("    sv_ptype", sv_ptype, sv_ptype == SVPtype.P2.value)
+        # check if srcstep needs incrementing by one, stop PC advancing
+        # svp64 loop can end early if the dest is scalar for single-pred
+        # but for 2-pred both src/dest have to be checked.
+        # XXX this might not be true! it may just be LD/ST
+        if sv_ptype == SVPtype.P2.value:
+            svp64_is_vector = (out_vec or in_vec)
+        else:
+            svp64_is_vector = out_vec
+        if svp64_is_vector and srcstep != vl-1 and dststep != vl-1:
+            self.svstate.srcstep += SelectableInt(1, 7)
+            self.svstate.dststep += SelectableInt(1, 7)
+            self.pc.NIA.value = self.pc.CIA.value
+            self.namespace['NIA'] = self.pc.NIA
+            self.namespace['SVSTATE'] = self.svstate.spr
+            log("end of sub-pc call", self.namespace['CIA'],
+                                 self.namespace['NIA'])
+            return False # DO NOT allow PC update whilst Sub-PC loop running
+        return True
 
     def update_pc_next(self):
         # UPDATE program counter
@@ -1538,10 +1588,11 @@ class ISACaller:
         self.svstate.srcstep[0:7] = 0
         self.svstate.dststep[0:7] = 0
         log ("    svstate.srcstep loop end (PC to update)")
-        self.pc.update_nia(self.is_svp64_mode)
-        self.namespace['NIA'] = self.pc.NIA
         self.namespace['SVSTATE'] = self.svstate.spr
 
+    def update_nia(self):
+        self.pc.update_nia(self.is_svp64_mode)
+        self.namespace['NIA'] = self.pc.NIA
 
 def inject():
     """Decorator factory.
