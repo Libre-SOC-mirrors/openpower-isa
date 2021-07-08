@@ -6,7 +6,7 @@ from openpower.decoder.isa.caller import ISACaller
 from openpower.decoder.power_decoder import (create_pdecode)
 from openpower.decoder.power_decoder2 import (PowerDecode2)
 from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State
+from openpower.decoder.isa.caller import ISACaller, SVP64State, CRFields
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
@@ -28,10 +28,10 @@ class DecoderTestCase(FHDLTestCase):
                         ])
         lst = list(lst)
 
-        # SVSTATE (in this case, VL=2)
+        # SVSTATE (in this case, VL=4) which is going to get erased by setvl
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
+        svstate.vl[0:7] = 4 # VL
+        svstate.maxvl[0:7] = 4 # MAXVL
         print ("SVSTATE", bin(svstate.spr.asint()))
 
         with Program(lst, bigendian=False) as program:
@@ -49,6 +49,82 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
             print("      msr", bin(sim.msr.value))
             self.assertEqual(sim.msr, SelectableInt(1<<(63-6), 64))
+
+    def test_svstep_2(self):
+        """tests svstep when it reaches VL
+        """
+        lst = SVP64Asm(["setvl 0, 0, 1, 1, 1, 1",
+                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 0, 1, 0, 0"
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 2 # VL
+        svstate.maxvl[0:7] = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
+            print ("        vl", bin(sim.svstate.vl.asint(True)))
+            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
+            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
+            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
+            self.assertEqual(sim.svstate.vl.asint(True), 2)
+            self.assertEqual(sim.svstate.maxvl.asint(True), 2)
+            self.assertEqual(sim.svstate.srcstep.asint(True), 0)
+            self.assertEqual(sim.svstate.dststep.asint(True), 0)
+            print("      gpr1", sim.gpr(0))
+            self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            print("      msr", bin(sim.msr.value))
+            self.assertEqual(sim.msr, SelectableInt(1<<(63-6), 64))
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 1)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
+    def test_svstep_3(self):
+        """tests svstep when it *doesn't* reach VL
+        """
+        lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
+                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 0, 1, 0, 0"
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 2 # VL
+        svstate.maxvl[0:7] = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
+            print ("        vl", bin(sim.svstate.vl.asint(True)))
+            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
+            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
+            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
+            self.assertEqual(sim.svstate.vl.asint(True), 3)
+            self.assertEqual(sim.svstate.maxvl.asint(True), 3)
+            # svstep called twice, didn't reach VL, so srcstep/dststep both 2
+            self.assertEqual(sim.svstate.srcstep.asint(True), 2)
+            self.assertEqual(sim.svstate.dststep.asint(True), 2)
+            print("      gpr1", sim.gpr(0))
+            self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            print("      msr", bin(sim.msr.value))
+            self.assertEqual(sim.msr, SelectableInt(1<<(63-6), 64))
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
 
     def test_setvl_1(self):
         lst = SVP64Asm(["setvl 1, 0, 9, 0, 1, 1",
