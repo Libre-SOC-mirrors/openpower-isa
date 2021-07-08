@@ -78,8 +78,9 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.dststep.asint(True), 0)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            # when end reached, vertical mode is exited
             print("      msr", bin(sim.msr.value))
-            self.assertEqual(sim.msr, SelectableInt(1<<(63-6), 64))
+            self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 1)

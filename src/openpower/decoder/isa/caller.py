@@ -1442,11 +1442,14 @@ class ISACaller:
             yield from self.svstate_pre_inc()
             pre = yield from self.update_new_svstate_steps()
             if pre:
+                # reset at end of loop including exit Vertical Mode
                 log ("SVSTATE_NEXT: end of loop, reset")
                 self.svp64_reset_loop()
+                self.msr[MSRb.SVF] = 0
                 self.update_nia()
-                results = [SelectableInt(0, 64)]
-                self.handle_comparison(results) # CR0
+                if rc_en:
+                    results = [SelectableInt(0, 64)]
+                    self.handle_comparison(results) # CR0
             else:
                 log ("SVSTATE_NEXT: post-inc")
                 srcstep, dststep = self.new_srcstep, self.new_dststep
@@ -1466,7 +1469,10 @@ class ISACaller:
                     results = [SelectableInt(endtest, 64)]
                     self.handle_comparison(results) # CR0
                 if end_src or end_dst:
+                    # reset at end of loop including exit Vertical Mode
+                    log ("SVSTATE_NEXT: after increments, reset")
                     self.svp64_reset_loop()
+                    self.msr[MSRb.SVF] = 0
 
         elif self.is_svp64_mode:
             yield from self.svstate_post_inc()
