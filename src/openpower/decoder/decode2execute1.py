@@ -10,8 +10,10 @@ from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
 from openpower.consts import TT
 from openpower.exceptions import LDSTException
 from openpower.decoder.power_svp64_rm import sv_input_record_layout
+from openpower.decoder.power_enums import asmlen
 
 from openpower.util import log
+
 
 class Data(Record):
 
@@ -102,7 +104,7 @@ class Decode2ToExecute1Type(RecordObject):
         RecordObject.__init__(self, name=name)
 
         if asmcode:
-            self.asmcode = Signal(8, reset_less=True) # only for simulator
+            self.asmcode = Signal(asmlen, reset_less=True) # only for simulator
         self.write_reg = Data(7, name="rego")
         self.write_ea = Data(7, name="ea") # for LD/ST in update mode
         self.read_reg1 = Data(7, name="reg1")

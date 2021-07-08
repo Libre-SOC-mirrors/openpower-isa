@@ -303,6 +303,9 @@ for i, insn in enumerate(_insns):
     insns[i] = insn
     asmidx[insn] = i
 
+# must be long enough to cover all instructions
+asmlen = len(_insns).bit_length()
+
 # Internal Operation numbering.  Add new opcodes here (FPADD, FPMUL etc.)
 
 

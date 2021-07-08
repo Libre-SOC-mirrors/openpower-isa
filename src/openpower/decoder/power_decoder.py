@@ -96,7 +96,8 @@ from openpower.decoder.power_enums import (Function, Form, MicrOp,
                                      RC, LdstLen, LDSTMode, CryIn,
                                      single_bit_flags, CRInSel,
                                      CROutSel, get_signal_name,
-                                     default_values, insns, asmidx)
+                                     default_values, insns, asmidx,
+                                     asmlen)
 from openpower.decoder.power_fields import DecodeFields
 from openpower.decoder.power_fieldsn import SigDecode, SignalBitRange
 from openpower.decoder.power_svp64 import SVP64RM
@@ -120,7 +121,7 @@ Subdecoder = namedtuple(  # fix autoformatter
 power_op_types = {'function_unit': Function,
                   'internal_op': MicrOp,
                   'form': Form,
-                  'asmcode': 8,
+                  'asmcode': asmlen,
                   'SV_Etype': SVEtype,
                   'SV_Ptype': SVPtype,
                   'in1_sel': In1Sel,
