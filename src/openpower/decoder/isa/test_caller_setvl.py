@@ -47,6 +47,8 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.dststep.asint(True), 2)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            print("      msr", bin(sim.msr.value))
+            self.assertEqual(sim.msr, SelectableInt(1<<(63-6), 64))
 
     def test_setvl_1(self):
         lst = SVP64Asm(["setvl 1, 0, 9, 0, 1, 1",
