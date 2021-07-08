@@ -21,8 +21,9 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def tst_svstep_1(self):
+    def test_svstep_1(self):
         lst = SVP64Asm(["setvl 0, 0, 9, 1, 1, 1",
+                        "setvl 0, 0, 0, 1, 0, 0",
                         "setvl 0, 0, 0, 1, 0, 0"
                         ])
         lst = list(lst)
@@ -42,11 +43,12 @@ class DecoderTestCase(FHDLTestCase):
             print ("    dststep", bin(sim.svstate.dststep.asint(True)))
             self.assertEqual(sim.svstate.vl.asint(True), 10)
             self.assertEqual(sim.svstate.maxvl.asint(True), 10)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 10)
+            self.assertEqual(sim.svstate.srcstep.asint(True), 2)
+            self.assertEqual(sim.svstate.dststep.asint(True), 2)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
 
-    def tst_setvl_1(self):
+    def test_setvl_1(self):
         lst = SVP64Asm(["setvl 1, 0, 9, 0, 1, 1",
                         ])
         lst = list(lst)

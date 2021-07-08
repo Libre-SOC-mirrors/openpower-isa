@@ -1103,6 +1103,10 @@ class ISACaller:
                   (name, asmop, self.pc.CIA.value))
             return
 
+        # this is for setvl "Vertical" mode: if set true,
+        # srcstep/dststep is explicitly advanced
+        self.allow_next_step_inc = False
+
         # nop has to be supported, we could let the actual op calculate
         # but PowerDecoder has a pattern for nop
         if name is 'nop':
@@ -1127,17 +1131,17 @@ class ISACaller:
 
         # see if srcstep/dststep need skipping over masked-out predicate bits
         if self.is_svp64_mode:
-            self.update_new_svstate_steps()
-            pre = yield from self.svstate_pre_inc()
+            yield from self.svstate_pre_inc()
+            pre = yield from self.update_new_svstate_steps()
             if pre:
                 self.svp64_reset_loop()
                 self.update_nia()
                 self.update_pc_next()
                 return
             srcstep, dststep = self.new_srcstep, self.new_dststep
+            pred_dst_zero = self.pred_dst_zero
+            pred_src_zero = self.pred_src_zero
             vl = self.svstate.vl.asint(msb0=True)
-            pred_src_zero = yield self.dec2.rm_dec.pred_sz
-            pred_dst_zero = yield self.dec2.rm_dec.pred_dz
 
         # VL=0 in SVP64 mode means "do nothing: skip instruction"
         if self.is_svp64_mode and vl == 0:
@@ -1430,12 +1434,32 @@ class ISACaller:
 
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
-        if self.is_svp64_mode:
-            post = yield from self.svstate_post_inc()
-            if post:
-                # reset loop to zero
+        pre = False
+        post = False
+        if self.allow_next_step_inc:
+            log("SVSTATE_NEXT: inc requested")
+            yield from self.svstate_pre_inc()
+            pre = yield from self.update_new_svstate_steps()
+            if pre:
+                log ("SVSTATE_NEXT: end of loop, reset (TODO, update CR0)")
                 self.svp64_reset_loop()
                 self.update_nia()
+            else:
+                log ("SVSTATE_NEXT: post-inc")
+                srcstep, dststep = self.new_srcstep, self.new_dststep
+                vl = self.svstate.vl.asint(msb0=True)
+                end_src = srcstep == vl-1
+                end_dst = dststep == vl-1
+                if not end_src:
+                    self.svstate.srcstep += SelectableInt(1, 7)
+                if not end_dst:
+                    self.svstate.dststep += SelectableInt(1, 7)
+                self.namespace['SVSTATE'] = self.svstate.spr
+                if end_src or end_dst:
+                    self.svp64_reset_loop()
+                    # TODO: set CR0 (if Rc=1) based on end
+        elif self.is_svp64_mode:
+            yield from self.svstate_post_inc()
 
         # XXX only in non-SVP64 mode!
         # record state of whether the current operation was an svshape,
@@ -1516,6 +1540,9 @@ class ISACaller:
 
         # store new srcstep / dststep
         self.new_srcstep, self.new_dststep = srcstep, dststep
+        self.pred_dst_zero, self.pred_src_zero = pred_dst_zero, pred_src_zero
+        log ("    new srcstep", srcstep)
+        log ("    new dststep", dststep)
 
     def update_new_svstate_steps(self):
         srcstep, dststep = self.new_srcstep, self.new_dststep
@@ -1528,6 +1555,7 @@ class ISACaller:
         yield Settle() # let decoder update
         srcstep = self.svstate.srcstep.asint(msb0=True)
         dststep = self.svstate.dststep.asint(msb0=True)
+        vl = self.svstate.vl.asint(msb0=True)
         log ("    srcstep", srcstep)
         log ("    dststep", dststep)
 
@@ -1535,7 +1563,13 @@ class ISACaller:
         # nothing needs doing (TODO zeroing): just do next instruction
         return srcstep == vl or dststep == vl
 
-    def svstate_post_inc(self):
+    def svstate_post_inc(self, vf=0):
+        # check if SV "Vertical First" mode is enabled
+        log ("    SV Vertical First", vf, self.msr[MSRb.SVF].value)
+        if not vf and self.msr[MSRb.SVF].value == 1:
+            self.update_nia()
+            return True
+
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
         # XXX twin predication TODO
@@ -1574,6 +1608,11 @@ class ISACaller:
             log("end of sub-pc call", self.namespace['CIA'],
                                  self.namespace['NIA'])
             return False # DO NOT allow PC update whilst Sub-PC loop running
+
+        # reset loop to zero and update NIA
+        self.svp64_reset_loop()
+        self.update_nia()
+
         return True
 
     def update_pc_next(self):
