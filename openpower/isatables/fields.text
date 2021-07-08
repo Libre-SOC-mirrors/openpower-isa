@@ -252,8 +252,8 @@
    | PO  |  RT|   d1|   d0|   XO|d2
 
 # 1.6.28 SVL-FORM
-   |0     |6    |11    |16   |22 |24 |25 |26    |31 |
-   | PO   |  RT |   RA | SVi |// |vs |ms |   XO |Rc |
+   |0     |6    |11    |16   |23 |24 |25 |26    |31 |
+   | PO   |  RT |   RA | SVi |vf |vs |ms |   XO |Rc |
 
 # 1.6.29 SVC-FORM
    |0     |6    |9    |11     |
@@ -758,7 +758,7 @@
         two's complement integer which is concatenated
         on the right with 0b00 and sign-extended to 64 bits.
         Formats: SVDS
-    SVi (16:23)
+    SVi (16:22)
          Simple-V immediate field for setting VL or MVL
          Formats: SVL
     SVRM (21:25)
@@ -855,6 +855,9 @@
     VRT (6:10)
         Field used to specify a VR to be used as a target.
         Formats: DS, VA, VC, VX, X
+    vf (23)
+        Field used in Simple-V to specify whether "Vertical" Mode is set
+        Formats: SVL
     vs (24)
         Field used in Simple-V to specify whether VL is to be set
         Formats: SVL

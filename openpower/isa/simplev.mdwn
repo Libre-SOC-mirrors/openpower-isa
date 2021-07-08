@@ -6,28 +6,32 @@
 
 SVL-Form
 
-* setvl RT, RA, SVi, vs, ms
-* setvl. RT, RA, SVi, vs, ms
+* setvl RT, RA, SVi, vf, vs, ms
+* setvl. RT, RA, SVi, vf, vs, ms
 
 Pseudo-code:
 
-    VLimm <- SVi + 1
-    if vs = 1 then
-        if _RA != 0 then
-            VL <- (RA|0)[57:63]
+    if (vf & (¬vs) & ¬(ms)) = 1 then
+        SVSTATE_NEXT(vf)
+    else
+        VLimm <- SVi + 1
+        if vs = 1 then
+            if _RA != 0 then
+                VL <- (RA|0)[57:63]
+            else
+                VL <- VLimm[0:6]
         else
-            VL <- VLimm[1:7]
-    else
-        VL <- SVSTATE[7:13]
-    if ms = 1 then
-        MVL <- VLimm[1:7]
-    else
-        MVL <- SVSTATE[0:6]
-    if VL > MVL then
-        VL = MVL
-    SVSTATE[0:6] <- MVL
-    SVSTATE[7:13] <- VL
-    RT <- [0]*57 || VL
+            VL <- SVSTATE[7:13]
+        if ms = 1 then
+            MVL <- VLimm[0:6]
+        else
+            MVL <- SVSTATE[0:6]
+        if VL > MVL then
+            VL = MVL
+        SVSTATE[0:6] <- MVL
+        SVSTATE[7:13] <- VL
+        RT <- [0]*57 || VL
+        MSR[6] <- vf
 
 Special Registers Altered:
 

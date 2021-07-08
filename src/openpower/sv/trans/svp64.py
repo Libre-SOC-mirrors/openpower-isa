@@ -186,9 +186,10 @@ class SVP64Asm:
             fields = list(map(int, fields))
             insn |= fields[0] << (31-10) # RT       , bits 6-10
             insn |= fields[1] << (31-15) # RA       , bits 11-15
-            insn |= fields[2] << (31-23) # SVi      , bits 16-23
-            insn |= fields[3] << (31-24) # vs       , bit  24
-            insn |= fields[4] << (31-25) # ms       , bit  25
+            insn |= fields[2] << (31-22) # SVi      , bits 16-22
+            insn |= fields[3] << (31-23) # vf       , bit  23
+            insn |= fields[4] << (31-24) # vs       , bit  24
+            insn |= fields[5] << (31-25) # ms       , bit  25
             insn |= 0b00000   << (31-30) # XO       , bits 26..30
             if opcode == 'setvl.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
@@ -950,7 +951,7 @@ if __name__ == '__main__':
     lst += [
                  'sv.stw 5.v, 4(1.v)',
                  'sv.ld 5.v, 4(1.v)',
-                 'setvl. 2, 3, 4, 1, 1',
+                 'setvl. 2, 3, 4, 0, 1, 1',
           ]
     lst = [
             "sv.stfsu 0.v, 16(4.v)",

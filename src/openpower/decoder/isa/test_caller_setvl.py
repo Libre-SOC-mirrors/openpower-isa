@@ -22,7 +22,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_setvl_1(self):
-        lst = SVP64Asm(["setvl 1, 0, 9, 1, 1",
+        lst = SVP64Asm(["setvl 1, 0, 9, 0, 1, 1",
                         ])
         lst = list(lst)
 
@@ -48,7 +48,7 @@ class DecoderTestCase(FHDLTestCase):
         # sets VL=2 then adds:
         #       1 = 5 + 9   => 0x5555 = 0x4321+0x1234
         #       2 = 6 + 10  => 0x3334 = 0x2223+0x1111
-        isa = SVP64Asm(["setvl 3, 0, 1, 1, 1",
+        isa = SVP64Asm(["setvl 3, 0, 1, 0, 1, 1",
                         'sv.add 1.v, 5.v, 9.v'
                        ])
         lst = list(isa)
