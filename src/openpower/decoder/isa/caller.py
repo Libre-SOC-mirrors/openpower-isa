@@ -1154,6 +1154,7 @@ class ISACaller:
         # using pre-arranged schedule.  all of this is awful but it is a
         # start.  next job will be to put the proper activation in place
         yield self.dec2.remap_active.eq(1 if self.last_op_svshape else 0)
+        yield Settle()
         if self.is_svp64_mode and self.last_op_svshape:
             # get four SVSHAPEs. here we are hard-coding
             # SVSHAPE0 to FRT, SVSHAPE1 to FRA, SVSHAPE2 to FRC and
@@ -1460,13 +1461,13 @@ class ISACaller:
                     # TODO: set CR0 (if Rc=1) based on end
         elif self.is_svp64_mode:
             yield from self.svstate_post_inc()
-
-        # XXX only in non-SVP64 mode!
-        # record state of whether the current operation was an svshape,
-        # to be able to know if it should apply in the next instruction.
-        # also (if going to use this instruction) should disable ability
-        # to interrupt in between. sigh.
-        self.last_op_svshape = asmop == 'svremap'
+        else:
+            # XXX only in non-SVP64 mode!
+            # record state of whether the current operation was an svshape,
+            # to be able to know if it should apply in the next instruction.
+            # also (if going to use this instruction) should disable ability
+            # to interrupt in between. sigh.
+            self.last_op_svshape = asmop == 'svremap'
 
         self.update_pc_next()
 
