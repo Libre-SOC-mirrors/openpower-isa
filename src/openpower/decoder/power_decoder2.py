@@ -1285,7 +1285,10 @@ class PowerDecode2(PowerDecodeSubset):
                     # schedule takes care of this offset.
                     with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
                         with m.If(~self.remap_active):
-                            comb += offs.eq(vl)
+                            with m.If(svdec.isvec):
+                                comb += offs.eq(vl) # VL for Vectors
+                            with m.Else():
+                                comb += offs.eq(1)  # add 1 if scalar
                 # detect if Vectorised: add srcstep/dststep if yes.
                 # to_reg is 7-bits, outs get dststep added, ins get srcstep
                 with m.If(svdec.isvec):
@@ -1327,7 +1330,10 @@ class PowerDecode2(PowerDecodeSubset):
             with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
                 comb += offs.eq(0)
                 with m.If(~self.remap_active):
-                    comb += offs.eq(vl)
+                    with m.If(o2_svdec.isvec):
+                        comb += offs.eq(vl) # VL for Vectors
+                    with m.Else():
+                        comb += offs.eq(1)  # add 1 if scalar
                 svdec = o_svdec # yes take source as o_svdec...
                 with m.If(svdec.isvec):
                     step = Signal(7, name="step_%s" % rname.lower())
