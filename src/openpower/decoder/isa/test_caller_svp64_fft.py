@@ -147,17 +147,16 @@ class FFTTestCase(FHDLTestCase):
                 self.assertTrue(err < 1e-7)
 
     def test_sv_remap_fpmadds_fft_svstep(self):
-        """>>> lst = ["svremap 8, 1, 1, 1",
-                      "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
-                     ]
+        """>>> lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
+                            "svremap 8, 1, 1, 1",
+                            "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
+                            "setvl. 0, 0, 0, 1, 0, 0",
+                            "bc 4, 2, -16"
+                            ])
             runs a full in-place O(N log2 N) butterfly schedule for
-            Discrete Fourier Transform.
-
-            this is the twin "butterfly" mul-add-sub from Cooley-Tukey
-            https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
-
-            there is the *option* to target a different location (non-in-place)
-            just in case.
+            Discrete Fourier Transform.  this version however uses
+            SVP64 "Vertical-First" Mode and so needs an explicit
+            branch, testing CR0.
 
             SVP64 "REMAP" in Butterfly Mode is applied to a twin +/- FMAC
             (3 inputs, 2 outputs)
