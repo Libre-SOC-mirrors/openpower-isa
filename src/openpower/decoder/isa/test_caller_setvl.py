@@ -18,6 +18,8 @@ from copy import deepcopy
 class DecoderTestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
+        print ("GPR")
+        sim.gpr.dump()
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
@@ -175,6 +177,153 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
+            self._check_regs(sim, expected_regs)
+
+    def test_svstep_add_1(self):
+        """tests svstep with an add, when it reaches VL
+        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+                        'sv.add 1.v, 5.v, 9.v',
+                        "setvl. 0, 0, 0, 1, 0, 0",
+                        'sv.add 1.v, 5.v, 9.v',
+                        "setvl. 0, 0, 0, 1, 0, 0"
+                        ])
+        sequence is as follows:
+        * setvl sets VL=2 but also "Vertical First" mode.
+          this sets MSR[SVF].
+        * first add, which has srcstep/dststep = 0, does add 1,5,9
+        * svstep EXPLICITLY walks srcstep/dststep to next element
+        * second add, which now has srcstep/dststep = 1, does add 2,6,10
+        * svstep EXPLICITLY walks srcstep/dststep to next element,
+          which now equals VL.  srcstep and dststep are both set to
+          zero, and MSR[SVF] is cleared.
+        """
+        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+                        'sv.add 1.v, 5.v, 9.v',
+                        "setvl. 0, 0, 0, 1, 0, 0",
+                        'sv.add 1.v, 5.v, 9.v',
+                        "setvl. 0, 0, 0, 1, 0, 0"
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 2 # VL
+        svstate.maxvl[0:7] = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[9] = 0x1234
+        initial_regs[10] = 0x1111
+        initial_regs[5] = 0x4321
+        initial_regs[6] = 0x2223
+
+        # copy before running
+        expected_regs = deepcopy(initial_regs)
+        expected_regs[1] = 0x5555
+        expected_regs[2] = 0x3334
+        expected_regs[3] = 2       # setvl places copy of VL here
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
+            print ("        vl", bin(sim.svstate.vl.asint(True)))
+            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
+            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
+            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
+            self.assertEqual(sim.svstate.vl.asint(True), 2)
+            self.assertEqual(sim.svstate.maxvl.asint(True), 2)
+            self.assertEqual(sim.svstate.srcstep.asint(True), 0)
+            self.assertEqual(sim.svstate.dststep.asint(True), 0)
+            # when end reached, vertical mode is exited
+            print("      msr", bin(sim.msr.value))
+            self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 1)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
+            # check registers as expected
+            self._check_regs(sim, expected_regs)
+
+    def test_svstep_add_2(self):
+        """tests svstep with a branch.
+        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+                        'sv.add 1.v, 5.v, 9.v',
+                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "bc 4, 2, -0xc"
+                        ])
+        sequence is as follows:
+        * setvl sets VL=2 but also "Vertical First" mode.
+          this sets MSR[SVF].
+        * first time add, which has srcstep/dststep = 0, does add 1,5,9
+        * svstep EXPLICITLY walks srcstep/dststep to next element,
+          not yet met VL, so CR0.EQ is set to zero
+        * branch conditional checks bne on CR0, jumps back TWELVE bytes
+          because whilst branch is 32-bit the sv.add is 64-bit
+        * second time add, which now has srcstep/dststep = 1, does add 2,6,10
+        * svstep walks to next element, meets VL, so:
+          - srcstep and dststep set to zero
+          - CR0.EQ set to one
+          - MSR[SVF] is cleared
+        * branch conditional detects CR0.EQ=1 and FAILs the condition,
+          therefore loop ends.
+
+        we therefore have an explicit "Vertical-First" system which can
+        have **MULTIPLE* instructions inside a loop, running each element 0
+        first, then looping back and running all element 1, then all element 2
+        etc.
+        """
+        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+                        'sv.add 1.v, 5.v, 9.v',
+                        "setvl. 0, 0, 0, 1, 0, 0", # this is 64-bit!
+                        "bc 4, 2, -0xc" # branch to add (64-bit op so -0xc!)
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 2 # VL
+        svstate.maxvl[0:7] = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[9] = 0x1234
+        initial_regs[10] = 0x1111
+        initial_regs[5] = 0x4321
+        initial_regs[6] = 0x2223
+
+        # copy before running
+        expected_regs = deepcopy(initial_regs)
+        expected_regs[1] = 0x5555
+        expected_regs[2] = 0x3334
+        expected_regs[3] = 2       # setvl places copy of VL here
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
+            print ("        vl", bin(sim.svstate.vl.asint(True)))
+            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
+            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
+            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
+            self.assertEqual(sim.svstate.vl.asint(True), 2)
+            self.assertEqual(sim.svstate.maxvl.asint(True), 2)
+            self.assertEqual(sim.svstate.srcstep.asint(True), 0)
+            self.assertEqual(sim.svstate.dststep.asint(True), 0)
+            # when end reached, vertical mode is exited
+            print("      msr", bin(sim.msr.value))
+            self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 1)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
+            # check registers as expected
             self._check_regs(sim, expected_regs)
 
     def run_tst_program(self, prog, initial_regs=None,
