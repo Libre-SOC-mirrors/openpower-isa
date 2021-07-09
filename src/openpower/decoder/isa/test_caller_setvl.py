@@ -24,9 +24,9 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_svstep_1(self):
-        lst = SVP64Asm(["setvl 0, 0, 9, 1, 1, 1",
-                        "setvl 0, 0, 0, 1, 0, 0",
-                        "setvl 0, 0, 0, 1, 0, 0"
+        lst = SVP64Asm(["setvl 0, 0, 9, 1, 1, 1", # actual setvl (VF mode)
+                        "setvl 0, 0, 0, 1, 0, 0", # svstep
+                        "setvl 0, 0, 0, 1, 0, 0" # svstep
                         ])
         lst = list(lst)
 
@@ -55,9 +55,9 @@ class DecoderTestCase(FHDLTestCase):
     def test_svstep_2(self):
         """tests svstep when it reaches VL
         """
-        lst = SVP64Asm(["setvl 0, 0, 1, 1, 1, 1",
-                        "setvl. 0, 0, 0, 1, 0, 0",
-                        "setvl. 0, 0, 0, 1, 0, 0"
+        lst = SVP64Asm(["setvl 0, 0, 1, 1, 1, 1",  # actual setvl (VF mode)
+                        "setvl. 0, 0, 0, 1, 0, 0", # svstep (Rc=1)
+                        "setvl. 0, 0, 0, 1, 0, 0" # svstep (Rc=1)
                         ])
         lst = list(lst)
 
@@ -93,9 +93,9 @@ class DecoderTestCase(FHDLTestCase):
     def test_svstep_3(self):
         """tests svstep when it *doesn't* reach VL
         """
-        lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
-                        "setvl. 0, 0, 0, 1, 0, 0",
-                        "setvl. 0, 0, 0, 1, 0, 0"
+        lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",  # actual setvl (VF mode)
+                        "setvl. 0, 0, 0, 1, 0, 0", # svstep (Rc=1)
+                        "setvl. 0, 0, 0, 1, 0, 0" # svstep (Rc=1)
                         ])
         lst = list(lst)
 
@@ -130,11 +130,13 @@ class DecoderTestCase(FHDLTestCase):
 
 
     def test_setvl_1(self):
+        """straight setvl, testing if VL and MVL are over-ridden
+        """
         lst = SVP64Asm(["setvl 1, 0, 9, 0, 1, 1",
                         ])
         lst = list(lst)
 
-        # SVSTATE (in this case, VL=2)
+        # SVSTATE (in this case, VL=2), want to see if these get changed
         svstate = SVP64State()
         svstate.vl[0:7] = 2 # VL
         svstate.maxvl[0:7] = 2 # MAXVL
@@ -151,11 +153,11 @@ class DecoderTestCase(FHDLTestCase):
             print("      gpr1", sim.gpr(1))
             self.assertEqual(sim.gpr(1), SelectableInt(10, 64))
 
-
     def test_sv_add(self):
-        # sets VL=2 then adds:
-        #       1 = 5 + 9   => 0x5555 = 0x4321+0x1234
-        #       2 = 6 + 10  => 0x3334 = 0x2223+0x1111
+        """sets VL=2 then adds:
+           * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
+           * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111
+        """
         isa = SVP64Asm(["setvl 3, 0, 1, 0, 1, 1",
                         'sv.add 1.v, 5.v, 9.v'
                        ])
@@ -199,9 +201,9 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 0, 1, 0, 0",  # svstep
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0"
+                        "setvl. 0, 0, 0, 1, 0, 0"  # svstep
                         ])
         lst = list(lst)
 
@@ -278,7 +280,7 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0", # this is 64-bit!
+                        "setvl. 0, 0, 0, 1, 0, 0", # svstep - this is 64-bit!
                         "bc 4, 2, -0xc" # branch to add (64-bit op so -0xc!)
                         ])
         lst = list(lst)
