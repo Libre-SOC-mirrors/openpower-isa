@@ -117,7 +117,7 @@ class FFTTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test_sv_remap_fpmadds_fft(self):
+    def tst_sv_remap_fpmadds_fft(self):
         """>>> lst = ["svremap 8, 1, 1, 1",
                       "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                      ]
@@ -196,7 +196,7 @@ class FFTTestCase(FHDLTestCase):
                 err = abs(actual - expected) / expected
                 self.assertTrue(err < 1e-7)
 
-    def test_sv_remap_fpmadds_fft_svstep(self):
+    def tst_sv_remap_fpmadds_fft_svstep(self):
         """>>> lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
                             "svremap 8, 1, 1, 1",
                             "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
@@ -277,7 +277,7 @@ class FFTTestCase(FHDLTestCase):
                 err = abs(actual - expected) / expected
                 self.assertTrue(err < 1e-7)
 
-    def test_sv_fpmadds_fft(self):
+    def tst_sv_fpmadds_fft(self):
         """>>> lst = ["sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                         ]
             four in-place vector mul-adds, four in-place vector mul-subs
@@ -331,7 +331,7 @@ class FFTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+2), t)
                 self.assertEqual(sim.fpr(i+6), u)
 
-    def test_sv_ffadds_fft(self):
+    def tst_sv_ffadds_fft(self):
         """>>> lst = ["sv.ffadds 2.v, 2.v, 2.v"
                         ]
             four in-place vector adds, four in-place vector subs
@@ -382,7 +382,7 @@ class FFTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+2), t)
                 self.assertEqual(sim.fpr(i+6), u)
 
-    def tst_sv_remap_fpmadds_fft_svstep_complex(self):
+    def test_sv_remap_fpmadds_fft_svstep_complex(self):
         """
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform.  this version however uses

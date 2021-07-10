@@ -1287,8 +1287,6 @@ class PowerDecode2(PowerDecodeSubset):
                         with m.If(~self.remap_active):
                             with m.If(svdec.isvec):
                                 comb += offs.eq(vl) # VL for Vectors
-                            with m.Else():
-                                comb += offs.eq(1)  # add 1 if scalar
                 # detect if Vectorised: add srcstep/dststep if yes.
                 # to_reg is 7-bits, outs get dststep added, ins get srcstep
                 with m.If(svdec.isvec):
