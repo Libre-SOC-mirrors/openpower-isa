@@ -489,13 +489,13 @@ class DecodeOut2(Elaboratable):
                 comb += self.fast_out3.data.eq(FastRegsEnum.SVSRR0) # SVSRR0
                 comb += self.fast_out3.ok.eq(1)
 
-            # SVP64 FFT mode, FP mul-add: 2nd output reg (FRS) same as FRT
-            # will be offset by VL in hardware
-            with m.Case(MicrOp.OP_FP_MADD):
-                with m.If(self.svp64_fft_mode):
-                    comb += self.reg_out.data.eq(self.dec.FRT)
-                    comb += self.reg_out.ok.eq(1)
-                    comb += self.fp_madd_en.eq(1)
+        # SVP64 FFT mode, FP mul-add: 2nd output reg (FRS) same as FRT
+        # will be offset by VL in hardware
+        #with m.Case(MicrOp.OP_FP_MADD):
+        with m.If(self.svp64_fft_mode):
+            comb += self.reg_out.data.eq(self.dec.FRT)
+            comb += self.reg_out.ok.eq(1)
+            comb += self.fp_madd_en.eq(1)
 
         return m
 
@@ -1025,9 +1025,9 @@ class PowerDecodeSubset(Elaboratable):
                 bitrev = rm_dec.ldstmode == SVP64LDSTmode.BITREVERSE
                 comb += self.use_svp64_ldst_dec.eq(bitrev)
             # detect if SVP64 FFT mode enabled (really bad hack)
-            xo = Signal(2) # 2 bits from Major 59 XO field == 0b00XXX
-            comb += xo.eq(self.dec.opcode_in[4:6])
-            comb += self.use_svp64_fft.eq((major == 59) & (xo == 0b00))
+            xo = Signal(1) # 1 bit from Major 59 XO field == 0b0XXXX
+            comb += xo.eq(self.dec.opcode_in[5])
+            comb += self.use_svp64_fft.eq((major == 59) & (xo == 0b0))
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
