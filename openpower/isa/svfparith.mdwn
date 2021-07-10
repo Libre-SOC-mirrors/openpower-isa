@@ -185,7 +185,7 @@ A-Form
 
 Pseudo-code:
 
-    FRT <- FPMULADD32(FRA, FRC, FRA, 1, -1)
+    FRT <- FPMULADD32(FRA, FRC, FRB, 1, -1)
     FRS <- FPMULADD32(FRA, FRC, FRB, -1, -1)
 
 Special Registers Altered:
@@ -204,7 +204,7 @@ A-Form
 
 Pseudo-code:
 
-    FRT <- FPMULADD32(FRA, FRC, FRA, -1, -1)
+    FRT <- FPMULADD32(FRA, FRC, FRB, -1, -1)
     FRS <- FPMULADD32(FRA, FRC, FRB, 1, -1)
 
 Special Registers Altered:
@@ -223,7 +223,7 @@ A-Form
 
 Pseudo-code:
 
-    FRT <- FPMULADD32(FRA, FRC, FRA, -1, 1)
+    FRT <- FPMULADD32(FRA, FRC, FRB, -1, 1)
     FRS <- FPMULADD32(FRA, FRC, FRB, 1, 1)
 
 Special Registers Altered:
