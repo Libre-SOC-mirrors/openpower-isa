@@ -813,7 +813,17 @@ class SVP64Asm:
             opcode |= int(v30b_newfields[1]) << (32-16) # FRA
             opcode |= int(v30b_newfields[2]) << (32-21) # FRB
             opcode |= int(v30b_newfields[3]) << (32-26) # FRC
-            opcode |= 5 << (32-31)   # bits 26-30
+            opcode |= 0b00101 << (32-31)   # bits 26-30
+            if rc:
+                opcode |= 1  # Rc, bit 31.
+            yield ".long 0x%x" % opcode
+        # argh, sv.ffadds etc. need to be done manually
+        if v30b_op == 'ffadds':
+            opcode = 59 << (32-6)    # bits 0..6 (MSB0)
+            opcode |= int(v30b_newfields[0]) << (32-11) # FRT
+            opcode |= int(v30b_newfields[1]) << (32-16) # FRA
+            opcode |= int(v30b_newfields[2]) << (32-21) # FRB
+            opcode |= 0b01101 << (32-31)   # bits 26-30
             if rc:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode
@@ -973,6 +983,7 @@ if __name__ == '__main__':
     lst = [
              'sv.fmadds 0.v, 8.v, 16.v, 4.v',
              'svremap 8, 1, 1, 1',
+             'sv.fadds 0.v, 8.v, 4.v',
             ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

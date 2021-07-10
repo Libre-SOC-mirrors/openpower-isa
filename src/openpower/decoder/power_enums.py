@@ -242,6 +242,7 @@ _insns = [
     "fadd", "fadds", "fsub", "fsubs",                   # FP add / sub
     "fcfids", "fcfidus", "fsqrts", "fres", "frsqrtes",  # FP stuff
     "fmsubs", "fmadds", "fnmsubs", "fnmadds",           # FP 3-arg
+    "ffadds", "ffsubs", "ffmuls", "ffdivs",             # FFT FP 2-arg
     "ffmsubs", "ffmadds", "ffnmsubs", "ffnmadds",       # FFT FP 3-arg
     "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
