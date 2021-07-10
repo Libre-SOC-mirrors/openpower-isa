@@ -529,7 +529,8 @@ def get_pdecode_idx_out2(dec2, name):
     if name == 'FRS':
         int_op = yield dec2.dec.op.internal_op
         fft_en = yield dec2.use_svp64_fft
-        if int_op == MicrOp.OP_FP_MADD.value and fft_en:
+        #if int_op == MicrOp.OP_FP_MADD.value and fft_en:
+        if fft_en:
             log ("get_pdecode_idx_out2", out_sel, OutSel.FRS.value,
                                            out, o_isvec)
             return out, o_isvec
@@ -1095,6 +1096,11 @@ class ISACaller:
         if asmop == 'ffmadds':
             illegal = False
             name = 'ffmadds'
+
+        # and ffadds not being supported by binutils (.long)
+        if asmop == 'ffadds':
+            illegal = False
+            name = 'ffadds'
 
         if illegal:
             print("illegal", name, asmop)
