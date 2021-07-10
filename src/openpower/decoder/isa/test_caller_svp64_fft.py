@@ -61,6 +61,56 @@ def transform_radix2(vec, exptable):
     return vec
 
 
+def transform_radix2_complex(vec_r, vec_i, cos_r, sin_i):
+    """
+    # FFT and convolution test (Python), based on Project Nayuki
+    #
+    # Copyright (c) 2020 Project Nayuki. (MIT License)
+    # https://www.nayuki.io/page/free-small-fft-in-multiple-languages
+
+    """
+    # bits of the integer 'val'.
+    def reverse_bits(val, width):
+        result = 0
+        for _ in range(width):
+            result = (result << 1) | (val & 1)
+            val >>= 1
+        return result
+
+    # Initialization
+    n = len(vec_r)
+    levels = n.bit_length() - 1
+
+    # Copy with bit-reversed permutation
+    #vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+
+    size = 2
+    while size <= n:
+        halfsize = size // 2
+        tablestep = n // size
+        for i in range(0, n, size):
+            k = 0
+            for j in range(i, i + halfsize):
+                # exact same actual computation, just embedded in
+                # triple-nested for-loops
+                jl, jh = j, j+halfsize
+
+                tpre =  vec_r[jh] * cos_r[k] + vec_i[jh] * sin_i[k]
+                tpim = -vec_r[jh] * sin_i[k] + vec_i[jh] * cos_r[k]
+                vec_r[jh] = vec_r[jl] - tpre
+                vec_i[jh] = vec_i[jl] - tpim
+                vec_r[jl] += tpre
+                vec_i[jl] += tpim
+
+                print ("xform jl jh k", jl, jh, k,
+                        "vr h l", vec_r[jh], vec_r[jl],
+                        "vi h l", vec_i[jh], vec_i[jl])
+                k += tablestep
+        size *= 2
+
+    return vec_r, vec_i
+
+
 class FFTTestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
@@ -280,6 +330,134 @@ class FFTTestCase(FHDLTestCase):
             for i, (t, u) in enumerate(res):
                 self.assertEqual(sim.fpr(i+2), t)
                 self.assertEqual(sim.fpr(i+6), u)
+
+    def tst_sv_remap_fpmadds_fft_svstep_complex(self):
+        """
+            runs a full in-place O(N log2 N) butterfly schedule for
+            Discrete Fourier Transform.  this version however uses
+            SVP64 "Vertical-First" Mode and so needs an explicit
+            branch, testing CR0.
+
+            SVP64 "REMAP" in Butterfly Mode is applied to a twin +/- FMAC
+            (3 inputs, 2 outputs)
+
+            complex calculation:
+
+                tpre =  vec_r[jh] * cos_r[k] + vec_i[jh] * sin_i[k]
+                vec_r[jh] = vec_r[jl] - tpre
+                vec_r[jl] += tpre
+
+                tpim = -vec_r[jh] * sin_i[k] + vec_i[jh] * cos_r[k]
+                vec_i[jh] = vec_i[jl] - tpim
+                vec_i[jl] += tpim
+
+                temp1 = vec[jh] * exptable[k]
+                temp2 = vec[jl]
+                vec[jh] = temp2 - temp1
+                vec[jl] = temp2 + temp1
+        """
+        lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
+                        # tpre
+                        "svremap 8, 1, 1, 1",
+                        "sv.fmuls 32, 0.v, 16.v",
+                        "svremap 8, 1, 1, 1",
+                        "sv.fmuls 33, 8.v, 20.v",
+                        "fadds 32, 32, 33",
+                        # tpim
+                        "svremap 8, 1, 1, 1",
+                        "sv.fmuls 34, 0.v, 20.v",
+                        "svremap 8, 1, 1, 1",
+                        "sv.fmuls 35, 8.v, 16.v",
+                        "fsubs 34, 34, 35",
+                        # vec_r jh/jl
+                        "svremap 8, 1, 1, 1",
+                        "sv.ffadds 0.v, 0.v, 32",
+                        # vec_i jh/jl
+                        "svremap 8, 1, 1, 1",
+                        "sv.ffadds 8.v, 8.v, 34",
+
+                        # svstep loop
+                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "bc 4, 2, -16"
+                        ])
+        lst = list(lst)
+
+        # array and coefficients to test
+        ar = [7.0, -9.8, 3.0, -32.3,
+              -2.0, 5.0, -9.8, 31.3] # array 0..7 real
+        ai = [1.0, -1.8, 3.0, 19.3,
+              4.0, -2.0, -0.8, 1.3] # array 0..7 imaginary
+        coer = [-0.25, 0.5, 3.1, 6.2] # coefficients real
+        coei = [0.21, -0.1, 1.1, -4.0] # coefficients imaginary
+
+        # store in regfile
+        fprs = [0] * 64
+        for i, a in enumerate(ar):
+            fprs[i+0] = fp64toselectable(a)
+        for i, a in enumerate(ai):
+            fprs[i+8] = fp64toselectable(a)
+        for i, c in enumerate(coer):
+            fprs[i+16] = fp64toselectable(c)
+        for i, c in enumerate(coei):
+            fprs[i+20] = fp64toselectable(c)
+
+        # set total. err don't know how to calculate how many there are...
+        # do it manually for now
+        VL = 0
+        size = 2
+        n = len(ar)
+        while size <= n:
+            halfsize = size // 2
+            tablestep = n // size
+            for i in range(0, n, size):
+                for j in range(i, i + halfsize):
+                    VL += 1
+            size *= 2
+
+        # SVSTATE (calculated VL)
+        svstate = SVP64State()
+        svstate.vl[0:7] = VL # VL
+        svstate.maxvl[0:7] = VL # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_fprs=fprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            # work out the results with the twin mul/add-sub, explicit
+            # complex numbers
+            res_r, res_i = transform_radix2_complex(ar, ai, coer, coei)
+
+            for i, expected_r, expected_i in enumerate(zip(res_r, res_i)):
+                print ("i", i, float(sim.fpr(i)),
+                       "expected_r", expected_r,
+                       "expected_i", expected_i)
+            for i, expected_r, expected_i in enumerate(zip(res_r, res_i)):
+                # convert to Power single
+                expected_r = DOUBLE2SINGLE(fp64toselectable(expected_r ))
+                expected_r = float(expected_r)
+                actual_r = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs(actual_r - expected_r ) / expected_r
+                self.assertTrue(err < 1e-7)
+                # convert to Power single
+                expected_i = DOUBLE2SINGLE(fp64toselectable(expected_i ))
+                expected_i = float(expected_i)
+                actual_i = float(sim.fpr(i+8))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs(actual_i - expected_i ) / expected_i
+                self.assertTrue(err < 1e-7)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
