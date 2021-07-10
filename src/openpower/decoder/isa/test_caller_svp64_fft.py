@@ -331,6 +331,57 @@ class FFTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+2), t)
                 self.assertEqual(sim.fpr(i+6), u)
 
+    def test_sv_ffadds_fft(self):
+        """>>> lst = ["sv.ffadds 2.v, 2.v, 2.v"
+                        ]
+            four in-place vector adds, four in-place vector subs
+
+            SVP64 "FFT" mode will *automatically* offset FRB and an implicit
+            FRS to perform the two multiplies.  one add, one subtract.
+
+            sv.ffadds FRT, FRA, FRB  actually does:
+                fadds FRT   , FRA, FRA
+                fsubs FRT+vl, FRA, FRB+vl
+        """
+        lst = SVP64Asm(["sv.ffadds 2.v, 2.v, 2.v"
+                        ])
+        lst = list(lst)
+
+        fprs = [0] * 32
+        av = [7.0, -9.8, 2.0, -32.3] # first half of array 0..3
+        bv = [-2.0, 2.0, -9.8, 32.3] # second half of array 4..7
+        res = []
+        # work out the results with the twin add-sub
+        for i, (a, b) in enumerate(zip(av, bv)):
+            fprs[i+2] = fp64toselectable(a)
+            fprs[i+6] = fp64toselectable(b)
+            t = b + a
+            u = b - a
+            t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            res.append((t, u))
+            print ("FFT", i, "in", a, b, "res", t, u)
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl[0:7] = 4 # VL
+        svstate.maxvl[0:7] = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_fprs=fprs)
+            # confirm that the results are as expected
+            for i, (t, u) in enumerate(res):
+                a = float(sim.fpr(i+2))
+                b = float(sim.fpr(i+6))
+                t = float(t)
+                u = float(u)
+                print ("FFT", i, "in", a, b, "res", t, u)
+            for i, (t, u) in enumerate(res):
+                self.assertEqual(sim.fpr(i+2), t)
+                self.assertEqual(sim.fpr(i+6), u)
+
     def tst_sv_remap_fpmadds_fft_svstep_complex(self):
         """
             runs a full in-place O(N log2 N) butterfly schedule for

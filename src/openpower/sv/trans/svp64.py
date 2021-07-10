@@ -983,7 +983,7 @@ if __name__ == '__main__':
     lst = [
              'sv.fmadds 0.v, 8.v, 16.v, 4.v',
              'svremap 8, 1, 1, 1',
-             'sv.fadds 0.v, 8.v, 4.v',
+             'sv.ffadds 0.v, 8.v, 4.v',
             ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

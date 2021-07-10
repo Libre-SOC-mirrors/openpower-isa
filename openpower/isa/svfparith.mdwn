@@ -15,7 +15,7 @@ A-Form
 Pseudo-code:
 
     FRT <- FPADD32(FRA, FRB)
-    FRS <- FPSUB32(FRA, FRB)
+    FRS <- FPSUB32(FRB, FRA)
 
 Special Registers Altered:
 
@@ -34,7 +34,7 @@ A-Form
 Pseudo-code:
 
     FRT <- FPADD64(FRA, FRB)
-    FRS <- FPSUB64(FRA, FRB)
+    FRS <- FPSUB64(FRB, FRA)
 
 Special Registers Altered:
 
@@ -52,7 +52,7 @@ A-Form
 
 Pseudo-code:
 
-    FRT <- FPSUB32(FRA, FRB)
+    FRT <- FPSUB32(FRB, FRA)
     FRS <- FPADD32(FRA, FRB)
 
 Special Registers Altered:
@@ -71,7 +71,7 @@ A-Form
 
 Pseudo-code:
 
-    FRT <- FPSUB64(FRA, FRB)
+    FRT <- FPSUB64(FRB, FRA)
     FRS <- FPADD64(FRA, FRB)
 
 Special Registers Altered:
