@@ -818,7 +818,7 @@ class SVP64Asm:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode
         # argh, sv.ffadds etc. need to be done manually
-        if v30b_op == 'ffadds':
+        elif v30b_op == 'ffadds':
             opcode = 59 << (32-6)    # bits 0..6 (MSB0)
             opcode |= int(v30b_newfields[0]) << (32-11) # FRT
             opcode |= int(v30b_newfields[1]) << (32-16) # FRA
