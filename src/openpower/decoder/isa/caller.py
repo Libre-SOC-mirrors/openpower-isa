@@ -74,6 +74,7 @@ REG_SORT_ORDER = {
     "TAR": 0,
     "MSR": 0,
     "SVSTATE": 0,
+    "SVREMAP": 0,
     "SVSHAPE0": 0,
     "SVSHAPE1": 0,
     "SVSHAPE2": 0,
