@@ -197,8 +197,8 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
-        # and svremap.  note that the dimension fields one subtracted from each
-        if opcode == 'svremap':
+        # and svshape.  note that the dimension fields one subtracted from each
+        if opcode == 'svshape':
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
             insn |= (fields[0]-1) << (31-10) # SVxd       , bits 6-10
@@ -207,7 +207,7 @@ class SVP64Asm:
             insn |= (fields[3])   << (31-25) # SVRM       , bits 21-25
             insn |= 0b00001   << (31-30) # XO       , bits 26..30
             #insn &= ((1<<32)-1)
-            log ("svremap", bin(insn))
+            log ("svshape", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -916,7 +916,7 @@ def asm_process():
         ls = line.split("#")
         # identify macros
         op = ls[0].strip()
-        if op.startswith("setvl") or op.startswith("svremap"):
+        if op.startswith("setvl") or op.startswith("svshape"):
             ws, line = get_ws(ls[0])
             lst = list(isa.translate_one(ls[0].strip(), macros))
             lst = '; '.join(lst)
@@ -982,7 +982,7 @@ if __name__ == '__main__':
     ]
     lst = [
              'sv.fmadds 0.v, 8.v, 16.v, 4.v',
-             'svremap 8, 1, 1, 1',
+             'svshape 8, 1, 1, 1',
              'sv.ffadds 0.v, 8.v, 4.v',
             ]
     isa = SVP64Asm(lst, macros=macros)

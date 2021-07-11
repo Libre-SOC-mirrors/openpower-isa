@@ -95,6 +95,10 @@ def transform_radix2_complex(vec_r, vec_i, cos_r, sin_i):
                 # triple-nested for-loops
                 jl, jh = j, j+halfsize
 
+                print ("xform jl jh k", jl, jh, k,
+                        "vr h l", vec_r[jh], vec_r[jl],
+                        "vi h l", vec_i[jh], vec_i[jl])
+                print ("    cr k", cos_r[k], "si k", sin_i[k])
                 tpre =  vec_r[jh] * cos_r[k] + vec_i[jh] * sin_i[k]
                 tpim = -vec_r[jh] * sin_i[k] + vec_i[jh] * cos_r[k]
                 vec_r[jh] = vec_r[jl] - tpre
@@ -102,9 +106,9 @@ def transform_radix2_complex(vec_r, vec_i, cos_r, sin_i):
                 vec_r[jl] += tpre
                 vec_i[jl] += tpim
 
-                print ("xform jl jh k", jl, jh, k,
-                        "vr h l", vec_r[jh], vec_r[jl],
-                        "vi h l", vec_i[jh], vec_i[jl])
+                print ("    xform jl jh k", jl, jh, k,
+                        "\n       vr h l", vec_r[jh], vec_r[jl],
+                        "\n       vi h l", vec_i[jh], vec_i[jl])
                 k += tablestep
         size *= 2
 
@@ -118,7 +122,7 @@ class FFTTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_remap_fpmadds_fft(self):
-        """>>> lst = ["svremap 8, 1, 1, 1",
+        """>>> lst = ["svshape 8, 1, 1, 1",
                       "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                      ]
             runs a full in-place O(N log2 N) butterfly schedule for
@@ -133,7 +137,7 @@ class FFTTestCase(FHDLTestCase):
             SVP64 "REMAP" in Butterfly Mode is applied to a twin +/- FMAC
             (3 inputs, 2 outputs)
         """
-        lst = SVP64Asm( ["svremap 8, 1, 1, 1",
+        lst = SVP64Asm( ["svshape 8, 1, 1, 1",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
                         ])
         lst = list(lst)
@@ -198,7 +202,7 @@ class FFTTestCase(FHDLTestCase):
 
     def test_sv_remap_fpmadds_fft_svstep(self):
         """>>> lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
-                            "svremap 8, 1, 1, 1",
+                            "svshape 8, 1, 1, 1",
                             "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                             "setvl. 0, 0, 0, 1, 0, 0",
                             "bc 4, 2, -16"
@@ -212,7 +216,7 @@ class FFTTestCase(FHDLTestCase):
             (3 inputs, 2 outputs)
         """
         lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
-                        "svremap 8, 1, 1, 1",
+                        "svshape 8, 1, 1, 1",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                         "setvl. 0, 0, 0, 1, 0, 0",
                         "bc 4, 2, -16"
@@ -409,23 +413,23 @@ class FFTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
                         # tpre
-                        "svremap 8, 1, 1, 1",
-                        "sv.fmuls 32, 0.v, 16.v",
-                        "svremap 8, 1, 1, 1",
-                        "sv.fmuls 33, 8.v, 20.v",
-                        "fadds 32, 32, 33",
+                        "svshape 8, 1, 1, 1",
+                        "sv.fmuls 24, 0.v, 16.v",
+                        "svshape 8, 1, 1, 1",
+                        "sv.fmuls 25, 8.v, 20.v",
+                        "fadds 24, 24, 25",
                         # tpim
-                        "svremap 8, 1, 1, 1",
-                        "sv.fmuls 34, 0.v, 20.v",
-                        "svremap 8, 1, 1, 1",
-                        "sv.fmuls 35, 8.v, 16.v",
-                        "fsubs 34, 34, 35",
+                        "svshape 8, 1, 1, 1",
+                        "sv.fmuls 26, 0.v, 20.v",
+                        "svshape 8, 1, 1, 1",
+                        "sv.fmuls 26, 8.v, 16.v",
+                        "fsubs 26, 26, 27",
                         # vec_r jh/jl
-                        "svremap 8, 1, 1, 1",
-                        "sv.ffadds 0.v, 0.v, 32",
+                        "svshape 8, 1, 1, 1",
+                        "sv.ffadds 0.v, 24, 25",
                         # vec_i jh/jl
-                        "svremap 8, 1, 1, 1",
-                        "sv.ffadds 8.v, 8.v, 34",
+                        "svshape 8, 1, 1, 1",
+                        "sv.ffadds 8.v, 26, 27",
 
                         # svstep loop
                         "setvl. 0, 0, 0, 1, 0, 0",
@@ -486,11 +490,11 @@ class FFTTestCase(FHDLTestCase):
             # complex numbers
             res_r, res_i = transform_radix2_complex(ar, ai, coer, coei)
 
-            for i, expected_r, expected_i in enumerate(zip(res_r, res_i)):
-                print ("i", i, float(sim.fpr(i)),
+            for i, (expected_r, expected_i) in enumerate(zip(res_r, res_i)):
+                print ("i", i, float(sim.fpr(i)), float(sim.fpr(i+8)),
                        "expected_r", expected_r,
                        "expected_i", expected_i)
-            for i, expected_r, expected_i in enumerate(zip(res_r, res_i)):
+            for i, (expected_r, expected_i) in enumerate(zip(res_r, res_i)):
                 # convert to Power single
                 expected_r = DOUBLE2SINGLE(fp64toselectable(expected_r ))
                 expected_r = float(expected_r)

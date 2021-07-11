@@ -1087,10 +1087,10 @@ class ISACaller:
             illegal = False
             name = 'setvl'
 
-        # and svremap not being supported by binutils (.long)
-        if asmop.startswith('svremap'):
+        # and svshape not being supported by binutils (.long)
+        if asmop.startswith('svshape'):
             illegal = False
-            name = 'svremap'
+            name = 'svshape'
 
         # sigh also deal with ffmadds not being supported by binutils (.long)
         if asmop == 'ffmadds':
@@ -1488,7 +1488,7 @@ class ISACaller:
             # to be able to know if it should apply in the next instruction.
             # also (if going to use this instruction) should disable ability
             # to interrupt in between. sigh.
-            self.last_op_svshape = asmop == 'svremap'
+            self.last_op_svshape = asmop == 'svshape'
 
         self.update_pc_next()
 

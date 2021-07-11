@@ -38,11 +38,11 @@ Special Registers Altered:
 
     CR0                     (if Rc=1)
 
-# svremap
+# svshape
 
 SVM-Form
 
-* svremap SVxd, SVyd, SVzd, SVRM
+* svshape SVxd, SVyd, SVzd, SVRM
 
 Pseudo-code:
 

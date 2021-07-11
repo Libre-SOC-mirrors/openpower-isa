@@ -27,12 +27,12 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_remap1(self):
-        """>>> lst = ["svremap 2, 2, 3, 0",
+        """>>> lst = ["svshape 2, 2, 3, 0",
                        "sv.fmadds 0.v, 8.v, 16.v, 0.v"
                         ]
                 REMAP fmadds FRT, FRA, FRC, FRB
         """
-        lst = SVP64Asm(["svremap 2, 2, 3, 0",
+        lst = SVP64Asm(["svshape 2, 2, 3, 0",
                        "sv.fmadds 0.v, 16.v, 32.v, 0.v"
                         ])
         lst = list(lst)
@@ -98,12 +98,12 @@ class DecoderTestCase(FHDLTestCase):
             #    self.assertEqual(sim.fpr(i+6), u)
 
     def test_sv_remap2(self):
-        """>>> lst = ["svremap 5, 4, 3, 0",
+        """>>> lst = ["svshape 5, 4, 3, 0",
                        "sv.fmadds 0.v, 8.v, 16.v, 0.v"
                         ]
                 REMAP fmadds FRT, FRA, FRC, FRB
         """
-        lst = SVP64Asm(["svremap 4, 3, 3, 0",
+        lst = SVP64Asm(["svshape 4, 3, 3, 0",
                        "sv.fmadds 0.v, 16.v, 32.v, 0.v"
                         ])
         lst = list(lst)
