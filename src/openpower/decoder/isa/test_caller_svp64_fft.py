@@ -122,7 +122,7 @@ class FFTTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_remap_fpmadds_fft(self):
-        """>>> lst = ["svshape 8, 1, 1, 1",
+        """>>> lst = ["svshape 8, 1, 1, 1, 0",
                      "svremap 31, 1, 0, 2, 0, 1",
                       "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                      ]
@@ -138,7 +138,7 @@ class FFTTestCase(FHDLTestCase):
             SVP64 "REMAP" in Butterfly Mode is applied to a twin +/- FMAC
             (3 inputs, 2 outputs)
         """
-        lst = SVP64Asm( ["svshape 8, 1, 1, 1",
+        lst = SVP64Asm( ["svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
                         ])
@@ -156,28 +156,8 @@ class FFTTestCase(FHDLTestCase):
         for i, a in enumerate(av):
             fprs[i+0] = fp64toselectable(a)
 
-        # set total. err don't know how to calculate how many there are...
-        # do it manually for now
-        VL = 0
-        size = 2
-        n = len(av)
-        while size <= n:
-            halfsize = size // 2
-            tablestep = n // size
-            for i in range(0, n, size):
-                for j in range(i, i + halfsize):
-                    VL += 1
-            size *= 2
-
-        # SVSTATE (calculated VL)
-        svstate = SVP64State()
-        svstate.vl[0:7] = VL # VL
-        svstate.maxvl[0:7] = VL # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
-
         with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, svstate=svstate,
-                                       initial_fprs=fprs)
+            sim = self.run_tst_program(program, initial_fprs=fprs)
             print ("spr svshape0", sim.spr['SVSHAPE0'])
             print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
             print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
@@ -203,8 +183,8 @@ class FFTTestCase(FHDLTestCase):
                 self.assertTrue(err < 1e-7)
 
     def test_sv_remap_fpmadds_fft_svstep(self):
-        """>>> lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
-                            "svshape 8, 1, 1, 1",
+        """>>> lst = SVP64Asm( [
+                            "svshape 8, 1, 1, 1, 1",
                              "svremap 31, 1, 0, 2, 0, 1",
                             "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                             "setvl. 0, 0, 0, 1, 0, 0",
@@ -218,8 +198,8 @@ class FFTTestCase(FHDLTestCase):
             SVP64 "REMAP" in Butterfly Mode is applied to a twin +/- FMAC
             (3 inputs, 2 outputs)
         """
-        lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
-                        "svshape 8, 1, 1, 1",
+        lst = SVP64Asm( [
+                        "svshape 8, 1, 1, 1, 1",
                          "svremap 31, 1, 0, 2, 0, 1",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                         "setvl. 0, 0, 0, 1, 0, 0",
@@ -416,18 +396,17 @@ class FFTTestCase(FHDLTestCase):
                 vec[jl] = temp2 + temp1
         """
         lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
-                        "svshape 8, 1, 1, 1",
+                        "svshape 8, 1, 1, 1, 1",
                         # tpre
                          "svremap 31, 1, 0, 2, 0, 1",
                         "sv.fmuls 24, 0.v, 16.v",
-                        "svshape 8, 1, 1, 1",
                          "svremap 31, 1, 0, 2, 0, 1",
                         "sv.fmuls 25, 8.v, 20.v",
                         "fadds 24, 24, 25",
                         # tpim
                          "svremap 31, 1, 0, 2, 0, 1",
                         "sv.fmuls 26, 0.v, 20.v",
-                        "svshape 8, 1, 1, 1",
+                         "svremap 31, 1, 0, 2, 0, 1",
                         "sv.fmuls 26, 8.v, 16.v",
                         "fsubs 26, 26, 27",
                         # vec_r jh/jl

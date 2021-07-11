@@ -253,7 +253,7 @@
 
 # 1.6.28 SVL-FORM
    |0     |6    |11    |16   |23 |24 |25 |26    |31 |
-   | PO   |  RT |   RA | SVi |vf |vs |ms |   XO |Rc |
+   | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
 
 # 1.6.29 SVC-FORM
    |0     |6    |9    |11     |
@@ -276,8 +276,8 @@
    | PO   |   RS  |   RA | RC  | SVDS |  XO    |
 
 # 1.6.33 SVM-FORM
-   |0     |6        |11      |16    |21    |26    |31  |
-   | PO   |  SVxd   |   SVyd | SVzd | SVRM |   XO |  / |
+   |0     |6        |11      |16    |21    |25 |26    |31  |
+   | PO   |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO |  / |
 
 # 1.6.34 SVRM-FORM
    |0     |6     |11  |13   |15   |17   |19   |21    |26     |31 |
@@ -607,7 +607,7 @@
         Field used in X-form instructions to specify a sub-
         set of storage accesses.
         Formats: X
-    ms (25)
+    ms (23)
         Field used in Simple-V to specify whether MVL is to be set
         Formats: SVL
     NB (16:20)
@@ -783,7 +783,7 @@
     SVme (6:10)
          Simple-V "REMAP" map-enable bits (0-4)
          Formats: SVRM
-    SVRM (21:25)
+    SVRM (21:24)
          Simple-V "REMAP" Mode
          Formats: SVM
     SVxd (6:10)
@@ -877,9 +877,9 @@
     VRT (6:10)
         Field used to specify a VR to be used as a target.
         Formats: DS, VA, VC, VX, X
-    vf (23)
+    vf (25)
         Field used in Simple-V to specify whether "Vertical" Mode is set
-        Formats: SVL
+        Formats: SVL, SVM
     vs (24)
         Field used in Simple-V to specify whether VL is to be set
         Formats: SVL

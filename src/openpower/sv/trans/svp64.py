@@ -187,9 +187,9 @@ class SVP64Asm:
             insn |= fields[0] << (31-10) # RT       , bits 6-10
             insn |= fields[1] << (31-15) # RA       , bits 11-15
             insn |= fields[2] << (31-22) # SVi      , bits 16-22
-            insn |= fields[3] << (31-23) # vf       , bit  23
+            insn |= fields[3] << (31-25) # ms       , bit  25
             insn |= fields[4] << (31-24) # vs       , bit  24
-            insn |= fields[5] << (31-25) # ms       , bit  25
+            insn |= fields[5] << (31-23) # vf       , bit  23
             insn |= 0b00000   << (31-30) # XO       , bits 26..30
             if opcode == 'setvl.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
@@ -204,7 +204,8 @@ class SVP64Asm:
             insn |= (fields[0]-1) << (31-10) # SVxd       , bits 6-10
             insn |= (fields[1]-1) << (31-15) # SVyd       , bits 11-15
             insn |= (fields[2]-1) << (31-20) # SVzd       , bits 16-20
-            insn |= (fields[3])   << (31-25) # SVRM       , bits 21-25
+            insn |= (fields[3])   << (31-24) # SVRM       , bits 21-24
+            insn |= (fields[4])   << (31-25) # vf         , bits 25
             insn |= 0b00001   << (31-30) # XO       , bits 26..30
             #insn &= ((1<<32)-1)
             log ("svshape", bin(insn))
@@ -998,9 +999,10 @@ if __name__ == '__main__':
     ]
     lst = [
              #'sv.fmadds 0.v, 8.v, 16.v, 4.v',
-             #'svshape 8, 1, 1, 1',
              #'sv.ffadds 0.v, 8.v, 4.v',
-             'svremap 11, 0, 1, 2, 3, 2',
+             #'svremap 11, 0, 1, 2, 3, 2',
+             'svshape 8, 1, 1, 1, 0',
+             'svshape 8, 1, 1, 1, 1',
             ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

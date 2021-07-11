@@ -27,13 +27,13 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_remap1(self):
-        """>>> lst = ["svshape 2, 2, 3, 0",
+        """>>> lst = ["svshape 2, 2, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0",
                        "sv.fmadds 0.v, 8.v, 16.v, 0.v"
                         ]
                 REMAP fmadds FRT, FRA, FRC, FRB
         """
-        lst = SVP64Asm(["svshape 2, 2, 3, 0",
+        lst = SVP64Asm(["svshape 2, 2, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0",
                        "sv.fmadds 0.v, 16.v, 32.v, 0.v"
                         ])
@@ -100,13 +100,13 @@ class DecoderTestCase(FHDLTestCase):
             #    self.assertEqual(sim.fpr(i+6), u)
 
     def test_sv_remap2(self):
-        """>>> lst = ["svshape 5, 4, 3, 0",
+        """>>> lst = ["svshape 5, 4, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0",
                        "sv.fmadds 0.v, 8.v, 16.v, 0.v"
                         ]
                 REMAP fmadds FRT, FRA, FRC, FRB
         """
-        lst = SVP64Asm(["svshape 4, 3, 3, 0",
+        lst = SVP64Asm(["svshape 4, 3, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0",
                        "sv.fmadds 0.v, 16.v, 32.v, 0.v"
                         ])
@@ -153,7 +153,6 @@ class DecoderTestCase(FHDLTestCase):
         xdim2 = len(Y[0])
         ydim2 = len(Y)
 
-        VL = ydim2 * xdim2 * ydim1
         print ("xdim2 ydim1 ydim2", xdim2, ydim1, ydim2)
 
         xf = reduce(operator.add, X)
@@ -180,15 +179,8 @@ class DecoderTestCase(FHDLTestCase):
             #print ("FFT", i, "in", a, b, "coeff", c, "mul",
             #       mul, "res", t, u)
 
-        # SVSTATE (in this case, VL=12, to cover all of matrix)
-        svstate = SVP64State()
-        svstate.vl[0:7] = VL # VL
-        svstate.maxvl[0:7] = VL # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
-
         with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, svstate=svstate,
-                                       initial_fprs=fprs)
+            sim = self.run_tst_program(program, initial_fprs=fprs)
             print ("spr svshape0", sim.spr['SVSHAPE0'])
             print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
             print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
