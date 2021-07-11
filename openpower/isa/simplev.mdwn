@@ -38,6 +38,26 @@ Special Registers Altered:
 
     CR0                     (if Rc=1)
 
+# svremap
+
+SVRM-Form
+
+* svremap SVme, mi0, mi1, mi2, mo0, mo1
+
+Pseudo-code:
+
+    # place into SVREMAP SPR
+    SVREMAP[10:14] <- SVme
+    SVREMAP[0:1] <- mi0
+    SVREMAP[2:3] <- mi1
+    SVREMAP[4:5] <- mi2
+    SVREMAP[6:7] <- mo0
+    SVREMAP[8:9] <- mo1
+
+Special Registers Altered:
+
+    None
+
 # svshape
 
 SVM-Form

@@ -21,13 +21,12 @@ class SVREMAP(SelectableInt):
             fs = tuple(range(offs, end))
             v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
-            #log("SVREMAP setup field", field, offs, end)
+            log("SVREMAP setup field", field, offs, end)
             offs = end
 
     @property
     def mi0(self):
-        mi0 = self.fsi['mi0'].asint(msb0=True)
-        return SVP64REMAP.mi0(mi0)
+        return self.fsi['mi0'].asint(msb0=True)
 
     @mi0.setter
     def mi0(self, value):
@@ -35,8 +34,7 @@ class SVREMAP(SelectableInt):
 
     @property
     def mi1(self):
-        mi1 = self.fsi['mi1'].asint(msb0=True)
-        return SVP64REMAP.mi1(mi1)
+        return self.fsi['mi1'].asint(msb0=True)
 
     @mi1.setter
     def mi1(self, value):
@@ -44,8 +42,7 @@ class SVREMAP(SelectableInt):
 
     @property
     def mi2(self):
-        mi2 = self.fsi['mi2'].asint(msb0=True)
-        return SVP64REMAP.mi2(mi2)
+        return self.fsi['mi2'].asint(msb0=True)
 
     @mi2.setter
     def mi2(self, value):
@@ -53,8 +50,7 @@ class SVREMAP(SelectableInt):
 
     @property
     def mo0(self):
-        mo0 = self.fsi['mo0'].asint(msb0=True)
-        return SVP64REMAP.mo0(mo0)
+        return self.fsi['mo0'].asint(msb0=True)
 
     @mo0.setter
     def mo0(self, value):
@@ -62,8 +58,7 @@ class SVREMAP(SelectableInt):
 
     @property
     def mo1(self):
-        mo1 = self.fsi['mo1'].asint(msb0=True)
-        return SVP64REMAP.mo1(mo1)
+        return self.fsi['mo1'].asint(msb0=True)
 
     @mo1.setter
     def mo1(self, value):
@@ -71,8 +66,7 @@ class SVREMAP(SelectableInt):
 
     @property
     def men(self):
-        men = self.fsi['men'].asint(msb0=True)
-        return SVP64REMAP.men(men)
+        return self.fsi['men'].asint(msb0=True)
 
     @men.setter
     def men(self, value):

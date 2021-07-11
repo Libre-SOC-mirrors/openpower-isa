@@ -211,6 +211,22 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
+        # and svremap
+        if opcode == 'svremap':
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            fields = list(map(int, fields))
+            insn |= fields[0] << (31-10) # SVme       , bits 6-10
+            insn |= fields[1] << (31-12) # mi0        , bits 11-12
+            insn |= fields[2] << (31-14) # mi1        , bits 13-14
+            insn |= fields[3] << (31-16) # mi2        , bits 15-16
+            insn |= fields[4] << (31-18) # m00        , bits 17-18
+            insn |= fields[5] << (31-20) # m01        , bits 19-20
+            insn |= 0b00010   << (31-30) # XO       , bits 26..30
+            #insn &= ((1<<32)-1)
+            log ("svremap", bin(insn))
+            yield ".long 0x%x" % insn
+            return
+
         # identify if is a svp64 mnemonic
         if not opcode.startswith('sv.'):
             yield insn  # unaltered
@@ -981,9 +997,10 @@ if __name__ == '__main__':
              'sv.ffmadds 6.v, 2.v, 4.v, 6.v',
     ]
     lst = [
-             'sv.fmadds 0.v, 8.v, 16.v, 4.v',
-             'svshape 8, 1, 1, 1',
-             'sv.ffadds 0.v, 8.v, 4.v',
+             #'sv.fmadds 0.v, 8.v, 16.v, 4.v',
+             #'svshape 8, 1, 1, 1',
+             #'sv.ffadds 0.v, 8.v, 4.v',
+             'svremap 11, 0, 1, 2, 3, 2',
             ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))
