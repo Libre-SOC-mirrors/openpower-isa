@@ -50,9 +50,10 @@ roptions = {}
 for k, v in options.items():
     roptions[v] = k
 
+
 # in nMigen, Record begins at the LSB and fills upwards
 # however in OpenPOWER, numbering is MSB0.  sigh.
-class SVP64REMAP(Record):
+class SVP64SHAPE(Record):
     layout=[("mode"    , 2),
             ("skip"    , 2),
             ("offset"  , 4),
@@ -62,7 +63,7 @@ class SVP64REMAP(Record):
             ("ydimsz"  , 6),
             ("xdimsz"  , 6)]
 
-    """SVP64 SHAPE (REMAP) Record.
+    """SVP64 SHAPE Record.
 
     https://libre-soc.org/openpower/sv/remap/
 

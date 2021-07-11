@@ -2,7 +2,7 @@ from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 from openpower.decoder.isa.remapyield import iterate_indices
 from openpower.decoder.isa.remap_fft_yield import iterate_butterfly_indices
-from openpower.sv.svp64 import SVP64REMAP
+from openpower.sv.svp64 import SVP64SHAPE
 import os
 from copy import deepcopy
 from openpower.util import log
@@ -14,7 +14,7 @@ class SVSHAPE(SelectableInt):
         offs = 0
         # set up sub-fields from Record layout
         self.fsi = {}
-        l = deepcopy(SVP64REMAP.layout)
+        l = deepcopy(SVP64SHAPE.layout)
         l.reverse()
         for field, width in l:
             end =  offs+width
@@ -27,11 +27,11 @@ class SVSHAPE(SelectableInt):
     @property
     def order(self):
         permute = self.fsi['permute'].asint(msb0=True)
-        return SVP64REMAP.order(permute)
+        return SVP64SHAPE.order(permute)
 
     @order.setter
     def order(self, value):
-        rorder = SVP64REMAP.rorder(value)
+        rorder = SVP64SHAPE.rorder(value)
         self.fsi['permute'].eq(rorder)
 
     @property
