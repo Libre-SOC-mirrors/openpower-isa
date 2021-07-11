@@ -93,3 +93,48 @@ class SVP64SHAPE(Record):
         return [self.mode, self.skip, self.offset, self.invxyz, self.permute,
                 self.zdimsz, self.ydimsz, self.xdimsz]
 
+
+# in nMigen, Record begins at the LSB and fills upwards
+# however in OpenPOWER, numbering is MSB0.  sigh.
+class SVP64REMAP(Record):
+    layout=[
+            ("rsvd"  , 9),
+            ("men"  , 5),
+            ("mo1"    , 2),
+            ("mo0"    , 2),
+            ("mi2"    , 2),
+            ("mi1"    , 2),
+            ("mi0"    , 2),
+            ]
+
+    """SVP64 REMAP Record.
+
+    https://libre-soc.org/openpower/sv/remap/
+
+    | Field Name | Field bits | Description                            |
+    |------------|------------|----------------------------------------|
+    | MI0        | `0:1`      | 1st input register SVSHAPE(0-3) index  |
+    | MI1        | `2:3`      | 2nd input register SVSHAPE(0-3) index  |
+    | MI2        | `4:5`      | 3rd input register SVSHAPE(0-3) index  |
+    | MO0        | `6:7`      | 1st output register SVSHAPE(0-3) index |
+    | MO1        | `8:9`      | 2nd output register SVSHAPE(0-3) index |
+    | MEN        | `10:14`    | enables MI0..MO1                       |
+    | RESERVED   | `15:23`    | reserved                               |
+    """
+    def __init__(self, name=None):
+        Record.__init__(self, layout=self.layout, name=name)
+
+    @staticmethod
+    def order(permute):
+        return options[permute]
+
+    @staticmethod
+    def rorder(order):
+        return roptions[tuple(order)]
+
+    def ports(self):
+        return [self.mi0, self.mi1, self.mi2,
+                self.mo0, self.m02,
+                self.men, self.rsvd
+               ]
+
