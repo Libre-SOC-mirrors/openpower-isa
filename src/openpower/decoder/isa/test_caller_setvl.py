@@ -328,6 +328,30 @@ class DecoderTestCase(FHDLTestCase):
             # check registers as expected
             self._check_regs(sim, expected_regs)
 
+    def test_svremap(self):
+        """svremap, see if values get set
+        """
+        lst = SVP64Asm(["svremap 11, 0, 1, 2, 3, 3",
+                        ])
+        lst = list(lst)
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program)
+            svremap = sim.spr('SVREMAP')
+            print ("SVREMAP after", bin(svremap.value))
+            print ("        men", bin(svremap.men))
+            print ("        mi0", bin(svremap.mi0))
+            print ("        mi1", bin(svremap.mi1))
+            print ("        mi2", bin(svremap.mi2))
+            print ("        mo0", bin(svremap.mo0))
+            print ("        mo1", bin(svremap.mo1))
+            self.assertEqual(svremap.men, 11)
+            self.assertEqual(svremap.mi0, 0)
+            self.assertEqual(svremap.mi1, 1)
+            self.assertEqual(svremap.mi2, 2)
+            self.assertEqual(svremap.mo0, 3)
+            self.assertEqual(svremap.mo1, 3)
+
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None):
         if initial_regs is None:

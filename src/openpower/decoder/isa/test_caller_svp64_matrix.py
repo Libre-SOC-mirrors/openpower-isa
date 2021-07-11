@@ -28,11 +28,13 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_sv_remap1(self):
         """>>> lst = ["svshape 2, 2, 3, 0",
+                        "svremap 31, 1, 2, 3, 0, 0",
                        "sv.fmadds 0.v, 8.v, 16.v, 0.v"
                         ]
                 REMAP fmadds FRT, FRA, FRC, FRB
         """
         lst = SVP64Asm(["svshape 2, 2, 3, 0",
+                        "svremap 31, 1, 2, 3, 0, 0",
                        "sv.fmadds 0.v, 16.v, 32.v, 0.v"
                         ])
         lst = list(lst)
@@ -99,11 +101,13 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_sv_remap2(self):
         """>>> lst = ["svshape 5, 4, 3, 0",
+                        "svremap 31, 1, 2, 3, 0, 0",
                        "sv.fmadds 0.v, 8.v, 16.v, 0.v"
                         ]
                 REMAP fmadds FRT, FRA, FRC, FRB
         """
         lst = SVP64Asm(["svshape 4, 3, 3, 0",
+                        "svremap 31, 1, 2, 3, 0, 0",
                        "sv.fmadds 0.v, 16.v, 32.v, 0.v"
                         ])
         lst = list(lst)

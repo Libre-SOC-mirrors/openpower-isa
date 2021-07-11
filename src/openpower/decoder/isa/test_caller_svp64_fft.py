@@ -123,6 +123,7 @@ class FFTTestCase(FHDLTestCase):
 
     def test_sv_remap_fpmadds_fft(self):
         """>>> lst = ["svshape 8, 1, 1, 1",
+                     "svremap 31, 1, 0, 2, 0, 1",
                       "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                      ]
             runs a full in-place O(N log2 N) butterfly schedule for
@@ -138,6 +139,7 @@ class FFTTestCase(FHDLTestCase):
             (3 inputs, 2 outputs)
         """
         lst = SVP64Asm( ["svshape 8, 1, 1, 1",
+                         "svremap 31, 1, 0, 2, 0, 1",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
                         ])
         lst = list(lst)
@@ -203,6 +205,7 @@ class FFTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_fft_svstep(self):
         """>>> lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
                             "svshape 8, 1, 1, 1",
+                             "svremap 31, 1, 0, 2, 0, 1",
                             "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                             "setvl. 0, 0, 0, 1, 0, 0",
                             "bc 4, 2, -16"
@@ -217,6 +220,7 @@ class FFTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
                         "svshape 8, 1, 1, 1",
+                         "svremap 31, 1, 0, 2, 0, 1",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                         "setvl. 0, 0, 0, 1, 0, 0",
                         "bc 4, 2, -16"
@@ -412,23 +416,25 @@ class FFTTestCase(FHDLTestCase):
                 vec[jl] = temp2 + temp1
         """
         lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
-                        # tpre
                         "svshape 8, 1, 1, 1",
+                        # tpre
+                         "svremap 31, 1, 0, 2, 0, 1",
                         "sv.fmuls 24, 0.v, 16.v",
                         "svshape 8, 1, 1, 1",
+                         "svremap 31, 1, 0, 2, 0, 1",
                         "sv.fmuls 25, 8.v, 20.v",
                         "fadds 24, 24, 25",
                         # tpim
-                        "svshape 8, 1, 1, 1",
+                         "svremap 31, 1, 0, 2, 0, 1",
                         "sv.fmuls 26, 0.v, 20.v",
                         "svshape 8, 1, 1, 1",
                         "sv.fmuls 26, 8.v, 16.v",
                         "fsubs 26, 26, 27",
                         # vec_r jh/jl
-                        "svshape 8, 1, 1, 1",
+                         "svremap 31, 1, 0, 2, 0, 1",
                         "sv.ffadds 0.v, 24, 25",
                         # vec_i jh/jl
-                        "svshape 8, 1, 1, 1",
+                         "svremap 31, 1, 0, 2, 0, 1",
                         "sv.ffadds 8.v, 26, 27",
 
                         # svstep loop

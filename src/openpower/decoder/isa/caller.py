@@ -743,6 +743,7 @@ class ISACaller:
         # then "yield" fields only from op_fields rather than hard-coded
         # list, here.
         fields = self.decoder.sigforms[formname]
+        log("prep_namespace", formname, op_fields)
         for name in op_fields:
             if name == 'spr':
                 sig = getattr(fields, name.upper())
@@ -1098,6 +1099,11 @@ class ISACaller:
             illegal = False
             name = 'setvl'
 
+        # and svremap not being supported by binutils (.long)
+        if asmop.startswith('svremap'):
+            illegal = False
+            name = 'svremap'
+
         # and svshape not being supported by binutils (.long)
         if asmop.startswith('svshape'):
             illegal = False
@@ -1136,7 +1142,7 @@ class ISACaller:
         # preserve order of register names
         input_names = create_args(list(info.read_regs) +
                                   list(info.uninit_regs))
-        log(input_names)
+        log("input names", input_names)
 
         # get SVP64 entry for the current instruction
         sv_rm = self.svp64rm.instrs.get(name)
@@ -1167,77 +1173,78 @@ class ISACaller:
                                        self.namespace['NIA'])
             return
 
-        # for when SVSHAPE is active, a very bad hack here (to be replaced)
-        # using pre-arranged schedule.  all of this is awful but it is a
-        # start.  next job will be to put the proper activation in place
-        yield self.dec2.remap_active.eq(1 if self.last_op_svshape else 0)
+        # get the REMAP SPR
+        SVREMAP = self.spr['SVREMAP']
+        # for when SVREMAP is active, using pre-arranged schedule.
+        # note: modifying PowerDecoder2 needs to "settle"
+        remap_en = SVREMAP.men
+        active = self.last_op_svshape and remap_en != 0
+        yield self.dec2.remap_active.eq(remap_en if active else 0)
         yield Settle()
         if self.is_svp64_mode and self.last_op_svshape:
             # get four SVSHAPEs. here we are hard-coding
-            # SVSHAPE0 to FRT, SVSHAPE1 to FRA, SVSHAPE2 to FRC and
-            # SVSHAPE3 to FRB, assuming "fmadd FRT, FRA, FRC, FRB."
             SVSHAPE0 = self.spr['SVSHAPE0']
             SVSHAPE1 = self.spr['SVSHAPE1']
             SVSHAPE2 = self.spr['SVSHAPE2']
             SVSHAPE3 = self.spr['SVSHAPE3']
+            # just some convenient debug info
             for i in range(4):
                 sname = 'SVSHAPE%d' % i
                 shape = self.spr[sname]
-                print (sname, bin(shape.value))
-                print ("    lims", shape.lims)
-                print ("    mode", shape.mode)
-                print ("    skip", shape.skip)
+                log (sname, bin(shape.value))
+                log ("    lims", shape.lims)
+                log ("    mode", shape.mode)
+                log ("    skip", shape.skip)
 
+            # set up the list of steps to remap
+            steps = [(self.dec2.in1_step, SVREMAP.mi0), # RA
+                     (self.dec2.in2_step, SVREMAP.mi1), # RB
+                     (self.dec2.in3_step, SVREMAP.mi2), # RC
+                     (self.dec2.o_step, SVREMAP.mo0),   # RT
+                     (self.dec2.o2_step, SVREMAP.mo1),   # EA
+                    ]
+            # set up the iterators
             remaps = [(SVSHAPE0, SVSHAPE0.get_iterator()),
                       (SVSHAPE1, SVSHAPE1.get_iterator()),
                       (SVSHAPE2, SVSHAPE2.get_iterator()),
                       (SVSHAPE3, SVSHAPE3.get_iterator()),
                      ]
-            rremaps = []
+            # go through all iterators in lock-step, advance to next remap_idx
+            remap_idxs = []
             for i, (shape, remap) in enumerate(remaps):
                 # zero is "disabled"
                 if shape.value == 0x0:
-                    continue
-                # XXX hardcoded! pick dststep for out (i==0) else srcstep
-                if shape.mode == 0b00: # multiply mode
-                    step = dststep if (i == 0) else srcstep
-                if shape.mode == 0b01: # FFT butterfly mode
-                    step = srcstep # XXX HACK - for now only use srcstep
+                    remap_idxs.append(0)
+                # pick src or dststep depending on reg num (0-2=in, 3-4=out)
+                step = dststep if (i in [3, 4]) else srcstep
                 # this is terrible.  O(N^2) looking for the match. but hey.
                 for idx, remap_idx in enumerate(remap):
                     if idx == step:
                         break
-                # multiply mode
-                if shape.mode == 0b00:
-                    if i == 0:
-                        yield self.dec2.o_step.eq(remap_idx)   # RT
-                        yield self.dec2.o2_step.eq(remap_idx)  # EA
-                    elif i == 1:
-                        yield self.dec2.in1_step.eq(remap_idx) # RA
-                    elif i == 2:
-                        yield self.dec2.in3_step.eq(remap_idx) # RB
-                    elif i == 3:
-                        yield self.dec2.in2_step.eq(remap_idx) # RC
-                # FFT butterfly mode
-                if shape.mode == 0b01:
-                    if i == 0:
-                        yield self.dec2.o_step.eq(remap_idx)   # RT
-                        yield self.dec2.in2_step.eq(remap_idx) # RB
-                    elif i == 1:
-                        yield self.dec2.in1_step.eq(remap_idx) # RA
-                        yield self.dec2.o2_step.eq(remap_idx)  # EA (FRS)
-                    elif i == 2:
-                        yield self.dec2.in3_step.eq(remap_idx) # RC
-                    elif i == 3:
-                        pass # no SVSHAPE3
-                rremaps.append((shape.mode, i, idx, remap_idx)) # debug printing
+                remap_idxs.append(remap_idx)
+
+            rremaps = []
+            # now cross-index the required SHAPE for each of 3-in 2-out regs
+            rnames = ['RA', 'RB', 'RC', 'RT', 'EA']
+            for i, (dstep, shape_idx) in enumerate(steps):
+                (shape, remap) = remaps[shape_idx]
+                remap_idx = remap_idxs[shape_idx]
+                # zero is "disabled"
+                if shape.value == 0x0:
+                    continue
+                # now set the actual requested step to the current index
+                yield dstep.eq(remap_idx)
+
+                # debug printout info
+                rremaps.append((shape.mode, i, rnames[i], step, shape_idx,
+                                remap_idx))
             for x in rremaps:
-                print ("shape remap", x)
+                log ("shape remap", x)
         # after that, settle down (combinatorial) to let Vector reg numbers
         # work themselves out
         yield Settle()
         remap_active = yield self.dec2.remap_active
-        print ("remap active", remap_active)
+        log ("remap active", bin(remap_active))
 
         # main input registers (RT, RA ...)
         inputs = []
@@ -1284,7 +1291,7 @@ class ISACaller:
             if ldstmode == SVP64LDSTmode.BITREVERSE.value:
                 imm = yield self.dec2.dec.fields.FormSVD.SVD[0:11]
                 imm = exts(imm, 11) # sign-extend to integer
-                print ("bitrev SVD", imm)
+                log ("bitrev SVD", imm)
                 replace_d = True
             else:
                 imm = yield self.dec2.dec.fields.FormD.D[0:16]
@@ -1499,7 +1506,7 @@ class ISACaller:
             # to be able to know if it should apply in the next instruction.
             # also (if going to use this instruction) should disable ability
             # to interrupt in between. sigh.
-            self.last_op_svshape = asmop == 'svshape'
+            self.last_op_svshape = asmop == 'svremap'
 
         self.update_pc_next()
 
@@ -1688,6 +1695,7 @@ def inject():
 
             context = args[0].namespace  # variables to be injected
             saved_values = func_globals.copy()  # Shallow copy of dict.
+            log("globals before", context.keys())
             func_globals.update(context)
             result = func(*args, **kwargs)
             log("globals after", func_globals['CIA'], func_globals['NIA'])

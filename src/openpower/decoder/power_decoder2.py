@@ -1116,7 +1116,7 @@ class PowerDecode2(PowerDecodeSubset):
             self.in3_step = Signal(7, name="reg_c_step")
             self.o_step = Signal(7, name="reg_o_step")
             self.o2_step = Signal(7, name="reg_o2_step")
-            self.remap_active = Signal(1, name="remap_active")
+            self.remap_active = Signal(5, name="remap_active") # per reg
             self.no_in_vec = Signal(1, name="no_in_vec") # no inputs vector
             self.no_out_vec = Signal(1, name="no_out_vec") # no outputs vector
             self.loop_continue = Signal(1, name="loop_continue")
@@ -1264,12 +1264,13 @@ class PowerDecode2(PowerDecodeSubset):
 
             # registers a, b, c and out and out2 (LD/ST EA)
             sv_etype = self.op_get("SV_Etype")
-            for rname, to_reg, fromreg, svdec, remapstep, out in (
+            for i, stuff in enumerate((
                 ("RA", e.read_reg1, dec_a.reg_out, in1_svdec, in1_step, False),
                 ("RB", e.read_reg2, dec_b.reg_out, in2_svdec, in2_step, False),
                 ("RC", e.read_reg3, dec_c.reg_out, in3_svdec, in3_step, False),
                 ("RT", e.write_reg, dec_o.reg_out, o_svdec, o_step, True),
-                ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, o2_step, True)):
+                ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, o2_step, True))):
+                rname, to_reg, fromreg, svdec, remapstep, out = stuff
                 comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
                 comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
                 comb += svdec.reg_in.eq(fromreg.data) # 3-bit (CR0/BC/BFA)
@@ -1284,7 +1285,7 @@ class PowerDecode2(PowerDecodeSubset):
                     # however when REMAP is active, the FFT REMAP
                     # schedule takes care of this offset.
                     with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
-                        with m.If(~self.remap_active):
+                        with m.If(~self.remap_active[i]):
                             with m.If(svdec.isvec):
                                 comb += offs.eq(vl) # VL for Vectors
                 # detect if Vectorised: add srcstep/dststep if yes.
@@ -1292,7 +1293,7 @@ class PowerDecode2(PowerDecodeSubset):
                 with m.If(svdec.isvec):
                     selectstep = dststep if out else srcstep
                     step = Signal(7, name="step_%s" % rname.lower())
-                    with m.If(self.remap_active):
+                    with m.If(self.remap_active[i]):
                         comb += step.eq(remapstep)
                     with m.Else():
                         comb += step.eq(selectstep)
@@ -1327,7 +1328,7 @@ class PowerDecode2(PowerDecodeSubset):
             # same trick is applied to FRA, above, but it's a lot cleaner, there
             with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
                 comb += offs.eq(0)
-                with m.If(~self.remap_active):
+                with m.If(~self.remap_active[4]):
                     with m.If(o2_svdec.isvec):
                         comb += offs.eq(vl) # VL for Vectors
                     with m.Else():
@@ -1335,7 +1336,7 @@ class PowerDecode2(PowerDecodeSubset):
                 svdec = o_svdec # yes take source as o_svdec...
                 with m.If(svdec.isvec):
                     step = Signal(7, name="step_%s" % rname.lower())
-                    with m.If(self.remap_active):
+                    with m.If(self.remap_active[4]):
                         comb += step.eq(o2_step)
                     with m.Else():
                         comb += step.eq(dststep)
