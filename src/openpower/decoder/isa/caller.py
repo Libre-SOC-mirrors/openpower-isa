@@ -36,6 +36,8 @@ from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.decoder.isa.mem import Mem, swap_order, MemException
 from openpower.decoder.isa.svshape import SVSHAPE
+from openpower.decoder.isa.svremap import SVREMAP
+
 
 from openpower.util import log
 
@@ -613,6 +615,13 @@ class ISACaller:
                 val = self.spr[sname].value
                 self.spr[sname] = SVSHAPE(val)
         self.last_op_svshape = False
+        # and an SVREMAP
+        if 'SVREMAP' not in self.spr:
+            self.spr['SVREMAP'] = SVREMAP(0)
+        else:
+            # make sure it's an SVREMAP
+            val = self.spr['SVREMAP'].value
+            self.spr['SVREMAP'] = SVREMAP(val)
 
         # "raw" memory
         self.mem = Mem(row_bytes=8, initial_mem=initial_mem)
@@ -653,6 +662,7 @@ class ISACaller:
                                'NIA': self.pc.NIA,
                                'CIA': self.pc.CIA,
                                'SVSTATE': self.svstate.spr,
+                               'SVREMAP': self.spr['SVREMAP'],
                                'SVSHAPE0': self.spr['SVSHAPE0'],
                                'SVSHAPE1': self.spr['SVSHAPE1'],
                                'SVSHAPE2': self.spr['SVSHAPE2'],
