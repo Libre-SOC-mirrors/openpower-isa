@@ -118,7 +118,8 @@ class Form(Enum):
     SVL = 29  # Simple-V for setvl instruction
     SVD = 30  # Simple-V for LD/ST bit-reverse, variant of D-Form
     SVDS = 31  # Simple-V for LD/ST bit-reverse, variant of DS-Form
-    SVM = 32  # Simple-V REMAP mode - TEMPORARY TEMPORARY TEMPORARY
+    SVM = 32  # Simple-V SHAPE mode - TEMPORARY TEMPORARY TEMPORARY
+    SVRM = 33  # Simple-V REMAP mode - TEMPORARY TEMPORARY TEMPORARY
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
@@ -391,6 +392,7 @@ class MicrOp(Enum):
     OP_FPOP_I = 78 # temporary: replace with actual ops
     OP_FP_MADD = 79
     OP_SVREMAP = 80
+    OP_SVSHAPE = 81
 
 
 @unique

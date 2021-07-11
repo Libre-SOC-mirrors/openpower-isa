@@ -279,6 +279,10 @@
    |0     |6        |11      |16    |21    |26    |31  |
    | PO   |  SVxd   |   SVyd | SVzd | SVRM |   XO |  / |
 
+# 1.6.34 SVRM-FORM
+   |0     |6     |10  |12   |14   |16   |18   |20    |26     |31 |
+   | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 | rsvd | XO    | / |
+
 # 1.6.28 Instruction Fields
     A (6)
         Field used by the tbegin. instruction to specify an
@@ -584,6 +588,21 @@
         Section 3.3.14, 'Fixed-Point Rotate and Shift
         Instructions' on page 101.
         Formats: M
+    mi0 (10:11)
+        Field used in REMAP to select the SVSHAPE for 1st input register
+        Formats: SVRM
+    mi1 (12:13)
+        Field used in REMAP to select the SVSHAPE for 2nd input register
+        Formats: SVRM
+    mi2 (14:15)
+        Field used in REMAP to select the SVSHAPE for 3rd input register
+        Formats: SVRM
+    mo0 (16:17)
+        Field used in REMAP to select the SVSHAPE for 1st output register
+        Formats: SVRM
+    mo1 (18:19)
+        Field used in REMAP to select the SVSHAPE for 2nd output register
+        Formats: SVRM
     MO (6:10)
         Field used in X-form instructions to specify a sub-
         set of storage accesses.
@@ -761,6 +780,9 @@
     SVi (16:22)
          Simple-V immediate field for setting VL or MVL
          Formats: SVL
+    SVme (6:10)
+         Simple-V "REMAP" map-enable bits (0-4)
+         Formats: SVRM
     SVRM (21:25)
          Simple-V "REMAP" Mode
          Formats: SVM
