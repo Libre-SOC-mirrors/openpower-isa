@@ -265,6 +265,106 @@ class FFTTestCase(FHDLTestCase):
                 err = abs(actual - expected) / expected
                 self.assertTrue(err < 1e-7)
 
+    def test_sv_remap_fpmadds_fft_svstep_scalar_temp(self):
+        """>>> lst = SVP64Asm( [
+                            "svshape 8, 1, 1, 1, 1",
+                             "svremap 31, 1, 0, 2, 0, 1",
+                            "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
+                            "setvl. 0, 0, 0, 1, 0, 0",
+                            "bc 4, 2, -16"
+                            ])
+
+            runs a full in-place O(N log2 N) butterfly schedule for
+            Discrete Fourier Transform.  also uses "Vertical First"
+            but also uses temporary scalars and ffadds rather than
+            sv.ffmadds.
+
+            this represents an incremental step towards complex FFT
+
+            SVP64 "REMAP" in Butterfly Mode is applied to two instructions:
+
+            * single fmuls FRT, FRA, FRC
+            * twin in-place ffadds +/- ADD/SUB (2 inputs, 2 outputs)
+              (FRS is implicit / hidden in ff* operations)
+
+            multiply:                         # sv.fmuls FRT, FRA, FRC
+                temp1 = vec[jh] * exptable[k]
+                temp2 = vec[jl]
+            twin-add:                         # sv.ffadds FRT(/FRS), FRA, FRB
+                vec[jh] = temp2 - temp1
+                vec[jl] = temp2 + temp1
+        """
+        lst = SVP64Asm( [
+                        "svshape 8, 1, 1, 1, 1",
+                         # RA: jh (S1) RB: n/a RC: k (S2) RT: scalar EA: n/a
+                         "svremap 5, 1, 0, 2, 0, 0",
+                         "sv.fmuls 24, 0.v, 8.v",
+                         # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
+                         "svremap 26, 0, 0, 0, 0, 1",
+                        "sv.ffadds 0.v, 24, 0.v",
+                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "bc 4, 2, -28"
+                        ])
+        lst = list(lst)
+
+        # array and coefficients to test
+        av = [7.0, -9.8, 3.0, -32.3,
+              -2.0, 5.0, -9.8, 31.3] # array 0..7
+        coe = [-0.25, 0.5, 3.1, 6.2] # coefficients
+
+        # store in regfile
+        fprs = [0] * 32
+        for i, c in enumerate(coe):
+            fprs[i+8] = fp64toselectable(c)
+        for i, a in enumerate(av):
+            fprs[i+0] = fp64toselectable(a)
+
+        # set total. err don't know how to calculate how many there are...
+        # do it manually for now
+        VL = 0
+        size = 2
+        n = len(av)
+        while size <= n:
+            halfsize = size // 2
+            tablestep = n // size
+            for i in range(0, n, size):
+                for j in range(i, i + halfsize):
+                    VL += 1
+            size *= 2
+
+        # SVSTATE (calculated VL)
+        svstate = SVP64State()
+        svstate.vl[0:7] = VL # VL
+        svstate.maxvl[0:7] = VL # MAXVL
+        print ("SVSTATE", bin(svstate.spr.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_fprs=fprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            # work out the results with the twin mul/add-sub
+            res = transform_radix2(av, coe)
+
+            for i, expected in enumerate(res):
+                print ("i", i, float(sim.fpr(i)), "expected", expected)
+            for i, expected in enumerate(res):
+                # convert to Power single
+                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = float(expected)
+                actual = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs(actual - expected) / expected
+                self.assertTrue(err < 1e-7)
+
     def test_sv_fpmadds_fft(self):
         """>>> lst = ["sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                         ]
@@ -370,7 +470,7 @@ class FFTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+2), t)
                 self.assertEqual(sim.fpr(i+6), u)
 
-    def tst_sv_remap_fpmadds_fft_svstep_complex(self):
+    def test_sv_remap_fpmadds_fft_svstep_complex(self):
         """
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform.  this version however uses
@@ -395,10 +495,11 @@ class FFTTestCase(FHDLTestCase):
                 vec[jh] = temp2 - temp1
                 vec[jl] = temp2 + temp1
         """
-        lst = SVP64Asm( ["setvl 0, 0, 11, 1, 1, 1",
+        lst = SVP64Asm( [
+                        # set triple butterfly mode
                         "svshape 8, 1, 1, 1, 1",
                         # tpre
-                         "svremap 31, 1, 0, 2, 0, 1",
+                         "svremap 31, 1, 0, 2, 0, 1",    # 4
                         "sv.fmuls 24, 0.v, 16.v",
                          "svremap 31, 1, 0, 2, 0, 1",
                         "sv.fmuls 25, 8.v, 20.v",
@@ -418,7 +519,7 @@ class FFTTestCase(FHDLTestCase):
 
                         # svstep loop
                         "setvl. 0, 0, 0, 1, 0, 0",
-                        "bc 4, 2, -16"
+                        "bc 4, 2, -84"
                         ])
         lst = list(lst)
 
@@ -436,10 +537,10 @@ class FFTTestCase(FHDLTestCase):
             fprs[i+0] = fp64toselectable(a)
         for i, a in enumerate(ai):
             fprs[i+8] = fp64toselectable(a)
-        for i, c in enumerate(coer):
-            fprs[i+16] = fp64toselectable(c)
-        for i, c in enumerate(coei):
-            fprs[i+20] = fp64toselectable(c)
+        for i, cr in enumerate(coer):
+            fprs[i+16] = fp64toselectable(cr)
+        for i, ci in enumerate(coei):
+            fprs[i+20] = fp64toselectable(ci)
 
         # set total. err don't know how to calculate how many there are...
         # do it manually for now

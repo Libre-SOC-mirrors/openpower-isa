@@ -268,7 +268,7 @@ def FPADD32(FRA, FRB):
     result = float(FRA) + float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE2SINGLE(cvt)
-    log ("FPADD32", FRA, FRB, result, cvt)
+    log ("FPADD32", FRA, FRB, float(FRA), "+", float(FRB), "=", result, cvt)
     return cvt
 
 
@@ -280,7 +280,7 @@ def FPSUB32(FRA, FRB):
     result = float(FRA) - float(FRB)
     cvt = fp64toselectable(result)
     cvt = DOUBLE2SINGLE(cvt)
-    log ("FPSUB32", FRA, FRB, result, cvt)
+    log ("FPSUB32", FRA, FRB, float(FRA), "-", float(FRB), "=", result, cvt)
     return cvt
 
 
