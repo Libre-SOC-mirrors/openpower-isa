@@ -99,8 +99,18 @@ def transform_radix2_complex(vec_r, vec_i, cos_r, sin_i):
                         "vr h l", vec_r[jh], vec_r[jl],
                         "vi h l", vec_i[jh], vec_i[jl])
                 print ("    cr k", cos_r[k], "si k", sin_i[k])
-                tpre =  vec_r[jh] * cos_r[k] + vec_i[jh] * sin_i[k]
-                tpim = -vec_r[jh] * sin_i[k] + vec_i[jh] * cos_r[k]
+                mul1_r =  vec_r[jh] * cos_r[k]
+                mul2_r = vec_i[jh] * sin_i[k]
+                tpre =  mul1_r + mul2_r
+                print ("        vec_r[jh] * cos_r[k]", mul1_r)
+                print ("        vec_i[jh] * sin_i[k]", mul2_r)
+                print ("    tpre", tpre)
+                mul1_i = vec_r[jh] * sin_i[k]
+                mul2_i = vec_i[jh] * cos_r[k]
+                tpim = -mul1_i + mul2_i
+                print ("        vec_r[jh] * sin_i[k]", mul1_i)
+                print ("        vec_i[jh] * cos_r[k]", mul2_i)
+                print ("    tpim", tpim)
                 vec_r[jh] = vec_r[jl] - tpre
                 vec_i[jh] = vec_i[jl] - tpim
                 vec_r[jl] += tpre
@@ -267,11 +277,15 @@ class FFTTestCase(FHDLTestCase):
 
     def test_sv_remap_fpmadds_fft_svstep_scalar_temp(self):
         """>>> lst = SVP64Asm( [
-                            "svshape 8, 1, 1, 1, 1",
-                             "svremap 31, 1, 0, 2, 0, 1",
-                            "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
-                            "setvl. 0, 0, 0, 1, 0, 0",
-                            "bc 4, 2, -16"
+                        "svshape 8, 1, 1, 1, 1",
+                         # RA: jh (S1) RB: n/a RC: k (S2) RT: scalar EA: n/a
+                         "svremap 5, 1, 0, 2, 0, 0",
+                         "sv.fmuls 24, 0.v, 8.v",
+                         # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
+                         "svremap 26, 0, 0, 0, 0, 1",
+                        "sv.ffadds 0.v, 24, 0.v",
+                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "bc 4, 2, -28"
                             ])
 
             runs a full in-place O(N log2 N) butterfly schedule for
@@ -480,7 +494,7 @@ class FFTTestCase(FHDLTestCase):
             SVP64 "REMAP" in Butterfly Mode is applied to a twin +/- FMAC
             (3 inputs, 2 outputs)
 
-            complex calculation:
+            complex calculation (FFT):
 
                 tpre =  vec_r[jh] * cos_r[k] + vec_i[jh] * sin_i[k]
                 vec_r[jh] = vec_r[jl] - tpre
@@ -489,6 +503,8 @@ class FFTTestCase(FHDLTestCase):
                 tpim = -vec_r[jh] * sin_i[k] + vec_i[jh] * cos_r[k]
                 vec_i[jh] = vec_i[jl] - tpim
                 vec_i[jl] += tpim
+
+            real-only calculation (DFT):
 
                 temp1 = vec[jh] * exptable[k]
                 temp2 = vec[jl]
@@ -499,23 +515,23 @@ class FFTTestCase(FHDLTestCase):
                         # set triple butterfly mode
                         "svshape 8, 1, 1, 1, 1",
                         # tpre
-                         "svremap 31, 1, 0, 2, 0, 1",    # 4
-                        "sv.fmuls 24, 0.v, 16.v",
-                         "svremap 31, 1, 0, 2, 0, 1",
-                        "sv.fmuls 25, 8.v, 20.v",
-                        "fadds 24, 24, 25",
+                        "svremap 5, 1, 0, 2, 0, 0",
+                        "sv.fmuls 24, 0.v, 16.v",    # mul1_r = r*cos_r
+                        "svremap 5, 1, 0, 2, 0, 0",
+                        "sv.fmuls 25, 8.v, 20.v",    # mul2_r = i*sin_i
+                        "fadds 24, 24, 25",          # tpre = mul1_r + mul2_r
                         # tpim
-                         "svremap 31, 1, 0, 2, 0, 1",
-                        "sv.fmuls 26, 0.v, 20.v",
-                         "svremap 31, 1, 0, 2, 0, 1",
-                        "sv.fmuls 26, 8.v, 16.v",
-                        "fsubs 26, 26, 27",
+                         "svremap 5, 1, 0, 2, 0, 0",
+                        "sv.fmuls 26, 0.v, 20.v",    # mul1_i = r*sin_i
+                         "svremap 5, 1, 0, 2, 0, 0",
+                        "sv.fmuls 27, 8.v, 16.v",    # mul2_i = i*cos_r
+                        "fsubs 26, 27, 26",          # tpim = mul2_i - mul1_i
                         # vec_r jh/jl
-                         "svremap 31, 1, 0, 2, 0, 1",
-                        "sv.ffadds 0.v, 24, 25",
+                         "svremap 26, 0, 0, 0, 0, 1",
+                        "sv.ffadds 0.v, 24, 0.v",    # vh/vl +/- tpre
                         # vec_i jh/jl
-                         "svremap 31, 1, 0, 2, 0, 1",
-                        "sv.ffadds 8.v, 26, 27",
+                         "svremap 26, 0, 0, 0, 0, 1",
+                        "sv.ffadds 8.v, 26, 8.v",    # vh/vl +- tpim
 
                         # svstep loop
                         "setvl. 0, 0, 0, 1, 0, 0",
@@ -589,7 +605,7 @@ class FFTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs(actual_r - expected_r ) / expected_r
-                self.assertTrue(err < 1e-7)
+                self.assertTrue(err < 1e-6)
                 # convert to Power single
                 expected_i = DOUBLE2SINGLE(fp64toselectable(expected_i ))
                 expected_i = float(expected_i)
@@ -598,7 +614,7 @@ class FFTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs(actual_i - expected_i ) / expected_i
-                self.assertTrue(err < 1e-7)
+                self.assertTrue(err < 1e-6)
 
     def test_sv_ffadds_fft_scalar(self):
         """>>> lst = ["sv.ffadds 2.v, 12, 13"
