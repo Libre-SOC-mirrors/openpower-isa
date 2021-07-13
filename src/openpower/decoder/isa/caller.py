@@ -1448,7 +1448,7 @@ class ISACaller:
                             ftype = 'fpr'
                         else:
                             ftype = 'gpr'
-                        log('writing %s %s %s' % (regnum, ftype, str(output)),
+                        log('writing %s %s %s' % (ftype, regnum, str(output)),
                                                      is_vec)
                     if output.bits > 64:
                         output = SelectableInt(output.value, 64)
