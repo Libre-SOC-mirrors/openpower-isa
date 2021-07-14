@@ -518,14 +518,14 @@ class FFTTestCase(FHDLTestCase):
                         "svremap 5, 1, 0, 2, 0, 0",
                         "sv.fmuls 24, 0.v, 16.v",    # mul1_r = r*cos_r
                         "svremap 5, 1, 0, 2, 0, 0",
-                        "sv.fmuls 25, 8.v, 20.v",    # mul2_r = i*sin_i
-                        "fadds 24, 24, 25",          # tpre = mul1_r + mul2_r
+                        "sv.fmadds 24, 8.v, 20.v, 24", # mul2_r = i*sin_i
+                                                     # tpre = mul1_r + mul2_r
                         # tpim
                          "svremap 5, 1, 0, 2, 0, 0",
                         "sv.fmuls 26, 0.v, 20.v",    # mul1_i = r*sin_i
                          "svremap 5, 1, 0, 2, 0, 0",
-                        "sv.fmuls 27, 8.v, 16.v",    # mul2_i = i*cos_r
-                        "fsubs 26, 27, 26",          # tpim = mul2_i - mul1_i
+                        "sv.fmsubs 26, 8.v, 16.v, 26", # mul2_i = i*cos_r
+                                                     # tpim = mul2_i - mul1_i
                         # vec_r jh/jl
                          "svremap 26, 0, 0, 0, 0, 1",
                         "sv.ffadds 0.v, 24, 0.v",    # vh/vl +/- tpre
@@ -535,7 +535,7 @@ class FFTTestCase(FHDLTestCase):
 
                         # svstep loop
                         "setvl. 0, 0, 1, 1, 0, 0",
-                        "bc 4, 2, -84"
+                        "bc 4, 2, -76"
                         ])
         lst = list(lst)
 
