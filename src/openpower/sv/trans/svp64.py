@@ -181,12 +181,13 @@ class SVP64Asm:
         log ("opcode, fields substed", ls, opcode, fields)
 
         # sigh have to do setvl here manually for now...
+        # note the subtract one from SVi.
         if opcode in ["setvl", "setvl."]:
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
             insn |= fields[0] << (31-10) # RT       , bits 6-10
             insn |= fields[1] << (31-15) # RA       , bits 11-15
-            insn |= fields[2] << (31-22) # SVi      , bits 16-22
+            insn |= (fields[2]-1) << (31-22) # SVi      , bits 16-22
             insn |= fields[3] << (31-25) # ms       , bit  25
             insn |= fields[4] << (31-24) # vs       , bit  24
             insn |= fields[5] << (31-23) # vf       , bit  23

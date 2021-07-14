@@ -24,9 +24,9 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_svstep_1(self):
-        lst = SVP64Asm(["setvl 0, 0, 9, 1, 1, 1", # actual setvl (VF mode)
-                        "setvl 0, 0, 0, 1, 0, 0", # svstep
-                        "setvl 0, 0, 0, 1, 0, 0" # svstep
+        lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1", # actual setvl (VF mode)
+                        "setvl 0, 0, 1, 1, 0, 0", # svstep
+                        "setvl 0, 0, 1, 1, 0, 0" # svstep
                         ])
         lst = list(lst)
 
@@ -55,9 +55,9 @@ class DecoderTestCase(FHDLTestCase):
     def test_svstep_2(self):
         """tests svstep when it reaches VL
         """
-        lst = SVP64Asm(["setvl 0, 0, 1, 1, 1, 1",  # actual setvl (VF mode)
-                        "setvl. 0, 0, 0, 1, 0, 0", # svstep (Rc=1)
-                        "setvl. 0, 0, 0, 1, 0, 0" # svstep (Rc=1)
+        lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",  # actual setvl (VF mode)
+                        "setvl. 0, 0, 1, 1, 0, 0", # svstep (Rc=1)
+                        "setvl. 0, 0, 1, 1, 0, 0" # svstep (Rc=1)
                         ])
         lst = list(lst)
 
@@ -93,9 +93,9 @@ class DecoderTestCase(FHDLTestCase):
     def test_svstep_3(self):
         """tests svstep when it *doesn't* reach VL
         """
-        lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",  # actual setvl (VF mode)
-                        "setvl. 0, 0, 0, 1, 0, 0", # svstep (Rc=1)
-                        "setvl. 0, 0, 0, 1, 0, 0" # svstep (Rc=1)
+        lst = SVP64Asm(["setvl 0, 0, 3, 1, 1, 1",  # actual setvl (VF mode)
+                        "setvl. 0, 0, 1, 1, 0, 0", # svstep (Rc=1)
+                        "setvl. 0, 0, 1, 1, 0, 0" # svstep (Rc=1)
                         ])
         lst = list(lst)
 
@@ -132,7 +132,7 @@ class DecoderTestCase(FHDLTestCase):
     def test_setvl_1(self):
         """straight setvl, testing if VL and MVL are over-ridden
         """
-        lst = SVP64Asm(["setvl 1, 0, 9, 0, 1, 1",
+        lst = SVP64Asm(["setvl 1, 0, 10, 0, 1, 1",
                         ])
         lst = list(lst)
 
@@ -158,7 +158,7 @@ class DecoderTestCase(FHDLTestCase):
            * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
            * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111
         """
-        isa = SVP64Asm(["setvl 3, 0, 1, 0, 1, 1",
+        isa = SVP64Asm(["setvl 3, 0, 2, 0, 1, 1",
                         'sv.add 1.v, 5.v, 9.v'
                        ])
         lst = list(isa)
@@ -183,11 +183,11 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_svstep_add_1(self):
         """tests svstep with an add, when it reaches VL
-        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+        lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 1, 1, 0, 0",
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0"
+                        "setvl. 0, 0, 1, 1, 0, 0"
                         ])
         sequence is as follows:
         * setvl sets VL=2 but also "Vertical First" mode.
@@ -199,11 +199,11 @@ class DecoderTestCase(FHDLTestCase):
           which now equals VL.  srcstep and dststep are both set to
           zero, and MSR[SVF] is cleared.
         """
-        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+        lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0",  # svstep
+                        "setvl. 0, 0, 1, 1, 0, 0",  # svstep
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0"  # svstep
+                        "setvl. 0, 0, 1, 1, 0, 0"  # svstep
                         ])
         lst = list(lst)
 
@@ -252,9 +252,9 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_svstep_add_2(self):
         """tests svstep with a branch.
-        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+        lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -0xc"
                         ])
         sequence is as follows:
@@ -278,9 +278,9 @@ class DecoderTestCase(FHDLTestCase):
         first, then looping back and running all element 1, then all element 2
         etc.
         """
-        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+        lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
-                        "setvl. 0, 0, 0, 1, 0, 0", # svstep - this is 64-bit!
+                        "setvl. 0, 0, 1, 1, 0, 0", # svstep - this is 64-bit!
                         "bc 4, 2, -0xc" # branch to add (64-bit op so -0xc!)
                         ])
         lst = list(lst)

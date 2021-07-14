@@ -197,7 +197,7 @@ class FFTTestCase(FHDLTestCase):
                             "svshape 8, 1, 1, 1, 1",
                              "svremap 31, 1, 0, 2, 0, 1",
                             "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
-                            "setvl. 0, 0, 0, 1, 0, 0",
+                            "setvl. 0, 0, 1, 1, 0, 0",
                             "bc 4, 2, -16"
                             ])
             runs a full in-place O(N log2 N) butterfly schedule for
@@ -212,7 +212,7 @@ class FFTTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 1, 1",
                          "svremap 31, 1, 0, 2, 0, 1",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
-                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -16"
                         ])
         lst = list(lst)
@@ -284,7 +284,7 @@ class FFTTestCase(FHDLTestCase):
                          # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
                          "svremap 26, 0, 0, 0, 0, 1",
                         "sv.ffadds 0.v, 24, 0.v",
-                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -28"
                             ])
 
@@ -316,7 +316,7 @@ class FFTTestCase(FHDLTestCase):
                          # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
                          "svremap 26, 0, 0, 0, 0, 1",
                         "sv.ffadds 0.v, 24, 0.v",
-                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -28"
                         ])
         lst = list(lst)
@@ -534,7 +534,7 @@ class FFTTestCase(FHDLTestCase):
                         "sv.ffadds 8.v, 26, 8.v",    # vh/vl +- tpim
 
                         # svstep loop
-                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -84"
                         ])
         lst = list(lst)

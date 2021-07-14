@@ -53,7 +53,7 @@ ff_mpadsp_apply_window_float_sv:
 	add out2, out, 0
 
 	# set Vector Length
-	setvl 0, 0, 7, 1, 1, 0# setvli MVL=8, VL=8
+	setvl 0, 0, 8, 1, 1, 0# setvli MVL=8, VL=8
 	addi win2, win, 124   # w2 = window + 31
 
 	lfiwax sum, 0, 5      # sum = *dither_state

@@ -65,13 +65,13 @@ class SVSTATETestCase(FHDLTestCase):
 
     def test_svstep_add_1(self):
         """tests svstep with an add, using scalar adds, when it reaches VL
-        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+        lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1, 5.v, 9.v',
                         'sv.addi 12.v, 1, 1',
-                        "setvl. 0, 0, 0, 1, 0, 0",
+                        "setvl. 0, 0, 1, 1, 0, 0",
                         'sv.add 1, 5.v, 9.v',
                         'sv.addi 12.v, 1, 1',
-                        "setvl. 0, 0, 0, 1, 0, 0"
+                        "setvl. 0, 0, 1, 1, 0, 0"
                         ])
 
         sequence is as follows:
@@ -96,13 +96,13 @@ class SVSTATETestCase(FHDLTestCase):
         store the result in r13 (0x3335).
 
         """
-        lst = SVP64Asm(["setvl 3, 0, 1, 1, 1, 1",
+        lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1, 5.v, 9.v',       # scalar dest (into r1)
                         'sv.addi 12.v, 1, 1',       # scalar src (from r1)
-                        "setvl. 0, 0, 0, 1, 0, 0",  # svstep
+                        "setvl. 0, 0, 1, 1, 0, 0",  # svstep
                         'sv.add 1, 5.v, 9.v',       # again, scalar dest
                         'sv.addi 12.v, 1, 1',       # but vector dest
-                        "setvl. 0, 0, 0, 1, 0, 0"  # svstep
+                        "setvl. 0, 0, 1, 1, 0, 0"  # svstep
                         ])
         lst = list(lst)
 
