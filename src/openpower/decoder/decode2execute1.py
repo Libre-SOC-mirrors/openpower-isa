@@ -47,7 +47,7 @@ class IssuerDecode2ToOperand(RecordObject):
         # current "state" (TODO: this in its own Record)
         self.msr = Signal(64, reset_less=True)
         self.cia = Signal(64, reset_less=True)
-        self.svstate = Signal(32, reset_less=True)
+        self.svstate = Signal(64, reset_less=True)
 
         # instruction, type and decoded information
         self.insn = Signal(32, reset_less=True) # original instruction

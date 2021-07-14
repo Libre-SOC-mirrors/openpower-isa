@@ -68,7 +68,7 @@ Pseudo-code:
 
     # for convenience, VL to be calculated and stored in SVSTATE
     vlen <- [0] * 7
-    SVSTATE[0:31] <- [0] * 32
+    SVSTATE[0:63] <- [0] * 64
     # clear out all SVSHAPEs
     SVSHAPE0[0:31] <- [0] * 32
     SVSHAPE1[0:31] <- [0] * 32

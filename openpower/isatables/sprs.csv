@@ -63,7 +63,7 @@ Idx,SPR,priv_mtspr,priv_mfspr,len
 349,AMOR,hypv,hypv,64
 446,TIR,-,yes,64
 464,PTCR,hypv,hypv,64
-704,SVSTATE,no,no,32
+704,SVSTATE,no,no,64
 720,PRTBL,yes,yes,64
 721,SVSRR0,yes,yes,32
 722,SVSHAPE0,yes,yes,32

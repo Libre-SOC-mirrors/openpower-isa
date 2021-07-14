@@ -253,7 +253,7 @@ class PC:
 # Simple-V: see https://libre-soc.org/openpower/sv
 class SVP64State:
     def __init__(self, init=0):
-        self.spr = SelectableInt(init, 32)
+        self.spr = SelectableInt(init, 64)
         # fields of SVSTATE, see https://libre-soc.org/openpower/sv/sprs/
         self.maxvl = FieldSelectableInt(self.spr, tuple(range(0,7)))
         self.vl = FieldSelectableInt(self.spr, tuple(range(7,14)))
@@ -1598,6 +1598,7 @@ class ISACaller:
         vl = self.svstate.vl.asint(msb0=True)
         log ("    srcstep", srcstep)
         log ("    dststep", dststep)
+        log ("         vl", vl)
 
         # check if end reached (we let srcstep overrun, above)
         # nothing needs doing (TODO zeroing): just do next instruction

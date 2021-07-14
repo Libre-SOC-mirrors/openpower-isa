@@ -23,6 +23,7 @@ from nmigen import Signal
 class SVSTATERec(RecordObject):
     def __init__(self, name=None):
         super().__init__(name=name)
+        self.rsvd = Signal(32) # TODO
         self.svstep = Signal(2)
         self.subvl = Signal(2)
         self.dststep = Signal(7)
