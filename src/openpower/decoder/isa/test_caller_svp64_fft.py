@@ -307,14 +307,21 @@ class FFTTestCase(FHDLTestCase):
             twin-add:                         # sv.ffadds FRT(/FRS), FRA, FRB
                 vec[jh] = temp2 - temp1
                 vec[jl] = temp2 + temp1
+
+            also see notes in complex fft test: here svremap is done in
+            "non-persistent" mode (as a demo) whereas in the complex fft
+            svremap is used in "persistent" mode, where by a complete
+            coincidence the REMAP arguments all happen to line up and
+            only one persistent svremap is needed.  the exact same trick
+            *could* be applied here but for illustrative purposes it is not.
         """
         lst = SVP64Asm( [
                         "svshape 8, 1, 1, 1, 1",
                          # RA: jh (S1) RB: n/a RC: k (S2) RT: scalar EA: n/a
-                         "svremap 5, 1, 0, 2, 0, 0, 1",
+                         "svremap 5, 1, 0, 2, 0, 0, 0",
                          "sv.fmuls 24, 0.v, 8.v",
                          # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
-                         "svremap 26, 0, 0, 0, 0, 1, 1",
+                         "svremap 26, 0, 0, 0, 0, 1, 0",
                         "sv.ffadds 0.v, 24, 0.v",
                         "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -28"
@@ -396,6 +403,7 @@ class FFTTestCase(FHDLTestCase):
             sv.ffmadds FRT, FRA, FRC, FRB  actually does:
                 fmadds  FRT   , FRA, FRC, FRA
                 fnmsubs FRT+vl, FRA, FRC, FRB+vl
+
         """
         lst = SVP64Asm(["sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                         ])
@@ -510,12 +518,26 @@ class FFTTestCase(FHDLTestCase):
                 temp2 = vec[jl]
                 vec[jh] = temp2 - temp1
                 vec[jl] = temp2 + temp1
+
+            note: a rather nice convenience / coincidence. the meaning of
+            these two instructions is:
+                # RA: jh (S1) RB: n/a RC: k (S2) RT: scalar EA: n/a
+                "svremap 5, 1, 0, 2, 0, 0, 1",
+                # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
+                "svremap 26, 0, 0, 0, 0, 1, 1",
+
+            however it turns out that they can be *merged*, and for
+            the first one (sv.fmadds/sv.fmsubs) the scalar arguments (RT, RB)
+            *ignore* their REMAPs (by definition), and for the second
+            one (sv.ffads) exactly the right REMAPs are also ignored!
+
+                "svremap 31, 1, 0, 2, 0, 1, 1",
         """
         lst = SVP64Asm( [
                         # set triple butterfly mode
                         "svshape 8, 1, 1, 1, 1",
                         # tpre
-                        "svremap 5, 1, 0, 2, 0, 0, 1",
+                        "svremap 31, 1, 0, 2, 0, 1, 1",
                         "sv.fmuls 24, 0.v, 16.v",    # mul1_r = r*cos_r
                         "sv.fmadds 24, 8.v, 20.v, 24", # mul2_r = i*sin_i
                                                      # tpre = mul1_r + mul2_r
@@ -524,14 +546,13 @@ class FFTTestCase(FHDLTestCase):
                         "sv.fmsubs 26, 8.v, 16.v, 26", # mul2_i = i*cos_r
                                                      # tpim = mul2_i - mul1_i
                         # vec_r jh/jl
-                         "svremap 26, 0, 0, 0, 0, 1, 1",
                         "sv.ffadds 0.v, 24, 0.v",    # vh/vl +/- tpre
                         # vec_i jh/jl
                         "sv.ffadds 8.v, 26, 8.v",    # vh/vl +- tpim
 
                         # svstep loop
                         "setvl. 0, 0, 1, 1, 0, 0",
-                        "bc 4, 2, -60"
+                        "bc 4, 2, -56"
                         ])
         lst = list(lst)
 
