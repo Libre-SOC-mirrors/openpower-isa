@@ -1154,10 +1154,11 @@ class ISACaller:
         # for when SVREMAP is active, using pre-arranged schedule.
         # note: modifying PowerDecoder2 needs to "settle"
         remap_en = self.svstate.SVme
-        active = self.last_op_svshape and remap_en != 0
+        persist = self.svstate.RMpst
+        active = (persist or self.last_op_svshape) and remap_en != 0
         yield self.dec2.remap_active.eq(remap_en if active else 0)
         yield Settle()
-        if self.is_svp64_mode and self.last_op_svshape:
+        if self.is_svp64_mode and (persist or self.last_op_svshape):
             # get four SVSHAPEs. here we are hard-coding
             SVSHAPE0 = self.spr['SVSHAPE0']
             SVSHAPE1 = self.spr['SVSHAPE1']
