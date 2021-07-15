@@ -331,26 +331,28 @@ class DecoderTestCase(FHDLTestCase):
     def test_svremap(self):
         """svremap, see if values get set
         """
-        lst = SVP64Asm(["svremap 11, 0, 1, 2, 3, 3",
+        lst = SVP64Asm(["svremap 11, 0, 1, 2, 3, 3, 1",
                         ])
         lst = list(lst)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program)
-            svremap = sim.svstate
-            print ("SVREMAP after", bin(svremap.value))
-            print ("        men", bin(svremap.SVme))
-            print ("        mi0", bin(svremap.mi0))
-            print ("        mi1", bin(svremap.mi1))
-            print ("        mi2", bin(svremap.mi2))
-            print ("        mo0", bin(svremap.mo0))
-            print ("        mo1", bin(svremap.mo1))
-            self.assertEqual(svremap.SVme, 11)
-            self.assertEqual(svremap.mi0, 0)
-            self.assertEqual(svremap.mi1, 1)
-            self.assertEqual(svremap.mi2, 2)
-            self.assertEqual(svremap.mo0, 3)
-            self.assertEqual(svremap.mo1, 3)
+            svstate = sim.svstate
+            print ("SVREMAP after", bin(svstate.value))
+            print ("        men", bin(svstate.SVme))
+            print ("        mi0", bin(svstate.mi0))
+            print ("        mi1", bin(svstate.mi1))
+            print ("        mi2", bin(svstate.mi2))
+            print ("        mo0", bin(svstate.mo0))
+            print ("        mo1", bin(svstate.mo1))
+            print ("    persist", bin(svstate.RMpst))
+            self.assertEqual(svstate.SVme, 11)
+            self.assertEqual(svstate.mi0, 0)
+            self.assertEqual(svstate.mi1, 1)
+            self.assertEqual(svstate.mi2, 2)
+            self.assertEqual(svstate.mo0, 3)
+            self.assertEqual(svstate.mo1, 3)
+            self.assertEqual(svstate.RMpst, 1)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None):

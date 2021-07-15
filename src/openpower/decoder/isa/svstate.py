@@ -112,3 +112,19 @@ class SVP64State(SelectableInt):
     def SVme(self, value):
         self.fsi['SVme'].eq(value)
 
+    @property
+    def vfirst(self):
+        return self.fsi['vfirst'].asint(msb0=True)
+
+    @vfirst.setter
+    def vfirst(self, value):
+        self.fsi['vfirst'].eq(value)
+
+    @property
+    def RMpst(self):
+        return self.fsi['RMpst'].asint(msb0=True)
+
+    @RMpst.setter
+    def RMpst(self, value):
+        self.fsi['RMpst'].eq(value)
+

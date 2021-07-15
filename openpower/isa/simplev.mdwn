@@ -42,17 +42,20 @@ Special Registers Altered:
 
 SVRM-Form
 
-* svremap SVme, mi0, mi1, mi2, mo0, mo1
+* svremap SVme, mi0, mi1, mi2, mo0, mo1, pst
 
 Pseudo-code:
 
-    # place into SVREMAP SPR
-    SVSTATE[42:46] <- SVme
+    # registers RA RB RC RT EA/FRS SVSHAPE0-3 indices
     SVSTATE[32:33] <- mi0
     SVSTATE[34:35] <- mi1
     SVSTATE[36:37] <- mi2
     SVSTATE[38:39] <- mo0
     SVSTATE[40:41] <- mo1
+    # enable bit for RA RB RC RT EA/FRS
+    SVSTATE[42:46] <- SVme
+    # persistence bit (applies to more than one instruction)
+    SVSTATE[62] <- pst
 
 Special Registers Altered:
 

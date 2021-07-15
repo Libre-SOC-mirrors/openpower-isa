@@ -280,8 +280,8 @@
    | PO   |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO |  / |
 
 # 1.6.34 SVRM-FORM
-   |0     |6     |11  |13   |15   |17   |19   |21    |26     |31 |
-   | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 | rsvd | XO    | / |
+   |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
+   | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
 
 # 1.6.28 Instruction Fields
     A (6)
@@ -633,6 +633,10 @@
         Field used to specify preferred sign for BCD opera-
         tions.
         Formats: VX
+    pst (21)
+        Field used in REMAP to indicate "persistence" mode (REMAP
+        continues to apply to multiple instructions)
+        Formats: SVRM
     PT (28:31)
         Immediate field used to specify a 4-bit unsigned
         value.

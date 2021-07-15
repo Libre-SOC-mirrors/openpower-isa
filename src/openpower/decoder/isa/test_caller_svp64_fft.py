@@ -133,7 +133,7 @@ class FFTTestCase(FHDLTestCase):
 
     def test_sv_remap_fpmadds_fft(self):
         """>>> lst = ["svshape 8, 1, 1, 1, 0",
-                     "svremap 31, 1, 0, 2, 0, 1",
+                     "svremap 31, 1, 0, 2, 0, 1, 0",
                       "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
                      ]
             runs a full in-place O(N log2 N) butterfly schedule for
@@ -149,7 +149,7 @@ class FFTTestCase(FHDLTestCase):
             (3 inputs, 2 outputs)
         """
         lst = SVP64Asm( ["svshape 8, 1, 1, 1, 0",
-                         "svremap 31, 1, 0, 2, 0, 1",
+                         "svremap 31, 1, 0, 2, 0, 1, 0",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
                         ])
         lst = list(lst)
@@ -195,7 +195,7 @@ class FFTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_fft_svstep(self):
         """>>> lst = SVP64Asm( [
                             "svshape 8, 1, 1, 1, 1",
-                             "svremap 31, 1, 0, 2, 0, 1",
+                             "svremap 31, 1, 0, 2, 0, 1, 0",
                             "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                             "setvl. 0, 0, 1, 1, 0, 0",
                             "bc 4, 2, -16"
@@ -210,7 +210,7 @@ class FFTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( [
                         "svshape 8, 1, 1, 1, 1",
-                         "svremap 31, 1, 0, 2, 0, 1",
+                         "svremap 31, 1, 0, 2, 0, 1, 0",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                         "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -16"
@@ -279,10 +279,10 @@ class FFTTestCase(FHDLTestCase):
         """>>> lst = SVP64Asm( [
                         "svshape 8, 1, 1, 1, 1",
                          # RA: jh (S1) RB: n/a RC: k (S2) RT: scalar EA: n/a
-                         "svremap 5, 1, 0, 2, 0, 0",
+                         "svremap 5, 1, 0, 2, 0, 0, 1",
                          "sv.fmuls 24, 0.v, 8.v",
                          # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
-                         "svremap 26, 0, 0, 0, 0, 1",
+                         "svremap 26, 0, 0, 0, 0, 1, 1",
                         "sv.ffadds 0.v, 24, 0.v",
                         "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -28"
@@ -311,10 +311,10 @@ class FFTTestCase(FHDLTestCase):
         lst = SVP64Asm( [
                         "svshape 8, 1, 1, 1, 1",
                          # RA: jh (S1) RB: n/a RC: k (S2) RT: scalar EA: n/a
-                         "svremap 5, 1, 0, 2, 0, 0",
+                         "svremap 5, 1, 0, 2, 0, 0, 1",
                          "sv.fmuls 24, 0.v, 8.v",
                          # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
-                         "svremap 26, 0, 0, 0, 0, 1",
+                         "svremap 26, 0, 0, 0, 0, 1, 1",
                         "sv.ffadds 0.v, 24, 0.v",
                         "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 4, 2, -28"
@@ -515,22 +515,22 @@ class FFTTestCase(FHDLTestCase):
                         # set triple butterfly mode
                         "svshape 8, 1, 1, 1, 1",
                         # tpre
-                        "svremap 5, 1, 0, 2, 0, 0",
+                        "svremap 5, 1, 0, 2, 0, 0, 1",
                         "sv.fmuls 24, 0.v, 16.v",    # mul1_r = r*cos_r
-                        "svremap 5, 1, 0, 2, 0, 0",
+                        "svremap 5, 1, 0, 2, 0, 0, 1",
                         "sv.fmadds 24, 8.v, 20.v, 24", # mul2_r = i*sin_i
                                                      # tpre = mul1_r + mul2_r
                         # tpim
-                         "svremap 5, 1, 0, 2, 0, 0",
+                         "svremap 5, 1, 0, 2, 0, 0, 1",
                         "sv.fmuls 26, 0.v, 20.v",    # mul1_i = r*sin_i
-                         "svremap 5, 1, 0, 2, 0, 0",
+                         "svremap 5, 1, 0, 2, 0, 0, 1",
                         "sv.fmsubs 26, 8.v, 16.v, 26", # mul2_i = i*cos_r
                                                      # tpim = mul2_i - mul1_i
                         # vec_r jh/jl
-                         "svremap 26, 0, 0, 0, 0, 1",
+                         "svremap 26, 0, 0, 0, 0, 1, 1",
                         "sv.ffadds 0.v, 24, 0.v",    # vh/vl +/- tpre
                         # vec_i jh/jl
-                         "svremap 26, 0, 0, 0, 0, 1",
+                         "svremap 26, 0, 0, 0, 0, 1, 1",
                         "sv.ffadds 8.v, 26, 8.v",    # vh/vl +- tpim
 
                         # svstep loop
