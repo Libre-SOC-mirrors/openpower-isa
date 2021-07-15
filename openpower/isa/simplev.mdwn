@@ -32,7 +32,7 @@ Pseudo-code:
         SVSTATE[7:13] <- VL
         if _RT != 0b00000 then
            GPR(_RT) <- [0]*57 || VL
-        MSR[6] <- vf
+        SVSTATE[63] <- vf
 
 Special Registers Altered:
 
@@ -118,10 +118,10 @@ Pseudo-code:
         SVSHAPE1[28:29] <- 0b01           # j+halfstep schedule
         # FRC (coefficients)
         SVSHAPE2[28:29] <- 0b10           # k schedule
-    # set VL, MVL and MSR Vertical-First
+    # set VL, MVL and Vertical-First
     SVSTATE[0:6] <- vlen
     SVSTATE[7:13] <- vlen
-    MSR[6] <- vf
+    SVSTATE[63] <- vf
 
 Special Registers Altered:
 

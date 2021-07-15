@@ -43,14 +43,14 @@ class DecoderTestCase(FHDLTestCase):
             print ("        mvl", bin(sim.svstate.maxvl))
             print ("    srcstep", bin(sim.svstate.srcstep))
             print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 10)
             self.assertEqual(sim.svstate.maxvl, 10)
             self.assertEqual(sim.svstate.srcstep, 2)
             self.assertEqual(sim.svstate.dststep, 2)
+            self.assertEqual(sim.svstate.vfirst, 1)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
-            print("      msr", bin(sim.msr.value))
-            self.assertEqual(sim.msr, SelectableInt(1<<(63-6), 64))
 
     def test__svstep_2(self):
         """tests svstep when it reaches VL
@@ -74,15 +74,15 @@ class DecoderTestCase(FHDLTestCase):
             print ("        mvl", bin(sim.svstate.maxvl))
             print ("    srcstep", bin(sim.svstate.srcstep))
             print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 2)
             self.assertEqual(sim.svstate.maxvl, 2)
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
+            # when end reached, vertical mode is exited
+            self.assertEqual(sim.svstate.vfirst, 0)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
-            # when end reached, vertical mode is exited
-            print("      msr", bin(sim.msr.value))
-            self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 1)
@@ -112,6 +112,7 @@ class DecoderTestCase(FHDLTestCase):
             print ("        mvl", bin(sim.svstate.maxvl))
             print ("    srcstep", bin(sim.svstate.srcstep))
             print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 3)
             self.assertEqual(sim.svstate.maxvl, 3)
             # svstep called twice, didn't reach VL, so srcstep/dststep both 2
@@ -119,8 +120,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.dststep, 2)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
-            print("      msr", bin(sim.msr.value))
-            self.assertEqual(sim.msr, SelectableInt(1<<(63-6), 64))
+            self.assertEqual(sim.svstate.vfirst, 1)
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 0)
@@ -233,13 +233,13 @@ class DecoderTestCase(FHDLTestCase):
             print ("        mvl", bin(sim.svstate.maxvl))
             print ("    srcstep", bin(sim.svstate.srcstep))
             print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 2)
             self.assertEqual(sim.svstate.maxvl, 2)
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             # when end reached, vertical mode is exited
-            print("      msr", bin(sim.msr.value))
-            self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
+            self.assertEqual(sim.svstate.vfirst, 0)
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 1)
@@ -311,13 +311,13 @@ class DecoderTestCase(FHDLTestCase):
             print ("        mvl", bin(sim.svstate.maxvl))
             print ("    srcstep", bin(sim.svstate.srcstep))
             print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 2)
             self.assertEqual(sim.svstate.maxvl, 2)
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             # when end reached, vertical mode is exited
-            print("      msr", bin(sim.msr.value))
-            self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
+            self.assertEqual(sim.svstate.vfirst, 0)
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 1)

@@ -1450,7 +1450,7 @@ class ISACaller:
                 # reset at end of loop including exit Vertical Mode
                 log ("SVSTATE_NEXT: end of loop, reset")
                 self.svp64_reset_loop()
-                self.msr[MSRb.SVF] = 0
+                self.svstate.vfirst = 0
                 self.update_nia()
                 if rc_en:
                     results = [SelectableInt(0, 64)]
@@ -1477,7 +1477,7 @@ class ISACaller:
                     # reset at end of loop including exit Vertical Mode
                     log ("SVSTATE_NEXT: after increments, reset")
                     self.svp64_reset_loop()
-                    self.msr[MSRb.SVF] = 0
+                    self.svstate.vfirst = 0
 
         elif self.is_svp64_mode:
             yield from self.svstate_post_inc()
@@ -1587,8 +1587,9 @@ class ISACaller:
 
     def svstate_post_inc(self, vf=0):
         # check if SV "Vertical First" mode is enabled
-        log ("    SV Vertical First", vf, self.msr[MSRb.SVF].value)
-        if not vf and self.msr[MSRb.SVF].value == 1:
+        vfirst = self.svstate.vfirst
+        log ("    SV Vertical First", vf, vfirst)
+        if not vf and vfirst == 1:
             self.update_nia()
             return True
 

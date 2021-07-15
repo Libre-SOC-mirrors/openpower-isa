@@ -90,7 +90,6 @@ class MSRb:
     SF  = 0     # Sixty-Four bit mode
     HV  = 3     # Hypervisor state
     UND = 5     # Undefined behavior state (see Bk 2, Sect. 3.2.1)
-    SVF = 6     # SVP64 "Vertical First" mode
     TSs = 29    # Transactional State (subfield)
     TSe = 30    # Transactional State (subfield)
     TM  = 31    # Transactional Memory Available
