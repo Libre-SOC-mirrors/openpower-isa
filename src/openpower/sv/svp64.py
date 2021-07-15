@@ -107,9 +107,9 @@ class SVP64REMAP(Record):
             ("mi0"    , 2),
             ]
 
-    """SVP64 REMAP Record.
+    """SVP64 REMAP Record, for Context Propagation
 
-    https://libre-soc.org/openpower/sv/remap/
+    https://libre-soc.org/openpower/sv/propagation/
 
     | Field Name | Field bits | Description                            |
     |------------|------------|----------------------------------------|

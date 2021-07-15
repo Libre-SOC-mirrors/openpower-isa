@@ -43,9 +43,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x0404
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
         # r1 = r1 + r5 + r6
@@ -80,9 +80,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[4] = 0x4
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3 # VL
-        svstate.maxvl[0:7] = 3 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3 # VL
+        svstate.maxvl = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
         for i in range(3):
@@ -117,9 +117,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[4] = 0x1
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3 # VL
-        svstate.maxvl[0:7] = 3 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3 # VL
+        svstate.maxvl = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
         for i in range(3):
@@ -158,9 +158,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3 # VL
-        svstate.maxvl[0:7] = 3 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3 # VL
+        svstate.maxvl = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -190,9 +190,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,

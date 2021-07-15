@@ -23,7 +23,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test_svstep_1(self):
+    def test__svstep_1(self):
         lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1", # actual setvl (VF mode)
                         "setvl 0, 0, 1, 1, 0, 0", # svstep
                         "setvl 0, 0, 1, 1, 0, 0" # svstep
@@ -32,27 +32,27 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=4) which is going to get erased by setvl
         svstate = SVP64State()
-        svstate.vl[0:7] = 4 # VL
-        svstate.maxvl[0:7] = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
-            print ("        vl", bin(sim.svstate.vl.asint(True)))
-            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
-            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
-            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
-            self.assertEqual(sim.svstate.vl.asint(True), 10)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 10)
-            self.assertEqual(sim.svstate.srcstep.asint(True), 2)
-            self.assertEqual(sim.svstate.dststep.asint(True), 2)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            self.assertEqual(sim.svstate.vl, 10)
+            self.assertEqual(sim.svstate.maxvl, 10)
+            self.assertEqual(sim.svstate.srcstep, 2)
+            self.assertEqual(sim.svstate.dststep, 2)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
             print("      msr", bin(sim.msr.value))
             self.assertEqual(sim.msr, SelectableInt(1<<(63-6), 64))
 
-    def test_svstep_2(self):
+    def test__svstep_2(self):
         """tests svstep when it reaches VL
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",  # actual setvl (VF mode)
@@ -63,21 +63,21 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
-            print ("        vl", bin(sim.svstate.vl.asint(True)))
-            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
-            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
-            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
-            self.assertEqual(sim.svstate.vl.asint(True), 2)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 2)
-            self.assertEqual(sim.svstate.srcstep.asint(True), 0)
-            self.assertEqual(sim.svstate.dststep.asint(True), 0)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            self.assertEqual(sim.svstate.vl, 2)
+            self.assertEqual(sim.svstate.maxvl, 2)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
             # when end reached, vertical mode is exited
@@ -90,7 +90,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 0)
             self.assertEqual(CR0[CRFields.SO], 0)
 
-    def test_svstep_3(self):
+    def test__svstep_3(self):
         """tests svstep when it *doesn't* reach VL
         """
         lst = SVP64Asm(["setvl 0, 0, 3, 1, 1, 1",  # actual setvl (VF mode)
@@ -101,22 +101,22 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
-            print ("        vl", bin(sim.svstate.vl.asint(True)))
-            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
-            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
-            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
-            self.assertEqual(sim.svstate.vl.asint(True), 3)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 3)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            self.assertEqual(sim.svstate.vl, 3)
+            self.assertEqual(sim.svstate.maxvl, 3)
             # svstep called twice, didn't reach VL, so srcstep/dststep both 2
-            self.assertEqual(sim.svstate.srcstep.asint(True), 2)
-            self.assertEqual(sim.svstate.dststep.asint(True), 2)
+            self.assertEqual(sim.svstate.srcstep, 2)
+            self.assertEqual(sim.svstate.dststep, 2)
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
             print("      msr", bin(sim.msr.value))
@@ -129,7 +129,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.SO], 0)
 
 
-    def test_setvl_1(self):
+    def test__setvl_1(self):
         """straight setvl, testing if VL and MVL are over-ridden
         """
         lst = SVP64Asm(["setvl 1, 0, 10, 0, 1, 1",
@@ -138,22 +138,22 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2), want to see if these get changed
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
-            print ("        vl", bin(sim.svstate.vl.asint(True)))
-            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
-            self.assertEqual(sim.svstate.vl.asint(True), 10)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 10)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 10)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            self.assertEqual(sim.svstate.vl, 10)
+            self.assertEqual(sim.svstate.maxvl, 10)
+            self.assertEqual(sim.svstate.maxvl, 10)
             print("      gpr1", sim.gpr(1))
             self.assertEqual(sim.gpr(1), SelectableInt(10, 64))
 
-    def test_sv_add(self):
+    def test__sv_add(self):
         """sets VL=2 then adds:
            * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
            * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111
@@ -181,7 +181,7 @@ class DecoderTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, initial_regs)
             self._check_regs(sim, expected_regs)
 
-    def test_svstep_add_1(self):
+    def test__svstep_add_1(self):
         """tests svstep with an add, when it reaches VL
         lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
@@ -209,9 +209,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -228,15 +228,15 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
-            print ("        vl", bin(sim.svstate.vl.asint(True)))
-            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
-            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
-            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
-            self.assertEqual(sim.svstate.vl.asint(True), 2)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 2)
-            self.assertEqual(sim.svstate.srcstep.asint(True), 0)
-            self.assertEqual(sim.svstate.dststep.asint(True), 0)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            self.assertEqual(sim.svstate.vl, 2)
+            self.assertEqual(sim.svstate.maxvl, 2)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
             # when end reached, vertical mode is exited
             print("      msr", bin(sim.msr.value))
             self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
@@ -250,7 +250,7 @@ class DecoderTestCase(FHDLTestCase):
             # check registers as expected
             self._check_regs(sim, expected_regs)
 
-    def test_svstep_add_2(self):
+    def test__svstep_add_2(self):
         """tests svstep with a branch.
         lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
@@ -287,9 +287,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -306,15 +306,15 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
-            print ("        vl", bin(sim.svstate.vl.asint(True)))
-            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
-            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
-            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
-            self.assertEqual(sim.svstate.vl.asint(True), 2)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 2)
-            self.assertEqual(sim.svstate.srcstep.asint(True), 0)
-            self.assertEqual(sim.svstate.dststep.asint(True), 0)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            self.assertEqual(sim.svstate.vl, 2)
+            self.assertEqual(sim.svstate.maxvl, 2)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
             # when end reached, vertical mode is exited
             print("      msr", bin(sim.msr.value))
             self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
@@ -337,15 +337,15 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program)
-            svremap = sim.spr('SVREMAP')
+            svremap = sim.svstate
             print ("SVREMAP after", bin(svremap.value))
-            print ("        men", bin(svremap.men))
+            print ("        men", bin(svremap.SVme))
             print ("        mi0", bin(svremap.mi0))
             print ("        mi1", bin(svremap.mi1))
             print ("        mi2", bin(svremap.mi2))
             print ("        mo0", bin(svremap.mo0))
             print ("        mo1", bin(svremap.mo1))
-            self.assertEqual(svremap.men, 11)
+            self.assertEqual(svremap.SVme, 11)
             self.assertEqual(svremap.mi0, 0)
             self.assertEqual(svremap.mi1, 1)
             self.assertEqual(svremap.mi2, 2)

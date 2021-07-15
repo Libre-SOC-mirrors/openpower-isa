@@ -32,9 +32,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         # memory addresses 0x0000 and 0x0008
         initial_mem = {0x0000: (0x42013333, 8), # 32.3
@@ -99,9 +99,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         # memory addresses 0x0000 and 0x0008
         initial_mem = {0x0000: (0x42013333, 8), # 32.3
@@ -147,9 +147,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -179,9 +179,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,

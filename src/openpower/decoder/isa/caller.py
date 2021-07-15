@@ -36,7 +36,7 @@ from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.decoder.isa.mem import Mem, swap_order, MemException
 from openpower.decoder.isa.svshape import SVSHAPE
-from openpower.decoder.isa.svremap import SVREMAP
+from openpower.decoder.isa.svstate import SVP64State
 
 
 from openpower.util import log
@@ -76,7 +76,6 @@ REG_SORT_ORDER = {
     "TAR": 0,
     "MSR": 0,
     "SVSTATE": 0,
-    "SVREMAP": 0,
     "SVSHAPE0": 0,
     "SVSHAPE1": 0,
     "SVSHAPE2": 0,
@@ -248,19 +247,6 @@ class PC:
         self.update_nia(is_svp64)
         namespace['CIA'] = self.CIA
         namespace['NIA'] = self.NIA
-
-
-# Simple-V: see https://libre-soc.org/openpower/sv
-class SVP64State:
-    def __init__(self, init=0):
-        self.spr = SelectableInt(init, 64)
-        # fields of SVSTATE, see https://libre-soc.org/openpower/sv/sprs/
-        self.maxvl = FieldSelectableInt(self.spr, tuple(range(0,7)))
-        self.vl = FieldSelectableInt(self.spr, tuple(range(7,14)))
-        self.srcstep = FieldSelectableInt(self.spr, tuple(range(14,21)))
-        self.dststep = FieldSelectableInt(self.spr, tuple(range(21,28)))
-        self.subvl = FieldSelectableInt(self.spr, tuple(range(28,30)))
-        self.svstep = FieldSelectableInt(self.spr, tuple(range(30,32)))
 
 
 # SVP64 ReMap field
@@ -615,13 +601,6 @@ class ISACaller:
                 val = self.spr[sname].value
                 self.spr[sname] = SVSHAPE(val)
         self.last_op_svshape = False
-        # and an SVREMAP
-        if 'SVREMAP' not in self.spr:
-            self.spr['SVREMAP'] = SVREMAP(0)
-        else:
-            # make sure it's an SVREMAP
-            val = self.spr['SVREMAP'].value
-            self.spr['SVREMAP'] = SVREMAP(val)
 
         # "raw" memory
         self.mem = Mem(row_bytes=8, initial_mem=initial_mem)
@@ -661,8 +640,7 @@ class ISACaller:
                                'memassign': self.memassign,
                                'NIA': self.pc.NIA,
                                'CIA': self.pc.CIA,
-                               'SVSTATE': self.svstate.spr,
-                               'SVREMAP': self.spr['SVREMAP'],
+                               'SVSTATE': self.svstate,
                                'SVSHAPE0': self.spr['SVSHAPE0'],
                                'SVSHAPE1': self.spr['SVSHAPE1'],
                                'SVSHAPE2': self.spr['SVSHAPE2'],
@@ -763,8 +741,8 @@ class ISACaller:
         self.namespace['CA32'] = self.spr['XER'][XER_bits['CA32']].value
 
         # add some SVSTATE convenience variables
-        vl = self.svstate.vl.asint(msb0=True)
-        srcstep = self.svstate.srcstep.asint(msb0=True)
+        vl = self.svstate.vl
+        srcstep = self.svstate.srcstep
         self.namespace['VL'] = vl
         self.namespace['srcstep'] = srcstep
 
@@ -916,7 +894,7 @@ class ISACaller:
         yield self.dec2.state.msr.eq(self.msr.value)
         yield self.dec2.state.pc.eq(pc)
         if self.svstate is not None:
-            yield self.dec2.state.svstate.eq(self.svstate.spr.value)
+            yield self.dec2.state.svstate.eq(self.svstate.value)
 
         # SVP64.  first, check if the opcode is EXT001, and SVP64 id bits set
         yield Settle()
@@ -932,14 +910,14 @@ class ISACaller:
         self.pc.update_nia(self.is_svp64_mode)
         yield self.dec2.is_svp64_mode.eq(self.is_svp64_mode) # set SVP64 decode
         self.namespace['NIA'] = self.pc.NIA
-        self.namespace['SVSTATE'] = self.svstate.spr
+        self.namespace['SVSTATE'] = self.svstate
         if not self.is_svp64_mode:
             return
 
         # in SVP64 mode.  decode/print out svp64 prefix, get v3.0B instruction
         log ("svp64.rm", bin(pfx.rm.asint(msb0=True)))
-        log ("    svstate.vl", self.svstate.vl.asint(msb0=True))
-        log ("    svstate.mvl", self.svstate.maxvl.asint(msb0=True))
+        log ("    svstate.vl", self.svstate.vl)
+        log ("    svstate.mvl", self.svstate.maxvl)
         sv_rm = pfx.rm.asint(msb0=True)
         ins = self.imem.ld(pc+4, 4, False, True, instr_fetch=True)
         log("     svsetup: 0x%x 0x%x %s" % (pc+4, ins & 0xffffffff, bin(ins)))
@@ -1164,7 +1142,7 @@ class ISACaller:
             srcstep, dststep = self.new_srcstep, self.new_dststep
             pred_dst_zero = self.pred_dst_zero
             pred_src_zero = self.pred_src_zero
-            vl = self.svstate.vl.asint(msb0=True)
+            vl = self.svstate.vl
 
         # VL=0 in SVP64 mode means "do nothing: skip instruction"
         if self.is_svp64_mode and vl == 0:
@@ -1173,11 +1151,9 @@ class ISACaller:
                                        self.namespace['NIA'])
             return
 
-        # get the REMAP SPR
-        SVREMAP = self.spr['SVREMAP']
         # for when SVREMAP is active, using pre-arranged schedule.
         # note: modifying PowerDecoder2 needs to "settle"
-        remap_en = SVREMAP.men
+        remap_en = self.svstate.SVme
         active = self.last_op_svshape and remap_en != 0
         yield self.dec2.remap_active.eq(remap_en if active else 0)
         yield Settle()
@@ -1197,11 +1173,16 @@ class ISACaller:
                 log ("    skip", shape.skip)
 
             # set up the list of steps to remap
-            steps = [(self.dec2.in1_step, SVREMAP.mi0), # RA
-                     (self.dec2.in2_step, SVREMAP.mi1), # RB
-                     (self.dec2.in3_step, SVREMAP.mi2), # RC
-                     (self.dec2.o_step, SVREMAP.mo0),   # RT
-                     (self.dec2.o2_step, SVREMAP.mo1),   # EA
+            mi0 = self.svstate.mi0
+            mi1 = self.svstate.mi1
+            mi2 = self.svstate.mi2
+            mo0 = self.svstate.mo0
+            mo1 = self.svstate.mo1
+            steps = [(self.dec2.in1_step, mi0), # RA
+                     (self.dec2.in2_step, mi1), # RB
+                     (self.dec2.in3_step, mi2), # RC
+                     (self.dec2.o_step, mo0),   # RT
+                     (self.dec2.o2_step, mo1),   # EA
                     ]
             # set up the iterators
             remaps = [(SVSHAPE0, SVSHAPE0.get_iterator()),
@@ -1477,7 +1458,7 @@ class ISACaller:
             else:
                 log ("SVSTATE_NEXT: post-inc")
                 srcstep, dststep = self.new_srcstep, self.new_dststep
-                vl = self.svstate.vl.asint(msb0=True)
+                vl = self.svstate.vl
                 end_src = srcstep == vl-1
                 end_dst = dststep == vl-1
                 if not end_src:
@@ -1487,8 +1468,8 @@ class ISACaller:
                 self.namespace['SVSTATE'] = self.svstate.spr
                 # set CR0 (if Rc=1) based on end
                 if rc_en:
-                    srcstep = self.svstate.srcstep.asint(msb0=True)
-                    dststep = self.svstate.srcstep.asint(msb0=True)
+                    srcstep = self.svstate.srcstep
+                    dststep = self.svstate.srcstep
                     endtest = 0 if (end_src or end_dst) else 1
                     results = [SelectableInt(endtest, 64)]
                     self.handle_comparison(results) # CR0
@@ -1522,9 +1503,9 @@ class ISACaller:
         """check if srcstep/dststep need to skip over masked-out predicate bits
         """
         # get SVSTATE VL (oh and print out some debug stuff)
-        vl = self.svstate.vl.asint(msb0=True)
-        srcstep = self.svstate.srcstep.asint(msb0=True)
-        dststep = self.svstate.dststep.asint(msb0=True)
+        vl = self.svstate.vl
+        srcstep = self.svstate.srcstep
+        dststep = self.svstate.dststep
         sv_a_nz = yield self.dec2.sv_a_nz
         fft_mode = yield self.dec2.use_svp64_fft
         in1 = yield self.dec2.e.read_reg1.data
@@ -1588,14 +1569,14 @@ class ISACaller:
         srcstep, dststep = self.new_srcstep, self.new_dststep
 
         # update SVSTATE with new srcstep
-        self.svstate.srcstep[0:7] = srcstep
-        self.svstate.dststep[0:7] = dststep
-        self.namespace['SVSTATE'] = self.svstate.spr
-        yield self.dec2.state.svstate.eq(self.svstate.spr.value)
+        self.svstate.srcstep = srcstep
+        self.svstate.dststep = dststep
+        self.namespace['SVSTATE'] = self.svstate
+        yield self.dec2.state.svstate.eq(self.svstate.value)
         yield Settle() # let decoder update
-        srcstep = self.svstate.srcstep.asint(msb0=True)
-        dststep = self.svstate.dststep.asint(msb0=True)
-        vl = self.svstate.vl.asint(msb0=True)
+        srcstep = self.svstate.srcstep
+        dststep = self.svstate.dststep
+        vl = self.svstate.vl
         log ("    srcstep", srcstep)
         log ("    dststep", dststep)
         log ("         vl", vl)
@@ -1614,10 +1595,10 @@ class ISACaller:
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
         # XXX twin predication TODO
-        vl = self.svstate.vl.asint(msb0=True)
-        mvl = self.svstate.maxvl.asint(msb0=True)
-        srcstep = self.svstate.srcstep.asint(msb0=True)
-        dststep = self.svstate.dststep.asint(msb0=True)
+        vl = self.svstate.vl
+        mvl = self.svstate.maxvl
+        srcstep = self.svstate.srcstep
+        dststep = self.svstate.dststep
         rm_mode = yield self.dec2.rm_dec.mode
         reverse_gear = yield self.dec2.rm_dec.reverse_gear
         sv_ptype = yield self.dec2.dec.op.SV_Ptype
@@ -1645,7 +1626,7 @@ class ISACaller:
             self.svstate.dststep += SelectableInt(1, 7)
             self.pc.NIA.value = self.pc.CIA.value
             self.namespace['NIA'] = self.pc.NIA
-            self.namespace['SVSTATE'] = self.svstate.spr
+            self.namespace['SVSTATE'] = self.svstate
             log("end of sub-pc call", self.namespace['CIA'],
                                  self.namespace['NIA'])
             return False # DO NOT allow PC update whilst Sub-PC loop running
@@ -1665,10 +1646,10 @@ class ISACaller:
                              self.namespace['SVSTATE'])
 
     def svp64_reset_loop(self):
-        self.svstate.srcstep[0:7] = 0
-        self.svstate.dststep[0:7] = 0
+        self.svstate.srcstep = 0
+        self.svstate.dststep = 0
         log ("    svstate.srcstep loop end (PC to update)")
-        self.namespace['SVSTATE'] = self.svstate.spr
+        self.namespace['SVSTATE'] = self.svstate
 
     def update_nia(self):
         self.pc.update_nia(self.is_svp64_mode)

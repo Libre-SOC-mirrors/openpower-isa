@@ -48,9 +48,9 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         initial_regs[10] = 0x90  # this gets skipped
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2  # VL
-        svstate.maxvl[0:7] = 2  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -85,9 +85,9 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x92  # source r3 is 0b101 so this will be used
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -122,9 +122,9 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x92  # the VL loop runs out before we can use it
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -158,9 +158,9 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x92  # VL loop runs out before we can use it
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -210,12 +210,12 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl[0:7] = 4  # VL
-        svstate.maxvl[0:7] = 4  # MAXVL
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
         # set src/dest step on the middle of the loop
-        svstate.srcstep[0:7] = 1
-        svstate.dststep[0:7] = 2
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.srcstep = 1
+        svstate.dststep = 2
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -254,9 +254,9 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x92  # 3rd bit of r30 is 1
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -291,9 +291,9 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x92  # r3 is 2, so this will be used
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -351,12 +351,12 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         cr.crl[7][CRFields.LT] = 1
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl[0:7] = 4  # VL
-        svstate.maxvl[0:7] = 4  # MAXVL
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
         # set src/dest step on the middle of the loop
-        svstate.srcstep[0:7] = 1
-        svstate.dststep[0:7] = 2
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.srcstep = 1
+        svstate.dststep = 2
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate, initial_cr=cr.cr.asint())
@@ -382,9 +382,9 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         initial_regs[10] = 0x90  # this gets read but the output gets zero'd
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)

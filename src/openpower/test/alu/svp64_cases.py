@@ -26,9 +26,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2  # VL
-        svstate.maxvl[0:7] = 2  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -49,9 +49,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[5] = 0x4321
         svstate = SVP64State()
         # SVSTATE (in this case, VL=1, so everything works as in v3.0B)
-        svstate.vl[0:7] = 1  # VL
-        svstate.maxvl[0:7] = 1  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 1  # VL
+        svstate.maxvl = 1  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -78,9 +78,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[10] = 0x1230
         svstate = SVP64State()
         # SVSTATE (in this case, VL=1, so everything works as in v3.0B)
-        svstate.vl[0:7] = 1  # VL
-        svstate.maxvl[0:7] = 1  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 1  # VL
+        svstate.maxvl = 1  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -105,9 +105,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2  # VL
-        svstate.maxvl[0:7] = 2  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -136,9 +136,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[10] = 0x1230
         svstate = SVP64State()
         # SVSTATE (in this case, VL=0, so vector instructions are skipped)
-        svstate.vl[0:7] = 0  # VL
-        svstate.maxvl[0:7] = 0  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 0  # VL
+        svstate.maxvl = 0  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -175,9 +175,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[7] = 0x1230
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -201,9 +201,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2  # VL
-        svstate.maxvl[0:7] = 2  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
 
@@ -226,9 +226,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2  # VL
-        svstate.maxvl[0:7] = 2  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
 
@@ -272,9 +272,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[8] = 0x8051
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -320,9 +320,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[8] = 0x8051
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
@@ -351,9 +351,9 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2  # VL
-        svstate.maxvl[0:7] = 2  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         # set up CR predicate - CR4.eq=1 and CR5.eq=0
         cr = 0b0010 << ((7-4)*4)  # CR4.eq (we hope)

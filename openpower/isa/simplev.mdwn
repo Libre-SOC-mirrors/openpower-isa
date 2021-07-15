@@ -47,12 +47,12 @@ SVRM-Form
 Pseudo-code:
 
     # place into SVREMAP SPR
-    SVREMAP[10:14] <- SVme
-    SVREMAP[0:1] <- mi0
-    SVREMAP[2:3] <- mi1
-    SVREMAP[4:5] <- mi2
-    SVREMAP[6:7] <- mo0
-    SVREMAP[8:9] <- mo1
+    SVSTATE[42:46] <- SVme
+    SVSTATE[32:33] <- mi0
+    SVSTATE[34:35] <- mi1
+    SVSTATE[36:37] <- mi2
+    SVSTATE[38:39] <- mo0
+    SVSTATE[40:41] <- mo1
 
 Special Registers Altered:
 

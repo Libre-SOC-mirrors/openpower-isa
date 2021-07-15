@@ -76,15 +76,8 @@ class DecoderTestCase(FHDLTestCase):
             #print ("FFT", i, "in", a, b, "coeff", c, "mul",
             #       mul, "res", t, u)
 
-        # SVSTATE (in this case, VL=12, to cover all of matrix)
-        svstate = SVP64State()
-        svstate.vl[0:7] = 12 # VL
-        svstate.maxvl[0:7] = 12 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
-
         with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, svstate=svstate,
-                                       initial_fprs=fprs)
+            sim = self.run_tst_program(program, initial_fprs=fprs)
             print ("spr svshape0", sim.spr['SVSHAPE0'])
             print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
             print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)

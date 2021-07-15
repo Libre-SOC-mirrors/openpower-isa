@@ -244,9 +244,9 @@ class FFTTestCase(FHDLTestCase):
 
         # SVSTATE (calculated VL)
         svstate = SVP64State()
-        svstate.vl[0:7] = VL # VL
-        svstate.maxvl[0:7] = VL # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = VL # VL
+        svstate.maxvl = VL # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -348,9 +348,9 @@ class FFTTestCase(FHDLTestCase):
 
         # SVSTATE (calculated VL)
         svstate = SVP64State()
-        svstate.vl[0:7] = VL # VL
-        svstate.maxvl[0:7] = VL # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = VL # VL
+        svstate.maxvl = VL # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -421,9 +421,9 @@ class FFTTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 4 # VL
-        svstate.maxvl[0:7] = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -466,9 +466,9 @@ class FFTTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 4 # VL
-        svstate.maxvl[0:7] = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -573,9 +573,9 @@ class FFTTestCase(FHDLTestCase):
 
         # SVSTATE (calculated VL)
         svstate = SVP64State()
-        svstate.vl[0:7] = VL # VL
-        svstate.maxvl[0:7] = VL # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = VL # VL
+        svstate.maxvl = VL # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -643,9 +643,9 @@ class FFTTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 4 # VL
-        svstate.maxvl[0:7] = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,

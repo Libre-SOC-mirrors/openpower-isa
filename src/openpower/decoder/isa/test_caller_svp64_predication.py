@@ -32,9 +32,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
@@ -76,9 +76,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[10] = 0x90  # this gets skipped
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0x0                   # dest r3 is 0b10: skip
@@ -104,9 +104,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[10] = 0x90  # this gets read but the output gets zero'd
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0xffff_ffff_ffff_ff91 # dest r3 is 0b01: store
@@ -142,9 +142,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = 0xbeef
@@ -172,9 +172,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = 0xbeef
@@ -209,9 +209,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[11] = 0x92  # source r3 is 0b101 so this will be used
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0xffff_ffff_ffff_ff90  # (from r9)
@@ -243,9 +243,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[11] = 0x92  # the VL loop runs out before we can use it
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0xffff_ffff_ffff_ff90  # 1st bit of r3 is 1
@@ -276,9 +276,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[11] = 0x92  # VL loop runs out before we can use it
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0x0  # dest ~r3 is 0b010: skip
@@ -318,12 +318,12 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl[0:7] = 4  # VL
-        svstate.maxvl[0:7] = 4  # MAXVL
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
         # set src/dest step on the middle of the loop
-        svstate.srcstep[0:7] = 1
-        svstate.dststep[0:7] = 2
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.srcstep = 1
+        svstate.dststep = 2
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0x0  # skip
@@ -356,9 +356,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[11] = 0x92  # 3rd bit of r30 is 1
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0x0  # skip
@@ -390,9 +390,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[11] = 0x92  # r3 is 2, so this will be used
         # SVSTATE (in this case, VL=3)
         svstate = SVP64State()
-        svstate.vl[0:7] = 3  # VL
-        svstate.maxvl[0:7] = 3  # MAXVL
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0x0  # skip
@@ -436,12 +436,12 @@ class DecoderTestCase(FHDLTestCase):
         cr.crl[7][CRFields.LT] = 1
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl[0:7] = 4  # VL
-        svstate.maxvl[0:7] = 4  # MAXVL
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
         # set src/dest step on the middle of the loop
-        svstate.srcstep[0:7] = 1
-        svstate.dststep[0:7] = 2
-        print("SVSTATE", bin(svstate.spr.asint()))
+        svstate.srcstep = 1
+        svstate.dststep = 2
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[5] = 0x0  # skip

@@ -49,11 +49,11 @@ class SVSTATETestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=3, and src/dststep set ALREADY to 1)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        svstate.srcstep[0:7] = 1 # srcstep
-        svstate.dststep[0:7] = 1 # srcstep
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        svstate.srcstep = 1 # srcstep
+        svstate.dststep = 1 # srcstep
+        print ("SVSTATE", bin(svstate.asint()))
 
         # copy before running
         expected_regs = deepcopy(initial_regs)
@@ -108,9 +108,9 @@ class SVSTATETestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -128,15 +128,15 @@ class SVSTATETestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.spr.asint()))
-            print ("        vl", bin(sim.svstate.vl.asint(True)))
-            print ("        mvl", bin(sim.svstate.maxvl.asint(True)))
-            print ("    srcstep", bin(sim.svstate.srcstep.asint(True)))
-            print ("    dststep", bin(sim.svstate.dststep.asint(True)))
-            self.assertEqual(sim.svstate.vl.asint(True), 2)
-            self.assertEqual(sim.svstate.maxvl.asint(True), 2)
-            self.assertEqual(sim.svstate.srcstep.asint(True), 0)
-            self.assertEqual(sim.svstate.dststep.asint(True), 0)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            self.assertEqual(sim.svstate.vl, 2)
+            self.assertEqual(sim.svstate.maxvl, 2)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
             # when end reached, vertical mode is exited
             print("      msr", bin(sim.msr.value)) # should be zero
             self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
