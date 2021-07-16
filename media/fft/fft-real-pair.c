@@ -46,6 +46,33 @@ bool Fft_inverseTransform(float real[], float imag[], size_t n) {
 }
 
 
+/* looking to replace this with assembler, so limit it to n <= 8 */
+void Fft_transformRadixL8(float real[], float imag[],
+                          float cos_table[], float sin_table[],
+                          size_t n)
+{
+    size_t size = (n / 2) * sizeof(float);
+
+    // Cooley-Tukey decimation-in-time radix-2 FFT
+    for (size_t size = 2; size <= n; size *= 2) {
+        size_t halfsize = size / 2;
+        size_t tablestep = n / size;
+        for (size_t i = 0; i < n; i += size) {
+            for (size_t j = i, k = 0; j < i + halfsize; j++, k += tablestep) {
+                size_t l = j + halfsize;
+                float tpre =  real[l] * cos_table[k] + imag[l] * sin_table[k];
+                float tpim = -real[l] * sin_table[k] + imag[l] * cos_table[k];
+                real[l] = real[j] - tpre;
+                imag[l] = imag[j] - tpim;
+                real[j] += tpre;
+                imag[j] += tpim;
+            }
+        }
+        if (size == n)  // Prevent overflow in 'size *= 2'
+            break;
+    }
+}
+
 bool Fft_transformRadix2(float real[], float imag[], size_t n) {
     // Length variables
     bool status = false;
@@ -81,23 +108,27 @@ bool Fft_transformRadix2(float real[], float imag[], size_t n) {
         }
     }
 
-    // Cooley-Tukey decimation-in-time radix-2 FFT
-    for (size_t size = 2; size <= n; size *= 2) {
-        size_t halfsize = size / 2;
-        size_t tablestep = n / size;
-        for (size_t i = 0; i < n; i += size) {
-            for (size_t j = i, k = 0; j < i + halfsize; j++, k += tablestep) {
-                size_t l = j + halfsize;
-                float tpre =  real[l] * cos_table[k] + imag[l] * sin_table[k];
-                float tpim = -real[l] * sin_table[k] + imag[l] * cos_table[k];
-                real[l] = real[j] - tpre;
-                imag[l] = imag[j] - tpim;
-                real[j] += tpre;
-                imag[j] += tpim;
+    if (n <= 8) {
+        Fft_transformRadixL8(real, imag, cos_table, sin_table, n);
+    } else {
+        // Cooley-Tukey decimation-in-time radix-2 FFT
+        for (size_t size = 2; size <= n; size *= 2) {
+            size_t halfsize = size / 2;
+            size_t tablestep = n / size;
+            for (size_t i = 0; i < n; i += size) {
+                for (size_t j = i, k = 0; j < i + halfsize; j++, k += tablestep) {
+                    size_t l = j + halfsize;
+                    float tpre =  real[l] * cos_table[k] + imag[l] * sin_table[k];
+                    float tpim = -real[l] * sin_table[k] + imag[l] * cos_table[k];
+                    real[l] = real[j] - tpre;
+                    imag[l] = imag[j] - tpim;
+                    real[j] += tpre;
+                    imag[j] += tpim;
+                }
             }
+            if (size == n)  // Prevent overflow in 'size *= 2'
+                break;
         }
-        if (size == n)  // Prevent overflow in 'size *= 2'
-            break;
     }
     status = true;
 
