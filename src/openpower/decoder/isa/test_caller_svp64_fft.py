@@ -534,10 +534,10 @@ class FFTTestCase(FHDLTestCase):
                 "svremap 31, 1, 0, 2, 0, 1, 1",
         """
         lst = SVP64Asm( [
-                        # set triple butterfly mode
+                        # set triple butterfly mode with "REMAP" schedule
                         "svshape 8, 1, 1, 1, 1",
-                        # tpre
                         "svremap 31, 1, 0, 2, 0, 1, 1",
+                        # tpre
                         "sv.fmuls 24, 0.v, 16.v",    # mul1_r = r*cos_r
                         "sv.fmadds 24, 8.v, 20.v, 24", # mul2_r = i*sin_i
                                                      # tpre = mul1_r + mul2_r
