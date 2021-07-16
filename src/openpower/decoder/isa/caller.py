@@ -1087,6 +1087,14 @@ class ISACaller:
             illegal = False
             name = 'svshape'
 
+        # and fsin and fcos
+        if asmop == 'fsins':
+            illegal = False
+            name = 'fsins'
+        if asmop == 'fcoss':
+            illegal = False
+            name = 'fcoss'
+
         # sigh also deal with ffmadds not being supported by binutils (.long)
         if asmop == 'ffmadds':
             illegal = False

@@ -230,6 +230,36 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
+        # and fsins
+        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+        # however we are out of space with opcode 22
+        if opcode.startswith('fsins'):
+            fields = list(map(int, fields))
+            insn = 59            << (31-5)  # opcode 59, bits 0-5
+            insn |= fields[0]    << (31-10) # RT       , bits 6-10
+            insn |= fields[1]    << (31-20) # RB       , bits 16-20
+            insn |= 0b1000001100 << (31-30) # XO       , bits 21..30
+            if opcode == 'fsins.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log ("fsins", bin(insn))
+            yield ".long 0x%x" % insn
+            return
+
+        # and fcoss
+        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+        # however we are out of space with opcode 22
+        if opcode.startswith('fcoss'):
+            fields = list(map(int, fields))
+            insn = 59            << (31-5)  # opcode 59, bits 0-5
+            insn |= fields[0]    << (31-10) # RT       , bits 6-10
+            insn |= fields[1]    << (31-20) # RB       , bits 16-20
+            insn |= 0b1000101100 << (31-30) # XO       , bits 21..30
+            if opcode == 'fsins.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log ("fsins", bin(insn))
+            yield ".long 0x%x" % insn
+            return
+
         # identify if is a svp64 mnemonic
         if not opcode.startswith('sv.'):
             yield insn  # unaltered

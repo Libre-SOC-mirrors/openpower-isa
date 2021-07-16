@@ -5,6 +5,8 @@
 <!-- FRS is automatically calculated by SVP64 to FRT+VL (default elwidth) -->
 <!-- (Vector FRS data sequentially starts immediately after FRT vectors) -->
 
+<!-- PLEASE NOTE THESE ARE UNAPPROVED AND DRAFT, NOT SUBMITTED TO OPF ISA WG -->
+
 # Floating Add FFT/DCT [Single]
 
 A-Form
@@ -225,6 +227,42 @@ Pseudo-code:
 
     FRT <- FPMULADD32(FRA, FRC, FRB, -1, 1)
     FRS <- FPMULADD32(FRA, FRC, FRB, 1, 1)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# Floating SIN [Single]
+
+X-Form
+
+* fsins FRT,FRB (Rc=0)
+* fsins. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- FPSIN32(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# Floating COS [Single]
+
+X-Form
+
+* fcoss FRT,FRB (Rc=0)
+* fcoss. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- FPCOS32(FRB)
 
 Special Registers Altered:
 

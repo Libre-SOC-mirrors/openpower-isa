@@ -247,6 +247,7 @@ _insns = [
     "ffmsubs", "ffmadds", "ffnmsubs", "ffnmadds",       # FFT FP 3-arg
     "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
+    "fsins", "fcoss",                                   # FP SIN/COS
     "hrfid", "icbi", "icbt", "isel", "isync",
     "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
     "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double

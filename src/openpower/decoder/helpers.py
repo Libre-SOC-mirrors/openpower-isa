@@ -9,6 +9,7 @@ from openpower.decoder.selectable_int import selectgtu as gtu
 from openpower.decoder.selectable_int import check_extsign
 
 from openpower.util import log
+import math
 
 trunc_div = floordiv
 trunc_rem = mod
@@ -258,6 +259,26 @@ def fp64toselectable(frt):
     b = struct.pack(">d", frt)
     val = int.from_bytes(b, byteorder='big', signed=False)
     return SelectableInt(val, 64)
+
+
+def FPSIN32(FRB):
+    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+    #FRB = DOUBLE(SINGLE(FRB))
+    result = math.sin(float(FRB))
+    cvt = fp64toselectable(result)
+    cvt = DOUBLE2SINGLE(cvt)
+    log ("FPSIN32", FRB, float(FRB), "=", result, cvt)
+    return cvt
+
+
+def FPCOS32(FRB):
+    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+    #FRB = DOUBLE(SINGLE(FRB))
+    result = math.cos(float(FRB))
+    cvt = fp64toselectable(result)
+    cvt = DOUBLE2SINGLE(cvt)
+    log ("FPCOS32", FRB, float(FRB), "=", result, cvt)
+    return cvt
 
 
 def FPADD32(FRA, FRB):
