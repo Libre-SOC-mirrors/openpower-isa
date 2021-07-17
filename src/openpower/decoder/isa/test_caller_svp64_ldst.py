@@ -13,6 +13,7 @@ from openpower.decoder.isa.all import ISA
 from openpower.decoder.isa.test_caller import Register, run_tst
 from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.consts import SVP64CROffs
+from openpower.decoder.helpers import fp64toselectable
 from copy import deepcopy
 
 
@@ -21,6 +22,10 @@ class DecoderTestCase(FHDLTestCase):
     def _check_regs(self, sim, expected):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
+
+    def _check_fpregs(self, sim, expected):
+        for i in range(32):
+            self.assertEqual(sim.fpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_load_store_elementstride(self):
         """>>> lst = ["addi 1, 0, 0x0010",
@@ -119,7 +124,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
                         "sv.stw 5.v, 0(1)",
-                        "sv.lwzbr 9.v, 4(1), 2"]
+                        "sv.lwzbr 12.v, 4(1), 2"]
 
         note: bitreverse mode is... odd.  it's the butterfly generator
         from Cooley-Tukey FFT:
@@ -142,14 +147,14 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
                         "sv.stw 5.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
-                        "sv.lwzbr 9.v, 4(1), 2"]) # bit-reversed
+                        "sv.lwzbr 12.v, 4(1), 2"]) # bit-reversed
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl[0:7] = 4 # VL
-        svstate.maxvl[0:7] = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
@@ -174,16 +179,81 @@ class DecoderTestCase(FHDLTestCase):
             #    r10 => mem[0x18] which was stored from r6
             #    r11 => mem[0x18] which was stored from r7
             #    r12 => mem[0x1c] which was stored from r8
-            self.assertEqual(sim.gpr(9), SelectableInt(0x101, 64))
-            self.assertEqual(sim.gpr(10), SelectableInt(0x303, 64))
-            self.assertEqual(sim.gpr(11), SelectableInt(0x202, 64))
-            self.assertEqual(sim.gpr(12), SelectableInt(0x404, 64))
+            self.assertEqual(sim.gpr(12), SelectableInt(0x101, 64))
+            self.assertEqual(sim.gpr(13), SelectableInt(0x303, 64))
+            self.assertEqual(sim.gpr(14), SelectableInt(0x202, 64))
+            self.assertEqual(sim.gpr(15), SelectableInt(0x404, 64))
+
+    def test_sv_load_store_bitreverse(self):
+        """>>> lst = ["addi 1, 0, 0x0010",
+                        "addi 2, 0, 0x0004",
+                        "addi 3, 0, 0x0002",
+                        "sv.stfs 4.v, 0(1)",
+                        "sv.lfsbr 12.v, 4(1), 2"]
+
+        note: bitreverse mode is... odd.  it's the butterfly generator
+        from Cooley-Tukey FFT:
+        https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
+
+        bitreverse LD is computed as:
+        for i in range(VL):
+            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
+
+        bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
+        produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
+
+        and thus creates the butterfly needed for one iteration of FFT.
+        the RC (shift) is to be able to offset the LDs by Radix-2 spans
+        """
+        lst = SVP64Asm(["addi 1, 0, 0x0010",
+                        "addi 2, 0, 0x0000",
+                        "sv.stfs 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "sv.lfsbr 12.v, 4(1), 2"]) # bit-reversed
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=4)
+        svstate = SVP64State()
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        fprs = [0] * 32
+        scalar_a = 1.3
+        scalar_b = -2.0
+        fprs[4] = fp64toselectable(1.0)
+        fprs[5] = fp64toselectable(2.0)
+        fprs[6] = fp64toselectable(3.0)
+        fprs[7] = fp64toselectable(4.0)
+
+        # expected results, remember that bit-reversed load has been done
+        expected_fprs = deepcopy(fprs)
+        expected_fprs[12] = fprs[4] # 0b00 -> 0b00
+        expected_fprs[13] = fprs[6] # 0b01 -> 0b10
+        expected_fprs[14] = fprs[5] # 0b10 -> 0b01
+        expected_fprs[15] = fprs[7] # 0b11 -> 0b11
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                                initial_fprs=fprs)
+            mem = sim.mem.dump(printout=False)
+            print ("mem dump")
+            print (mem)
+
+            print ("FPRs")
+            sim.fpr.dump()
+
+            #self.assertEqual(mem, [(16, 0x020200000101),
+            #                       (24, 0x040400000303)])
+            self._check_fpregs(sim, expected_fprs)
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None):
+                              svstate=None, initial_fprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
-        simulator = run_tst(prog, initial_regs, svstate=svstate)
+        if initial_fprs is None:
+            initial_fprs = [0] * 32
+        simulator = run_tst(prog, initial_regs, svstate=svstate,
+                                  initial_fprs=initial_fprs)
         simulator.gpr.dump()
         return simulator
 

@@ -1036,6 +1036,10 @@ if __name__ == '__main__':
              'svshape 8, 1, 1, 1, 0',
              'svshape 8, 1, 1, 1, 1',
             ]
+    lst = [
+             'sv.lfsbr 4.v, 11(8.v), 15',
+             #'sv.lwzbr 4.v, 11(8.v), 15',
+        ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))
     csvs = SVP64RM()

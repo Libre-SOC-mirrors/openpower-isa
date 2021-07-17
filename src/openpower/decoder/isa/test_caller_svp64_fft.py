@@ -13,7 +13,7 @@ from openpower.decoder.helpers import fp64toselectable
 from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
 
 
-def transform_radix2(vec, exptable):
+def transform_radix2(vec, exptable, reverse=False):
     """
     # FFT and convolution test (Python), based on Project Nayuki
     #
@@ -34,7 +34,8 @@ def transform_radix2(vec, exptable):
     levels = n.bit_length() - 1
 
     # Copy with bit-reversed permutation
-    #vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+    if reverse:
+        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
     size = 2
     while size <= n:
@@ -61,7 +62,7 @@ def transform_radix2(vec, exptable):
     return vec
 
 
-def transform_radix2_complex(vec_r, vec_i, cos_r, sin_i):
+def transform_radix2_complex(vec_r, vec_i, cos_r, sin_i, reverse=False):
     """
     # FFT and convolution test (Python), based on Project Nayuki
     #
@@ -82,7 +83,8 @@ def transform_radix2_complex(vec_r, vec_i, cos_r, sin_i):
     levels = n.bit_length() - 1
 
     # Copy with bit-reversed permutation
-    #vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+    if reverse:
+        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
     size = 2
     while size <= n:
@@ -534,7 +536,7 @@ class FFTTestCase(FHDLTestCase):
                 "svremap 31, 1, 0, 2, 0, 1, 1",
         """
         lst = SVP64Asm( [
-                        # set triple butterfly mode with "REMAP" schedule
+                        # set triple butterfly mode with persistent "REMAP"
                         "svshape 8, 1, 1, 1, 1",
                         "svremap 31, 1, 0, 2, 0, 1, 1",
                         # tpre
@@ -677,6 +679,70 @@ class FFTTestCase(FHDLTestCase):
             for i, (t, u) in enumerate(res):
                 self.assertEqual(sim.fpr(i+2), t)
                 self.assertEqual(sim.fpr(i+6), u)
+
+    def test_sv_remap_fpmadds_fft_ldst(self):
+        """>>> lst = ["svshape 8, 1, 1, 1, 0",
+                     "svremap 31, 1, 0, 2, 0, 1, 0",
+                      "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
+                     ]
+            runs a full in-place O(N log2 N) butterfly schedule for
+            Discrete Fourier Transform, using bit-reversed LD/ST
+        """
+        lst = SVP64Asm( ["setvl 0, 0, 8, 0, 1, 1",
+                         "sv.lfsbr 0.v, 4(0), 20", # bit-reversed
+                         #"svshape 8, 1, 1, 1, 0",
+                         #"svremap 31, 1, 0, 2, 0, 1, 0",
+                         #"sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                        ])
+        lst = list(lst)
+
+        # array and coefficients to test
+        av = [7.0, -9.8, 3.0, -32.3,
+              -2.0, 5.0, -9.8, 31.3] # array 0..7
+        coe = [-0.25, 0.5, 3.1, 6.2] # coefficients
+
+        # store in regfile
+        fprs = [0] * 32
+        for i, c in enumerate(coe):
+            fprs[i+8] = fp64toselectable(c)
+        # store in memory
+        mem = {}
+        for i, a in enumerate(av):
+            shift = (i % 2) == 1
+            if shift == 0:
+                mem[(i//2)*8] = fp64toselectable(a).value
+            else:
+                mem[(i//2)*8] |= fp64toselectable(a).value << 32
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_mem=mem,
+                                                initial_fprs=fprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            print ("mem dump")
+            print (sim.mem.dump())
+
+            # work out the results with the twin mul/add-sub
+            res = transform_radix2(av, coe)
+
+            for i, expected in enumerate(res):
+                print ("i", i, float(sim.fpr(i)), "expected", expected)
+            for i, expected in enumerate(res):
+                # convert to Power single
+                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = float(expected)
+                actual = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs(actual - expected) / expected
+                self.assertTrue(err < 1e-7)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
