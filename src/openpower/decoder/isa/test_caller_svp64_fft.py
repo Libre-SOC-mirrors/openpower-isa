@@ -9,7 +9,7 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.isa.test_caller import run_tst
 from openpower.sv.trans.svp64 import SVP64Asm
 from copy import deepcopy
-from openpower.decoder.helpers import fp64toselectable
+from openpower.decoder.helpers import fp64toselectable, SINGLE
 from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
 
 
@@ -690,9 +690,9 @@ class FFTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["setvl 0, 0, 8, 0, 1, 1",
                          "sv.lfsbr 0.v, 4(0), 20", # bit-reversed
-                         #"svshape 8, 1, 1, 1, 0",
-                         #"svremap 31, 1, 0, 2, 0, 1, 0",
-                         #"sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                         "svshape 8, 1, 1, 1, 0",
+                         "svremap 31, 1, 0, 2, 0, 1, 0",
+                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
                         ])
         lst = list(lst)
 
@@ -707,12 +707,14 @@ class FFTTestCase(FHDLTestCase):
             fprs[i+8] = fp64toselectable(c)
         # store in memory
         mem = {}
+        val = 0
         for i, a in enumerate(av):
+            a = SINGLE(fp64toselectable(a)).value
             shift = (i % 2) == 1
             if shift == 0:
-                mem[(i//2)*8] = fp64toselectable(a).value
+                val = a
             else:
-                mem[(i//2)*8] |= fp64toselectable(a).value << 32
+                mem[(i//2)*8] = val | (a << 32)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=mem,
@@ -729,7 +731,7 @@ class FFTTestCase(FHDLTestCase):
             print (sim.mem.dump())
 
             # work out the results with the twin mul/add-sub
-            res = transform_radix2(av, coe)
+            res = transform_radix2(av, coe, reverse=True)
 
             for i, expected in enumerate(res):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
@@ -742,7 +744,7 @@ class FFTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs(actual - expected) / expected
-                self.assertTrue(err < 1e-7)
+                self.assertTrue(err < 1e-6)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
