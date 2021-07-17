@@ -681,10 +681,12 @@ class FFTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+6), u)
 
     def test_sv_remap_fpmadds_fft_ldst(self):
-        """>>> lst = ["svshape 8, 1, 1, 1, 0",
-                     "svremap 31, 1, 0, 2, 0, 1, 0",
-                      "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
-                     ]
+        """>>>lst = ["setvl 0, 0, 8, 0, 1, 1",
+                         "sv.lfsbr 0.v, 4(0), 20", # bit-reversed
+                         "svshape 8, 1, 1, 1, 0",
+                         "svremap 31, 1, 0, 2, 0, 1, 0",
+                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform, using bit-reversed LD/ST
         """
@@ -730,7 +732,8 @@ class FFTTestCase(FHDLTestCase):
             print ("mem dump")
             print (sim.mem.dump())
 
-            # work out the results with the twin mul/add-sub
+            # work out the results with the twin mul/add-sub,
+            # note bit-reverse mode requested
             res = transform_radix2(av, coe, reverse=True)
 
             for i, expected in enumerate(res):
