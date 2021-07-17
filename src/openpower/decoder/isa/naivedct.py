@@ -21,45 +21,30 @@
 #   Software.
 # 
 
-import math, random, unittest
-import fastdctlee, naivedct
+import math
 
 
-class FastDctTest(unittest.TestCase):
-	
-	def test_fast_dct_lee_vs_naive(self):
-		for i in range(1, 12):
-			n = 2**i
-			vector = FastDctTest.random_vector(n)
-			expect = naivedct.transform(vector)
-			actual = fastdctlee.transform(vector)
-			self.assertListAlmostEqual(actual, expect)
-			expect = naivedct.inverse_transform(vector)
-			actual = fastdctlee.inverse_transform(vector)
-			self.assertListAlmostEqual(actual, expect)
-	
-	def test_fast_dct_lee_invertibility(self):
-		for i in range(1, 18):
-			n = 2**i
-			vector = FastDctTest.random_vector(n)
-			temp = fastdctlee.transform(vector)
-			temp = fastdctlee.inverse_transform(temp)
-			temp = [(val * 2.0 / n) for val in temp]
-			self.assertListAlmostEqual(vector, temp)
-	
-	def assertListAlmostEqual(self, actual, expect):
-		self.assertEqual(len(actual), len(expect))
-		for (x, y) in zip(actual, expect):
-			self.assertAlmostEqual(x, y, delta=FastDctTest._EPSILON)
-	
-	
-	@staticmethod
-	def random_vector(n):
-		return [random.uniform(-1.0, 1.0) for _ in range(n)]
-	
-	
-	_EPSILON = 1e-9
+# DCT type II, unscaled.
+# See: https://en.wikipedia.org/wiki/Discrete_cosine_transform#DCT-II
+def transform(vector):
+	result = []
+	factor = math.pi / len(vector)
+	for i in range(len(vector)):
+		sum = 0.0
+		for (j, val) in enumerate(vector):
+			sum += val * math.cos((j + 0.5) * i * factor)
+		result.append(sum)
+	return result
 
 
-if __name__ == "__main__":
-	unittest.main()
+# DCT type III, unscaled.
+# See: https://en.wikipedia.org/wiki/Discrete_cosine_transform#DCT-III
+def inverse_transform(vector):
+	result = []
+	factor = math.pi / len(vector)
+	for i in range(len(vector)):
+		sum = vector[0] / 2
+		for j in range(1, len(vector)):
+			sum += vector[j] * math.cos(j * (i + 0.5) * factor)
+		result.append(sum)
+	return result
