@@ -73,7 +73,7 @@ def transform(vector, indent=0):
         print ()
         print (idt, "n", n, "alpha", end=" ")
         for i in range(0, n, 2):
-            print (i, alpha[i//2], end=" ")
+            print (i, i//2, alpha[i//2], end=" ")
         print()
         print (idt, "n", n, "beta", end=" ")
         for i in range(0, n, 2):
@@ -92,7 +92,8 @@ def transform(vector, indent=0):
         return result
 
 
-def transform_itersum(vector):
+def transform_itersum(vector, indent=0):
+    idt = "   " * indent
     n = len(vector)
     if n == 1:
         return list(vector)
@@ -103,17 +104,19 @@ def transform_itersum(vector):
         alpha = [0] * half
         beta = [0] * half
         for i in range(half):
-            t1, t2 = vector[i], vector[n-i-1]
+            t1, t2 = vector[i], vector[i+half]
             alpha[i] = t1
             beta[i] = t2
-        alpha = transform_itersum(alpha)
-        beta  = transform_itersum(beta )
+        alpha = transform_itersum(alpha, indent+1)
+        beta  = transform_itersum(beta , indent+1)
         result = [0] * n
         for i in range(half):
             result[i*2] = alpha[i]
             result[i*2+1] = beta[i]
+        print(idt, "iter-merge", result)
         for i in range(half - 1):
             result[i*2+1] += result[i*2+3]
+        print(idt, "iter-result", result)
         return result
 
 
@@ -146,45 +149,50 @@ def transform2(vec, reverse=True):
             jr = list(range(i+halfsize, i + size))
             jr.reverse()
             print ("  xform jr", j, jr)
-            for jl, jh in zip(j, jr):
+            vec2 = deepcopy(vec)
+            for ci, (jl, jh) in enumerate(zip(j, jr)):
                 # exact same actual computation, just embedded in
                 # triple-nested for-loops
                 t1, t2 = vec[jl], vec[jh]
-                coeff = (math.cos((k + 0.5) * math.pi / size) * 2.0)
-                vec[jh] = t1 + t2
-                vec[jl] = (t1 - t2) * (1/coeff)
+                coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+                vec2[jl] = t1 + t2
+                vec2[jl+halfsize] = (t1 - t2) * (1/coeff)
                 print ("coeff", size, i, k, "jl", jl, "jh", jh,
                        "i/n", (k+0.5)/size, coeff, vec[jl], vec[jh])
                 k += tablestep
+            vec = vec2
         size //= 2
 
-    vec.reverse()
-    if reverse:
-        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+    #vec.reverse()
     print("transform2 pre-itersum", vec)
     # Copy with bit-reversed permutation
 
+
     vec = transform_itersum(vec)
-    print("transform2 result", vec)
+    print("transform2 intermediate", vec)
     return vec
 
-    size //= 2
-    while size > 2:
+    size *= 2
+    while size <= n:
         halfsize = size // 2
         tablestep = n // size
         ir = list(range(0, n, size))
-        ir.reverse()
+        #ir.reverse()
         print ("itersum", size, ir)
         for i in ir:
-            jr = list(range(i, i + halfsize-1))
+            jr = list(range(i+halfsize, i + size-1))
+            #jr.reverse()
             print ("itersum    jr", jr)
-            for j in jr:
+            for jh in jr:
                 # exact same actual computation, just embedded in
                 # triple-nested for-loops
-                jh = i+halfsize-j
+                #jh = i+halfsize-j
                 vec[jh] += vec[jh+1]
                 print ("    itersum", size, i, j, jh, jh+1)
-        size //= 2
+        size *= 2
+
+    if reverse:
+        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
     print("transform2 result", vec)
 
@@ -252,6 +260,83 @@ def inverse_transform2(vector, root=True):
             vector[i] = ("add", x, y)
             vector[-(i + 1)] = ("sub", x, y)
         return vector
+
+
+def failllll_transform2(block):
+    N = len(block)
+    cos = [0.0] * (N>>1)
+
+    front = deepcopy(block)
+    back = deepcopy(block)
+
+    step = 1
+    j = N *2
+    half_N = N 
+    prev_half_N = N
+
+    while j > 1: #// Cycle of iterations Input Butterfly
+        half_N = half_N >> 1
+        current_PI_half_By_N = (math.pi / 2) / prev_half_N
+        current_PI_By_N = 0.0
+        step_Phase = current_PI_half_By_N * 2.0
+        print ("n", N, "cos", end=" ")
+        for i in range(half_N):
+            #Precompute Cosine's coefficients
+            a = current_PI_By_N + current_PI_half_By_N
+            print (i, a / (math.pi), math.cos(a) * 2, end=" ")
+            cos[i] = 0.5 / math.cos(a)
+            current_PI_By_N += step_Phase
+        print()
+        k = 0
+        for x in range(step):
+            for i in range(half_N):
+                shift = k + prev_half_N - i - 1
+                back[k + i]          = front[k + i] + front[shift]
+                back[k + half_N + i] = (front[k + i] - front[shift]) * cos[i]
+                print ("xf coeff", N, j, i, x, "k/kh", k+i, k+half_N+i)
+            k += prev_half_N
+        temp = front
+        front = back
+        back = temp
+        j = j >> 1
+        step = step << 1
+        prev_half_N = half_N
+
+    half_N = 2
+    prev_half_N = 2
+    j = 2
+
+    print("xform intermediate", front)
+
+    while j < N: # Cycle of Out ButterFly
+        k = 0
+        print ("out", j, N, step, half_N)
+        for x in range(step):
+            for i in range(half_N - 1):
+                back[k + (i << 1)] = front[k + i]
+                back[k + (i << 1) + 1] = (front[k + half_N + i] +
+                                          front[k + half_N + i + 1])
+                print ("  out", j, x, i, "k", k,
+                                "k+i<<1", k+(i<<1), "hh1", k+half_N+i)
+            back[k + ((half_N - 1) << 1)] = front[k + half_N - 1]
+            back[k + (half_N << 1) - 1] = front[k + (half_N << 1) - 1]
+            k += prev_half_N
+
+        temp = front
+        front = back
+        back = temp
+        j = j << 1
+        step = step >> 1
+        half_N = prev_half_N
+        prev_half_N = prev_half_N << 1
+
+    for i in range(N):
+        block[i] = front[i] #// Unload DCT coefficients
+    dN = 2.0
+    #block[0] = block[0] / dN #// Compute DC.
+
+    print("transform2 result", block)
+    return block
 
 
 if __name__ == '__main__':
