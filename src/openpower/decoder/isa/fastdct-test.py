@@ -28,21 +28,21 @@ import fastdctlee, naivedct
 class FastDctTest(unittest.TestCase):
 	
 	def test_fast_dct_lee_vs_naive(self):
-		for i in range(1, 12):
+		for i in range(1, 9):
 			n = 2**i
 			vector = FastDctTest.random_vector(n)
 			expect = naivedct.transform(vector)
-			actual = fastdctlee.transform(vector)
+			actual = fastdctlee.transform2(vector)
 			self.assertListAlmostEqual(actual, expect)
 			expect = naivedct.inverse_transform(vector)
 			actual = fastdctlee.inverse_transform(vector)
 			self.assertListAlmostEqual(actual, expect)
 	
 	def test_fast_dct_lee_invertibility(self):
-		for i in range(1, 18):
+		for i in range(1, 10):
 			n = 2**i
 			vector = FastDctTest.random_vector(n)
-			temp = fastdctlee.transform(vector)
+			temp = fastdctlee.transform2(vector)
 			temp = fastdctlee.inverse_transform(temp)
 			temp = [(val * 2.0 / n) for val in temp]
 			self.assertListAlmostEqual(vector, temp)

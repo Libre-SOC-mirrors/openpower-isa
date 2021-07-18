@@ -49,6 +49,32 @@ def transform(vector):
         return result
 
 
+def transform2(vector):
+    n = len(vector)
+    if n == 1:
+        return list(vector)
+    elif n == 0 or n % 2 != 0:
+        raise ValueError()
+    else:
+        half = n // 2
+        alpha = [0] * half
+        beta = [0] * half
+        for i in range(half):
+            t1, t2 = vector[i], vector[n-i-1]
+            k = (math.cos((i + 0.5) * math.pi / n) * 2.0)
+            alpha[i] = t1 + t2
+            beta[i] = (t1 - t2) * (1/k)
+        alpha = transform2(alpha)
+        beta  = transform2(beta )
+        result = [0] * n
+        for i in range(half):
+            result[i*2] = alpha[i]
+            result[i*2+1] = beta[i]
+        for i in range(half - 1):
+            result[i*2+1] += result[i*2+3]
+        return result
+
+
 # DCT type III, unscaled. Algorithm by Byeong Gi Lee, 1984.
 # See: https://www.nayuki.io/res/fast-discrete-cosine-transform-algorithms/lee-new-algo-discrete-cosine-transform.pdf
 def inverse_transform(vector, root=True, indent=0):
