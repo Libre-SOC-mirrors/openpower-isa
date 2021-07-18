@@ -22,11 +22,13 @@
 #
 
 import math
+from copy import deepcopy
 
 
 # DCT type II, unscaled. Algorithm by Byeong Gi Lee, 1984.
 # See: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.118.3056&rep=rep1&type=pdf#page=34
-def transform(vector):
+def transform(vector, indent=0):
+    idt = "   " * indent
     n = len(vector)
     if n == 1:
         return list(vector)
@@ -49,7 +51,48 @@ def transform(vector):
         return result
 
 
-def transform2(vector):
+def transform(vector, indent=0):
+    idt = "   " * indent
+    n = len(vector)
+    if n == 1:
+        return list(vector)
+    elif n == 0 or n % 2 != 0:
+        raise ValueError()
+    else:
+        half = n // 2
+        alpha = [0] * half
+        beta = [0] * half
+        print (idt, "xf", vector)
+        print (idt, "coeff", n, "->", end=" ")
+        for i in range(half):
+            t1, t2 = vector[i], vector[n-i-1]
+            k = (math.cos((i + 0.5) * math.pi / n) * 2.0)
+            print (i, n-i-1, "i/n", (i+0.5)/n, ":", k, end= " ")
+            alpha[i] = t1 + t2
+            beta[i] = (t1 - t2) * (1/k)
+        print ()
+        print (idt, "n", n, "alpha", end=" ")
+        for i in range(0, n, 2):
+            print (i, alpha[i//2], end=" ")
+        print()
+        print (idt, "n", n, "beta", end=" ")
+        for i in range(0, n, 2):
+            print (i, beta[i//2], end=" ")
+        print()
+        alpha = transform(alpha, indent+1)
+        beta  = transform(beta , indent+1)
+        result = [0] * n
+        for i in range(half):
+            result[i*2] = alpha[i]
+            result[i*2+1] = beta[i]
+        print(idt, "merge", result)
+        for i in range(half - 1):
+            result[i*2+1] += result[i*2+3]
+        print(idt, "result", result)
+        return result
+
+
+def transform_itersum(vector):
     n = len(vector)
     if n == 1:
         return list(vector)
@@ -61,11 +104,10 @@ def transform2(vector):
         beta = [0] * half
         for i in range(half):
             t1, t2 = vector[i], vector[n-i-1]
-            k = (math.cos((i + 0.5) * math.pi / n) * 2.0)
-            alpha[i] = t1 + t2
-            beta[i] = (t1 - t2) * (1/k)
-        alpha = transform2(alpha)
-        beta  = transform2(beta )
+            alpha[i] = t1
+            beta[i] = t2
+        alpha = transform_itersum(alpha)
+        beta  = transform_itersum(beta )
         result = [0] * n
         for i in range(half):
             result[i*2] = alpha[i]
@@ -73,6 +115,80 @@ def transform2(vector):
         for i in range(half - 1):
             result[i*2+1] += result[i*2+3]
         return result
+
+
+
+def transform2(vec, reverse=True):
+
+    vec = deepcopy(vec)
+    # bits of the integer 'val'.
+    def reverse_bits(val, width):
+        result = 0
+        for _ in range(width):
+            result = (result << 1) | (val & 1)
+            val >>= 1
+        return result
+
+    # Initialization
+    n = len(vec)
+    print ("transform2", n)
+    levels = n.bit_length() - 1
+
+    size = n
+    while size >= 2:
+        halfsize = size // 2
+        tablestep = n // size
+        ir = list(range(0, n, size))
+        print ("  xform", size, ir)
+        for i in ir:
+            k = 0
+            j = list(range(i, i + halfsize))
+            jr = list(range(i+halfsize, i + size))
+            jr.reverse()
+            print ("  xform jr", j, jr)
+            for jl, jh in zip(j, jr):
+                # exact same actual computation, just embedded in
+                # triple-nested for-loops
+                t1, t2 = vec[jl], vec[jh]
+                coeff = (math.cos((k + 0.5) * math.pi / size) * 2.0)
+                vec[jh] = t1 + t2
+                vec[jl] = (t1 - t2) * (1/coeff)
+                print ("coeff", size, i, k, "jl", jl, "jh", jh,
+                       "i/n", (k+0.5)/size, coeff, vec[jl], vec[jh])
+                k += tablestep
+        size //= 2
+
+    vec.reverse()
+    if reverse:
+        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+    print("transform2 pre-itersum", vec)
+    # Copy with bit-reversed permutation
+
+    vec = transform_itersum(vec)
+    print("transform2 result", vec)
+    return vec
+
+    size //= 2
+    while size > 2:
+        halfsize = size // 2
+        tablestep = n // size
+        ir = list(range(0, n, size))
+        ir.reverse()
+        print ("itersum", size, ir)
+        for i in ir:
+            jr = list(range(i, i + halfsize-1))
+            print ("itersum    jr", jr)
+            for j in jr:
+                # exact same actual computation, just embedded in
+                # triple-nested for-loops
+                jh = i+halfsize-j
+                vec[jh] += vec[jh+1]
+                print ("    itersum", size, i, j, jh, jh+1)
+        size //= 2
+
+    print("transform2 result", vec)
+
+    return vec
 
 
 # DCT type III, unscaled. Algorithm by Byeong Gi Lee, 1984.
