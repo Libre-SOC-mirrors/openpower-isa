@@ -85,10 +85,10 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
-            self.assertEqual(CR0[CRFields.EQ], 1)
+            self.assertEqual(CR0[CRFields.EQ], 0)
             self.assertEqual(CR0[CRFields.LT], 0)
             self.assertEqual(CR0[CRFields.GT], 0)
-            self.assertEqual(CR0[CRFields.SO], 0)
+            self.assertEqual(CR0[CRFields.SO], 1)
 
     def test__svstep_3(self):
         """tests svstep when it *doesn't* reach VL
@@ -125,7 +125,7 @@ class DecoderTestCase(FHDLTestCase):
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 0)
             self.assertEqual(CR0[CRFields.LT], 0)
-            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.GT], 0)
             self.assertEqual(CR0[CRFields.SO], 0)
 
 
@@ -242,20 +242,20 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.vfirst, 0)
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
-            self.assertEqual(CR0[CRFields.EQ], 1)
+            self.assertEqual(CR0[CRFields.EQ], 0)
             self.assertEqual(CR0[CRFields.LT], 0)
             self.assertEqual(CR0[CRFields.GT], 0)
-            self.assertEqual(CR0[CRFields.SO], 0)
+            self.assertEqual(CR0[CRFields.SO], 1)
 
             # check registers as expected
             self._check_regs(sim, expected_regs)
 
-    def test__svstep_add_2(self):
+    def test_svstep_add_2(self):
         """tests svstep with a branch.
         lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
                         "setvl. 0, 0, 1, 1, 0, 0",
-                        "bc 4, 2, -0xc"
+                        "bc 6, 3, -0xc"
                         ])
         sequence is as follows:
         * setvl sets VL=2 but also "Vertical First" mode.
@@ -281,7 +281,7 @@ class DecoderTestCase(FHDLTestCase):
         lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
                         "setvl. 0, 0, 1, 1, 0, 0", # svstep - this is 64-bit!
-                        "bc 4, 2, -0xc" # branch to add (64-bit op so -0xc!)
+                        "bc 6, 3, -0xc" # branch to add (64-bit op so -0xc!)
                         ])
         lst = list(lst)
 
@@ -320,10 +320,10 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.vfirst, 0)
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
-            self.assertEqual(CR0[CRFields.EQ], 1)
+            self.assertEqual(CR0[CRFields.EQ], 0)
             self.assertEqual(CR0[CRFields.LT], 0)
             self.assertEqual(CR0[CRFields.GT], 0)
-            self.assertEqual(CR0[CRFields.SO], 0)
+            self.assertEqual(CR0[CRFields.SO], 1)
 
             # check registers as expected
             self._check_regs(sim, expected_regs)

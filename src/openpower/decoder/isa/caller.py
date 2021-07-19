@@ -1113,8 +1113,10 @@ class ISACaller:
             return
 
         # this is for setvl "Vertical" mode: if set true,
-        # srcstep/dststep is explicitly advanced
+        # srcstep/dststep is explicitly advanced. mode says which SVSTATE to
+        # test for Rc=1 end condition.  3 bits of all 3 loops are put into CR0
         self.allow_next_step_inc = False
+        self.svstate_next_mode = 0
 
         # nop has to be supported, we could let the actual op calculate
         # but PowerDecoder has a pattern for nop
@@ -1201,6 +1203,7 @@ class ISACaller:
                      ]
             # go through all iterators in lock-step, advance to next remap_idx
             remap_idxs = []
+            self.remap_loopends = []
             for i, (shape, remap) in enumerate(remaps):
                 # zero is "disabled"
                 if shape.value == 0x0:
@@ -1208,10 +1211,11 @@ class ISACaller:
                 # pick src or dststep depending on reg num (0-2=in, 3-4=out)
                 step = dststep if (i in [3, 4]) else srcstep
                 # this is terrible.  O(N^2) looking for the match. but hey.
-                for idx, remap_idx in enumerate(remap):
+                for idx, (remap_idx, loopends) in enumerate(remap):
                     if idx == step:
                         break
                 remap_idxs.append(remap_idx)
+                self.remap_loopends.append(loopends)
 
             rremaps = []
             # now cross-index the required SHAPE for each of 3-in 2-out regs
@@ -1452,7 +1456,7 @@ class ISACaller:
         pre = False
         post = False
         if self.allow_next_step_inc:
-            log("SVSTATE_NEXT: inc requested")
+            log("SVSTATE_NEXT: inc requested, mode", self.svstate_next_mode)
             yield from self.svstate_pre_inc()
             pre = yield from self.update_new_svstate_steps()
             if pre:
@@ -1479,9 +1483,17 @@ class ISACaller:
                 if rc_en:
                     srcstep = self.svstate.srcstep
                     dststep = self.svstate.srcstep
-                    endtest = 0 if (end_src or end_dst) else 1
-                    results = [SelectableInt(endtest, 64)]
-                    self.handle_comparison(results) # CR0
+                    endtest = 1 if (end_src or end_dst) else 0
+                    #results = [SelectableInt(endtest, 64)]
+                    #self.handle_comparison(results) # CR0
+
+                    # see if svstep was requested, if so, which SVSTATE
+                    endings = 0b111
+                    if self.svstate_next_mode > 0:
+                        endings = self.remap_loopends[self.svstate_nextmode-1]
+                    cr_field = SelectableInt((~endings)<<1 | endtest, 4)
+                    print ("svstep Rc=1, CR0", cr_field)
+                    self.crl[0].eq(cr_field) # CR0
                 if end_src or end_dst:
                     # reset at end of loop including exit Vertical Mode
                     log ("SVSTATE_NEXT: after increments, reset")
@@ -1500,13 +1512,14 @@ class ISACaller:
 
         self.update_pc_next()
 
-    def SVSTATE_NEXT(self):
+    def SVSTATE_NEXT(self, mode):
         """explicitly moves srcstep/dststep on to next element, for
         "Vertical-First" mode.  this function is called from
         setvl pseudo-code, as a pseudo-op "svstep"
         """
-        log("SVSTATE_NEXT")
+        log("SVSTATE_NEXT mode", mode)
         self.allow_next_step_inc = True
+        self.svstate_next_mode = mode
 
     def svstate_pre_inc(self):
         """check if srcstep/dststep need to skip over masked-out predicate bits

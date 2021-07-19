@@ -200,7 +200,7 @@ class FFTTestCase(FHDLTestCase):
                              "svremap 31, 1, 0, 2, 0, 1, 0",
                             "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                             "setvl. 0, 0, 1, 1, 0, 0",
-                            "bc 4, 2, -16"
+                            "bc 6, 3, -16"
                             ])
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform.  this version however uses
@@ -215,7 +215,7 @@ class FFTTestCase(FHDLTestCase):
                          "svremap 31, 1, 0, 2, 0, 1, 0",
                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
                         "setvl. 0, 0, 1, 1, 0, 0",
-                        "bc 4, 2, -16"
+                        "bc 6, 3, -16"
                         ])
         lst = list(lst)
 
@@ -287,7 +287,7 @@ class FFTTestCase(FHDLTestCase):
                          "svremap 26, 0, 0, 0, 0, 1, 1",
                         "sv.ffadds 0.v, 24, 0.v",
                         "setvl. 0, 0, 1, 1, 0, 0",
-                        "bc 4, 2, -28"
+                        "bc 6, 3, -28"
                             ])
 
             runs a full in-place O(N log2 N) butterfly schedule for
@@ -326,7 +326,7 @@ class FFTTestCase(FHDLTestCase):
                          "svremap 26, 0, 0, 0, 0, 1, 0",
                         "sv.ffadds 0.v, 24, 0.v",
                         "setvl. 0, 0, 1, 1, 0, 0",
-                        "bc 4, 2, -28"
+                        "bc 6, 3, -28"
                         ])
         lst = list(lst)
 
@@ -554,7 +554,7 @@ class FFTTestCase(FHDLTestCase):
 
                         # svstep loop
                         "setvl. 0, 0, 1, 1, 0, 0",
-                        "bc 4, 2, -56"
+                        "bc 6, 3, -56"
                         ])
         lst = list(lst)
 

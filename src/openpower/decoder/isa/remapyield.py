@@ -19,8 +19,11 @@ def iterate_indices(SVSHAPE):
     # start an infinite (wrapping) loop
     while True:
         for z in z_r:   # loop over 1st order dimension
+            z_end = z == z_r[-1]
             for y in y_r:       # loop over 2nd order dimension
+                y_end = y == y_r[-1]
                 for x in x_r:           # loop over 3rd order dimension
+                    x_end = x == x_r[-1]
                     # ok work out which order to construct things in.
                     # start by creating a list of tuples of the dimension
                     # and its limit
@@ -61,13 +64,17 @@ def iterate_indices(SVSHAPE):
                             result += idx # adds on this dimension
                             mult *= lim   # for the next dimension
 
-                    yield result + SVSHAPE.offset
+                    loopends = (x_end |
+                               ((y_end and x_end)<<1) |
+                                ((y_end and x_end and z_end)<<2))
+
+                    yield result + SVSHAPE.offset, loopends
 
 def demo():
     # set the dimension sizes here
     xdim = 3
     ydim = 2
-    zdim = 1
+    zdim = 4
 
     # set total (can repeat, e.g. VL=x*y*z*4)
     VL = xdim * ydim * zdim
@@ -84,10 +91,10 @@ def demo():
     SVSHAPE0.invxyz = [0,0,0] # inversion if desired
 
     # enumerate over the iterator function, getting new indices
-    for idx, new_idx in enumerate(iterate_indices(SVSHAPE0)):
+    for idx, (new_idx, end) in enumerate(iterate_indices(SVSHAPE0)):
         if idx >= VL:
             break
-        print ("%d->%d" % (idx, new_idx))
+        print ("%d->%d" % (idx, new_idx), "end", bin(end)[2:])
 
 # run the demo
 if __name__ == '__main__':

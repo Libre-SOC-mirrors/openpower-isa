@@ -12,7 +12,7 @@ SVL-Form
 Pseudo-code:
 
     if (vf & (¬vs) & ¬(ms)) = 1 then
-        SVSTATE_NEXT
+        SVSTATE_NEXT(SVi)
     else
         VLimm <- SVi + 1
         if vs = 1 then

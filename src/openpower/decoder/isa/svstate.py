@@ -1,7 +1,6 @@
-from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
-                                        selectconcat)
-from openpower.decoder.isa.remapyield import iterate_indices
-from openpower.decoder.isa.remap_fft_yield import iterate_butterfly_indices
+from openpower.decoder.selectable_int import (FieldSelectableInt,
+                                              SelectableInt,
+                                                )
 from openpower.sv.svstate import SVSTATERec
 import os
 from copy import deepcopy

@@ -181,7 +181,12 @@ hextest = """
 RT <- 0x0001_a000_0000_0000
 """
 
-code = hextest
+SVSTATE_next = """
+SVSTATE_NEXT(5)
+"""
+
+code = SVSTATE_next
+#code = hextest
 #code = lswx
 #code = testcond
 #code = testdo
@@ -243,7 +248,7 @@ def test():
     gsc.regfile = {}
     for i in range(32):
         gsc.regfile[i] = i
-    gsc.gpr = GPR(gsc.parser.sd, gsc.regfile)
+    gsc.gpr = GPR(None, None, None, gsc.regfile)
     gsc.mem = Mem()
 
     _compile = gsc.compile

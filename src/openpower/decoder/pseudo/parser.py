@@ -201,6 +201,10 @@ def apply_trailer(atom, trailer, read_regs):
                 name = arg.id
                 if name in regs + fregs:
                     read_regs.add(name)
+        # special-case, function named "SVSTATE_NEXT" must be made "self.xxxx"
+        if atom.id == 'SVSTATE_NEXT':
+            name = ast.Name("self", ast.Load())
+            atom = ast.Attribute(name, atom, ast.Load())
         return ast.Call(atom, trailer[1], [])
         # if p[1].id == 'print':
         #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)

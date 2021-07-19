@@ -43,6 +43,7 @@ def iterate_butterfly_indices(SVSHAPE):
     skip = 0
     while True:
         for size in x_r:           # loop over 3rd order dimension (size)
+            x_end = size == x_r[-1]
             # y_r schedule depends on size
             halfsize = size // 2
             tablestep = n // size
@@ -52,6 +53,7 @@ def iterate_butterfly_indices(SVSHAPE):
             # invert if requested
             if SVSHAPE.invxyz[1]: y_r.reverse()
             for i in y_r:       # loop over 2nd order dimension
+                y_end = i == y_r[-1]
                 k_r = []
                 j_r = []
                 k = 0
@@ -63,10 +65,7 @@ def iterate_butterfly_indices(SVSHAPE):
                 if SVSHAPE.invxyz[2]: k_r.reverse()
                 if SVSHAPE.invxyz[2]: j_r.reverse()
                 for j, k in zip(j_r, k_r):   # loop over 1st order dimension
-                    # skip the first entries up to offset
-                    if skip < SVSHAPE.offset:
-                        skip += 1
-                        continue
+                    z_end = j == j_r[-1]
                     # now depending on MODE return the index
                     if SVSHAPE.skip == 0b00:
                         result = j              # for vec[j]
@@ -75,11 +74,15 @@ def iterate_butterfly_indices(SVSHAPE):
                     elif SVSHAPE.skip == 0b10:
                         result = k              # for exptable[k]
 
-                    yield result
+                    loopends = (z_end |
+                               ((y_end and z_end)<<1) |
+                                ((y_end and x_end and z_end)<<2))
+
+                    yield result + SVSHAPE.offset, loopends
 
 def demo():
     # set the dimension sizes here
-    xdim = 8
+    xdim = 16
     ydim = 0 # not needed
     zdim = 0 # again, not needed
 
@@ -145,11 +148,13 @@ def demo():
             prefix = "i %d\t" % i
             k = 0
             for j in range(i, i + halfsize):
-                jl, jh, ks = schedule[idx]
+                (jl, je), (jh, he), (ks, ke) = schedule[idx]
                 print ("  %-3d\t%s j=%-2d jh=%-2d k=%-2d -> "
-                        "j[jl=%-2d] j[jh=%-2d] exptable[k=%d]" % \
+                        "j[jl=%-2d] j[jh=%-2d] ex[k=%d]" % \
                                 (idx, prefix, j, j+halfsize, k,
-                                      jl, jh, ks))
+                                      jl, jh, ks,
+                                ),
+                                "end", bin(je)[2:], bin(je)[2:], bin(ke)[2:])
                 k += tablestep
                 idx += 1
         size *= 2
