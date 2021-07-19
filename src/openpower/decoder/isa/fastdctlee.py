@@ -149,6 +149,12 @@ def transform2(vec):
     # and pretend we LDed the data in bit-reversed order as well
     vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
+    # create cos coefficient table
+    coeffs = []
+    for ci in range(n):
+        coeffs.append((math.cos((ci + 0.5) * math.pi / n) * 2.0))
+
+    # start the inner butterfly
     size = n
     while size >= 2:
         halfsize = size // 2
@@ -163,11 +169,11 @@ def transform2(vec):
             print ("  xform jr", j, jr)
             for ci, (jl, jh) in enumerate(zip(j, jr)):
                 t1, t2 = vec[ri[jl]], vec[ri[jh]]
-                coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
                 # normally DCT would use jl+halfsize not jh, here.
                 # to be able to work in-place, the idea is to perform a
                 # high-half reverse/swap afterwards.  however actually
                 # we swap the *indices*
+                coeff = coeffs[k]
                 vec[ri[jl]] = t1 + t2
                 vec[ri[jh]] = (t1 - t2) * (1/coeff)
                 print (" ", size, i, k, "ci", ci,
