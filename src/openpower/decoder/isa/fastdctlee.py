@@ -189,16 +189,23 @@ def transform2(vec, reverse=True):
             jr = list(range(i+halfsize, i + size))
             jr.reverse()
             print ("  xform jr", j, jr)
-            vec2 = deepcopy(vec)
             for ci, (jl, jh) in enumerate(zip(j, jr)):
                 t1, t2 = vec[ri[jl]], vec[ri[jh]]
                 coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
-                vec2[ri[jl]] = t1 + t2
-                vec2[ri[jl+halfsize]] = (t1 - t2) * (1/coeff)
+                vec[ri[jl]] = t1 + t2
+                vec[ri[jh]] = (t1 - t2) * (1/coeff) # not jl+halfsize!
                 print ("coeff", size, i, k, "jl", jl, "jh", jh,
                        "i/n", (k+0.5)/size, coeff, vec[ri[jl]], vec[ri[jh]])
                 k += tablestep
-            vec = vec2
+            # instead of using jl+halfsize, perform a swap here.
+            # use half of j/jr because actually jl+halfsize = reverse(j)
+            if len(j) > 1:
+                hz2 = halfsize // 2
+                for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
+                    tmp = vec[ri[jl+halfsize]]
+                    vec[ri[jl+halfsize]] = vec[ri[jh]]
+                    vec[ri[jh]] = tmp
+                    #print ("     swap", size, i, ri[jl+halfsize], ri[jh])
         size //= 2
 
     print("transform2 pre-itersum", vec)
@@ -294,7 +301,7 @@ def failllll_transform2(block):
 
     step = 1
     j = N *2
-    half_N = N 
+    half_N = N
     prev_half_N = N
 
     while j > 1: #// Cycle of iterations Input Butterfly
