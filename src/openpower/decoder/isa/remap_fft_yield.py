@@ -2,22 +2,22 @@
 # original code for the FFT Tukey-Cooley schedul:
 # https://www.nayuki.io/res/free-small-fft-in-multiple-languages/fft.py
 """
-	# Radix-2 decimation-in-time FFT
-	size = 2
-	while size <= n:
-		halfsize = size // 2
-		tablestep = n // size
-		for i in range(0, n, size):
-			k = 0
-			for j in range(i, i + halfsize):
+    # Radix-2 decimation-in-time FFT
+    size = 2
+    while size <= n:
+        halfsize = size // 2
+        tablestep = n // size
+        for i in range(0, n, size):
+            k = 0
+            for j in range(i, i + halfsize):
                 jh = j+halfsize
                 jl = j
-				temp1 = vec[jh] * exptable[k]
-				temp2 = vec[jl]
-				vec[jh] = temp2 - temp1
-				vec[jl] = temp2 + temp1
-				k += tablestep
-		size *= 2
+                temp1 = vec[jh] * exptable[k]
+                temp2 = vec[jl]
+                vec[jh] = temp2 - temp1
+                vec[jl] = temp2 + temp1
+                k += tablestep
+        size *= 2
 """
 
 # python "yield" can be iterated. use this to make it clear how
