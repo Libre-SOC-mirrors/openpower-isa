@@ -149,12 +149,6 @@ def transform2(vec):
     # and pretend we LDed the data in bit-reversed order as well
     vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
-    # create cos coefficient table
-    coeffs = []
-    for ci in range(n):
-        coeffs.append((math.cos((ci + 0.5) * math.pi / n) * 2.0))
-
-    # start the inner butterfly
     size = n
     while size >= 2:
         halfsize = size // 2
@@ -164,18 +158,18 @@ def transform2(vec):
         for i in ir:
             k = 0
             j = list(range(i, i + halfsize))
-            print ("  xform j", j)
-            for ci, jl in enumerate(j):
-                jh = i+size-jl-1
+            jr = list(range(i+halfsize, i + size))
+            jr.reverse()
+            print ("  xform jr", j, jr)
+            for ci, (jl, jh) in enumerate(zip(j, jr)):
                 t1, t2 = vec[ri[jl]], vec[ri[jh]]
+                coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
                 # normally DCT would use jl+halfsize not jh, here.
                 # to be able to work in-place, the idea is to perform a
-                # high-half reverse/swap afterwards.  however actually
-                # we swap the *indices*
-                coeff = coeffs[k]
+                # swap afterwards.  however actually we swap the *indices*
                 vec[ri[jl]] = t1 + t2
                 vec[ri[jh]] = (t1 - t2) * (1/coeff)
-                print (" ", size, i, k, "ci", ci,
+                print ("coeff", size, i, k, "ci", ci,
                         "jl", ri[jl], "jh", ri[jh],
                        "i/n", (k+0.5)/size, coeff, vec[ri[jl]], vec[ri[jh]])
                 k += tablestep
@@ -185,8 +179,7 @@ def transform2(vec):
             # incredibly... bizarrely... this works *without* having
             # to do anything else.
             hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
-            for jl in j[:hz2]:
-                jh = i+size-jl-1
+            for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
                 tmp = ri[jl+halfsize]
                 ri[jl+halfsize] = ri[jh]
                 ri[jh] = tmp
