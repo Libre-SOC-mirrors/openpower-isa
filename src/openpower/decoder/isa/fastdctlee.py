@@ -137,6 +137,11 @@ def transform2(vec, reverse=True):
     print ("transform2", n)
     levels = n.bit_length() - 1
 
+    # reference (read/write) the in-place data in *reverse-bit-order*
+    if reverse:
+        ri = range(n)
+        ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+
     size = n
     while size >= 2:
         halfsize = size // 2
@@ -161,16 +166,10 @@ def transform2(vec, reverse=True):
             vec = vec2
         size //= 2
 
-    #vec.reverse()
     print("transform2 pre-itersum", vec)
     # Copy with bit-reversed permutation
 
-    if reverse:
-        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
-
-    #vec = transform_itersum(vec)
     print("transform2 intermediate", vec)
-    #return vec
 
     n = len(vec)
     size = n // 2
@@ -183,12 +182,12 @@ def transform2(vec, reverse=True):
             jr = list(range(i+halfsize, i+n-halfsize, size))
             print ("itersum    jr", i+halfsize, i+size, jr)
             for jh in jr:
-                vec[jh] += vec[jh+size]
+                vec[ri[jh]] += vec[ri[jh+size]]
                 print ("    itersum", size, i, jh, jh+size)
         size //= 2
 
-    #if reverse:
-    #    vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+    if reverse:
+        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
     print("transform2 result", vec)
 
