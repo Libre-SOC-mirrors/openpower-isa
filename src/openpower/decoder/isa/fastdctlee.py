@@ -4,22 +4,52 @@
 # Copyright (c) 2020 Project Nayuki. (MIT License)
 # https://www.nayuki.io/page/fast-discrete-cosine-transform-algorithms
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy of
-# this software and associated documentation files (the "Software"), to deal in
-# the Software without restriction, including without limitation the rights to
-# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-# the Software, and to permit persons to whom the Software is furnished to do so,
-# subject to the following conditions:
+# License for original fastdctlee.py by Nayuki:
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
 # - The above copyright notice and this permission notice shall be included in
 #   all copies or substantial portions of the Software.
 # - The Software is provided "as is", without warranty of any kind, express or
 #   implied, including but not limited to the warranties of merchantability,
 #   fitness for a particular purpose and noninfringement. In no event shall the
 #   authors or copyright holders be liable for any claim, damages or other
-#   liability, whether in an action of contract, tort or otherwise, arising from,
-#   out of or in connection with the Software or the use or other dealings in the
-#   Software.
+#   liability, whether in an action of contract, tort or otherwise,
+#   arising from, out of or in connection with the Software or the use
+#   or other dealings in the Software.
 #
+#
+# Modifications made to in-place iterative DCT - SPDX: LGPLv3+
+# Copyright (c) 2021 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
+#
+# The modifications made are firstly to create an iterative schedule,
+# rather than the more normal recursive algorithm.  Secondly, the
+# two butterflys are also separated out: inner butterfly does COS +/-
+# whilst outer butterfly does the iterative summing.
+#
+# However, to avoid data copying some additional tricks are played:
+# - firstly, the data is LOADed in bit-reversed order (which is normally
+#   covered by the recursive algorithm due to the odd-even reconstruction)
+#   but then to reference the data in the correct order an array of
+#   bit-reversed indices is created, as a level of indirection.
+#   the data is bit-reversed but so are the indices, making it all A-Ok.
+# - secondly, normally in DCT a 2nd target (copy) array is used where
+#   the top half is read in reverse order (7 6 5 4) and written out
+#   to the target 4 5 6 7.  the plan was to do this in two stages:
+#   write in-place in order 4 5 6 7 then swap afterwards (7-4), (6-5).
+#   the insight then was: to modify the *indirection* indices rather
+#   than swap the actual data, and then try the same trick as was done
+#   with the bit-reversed LOAD.  by a bizarre twist of good fortune
+#   *that was not needed*!  simply swapping the indices was enough!
+# End result is that once the first butterfly is done - bear in mind
+# it's in-place - the data is in the right order so that a second
+# dead-straightforward iterative sum can be done: again, in-place.
+# Really surprising.
 
 import math
 from copy import deepcopy
@@ -35,6 +65,7 @@ def reverse_bits(val, width):
 
 # DCT type II, unscaled. Algorithm by Byeong Gi Lee, 1984.
 # See: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.118.3056&rep=rep1&type=pdf#page=34
+# original (recursive) algorithm by Nayuki
 def transform(vector, indent=0):
     idt = "   " * indent
     n = len(vector)
@@ -59,6 +90,7 @@ def transform(vector, indent=0):
         return result
 
 
+# modified (iterative) algorithm by lkcl, based on Nayuki original
 def transform(vector, indent=0):
     idt = "   " * indent
     n = len(vector)
@@ -128,7 +160,7 @@ def transform_itersum(vector, indent=0):
         return result
 
 
-
+# totally cool *in-place* DCT algorithm
 def transform2(vec):
 
     vec = deepcopy(vec)
