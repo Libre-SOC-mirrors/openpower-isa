@@ -132,34 +132,6 @@ def transform(vector, indent=0):
         return result
 
 
-def transform_itersum(vector, indent=0):
-    idt = "   " * indent
-    n = len(vector)
-    if n == 1:
-        return list(vector)
-    elif n == 0 or n % 2 != 0:
-        raise ValueError()
-    else:
-        half = n // 2
-        alpha = [0] * half
-        beta = [0] * half
-        for i in range(half):
-            t1, t2 = vector[i], vector[i+half]
-            alpha[i] = t1
-            beta[i] = t2
-        alpha = transform_itersum(alpha, indent+1)
-        beta  = transform_itersum(beta , indent+1)
-        result = [0] * n
-        for i in range(half):
-            result[i*2] = alpha[i]
-            result[i*2+1] = beta[i]
-        print(idt, "iter-merge", result)
-        for i in range(half - 1):
-            result[i*2+1] += result[i*2+3]
-        print(idt, "iter-result", result)
-        return result
-
-
 # totally cool *in-place* DCT algorithm
 def transform2(vec):
 
@@ -298,6 +270,38 @@ def inverse_transform2(vector, root=True):
         return vector
 
 
+# does the outer butterfly in a recursive fashion, used in an
+# intermediary development of the in-place DCT.
+def transform_itersum(vector, indent=0):
+    idt = "   " * indent
+    n = len(vector)
+    if n == 1:
+        return list(vector)
+    elif n == 0 or n % 2 != 0:
+        raise ValueError()
+    else:
+        half = n // 2
+        alpha = [0] * half
+        beta = [0] * half
+        for i in range(half):
+            t1, t2 = vector[i], vector[i+half]
+            alpha[i] = t1
+            beta[i] = t2
+        alpha = transform_itersum(alpha, indent+1)
+        beta  = transform_itersum(beta , indent+1)
+        result = [0] * n
+        for i in range(half):
+            result[i*2] = alpha[i]
+            result[i*2+1] = beta[i]
+        print(idt, "iter-merge", result)
+        for i in range(half - 1):
+            result[i*2+1] += result[i*2+3]
+        print(idt, "iter-result", result)
+        return result
+
+
+# prints out an "add" schedule for the outer butterfly, recursively,
+# matching what transform_itersum does.
 def itersum_explore(vector, indent=0):
     idt = "   " * indent
     n = len(vector)
@@ -326,13 +330,16 @@ def itersum_explore(vector, indent=0):
         return result
 
 
+# prints out the exact same outer butterfly but does so iteratively.
+# by comparing the output from itersum_explore and itersum_explore2
+# and by drawing out the resultant ADDs as a graph it was possible
+# to deduce what the heck was going on.
 def itersum_explore2(vec, indent=0):
     n = len(vec)
     size = n // 2
     while size >= 2:
         halfsize = size // 2
         ir = list(range(0, halfsize))
-        #ir.reverse()
         print ("itersum", halfsize, size, ir)
         for i in ir:
             jr = list(range(i+halfsize, i+n-halfsize, size))
@@ -342,9 +349,6 @@ def itersum_explore2(vec, indent=0):
                 print ("    itersum", size, i, jh, jh+size)
         size //= 2
 
-    #if reverse:
-    #    vec = [vec[reverse_bits(i, levels)] for i in range(n)]
-
     return vec
 
 if __name__ == '__main__':
@@ -353,14 +357,12 @@ if __name__ == '__main__':
     levels = n.bit_length() - 1
     vec = [vec[reverse_bits(i, levels)] for i in range(n)]
     ops = itersum_explore(vec)
-    #ops = [ops[reverse_bits(i, levels)] for i in range(n)]
     for i, x in enumerate(ops):
         print (i, x)
 
     n = 16
     vec = list(range(n))
     levels = n.bit_length() - 1
-    #vec = [vec[reverse_bits(i, levels)] for i in range(n)]
     ops = itersum_explore2(vec)
     for i, x in enumerate(ops):
         print (i, x)
