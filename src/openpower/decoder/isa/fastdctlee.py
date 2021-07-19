@@ -173,13 +173,12 @@ def transform2(vec):
             # actually: swap the *indices*... not the actual data.
             # incredibly... bizarrely... this works *without* having
             # to do anything else.
-            if len(j) > 1:
-                hz2 = halfsize // 2
-                for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
-                    tmp = ri[jl+halfsize]
-                    ri[jl+halfsize] = ri[jh]
-                    ri[jh] = tmp
-                    print ("     swap", size, i, ri[jl+halfsize], ri[jh])
+            hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
+            for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
+                tmp = ri[jl+halfsize]
+                ri[jl+halfsize] = ri[jh]
+                ri[jh] = tmp
+                print ("     swap", size, i, ri[jl+halfsize], ri[jh])
         size //= 2
 
     print("post-swapped", ri)
