@@ -134,16 +134,48 @@ def transform2(vec, reverse=True):
     vec = deepcopy(vec)
     # Initialization
     n = len(vec)
+    print ()
     print ("transform2", n)
     levels = n.bit_length() - 1
 
     # reference (read/write) the in-place data in *reverse-bit-order*
     if reverse:
-        ri = range(n)
+        ri = list(range(n))
         ri = [ri[reverse_bits(i, levels)] for i in range(n)]
 
     if reverse:
         vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+
+    if False:
+        size = n
+        #v = list(range(n))
+        v = deepcopy(ri)
+        while size >= 2:
+            halfsize = size // 2
+            tablestep = n // size
+            ir = list(range(0, n, size))
+            for i in ir:
+                k = 0
+                j = list(range(i, i + halfsize))
+                jr = list(range(i+halfsize, i + size))
+                jr.reverse()
+                print ("  xform jr", j, jr)
+                vec2 = deepcopy(v)
+                for ci, (jl, jh) in enumerate(zip(j, jr)):
+                    t1, t2 = v[ri[jl]], v[ri[jh]]
+                    vec2[ri[jl]] = t1
+                    vec2[ri[jl+halfsize]] = t2
+                v = vec2
+            size //= 2
+
+        print ("ri rev", ri)
+        print ("rh rev", v)
+
+        #vec2 = deepcopy(vec)
+        #for i in range(n):
+        #    vec[i] = vec2[v[i]]
+
+        ri = v
 
     size = n
     while size >= 2:
