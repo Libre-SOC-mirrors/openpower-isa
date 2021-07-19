@@ -164,10 +164,9 @@ def transform2(vec):
         for i in ir:
             k = 0
             j = list(range(i, i + halfsize))
-            jr = list(range(i+halfsize, i + size))
-            jr.reverse()
-            print ("  xform jr", j, jr)
-            for ci, (jl, jh) in enumerate(zip(j, jr)):
+            print ("  xform j", j)
+            for ci, jl in enumerate(j):
+                jh = i+size-jl-1
                 t1, t2 = vec[ri[jl]], vec[ri[jh]]
                 # normally DCT would use jl+halfsize not jh, here.
                 # to be able to work in-place, the idea is to perform a
@@ -186,7 +185,8 @@ def transform2(vec):
             # incredibly... bizarrely... this works *without* having
             # to do anything else.
             hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
-            for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
+            for jl in j[:hz2]:
+                jh = i+size-jl-1
                 tmp = ri[jl+halfsize]
                 ri[jl+halfsize] = ri[jh]
                 ri[jh] = tmp
