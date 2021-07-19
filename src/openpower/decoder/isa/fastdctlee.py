@@ -199,15 +199,19 @@ def transform2(vec, reverse=True):
                 k += tablestep
             # instead of using jl+halfsize, perform a swap here.
             # use half of j/jr because actually jl+halfsize = reverse(j)
+            # actually: swap the *indices*... not the actual data.
+            # incredibly... bizarrely... this works *without* having
+            # to do anything else.
             if len(j) > 1:
                 hz2 = halfsize // 2
                 for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
-                    tmp = vec[ri[jl+halfsize]]
-                    vec[ri[jl+halfsize]] = vec[ri[jh]]
-                    vec[ri[jh]] = tmp
-                    #print ("     swap", size, i, ri[jl+halfsize], ri[jh])
+                    tmp = ri[jl+halfsize]
+                    ri[jl+halfsize] = ri[jh]
+                    ri[jh] = tmp
+                    print ("     swap", size, i, ri[jl+halfsize], ri[jh])
         size //= 2
 
+    print("post-swapped", ri)
     print("transform2 pre-itersum", vec)
 
     n = len(vec)
