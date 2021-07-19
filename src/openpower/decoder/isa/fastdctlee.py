@@ -129,7 +129,7 @@ def transform_itersum(vector, indent=0):
 
 
 
-def transform2(vec, reverse=True):
+def transform2(vec):
 
     vec = deepcopy(vec)
     # Initialization
@@ -139,43 +139,11 @@ def transform2(vec, reverse=True):
     levels = n.bit_length() - 1
 
     # reference (read/write) the in-place data in *reverse-bit-order*
-    if reverse:
-        ri = list(range(n))
-        ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+    ri = list(range(n))
+    ri = [ri[reverse_bits(i, levels)] for i in range(n)]
 
-    if reverse:
-        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
-
-    if False:
-        size = n
-        #v = list(range(n))
-        v = deepcopy(ri)
-        while size >= 2:
-            halfsize = size // 2
-            tablestep = n // size
-            ir = list(range(0, n, size))
-            for i in ir:
-                k = 0
-                j = list(range(i, i + halfsize))
-                jr = list(range(i+halfsize, i + size))
-                jr.reverse()
-                print ("  xform jr", j, jr)
-                vec2 = deepcopy(v)
-                for ci, (jl, jh) in enumerate(zip(j, jr)):
-                    t1, t2 = v[ri[jl]], v[ri[jh]]
-                    vec2[ri[jl]] = t1
-                    vec2[ri[jl+halfsize]] = t2
-                v = vec2
-            size //= 2
-
-        print ("ri rev", ri)
-        print ("rh rev", v)
-
-        #vec2 = deepcopy(vec)
-        #for i in range(n):
-        #    vec[i] = vec2[v[i]]
-
-        ri = v
+    # and pretend we LDed the data in bit-reversed order as well
+    vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
     size = n
     while size >= 2:
@@ -192,8 +160,11 @@ def transform2(vec, reverse=True):
             for ci, (jl, jh) in enumerate(zip(j, jr)):
                 t1, t2 = vec[ri[jl]], vec[ri[jh]]
                 coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+                # normally DCT would use jl+halfsize not jh, here.
+                # to be able to work in-place, the idea is to perform a
+                # swap afterwards.  however actually we swap the *indices*
                 vec[ri[jl]] = t1 + t2
-                vec[ri[jh]] = (t1 - t2) * (1/coeff) # not jl+halfsize!
+                vec[ri[jh]] = (t1 - t2) * (1/coeff)
                 print ("coeff", size, i, k, "jl", jl, "jh", jh,
                        "i/n", (k+0.5)/size, coeff, vec[ri[jl]], vec[ri[jh]])
                 k += tablestep
