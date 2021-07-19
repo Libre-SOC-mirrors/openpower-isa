@@ -24,6 +24,14 @@
 import math
 from copy import deepcopy
 
+# bits of the integer 'val'.
+def reverse_bits(val, width):
+    result = 0
+    for _ in range(width):
+        result = (result << 1) | (val & 1)
+        val >>= 1
+    return result
+
 
 # DCT type II, unscaled. Algorithm by Byeong Gi Lee, 1984.
 # See: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.118.3056&rep=rep1&type=pdf#page=34
@@ -124,14 +132,6 @@ def transform_itersum(vector, indent=0):
 def transform2(vec, reverse=True):
 
     vec = deepcopy(vec)
-    # bits of the integer 'val'.
-    def reverse_bits(val, width):
-        result = 0
-        for _ in range(width):
-            result = (result << 1) | (val & 1)
-            val >>= 1
-        return result
-
     # Initialization
     n = len(vec)
     print ("transform2", n)
@@ -151,8 +151,6 @@ def transform2(vec, reverse=True):
             print ("  xform jr", j, jr)
             vec2 = deepcopy(vec)
             for ci, (jl, jh) in enumerate(zip(j, jr)):
-                # exact same actual computation, just embedded in
-                # triple-nested for-loops
                 t1, t2 = vec[jl], vec[jh]
                 coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
                 vec2[jl] = t1 + t2
@@ -167,32 +165,30 @@ def transform2(vec, reverse=True):
     print("transform2 pre-itersum", vec)
     # Copy with bit-reversed permutation
 
-
-    vec = transform_itersum(vec)
-    print("transform2 intermediate", vec)
-    return vec
-
-    size *= 2
-    while size <= n:
-        halfsize = size // 2
-        tablestep = n // size
-        ir = list(range(0, n, size))
-        #ir.reverse()
-        print ("itersum", size, ir)
-        for i in ir:
-            jr = list(range(i+halfsize, i + size-1))
-            #jr.reverse()
-            print ("itersum    jr", jr)
-            for jh in jr:
-                # exact same actual computation, just embedded in
-                # triple-nested for-loops
-                #jh = i+halfsize-j
-                vec[jh] += vec[jh+1]
-                print ("    itersum", size, i, j, jh, jh+1)
-        size *= 2
-
     if reverse:
         vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+
+    #vec = transform_itersum(vec)
+    print("transform2 intermediate", vec)
+    #return vec
+
+    n = len(vec)
+    size = n // 2
+    while size >= 2:
+        halfsize = size // 2
+        ir = list(range(0, halfsize))
+        #ir.reverse()
+        print ("itersum", halfsize, size, ir)
+        for i in ir:
+            jr = list(range(i+halfsize, i+n-halfsize, size))
+            print ("itersum    jr", i+halfsize, i+size, jr)
+            for jh in jr:
+                vec[jh] += vec[jh+size]
+                print ("    itersum", size, i, jh, jh+size)
+        size //= 2
+
+    #if reverse:
+    #    vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
     print("transform2 result", vec)
 
@@ -339,7 +335,69 @@ def failllll_transform2(block):
     return block
 
 
+def itersum_explore(vector, indent=0):
+    idt = "   " * indent
+    n = len(vector)
+    if n == 1:
+        return list(vector)
+    elif n == 0 or n % 2 != 0:
+        raise ValueError()
+    else:
+        half = n // 2
+        alpha = [0] * half
+        beta = [0] * half
+        for i in range(half):
+            t1, t2 = vector[i], vector[i+half]
+            alpha[i] = t1
+            beta[i] = t2
+        alpha = itersum_explore(alpha, indent+1)
+        beta  = itersum_explore(beta , indent+1)
+        result = [0] * n
+        for i in range(half):
+            result[i*2] = alpha[i]
+            result[i*2+1] = beta[i]
+        print(idt, "iter-merge", result)
+        for i in range(half - 1):
+            result[i*2+1] = ("add", result[i*2+1], result[i*2+3])
+        print(idt, "iter-result", result)
+        return result
+
+
+def itersum_explore2(vec, indent=0):
+    n = len(vec)
+    size = n // 2
+    while size >= 2:
+        halfsize = size // 2
+        ir = list(range(0, halfsize))
+        #ir.reverse()
+        print ("itersum", halfsize, size, ir)
+        for i in ir:
+            jr = list(range(i+halfsize, i+n-halfsize, size))
+            print ("itersum    jr", i+halfsize, i+size, jr)
+            for jh in jr:
+                vec[jh] = ("add", vec[jh], vec[jh+size])
+                print ("    itersum", size, i, jh, jh+size)
+        size //= 2
+
+    #if reverse:
+    #    vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+
+    return vec
+
 if __name__ == '__main__':
-    vector = range(8)
-    ops = inverse_transform(vector)
-    print (ops)
+    n = 16
+    vec = list(range(n))
+    levels = n.bit_length() - 1
+    vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+    ops = itersum_explore(vec)
+    #ops = [ops[reverse_bits(i, levels)] for i in range(n)]
+    for i, x in enumerate(ops):
+        print (i, x)
+
+    n = 16
+    vec = list(range(n))
+    levels = n.bit_length() - 1
+    #vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+    ops = itersum_explore2(vec)
+    for i, x in enumerate(ops):
+        print (i, x)
