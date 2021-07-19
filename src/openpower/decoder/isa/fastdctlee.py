@@ -166,10 +166,12 @@ def transform2(vec):
                 coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
                 # normally DCT would use jl+halfsize not jh, here.
                 # to be able to work in-place, the idea is to perform a
-                # swap afterwards.  however actually we swap the *indices*
+                # high-half reverse/swap afterwards.  however actually
+                # we swap the *indices*
                 vec[ri[jl]] = t1 + t2
                 vec[ri[jh]] = (t1 - t2) * (1/coeff)
-                print ("coeff", size, i, k, "jl", jl, "jh", jh,
+                print (" ", size, i, k, "ci", ci,
+                        "jl", ri[jl], "jh", ri[jh],
                        "i/n", (k+0.5)/size, coeff, vec[ri[jl]], vec[ri[jh]])
                 k += tablestep
             # instead of using jl+halfsize, perform a swap here.
