@@ -24,7 +24,7 @@
 #   or other dealings in the Software.
 #
 #
-# Modifications made to in-place iterative DCT - SPDX: LGPLv3+
+# Modifications made to create an in-place iterative DCT - SPDX: LGPLv3+
 # Copyright (c) 2021 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
 #
 # The modifications made are firstly to create an iterative schedule,
@@ -42,10 +42,7 @@
 #   the top half is read in reverse order (7 6 5 4) and written out
 #   to the target 4 5 6 7.  the plan was to do this in two stages:
 #   write in-place in order 4 5 6 7 then swap afterwards (7-4), (6-5).
-#   the insight then was: to modify the *indirection* indices rather
-#   than swap the actual data, and then try the same trick as was done
-#   with the bit-reversed LOAD.  by a bizarre twist of good fortune
-#   *that was not needed*!  simply swapping the indices was enough!
+#
 # End result is that once the first butterfly is done - bear in mind
 # it's in-place - the data is in the right order so that a second
 # dead-straightforward iterative sum can be done: again, in-place.
@@ -147,7 +144,7 @@ def transform2(vec):
     ri = [ri[reverse_bits(i, levels)] for i in range(n)]
 
     # and pretend we LDed the data in bit-reversed order as well
-    vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+    vec = [vec[ri[i]] for i in range(n)]
 
     size = n
     while size >= 2:
@@ -166,7 +163,7 @@ def transform2(vec):
                 coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
                 # normally DCT would use jl+halfsize not jh, here.
                 # to be able to work in-place, the idea is to perform a
-                # swap afterwards.  however actually we swap the *indices*
+                # swap afterwards.
                 vec[ri[jl]] = t1 + t2
                 vec[ri[jh]] = (t1 - t2) * (1/coeff)
                 print ("coeff", size, i, k, "ci", ci,
@@ -175,15 +172,14 @@ def transform2(vec):
                 k += tablestep
             # instead of using jl+halfsize, perform a swap here.
             # use half of j/jr because actually jl+halfsize = reverse(j)
-            # actually: swap the *indices*... not the actual data.
-            # incredibly... bizarrely... this works *without* having
-            # to do anything else.
             hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
             for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
-                tmp = ri[jl+halfsize]
-                ri[jl+halfsize] = ri[jh]
-                ri[jh] = tmp
-                print ("     swap", size, i, ri[jl+halfsize], ri[jh])
+                jlh = jl+halfsize
+                # swap
+                tmp = vec[ri[jlh]]
+                vec[ri[jlh]] = vec[ri[jh]]
+                vec[ri[jh]] = tmp
+                print ("     swap", size, i, ri[jlh], ri[jh])
         size //= 2
 
     print("post-swapped", ri)
