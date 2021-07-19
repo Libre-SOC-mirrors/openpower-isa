@@ -2,7 +2,7 @@
 # original code for the FFT Tukey-Cooley schedul:
 # https://www.nayuki.io/res/free-small-fft-in-multiple-languages/fft.py
 """
-    # Radix-2 decimation-in-time FFT
+    # Radix-2 decimation-in-time FFT (real, not complex)
     size = 2
     while size <= n:
         halfsize = size // 2
