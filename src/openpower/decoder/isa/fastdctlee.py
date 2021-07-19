@@ -142,6 +142,9 @@ def transform2(vec, reverse=True):
         ri = range(n)
         ri = [ri[reverse_bits(i, levels)] for i in range(n)]
 
+    if reverse:
+        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
+
     size = n
     while size >= 2:
         halfsize = size // 2
@@ -156,38 +159,31 @@ def transform2(vec, reverse=True):
             print ("  xform jr", j, jr)
             vec2 = deepcopy(vec)
             for ci, (jl, jh) in enumerate(zip(j, jr)):
-                t1, t2 = vec[jl], vec[jh]
+                t1, t2 = vec[ri[jl]], vec[ri[jh]]
                 coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
-                vec2[jl] = t1 + t2
-                vec2[jl+halfsize] = (t1 - t2) * (1/coeff)
+                vec2[ri[jl]] = t1 + t2
+                vec2[ri[jl+halfsize]] = (t1 - t2) * (1/coeff)
                 print ("coeff", size, i, k, "jl", jl, "jh", jh,
-                       "i/n", (k+0.5)/size, coeff, vec[jl], vec[jh])
+                       "i/n", (k+0.5)/size, coeff, vec[ri[jl]], vec[ri[jh]])
                 k += tablestep
             vec = vec2
         size //= 2
 
     print("transform2 pre-itersum", vec)
-    # Copy with bit-reversed permutation
-
-    print("transform2 intermediate", vec)
 
     n = len(vec)
     size = n // 2
     while size >= 2:
         halfsize = size // 2
         ir = list(range(0, halfsize))
-        #ir.reverse()
         print ("itersum", halfsize, size, ir)
         for i in ir:
             jr = list(range(i+halfsize, i+n-halfsize, size))
             print ("itersum    jr", i+halfsize, i+size, jr)
             for jh in jr:
-                vec[ri[jh]] += vec[ri[jh+size]]
+                vec[jh] += vec[jh+size]
                 print ("    itersum", size, i, jh, jh+size)
         size //= 2
-
-    if reverse:
-        vec = [vec[reverse_bits(i, levels)] for i in range(n)]
 
     print("transform2 result", vec)
 
