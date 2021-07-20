@@ -64,12 +64,12 @@ Idx,SPR,priv_mtspr,priv_mfspr,len
 446,TIR,-,yes,64
 464,PTCR,hypv,hypv,64
 704,SVSTATE,no,no,64
+705,SVSHAPE0,no,no,32
+706,SVSHAPE1,no,no,32
+707,SVSHAPE2,no,no,32
+708,SVSHAPE3,no,no,32
 720,PRTBL,yes,yes,64
 721,SVSRR0,yes,yes,64
-722,SVSHAPE0,yes,yes,32
-723,SVSHAPE1,yes,yes,32
-724,SVSHAPE2,yes,yes,32
-725,SVSHAPE3,yes,yes,32
 727,SVCTX0,yes,yes,64
 728,SVCTX1,yes,yes,64
 729,SVCTX2,yes,yes,64
