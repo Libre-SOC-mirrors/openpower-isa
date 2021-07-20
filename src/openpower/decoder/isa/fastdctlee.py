@@ -203,8 +203,20 @@ def transform2(vec):
     vec = halfrev2(vec, False)
     vec = [vec[ri[i]] for i in range(n)]
 
+    # create a cos table: not strictly necessary but here for illustrative
+    # purposes.
+    ctable = []
+    size = n
+    while size >= 2:
+        halfsize = size // 2
+        for i in range(n//size):
+            for ci in range(halfsize):
+                ctable.append((math.cos((ci + 0.5) * math.pi / size) * 2.0))
+        size //= 2
+
     # start the inner butterfly
     size = n
+    k = 0
     while size >= 2:
         halfsize = size // 2
         tablestep = n // size
@@ -218,7 +230,9 @@ def transform2(vec):
             print ("  xform jr", j, jr)
             for ci, (jl, jh) in enumerate(zip(j, jr)):
                 t1, t2 = vec[ri[ji[jl]]], vec[ri[ji[jh]]]
-                coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+                #coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+                coeff = ctable[k]
+                k += 1
                 # normally DCT would use jl+halfsize not jh, here.
                 # to be able to work in-place, the idea is to perform a
                 # swap afterwards.
