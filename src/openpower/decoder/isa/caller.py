@@ -1019,6 +1019,41 @@ class ISACaller:
                 asmop = 'mtcrf'
         return asmop
 
+    def get_remap_indices(self):
+        # go through all iterators in lock-step, advance to next remap_idx
+        srcstep, dststep = self.new_srcstep, self.new_dststep
+        # get four SVSHAPEs. here we are hard-coding
+        SVSHAPE0 = self.spr['SVSHAPE0']
+        SVSHAPE1 = self.spr['SVSHAPE1']
+        SVSHAPE2 = self.spr['SVSHAPE2']
+        SVSHAPE3 = self.spr['SVSHAPE3']
+        # set up the iterators
+        remaps = [(SVSHAPE0, SVSHAPE0.get_iterator()),
+                  (SVSHAPE1, SVSHAPE1.get_iterator()),
+                  (SVSHAPE2, SVSHAPE2.get_iterator()),
+                  (SVSHAPE3, SVSHAPE3.get_iterator()),
+                 ]
+
+        remap_idxs = []
+        self.remap_loopends = [0] * 4
+        dbg = []
+        for i, (shape, remap) in enumerate(remaps):
+            # zero is "disabled"
+            if shape.value == 0x0:
+                remap_idxs.append(0)
+            # pick src or dststep depending on reg num (0-2=in, 3-4=out)
+            step = dststep if (i in [3, 4]) else srcstep
+            # this is terrible.  O(N^2) looking for the match. but hey.
+            for idx, (remap_idx, loopends) in enumerate(remap):
+                if idx == step:
+                    break
+            remap_idxs.append(remap_idx)
+            self.remap_loopends[i] = loopends
+            dbg.append((i, step, remap_idx, loopends))
+        for (i, step, remap_idx, loopends) in dbg:
+            log ("SVSHAPE %d idx, end" % i, step, remap_idx, bin(loopends))
+        return remap_idxs, remaps
+
     def get_spr_msb(self):
         dec_insn = yield self.dec2.e.do.insn
         return dec_insn & (1 << 20) != 0  # sigh - XFF.spr[-1]?
@@ -1169,11 +1204,6 @@ class ISACaller:
         yield self.dec2.remap_active.eq(remap_en if active else 0)
         yield Settle()
         if self.is_svp64_mode and (persist or self.last_op_svshape):
-            # get four SVSHAPEs. here we are hard-coding
-            SVSHAPE0 = self.spr['SVSHAPE0']
-            SVSHAPE1 = self.spr['SVSHAPE1']
-            SVSHAPE2 = self.spr['SVSHAPE2']
-            SVSHAPE3 = self.spr['SVSHAPE3']
             # just some convenient debug info
             for i in range(4):
                 sname = 'SVSHAPE%d' % i
@@ -1195,28 +1225,7 @@ class ISACaller:
                      (self.dec2.o_step, mo0),   # RT
                      (self.dec2.o2_step, mo1),   # EA
                     ]
-            # set up the iterators
-            remaps = [(SVSHAPE0, SVSHAPE0.get_iterator()),
-                      (SVSHAPE1, SVSHAPE1.get_iterator()),
-                      (SVSHAPE2, SVSHAPE2.get_iterator()),
-                      (SVSHAPE3, SVSHAPE3.get_iterator()),
-                     ]
-            # go through all iterators in lock-step, advance to next remap_idx
-            remap_idxs = []
-            self.remap_loopends = []
-            for i, (shape, remap) in enumerate(remaps):
-                # zero is "disabled"
-                if shape.value == 0x0:
-                    remap_idxs.append(0)
-                # pick src or dststep depending on reg num (0-2=in, 3-4=out)
-                step = dststep if (i in [3, 4]) else srcstep
-                # this is terrible.  O(N^2) looking for the match. but hey.
-                for idx, (remap_idx, loopends) in enumerate(remap):
-                    if idx == step:
-                        break
-                remap_idxs.append(remap_idx)
-                self.remap_loopends.append(loopends)
-
+            remap_idxs, remaps = self.get_remap_indices()
             rremaps = []
             # now cross-index the required SHAPE for each of 3-in 2-out regs
             rnames = ['RA', 'RB', 'RC', 'RT', 'EA']
@@ -1230,7 +1239,7 @@ class ISACaller:
                 yield dstep.eq(remap_idx)
 
                 # debug printout info
-                rremaps.append((shape.mode, i, rnames[i], step, shape_idx,
+                rremaps.append((shape.mode, i, rnames[i], shape_idx,
                                 remap_idx))
             for x in rremaps:
                 log ("shape remap", x)
@@ -1471,6 +1480,7 @@ class ISACaller:
             else:
                 log ("SVSTATE_NEXT: post-inc")
                 srcstep, dststep = self.new_srcstep, self.new_dststep
+                remap_idxs, remaps = self.get_remap_indices()
                 vl = self.svstate.vl
                 end_src = srcstep == vl-1
                 end_dst = dststep == vl-1
@@ -1490,7 +1500,8 @@ class ISACaller:
                     # see if svstep was requested, if so, which SVSTATE
                     endings = 0b111
                     if self.svstate_next_mode > 0:
-                        endings = self.remap_loopends[self.svstate_nextmode-1]
+                        shape_idx = self.svstate_next_mode.value-1
+                        endings = self.remap_loopends[shape_idx]
                     cr_field = SelectableInt((~endings)<<1 | endtest, 4)
                     print ("svstep Rc=1, CR0", cr_field)
                     self.crl[0].eq(cr_field) # CR0

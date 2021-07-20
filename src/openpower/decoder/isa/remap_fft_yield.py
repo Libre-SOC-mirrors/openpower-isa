@@ -82,7 +82,7 @@ def iterate_butterfly_indices(SVSHAPE):
 
 def demo():
     # set the dimension sizes here
-    xdim = 16
+    xdim = 8
     ydim = 0 # not needed
     zdim = 0 # again, not needed
 

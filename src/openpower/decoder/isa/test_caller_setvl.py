@@ -23,7 +23,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test__svstep_1(self):
+    def test_svstep_1(self):
         lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1", # actual setvl (VF mode)
                         "setvl 0, 0, 1, 1, 0, 0", # svstep
                         "setvl 0, 0, 1, 1, 0, 0" # svstep
@@ -52,7 +52,7 @@ class DecoderTestCase(FHDLTestCase):
             print("      gpr1", sim.gpr(0))
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
 
-    def test__svstep_2(self):
+    def test_svstep_2(self):
         """tests svstep when it reaches VL
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",  # actual setvl (VF mode)
@@ -90,7 +90,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 0)
             self.assertEqual(CR0[CRFields.SO], 1)
 
-    def test__svstep_3(self):
+    def test_svstep_3(self):
         """tests svstep when it *doesn't* reach VL
         """
         lst = SVP64Asm(["setvl 0, 0, 3, 1, 1, 1",  # actual setvl (VF mode)
@@ -129,7 +129,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.SO], 0)
 
 
-    def test__setvl_1(self):
+    def test_setvl_1(self):
         """straight setvl, testing if VL and MVL are over-ridden
         """
         lst = SVP64Asm(["setvl 1, 0, 10, 0, 1, 1",
@@ -153,7 +153,134 @@ class DecoderTestCase(FHDLTestCase):
             print("      gpr1", sim.gpr(1))
             self.assertEqual(sim.gpr(1), SelectableInt(10, 64))
 
-    def test__sv_add(self):
+    def test_svstep_inner_loop_6(self):
+        """tests svstep inner loop, running 6 times, looking for "k"
+        """
+        lst = SVP64Asm([
+                        # set triple butterfly mode with persistent "REMAP"
+                        "svshape 8, 1, 1, 1, 1",
+                        "svremap 31, 1, 0, 2, 0, 1, 1",
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        #svstate.vl = 2 # VL
+        #svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            self.assertEqual(sim.svstate.vl, 12)
+            self.assertEqual(sim.svstate.maxvl, 12)
+            # svstep called twice, didn't reach VL, so srcstep/dststep both 2
+            self.assertEqual(sim.svstate.srcstep, 6)
+            self.assertEqual(sim.svstate.dststep, 6)
+            self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            self.assertEqual(sim.svstate.vfirst, 1)
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 1)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
+    def test_svstep_inner_loop_3(self):
+        """tests svstep inner loop, running 3 times
+        """
+        lst = SVP64Asm([
+                        # set triple butterfly mode with persistent "REMAP"
+                        "svshape 8, 1, 1, 1, 1",
+                        "svremap 31, 1, 0, 2, 0, 1, 1",
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0", # svstep (Rc=1)
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        #svstate.vl = 2 # VL
+        #svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            self.assertEqual(sim.svstate.vl, 12)
+            self.assertEqual(sim.svstate.maxvl, 12)
+            # svstep called twice, didn't reach VL, so srcstep/dststep both 2
+            self.assertEqual(sim.svstate.srcstep, 3)
+            self.assertEqual(sim.svstate.dststep, 3)
+            self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            self.assertEqual(sim.svstate.vfirst, 1)
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 1)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
+    def test_svstep_inner_loop_4(self):
+        """tests svstep inner loop, running 4 times
+        """
+        lst = SVP64Asm([
+                        # set triple butterfly mode with persistent "REMAP"
+                        "svshape 8, 1, 1, 1, 1",
+                        "svremap 31, 1, 0, 2, 0, 1, 1",
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0", # svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0", # svstep (Rc=1)
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        #svstate.vl = 2 # VL
+        #svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            self.assertEqual(sim.svstate.vl, 12)
+            self.assertEqual(sim.svstate.maxvl, 12)
+            # svstep called twice, didn't reach VL, so srcstep/dststep both 2
+            self.assertEqual(sim.svstate.srcstep, 4)
+            self.assertEqual(sim.svstate.dststep, 4)
+            self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            self.assertEqual(sim.svstate.vfirst, 1)
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 1)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
+    def test_sv_add(self):
         """sets VL=2 then adds:
            * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
            * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111
@@ -181,7 +308,7 @@ class DecoderTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, initial_regs)
             self._check_regs(sim, expected_regs)
 
-    def test__svstep_add_1(self):
+    def test_svstep_add_1(self):
         """tests svstep with an add, when it reaches VL
         lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
                         'sv.add 1.v, 5.v, 9.v',
