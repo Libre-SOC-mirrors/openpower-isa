@@ -59,7 +59,7 @@ class FastDctTest(unittest.TestCase):
 
     @staticmethod
     def nonrandom_vector(n):
-        return [(i-n/2.0) for i in range(n)]
+        return [(i-n/2.0+pow(1.001, n)) for i in range(n)]
 
 
     _EPSILON = 1e-9
