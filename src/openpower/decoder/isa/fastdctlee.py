@@ -1,6 +1,12 @@
 #
-# Fast discrete cosine transform algorithms (Python)
+# Fast discrete cosine transform algorithm (Python)
 #
+# Modifications made to create an in-place iterative DCT:
+# Copyright (c) 2021 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
+#
+# License for modifications - SPDX: LGPLv3+
+#
+# Original fastdctlee.py by Nayuki:
 # Copyright (c) 2020 Project Nayuki. (MIT License)
 # https://www.nayuki.io/page/fast-discrete-cosine-transform-algorithms
 #
@@ -24,9 +30,6 @@
 #   or other dealings in the Software.
 #
 #
-# Modifications made to create an in-place iterative DCT - SPDX: LGPLv3+
-# Copyright (c) 2021 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
-#
 # The modifications made are firstly to create an iterative schedule,
 # rather than the more normal recursive algorithm.  Secondly, the
 # two butterflys are also separated out: inner butterfly does COS +/-
@@ -42,6 +45,12 @@
 #   the top half is read in reverse order (7 6 5 4) and written out
 #   to the target 4 5 6 7.  the plan was to do this in two stages:
 #   write in-place in order 4 5 6 7 then swap afterwards (7-4), (6-5).
+#   however by leaving the data *in-place* and having subsequent
+#   loops refer to the data *where it now is*, the swap is avoided
+# - thirdly, arrange for the data to be *pre-swapped* (in an inverse
+#   order of how it would have got there, if that makes sense), such
+#   that *when* it gets swapped, it ends up in the right order.
+#   given that that will be a LD operation it's no big deal.
 #
 # End result is that once the first butterfly is done - bear in mind
 # it's in-place - the data is in the right order so that a second
@@ -130,7 +139,8 @@ def transform(vector, indent=0):
 
 # reverse top half of a list, recursively.  the recursion can be
 # applied *after* or *before* the reversal of the top half.  these
-# are inverses of each other
+# are inverses of each other.
+# this function is unused except to test the iterative version (halfrev2)
 def halfrev(l, pre_rev=True):
     n = len(l)
     if n == 1:
@@ -143,6 +153,26 @@ def halfrev(l, pre_rev=True):
         ll, lh = halfrev(ll, pre_rev), halfrev(lh, pre_rev)
     return ll + lh
 
+# iterative version of [recursively-applied] half-rev.
+# relies on the list lengths being power-of-two and the fact
+# that bit-inversion of a list of binary numbers is the same
+# as reversing the order of the list
+# this version is dead easy to implement in hardware.
+# a big surprise is that the half-reversal can be done with
+# such a simple XOR. the inverse operation is slightly trickier
+def halfrev2(vec, pre_rev=True):
+    res = []
+    for i in range(len(vec)):
+        if pre_rev:
+            res.append(i ^ (i>>1))
+        else:
+            ri = i
+            bl = i.bit_length()
+            for ji in range(1, bl):
+                if (1<<ji) & i:
+                    ri ^= ((1<<ji)-1)
+            res.append(vec[ri])
+    return res
 
 # totally cool *in-place* DCT algorithm
 def transform2(vec):
@@ -162,11 +192,11 @@ def transform2(vec):
     # *indices* are referenced (two levels of indirection at the moment)
     # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
-    ji = halfrev(ji, True)
+    ji = halfrev2(ji, True)
 
     # and pretend we LDed data in half-swapped *and* bit-reversed order as well
     # TODO: merge these two
-    vec = halfrev(vec, False)
+    vec = halfrev2(vec, False)
     vec = [vec[ri[i]] for i in range(n)]
 
     # start the inner butterfly
@@ -393,11 +423,21 @@ if __name__ == '__main__':
         print (i, x)
 
     # halfrev test
-    vec = list(range(8))
+    vec = list(range(16))
     print ("orig vec", vec)
     vecr = halfrev(vec, True)
     print ("reversed", vecr)
+    for i, v in enumerate(vecr):
+        print ("%2d %2d   %04s %04s %04s" % (i, v,
+                            bin(i)[2:], bin(v ^ i)[2:], bin(v)[2:]))
     vecrr = halfrev(vecr, False)
     assert vec == vecrr
     vecrr = halfrev(vec, False)
     print ("pre-reversed", vecrr)
+    for i, v in enumerate(vecrr):
+        print ("%2d %2d   %04s %04s %04s" % (i, v,
+                            bin(i)[2:], bin(v ^ i)[2:], bin(v)[2:]))
+    il = halfrev2(vec, False)
+    print ("iterative rev", il)
+    il = halfrev2(vec, True)
+    print ("iterative rev-true", il)
