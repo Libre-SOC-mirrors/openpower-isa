@@ -146,6 +146,7 @@ def transform2(vec):
     # and pretend we LDed the data in bit-reversed order as well
     vec = [vec[ri[i]] for i in range(n)]
 
+    # start the inner butterfly
     size = n
     while size >= 2:
         halfsize = size // 2
