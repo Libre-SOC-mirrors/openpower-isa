@@ -69,6 +69,45 @@ def reverse_bits(val, width):
     return result
 
 
+# reverse top half of a list, recursively.  the recursion can be
+# applied *after* or *before* the reversal of the top half.  these
+# are inverses of each other.
+# this function is unused except to test the iterative version (halfrev2)
+def halfrev(l, pre_rev=True):
+    n = len(l)
+    if n == 1:
+        return l
+    ll, lh = l[:n//2], l[n//2:]
+    if pre_rev:
+        ll, lh = halfrev(ll, pre_rev), halfrev(lh, pre_rev)
+    lh.reverse()
+    if not pre_rev:
+        ll, lh = halfrev(ll, pre_rev), halfrev(lh, pre_rev)
+    return ll + lh
+
+
+# iterative version of [recursively-applied] half-rev.
+# relies on the list lengths being power-of-two and the fact
+# that bit-inversion of a list of binary numbers is the same
+# as reversing the order of the list
+# this version is dead easy to implement in hardware.
+# a big surprise is that the half-reversal can be done with
+# such a simple XOR. the inverse operation is slightly trickier
+def halfrev2(vec, pre_rev=True):
+    res = []
+    for i in range(len(vec)):
+        if pre_rev:
+            res.append(i ^ (i>>1))
+        else:
+            ri = i
+            bl = i.bit_length()
+            for ji in range(1, bl):
+                if (1<<ji) & i:
+                    ri ^= ((1<<ji)-1)
+            res.append(vec[ri])
+    return res
+
+
 # DCT type II, unscaled. Algorithm by Byeong Gi Lee, 1984.
 # See: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.118.3056&rep=rep1&type=pdf#page=34
 # original (recursive) algorithm by Nayuki
@@ -96,7 +135,9 @@ def transform(vector, indent=0):
         return result
 
 
-# modified (iterative) algorithm by lkcl, based on Nayuki original
+# modified recursive algorithm, based on Nayuki original, which simply
+# prints out an awful lot of debug data.  used to work out the ordering
+# for the iterative version by analysing the indices printed out
 def transform(vector, indent=0):
     idt = "   " * indent
     n = len(vector)
@@ -137,47 +178,10 @@ def transform(vector, indent=0):
         print(idt, "result", result)
         return result
 
-# reverse top half of a list, recursively.  the recursion can be
-# applied *after* or *before* the reversal of the top half.  these
-# are inverses of each other.
-# this function is unused except to test the iterative version (halfrev2)
-def halfrev(l, pre_rev=True):
-    n = len(l)
-    if n == 1:
-        return l
-    ll, lh = l[:n//2], l[n//2:]
-    if pre_rev:
-        ll, lh = halfrev(ll, pre_rev), halfrev(lh, pre_rev)
-    lh.reverse()
-    if not pre_rev:
-        ll, lh = halfrev(ll, pre_rev), halfrev(lh, pre_rev)
-    return ll + lh
-
-# iterative version of [recursively-applied] half-rev.
-# relies on the list lengths being power-of-two and the fact
-# that bit-inversion of a list of binary numbers is the same
-# as reversing the order of the list
-# this version is dead easy to implement in hardware.
-# a big surprise is that the half-reversal can be done with
-# such a simple XOR. the inverse operation is slightly trickier
-def halfrev2(vec, pre_rev=True):
-    res = []
-    for i in range(len(vec)):
-        if pre_rev:
-            res.append(i ^ (i>>1))
-        else:
-            ri = i
-            bl = i.bit_length()
-            for ji in range(1, bl):
-                if (1<<ji) & i:
-                    ri ^= ((1<<ji)-1)
-            res.append(vec[ri])
-    return res
 
 # totally cool *in-place* DCT algorithm
 def transform2(vec):
 
-    vec = deepcopy(vec)
     # Initialization
     n = len(vec)
     print ()
@@ -229,17 +233,14 @@ def transform2(vec):
             hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
             for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
                 jlh = jl+halfsize
-                # swap indices
-                tmp1 = ji[jlh]
-                tmp2 = ji[jh]
-                ji[jlh] = tmp2
-                ji[jh] = tmp1
+                # swap indices, NOT the data
+                tmp1, tmp2 = ji[jlh], ji[jh]
+                ji[jlh], ji[jh] = tmp2, tmp1
                 print ("     swap", size, i, ji[jlh], ji[jh])
         size //= 2
 
     print("post-swapped", ri)
     print("ji-swapped", ji)
-
     print("transform2 pre-itersum", vec)
 
     # now things are in the right order for the outer butterfly.
