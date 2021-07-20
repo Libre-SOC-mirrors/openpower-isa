@@ -204,7 +204,9 @@ def transform2(vec):
     vec = [vec[ri[i]] for i in range(n)]
 
     # create a cos table: not strictly necessary but here for illustrative
-    # purposes.
+    # purposes, to demonstrate the point that it really *is* iterative.
+    # this table could be cached and used multiple times rather than
+    # computed every time.
     ctable = []
     size = n
     while size >= 2:
