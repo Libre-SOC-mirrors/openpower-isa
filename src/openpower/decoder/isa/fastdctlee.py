@@ -154,7 +154,7 @@ def transform2(vec):
         ir = list(range(0, n, size))
         print ("  xform", size, ir)
         for i in ir:
-            k = 0
+            # two lists of half-range indices, e.g. j 0123, jr 7654
             j = list(range(i, i + halfsize))
             jr = list(range(i+halfsize, i + size))
             jr.reverse()
@@ -167,10 +167,9 @@ def transform2(vec):
                 # swap afterwards.
                 vec[ri[jl]] = t1 + t2
                 vec[ri[jh]] = (t1 - t2) * (1/coeff)
-                print ("coeff", size, i, k, "ci", ci,
+                print ("coeff", size, i, "ci", ci,
                         "jl", ri[jl], "jh", ri[jh],
-                       "i/n", (k+0.5)/size, coeff, vec[ri[jl]], vec[ri[jh]])
-                k += tablestep
+                       "i/n", (ci+0.5)/size, coeff, vec[ri[jl]], vec[ri[jh]])
             # instead of using jl+halfsize, perform a swap here.
             # use half of j/jr because actually jl+halfsize = reverse(j)
             hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
