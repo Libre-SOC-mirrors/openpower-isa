@@ -128,6 +128,21 @@ def transform(vector, indent=0):
         print(idt, "result", result)
         return result
 
+# reverse top half of a list, recursively.  the recursion can be
+# applied *after* or *before* the reversal of the top half.  these
+# are inverses of each other
+def halfrev(l, pre_rev=True):
+    n = len(l)
+    if n == 1:
+        return l
+    ll, lh = l[:n//2], l[n//2:]
+    if pre_rev:
+        ll, lh = halfrev(ll, pre_rev), halfrev(lh, pre_rev)
+    lh.reverse()
+    if not pre_rev:
+        ll, lh = halfrev(ll, pre_rev), halfrev(lh, pre_rev)
+    return ll + lh
+
 
 # totally cool *in-place* DCT algorithm
 def transform2(vec):
@@ -143,12 +158,16 @@ def transform2(vec):
     ri = list(range(n))
     ri = [ri[reverse_bits(i, levels)] for i in range(n)]
 
-    # and pretend we LDed the data in bit-reversed order as well
-    vec = [vec[ri[i]] for i in range(n)]
-
     # reference list for not needing to do data-swaps, just swap what
     # *indices* are referenced (two levels of indirection at the moment)
+    # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
+    ji = halfrev(ji, True)
+
+    # and pretend we LDed data in half-swapped *and* bit-reversed order as well
+    # TODO: merge these two
+    vec = halfrev(vec, False)
+    vec = [vec[ri[i]] for i in range(n)]
 
     # start the inner butterfly
     size = n
@@ -180,16 +199,11 @@ def transform2(vec):
             hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
             for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
                 jlh = jl+halfsize
-                # swap
-                if False:
-                    tmp = vec[ri[jlh]]
-                    vec[ri[jlh]] = vec[ri[jh]]
-                    vec[ri[jh]] = tmp
-                else:
-                    tmp1 = ji[jlh]
-                    tmp2 = ji[jh]
-                    ji[jlh] = tmp2
-                    ji[jh] = tmp1
+                # swap indices
+                tmp1 = ji[jlh]
+                tmp2 = ji[jh]
+                ji[jlh] = tmp2
+                ji[jh] = tmp1
                 print ("     swap", size, i, ji[jlh], ji[jh])
         size //= 2
 
@@ -197,25 +211,6 @@ def transform2(vec):
     print("ji-swapped", ji)
 
     print("transform2 pre-itersum", vec)
-
-    # ok so the above in-place-ness caused the order to change.
-    # need to work out how to invert it back into the correct order
-    idx_search = range(n)
-    ir = [idx_search[reverse_bits(i, levels)] for i in range(n)]
-    print("transform2 expected bit-rev", ir)
-    vv = [0] * n
-    for i in range(n):
-        vv[i] = ir[ji[i]]
-    print("restored", vv)
-    vv = [vv[reverse_bits(i, levels)] for i in range(n)]
-    print("restored-inverted", vv)
-
-    # this is TEMPORARY!  it should be possible to establish
-    # a *LOAD* schedule which has everything work out such that
-    # all data ends up *in* this order at the end of the inner butterfly
-    vec2 = deepcopy(vec)
-    for i in range(n):
-        vec[i] = vec2[vv[i]]
 
     # now things are in the right order for the outer butterfly.
     n = len(vec)
@@ -396,3 +391,13 @@ if __name__ == '__main__':
     ops = itersum_explore2(vec)
     for i, x in enumerate(ops):
         print (i, x)
+
+    # halfrev test
+    vec = list(range(8))
+    print ("orig vec", vec)
+    vecr = halfrev(vec, True)
+    print ("reversed", vecr)
+    vecrr = halfrev(vecr, False)
+    assert vec == vecrr
+    vecrr = halfrev(vec, False)
+    print ("pre-reversed", vecrr)
