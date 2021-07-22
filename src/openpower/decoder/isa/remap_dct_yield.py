@@ -73,7 +73,11 @@ def iterate_dct_butterfly_indices(SVSHAPE):
     ji = list(range(n))
     inplace_mode = SVSHAPE.mode == 0b01 and SVSHAPE.skip not in [0b10, 0b11]
     if inplace_mode:
+        print ("inplace mode")
         ji = halfrev2(ji, True)
+
+    print ("ri", ri)
+    print ("ji", ji)
 
     # start an infinite (wrapping) loop
     skip = 0
@@ -89,12 +93,10 @@ def iterate_dct_butterfly_indices(SVSHAPE):
             if SVSHAPE.invxyz[1]: y_r.reverse()
             for i in y_r:       # loop over 2nd order dimension
                 y_end = i == y_r[-1]
-                k_r = []
-                j_r = []
-                k = 0
-                for j in range(i, i+halfsize):
-                    k_r.append(k)
-                    j_r.append(j)
+                # two lists of half-range indices, e.g. j 0123, jr 7654
+                j = list(range(i, i + halfsize))
+                jr = list(range(i+halfsize, i + size))
+                jr.reverse()
                 # invert if requested
                 if SVSHAPE.invxyz[2]: k_r.reverse()
                 if SVSHAPE.invxyz[2]: j_r.reverse()
@@ -102,14 +104,16 @@ def iterate_dct_butterfly_indices(SVSHAPE):
                 # if you *really* want to do the in-place swapping manually,
                 # this allows you to do it.  good luck...
                 if SVSHAPE.mode == 0b01 and not inplace_mode:
+                    print ("swap mode")
                     jr = j_r[:hz2]
-                for j in j_r:   # loop over 1st order dimension
-                    z_end = j == j_r[-1]
+                print ("xform jr", jr)
+                for jl, jh in zip(j, jr):   # loop over 1st order dimension
+                    z_end = jl == j[-1]
                     # now depending on MODE return the index
                     if SVSHAPE.skip in [0b00, 0b10]:
-                        result = ri[ji[j]]        # lower half
+                        result = ri[ji[jl]]        # lower half
                     elif SVSHAPE.skip in [0b01, 0b11]:
-                        result = ri[ji[size-j-1]] # upper half, reverse order
+                        result = ri[ji[jh]] # upper half, reverse order
                     loopends = (z_end |
                                ((y_end and z_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
@@ -118,9 +122,9 @@ def iterate_dct_butterfly_indices(SVSHAPE):
 
                 # now in-place swap
                 if SVSHAPE.mode == 0b01 and inplace_mode:
-                    for ci, jl in enumerate(j_r[:hz2]):
-                        jh = size-jl-1 # upper half, reverse order
+                    for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
                         jlh = jl+halfsize
+                        #print ("inplace swap", jh, jlh)
                         tmp1, tmp2 = ji[jlh], ji[jh]
                         ji[jlh], ji[jh] = tmp2, tmp1
 
@@ -145,6 +149,102 @@ def pprint_schedule(schedule, n):
                                 "end", bin(je)[2:], bin(je)[2:])
                 idx += 1
         size *= 2
+
+# totally cool *in-place* DCT algorithm using yield REMAPs
+def transform2(vec):
+
+    # Initialization
+    n = len(vec)
+    print ()
+    print ("transform2", n)
+    levels = n.bit_length() - 1
+
+    # reference (read/write) the in-place data in *reverse-bit-order*
+    ri = list(range(n))
+    ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+
+    # and pretend we LDed data in half-swapped *and* bit-reversed order as well
+    # TODO: merge these two
+    vec = halfrev2(vec, False)
+    vec = [vec[ri[i]] for i in range(n)]
+
+    # create a cos table: not strictly necessary but here for illustrative
+    # purposes, to demonstrate the point that it really *is* iterative.
+    # this table could be cached and used multiple times rather than
+    # computed every time.
+    ctable = []
+    size = n
+    VL = 0
+    while size >= 2:
+        halfsize = size // 2
+        for i in range(n//size):
+            for ci in range(halfsize):
+                ctable.append((math.cos((ci + 0.5) * math.pi / size) * 2.0))
+                VL += 1
+        size //= 2
+
+    ################
+    # INNER butterfly
+    ################
+    xdim = n
+    ydim = 0
+    zdim = 0
+
+    # set up an SVSHAPE
+    class SVSHAPE:
+        pass
+    # j schedule
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, ydim, zdim]
+    SVSHAPE0.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE0.mode = 0b01
+    SVSHAPE0.skip = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [1,0,0] # inversion if desired
+    # j+halfstep schedule
+    SVSHAPE1 = SVSHAPE()
+    SVSHAPE1.lims = [xdim, ydim, zdim]
+    SVSHAPE1.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE1.mode = 0b01
+    SVSHAPE1.skip = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [1,0,0] # inversion if desired
+
+    # enumerate over the iterator function, getting new indices
+    i0 = iterate_dct_butterfly_indices(SVSHAPE0)
+    i1 = iterate_dct_butterfly_indices(SVSHAPE1)
+    for k, ((jl, jle), (jh, jhe)) in enumerate(zip(i0, i1)):
+        if k >= VL:
+            break
+        t1, t2 = vec[jl], vec[jh]
+        coeff = ctable[k]
+        vec[jl] = t1 + t2
+        vec[jh] = (t1 - t2) * (1/coeff)
+        print ("coeff", size, i, "ci", ci,
+                "jl", jl, "jh", jh,
+               "i/n", (ci+0.5)/size, coeff, vec[jl],
+                                            vec[jh])
+
+    print("transform2 pre-itersum", vec)
+
+    # now things are in the right order for the outer butterfly.
+    n = len(vec)
+    size = n // 2
+    while size >= 2:
+        halfsize = size // 2
+        ir = list(range(0, halfsize))
+        print ("itersum", halfsize, size, ir)
+        for i in ir:
+            jr = list(range(i+halfsize, i+n-halfsize, size))
+            print ("itersum    jr", i+halfsize, i+size, jr)
+            for jh in jr:
+                vec[jh] += vec[jh+size]
+                print ("    itersum", size, i, jh, jh+size)
+        size //= 2
+
+    print("transform2 result", vec)
+
+    return vec
 
 
 def demo():

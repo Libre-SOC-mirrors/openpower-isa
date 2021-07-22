@@ -202,6 +202,9 @@ def transform2(vec):
     vec = halfrev2(vec, False)
     vec = [vec[ri[i]] for i in range(n)]
 
+    print ("ri", ri)
+    print ("ji", ji)
+
     # create a cos table: not strictly necessary but here for illustrative
     # purposes, to demonstrate the point that it really *is* iterative.
     # this table could be cached and used multiple times rather than
@@ -240,7 +243,7 @@ def transform2(vec):
                 vec[ri[ji[jl]]] = t1 + t2
                 vec[ri[ji[jh]]] = (t1 - t2) * (1/coeff)
                 print ("coeff", size, i, "ci", ci,
-                        "jl", ri[jl], "jh", ri[jh],
+                        "jl", ri[ji[jl]], "jh", ri[ji[jh]],
                        "i/n", (ci+0.5)/size, coeff, vec[ri[ji[jl]]],
                                                     vec[ri[ji[jh]]])
             # instead of using jl+halfsize, perform a swap here.
