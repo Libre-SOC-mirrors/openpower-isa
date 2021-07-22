@@ -185,7 +185,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(14), SelectableInt(0x202, 64))
             self.assertEqual(sim.gpr(15), SelectableInt(0x404, 64))
 
-    def test_sv_load_store_bitreverse(self):
+    def test_sv_load_store_bitreverse2(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
@@ -246,6 +246,90 @@ class DecoderTestCase(FHDLTestCase):
             #self.assertEqual(mem, [(16, 0x020200000101),
             #                       (24, 0x040400000303)])
             self._check_fpregs(sim, expected_fprs)
+
+    def test_sv_load_store_bitreverse_remap(self):
+        """>>> lst = ["addi 1, 0, 0x0010",
+                        "addi 2, 0, 0x0004",
+                        "addi 3, 0, 0x0002",
+                        "addi 5, 0, 0x101",
+                        "addi 6, 0, 0x202",
+                        "addi 7, 0, 0x303",
+                        "addi 8, 0, 0x404",
+                        "sv.stw 5.v, 0(1)",
+                        "svshape 4, 4, 4, 0, 0",
+                        "svremap 31, 1, 2, 3, 0, 0, 0, 0",
+                        "sv.lwzbr 12.v, 4(1), 2"]
+
+        note: bitreverse mode is... odd.  it's the butterfly generator
+        from Cooley-Tukey FFT:
+        https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
+
+        bitreverse LD is computed as:
+        for i in range(VL):
+            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
+
+        bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
+        produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
+
+        and thus creates the butterfly needed for one iteration of FFT.
+        the RC (shift) is to be able to offset the LDs by Radix-2 spans
+        """
+        lst = SVP64Asm(["addi 1, 0, 0x0010",
+                        "addi 2, 0, 0x0000",
+                        "addi 4, 0, 0x101",
+                        "addi 5, 0, 0x202",
+                        "addi 6, 0, 0x303",
+                        "addi 7, 0, 0x404",
+                        "addi 8, 0, 0x505",
+                        "addi 9, 0, 0x606",
+                        "addi 10, 0, 0x707",
+                        "addi 11, 0, 0x808",
+                        "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "svshape 4, 4, 2, 0, 0",
+                        "svremap 31, 1, 2, 3, 0, 0, 0, 1",
+                        #"setvl 0, 0, 8, 0, 1, 1",
+                        "sv.lwzbr 12.v, 4(1), 2"]) # bit-reversed
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=4)
+        svstate = SVP64State()
+        svstate.vl = 8 # VL
+        svstate.maxvl = 8 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        regs = [0] * 64
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                                initial_regs=regs)
+            mem = sim.mem.dump(printout=False)
+            print ("Mem")
+            print (mem)
+
+            self.assertEqual(mem, [(16, 0x020200000101),
+                                   (24, 0x040400000303),
+                                   (32, 0x060600000505),
+                                   (40, 0x080800000707)])
+            print(sim.gpr(1))
+            # from STs
+            self.assertEqual(sim.gpr(4), SelectableInt(0x101, 64))
+            self.assertEqual(sim.gpr(5), SelectableInt(0x202, 64))
+            self.assertEqual(sim.gpr(6), SelectableInt(0x303, 64))
+            self.assertEqual(sim.gpr(7), SelectableInt(0x404, 64))
+            self.assertEqual(sim.gpr(8), SelectableInt(0x505, 64))
+            self.assertEqual(sim.gpr(9), SelectableInt(0x606, 64))
+            self.assertEqual(sim.gpr(10), SelectableInt(0x707, 64))
+            self.assertEqual(sim.gpr(11), SelectableInt(0x808, 64))
+            # combination of bit-reversed load with a Matrix REMAP
+            # schedule
+            self.assertEqual(sim.gpr(12), SelectableInt(0x101, 64))
+            self.assertEqual(sim.gpr(13), SelectableInt(0x505, 64))
+            self.assertEqual(sim.gpr(14), SelectableInt(0x303, 64))
+            self.assertEqual(sim.gpr(15), SelectableInt(0x707, 64))
+            self.assertEqual(sim.gpr(16), SelectableInt(0x202, 64))
+            self.assertEqual(sim.gpr(17), SelectableInt(0x606, 64))
+            self.assertEqual(sim.gpr(18), SelectableInt(0x404, 64))
+            self.assertEqual(sim.gpr(19), SelectableInt(0x808, 64))
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None, initial_fprs=None):
