@@ -30,10 +30,10 @@ class DecoderTestCase(FHDLTestCase):
     def test_sv_load_store_elementstride(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0008",
-                        "addi 5, 0, 0x1234",
-                        "addi 6, 0, 0x1235",
-                        "sv.stw/els 5.v, 16(1)",
-                        "sv.lwz/els 9.v, 16(1)"]
+                        "addi 4, 0, 0x1234",
+                        "addi 5, 0, 0x1235",
+                        "sv.stw/els 4.v, 16(1)",
+                        "sv.lwz/els 8.v, 16(1)"]
 
         note: element stride mode is only enabled when RA is a scalar
         and when the immediate is non-zero
@@ -44,17 +44,17 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0008",
-                        "addi 5, 0, 0x1234",
-                        "addi 6, 0, 0x1235",
-                        "sv.stw/els 5.v, 24(1)",  # scalar r1 + 16 + 24*offs
-                        "sv.lwz/els 9.v, 24(1)"]) # scalar r1 + 16 + 24*offs
+                        "addi 4, 0, 0x1234",
+                        "addi 5, 0, 0x1235",
+                        "sv.stw/els 4.v, 24(1)",  # scalar r1 + 16 + 24*offs
+                        "sv.lwz/els 8.v, 24(1)"]) # scalar r1 + 16 + 24*offs
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
@@ -69,16 +69,16 @@ class DecoderTestCase(FHDLTestCase):
                             (40, 0x1235)]
             self.assertEqual(mem, expected_mem)
             print(sim.gpr(1))
-            self.assertEqual(sim.gpr(9), SelectableInt(0x1234, 64))
-            self.assertEqual(sim.gpr(10), SelectableInt(0x1235, 64))
+            self.assertEqual(sim.gpr(8), SelectableInt(0x1234, 64))
+            self.assertEqual(sim.gpr(9), SelectableInt(0x1235, 64))
 
     def test_sv_load_store_unitstride(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0008",
                         "addi 5, 0, 0x1234",
                         "addi 6, 0, 0x1235",
-                        "sv.stw 5.v, 8(1)",
-                        "sv.lwz 9.v, 8(1)"]
+                        "sv.stw 8.v, 8(1)",
+                        "sv.lwz 12.v, 8(1)"]
 
         note: unit stride mode is only enabled when RA is a scalar.
 
@@ -89,21 +89,22 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0008",
-                        "addi 5, 0, 0x1234",
-                        "addi 6, 0, 0x1235",
-                        "sv.stw 5.v, 8(1)",  # scalar r1 + 8 + wordlen*offs
-                        "sv.lwz 9.v, 8(1)"]) # scalar r1 + 8 + wordlen*offs
+                        "addi 8, 0, 0x1234",
+                        "addi 9, 0, 0x1235",
+                        "sv.stw 8.v, 8(1)",  # scalar r1 + 8 + wordlen*offs
+                        "sv.lwz 12.v, 8(1)"]) # scalar r1 + 8 + wordlen*offs
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
             mem = sim.mem.dump(printout=False)
+            print ("Mem")
             print (mem)
             # contents of memory expected at:
             #    element 0:   r1=0x10, D=8, wordlen=4 => EA = 0x10+8+4*0 = 0x24
@@ -112,8 +113,8 @@ class DecoderTestCase(FHDLTestCase):
             # therefore, at address 0x28 ==> 0x1235
             self.assertEqual(mem, [(24, 0x123500001234)])
             print(sim.gpr(1))
-            self.assertEqual(sim.gpr(9), SelectableInt(0x1234, 64))
-            self.assertEqual(sim.gpr(10), SelectableInt(0x1235, 64))
+            self.assertEqual(sim.gpr(12), SelectableInt(0x1234, 64))
+            self.assertEqual(sim.gpr(13), SelectableInt(0x1235, 64))
 
     def test_sv_load_store_bitreverse(self):
         """>>> lst = ["addi 1, 0, 0x0010",
