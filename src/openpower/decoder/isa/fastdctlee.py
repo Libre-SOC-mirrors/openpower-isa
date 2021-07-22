@@ -102,8 +102,7 @@ def halfrev2(vec, pre_rev=True):
             ri = i
             bl = i.bit_length()
             for ji in range(1, bl):
-                if (1<<ji) & i:
-                    ri ^= ((1<<ji)-1)
+                ri ^= (i >> ji)
             res.append(vec[ri])
     return res
 
