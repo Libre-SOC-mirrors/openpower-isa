@@ -855,7 +855,7 @@ class SVP64Asm:
         rc = '.' if rc_mode else ''
         yield ".long 0x%x" % svp64_prefix.insn.value
         log(v30b_newfields)
-        # argh, sv.fmaddso etc. need to be done manually
+        # argh, sv.fmadds etc. need to be done manually
         if v30b_op == 'ffmadds':
             opcode = 59 << (32-6)    # bits 0..6 (MSB0)
             opcode |= int(v30b_newfields[0]) << (32-11) # FRT
@@ -863,6 +863,17 @@ class SVP64Asm:
             opcode |= int(v30b_newfields[2]) << (32-21) # FRB
             opcode |= int(v30b_newfields[3]) << (32-26) # FRC
             opcode |= 0b00101 << (32-31)   # bits 26-30
+            if rc:
+                opcode |= 1  # Rc, bit 31.
+            yield ".long 0x%x" % opcode
+        # argh, sv.fdmadds need to be done manually
+        elif v30b_op == 'fdmadds':
+            opcode = 59 << (32-6)    # bits 0..6 (MSB0)
+            opcode |= int(v30b_newfields[0]) << (32-11) # FRT
+            opcode |= int(v30b_newfields[1]) << (32-16) # FRA
+            opcode |= int(v30b_newfields[2]) << (32-21) # FRB
+            opcode |= int(v30b_newfields[3]) << (32-26) # FRC
+            opcode |= 0b01110 << (32-31)   # bits 26-30
             if rc:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode
