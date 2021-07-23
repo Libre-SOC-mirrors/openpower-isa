@@ -142,7 +142,7 @@ Pseudo-code:
     if (SVRM = 0b0011) then
         # calculate O(N log2 N) number of outer butterfly overlapping adds
         vlen[0:6] <- [0] * 7
-        n <- 0b001
+        n <- 0b000
         size <- 0b0000001
         itercount[0:6] <- (0b00 || SVxd) + 0b0000001
         itercount[0:6] <- (0b0 || itercount[0:5])
@@ -158,11 +158,11 @@ Pseudo-code:
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[30:31] <- 0b01          # Butterfly mode
-        SVSHAPE0[18:20] <- 0b011         # DCT Outer Butterfly sub-mode
+        SVSHAPE0[18:20] <- 0b100         # DCT Outer Butterfly sub-mode
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
         # for FRA and FRT
-        SVSHAPE0[28:29] <- 0b01           # j+halfstep schedule
+        SVSHAPE1[28:29] <- 0b01           # j+halfstep schedule
     # set VL, MVL and Vertical-First
     SVSTATE[0:6] <- vlen
     SVSTATE[7:13] <- vlen

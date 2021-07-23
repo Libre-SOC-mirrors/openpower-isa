@@ -326,7 +326,7 @@ def transform2(vec):
         vec[jh] = (t1 - t2) * (1/coeff)
         print ("coeff", size, i, "ci", ci,
                 "jl", jl, "jh", jh,
-               "i/n", (ci+0.5)/size, 1.0/coeff, vec[jl],
+               "i/n", (ci+0.5)/size, coeff, vec[jl],
                                             vec[jh],
                 "end", bin(jle), bin(jhe))
         if jle == 0b111: # all loops end
@@ -339,7 +339,7 @@ def transform2(vec):
     # j schedule
     SVSHAPE0 = SVSHAPE()
     SVSHAPE0.lims = [xdim, ydim, zdim]
-    SVSHAPE0.submode2 = 0b10
+    SVSHAPE0.submode2 = 0b100
     SVSHAPE0.mode = 0b01
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
@@ -348,7 +348,7 @@ def transform2(vec):
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, ydim, zdim]
     SVSHAPE1.mode = 0b01
-    SVSHAPE1.submode2 = 0b10
+    SVSHAPE1.submode2 = 0b100
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
     SVSHAPE1.invxyz = [0,0,0] # inversion if desired

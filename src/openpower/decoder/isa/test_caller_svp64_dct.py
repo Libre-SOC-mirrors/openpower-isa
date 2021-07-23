@@ -12,7 +12,8 @@ from copy import deepcopy
 from openpower.decoder.helpers import fp64toselectable, SINGLE
 from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
 from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
-                                         iterate_dct_inner_butterfly_indices)
+                                         iterate_dct_inner_butterfly_indices,
+                                         iterate_dct_outer_butterfly_indices)
 
 
 def transform_inner_radix2(vec, ctable):
@@ -76,6 +77,52 @@ def transform_inner_radix2(vec, ctable):
                 "end", bin(jle), bin(jhe))
         if jle == 0b111: # all loops end
             break
+
+    return vec
+
+def transform_outer_radix2(vec):
+
+    # Initialization
+    n = len(vec)
+    print ()
+    print ("transform2", n)
+    levels = n.bit_length() - 1
+
+    # outer butterfly
+    xdim = n
+    ydim = 0
+    zdim = 0
+
+    # j schedule
+    class SVSHAPE:
+        pass
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, ydim, zdim]
+    SVSHAPE0.submode2 = 0b100
+    SVSHAPE0.mode = 0b01
+    SVSHAPE0.skip = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+    # j+halfstep schedule
+    SVSHAPE1 = SVSHAPE()
+    SVSHAPE1.lims = [xdim, ydim, zdim]
+    SVSHAPE1.mode = 0b01
+    SVSHAPE1.submode2 = 0b100
+    SVSHAPE1.skip = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [0,0,0] # inversion if desired
+
+    # enumerate over the iterator function, getting new indices
+    i0 = iterate_dct_outer_butterfly_indices(SVSHAPE0)
+    i1 = iterate_dct_outer_butterfly_indices(SVSHAPE1)
+    for k, ((jl, jle), (jh, jhe)) in enumerate(zip(i0, i1)):
+        print ("itersum    jr", jl, jh,
+                "end", bin(jle), bin(jhe))
+        vec[jl] += vec[jh]
+        if jle == 0b111: # all loops end
+            break
+
+    print("transform2 result", vec)
 
     return vec
 
@@ -147,7 +194,7 @@ class DCTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+0), t)
                 self.assertEqual(sim.fpr(i+4), u)
 
-    def test_sv_remap_fpmadds_dct_4(self):
+    def test_sv_remap_fpmadds_dct_inner_4(self):
         """>>> lst = ["svshape 4, 1, 1, 2, 0",
                      "svremap 27, 1, 0, 2, 0, 1, 0",
                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
@@ -199,6 +246,57 @@ class DCTTestCase(FHDLTestCase):
 
             # work out the results with the twin mul/add-sub
             res = transform_inner_radix2(avi, coe)
+
+            for i, expected in enumerate(res):
+                print ("i", i, float(sim.fpr(i)), "expected", expected)
+            for i, expected in enumerate(res):
+                # convert to Power single
+                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = float(expected)
+                actual = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs((actual - expected) / expected)
+                print ("err", i, err)
+                self.assertTrue(err < 1e-6)
+
+    def test_sv_remap_fpmadds_dct_outer_8(self):
+        """>>> lst = ["svshape 8, 1, 1, 3, 0",
+                     "svremap 27, 1, 0, 2, 0, 1, 0",
+                        "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                     ]
+            runs a full in-place 8-long O(N log2 N) outer butterfly schedule
+            for DCT, does the iterative overlapped ADDs
+
+            SVP64 "REMAP" in Butterfly Mode.
+        """
+        lst = SVP64Asm( ["svshape 8, 1, 1, 3, 0",
+                         "svremap 27, 1, 0, 2, 0, 1, 0",
+                         "sv.fadds 0.v, 0.v, 0.v"
+                        ])
+        lst = list(lst)
+
+        # array and coefficients to test
+        av = [7.0, -9.8, 3.0, -32.3, 2.1, 3.6, 0.7, -0.2]
+
+        # store in regfile
+        fprs = [0] * 32
+        for i, a in enumerate(av):
+            fprs[i+0] = fp64toselectable(a)
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            # outer iterative sum
+            res = transform_outer_radix2(av)
 
             for i, expected in enumerate(res):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
