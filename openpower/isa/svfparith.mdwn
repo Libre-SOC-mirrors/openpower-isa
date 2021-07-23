@@ -159,7 +159,26 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Multiply-Add FFT/DCT [Single]
+# Floating Twin Multiply-Add DCT [Single]
+
+A-Form
+
+* fdmadds FRT,FRA,FRC,FRB (Rc=0)
+* fdmadds. FRT,FRA,FRC,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- FPADD32(FRA, FRB)
+    FRS <- FPMULADD32(FRA, FRC, FRB, -1, 1)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# Floating Multiply-Add FFT [Single]
 
 A-Form
 
@@ -178,7 +197,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Multiply-Sub FFT/DCT [Single]
+# Floating Multiply-Sub FFT [Single]
 
 A-Form
 
@@ -197,7 +216,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Negative Multiply-Add FFT/DCT [Single]
+# Floating Negative Multiply-Add FFT [Single]
 
 A-Form
 
@@ -216,7 +235,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Negative Multiply-Sub FFT/DCT [Single]
+# Floating Negative Multiply-Sub FFT [Single]
 
 A-Form
 
