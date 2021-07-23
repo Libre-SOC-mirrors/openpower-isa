@@ -1135,6 +1135,11 @@ class ISACaller:
             illegal = False
             name = 'ffmadds'
 
+        # and fdmadds not being supported by binutils (.long)
+        if asmop == 'fdmadds':
+            illegal = False
+            name = 'fdmadds'
+
         # and ffadds not being supported by binutils (.long)
         if asmop == 'ffadds':
             illegal = False

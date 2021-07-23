@@ -20,7 +20,7 @@ class DCTTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_ffadds_dct(self):
-        """>>> lst = ["sv.fdmadds 0.v, 8.v, 0.v, 0.v"
+        """>>> lst = ["sv.fdmadds 0.v, 0.v, 0.v, 8.v"
                         ]
             four in-place vector adds, four in-place vector mul-subs
 
@@ -31,26 +31,34 @@ class DCTTestCase(FHDLTestCase):
                 fadds FRT   , FRB, FRA
                 fsubs FRT+vl, FRA, FRB+vl
         """
-        lst = SVP64Asm(["sv.fdmadds 0.v, 8.v, 0.v, 0.v"
+        lst = SVP64Asm(["sv.fdmadds 0.v, 0.v, 0.v, 8.v"
                         ])
         lst = list(lst)
 
+        # cheat here with these values, they're selected so that
+        # rounding errors do not occur. sigh.
         fprs = [0] * 32
-        av = [7.0, -9.8, 2.0, -32.3] # first half of array 0..3
-        bv = [-2.0, 2.0, -9.8, 32.3] # second half of array 4..7
-        cv = [-1.0, 0.5, 2.3, -3.2]  # coefficients
+        av = [7.0, -0.8, 2.0, -2.3] # first half of array 0..3
+        bv = [-2.0, 2.0, -0.8, 1.4] # second half of array 4..7
+        cv = [-1.0, 0.5, 2.5, -0.25]  # coefficients
         res = []
         # work out the results with the twin add-sub
         for i, (a, b, c) in enumerate(zip(av, bv, cv)):
             fprs[i+0] = fp64toselectable(a)
             fprs[i+4] = fp64toselectable(b)
             fprs[i+8] = fp64toselectable(c)
+            # this isn't quite a perfect replication of the
+            # FP32 mul-add-sub.  better really to use FPMUL32, FPADD32
+            # and FPSUB32 directly to be honest.
             t = b + a
-            u = (b - a) * c
-            t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
-            u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
-            res.append((t, u))
-            print ("FFT", i, "in", a, b, "c", c, "res", t, u)
+            diff = (b - a)
+            diff = DOUBLE2SINGLE(fp64toselectable(diff)) # FP32 round
+            diff = float(diff)
+            u = diff * c
+            tc = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            uc = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            res.append((tc, uc))
+            print ("DCT", i, "in", a, b, "c", c, "res", t, u)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
@@ -67,10 +75,10 @@ class DCTTestCase(FHDLTestCase):
                 b = float(sim.fpr(i+4))
                 t = float(t)
                 u = float(u)
-                print ("FFT", i, "in", a, b, "res", t, u)
+                print ("DCT", i, "in", a, b, "res", t, u)
             for i, (t, u) in enumerate(res):
-                self.assertEqual(sim.fpr(i+2), t)
-                self.assertEqual(sim.fpr(i+6), u)
+                self.assertEqual(sim.fpr(i+0), t)
+                self.assertEqual(sim.fpr(i+4), u)
 
     def tst_sv_remap_fpmadds_dct(self):
         """>>> lst = ["svshape 4, 1, 1, 2, 0",

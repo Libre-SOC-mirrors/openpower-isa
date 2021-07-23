@@ -169,7 +169,8 @@ A-Form
 Pseudo-code:
 
     FRT <- FPADD32(FRA, FRB)
-    FRS <- FPMULADD32(FRA, FRC, FRB, -1, 1)
+    sub <- FPSUB32(FRB, FRA)
+    FRS <- FPMUL32(FRC, sub)
 
 Special Registers Altered:
 
