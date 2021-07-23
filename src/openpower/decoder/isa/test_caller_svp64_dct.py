@@ -11,6 +11,72 @@ from openpower.sv.trans.svp64 import SVP64Asm
 from copy import deepcopy
 from openpower.decoder.helpers import fp64toselectable, SINGLE
 from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
+                                         iterate_dct_inner_butterfly_indices)
+
+
+def transform_inner_radix2(vec, ctable):
+
+    # Initialization
+    n = len(vec)
+    print ()
+    print ("transform2", n)
+    levels = n.bit_length() - 1
+
+    # reference (read/write) the in-place data in *reverse-bit-order*
+    ri = list(range(n))
+    ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+
+    # and pretend we LDed data in half-swapped *and* bit-reversed order as well
+    # TODO: merge these two
+    vec = halfrev2(vec, False)
+    vec = [vec[ri[i]] for i in range(n)]
+
+    ################
+    # INNER butterfly
+    ################
+    xdim = n
+    ydim = 0
+    zdim = 0
+
+    # set up an SVSHAPE
+    class SVSHAPE:
+        pass
+    # j schedule
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, ydim, zdim]
+    SVSHAPE0.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE0.mode = 0b01
+    SVSHAPE0.submode2 = 0b01
+    SVSHAPE0.skip = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [1,0,0] # inversion if desired
+    # j+halfstep schedule
+    SVSHAPE1 = SVSHAPE()
+    SVSHAPE1.lims = [xdim, ydim, zdim]
+    SVSHAPE1.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE1.mode = 0b01
+    SVSHAPE1.submode2 = 0b01
+    SVSHAPE1.skip = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [1,0,0] # inversion if desired
+
+    # enumerate over the iterator function, getting new indices
+    i0 = iterate_dct_inner_butterfly_indices(SVSHAPE0)
+    i1 = iterate_dct_inner_butterfly_indices(SVSHAPE1)
+    for k, ((jl, jle), (jh, jhe)) in enumerate(zip(i0, i1)):
+        t1, t2 = vec[jl], vec[jh]
+        coeff = ctable[k]
+        vec[jl] = t1 + t2
+        vec[jh] = (t1 - t2) * (1/coeff)
+        print ("coeff", "ci", k,
+                "jl", jl, "jh", jh,
+               "i/n", (k+0.5), coeff, vec[jl], vec[jh],
+                "end", bin(jle), bin(jhe))
+        if jle == 0b111: # all loops end
+            break
+
+    return vec
 
 
 class DCTTestCase(FHDLTestCase):
@@ -19,7 +85,7 @@ class DCTTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test_sv_ffadds_dct(self):
+    def tst_sv_ffadds_dct(self):
         """>>> lst = ["sv.fdmadds 0.v, 0.v, 0.v, 8.v"
                         ]
             four in-place vector adds, four in-place vector mul-subs
@@ -80,10 +146,10 @@ class DCTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+0), t)
                 self.assertEqual(sim.fpr(i+4), u)
 
-    def tst_sv_remap_fpmadds_dct(self):
+    def test_sv_remap_fpmadds_dct(self):
         """>>> lst = ["svshape 4, 1, 1, 2, 0",
                      "svremap 31, 1, 0, 2, 0, 1, 0",
-                        "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                        "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
                      ]
             runs a full in-place O(N log2 N) butterfly schedule for
             DCT
@@ -93,13 +159,21 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["svshape 4, 1, 1, 2, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
-                        "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                        "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
                         ])
         lst = list(lst)
 
         # array and coefficients to test
+        n = 4
         av = [7.0, -9.8, 3.0, -32.3]
-        coe = [-0.25, 0.5, 3.1, 6.2, 0.1, -0.2] # 6 coefficients
+        coe = [-0.25, 0.5, 3.1, 6.2] # 4 coefficients
+
+        levels = n.bit_length() - 1
+        ri = list(range(n))
+        ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+        avi = [7.0, -0.8, 2.0, -2.3] # first half of array 0..3
+        av = halfrev2(avi, False)
+        av = [av[ri[i]] for i in range(n)]
 
         # store in regfile
         fprs = [0] * 32
@@ -118,10 +192,8 @@ class DCTTestCase(FHDLTestCase):
             print ("spr svshape2", sim.spr['SVSHAPE2'])
             print ("spr svshape3", sim.spr['SVSHAPE3'])
 
-            return
-
             # work out the results with the twin mul/add-sub
-            res = transform_radix2(av, coe)
+            res = transform_inner_radix2(avi, coe)
 
             for i, expected in enumerate(res):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
@@ -133,7 +205,8 @@ class DCTTestCase(FHDLTestCase):
                 # approximate error calculation, good enough test
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
-                err = abs(actual - expected) / expected
+                err = abs((actual - expected) / expected)
+                print ("err", i, err)
                 self.assertTrue(err < 1e-7)
 
     def run_tst_program(self, prog, initial_regs=None,
