@@ -129,14 +129,15 @@ Pseudo-code:
         n <- ((0b0 || SVxd) + 1) * n
         vlen[0:6] <- n[1:7]
         # set up template in SVSHAPE0, then copy to 1-3
-        # for FRA and FRT
+        # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[30:31] <- 0b01          # Butterfly mode
         SVSHAPE0[18:20] <- 0b001         # DCT Inner Butterfly sub-mode
+        SVSHAPE0[21:23] <- 0b001         # "inverse" on outer loop
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
-        # set up FRB and FRS
-        SVSHAPE1[28:29] <- 0b01           # j+halfstep schedule
+        # for FRA and FRT
+        SVSHAPE0[28:29] <- 0b01           # j+halfstep schedule
     # set VL, MVL and Vertical-First
     SVSTATE[0:6] <- vlen
     SVSTATE[7:13] <- vlen

@@ -68,10 +68,11 @@ def transform_inner_radix2(vec, ctable):
         t1, t2 = vec[jl], vec[jh]
         coeff = ctable[k]
         vec[jl] = t1 + t2
-        vec[jh] = (t1 - t2) * (1/coeff)
+        vec[jh] = (t1 - t2) * (1.0/coeff)
         print ("coeff", "ci", k,
                 "jl", jl, "jh", jh,
-               "i/n", (k+0.5), coeff, vec[jl], vec[jh],
+               "i/n", (k+0.5), 1.0/coeff,
+                "t1, t2", t1, t2, "res", vec[jl], vec[jh],
                 "end", bin(jle), bin(jhe))
         if jle == 0b111: # all loops end
             break
@@ -85,7 +86,7 @@ class DCTTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def tst_sv_ffadds_dct(self):
+    def test_sv_ffadds_dct(self):
         """>>> lst = ["sv.fdmadds 0.v, 0.v, 0.v, 8.v"
                         ]
             four in-place vector adds, four in-place vector mul-subs
@@ -116,14 +117,14 @@ class DCTTestCase(FHDLTestCase):
             # this isn't quite a perfect replication of the
             # FP32 mul-add-sub.  better really to use FPMUL32, FPADD32
             # and FPSUB32 directly to be honest.
-            t = b + a
-            diff = (b - a)
+            t = a + b
+            diff = (a - b)
             diff = DOUBLE2SINGLE(fp64toselectable(diff)) # FP32 round
             diff = float(diff)
             u = diff * c
             tc = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
             uc = DOUBLE2SINGLE(fp64toselectable(u)) # from double
-            res.append((tc, uc))
+            res.append((uc, tc))
             print ("DCT", i, "in", a, b, "c", c, "res", t, u)
 
         # SVSTATE (in this case, VL=2)
@@ -146,20 +147,24 @@ class DCTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+0), t)
                 self.assertEqual(sim.fpr(i+4), u)
 
-    def test_sv_remap_fpmadds_dct(self):
+    def test_sv_remap_fpmadds_dct_4(self):
         """>>> lst = ["svshape 4, 1, 1, 2, 0",
-                     "svremap 31, 1, 0, 2, 0, 1, 0",
+                     "svremap 27, 1, 0, 2, 0, 1, 0",
                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
                      ]
-            runs a full in-place O(N log2 N) butterfly schedule for
-            DCT
+            runs a full in-place 4-long O(N log2 N) inner butterfly schedule
+            for DCT
 
             SVP64 "REMAP" in Butterfly Mode is applied to a twin +/- FMAC
             (3 inputs, 2 outputs)
+
+            Note that the coefficient (FRC) is not on a "schedule", it
+            is straight Vectorised (0123...) because DCT coefficients
+            cannot be shared between butterfly layers (due to +0.5)
         """
         lst = SVP64Asm( ["svshape 4, 1, 1, 2, 0",
-                         "svremap 31, 1, 0, 2, 0, 1, 0",
-                        "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                         "svremap 27, 1, 0, 2, 0, 1, 0",
+                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
                         ])
         lst = list(lst)
 
@@ -178,7 +183,7 @@ class DCTTestCase(FHDLTestCase):
         # store in regfile
         fprs = [0] * 32
         for i, c in enumerate(coe):
-            fprs[i+8] = fp64toselectable(c)
+            fprs[i+8] = fp64toselectable(1.0 / c) # invert
         for i, a in enumerate(av):
             fprs[i+0] = fp64toselectable(a)
 
@@ -207,7 +212,7 @@ class DCTTestCase(FHDLTestCase):
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
                 print ("err", i, err)
-                self.assertTrue(err < 1e-7)
+                self.assertTrue(err < 1e-6)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
