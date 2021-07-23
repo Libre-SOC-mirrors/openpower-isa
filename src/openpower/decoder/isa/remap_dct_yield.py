@@ -63,7 +63,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
 
     # reference (read/write) the in-place data in *reverse-bit-order*
     ri = list(range(n))
-    if SVSHAPE.mode == 0b01:
+    if SVSHAPE.submode2 == 0b01:
         levels = n.bit_length() - 1
         ri = [ri[reverse_bits(i, levels)] for i in range(n)]
 
@@ -71,7 +71,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     # *indices* are referenced (two levels of indirection at the moment)
     # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
-    inplace_mode = SVSHAPE.mode == 0b01 and SVSHAPE.skip not in [0b10, 0b11]
+    inplace_mode = SVSHAPE.submode2 == 0b01 and SVSHAPE.skip not in [0b10, 0b11]
     if inplace_mode:
         #print ("inplace mode")
         ji = halfrev2(ji, True)
@@ -102,24 +102,17 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                 hz2 = halfsize // 2 # zero stops reversing 1-item lists
                 # if you *really* want to do the in-place swapping manually,
                 # this allows you to do it.  good luck...
-                if SVSHAPE.mode == 0b01 and not inplace_mode:
+                if SVSHAPE.submode2 == 0b01 and not inplace_mode:
                     #print ("swap mode")
                     jr = j_r[:hz2]
                 #print ("xform jr", jr)
                 for jl, jh in zip(j, jr):   # loop over 1st order dimension
                     z_end = jl == j[-1]
                     # now depending on MODE return the index.  inner butterfly
-                    if SVSHAPE.mode == 0b01:
-                        if SVSHAPE.skip in [0b00, 0b10]:
-                            result = ri[ji[jl]]        # lower half
-                        elif SVSHAPE.skip in [0b01, 0b11]:
-                            result = ri[ji[jh]] # upper half, reverse order
-                    # outer butterfly
-                    elif SVSHAPE.mode == 0b10:
-                        if SVSHAPE.skip == 0b00:
-                            result = ri[ji[jl]]        # lower half
-                        elif SVSHAPE.skip == 0b01:
-                            result = ri[ji[jl+size]]   # upper half
+                    if SVSHAPE.skip in [0b00, 0b10]:
+                        result = ri[ji[jl]]        # lower half
+                    elif SVSHAPE.skip in [0b01, 0b11]:
+                        result = ri[ji[jh]] # upper half, reverse order
                     loopends = (z_end |
                                ((y_end and z_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
@@ -127,7 +120,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                     yield result + SVSHAPE.offset, loopends
 
                 # now in-place swap
-                if SVSHAPE.mode == 0b01 and inplace_mode:
+                if inplace_mode:
                     for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
                         jlh = jl+halfsize
                         #print ("inplace swap", jh, jlh)
@@ -159,7 +152,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
 
     # reference (read/write) the in-place data in *reverse-bit-order*
     ri = list(range(n))
-    if SVSHAPE.mode == 0b11:
+    if SVSHAPE.submode2 == 0b11:
         levels = n.bit_length() - 1
         ri = [ri[reverse_bits(i, levels)] for i in range(n)]
 
@@ -207,7 +200,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
                     yield result + SVSHAPE.offset, loopends
 
                 # now in-place swap
-                if SVSHAPE.mode == 0b11 and inplace_mode:
+                if SVSHAPE.submode2 == 0b11 and inplace_mode:
                     j = list(range(i, i + halfsize))
                     jr = list(range(i+halfsize, i + size))
                     jr.reverse()
@@ -309,6 +302,7 @@ def transform2(vec):
     SVSHAPE0.lims = [xdim, ydim, zdim]
     SVSHAPE0.order = [0,1,2]  # experiment with different permutations, here
     SVSHAPE0.mode = 0b01
+    SVSHAPE0.submode2 = 0b01
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
     SVSHAPE0.invxyz = [1,0,0] # inversion if desired
@@ -317,6 +311,7 @@ def transform2(vec):
     SVSHAPE1.lims = [xdim, ydim, zdim]
     SVSHAPE1.order = [0,1,2]  # experiment with different permutations, here
     SVSHAPE1.mode = 0b01
+    SVSHAPE1.submode2 = 0b01
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
     SVSHAPE1.invxyz = [1,0,0] # inversion if desired
@@ -345,7 +340,8 @@ def transform2(vec):
     SVSHAPE0 = SVSHAPE()
     SVSHAPE0.lims = [xdim, ydim, zdim]
     SVSHAPE0.order = [0,1,2]  # experiment with different permutations, here
-    SVSHAPE0.mode = 0b10
+    SVSHAPE0.submode2 = 0b10
+    SVSHAPE0.mode = 0b01
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
     SVSHAPE0.invxyz = [0,0,0] # inversion if desired
@@ -353,7 +349,8 @@ def transform2(vec):
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, ydim, zdim]
     SVSHAPE1.order = [0,1,2]  # experiment with different permutations, here
-    SVSHAPE1.mode = 0b10
+    SVSHAPE1.mode = 0b01
+    SVSHAPE1.submode2 = 0b10
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
     SVSHAPE1.invxyz = [0,0,0] # inversion if desired
@@ -429,6 +426,7 @@ def demo():
     SVSHAPE0.lims = [xdim, ydim, zdim]
     SVSHAPE0.order = [0,1,2]  # experiment with different permutations, here
     SVSHAPE0.mode = 0b10
+    SVSHAPE0.submode2 = 0b100
     SVSHAPE0.skip = 0b10
     SVSHAPE0.offset = 0       # experiment with different offset, here
     SVSHAPE0.invxyz = [1,0,0] # inversion if desired
@@ -437,6 +435,7 @@ def demo():
     SVSHAPE1.lims = [xdim, ydim, zdim]
     SVSHAPE1.order = [0,1,2]  # experiment with different permutations, here
     SVSHAPE1.mode = 0b10
+    SVSHAPE1.submode2 = 0b100
     SVSHAPE1.skip = 0b11
     SVSHAPE1.offset = 0       # experiment with different offset, here
     SVSHAPE1.invxyz = [1,0,0] # inversion if desired

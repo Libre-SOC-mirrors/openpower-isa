@@ -2,6 +2,9 @@ from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 from openpower.decoder.isa.remapyield import iterate_indices
 from openpower.decoder.isa.remap_fft_yield import iterate_butterfly_indices
+from openpower.decoder.isa.remap_dct_yield import (
+                                iterate_dct_inner_butterfly_indices,
+                                iterate_dct_outer_butterfly_indices)
 from openpower.sv.svp64 import SVP64SHAPE
 import os
 from copy import deepcopy
@@ -23,6 +26,14 @@ class SVSHAPE(SelectableInt):
             self.fsi[field] = v
             #log("SVSHAPE setup field", field, offs, end)
             offs = end
+
+    @property
+    def submode2(self):
+        return self.fsi['permute'].asint(msb0=True)
+
+    @submode2.setter
+    def submode2(self, value):
+        self.fsi['permute'].eq(value)
 
     @property
     def order(self):
@@ -105,7 +116,13 @@ class SVSHAPE(SelectableInt):
         if self.mode == 0b00:
             iterate_fn = iterate_indices
         elif self.mode == 0b01:
-            iterate_fn = iterate_butterfly_indices
+            # further sub-selection
+            if self.submode2 == 0b000:
+                iterate_fn = iterate_butterfly_indices
+            elif self.submode2 in [0b001, 0b010]:
+                iterate_fn = iterate_dct_inner_butterfly_indices
+            elif self.submode2 in [0b011, 0b100]:
+                iterate_fn = iterate_dct_outer_butterfly_indices
         # create a **NEW** iterator each time this is called
         return iterate_fn(deepcopy(self))
 
