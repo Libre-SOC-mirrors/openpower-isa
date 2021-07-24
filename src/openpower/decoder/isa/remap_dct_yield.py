@@ -71,7 +71,8 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     # *indices* are referenced (two levels of indirection at the moment)
     # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
-    inplace_mode = SVSHAPE.submode2 == 0b01 and SVSHAPE.skip not in [0b10, 0b11]
+    inplace_mode = SVSHAPE.submode2 == 0b01
+    #                     and SVSHAPE.skip not in [0b10, 0b11]
     if inplace_mode:
         #print ("inplace mode")
         ji = halfrev2(ji, True)
@@ -106,13 +107,18 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                     #print ("swap mode")
                     jr = j_r[:hz2]
                 #print ("xform jr", jr)
-                for jl, jh in zip(j, jr):   # loop over 1st order dimension
+                # loop over 1st order dimension
+                for ci, (jl, jh) in enumerate(zip(j, jr)):
                     z_end = jl == j[-1]
                     # now depending on MODE return the index.  inner butterfly
-                    if SVSHAPE.skip in [0b00, 0b10]:
+                    if SVSHAPE.skip == 0b00: # in [0b00, 0b10]:
                         result = ri[ji[jl]]        # lower half
-                    elif SVSHAPE.skip in [0b01, 0b11]:
+                    elif SVSHAPE.skip == 0b01: # in [0b01, 0b11]:
                         result = ri[ji[jh]] # upper half, reverse order
+                    elif SVSHAPE.skip == 0b10: #
+                        result = ci # coefficient helper
+                    elif SVSHAPE.skip == 0b11: #
+                        result = size # coefficient helper
                     loopends = (z_end |
                                ((y_end and z_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
@@ -160,7 +166,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
     # *indices* are referenced (two levels of indirection at the moment)
     # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
-    inplace_mode = SVSHAPE.skip in [0b10, 0b11]
+    inplace_mode = False # need the space... SVSHAPE.skip in [0b10, 0b11]
     if inplace_mode:
         #print ("inplace mode", SVSHAPE.skip)
         ji = halfrev2(ji, True)
@@ -186,13 +192,17 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
                 # invert if requested
                 if SVSHAPE.invxyz[2]: j_r.reverse()
                 hz2 = halfsize // 2 # zero stops reversing 1-item lists
-                for jh in jr:   # loop over 1st order dimension
+                for ci, jh in enumerate(jr):   # loop over 1st order dimension
                     z_end = jh == jr[-1]
                     #print ("     itersum", size, i, jh, jh+size)
-                    if SVSHAPE.skip in [0b00, 0b10]:
+                    if SVSHAPE.skip == 0b00: # in [0b00, 0b10]:
                         result = ri[ji[jh]]        # lower half
-                    elif SVSHAPE.skip in [0b01, 0b11]:
+                    elif SVSHAPE.skip == 0b01: # in [0b01, 0b11]:
                         result = ri[ji[jh+size]] # upper half
+                    elif SVSHAPE.skip == 0b10: #
+                        result = ci # coefficient helper
+                    elif SVSHAPE.skip == 0b11: #
+                        result = size # coefficient helper
                     loopends = (z_end |
                                ((y_end and z_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
@@ -300,7 +310,6 @@ def transform2(vec):
     # j schedule
     SVSHAPE0 = SVSHAPE()
     SVSHAPE0.lims = [xdim, ydim, zdim]
-    SVSHAPE0.order = [0,1,2]  # experiment with different permutations, here
     SVSHAPE0.mode = 0b01
     SVSHAPE0.submode2 = 0b01
     SVSHAPE0.skip = 0b00
@@ -309,19 +318,39 @@ def transform2(vec):
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, ydim, zdim]
-    SVSHAPE1.order = [0,1,2]  # experiment with different permutations, here
     SVSHAPE1.mode = 0b01
     SVSHAPE1.submode2 = 0b01
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
     SVSHAPE1.invxyz = [1,0,0] # inversion if desired
+    # ci schedule
+    SVSHAPE2 = SVSHAPE()
+    SVSHAPE2.lims = [xdim, ydim, zdim]
+    SVSHAPE2.mode = 0b01
+    SVSHAPE2.submode2 = 0b01
+    SVSHAPE2.skip = 0b10
+    SVSHAPE2.offset = 0       # experiment with different offset, here
+    SVSHAPE2.invxyz = [1,0,0] # inversion if desired
+    # size schedule
+    SVSHAPE3 = SVSHAPE()
+    SVSHAPE3.lims = [xdim, ydim, zdim]
+    SVSHAPE3.mode = 0b01
+    SVSHAPE3.submode2 = 0b01
+    SVSHAPE3.skip = 0b11
+    SVSHAPE3.offset = 0       # experiment with different offset, here
+    SVSHAPE3.invxyz = [1,0,0] # inversion if desired
 
     # enumerate over the iterator function, getting new indices
     i0 = iterate_dct_inner_butterfly_indices(SVSHAPE0)
     i1 = iterate_dct_inner_butterfly_indices(SVSHAPE1)
-    for k, ((jl, jle), (jh, jhe)) in enumerate(zip(i0, i1)):
+    i2 = iterate_dct_inner_butterfly_indices(SVSHAPE2)
+    i3 = iterate_dct_inner_butterfly_indices(SVSHAPE3)
+    for k, ((jl, jle), (jh, jhe), (ci, cie), (size, sze)) in \
+                enumerate(zip(i0, i1, i2, i3)):
         t1, t2 = vec[jl], vec[jh]
-        coeff = ctable[k]
+        print ("xform2", jl, jh, ci, size)
+        coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+        assert coeff == ctable[k]
         vec[jl] = t1 + t2
         vec[jh] = (t1 - t2) * (1/coeff)
         print ("coeff", size, i, "ci", ci,

@@ -50,7 +50,7 @@ class FastDctTest(unittest.TestCase):
             actual = fastdctlee.inverse_transform(vector)
             self.assertListAlmostEqual(actual, expect)
 
-    def test_fast_dct_lee_invertibility(self):
+    def tst_fast_dct_lee_invertibility(self):
         for i in range(1, 10):
             n = 2**i
             vector = FastDctTest.random_vector(n)
