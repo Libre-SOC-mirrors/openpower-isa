@@ -1042,7 +1042,7 @@ class ISACaller:
                  ]
 
         self.remap_loopends = [0] * 4
-        self.remap_idxs = [0] * 4
+        self.remap_idxs = [0, 1, 2, 3]
         dbg = []
         for i, (shape, remap) in enumerate(remaps):
             # zero is "disabled"
@@ -1322,7 +1322,10 @@ class ISACaller:
                 log ("bitrev SVD", imm)
                 replace_d = True
             else:
-                imm = yield self.dec2.dec.fields.FormD.D[0:16]
+                if info.form == 'DS':
+                    imm = yield self.dec2.dec.fields.FormDS.DS[0:14]
+                else:
+                    imm = yield self.dec2.dec.fields.FormD.D[0:16]
                 imm = exts(imm, 16) # sign-extend to integer
             # get the right step. LD is from srcstep, ST is dststep
             op = yield self.dec2.e.do.insn_type
@@ -1354,9 +1357,12 @@ class ISACaller:
             ldst_imz_in = yield self.dec2.rm_dec.ldst_imz_in
             log("LDSTmode", ldstmode, SVP64LDSTmode.BITREVERSE.value,
                             offsmul, imm, ldst_ra_vec, ldst_imz_in)
-        # new replacement D
+        # new replacement D... errr.. DS
         if replace_d:
-            self.namespace['D'] = imm
+            if info.form == 'DS':
+                self.namespace['DS'] = imm
+            else:
+                self.namespace['D'] = imm
 
         # "special" registers
         for special in info.special_regs:
