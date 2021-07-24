@@ -1,7 +1,6 @@
 from nmigen import Module, Signal
 from nmigen.back.pysim import Simulator, Delay, Settle
 from nmutil.formaltest import FHDLTestCase
-import unittest
 from openpower.decoder.power_decoder import (create_pdecode)
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State
@@ -13,7 +12,10 @@ from openpower.decoder.helpers import fp64toselectable, SINGLE
 from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
 from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
                                          iterate_dct_inner_butterfly_indices,
-                                         iterate_dct_outer_butterfly_indices)
+                                         iterate_dct_outer_butterfly_indices,
+                                         transform2)
+import unittest
+import math
 
 
 def transform_inner_radix2(vec, ctable):
@@ -264,7 +266,7 @@ class DCTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_dct_outer_8(self):
         """>>> lst = ["svshape 8, 1, 1, 3, 0",
                      "svremap 27, 1, 0, 2, 0, 1, 0",
-                        "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.fadds 0.v, 0.v, 0.v"
                      ]
             runs a full in-place 8-long O(N log2 N) outer butterfly schedule
             for DCT, does the iterative overlapped ADDs
@@ -311,6 +313,76 @@ class DCTTestCase(FHDLTestCase):
                 err = abs((actual - expected) / expected)
                 print ("err", i, err)
                 self.assertTrue(err < 1e-6)
+
+    def test_sv_remap_fpmadds_dct_8(self):
+        """>>> lst = ["svshape 8, 1, 1, 3, 0",
+                     "svremap 27, 1, 0, 2, 0, 1, 0",
+                        "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.fadds 0.v, 0.v, 0.v"
+                     ]
+            runs a full in-place 8-long O(N log2 N) outer butterfly schedule
+            for DCT, does the iterative overlapped ADDs
+
+            SVP64 "REMAP" in Butterfly Mode.
+        """
+        lst = SVP64Asm( ["svremap 27, 1, 0, 2, 0, 1, 1",
+                         "svshape 8, 1, 1, 2, 0",
+                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v",
+                         "svshape 8, 1, 1, 3, 0",
+                         "sv.fadds 0.v, 0.v, 0.v"
+                        ])
+        lst = list(lst)
+
+        # array and coefficients to test
+        avi = [7.0, -9.8, 3.0, -32.3, 2.1, 3.6, 0.7, -0.2]
+        n = len(avi)
+        levels = n.bit_length() - 1
+        ri = list(range(n))
+        ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+        av = halfrev2(avi, False)
+        av = [av[ri[i]] for i in range(n)]
+        ctable = []
+        size = n
+        while size >= 2:
+            halfsize = size // 2
+            for i in range(n//size):
+                for ci in range(halfsize):
+                    ctable.append((math.cos((ci + 0.5) * math.pi / size) * 2.0))
+            size //= 2
+
+        # store in regfile
+        fprs = [0] * 32
+        for i, a in enumerate(av):
+            fprs[i+0] = fp64toselectable(a)
+        for i, c in enumerate(ctable):
+            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            # outer iterative sum
+            res = transform2(avi)
+
+            for i, expected in enumerate(res):
+                print ("i", i, float(sim.fpr(i)), "expected", expected)
+            for i, expected in enumerate(res):
+                # convert to Power single
+                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = float(expected)
+                actual = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs((actual - expected) / expected)
+                print ("err", i, err)
+                self.assertTrue(err < 1e-5)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
