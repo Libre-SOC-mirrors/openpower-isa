@@ -929,6 +929,16 @@ class SVP64Asm:
             log ("setvl", bin(insn))
             yield ".long 0x%x" % insn
 
+        elif v30b_op in ["fcoss", "fcoss."]:
+            insn = 59            << (31-5)  # opcode 59, bits 0-5
+            insn |= int(v30b_newfields[0]) << (31-10) # RT       , bits 6-10
+            insn |= int(v30b_newfields[0]) << (31-20) # RB       , bits 16-20
+            insn |= 0b1000101100 << (31-30) # XO       , bits 21..30
+            if opcode == 'fsins.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log ("fsins", bin(insn))
+            yield ".long 0x%x" % insn
+
         else:
             yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
         log ("new v3.0B fields", v30b_op, v30b_newfields)
