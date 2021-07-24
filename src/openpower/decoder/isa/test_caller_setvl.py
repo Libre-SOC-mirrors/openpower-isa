@@ -154,7 +154,8 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(1), SelectableInt(10, 64))
 
     def test_svstep_inner_loop_6(self):
-        """tests svstep inner loop, running 6 times, looking for "k"
+        """tests svstep inner loop, running 6 times, looking for "k".
+        also sees if k is actually output into reg 2 (RT=2)
         """
         lst = SVP64Asm([
                         # set triple butterfly mode with persistent "REMAP"
@@ -165,7 +166,7 @@ class DecoderTestCase(FHDLTestCase):
                         "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
                         "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
                         "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
-                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 2, 0, 2, 1, 0, 0",# svstep (Rc=1)
                         ])
         lst = list(lst)
 
@@ -188,7 +189,7 @@ class DecoderTestCase(FHDLTestCase):
             # svstep called twice, didn't reach VL, so srcstep/dststep both 2
             self.assertEqual(sim.svstate.srcstep, 6)
             self.assertEqual(sim.svstate.dststep, 6)
-            self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            self.assertEqual(sim.gpr(2), SelectableInt(1, 64))
             self.assertEqual(sim.svstate.vfirst, 1)
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
@@ -272,6 +273,49 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 4)
             self.assertEqual(sim.svstate.dststep, 4)
             self.assertEqual(sim.gpr(0), SelectableInt(0, 64))
+            self.assertEqual(sim.svstate.vfirst, 1)
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 1)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
+    def test_svstep_inner_loop_4_jl(self):
+        """tests svstep inner loop, running 4 times, checking
+           "jl" is returned after 4th iteration
+        """
+        lst = SVP64Asm([
+                        # set triple butterfly mode with persistent "REMAP"
+                        "svshape 8, 1, 1, 1, 1",
+                        "svremap 31, 1, 0, 2, 0, 1, 1",
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0",# svstep (Rc=1)
+                        "setvl. 0, 0, 2, 1, 0, 0", # svstep (Rc=1)
+                        "setvl. 2, 0, 2, 1, 0, 0", # svstep (Rc=1)
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        #svstate.vl = 2 # VL
+        #svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            self.assertEqual(sim.svstate.vl, 12)
+            self.assertEqual(sim.svstate.maxvl, 12)
+            # svstep called twice, didn't reach VL, so srcstep/dststep both 2
+            self.assertEqual(sim.svstate.srcstep, 4)
+            self.assertEqual(sim.svstate.dststep, 4)
+            self.assertEqual(sim.gpr(2), SelectableInt(6, 64))
             self.assertEqual(sim.svstate.vfirst, 1)
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))

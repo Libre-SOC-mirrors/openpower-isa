@@ -1034,25 +1034,25 @@ class ISACaller:
                   (SVSHAPE3, SVSHAPE3.get_iterator()),
                  ]
 
-        remap_idxs = []
         self.remap_loopends = [0] * 4
+        self.remap_idxs = [0] * 4
         dbg = []
         for i, (shape, remap) in enumerate(remaps):
             # zero is "disabled"
             if shape.value == 0x0:
-                remap_idxs.append(0)
+                self.remap_idxs[i] = 0
             # pick src or dststep depending on reg num (0-2=in, 3-4=out)
             step = dststep if (i in [3, 4]) else srcstep
             # this is terrible.  O(N^2) looking for the match. but hey.
             for idx, (remap_idx, loopends) in enumerate(remap):
                 if idx == step:
                     break
-            remap_idxs.append(remap_idx)
+            self.remap_idxs[i] = remap_idx
             self.remap_loopends[i] = loopends
             dbg.append((i, step, remap_idx, loopends))
         for (i, step, remap_idx, loopends) in dbg:
             log ("SVSHAPE %d idx, end" % i, step, remap_idx, bin(loopends))
-        return remap_idxs, remaps
+        return remaps
 
     def get_spr_msb(self):
         dec_insn = yield self.dec2.e.do.insn
@@ -1064,15 +1064,15 @@ class ISACaller:
         self.last_st_addr = None # reset the last known store address
         self.last_ld_addr = None # etc.
 
-        name = name.strip()  # remove spaces if not already done so
+        ins_name = name.strip()  # remove spaces if not already done so
         if self.halted:
-            log("halted - not executing", name)
+            log("halted - not executing", ins_name)
             return
 
         # TODO, asmregs is from the spec, e.g. add RT,RA,RB
         # see http://bugs.libre-riscv.org/show_bug.cgi?id=282
         asmop = yield from self.get_assembly_name()
-        log("call", name, asmop)
+        log("call", ins_name, asmop)
 
         # check privileged
         int_op = yield self.dec2.dec.op.internal_op
@@ -1098,58 +1098,58 @@ class ISACaller:
             return
 
         # check halted condition
-        if name == 'attn':
+        if ins_name == 'attn':
             self.halted = True
             return
 
         # check illegal instruction
         illegal = False
-        if name not in ['mtcrf', 'mtocrf']:
-            illegal = name != asmop
+        if ins_name not in ['mtcrf', 'mtocrf']:
+            illegal = ins_name != asmop
 
         # sigh deal with setvl not being supported by binutils (.long)
         if asmop.startswith('setvl'):
             illegal = False
-            name = 'setvl'
+            ins_name = 'setvl'
 
         # and svremap not being supported by binutils (.long)
         if asmop.startswith('svremap'):
             illegal = False
-            name = 'svremap'
+            ins_name = 'svremap'
 
         # and svshape not being supported by binutils (.long)
         if asmop.startswith('svshape'):
             illegal = False
-            name = 'svshape'
+            ins_name = 'svshape'
 
         # and fsin and fcos
         if asmop == 'fsins':
             illegal = False
-            name = 'fsins'
+            ins_name = 'fsins'
         if asmop == 'fcoss':
             illegal = False
-            name = 'fcoss'
+            ins_name = 'fcoss'
 
         # sigh also deal with ffmadds not being supported by binutils (.long)
         if asmop == 'ffmadds':
             illegal = False
-            name = 'ffmadds'
+            ins_name = 'ffmadds'
 
         # and fdmadds not being supported by binutils (.long)
         if asmop == 'fdmadds':
             illegal = False
-            name = 'fdmadds'
+            ins_name = 'fdmadds'
 
         # and ffadds not being supported by binutils (.long)
         if asmop == 'ffadds':
             illegal = False
-            name = 'ffadds'
+            ins_name = 'ffadds'
 
         if illegal:
-            print("illegal", name, asmop)
+            print("illegal", ins_name, asmop)
             self.call_trap(0x700, PIb.ILLEG)
             print("name %s != %s - calling ILLEGAL trap, PC: %x" %
-                  (name, asmop, self.pc.CIA.value))
+                  (ins_name, asmop, self.pc.CIA.value))
             return
 
         # this is for setvl "Vertical" mode: if set true,
@@ -1160,11 +1160,11 @@ class ISACaller:
 
         # nop has to be supported, we could let the actual op calculate
         # but PowerDecoder has a pattern for nop
-        if name is 'nop':
+        if ins_name is 'nop':
             self.update_pc_next()
             return
 
-        info = self.instrs[name]
+        info = self.instrs[ins_name]
         yield from self.prep_namespace(info.form, info.op_fields)
 
         # preserve order of register names
@@ -1173,7 +1173,7 @@ class ISACaller:
         log("input names", input_names)
 
         # get SVP64 entry for the current instruction
-        sv_rm = self.svp64rm.instrs.get(name)
+        sv_rm = self.svp64rm.instrs.get(ins_name)
         if sv_rm is not None:
             dest_cr, src_cr, src_byname, dest_byname = decode_extra(sv_rm)
         else:
@@ -1181,8 +1181,10 @@ class ISACaller:
         log ("sv rm", sv_rm, dest_cr, src_cr, src_byname, dest_byname)
 
         # see if srcstep/dststep need skipping over masked-out predicate bits
-        if self.is_svp64_mode:
+        if (self.is_svp64_mode or ins_name == 'setvl' or
+           ins_name.startswith("sv")):
             yield from self.svstate_pre_inc()
+        if self.is_svp64_mode:
             pre = yield from self.update_new_svstate_steps()
             if pre:
                 self.svp64_reset_loop()
@@ -1208,6 +1210,8 @@ class ISACaller:
         active = (persist or self.last_op_svshape) and remap_en != 0
         yield self.dec2.remap_active.eq(remap_en if active else 0)
         yield Settle()
+        if persist or self.last_op_svshape:
+            remaps = self.get_remap_indices()
         if self.is_svp64_mode and (persist or self.last_op_svshape):
             # just some convenient debug info
             for i in range(4):
@@ -1230,7 +1234,7 @@ class ISACaller:
                      (self.dec2.o_step, mo0),   # RT
                      (self.dec2.o2_step, mo1),   # EA
                     ]
-            remap_idxs, remaps = self.get_remap_indices()
+            remap_idxs = self.remap_idxs
             rremaps = []
             # now cross-index the required SHAPE for each of 3-in 2-out regs
             rnames = ['RA', 'RB', 'RC', 'RT', 'EA']
@@ -1282,7 +1286,7 @@ class ISACaller:
                 reg_val = 0
             inputs.append(reg_val)
         # arrrrgh, awful hack, to get _RT into namespace
-        if asmop == 'setvl':
+        if ins_name == 'setvl':
             regname = "_RT"
             RT = yield self.dec2.dec.RT
             self.namespace[regname] = SelectableInt(RT, 5)
@@ -1485,7 +1489,8 @@ class ISACaller:
             else:
                 log ("SVSTATE_NEXT: post-inc")
                 srcstep, dststep = self.new_srcstep, self.new_dststep
-                remap_idxs, remaps = self.get_remap_indices()
+                remaps = self.get_remap_indices()
+                remap_idxs = self.remap_idxs
                 vl = self.svstate.vl
                 end_src = srcstep == vl-1
                 end_dst = dststep == vl-1
@@ -1536,6 +1541,10 @@ class ISACaller:
         log("SVSTATE_NEXT mode", mode)
         self.allow_next_step_inc = True
         self.svstate_next_mode = mode
+        if self.svstate_next_mode > 0:
+            shape_idx = self.svstate_next_mode.value-1
+            return SelectableInt(self.remap_idxs[shape_idx], 7)
+        return SelectableInt(0, 7)
 
     def svstate_pre_inc(self):
         """check if srcstep/dststep need to skip over masked-out predicate bits

@@ -11,7 +11,9 @@ SVL-Form
 Pseudo-code:
 
     if (vf & (¬vs) & ¬(ms)) = 1 then
-        SVSTATE_NEXT(SVi)
+        step <- SVSTATE_NEXT(SVi)
+        if _RT != 0b00000 then
+           GPR(_RT) <- [0]*57 || step
     else
         VLimm <- SVi + 1
         if vs = 1 then
