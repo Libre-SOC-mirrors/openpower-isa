@@ -315,15 +315,14 @@ class DCTTestCase(FHDLTestCase):
                 self.assertTrue(err < 1e-6)
 
     def test_sv_remap_fpmadds_dct_8(self):
-        """>>> lst = ["svshape 8, 1, 1, 3, 0",
-                     "svremap 27, 1, 0, 2, 0, 1, 0",
-                        "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
-                         "sv.fadds 0.v, 0.v, 0.v"
+        """>>> lst = ["svremap 27, 1, 0, 2, 0, 1, 1",
+                      "svshape 8, 1, 1, 2, 0",
+                      "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                      "svshape 8, 1, 1, 3, 0",
+                      "sv.fadds 0.v, 0.v, 0.v"
                      ]
-            runs a full in-place 8-long O(N log2 N) outer butterfly schedule
-            for DCT, does the iterative overlapped ADDs
-
-            SVP64 "REMAP" in Butterfly Mode.
+            runs a full in-place 8-long O(N log2 N) DCT, both
+            inner and outer butterfly "REMAP" schedules.
         """
         lst = SVP64Asm( ["svremap 27, 1, 0, 2, 0, 1, 1",
                          "svshape 8, 1, 1, 2, 0",

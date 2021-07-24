@@ -1,5 +1,4 @@
-<!-- This defines instructions described in PowerISA Version 3.0 B Book 1 -->
-
+<!-- This defines Draft SVP64 instructions to augment PowerISA Version 3.0 -->
 <!-- These are not described in book 1 -->
 
 # setvl
