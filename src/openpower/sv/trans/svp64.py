@@ -198,6 +198,21 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
+        # sigh have to do setvl here manually for now...
+        # note the subtract one from SVi.
+        if opcode in ["svstep", "svstep."]:
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            fields = list(map(int, fields))
+            insn |= fields[0] << (31-10) # RT       , bits 6-10
+            insn |= (fields[1]-1) << (31-22) # SVi      , bits 16-22
+            insn |= fields[2] << (31-25) # vf       , bit  25
+            insn |= 0b00011   << (31-30) # XO       , bits 26..30
+            if opcode == 'svstep.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log ("svstep", bin(insn))
+            yield ".long 0x%x" % insn
+            return
+
         # and svshape.  note that the dimension fields one subtracted from each
         if opcode == 'svshape':
             insn = 22 << (31-5)          # opcode 22, bits 0-5
@@ -347,8 +362,8 @@ class SVP64Asm:
         # okaaay now we identify the field value (opcode N,N,N) with
         # the pseudo-code info (opcode RT, RA, RB)
         assert len(fields) == len(v30b_regs), \
-            "length of fields %s must match insn `%s`" % \
-                    (str(v30b_regs), insn)
+            "length of fields %s must match insn `%s` fields %s" % \
+                    (str(v30b_regs), insn, str(fields))
         opregfields = zip(fields, v30b_regs) # err that was easy
 
         # now for each of those find its place in the EXTRA encoding
@@ -887,6 +902,33 @@ class SVP64Asm:
             if rc:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode
+        # sigh have to do svstep here manually for now...
+        elif opcode in ["svstep", "svstep."]:
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            insn |= int(v30b_newfields[0]) << (31-10) # RT       , bits 6-10
+            insn |= int(v30b_newfields[1]) << (31-22) # SVi      , bits 16-22
+            insn |= int(v30b_newfields[2]) << (31-25) # vf       , bit  25
+            insn |= 0b00011   << (31-30) # XO       , bits 26..30
+            if opcode == 'svstep.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log ("svstep", bin(insn))
+            yield ".long 0x%x" % insn
+
+        elif v30b_op in ["setvl", "setvl."]:
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            fields = list(map(int, fields))
+            insn |= fields[0] << (31-10) # RT       , bits 6-10
+            insn |= fields[1] << (31-15) # RA       , bits 11-15
+            insn |= (fields[2]-1) << (31-22) # SVi      , bits 16-22
+            insn |= fields[3] << (31-25) # ms       , bit  25
+            insn |= fields[4] << (31-24) # vs       , bit  24
+            insn |= fields[5] << (31-23) # vf       , bit  23
+            insn |= 0b00000   << (31-30) # XO       , bits 26..30
+            if opcode == 'setvl.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log ("setvl", bin(insn))
+            yield ".long 0x%x" % insn
+
         else:
             yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
         log ("new v3.0B fields", v30b_op, v30b_newfields)
@@ -1022,6 +1064,7 @@ if __name__ == '__main__':
                  'sv.stw 5.v, 4(1.v)',
                  'sv.ld 5.v, 4(1.v)',
                  'setvl. 2, 3, 4, 0, 1, 1',
+                 'sv.setvl. 2, 3, 4, 0, 1, 1',
           ]
     lst = [
             "sv.stfsu 0.v, 16(4.v)",
@@ -1050,6 +1093,7 @@ if __name__ == '__main__':
     lst = [
              'sv.lfsbr 4.v, 11(8.v), 15',
              #'sv.lwzbr 4.v, 11(8.v), 15',
+             'sv.svstep. 2.v, 4, 0',
         ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))

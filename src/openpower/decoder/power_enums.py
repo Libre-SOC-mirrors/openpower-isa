@@ -283,6 +283,7 @@ _insns = [
     "setvl",  # https://libre-soc.org/openpower/sv/setvl
     "svremap",  # https://libre-soc.org/openpower/sv/remap - TEMPORARY
     "svshape",  # https://libre-soc.org/openpower/sv/remap
+    "svstep",  # https://libre-soc.org/openpower/sv/setvl
     "sim_cfg",
     "slbia", "sld", "slw", "srad", "sradi",
     "sraw", "srawi", "srd", "srw",
@@ -395,6 +396,7 @@ class MicrOp(Enum):
     OP_FP_MADD = 79
     OP_SVREMAP = 80
     OP_SVSHAPE = 81
+    OP_SVSTEP = 82
 
 
 @unique

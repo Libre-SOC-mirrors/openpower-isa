@@ -324,6 +324,57 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 0)
             self.assertEqual(CR0[CRFields.SO], 0)
 
+    def test_svstep_inner_loop_8_jl(self):
+        """tests svstep inner loop, running 8 times (sv.setvl.), checking
+            jl is copied into a *Vector* result.
+
+            fuuun...
+        """
+        lst = SVP64Asm([
+                        # set DCT triple butterfly mode with persistent "REMAP"
+                        "svshape 8, 1, 1, 2, 0",
+                        "svremap 0, 0, 0, 2, 0, 1, 1",
+                        "sv.svstep 2.v, 4, 1", # svstep get vector of ci
+                        "sv.svstep 16.v, 3, 1", # svstep get vector of step
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        #svstate.vl = 2 # VL
+        #svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            self.assertEqual(sim.svstate.vl, 12)
+            self.assertEqual(sim.svstate.maxvl, 12)
+            # svstep called four times, reset occurs, srcstep zero
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            for i in range(4):
+                self.assertEqual(sim.gpr(2+i), SelectableInt(8, 64))
+                self.assertEqual(sim.gpr(6+i), SelectableInt(4, 64))
+                self.assertEqual(sim.gpr(10+i), SelectableInt(2, 64))
+                self.assertEqual(sim.gpr(16+i), SelectableInt(i, 64))
+                self.assertEqual(sim.gpr(24+i), SelectableInt(0, 64))
+            for i in range(2):
+                self.assertEqual(sim.gpr(20+i), SelectableInt(i, 64))
+                self.assertEqual(sim.gpr(22+i), SelectableInt(i, 64))
+            self.assertEqual(sim.svstate.vfirst, 0)
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
     def test_sv_add(self):
         """sets VL=2 then adds:
            * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234

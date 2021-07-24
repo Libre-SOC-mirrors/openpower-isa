@@ -481,6 +481,12 @@ def get_pdecode_idx_out(dec2, name):
                                       dec2.dec.RT)
         if out_sel == OutSel.RT.value:
             return out, o_isvec
+    elif name == 'RT_OR_ZERO':
+        log ("get_pdecode_idx_out", out_sel, OutSel.RT.value,
+                                      OutSel.RT_OR_ZERO.value, out, o_isvec,
+                                      dec2.dec.RT)
+        if out_sel == OutSel.RT_OR_ZERO.value:
+            return out, o_isvec
     elif name == 'FRA':
         log ("get_pdecode_idx_out", out_sel, OutSel.FRA.value, out, o_isvec)
         if out_sel == OutSel.FRA.value:
@@ -857,6 +863,7 @@ class ISACaller:
         SO = self.spr['XER'][XER_bits['SO']]
         log("handle_comparison SO", SO)
         cr_field = selectconcat(negative, positive, zero, SO)
+        log("handle_comparison cr_field", self.cr, cr_idx, cr_field)
         self.crl[cr_idx].eq(cr_field)
 
     def set_pc(self, pc_val):
@@ -1112,6 +1119,11 @@ class ISACaller:
             illegal = False
             ins_name = 'setvl'
 
+        # and svstep not being supported by binutils (.long)
+        if asmop.startswith('svstep'):
+            illegal = False
+            ins_name = 'svstep'
+
         # and svremap not being supported by binutils (.long)
         if asmop.startswith('svremap'):
             illegal = False
@@ -1286,10 +1298,14 @@ class ISACaller:
                 reg_val = 0
             inputs.append(reg_val)
         # arrrrgh, awful hack, to get _RT into namespace
-        if ins_name == 'setvl':
+        if ins_name in ['setvl', 'svstep']:
             regname = "_RT"
             RT = yield self.dec2.dec.RT
             self.namespace[regname] = SelectableInt(RT, 5)
+            if RT == 0:
+                self.namespace["RT"] = SelectableInt(0, 5)
+            regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, "RT")
+            log('hack input reg %s %s' % (name, str(regnum)), is_vec)
 
         # in SVP64 mode for LD/ST work out immediate
         # XXX TODO: replace_ds for DS-Form rather than D-Form.
@@ -1416,7 +1432,7 @@ class ISACaller:
         if not self.is_svp64_mode or not pred_dst_zero:
             if hasattr(self.dec2.e.do, "rc"):
                 rc_en = yield self.dec2.e.do.rc.rc
-        if rc_en:
+        if rc_en and ins_name not in ['svstep']:
             regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
             self.handle_comparison(results, regnum)
 
@@ -1474,7 +1490,8 @@ class ISACaller:
         pre = False
         post = False
         if self.allow_next_step_inc:
-            log("SVSTATE_NEXT: inc requested, mode", self.svstate_next_mode)
+            log("SVSTATE_NEXT: inc requested, mode",
+                    self.svstate_next_mode, self.allow_next_step_inc)
             yield from self.svstate_pre_inc()
             pre = yield from self.update_new_svstate_steps()
             if pre:
@@ -1487,17 +1504,22 @@ class ISACaller:
                     results = [SelectableInt(0, 64)]
                     self.handle_comparison(results) # CR0
             else:
-                log ("SVSTATE_NEXT: post-inc")
+                if self.allow_next_step_inc == 2:
+                    log ("SVSTATE_NEXT: read")
+                    yield from self.svstate_post_inc()
+                else:
+                    log ("SVSTATE_NEXT: post-inc")
                 srcstep, dststep = self.new_srcstep, self.new_dststep
                 remaps = self.get_remap_indices()
                 remap_idxs = self.remap_idxs
                 vl = self.svstate.vl
                 end_src = srcstep == vl-1
                 end_dst = dststep == vl-1
-                if not end_src:
-                    self.svstate.srcstep += SelectableInt(1, 7)
-                if not end_dst:
-                    self.svstate.dststep += SelectableInt(1, 7)
+                if self.allow_next_step_inc != 2:
+                    if not end_src:
+                        self.svstate.srcstep += SelectableInt(1, 7)
+                    if not end_dst:
+                        self.svstate.dststep += SelectableInt(1, 7)
                 self.namespace['SVSTATE'] = self.svstate.spr
                 # set CR0 (if Rc=1) based on end
                 if rc_en:
@@ -1533,13 +1555,13 @@ class ISACaller:
 
         self.update_pc_next()
 
-    def SVSTATE_NEXT(self, mode):
+    def SVSTATE_NEXT(self, mode, submode):
         """explicitly moves srcstep/dststep on to next element, for
         "Vertical-First" mode.  this function is called from
         setvl pseudo-code, as a pseudo-op "svstep"
         """
-        log("SVSTATE_NEXT mode", mode)
-        self.allow_next_step_inc = True
+        self.allow_next_step_inc = submode.value + 1
+        log("SVSTATE_NEXT mode", mode, submode, self.allow_next_step_inc)
         self.svstate_next_mode = mode
         if self.svstate_next_mode > 0:
             shape_idx = self.svstate_next_mode.value-1
@@ -1556,8 +1578,9 @@ class ISACaller:
         sv_a_nz = yield self.dec2.sv_a_nz
         fft_mode = yield self.dec2.use_svp64_fft
         in1 = yield self.dec2.e.read_reg1.data
-        log ("SVP64: VL, srcstep, dststep, sv_a_nz, in1 fft",
-                vl, srcstep, dststep, sv_a_nz, in1, fft_mode)
+        log ("SVP64: VL, srcstep, dststep, sv_a_nz, in1 fft, svp64",
+                vl, srcstep, dststep, sv_a_nz, in1, fft_mode,
+                self.is_svp64_mode)
 
         # get predicate mask
         srcmask = dstmask = 0xffff_ffff_ffff_ffff

@@ -1,17 +1,33 @@
 <!-- This defines Draft SVP64 instructions to augment PowerISA Version 3.0 -->
 <!-- These are not described in book 1 -->
 
+# svstep
+
+SVL-Form
+
+* svstep RT,SVi,vf
+* svstep. RT,SVi,vf
+
+Pseudo-code:
+
+    step <- SVSTATE_NEXT(SVi, vf)
+    RT <- [0]*57 || step
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
 # setvl
 
 SVL-Form
 
-* setvl RT, RA, SVi, vf, vs, ms
-* setvl. RT, RA, SVi, vf, vs, ms
+* setvl RT,RA,SVi,vf,vs,ms
+* setvl. RT,RA,SVi,vf,vs,ms
 
 Pseudo-code:
 
     if (vf & (¬vs) & ¬(ms)) = 1 then
-        step <- SVSTATE_NEXT(SVi)
+        step <- SVSTATE_NEXT(SVi, 0b0)
         if _RT != 0b00000 then
            GPR(_RT) <- [0]*57 || step
     else
@@ -43,7 +59,7 @@ Special Registers Altered:
 
 SVRM-Form
 
-* svremap SVme, mi0, mi1, mi2, mo0, mo1, pst
+* svremap SVme,mi0,mi1,mi2,mo0,mo1,pst
 
 Pseudo-code:
 
@@ -66,7 +82,7 @@ Special Registers Altered:
 
 SVM-Form
 
-* svshape SVxd, SVyd, SVzd, SVRM, vf
+* svshape SVxd,SVyd,SVzd,SVRM,vf
 
 Pseudo-code:
 
@@ -147,8 +163,13 @@ Pseudo-code:
         SVSHAPE0[21:23] <- 0b001         # "inverse" on outer loop
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
+        SVSHAPE2[0:31] <- SVSHAPE0[0:31]
+        SVSHAPE3[0:31] <- SVSHAPE0[0:31]
         # for FRA and FRT
         SVSHAPE0[28:29] <- 0b01           # j+halfstep schedule
+        # for cos coefficient
+        SVSHAPE2[28:29] <- 0b10           # ci schedule
+        SVSHAPE3[28:29] <- 0b11           # size schedule
     # set schedule up for DCT Outer butterfly
     if (SVRM = 0b0011) then
         # calculate O(N log2 N) number of outer butterfly overlapping adds
@@ -173,12 +194,8 @@ Pseudo-code:
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
         SVSHAPE2[0:31] <- SVSHAPE0[0:31]
-        SVSHAPE3[0:31] <- SVSHAPE0[0:31]
         # for FRA and FRT
         SVSHAPE1[28:29] <- 0b01           # j+halfstep schedule
-        # for cos coefficient
-        SVSHAPE2[28:29] <- 0b10           # ci schedule
-        SVSHAPE3[28:29] <- 0b11           # size schedule
     # set VL, MVL and Vertical-First
     SVSTATE[0:6] <- vlen
     SVSTATE[7:13] <- vlen

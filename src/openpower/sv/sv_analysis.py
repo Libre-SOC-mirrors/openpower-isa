@@ -249,6 +249,7 @@ def process_csvs():
               '1R-1W-imm': 'RM-2P-1S1D',
               '1R-CRo': 'RM-2P-1S1D',
               '1R-imm': 'non-SV',
+              '1W-CRo': 'RM-1P-1D',
               '1W': 'non-SV',
               '1W-CRi': 'RM-2P-1S1D',
               'CRio': 'RM-2P-1S1D',
@@ -564,6 +565,11 @@ def process_csvs():
                     res['1'] = 's:FRA' # FRA: Rsrc1_EXTRA2
                     res['2'] = 's:FRB' # FRB: Rsrc2_EXTRA2
                     res['3'] = 's:FRC' # FRC: Rsrc3_EXTRA2
+
+            elif value == 'RM-1P-1D':
+                res['Etype'] = 'EXTRA3' # RM EXTRA3 type
+                if insn_name == 'svstep':
+                    res['0'] = 'd:RT;d:CR0' # RT,CR0: Rdest1_EXTRA2
 
             # add to svp64 csvs
             #for k in ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']:
