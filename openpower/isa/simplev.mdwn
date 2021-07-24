@@ -71,7 +71,17 @@ Pseudo-code:
 
     # for convenience, VL to be calculated and stored in SVSTATE
     vlen <- [0] * 7
-    SVSTATE[0:63] <- [0] * 64
+    SVSTATE[0:31] <- [0] * 32
+    # only overwrite REMAP if "persistence" is zero
+    if (SVSTATE[62] = 0b0) then
+        SVSTATE[32:33] <- 0b00
+        SVSTATE[34:35] <- 0b00
+        SVSTATE[36:37] <- 0b00
+        SVSTATE[38:39] <- 0b00
+        SVSTATE[40:41] <- 0b00
+        SVSTATE[42:46] <- 0b00000
+        SVSTATE[62] <- 0b0
+        SVSTATE[63] <- 0b0
     # clear out all SVSHAPEs
     SVSHAPE0[0:31] <- [0] * 32
     SVSHAPE1[0:31] <- [0] * 32
