@@ -225,6 +225,7 @@ _insns = [
     "NONE", "add", "addc", "addco", "adde", "addeo",
     "addi", "addic", "addic.", "addis",
     "addme", "addmeo", "addo", "addze", "addzeo",
+    "addg6s",
     "and", "andc", "andi.", "andis.",
     "attn",
     "b", "bc", "bcctr", "bclr", "bctar",
@@ -397,6 +398,7 @@ class MicrOp(Enum):
     OP_SVREMAP = 80
     OP_SVSHAPE = 81
     OP_SVSTEP = 82
+    OP_ADDG6S = 83
 
 
 @unique
