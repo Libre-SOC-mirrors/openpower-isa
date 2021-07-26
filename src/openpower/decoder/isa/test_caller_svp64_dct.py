@@ -346,7 +346,7 @@ class DCTTestCase(FHDLTestCase):
             halfsize = size // 2
             for i in range(n//size):
                 for ci in range(halfsize):
-                    ctable.append((math.cos((ci + 0.5) * math.pi / size) * 2.0))
+                    ctable.append(math.cos((ci + 0.5) * math.pi / size) * 2.0)
             size //= 2
 
         # store in regfile
@@ -382,6 +382,50 @@ class DCTTestCase(FHDLTestCase):
                 err = abs((actual - expected) / expected)
                 print ("err", i, err)
                 self.assertTrue(err < 1e-5)
+
+    def test_sv_remap_dct_cos_8(self):
+        lst = SVP64Asm(["svshape 8, 1, 1, 2, 0",
+                        "svremap 0, 0, 0, 2, 0, 1, 1",
+                        "sv.svstep 4.v, 4, 1", # svstep get vector of ci
+                        "sv.svstep 16.v, 3, 1", # svstep get vector of step
+                        "addi 1, 0, 0x0008",
+                        "setvl 0, 0, 12, 0, 1, 1",
+                        "sv.std 4.v, 0(1)",
+                        "sv.lfd  0.v, 0(1)",
+                        "sv.std 16.v, 8(1)",
+                        "sv.lfd  12.v, 8(1)",
+                        "sv.fcfids 0.v, 0.v",
+                        "sv.fadds 0.v, 0.v, 43", # plus 0.5
+                        "sv.fmuls 0.v, 0.v, 41", # times PI
+                        "sv.fdivs 0.v, 12.v, 0.v", # div size
+                        "sv.fcoss 12.v, 0.v",
+                        "sv.fdivs 12.v, 44, 12.v", # div 2.0 / x
+                     ])
+        lst = list(lst)
+
+        gprs = [0] * 32
+        fprs = [0] * 64
+        # constants
+        fprs[43] = fp64toselectable(0.5)     # 0.5
+        fprs[41] = fp64toselectable(math.pi) # pi
+        fprs[42] = fp64toselectable(8.0)     # 8.0
+        fprs[44] = fp64toselectable(2.0)     # 2.0
+
+        n = 8
+
+        ctable = []
+        size = n
+        while size >= 2:
+            halfsize = size // 2
+            for i in range(n//size):
+                for ci in range(halfsize):
+                    ctable.append(math.cos((ci + 0.5) * math.pi / size) * 2.0)
+            size //= 2
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, gprs, initial_fprs=fprs)
+            print ("MEM")
+            sim.mem.dump()
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
