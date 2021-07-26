@@ -61,7 +61,7 @@ class FPTranscendentalsTestCase(FHDLTestCase):
                       "fcoss 3, 2",
                      ]
         """
-        lst = SVP64Asm(["stw 1, 0(0)",
+        lst = SVP64Asm(["std 1, 0(0)",
                         "lfd 0, 0(0)",
                         "fcfids 0, 0",
                         "fadds 0, 0, 3", # plus 0.5
