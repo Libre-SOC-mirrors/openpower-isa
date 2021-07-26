@@ -24,7 +24,7 @@ class SVSHAPE(SelectableInt):
             fs = tuple(range(offs, end))
             v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
-            #log("SVSHAPE setup field", field, offs, end)
+            log("SVSHAPE setup field", field, offs, end)
             offs = end
 
     @property
@@ -113,15 +113,16 @@ class SVSHAPE(SelectableInt):
         self.fsi['offset'].eq(value)
 
     def get_iterator(self):
+        log ("SVSHAPE get_iterator", self.mode, self.ydimsz)
         if self.mode == 0b00:
             iterate_fn = iterate_indices
         elif self.mode == 0b01:
             # further sub-selection
-            if self.submode2 == 0b000:
+            if self.ydimsz == 1:
                 iterate_fn = iterate_butterfly_indices
-            elif self.submode2 in [0b001, 0b010]:
+            elif self.ydimsz == 2:
                 iterate_fn = iterate_dct_inner_butterfly_indices
-            elif self.submode2 in [0b011, 0b100]:
+            elif self.ydimsz == 3:
                 iterate_fn = iterate_dct_outer_butterfly_indices
         # create a **NEW** iterator each time this is called
         return iterate_fn(deepcopy(self))

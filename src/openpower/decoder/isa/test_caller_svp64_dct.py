@@ -47,8 +47,7 @@ def transform_inner_radix2(vec, ctable):
         pass
     # j schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, ydim, zdim]
-    SVSHAPE0.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE0.lims = [xdim, 2, zdim]
     SVSHAPE0.mode = 0b01
     SVSHAPE0.submode2 = 0b01
     SVSHAPE0.skip = 0b00
@@ -56,8 +55,7 @@ def transform_inner_radix2(vec, ctable):
     SVSHAPE0.invxyz = [1,0,0] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, ydim, zdim]
-    SVSHAPE1.order = [0,1,2]  # experiment with different permutations, here
+    SVSHAPE1.lims = [xdim, 2, zdim]
     SVSHAPE1.mode = 0b01
     SVSHAPE1.submode2 = 0b01
     SVSHAPE1.skip = 0b01
@@ -99,7 +97,7 @@ def transform_outer_radix2(vec):
     class SVSHAPE:
         pass
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, ydim, zdim]
+    SVSHAPE0.lims = [xdim, 3, zdim]
     SVSHAPE0.submode2 = 0b100
     SVSHAPE0.mode = 0b01
     SVSHAPE0.skip = 0b00
@@ -107,7 +105,7 @@ def transform_outer_radix2(vec):
     SVSHAPE0.invxyz = [0,0,0] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, ydim, zdim]
+    SVSHAPE1.lims = [xdim, 3, zdim]
     SVSHAPE1.mode = 0b01
     SVSHAPE1.submode2 = 0b100
     SVSHAPE1.skip = 0b01
