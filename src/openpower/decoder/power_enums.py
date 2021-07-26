@@ -230,6 +230,7 @@ _insns = [
     "attn",
     "b", "bc", "bcctr", "bclr", "bctar",
     "bpermd",
+    "cbcdtd",
     "cdtbcd",
     "cmp", "cmpb", "cmpeqb", "cmpi", "cmpl", "cmpli", "cmprb",
     "cntlzd", "cntlzw", "cnttzd", "cnttzw",
@@ -401,6 +402,7 @@ class MicrOp(Enum):
     OP_SVSTEP = 82
     OP_ADDG6S = 83
     OP_CDTBCD = 84
+    OP_CBCDTD = 85
 
 
 @unique
