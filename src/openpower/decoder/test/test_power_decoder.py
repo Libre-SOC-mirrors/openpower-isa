@@ -2,7 +2,7 @@ from nmigen import Module, Signal
 
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
 # Also, check out the cxxsim nmigen branch, and latest yosys from git
-from nmutil.sim_tmp_alternative import Simulator, Delay
+from nmutil.sim_tmp_alternative import Simulator, Delay, Settle
 
 from nmutil.formaltest import FHDLTestCase
 from nmigen.cli import rtlil
@@ -35,7 +35,7 @@ class DecoderTestCase(FHDLTestCase):
         ldst_len = Signal(LdstLen)
         cry_in = Signal(CryIn)
         bigendian = Signal()
-        comb += bigendian.eq(1)
+        comb += bigendian.eq(0)
 
         # opcodes = get_csv(csvname)
         m.submodules.dut = dut = create_pdecode()
@@ -60,6 +60,10 @@ class DecoderTestCase(FHDLTestCase):
             for row in opcodes:
                 if not row['unit']:
                     continue
+                # skip "conditions" for now
+                if (row['CONDITIONS'] and
+                    row['CONDITIONS'] in ['SVP64BREV']):
+                    continue
                 op = row['opcode']
                 if not opint:  # HACK: convert 001---10 to 0b00100010
                     op = "0b" + op.replace('-', '0')
@@ -79,6 +83,7 @@ class DecoderTestCase(FHDLTestCase):
                         yield opcode[24:25].eq(0b11)
 
                 yield Delay(1e-6)
+                yield Settle()
                 signals = [(function_unit, Function, 'unit'),
                            (internal_op, MicrOp, 'internal op'),
                            (in1_sel, In1Sel, 'in1'),
@@ -94,6 +99,8 @@ class DecoderTestCase(FHDLTestCase):
                     result = yield sig
                     expected = enm[row[name]]
                     msg = f"{sig.name} == {enm(result)}, expected: {expected}"
+                    msg += "- op: %x, opcode %s" % (opint, row['opcode'])
+                    print (msg)
                     self.assertEqual(enm(result), expected, msg)
                 for bit in single_bit_flags:
                     sig = getattr(dut.op, get_signal_name(bit))
@@ -109,7 +116,10 @@ class DecoderTestCase(FHDLTestCase):
             sim.run()
 
     def generate_ilang(self):
-        pdecode = create_pdecode()
+        conditions = {'SVP64BREV': Signal(name="svp64brev", reset_less=True),
+                      'SVP64FFT': Signal(name="svp64fft", reset_less=True),
+                     }
+        pdecode = create_pdecode(conditions=conditions)
         vl = rtlil.convert(pdecode, ports=pdecode.ports())
         with open("decoder.il", "w") as f:
             f.write(vl)
