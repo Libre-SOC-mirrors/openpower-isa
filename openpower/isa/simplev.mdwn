@@ -90,6 +90,7 @@ Pseudo-code:
 
     # for convenience, VL to be calculated and stored in SVSTATE
     vlen <- [0] * 7
+    itercount[0:6] <- [0] * 7
     SVSTATE[0:31] <- [0] * 32
     # only overwrite REMAP if "persistence" is zero
     if (SVSTATE[62] = 0b0) then
@@ -220,7 +221,7 @@ Pseudo-code:
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode
-        SVSHAPE0[6:11] <- 0b000011       # DCT Inner Butterfly COS-gen mode
+        SVSHAPE0[6:11] <- 0b000100       # DCT Inner Butterfly COS-gen mode
         SVSHAPE0[21:23] <- 0b001         # "inverse" on outer loop
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
