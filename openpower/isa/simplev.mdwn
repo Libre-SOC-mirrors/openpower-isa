@@ -146,7 +146,9 @@ Pseudo-code:
         # FRC (coefficients)
         SVSHAPE2[28:29] <- 0b10           # k schedule
     # set schedule up for DCT Inner butterfly
-    if (SVRM = 0b0010) then
+    # SVRM Mode 2 is for pre-calculated coefficients,
+    # SVRM Mode 4 is for on-the-fly (Vertical-First Mode)
+    if (SVRM = 0b0010) | (SVRM = 0b0100) then
         # calculate O(N log2 N)
         n <- [0] * 3
         do while n < 5
@@ -159,6 +161,7 @@ Pseudo-code:
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode
+        if (SVRM = 0b0100) then
         SVSHAPE0[6:11] <- 0b000001       # DCT Inner Butterfly mode
         SVSHAPE0[18:20] <- 0b001         # DCT Inner Butterfly sub-mode
         SVSHAPE0[21:23] <- 0b001         # "inverse" on outer loop
@@ -198,6 +201,31 @@ Pseudo-code:
         SVSHAPE2[0:31] <- SVSHAPE0[0:31]
         # for FRA and FRT
         SVSHAPE1[28:29] <- 0b01           # j+halfstep schedule
+    # set schedule up for DCT COS table generation
+    if (SVRM = 0b0011) then
+        # calculate O(N log2 N)
+        vlen[0:6] <- [0] * 7
+        itercount[0:6] <- (0b00 || SVxd) + 0b0000001
+        itercount[0:6] <- (0b0 || itercount[0:5])
+        n <- [0] * 3
+        do while n < 5
+           if SVxd[4-n] = 0 then
+               leave
+           n <- n + 1
+           vlen[0:6] <- vlen + itercount
+           itercount[0:6] <- (0b0 || itercount[0:5])
+        # set up template in SVSHAPE0, then copy to 1-3
+        # set up FRB and FRS
+        SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
+        SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode
+        SVSHAPE0[6:11] <- 0b000011       # DCT Inner Butterfly COS-gen mode
+        SVSHAPE0[21:23] <- 0b001         # "inverse" on outer loop
+        # copy
+        SVSHAPE1[0:31] <- SVSHAPE0[0:31]
+        SVSHAPE2[0:31] <- SVSHAPE0[0:31]
+        # for cos coefficient
+        SVSHAPE1[28:29] <- 0b10           # ci schedule
+        SVSHAPE2[28:29] <- 0b11           # size schedule
     # set VL, MVL and Vertical-First
     SVSTATE[0:6] <- vlen
     SVSTATE[7:13] <- vlen
