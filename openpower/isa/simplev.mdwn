@@ -204,7 +204,7 @@ Pseudo-code:
         # for FRA and FRT
         SVSHAPE1[28:29] <- 0b01           # j+halfstep schedule
     # set schedule up for DCT COS table generation
-    if (SVRM = 0b0011) then
+    if (SVRM = 0b0101) then
         # calculate O(N log2 N)
         vlen[0:6] <- [0] * 7
         itercount[0:6] <- (0b00 || SVxd) + 0b0000001

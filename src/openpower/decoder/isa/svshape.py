@@ -4,6 +4,7 @@ from openpower.decoder.isa.remapyield import iterate_indices
 from openpower.decoder.isa.remap_fft_yield import iterate_butterfly_indices
 from openpower.decoder.isa.remap_dct_yield import (
                                 iterate_dct_inner_butterfly_indices,
+                                iterate_dct_inner_costable_indices,
                                 iterate_dct_outer_butterfly_indices)
 from openpower.sv.svp64 import SVP64SHAPE
 import os
@@ -120,10 +121,12 @@ class SVSHAPE(SelectableInt):
             # further sub-selection
             if self.ydimsz == 1:
                 iterate_fn = iterate_butterfly_indices
-            elif self.ydimsz == 2:
+            elif self.ydimsz in [2, 4]:
                 iterate_fn = iterate_dct_inner_butterfly_indices
             elif self.ydimsz == 3:
                 iterate_fn = iterate_dct_outer_butterfly_indices
+            elif self.ydimsz == 3:
+                iterate_fn = iterate_dct_inner_costable_indices
         # create a **NEW** iterator each time this is called
         return iterate_fn(deepcopy(self))
 
