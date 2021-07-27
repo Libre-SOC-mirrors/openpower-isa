@@ -173,12 +173,14 @@ Pseudo-code:
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
         SVSHAPE2[0:31] <- SVSHAPE0[0:31]
-        SVSHAPE3[0:31] <- SVSHAPE0[0:31]
+        if (SVRM != 0b0100) then
+            SVSHAPE3[0:31] <- SVSHAPE0[0:31]
         # for FRA and FRT
         SVSHAPE0[28:29] <- 0b01           # j+halfstep schedule
         # for cos coefficient
-        SVSHAPE2[28:29] <- 0b10           # ci schedule
-        SVSHAPE3[28:29] <- 0b11           # size schedule
+        SVSHAPE2[28:29] <- 0b10           # ci (k for mode 4) schedule
+        if (SVRM != 0b0100) then
+            SVSHAPE3[28:29] <- 0b11           # size schedule
     # set schedule up for DCT Outer butterfly
     if (SVRM = 0b0011) then
         # calculate O(N log2 N) number of outer butterfly overlapping adds

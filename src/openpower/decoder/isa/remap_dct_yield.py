@@ -108,7 +108,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    print ("inner butterfly", mode)
+    #print ("inner butterfly", mode, SVSHAPE.skip)
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
