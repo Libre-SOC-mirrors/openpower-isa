@@ -60,6 +60,10 @@ class FPTranscendentalsTestCase(FHDLTestCase):
         """>>> lst = [
                       "fcoss 3, 2",
                      ]
+
+        this is a base / proving-ground for the more complex SVP64
+        variant in test_caller_svp64_dct.py:
+        test_sv_remap_dct_cos_precompute_8
         """
         lst = SVP64Asm(["std 1, 0(0)",
                         "lfd 0, 0(0)",

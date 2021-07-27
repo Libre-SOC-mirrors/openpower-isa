@@ -381,32 +381,42 @@ class DCTTestCase(FHDLTestCase):
                 print ("err", i, err)
                 self.assertTrue(err < 1e-5)
 
-    def test_sv_remap_dct_cos_8(self):
+    def test_sv_remap_dct_cos_precompute_8(self):
+        """pre-computes a DCT COS table, deliberately using a lot of
+        registers so as to be able to see what is going on (dumping all
+        regs after the run).
+
+        the simpler (scalar) version is in test_caller_transcendentals.py
+        (test_fp_coss_cvt), this is the SVP64 variant.  TODO: really
+        need the new version of fcfids which doesn't spam memory with
+        LD/STs.
+        """
         lst = SVP64Asm(["svshape 8, 1, 1, 2, 0",
                         "svremap 0, 0, 0, 2, 0, 1, 1",
                         "sv.svstep 4.v, 4, 1", # svstep get vector of ci
                         "sv.svstep 16.v, 3, 1", # svstep get vector of step
-                        "addi 1, 0, 0x0008",
+                        "addi 1, 0, 0x0000",
                         "setvl 0, 0, 12, 0, 1, 1",
                         "sv.std 4.v, 0(1)",
-                        "sv.lfd  0.v, 0(1)",
-                        "sv.std 16.v, 8(1)",
-                        "sv.lfd  12.v, 8(1)",
-                        "sv.fcfids 0.v, 0.v",
-                        "sv.fadds 0.v, 0.v, 43", # plus 0.5
+                        "sv.lfd  64.v, 0(1)",
+                        "sv.fcfids 48.v, 64.v",
+                        "addi 1, 0, 0x0060",
+                        "sv.std 16.v, 0(1)",
+                        "sv.lfd  12.v, 0(1)",
+                        "sv.fcfids 24.v, 12.v",
+                        "sv.fadds 0.v, 24.v, 43", # plus 0.5
                         "sv.fmuls 0.v, 0.v, 41", # times PI
-                        "sv.fdivs 0.v, 12.v, 0.v", # div size
-                        "sv.fcoss 12.v, 0.v",
-                        "sv.fdivs 12.v, 44, 12.v", # div 2.0 / x
+                        "sv.fdivs 0.v, 0.v, 48.v", # div size
+                        "sv.fcoss 80.v, 0.v",
+                        "sv.fdivs 80.v, 43, 80.v", # div 0.5 / x
                      ])
         lst = list(lst)
 
         gprs = [0] * 32
-        fprs = [0] * 64
+        fprs = [0] * 128
         # constants
-        fprs[43] = fp64toselectable(0.5)     # 0.5
+        fprs[43] = fp64toselectable(0.5)         # 0.5
         fprs[41] = fp64toselectable(math.pi) # pi
-        fprs[42] = fp64toselectable(8.0)     # 8.0
         fprs[44] = fp64toselectable(2.0)     # 2.0
 
         n = 8
@@ -424,6 +434,26 @@ class DCTTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, gprs, initial_fprs=fprs)
             print ("MEM")
             sim.mem.dump()
+            print ("ci FP")
+            for i in range(len(ctable)):
+                actual = float(sim.fpr(i+24))
+                print ("i", i, actual)
+            print ("size FP")
+            for i in range(len(ctable)):
+                actual = float(sim.fpr(i+48))
+                print ("i", i, actual)
+            print ("temps")
+            for i in range(len(ctable)):
+                actual = float(sim.fpr(i))
+                print ("i", i, actual)
+            for i in range(len(ctable)):
+                expected = 1.0/ctable[i]
+                actual = float(sim.fpr(i+80))
+                err = abs((actual - expected) / expected)
+                print ("i", i, actual, "1/expect", 1/expected,
+                                        "expected", expected,
+                                        "err", err)
+                self.assertTrue(err < 1e-6)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
