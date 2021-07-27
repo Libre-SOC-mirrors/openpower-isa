@@ -1323,7 +1323,8 @@ class ISACaller:
                 replace_d = True
             else:
                 if info.form == 'DS':
-                    imm = yield self.dec2.dec.fields.FormDS.DS[0:14]
+                    # DS-Form, multiply by 4 then knock 2 bits off after
+                    imm = yield self.dec2.dec.fields.FormDS.DS[0:14] * 4
                 else:
                     imm = yield self.dec2.dec.fields.FormD.D[0:16]
                 imm = exts(imm, 16) # sign-extend to integer
@@ -1353,13 +1354,17 @@ class ISACaller:
             elif ldstmode == SVP64LDSTmode.ELSTRIDE.value:
                 imm = SelectableInt(imm * offsmul, 32)
                 replace_d = True
-            ldst_ra_vec = yield self.dec2.rm_dec.ldst_ra_vec
-            ldst_imz_in = yield self.dec2.rm_dec.ldst_imz_in
-            log("LDSTmode", ldstmode, SVP64LDSTmode.BITREVERSE.value,
-                            offsmul, imm, ldst_ra_vec, ldst_imz_in)
+            if replace_d:
+                ldst_ra_vec = yield self.dec2.rm_dec.ldst_ra_vec
+                ldst_imz_in = yield self.dec2.rm_dec.ldst_imz_in
+                log("LDSTmode", SVP64LDSTmode(ldstmode),
+                                offsmul, imm, ldst_ra_vec, ldst_imz_in)
         # new replacement D... errr.. DS
         if replace_d:
             if info.form == 'DS':
+                # TODO: assert 2 LSBs are zero?
+                log("DS-Form, TODO, assert 2 LSBs zero?", bin(imm.value))
+                imm.value = imm.value >> 2
                 self.namespace['DS'] = imm
             else:
                 self.namespace['D'] = imm
