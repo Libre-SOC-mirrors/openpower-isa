@@ -253,7 +253,7 @@ class SVP64Asm:
             insn = 59            << (31-5)  # opcode 59, bits 0-5
             insn |= fields[0]    << (31-10) # RT       , bits 6-10
             insn |= fields[1]    << (31-20) # RB       , bits 16-20
-            insn |= 0b1000001100 << (31-30) # XO       , bits 21..30
+            insn |= 0b1000001110 << (31-30) # XO       , bits 21..30
             if opcode == 'fsins.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
             log ("fsins", bin(insn))
@@ -268,10 +268,10 @@ class SVP64Asm:
             insn = 59            << (31-5)  # opcode 59, bits 0-5
             insn |= fields[0]    << (31-10) # RT       , bits 6-10
             insn |= fields[1]    << (31-20) # RB       , bits 16-20
-            insn |= 0b1000101100 << (31-30) # XO       , bits 21..30
-            if opcode == 'fsins.':
+            insn |= 0b1000101110 << (31-30) # XO       , bits 21..30
+            if opcode == 'fcoss.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("fsins", bin(insn))
+            log ("fcoss", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -888,7 +888,7 @@ class SVP64Asm:
             opcode |= int(v30b_newfields[1]) << (32-16) # FRA
             opcode |= int(v30b_newfields[2]) << (32-21) # FRB
             opcode |= int(v30b_newfields[3]) << (32-26) # FRC
-            opcode |= 0b01110 << (32-31)   # bits 26-30
+            opcode |= 0b01111 << (32-31)   # bits 26-30
             if rc:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode
@@ -932,11 +932,11 @@ class SVP64Asm:
         elif v30b_op in ["fcoss", "fcoss."]:
             insn = 59            << (31-5)  # opcode 59, bits 0-5
             insn |= int(v30b_newfields[0]) << (31-10) # RT       , bits 6-10
-            insn |= int(v30b_newfields[0]) << (31-20) # RB       , bits 16-20
-            insn |= 0b1000101100 << (31-30) # XO       , bits 21..30
-            if opcode == 'fsins.':
+            insn |= int(v30b_newfields[1]) << (31-20) # RB       , bits 16-20
+            insn |= 0b1000101110 << (31-30) # XO       , bits 21..30
+            if opcode == 'fcoss.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("fsins", bin(insn))
+            log ("fcoss", bin(insn))
             yield ".long 0x%x" % insn
 
         else:
@@ -1101,9 +1101,12 @@ if __name__ == '__main__':
              'svshape 8, 1, 1, 1, 1',
             ]
     lst = [
-             'sv.lfsbr 4.v, 11(8.v), 15',
+             #'sv.lfsbr 4.v, 11(8.v), 15',
              #'sv.lwzbr 4.v, 11(8.v), 15',
-             'sv.svstep. 2.v, 4, 0',
+             #'sv.svstep. 2.v, 4, 0',
+             #'sv.fcfids. 48.v, 64.v',
+             'sv.fcoss. 80.v, 0.v',
+             'sv.fcoss. 20.v, 0.v',
         ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))
