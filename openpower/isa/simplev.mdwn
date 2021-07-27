@@ -164,8 +164,10 @@ Pseudo-code:
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode
-        #if (SVRM = 0b0100) then
-        SVSHAPE0[6:11] <- 0b000001       # DCT Inner Butterfly mode
+        if (SVRM = 0b0100) then
+            SVSHAPE0[6:11] <- 0b000011       # DCT Inner Butterfly mode 4
+        else
+            SVSHAPE0[6:11] <- 0b000001       # DCT Inner Butterfly mode 2
         SVSHAPE0[18:20] <- 0b001         # DCT Inner Butterfly sub-mode
         SVSHAPE0[21:23] <- 0b001         # "inverse" on outer loop
         # copy

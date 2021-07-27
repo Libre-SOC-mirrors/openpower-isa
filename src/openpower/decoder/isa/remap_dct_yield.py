@@ -108,7 +108,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    #print ("inner butterfly", mode)
+    print ("inner butterfly", mode)
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
@@ -145,6 +145,8 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
 
     # start an infinite (wrapping) loop
     skip = 0
+    k = 0
+    k_start = 0
     while True:
         for size in x_r:           # loop over 3rd order dimension (size)
             x_end = size == x_r[-1]
@@ -171,22 +173,30 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                     jr = j_r[:hz2]
                 #print ("xform jr", jr)
                 # loop over 1st order dimension
+                k = k_start
                 for ci, (jl, jh) in enumerate(zip(j, jr)):
                     z_end = jl == j[-1]
                     # now depending on MODE return the index.  inner butterfly
                     if SVSHAPE.skip == 0b00: # in [0b00, 0b10]:
                         result = ri[ji[jl]]        # lower half
                     elif SVSHAPE.skip == 0b01: # in [0b01, 0b11]:
-                        result = ri[ji[jh]] # upper half, reverse order
-                    elif SVSHAPE.skip == 0b10: #
-                        result = ci # coefficient helper
-                    elif SVSHAPE.skip == 0b11: #
-                        result = size # coefficient helper
+                        result = ri[ji[jh]] # upper half
+                    elif mode == 4:
+                        # COS table pre-generated mode
+                        if SVSHAPE.skip == 0b10: #
+                            result = k # cos table offset
+                    else: # mode 2
+                        # COS table generated on-demand ("Vertical-First") mode
+                        if SVSHAPE.skip == 0b10: #
+                            result = ci # coefficient helper
+                        elif SVSHAPE.skip == 0b11: #
+                            result = size # coefficient helper
                     loopends = (z_end |
                                ((y_end and z_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
 
                     yield result + SVSHAPE.offset, loopends
+                    k += 1
 
                 # now in-place swap
                 if inplace_mode:
@@ -195,6 +205,9 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                         #print ("inplace swap", jh, jlh)
                         tmp1, tmp2 = ji[jlh], ji[jh]
                         ji[jlh], ji[jh] = tmp2, tmp1
+
+            # new k_start point for cos tables( runs inside x_r loop NOT i loop)
+            k_start += halfsize
 
 
 # python "yield" can be iterated. use this to make it clear how

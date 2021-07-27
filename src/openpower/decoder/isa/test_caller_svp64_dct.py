@@ -457,7 +457,8 @@ class DCTTestCase(FHDLTestCase):
 
     def test_sv_remap_dct_cos_precompute_inner_8(self):
         """pre-computes a DCT COS table, using the shorter costable
-        indices schedule
+        indices schedule.  turns out, some COS values are repeated
+        in each layer of the DCT butterfly.
 
         the simpler (scalar) version is in test_caller_transcendentals.py
         (test_fp_coss_cvt), this is the SVP64 variant.  TODO: really
@@ -529,6 +530,75 @@ class DCTTestCase(FHDLTestCase):
                                         "expected", expected,
                                         "err", err)
                 self.assertTrue(err < 1e-6)
+
+    def test_sv_remap_fpmadds_dct_8_mode_4(self):
+        """>>> lst = ["svremap 31, 1, 0, 2, 0, 1, 1",
+                      "svshape 8, 1, 1, 4, 0",
+                      "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                      "svshape 8, 1, 1, 3, 0",
+                      "sv.fadds 0.v, 0.v, 0.v"
+                     ]
+            runs a full in-place 8-long O(N log2 N) DCT, both
+            inner and outer butterfly "REMAP" schedules.
+            uses shorter tables: FRC also needs to be on a Schedule
+        """
+        lst = SVP64Asm( ["svremap 31, 1, 0, 2, 0, 1, 1",
+                         "svshape 8, 1, 1, 4, 0",
+                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v",
+                         "svshape 8, 1, 1, 3, 0",
+                         "sv.fadds 0.v, 0.v, 0.v"
+                        ])
+        lst = list(lst)
+
+        # array and coefficients to test
+        avi = [7.0, -9.8, 3.0, -32.3, 2.1, 3.6, 0.7, -0.2]
+        n = len(avi)
+        levels = n.bit_length() - 1
+        ri = list(range(n))
+        ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+        av = halfrev2(avi, False)
+        av = [av[ri[i]] for i in range(n)]
+        ctable = []
+        size = n
+        while size >= 2:
+            halfsize = size // 2
+            for ci in range(halfsize):
+                ctable.append(math.cos((ci + 0.5) * math.pi / size) * 2.0)
+            size //= 2
+
+        # store in regfile
+        fprs = [0] * 32
+        for i, a in enumerate(av):
+            fprs[i+0] = fp64toselectable(a)
+        for i, c in enumerate(ctable):
+            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            # outer iterative sum
+            res = transform2(avi)
+
+            for i, expected in enumerate(res):
+                print ("i", i, float(sim.fpr(i)), "expected", expected)
+            for i, expected in enumerate(res):
+                # convert to Power single
+                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = float(expected)
+                actual = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs((actual - expected) / expected)
+                print ("err", i, err)
+                self.assertTrue(err < 1e-5)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
