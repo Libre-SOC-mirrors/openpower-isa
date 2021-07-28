@@ -249,7 +249,7 @@ class DecoderTestCase(FHDLTestCase):
             #                       (24, 0x040400000303)])
             self._check_fpregs(sim, expected_fprs)
 
-    def test_sv_load_store_bitreverse_remap_matrix(self):
+    def test_sv_load_store_remap_matrix(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
@@ -257,27 +257,14 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 6, 0, 0x202",
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
-                        "sv.stw 5.v, 0(1)",
-                        "svshape 4, 4, 2, 0, 0",
-                        "svremap 31, 1, 2, 3, 0, 0, 0, 0",
-                        "sv.lwzbr 12.v, 4(1), 2"]
+                        "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "svshape 3, 3, 4, 0, 0",
+                        "svremap 1, 1, 2, 0, 0, 0, 0, 1",
+                        "sv.lwz 20.v, 0(1)",
+                        ]
 
-        note: bitreverse mode is... odd.  it's the butterfly generator
-        from Cooley-Tukey FFT:
-        https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
-
-        bitreverse LD is computed as:
-        for i in range(VL):
-            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
-
-        bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
-        produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
-
-        and thus creates the butterfly needed for one iteration of FFT.
-        the RC (shift) is to be able to offset the LDs by Radix-2 spans
-
-        in this case however it is REMAPed via a Matrix Multiply Schedule,
-        which is set up as 4x2.
+        REMAPed a LD operation via a Matrix Multiply Schedule,
+        which is set up as 3x4 result
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
@@ -289,17 +276,25 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 9, 0, 0x606",
                         "addi 10, 0, 0x707",
                         "addi 11, 0, 0x808",
+                        "addi 12, 0, 0x909",
+                        "addi 13, 0, 0xa0a",
+                        "addi 14, 0, 0xb0b",
+                        "addi 15, 0, 0xc0c",
+                        "addi 16, 0, 0xd0d",
+                        "addi 17, 0, 0xe0e",
+                        "addi 18, 0, 0xf0f",
                         "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
-                        "svshape 4, 4, 2, 0, 0",
-                        "svremap 31, 1, 2, 3, 0, 0, 0, 1",
-                        #"setvl 0, 0, 8, 0, 1, 1",
-                        "sv.lwzbr 12.v, 4(1), 2"]) # bit-reversed
+                        "svshape 3, 3, 4, 0, 0",
+                        "svremap 1, 1, 2, 0, 0, 0, 0, 1",
+                        "sv.lwz 20.v, 0(1)",
+                        #"sv.lwzbr 12.v, 4(1), 2", # bit-reversed
+                        ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl = 8 # VL
-        svstate.maxvl = 8 # MAXVL
+        svstate.vl = 12 # VL
+        svstate.maxvl = 12 # MAXVL
         print ("SVSTATE", bin(svstate.asint()))
 
         regs = [0] * 64
@@ -314,7 +309,9 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(mem, [(16, 0x020200000101),
                                    (24, 0x040400000303),
                                    (32, 0x060600000505),
-                                   (40, 0x080800000707)])
+                                   (40, 0x080800000707),
+                                   (48, 0x0a0a00000909),
+                                   (56, 0x0c0c00000b0b)])
             print(sim.gpr(1))
             # from STs
             self.assertEqual(sim.gpr(4), SelectableInt(0x101, 64))
@@ -327,14 +324,11 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(11), SelectableInt(0x808, 64))
             # combination of bit-reversed load with a Matrix REMAP
             # schedule
-            self.assertEqual(sim.gpr(12), SelectableInt(0x101, 64))
-            self.assertEqual(sim.gpr(13), SelectableInt(0x505, 64))
-            self.assertEqual(sim.gpr(14), SelectableInt(0x303, 64))
-            self.assertEqual(sim.gpr(15), SelectableInt(0x707, 64))
-            self.assertEqual(sim.gpr(16), SelectableInt(0x202, 64))
-            self.assertEqual(sim.gpr(17), SelectableInt(0x606, 64))
-            self.assertEqual(sim.gpr(18), SelectableInt(0x404, 64))
-            self.assertEqual(sim.gpr(19), SelectableInt(0x808, 64))
+            for i in range(3):
+                self.assertEqual(sim.gpr(20+i), SelectableInt(0x101, 64))
+                self.assertEqual(sim.gpr(23+i), SelectableInt(0x505, 64))
+                self.assertEqual(sim.gpr(26+i), SelectableInt(0x909, 64))
+                self.assertEqual(sim.gpr(29+i), SelectableInt(0x202, 64))
 
     def test_sv_load_store_bitreverse_remap_halfswap(self):
         """>>> lst = ["addi 1, 0, 0x0010",
@@ -379,9 +373,9 @@ class DecoderTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 1, 0, 0, 0, 0, 0, 0, 1",
                         #"setvl 0, 0, 8, 0, 1, 1",
-                        "sv.lwzbr 12.v, 4(1), 2",
-                        #"sv.lwz 12.v, 0(1)"  # bit-reversed
-                        ]) 
+                        "sv.lwzbr 12.v, 4(1), 2",  # bit-reversed
+                        #"sv.lwz 12.v, 0(1)"
+                        ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
