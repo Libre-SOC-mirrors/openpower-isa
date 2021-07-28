@@ -187,6 +187,81 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(14), SelectableInt(0x202, 64))
             self.assertEqual(sim.gpr(15), SelectableInt(0x404, 64))
 
+    def test_sv_load_store_bitreverse_fp(self):
+        """>>> lst = ["addi 1, 0, 0x0010",
+                        "addi 2, 0, 0x0004",
+                        "addi 3, 0, 0x0002",
+                        "addi 5, 0, 0x101",
+                        "addi 6, 0, 0x202",
+                        "addi 7, 0, 0x303",
+                        "addi 8, 0, 0x404",
+                        "sv.std 5.v, 0(1)",
+                        "sv.lfdbr 12.v, 4(1), 2"]
+
+        note: bitreverse mode is... odd.  it's the butterfly generator
+        from Cooley-Tukey FFT:
+        https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
+
+        bitreverse LD is computed as:
+        for i in range(VL):
+            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
+
+        bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
+        produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
+
+        and thus creates the butterfly needed for one iteration of FFT.
+        the RC (shift) is to be able to offset the LDs by Radix-2 spans
+        """
+        lst = SVP64Asm(["addi 1, 0, 0x0010",
+                        "addi 2, 0, 0x0000",
+                        "addi 5, 0, 0x101",
+                        "addi 6, 0, 0x202",
+                        "addi 7, 0, 0x303",
+                        "addi 8, 0, 0x404",
+                        "sv.std 5.v, 0(1)", # scalar r1 + 0 + wordlen*offs
+                        "sv.lfdbr 12.v, 8(1), 2"]) # bit-reversed
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=4)
+        svstate = SVP64State()
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        fprs = [0] * 32
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                                initial_fprs=fprs)
+            mem = sim.mem.dump(printout=False)
+            print (mem)
+
+            self.assertEqual(mem, [(16, 0x101),
+                                   (24, 0x202),
+                                   (32, 0x303),
+                                   (40, 0x404),
+                                  ])
+            print(sim.gpr(1))
+            # from STs
+            self.assertEqual(sim.gpr(5), SelectableInt(0x101, 64))
+            self.assertEqual(sim.gpr(6), SelectableInt(0x202, 64))
+            self.assertEqual(sim.gpr(7), SelectableInt(0x303, 64))
+            self.assertEqual(sim.gpr(8), SelectableInt(0x404, 64))
+            # r1=0x10, RC=0, offs=4: contents of memory expected at:
+            #    element 0:   EA = r1 + bitrev(0b00)*4 => 0x10 + 0b00*4 => 0x10
+            #    element 1:   EA = r1 + bitrev(0b01)*4 => 0x10 + 0b10*4 => 0x18
+            #    element 2:   EA = r1 + bitrev(0b10)*4 => 0x10 + 0b01*4 => 0x14
+            #    element 3:   EA = r1 + bitrev(0b11)*4 => 0x10 + 0b10*4 => 0x1c
+            # therefore loaded from (bit-reversed indexing):
+            #    r9  => mem[0x10] which was stored from r5
+            #    r10 => mem[0x18] which was stored from r6
+            #    r11 => mem[0x18] which was stored from r7
+            #    r12 => mem[0x1c] which was stored from r8
+            self.assertEqual(sim.fpr(12), SelectableInt(0x101, 64))
+            self.assertEqual(sim.fpr(13), SelectableInt(0x303, 64))
+            self.assertEqual(sim.fpr(14), SelectableInt(0x202, 64))
+            self.assertEqual(sim.fpr(15), SelectableInt(0x404, 64))
+
     def test_sv_load_store_bitreverse2(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
@@ -430,7 +505,10 @@ class DecoderTestCase(FHDLTestCase):
             initial_fprs = [0] * 32
         simulator = run_tst(prog, initial_regs, svstate=svstate,
                                   initial_fprs=initial_fprs)
+        print ("GPRs")
         simulator.gpr.dump()
+        print ("FPRs")
+        simulator.fpr.dump()
         return simulator
 
 

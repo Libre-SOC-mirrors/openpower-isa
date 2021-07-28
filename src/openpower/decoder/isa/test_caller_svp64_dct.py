@@ -600,6 +600,96 @@ class DCTTestCase(FHDLTestCase):
                 print ("err", i, err)
                 self.assertTrue(err < 1e-5)
 
+    def test_sv_remap_fpmadds_ldbrev_dct_8_mode_4(self):
+        """>>> lst = [# LOAD bit-reversed with half-swap
+                      "svshape 8, 1, 1, 6, 0",
+                      "svremap 1, 0, 0, 0, 0, 0, 0, 1",
+                      "sv.lfsbr 0.v, 4(1), 2",
+                      # Inner butterfly, twin +/- MUL-ADD-SUB
+                      "svremap 31, 1, 0, 2, 0, 1, 1",
+                      "svshape 8, 1, 1, 4, 0",
+                      "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                      # Outer butterfly, iterative sum
+                      "svshape 8, 1, 1, 3, 0",
+                      "sv.fadds 0.v, 0.v, 0.v"
+                     ]
+            runs a full in-place 8-long O(N log2 N) DCT, both
+            inner and outer butterfly "REMAP" schedules, and using
+            bit-reversed half-swapped LDs.
+            uses shorter pre-loaded COS tables: FRC also needs to be on a
+            Schedule
+        """
+        lst = SVP64Asm( ["addi 1, 0, 0x000",
+                         "svshape 8, 1, 1, 6, 0",
+                         "svremap 1, 0, 0, 0, 0, 0, 0, 1",
+                         "sv.lfsbr 0.v, 4(1), 2",
+                         "svremap 31, 1, 0, 2, 0, 1, 1",
+                         "svshape 8, 1, 1, 4, 0",
+                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v",
+                         "svshape 8, 1, 1, 3, 0",
+                         "sv.fadds 0.v, 0.v, 0.v"
+                        ])
+        lst = list(lst)
+
+        # array and coefficients to test
+        avi = [7.0, -9.8, 3.0, -32.3, 2.1, 3.6, 0.7, -0.2]
+
+        # store in memory, in standard (expected) order, FP32s (2 per 8-bytes)
+        # LD will bring them in, in the correct order.
+        mem = {}
+        val = 0
+        for i, a in enumerate(avi):
+            a = SINGLE(fp64toselectable(a)).value
+            shift = (i % 2) == 1
+            if shift == 0:
+                val = a                         # accumulate for next iteration
+            else:
+                mem[(i//2)*8] = val | (a << 32) # even and odd 4-byte in same 8
+
+        # calculate the (shortened) COS tables, 4 2 1 not 4 2+2 1+1+1+1
+        n = len(avi)
+        ctable = []
+        size = n
+        while size >= 2:
+            halfsize = size // 2
+            for ci in range(halfsize):
+                ctable.append(math.cos((ci + 0.5) * math.pi / size) * 2.0)
+            size //= 2
+
+        # store in regfile
+        fprs = [0] * 32
+        for i, c in enumerate(ctable):
+            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs,
+                                                initial_mem=mem)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            # outer iterative sum
+            res = transform2(avi)
+
+            for i, expected in enumerate(res):
+                print ("i", i, float(sim.fpr(i)), "expected", expected)
+
+            for i, expected in enumerate(res):
+                # convert to Power single
+                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = float(expected)
+                actual = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs((actual - expected) / expected)
+                print ("err", i, err)
+                self.assertTrue(err < 1e-5)
+
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
                               initial_mem=None,
