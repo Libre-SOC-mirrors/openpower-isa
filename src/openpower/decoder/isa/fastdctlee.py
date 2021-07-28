@@ -310,37 +310,44 @@ def inverse_transform(vector, root=True, indent=0):
         inverse_transform(alpha, False, indent+1)
         inverse_transform(beta , False, indent+1)
         for i in range(half):
-            x = alpha[i]
-            y = beta[i] / (math.cos((i + 0.5) * math.pi / n) * 2)
+            x, y = alpha[i], beta[i]
+            coeff = (math.cos((i + 0.5) * math.pi / n) * 2)
+            y /= coeff
             vector[i] = x + y
-            vector[-(i + 1)] = x - y
+            vector[n-(i+1)] = x - y
             print (idt, " v[%d] = alpha[%d]+beta[%d]" % (i, i, i))
             print (idt, " v[%d] = alpha[%d]-beta[%d]" % (n-i-1, i, i))
         return vector
 
 
-def inverse_transform2(vector, root=True):
+def inverse_transform2(vector, root=True, indent=0):
+    idt = "   " * indent
     n = len(vector)
     if root:
         vector = list(vector)
+        vector[0] /= 2
     if n == 1:
         return vector
     elif n == 0 or n % 2 != 0:
         raise ValueError()
     else:
         half = n // 2
-        alpha = [0]
-        beta  = [1]
+        alpha = [vector[0]]
+        beta  = [vector[1]]
         for i in range(2, n, 2):
-            alpha.append(i)
-            beta.append(("add", i - 1, i + 1))
-        inverse_transform2(alpha, False)
-        inverse_transform2(beta , False)
+            alpha.append(vector[i])
+            beta.append(vector[i - 1] + vector[i + 1])
+        inverse_transform2(alpha, False, indent+1)
+        inverse_transform2(beta , False, indent+1)
         for i in range(half):
+            x, y = alpha[i], beta[i]
+            coeff = (math.cos((i + 0.5) * math.pi / n) * 2)
+            y /= coeff
+            vector[i] = x + y
+            vector[n-(i+1)] = x - y
+            print (idt, " v[%d] = alpha[%d]+beta[%d]" % (i, i, i))
+            print (idt, " v[%d] = alpha[%d]-beta[%d]" % (n-i-1, i, i))
             x = alpha[i]
-            y = ("cos", beta[i], i)
-            vector[i] = ("add", x, y)
-            vector[-(i + 1)] = ("sub", x, y)
         return vector
 
 
