@@ -235,7 +235,7 @@ Pseudo-code:
         SVSHAPE2[28:29] <- 0b11           # size schedule
     # set schedule up for DCT inverse of half-swapped ordering
     if (SVRM = 0b0110) then
-        vlen[0:6] <- (0b00 || SVxd)
+        vlen[0:6] <- (0b00 || SVxd) + 0b0000001
         # set up template in SVSHAPE0
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode

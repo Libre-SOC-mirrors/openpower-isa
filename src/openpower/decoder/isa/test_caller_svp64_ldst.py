@@ -14,6 +14,8 @@ from openpower.decoder.isa.test_caller import Register, run_tst
 from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.consts import SVP64CROffs
 from openpower.decoder.helpers import fp64toselectable
+from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
+                                                  )
 from copy import deepcopy
 
 
@@ -247,7 +249,7 @@ class DecoderTestCase(FHDLTestCase):
             #                       (24, 0x040400000303)])
             self._check_fpregs(sim, expected_fprs)
 
-    def test_sv_load_store_bitreverse_remap(self):
+    def test_sv_load_store_bitreverse_remap_matrix(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
@@ -256,7 +258,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
                         "sv.stw 5.v, 0(1)",
-                        "svshape 4, 4, 4, 0, 0",
+                        "svshape 4, 4, 2, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0, 0",
                         "sv.lwzbr 12.v, 4(1), 2"]
 
@@ -273,6 +275,9 @@ class DecoderTestCase(FHDLTestCase):
 
         and thus creates the butterfly needed for one iteration of FFT.
         the RC (shift) is to be able to offset the LDs by Radix-2 spans
+
+        in this case however it is REMAPed via a Matrix Multiply Schedule,
+        which is set up as 4x2.
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
@@ -330,6 +335,98 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(17), SelectableInt(0x606, 64))
             self.assertEqual(sim.gpr(18), SelectableInt(0x404, 64))
             self.assertEqual(sim.gpr(19), SelectableInt(0x808, 64))
+
+    def test_sv_load_store_bitreverse_remap_halfswap(self):
+        """>>> lst = ["addi 1, 0, 0x0010",
+                        "addi 2, 0, 0x0000",
+                        "addi 4, 0, 0x101",
+                        "addi 5, 0, 0x202",
+                        "addi 6, 0, 0x303",
+                        "addi 7, 0, 0x404",
+                        "addi 8, 0, 0x505",
+                        "addi 9, 0, 0x606",
+                        "addi 10, 0, 0x707",
+                        "addi 11, 0, 0x808",
+                        "sv.stw 5.v, 0(1)",
+                        "svshape 8, 1, 1, 6, 0",
+                        "svremap 31, 1, 2, 3, 0, 0, 0, 0",
+                        "sv.lwzbr 12.v, 4(1), 2"]
+
+        bitreverse LD is computed as:
+        for i in range(VL):
+            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
+
+        bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
+        produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
+
+        and thus creates the butterfly needed for one iteration of FFT.
+        the RC (shift) is to be able to offset the LDs by Radix-2 spans
+
+        on top of the bit-reversal is a REMAP for half-swaps for DCT
+        in-place.
+        """
+        lst = SVP64Asm(["addi 1, 0, 0x0010",
+                        "addi 2, 0, 0x0000",
+                        "addi 4, 0, 0x001",
+                        "addi 5, 0, 0x102",
+                        "addi 6, 0, 0x203",
+                        "addi 7, 0, 0x304",
+                        "addi 8, 0, 0x405",
+                        "addi 9, 0, 0x506",
+                        "addi 10, 0, 0x607",
+                        "addi 11, 0, 0x708",
+                        "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "svshape 8, 1, 1, 6, 0",
+                        "svremap 1, 0, 0, 0, 0, 0, 0, 1",
+                        #"setvl 0, 0, 8, 0, 1, 1",
+                        "sv.lwzbr 12.v, 4(1), 2",
+                        #"sv.lwz 12.v, 0(1)"  # bit-reversed
+                        ]) 
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=4)
+        svstate = SVP64State()
+        svstate.vl = 8 # VL
+        svstate.maxvl = 8 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        regs = [0] * 64
+
+        avi = [0x001, 0x102, 0x203, 0x304, 0x405, 0x506, 0x607, 0x708]
+        n = len(avi)
+        levels = n.bit_length() - 1
+        ri = list(range(n))
+        ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+        av = halfrev2(avi, False)
+        av = [av[ri[i]] for i in range(n)]
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                                initial_regs=regs)
+            mem = sim.mem.dump(printout=False)
+            print ("Mem")
+            print (mem)
+
+            self.assertEqual(mem, [(16, 0x010200000001),
+                                   (24, 0x030400000203),
+                                   (32, 0x050600000405),
+                                   (40, 0x070800000607)])
+            # from STs
+            for i in range(len(avi)):
+                print ("st gpr", i, sim.gpr(i+4), hex(avi[i]))
+                self.assertEqual(sim.gpr(i+4), avi[i])
+            self.assertEqual(sim.gpr(5), SelectableInt(0x102, 64))
+            self.assertEqual(sim.gpr(6), SelectableInt(0x203, 64))
+            self.assertEqual(sim.gpr(7), SelectableInt(0x304, 64))
+            self.assertEqual(sim.gpr(8), SelectableInt(0x405, 64))
+            self.assertEqual(sim.gpr(9), SelectableInt(0x506, 64))
+            self.assertEqual(sim.gpr(10), SelectableInt(0x607, 64))
+            self.assertEqual(sim.gpr(11), SelectableInt(0x708, 64))
+            # combination of bit-reversed load with a DCT half-swap REMAP
+            # schedule
+            for i in range(len(avi)):
+                print ("ld gpr", i, sim.gpr(i+12), hex(av[i]))
+                self.assertEqual(sim.gpr(i+12), av[i])
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None, initial_fprs=None):

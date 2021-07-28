@@ -53,13 +53,21 @@ def iterate_dct_inner_halfswap_loadstore(SVSHAPE):
     # *indices* are referenced (two levels of indirection at the moment)
     # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
-    ji = halfrev2(ji, True)
+
+    levels = n.bit_length() - 1
+    ji = halfrev2(ji, False)
+    if False: # swap: TODO, add extra bit-reverse mode
+        ri = [reverse_bits(i, levels) for i in range(n)]
+        ji = [ji[ri[i]] for i in range(n)]
+
 
     # invert order if requested
     if SVSHAPE.invxyz[0]:
         ji.reverse()
 
-    yield from ji
+    for i, jl in enumerate(ji):
+        y_end = jl == ji[-1]
+        yield jl, (0b111 if y_end else 0b000)
 
 
 # python "yield" can be iterated. use this to make it clear how
@@ -634,6 +642,31 @@ def demo():
     # ok now pretty-print the results, with some debug output
     print ("outer butterfly")
     pprint_schedule_outer(schedule, n)
+
+    # for DCT half-swap LDs
+    # j schedule
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, 0b000101, zdim]
+    SVSHAPE0.mode = 0b01
+    SVSHAPE0.submode2 = 0
+    SVSHAPE0.skip = 0
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+
+    # expected results
+    levels = n.bit_length() - 1
+    avi = list(range(n))
+    ri = [reverse_bits(i, levels) for i in range(n)]
+    av = halfrev2(avi, False)
+    av = [av[ri[i]] for i in range(n)]
+
+
+    i0 = iterate_dct_inner_halfswap_loadstore(SVSHAPE0)
+    for idx, (jl) in enumerate(i0):
+        print ("inverse half-swap ld", idx, jl, av[idx])
+        if jl[1] == 0b111: # end
+            break
+
 
 # run the demo
 if __name__ == '__main__':

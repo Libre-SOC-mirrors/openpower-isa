@@ -931,6 +931,8 @@ class ISACaller:
         yield self.dec2.dec.raw_opcode_in.eq(ins & 0xffffffff) # v3.0B suffix
         yield self.dec2.sv_rm.eq(sv_rm)                        # svp64 prefix
         yield Settle()
+        # store this for use in get_src_dststeps()
+        self.ldstmode = yield self.dec2.rm_dec.ldstmode
 
     def execute_one(self):
         """execute one instruction
@@ -1031,7 +1033,7 @@ class ISACaller:
         in the class for later use.  this to avoid problems with yield
         """
         # go through all iterators in lock-step, advance to next remap_idx
-        srcstep, dststep = self.new_srcstep, self.new_dststep
+        srcstep, dststep = self.get_src_dststeps()
         # get four SVSHAPEs. here we are hard-coding
         SVSHAPE0 = self.spr['SVSHAPE0']
         SVSHAPE1 = self.spr['SVSHAPE1']
@@ -1206,7 +1208,7 @@ class ISACaller:
                 self.update_nia()
                 self.update_pc_next()
                 return
-            srcstep, dststep = self.new_srcstep, self.new_dststep
+            srcstep, dststep = self.get_src_dststeps()
             pred_dst_zero = self.pred_dst_zero
             pred_src_zero = self.pred_src_zero
             vl = self.svstate.vl
@@ -1335,19 +1337,26 @@ class ISACaller:
             op = yield self.dec2.e.do.insn_type
             offsmul = 0
             if op == MicrOp.OP_LOAD.value:
-                offsmul = srcstep
-                log("D-field src", imm, offsmul)
+                if remap_active:
+                    offsmul = yield self.dec2.in1_step
+                    log("D-field REMAP src", imm, offsmul)
+                else:
+                    offsmul = srcstep
+                    log("D-field src", imm, offsmul)
             elif op == MicrOp.OP_STORE.value:
+                # XXX NOTE! no bit-reversed STORE! this should not ever be used
                 offsmul = dststep
                 log("D-field dst", imm, offsmul)
-            # bit-reverse mode
+            # bit-reverse mode, rev already done through get_src_dst_steps()
             if ldstmode == SVP64LDSTmode.BITREVERSE.value:
                 # manually look up RC, sigh
                 RC = yield self.dec2.dec.RC[0:5]
                 RC = self.gpr(RC)
-                log ("RC", RC.value, "imm", imm, "offs", bin(offsmul),
-                     "rev", bin(bitrev(offsmul, vl)))
-                imm = SelectableInt((imm * bitrev(offsmul, vl)) << RC.value, 32)
+                log ("LD-BITREVERSE:", "VL", vl,
+                      "RC", RC.value, "imm", imm,
+                     "offs", bin(offsmul),
+                     )
+                imm = SelectableInt((imm * offsmul) << RC.value, 32)
             # Unit-Strided LD/ST adds offset*width to immediate
             elif ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
                 ldst_len = yield self.dec2.e.do.data_len
@@ -1523,6 +1532,8 @@ class ISACaller:
                     yield from self.svstate_post_inc()
                 else:
                     log ("SVSTATE_NEXT: post-inc")
+                # use actual src/dst-step here to check end, do NOT
+                # use bit-reversed version
                 srcstep, dststep = self.new_srcstep, self.new_dststep
                 remaps = self.get_remap_indices()
                 remap_idxs = self.remap_idxs
@@ -1653,7 +1664,25 @@ class ISACaller:
         log ("    new srcstep", srcstep)
         log ("    new dststep", dststep)
 
+    def get_src_dststeps(self):
+        """gets srcstep and dststep but performs bit-reversal on srcstep if
+        required.  use this ONLY to perform calculations, do NOT update
+        SVSTATE with the bit-reversed value of srcstep
+
+        ARGH, had to store self.ldstmode and VL due to yield issues
+        """
+        srcstep, dststep = self.new_srcstep, self.new_dststep
+        if self.is_svp64_mode:
+            if self.ldstmode == SVP64LDSTmode.BITREVERSE.value:
+                vl = self.svstate.vl
+                log ("SRCSTEP-BITREVERSE:", "VL", vl, "srcstep", srcstep,
+                     "rev", bin(bitrev(srcstep, vl)))
+                srcstep = bitrev(srcstep, vl)
+
+        return (srcstep, dststep)
+
     def update_new_svstate_steps(self):
+        # note, do not get the bit-reversed srcstep here!
         srcstep, dststep = self.new_srcstep, self.new_dststep
 
         # update SVSTATE with new srcstep
