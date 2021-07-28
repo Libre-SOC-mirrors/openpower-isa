@@ -1027,6 +1027,9 @@ class ISACaller:
         return asmop
 
     def get_remap_indices(self):
+        """WARNING, this function stores remap_idxs and remap_loopends
+        in the class for later use.  this to avoid problems with yield
+        """
         # go through all iterators in lock-step, advance to next remap_idx
         srcstep, dststep = self.new_srcstep, self.new_dststep
         # get four SVSHAPEs. here we are hard-coding
@@ -1570,6 +1573,10 @@ class ISACaller:
         """explicitly moves srcstep/dststep on to next element, for
         "Vertical-First" mode.  this function is called from
         setvl pseudo-code, as a pseudo-op "svstep"
+
+        WARNING: this function uses information that was created EARLIER
+        due to it being in the middle of a yield, but this function is
+        *NOT* called from yield (it's called from compiled pseudocode).
         """
         self.allow_next_step_inc = submode.value + 1
         log("SVSTATE_NEXT mode", mode, submode, self.allow_next_step_inc)
