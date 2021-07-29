@@ -362,13 +362,14 @@ def inverse_transform_iter(vec):
 
     # first the outer butterfly (iterative sum thing)
     n = len(vec)
-    size = n // 2
-    while size >= 2:
+    size = 2
+    while size <= n:
         halfsize = size // 2
         ir = list(range(0, halfsize))
         print ("itersum", halfsize, size, ir)
         for i in ir:
             jr = list(range(i+halfsize, i+n-halfsize, size))
+            jr.reverse()
             print ("itersum    jr", i+halfsize, i+size, jr)
             for jh in jr:
                 x = vec[jh]
@@ -376,7 +377,7 @@ def inverse_transform_iter(vec):
                 vec[jh+size] = x + y
                 print ("    itersum", size, i, jh, jh+size,
                         x, y, "jh+sz", vec[jh+size])
-        size //= 2
+        size *= 2
 
     print("transform2-inv post-itersum", vec)
 
@@ -460,8 +461,9 @@ def inverse_transform2(vector, root=True, indent=0):
         for i in range(2, n, 2):
             alpha.append(vector[i])
             beta.append(vector[i - 1] + vector[i + 1])
-        print (idt, " alpha", alpha)
-        print (idt, " beta", beta)
+            print (idt, " alpha", i, vector[i])
+            print (idt, " beta", i-1, i+1, vector[i-1], vector[i+1], "->",
+                          beta[-1])
         inverse_transform2(alpha, False, indent+1)
         inverse_transform2(beta , False, indent+1)
         for i in range(half):
