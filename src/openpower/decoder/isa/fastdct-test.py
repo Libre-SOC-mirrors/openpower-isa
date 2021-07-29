@@ -28,7 +28,7 @@ import fastdctlee, naivedct, remap_dct_yield
 class FastDctTest(unittest.TestCase):
 
     def test_fast_dct_lee_vs_naive(self):
-        for i in range(3, 4):
+        for i in range(3, 10):
             n = 2**i
             vector = FastDctTest.nonrandom_vector(n)
             expect = naivedct.transform(vector)

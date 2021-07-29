@@ -360,6 +360,7 @@ def inverse_transform_iter(vec):
 
     print("transform2-inv pre-itersum", vec)
     #vec = halfrev2(vec, True)
+    vec = [vec[ri[i]] for i in range(n)]
     #print("transform2-inv post-itersum-reorder", vec)
 
     # first the outer butterfly (iterative sum thing)
@@ -374,12 +375,9 @@ def inverse_transform_iter(vec):
             jr.reverse()
             print ("itersum    jr", i+halfsize, i+size, jr)
             for jh in jr:
-                #x = vec[ji[jh]]
-                #y = vec[ji[jh+size]]
-                #vec[ji[jh+size]] = x + y
-                x = vec[jh]
-                y = vec[jh+size]
-                vec[jh+size] = x + y
+                x = vec[ri[jh]]
+                y = vec[ri[jh+size]]
+                vec[ri[jh+size]] = x + y
                 print ("    itersum", size, i, jh, jh+size,
                         x, y, "jh+sz", vec[ji[jh+size]])
         size *= 2
@@ -388,7 +386,6 @@ def inverse_transform_iter(vec):
 
     # and pretend we LDed data in half-swapped *and* bit-reversed order as well
     # TODO: merge these two
-    vec = [vec[ri[i]] for i in range(n)]
     vec = halfrev2(vec, True)
     ri = list(range(n))
 
