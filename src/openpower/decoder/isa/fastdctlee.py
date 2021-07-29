@@ -97,7 +97,7 @@ def halfrev2(vec, pre_rev=True):
     res = []
     for i in range(len(vec)):
         if pre_rev:
-            res.append(i ^ (i>>1))
+            res.append(vec[i ^ (i>>1)])
         else:
             ri = i
             bl = i.bit_length()
@@ -337,7 +337,7 @@ def inverse_transform_iter(vec):
     # *indices* are referenced (two levels of indirection at the moment)
     # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
-    #ji = halfrev2(ji, True)
+    ji = halfrev2(ji, False)
 
     print ("ri", ri)
     print ("ji", ji)
@@ -359,6 +359,8 @@ def inverse_transform_iter(vec):
     vec[0] /= 2.0
 
     print("transform2-inv pre-itersum", vec)
+    #vec = halfrev2(vec, True)
+    #print("transform2-inv post-itersum-reorder", vec)
 
     # first the outer butterfly (iterative sum thing)
     n = len(vec)
@@ -372,19 +374,22 @@ def inverse_transform_iter(vec):
             jr.reverse()
             print ("itersum    jr", i+halfsize, i+size, jr)
             for jh in jr:
+                #x = vec[ji[jh]]
+                #y = vec[ji[jh+size]]
+                #vec[ji[jh+size]] = x + y
                 x = vec[jh]
                 y = vec[jh+size]
                 vec[jh+size] = x + y
                 print ("    itersum", size, i, jh, jh+size,
-                        x, y, "jh+sz", vec[jh+size])
+                        x, y, "jh+sz", vec[ji[jh+size]])
         size *= 2
 
     print("transform2-inv post-itersum", vec)
 
     # and pretend we LDed data in half-swapped *and* bit-reversed order as well
     # TODO: merge these two
-    #vec = halfrev2(vec, False)
     vec = [vec[ri[i]] for i in range(n)]
+    vec = halfrev2(vec, True)
     ri = list(range(n))
 
     print("transform2-inv post-reorder", vec)
@@ -403,10 +408,9 @@ def inverse_transform_iter(vec):
             jr = list(range(i+halfsize, i + size))
             jr.reverse()
             print ("  xform jr", j, jr)
-            vec2 = deepcopy(vec)
             for ci, (jl, jh) in enumerate(zip(j, jr)):
                 #t1, t2 = vec[ri[ji[jl]]], vec[ri[ji[jh]]]
-                t1, t2 = vec[jl], vec[jl+halfsize]
+                t1, t2 = vec[ji[jl]], vec[ji[jl+halfsize]]
                 coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
                 #coeff = ctable[k]
                 k += 1
@@ -415,16 +419,14 @@ def inverse_transform_iter(vec):
                 # swap afterwards.
                 #vec[ri[ji[jl]]] = t1 + t2/coeff
                 #vec[ri[ji[jh]]] = t1 - t2/coeff
-                vec2[jl] = t1 + t2/coeff
-                vec2[jh] = t1 - t2/coeff
+                vec[ji[jl]] = t1 + t2/coeff
+                vec[ji[jl+halfsize]] = t1 - t2/coeff
                 print ("coeff", size, i, "ci", ci,
                         "jl", ri[ji[jl]], "jh", ri[ji[jh]],
                        "i/n", (ci+0.5)/size, coeff,
                         "t1,t2", t1, t2,
-                        "+/i", vec2[jl], vec2[jh])
+                        "+/i", vec[ji[jl]], vec[ji[jh]])
                         #"+/i", vec2[ri[ji[jl]]], vec2[ri[ji[jh]]])
-            vec = vec2
-            continue
             # instead of using jl+halfsize, perform a swap here.
             # use half of j/jr because actually jl+halfsize = reverse(j)
             hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
@@ -438,7 +440,11 @@ def inverse_transform_iter(vec):
 
     print("post-swapped", ri)
     print("ji-swapped", ji)
-    print("transform2 result", vec)
+    ji = list(range(n))
+    ji = halfrev2(ji, True)
+    print("ji-calc   ", ji)
+
+    print("transform2-inv result", vec)
 
     return vec
 
