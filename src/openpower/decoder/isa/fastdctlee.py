@@ -320,6 +320,128 @@ def inverse_transform(vector, root=True, indent=0):
         return vector
 
 
+# totally cool *in-place* DCT algorithm
+def inverse_transform_iter(vec):
+
+    # Initialization
+    n = len(vec)
+    print ()
+    print ("transform2 inv", n, vec)
+    levels = n.bit_length() - 1
+
+    # reference (read/write) the in-place data in *reverse-bit-order*
+    ri = list(range(n))
+    ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+
+    # reference list for not needing to do data-swaps, just swap what
+    # *indices* are referenced (two levels of indirection at the moment)
+    # pre-reverse the data-swap list so that it *ends up* in the order 0123..
+    ji = list(range(n))
+    #ji = halfrev2(ji, True)
+
+    print ("ri", ri)
+    print ("ji", ji)
+
+    # create a cos table: not strictly necessary but here for illustrative
+    # purposes, to demonstrate the point that it really *is* iterative.
+    # this table could be cached and used multiple times rather than
+    # computed every time.
+    ctable = []
+    size = n
+    while size >= 2:
+        halfsize = size // 2
+        for i in range(n//size):
+            for ci in range(halfsize):
+                ctable.append((math.cos((ci + 0.5) * math.pi / size) * 2.0))
+        size //= 2
+
+    # first divide element 0 by 2
+    vec[0] /= 2.0
+
+    print("transform2-inv pre-itersum", vec)
+
+    # first the outer butterfly (iterative sum thing)
+    n = len(vec)
+    size = n // 2
+    while size >= 2:
+        halfsize = size // 2
+        ir = list(range(0, halfsize))
+        print ("itersum", halfsize, size, ir)
+        for i in ir:
+            jr = list(range(i+halfsize, i+n-halfsize, size))
+            print ("itersum    jr", i+halfsize, i+size, jr)
+            for jh in jr:
+                x = vec[jh]
+                y = vec[jh+size]
+                vec[jh+size] = x + y
+                print ("    itersum", size, i, jh, jh+size,
+                        x, y, "jh+sz", vec[jh+size])
+        size //= 2
+
+    print("transform2-inv post-itersum", vec)
+
+    # and pretend we LDed data in half-swapped *and* bit-reversed order as well
+    # TODO: merge these two
+    #vec = halfrev2(vec, False)
+    vec = [vec[ri[i]] for i in range(n)]
+    ri = list(range(n))
+
+    print("transform2-inv post-reorder", vec)
+
+    # start the inner butterfly (coefficients)
+    size = 2
+    k = 0
+    while size <= n:
+        halfsize = size // 2
+        tablestep = n // size
+        ir = list(range(0, n, size))
+        print ("  xform", size, ir)
+        for i in ir:
+            # two lists of half-range indices, e.g. j 0123, jr 7654
+            j = list(range(i, i + halfsize))
+            jr = list(range(i+halfsize, i + size))
+            jr.reverse()
+            print ("  xform jr", j, jr)
+            vec2 = deepcopy(vec)
+            for ci, (jl, jh) in enumerate(zip(j, jr)):
+                #t1, t2 = vec[ri[ji[jl]]], vec[ri[ji[jh]]]
+                t1, t2 = vec[jl], vec[jl+halfsize]
+                coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+                #coeff = ctable[k]
+                k += 1
+                # normally DCT would use jl+halfsize not jh, here.
+                # to be able to work in-place, the idea is to perform a
+                # swap afterwards.
+                #vec[ri[ji[jl]]] = t1 + t2/coeff
+                #vec[ri[ji[jh]]] = t1 - t2/coeff
+                vec2[jl] = t1 + t2/coeff
+                vec2[jh] = t1 - t2/coeff
+                print ("coeff", size, i, "ci", ci,
+                        "jl", ri[ji[jl]], "jh", ri[ji[jh]],
+                       "i/n", (ci+0.5)/size, coeff,
+                        "t1,t2", t1, t2,
+                        "+/i", vec2[jl], vec2[jh])
+                        #"+/i", vec2[ri[ji[jl]]], vec2[ri[ji[jh]]])
+            vec = vec2
+            continue
+            # instead of using jl+halfsize, perform a swap here.
+            # use half of j/jr because actually jl+halfsize = reverse(j)
+            hz2 = halfsize // 2 # can be zero which stops reversing 1-item lists
+            for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
+                jlh = jl+halfsize
+                # swap indices, NOT the data
+                tmp1, tmp2 = ji[jlh], ji[jh]
+                ji[jlh], ji[jh] = tmp2, tmp1
+                print ("     swap", size, i, ji[jlh], ji[jh])
+        size *= 2
+
+    print("post-swapped", ri)
+    print("ji-swapped", ji)
+    print("transform2 result", vec)
+
+    return vec
+
+
 def inverse_transform2(vector, root=True, indent=0):
     idt = "   " * indent
     n = len(vector)
@@ -331,24 +453,52 @@ def inverse_transform2(vector, root=True, indent=0):
     elif n == 0 or n % 2 != 0:
         raise ValueError()
     else:
+        print (idt, "inverse_xform2", vector)
         half = n // 2
         alpha = [vector[0]]
         beta  = [vector[1]]
         for i in range(2, n, 2):
             alpha.append(vector[i])
             beta.append(vector[i - 1] + vector[i + 1])
+        print (idt, " alpha", alpha)
+        print (idt, " beta", beta)
         inverse_transform2(alpha, False, indent+1)
         inverse_transform2(beta , False, indent+1)
         for i in range(half):
             x, y = alpha[i], beta[i]
             coeff = (math.cos((i + 0.5) * math.pi / n) * 2)
-            y /= coeff
-            vector[i] = x + y
-            vector[n-(i+1)] = x - y
-            print (idt, " v[%d] = alpha[%d]+beta[%d]" % (i, i, i))
-            print (idt, " v[%d] = alpha[%d]-beta[%d]" % (n-i-1, i, i))
-            x = alpha[i]
+            vector[i] = x + y / coeff
+            vector[n-(i+1)] = x - y / coeff
+            print (idt, " v[%d] = %f+%f/%f=%f" % (i, x, y, coeff, vector[i]))
+            print (idt, " v[%d] = %f-%f/%f=%f" % (n-i-1, x, y,
+                                                  coeff, vector[n-i-1]))
         return vector
+
+
+def inverse_transform2_explore(vector, root=True, indent=0):
+    n = len(vector)
+    if root:
+        vector = list(vector)
+    if n == 1:
+        return vector
+    elif n == 0 or n % 2 != 0:
+        raise ValueError()
+    else:
+        half = n // 2
+        alpha = [vector[0]]
+        beta  = [vector[1]]
+        for i in range(2, n, 2):
+            alpha.append(vector[i])
+            beta.append(("add%d" % indent, vector[i - 1], vector[i + 1]))
+        inverse_transform2_explore(alpha, False, indent+1)
+        inverse_transform2_explore(beta , False, indent+1)
+        for i in range(half):
+            x = alpha[i]
+            y = ("cos%d" % indent, beta[i], i, n)
+            vector[i] = ("add%d" % indent, x, y)
+            vector[n-(i + 1)] = ("sub%d" % indent, x, y)
+        return vector
+
 
 
 # does the outer butterfly in a recursive fashion, used in an
@@ -467,3 +617,11 @@ if __name__ == '__main__':
     print ("iterative rev", il)
     il = halfrev2(vec, True)
     print ("iterative rev-true", il)
+
+    n = 4
+    vec = list(range(n))
+    levels = n.bit_length() - 1
+    ops = inverse_transform2_explore(vec)
+    for i, x in enumerate(ops):
+        print (i, x)
+
