@@ -347,13 +347,13 @@ def inverse_transform_iter(vec):
     # this table could be cached and used multiple times rather than
     # computed every time.
     ctable = []
-    size = n
-    while size >= 2:
+    size = 2
+    while size <= n:
         halfsize = size // 2
         for i in range(n//size):
             for ci in range(halfsize):
                 ctable.append((math.cos((ci + 0.5) * math.pi / size) * 2.0))
-        size //= 2
+        size *= 2
 
     # first divide element 0 by 2
     vec[0] /= 2.0
@@ -408,8 +408,8 @@ def inverse_transform_iter(vec):
             for ci, (jl, jh) in enumerate(zip(j, jr)):
                 #t1, t2 = vec[ri[ji[jl]]], vec[ri[ji[jh]]]
                 t1, t2 = vec[ji[jl]], vec[ji[jl+halfsize]]
-                coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
-                #coeff = ctable[k]
+                #coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+                coeff = ctable[k]
                 k += 1
                 # normally DCT would use jl+halfsize not jh, here.
                 # to be able to work in-place, the idea is to perform a
