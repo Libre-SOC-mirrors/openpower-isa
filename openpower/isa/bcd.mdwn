@@ -33,7 +33,7 @@ XO-Form
 
 Pseudo-code:
 
-    dc[16] = [0]*16
+    dc[16] <- [0]*16
     do i = 0 to 15
         temp <- (0b0 || RA[4*i:63]) + (0b0 || RB[4*i:63])
         dc[i] <- temp[0]
