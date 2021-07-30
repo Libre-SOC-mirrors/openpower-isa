@@ -163,20 +163,18 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     # *indices* are referenced (two levels of indirection at the moment)
     # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
-    inplace_mode = SVSHAPE.submode2 == 0b01
-    #                     and SVSHAPE.skip not in [0b10, 0b11]
-    if inplace_mode:
+    inplace_mode = True
+    if inplace_mode and SVSHAPE.submode2 == 0b01:
         #print ("inplace mode")
         ji = halfrev2(ji, True)
 
-    #print ("ri", ri)
-    #print ("ji", ji)
+    print ("ri", ri)
+    print ("ji", ji)
 
     # start an infinite (wrapping) loop
-    skip = 0
-    k = 0
-    k_start = 0
     while True:
+        k = 0
+        k_start = 0
         for size in x_r:           # loop over 3rd order dimension (size)
             x_end = size == x_r[-1]
             # y_r schedule depends on size
@@ -195,11 +193,6 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                 # invert if requested
                 if SVSHAPE.invxyz[2]: j_r.reverse()
                 hz2 = halfsize // 2 # zero stops reversing 1-item lists
-                # if you *really* want to do the in-place swapping manually,
-                # this allows you to do it.  good luck...
-                if SVSHAPE.submode2 == 0b01 and not inplace_mode:
-                    #print ("swap mode")
-                    jr = j_r[:hz2]
                 #print ("xform jr", jr)
                 # loop over 1st order dimension
                 k = k_start
@@ -245,7 +238,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    # createing lists of indices to iterate over in each dimension
+    # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
     x_r = []
@@ -262,7 +255,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
 
     #print ("outer butterfly")
 
-    # reference (read/write) the in-place data in *reverse-bit-order*
+    # I-DCT, reference (read/write) the in-place data in *reverse-bit-order*
     ri = list(range(n))
     if SVSHAPE.submode2 == 0b11:
         levels = n.bit_length() - 1
@@ -273,32 +266,31 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
     # pre-reverse the data-swap list so that it *ends up* in the order 0123..
     ji = list(range(n))
     inplace_mode = False # need the space... SVSHAPE.skip in [0b10, 0b11]
-    if inplace_mode:
-        #print ("inplace mode", SVSHAPE.skip)
-        ji = halfrev2(ji, True)
+    if SVSHAPE.submode2 == 0b11:
+        ji = halfrev2(ji, False)
 
-    #print ("ri", ri)
-    #print ("ji", ji)
+    print ("ri", ri)
+    print ("ji", ji)
 
     # start an infinite (wrapping) loop
-    skip = 0
-    k = 0
-    k_start = 0
     while True:
+        k = 0
+        k_start = 0
         for size in x_r:           # loop over 3rd order dimension (size)
             halfsize = size//2
             x_end = size == x_r[-1]
             y_r = list(range(0, halfsize))
-            #print ("itersum", halfsize, size, y_r)
+            print ("itersum", halfsize, size, y_r, "invert", SVSHAPE.invxyz[1])
             # invert if requested
             if SVSHAPE.invxyz[1]: y_r.reverse()
             for i in y_r:       # loop over 2nd order dimension
                 y_end = i == y_r[-1]
                 # one list to create iterative-sum schedule
                 jr = list(range(i+halfsize, i+n-halfsize, size))
-                #print ("itersum     jr", i+halfsize, i+size, jr)
                 # invert if requested
-                if SVSHAPE.invxyz[2]: j_r.reverse()
+                if SVSHAPE.invxyz[2]: jr.reverse()
+                print ("itersum     jr", i+halfsize, i+size, jr,
+                                         "invert", SVSHAPE.invxyz[2])
                 hz2 = halfsize // 2 # zero stops reversing 1-item lists
                 k = k_start
                 for ci, jh in enumerate(jr):   # loop over 1st order dimension
@@ -329,15 +321,15 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
                     yield result + SVSHAPE.offset, loopends
                     k += 1
 
-                # now in-place swap
-                if SVSHAPE.submode2 == 0b11 and inplace_mode:
+                # now in-place swap (disabled)
+                if False and SVSHAPE.submode2 == 0b11:
                     j = list(range(i, i + halfsize))
                     jr = list(range(i+halfsize, i + size))
                     jr.reverse()
                     for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
                         jlh = jl+halfsize
-                        #print ("inplace swap", jh, jlh)
                         tmp1, tmp2 = ji[jlh], ji[jh]
+                        print ("inplace swap", jh, jlh, "actual", tmp1, tmp2)
                         ji[jlh], ji[jh] = tmp2, tmp1
 
             # new k_start point for cos tables( runs inside x_r loop NOT i loop)
@@ -563,7 +555,113 @@ def transform2(vec):
     return vec
 
 
-def demo():
+def demo_idct():
+    # set the dimension sizes here
+    n = 8
+    xdim = n
+    ydim = 0 # not needed
+    zdim = 0 # again, not needed
+
+    # set up an SVSHAPE
+    class SVSHAPE:
+        pass
+
+    ################
+    # outer butterfly
+    ################
+
+    # j schedule
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, 0b0000010, 0]
+    SVSHAPE0.submode2 = 0b100
+    SVSHAPE0.mode = 0b11
+    SVSHAPE0.skip = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [1,0,1] # inversion if desired
+    # j+halfstep schedule
+    SVSHAPE1 = SVSHAPE()
+    SVSHAPE1.lims = [xdim, 0b0000010, 0]
+    SVSHAPE1.mode = 0b11
+    SVSHAPE1.submode2 = 0b100
+    SVSHAPE1.skip = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [1,0,1] # inversion if desired
+
+    # enumerate over the iterator function, getting new indices
+    schedule = []
+    i0 = iterate_dct_outer_butterfly_indices(SVSHAPE0)
+    i1 = iterate_dct_outer_butterfly_indices(SVSHAPE1)
+    for idx, (jl, jh) in enumerate(zip(i0, i1)):
+        schedule.append((jl, jh))
+        if jl[1] == 0b111: # end
+            break
+
+    # ok now pretty-print the results, with some debug output
+    print ("outer i-dct butterfly")
+    pprint_schedule_outer(schedule, n)
+
+    ################
+    # INNER butterfly
+    ################
+
+    # j schedule
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, 0b000001, 0]
+    SVSHAPE0.mode = 0b11
+    SVSHAPE0.submode2 = 0b11
+    SVSHAPE0.skip = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+    # j+halfstep schedule
+    SVSHAPE1 = SVSHAPE()
+    SVSHAPE1.lims = [xdim, 0b000001, 0]
+    SVSHAPE1.mode = 0b11
+    SVSHAPE1.submode2 = 0b11
+    SVSHAPE1.skip = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [0,0,0] # inversion if desired
+
+    # enumerate over the iterator function, getting new indices
+    schedule = []
+    i0 = iterate_dct_inner_butterfly_indices(SVSHAPE0)
+    i1 = iterate_dct_inner_butterfly_indices(SVSHAPE1)
+    for idx, (jl, jh) in enumerate(zip(i0, i1)):
+        schedule.append((jl, jh))
+        if jl[1] == 0b111: # end
+            break
+
+    # ok now pretty-print the results, with some debug output
+    print ("inner butterfly")
+    pprint_schedule(schedule, n)
+    print ("")
+
+    return
+
+    # for DCT half-swap LDs
+    # j schedule
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, 0b000101, zdim]
+    SVSHAPE0.mode = 0b01
+    SVSHAPE0.submode2 = 0b01
+    SVSHAPE0.skip = 0
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+
+    # expected results
+    levels = n.bit_length() - 1
+    avi = list(range(n))
+    ri = [reverse_bits(i, levels) for i in range(n)]
+    av = halfrev2(avi, False)
+    av = [av[ri[i]] for i in range(n)]
+
+    i0 = iterate_dct_inner_halfswap_loadstore(SVSHAPE0)
+    for idx, (jl) in enumerate(i0):
+        print ("inverse half-swap ld", idx, jl, av[idx])
+        if jl[1] == 0b111: # end
+            break
+
+
+def demo_dct():
     # set the dimension sizes here
     n = 8
     xdim = n
@@ -670,4 +768,5 @@ def demo():
 
 # run the demo
 if __name__ == '__main__':
-    demo()
+    demo_dct()
+    demo_idct()

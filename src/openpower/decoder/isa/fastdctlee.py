@@ -384,13 +384,6 @@ def inverse_transform_iter(vec):
 
     print("transform2-inv post-itersum", vec)
 
-    # and pretend we LDed data in half-swapped *and* bit-reversed order as well
-    # TODO: merge these two
-    #vec = halfrev2(vec, True)
-    ri = list(range(n))
-
-    print("transform2-inv post-reorder", vec)
-
     # start the inner butterfly (coefficients)
     size = 2
     k = 0
@@ -406,7 +399,6 @@ def inverse_transform_iter(vec):
             jr.reverse()
             print ("  xform jr", j, jr)
             for ci, (jl, jh) in enumerate(zip(j, jr)):
-                #t1, t2 = vec[ri[ji[jl]]], vec[ri[ji[jh]]]
                 t1, t2 = vec[ji[jl]], vec[ji[jl+halfsize]]
                 #coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
                 coeff = ctable[k]
@@ -414,8 +406,6 @@ def inverse_transform_iter(vec):
                 # normally DCT would use jl+halfsize not jh, here.
                 # to be able to work in-place, the idea is to perform a
                 # swap afterwards.
-                #vec[ri[ji[jl]]] = t1 + t2/coeff
-                #vec[ri[ji[jh]]] = t1 - t2/coeff
                 vec[ji[jl]] = t1 + t2/coeff
                 vec[ji[jl+halfsize]] = t1 - t2/coeff
                 print ("coeff", size, i, "ci", ci,
