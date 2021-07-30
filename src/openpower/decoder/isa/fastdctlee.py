@@ -323,6 +323,9 @@ def inverse_transform(vector, root=True, indent=0):
 # totally cool *in-place* DCT algorithm
 def inverse_transform_iter(vec):
 
+    # in-place, but actually have to protect the input list!
+    vec = deepcopy(vec)
+
     # Initialization
     n = len(vec)
     print ()

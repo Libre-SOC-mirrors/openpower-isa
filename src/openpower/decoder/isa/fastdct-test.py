@@ -27,7 +27,7 @@ import fastdctlee, naivedct, remap_dct_yield
 
 class FastDctTest(unittest.TestCase):
 
-    def test_fast_dct_lee_vs_naive(self):
+    def tst_fast_dct_lee_vs_naive(self):
         for i in range(3, 4):
             n = 2**i
             vector = FastDctTest.nonrandom_vector(n)
@@ -40,15 +40,17 @@ class FastDctTest(unittest.TestCase):
             actual = fastdctlee.inverse_transform_iter(vector)
             self.assertListAlmostEqual(actual, expect)
 
-    def tst_yield_dct_lee_vs_naive(self):
-        for i in range(3, 4):
+    def test_yield_dct_lee_vs_naive(self):
+        for i in range(2, 10):
             n = 2**i
             vector = FastDctTest.nonrandom_vector(n)
             expect = fastdctlee.transform2(vector)
             actual = remap_dct_yield.transform2(vector)
             self.assertListAlmostEqual(actual, expect)
             expect = naivedct.inverse_transform(vector)
-            actual = fastdctlee.inverse_transform(vector)
+            actual = fastdctlee.inverse_transform_iter(vector)
+            self.assertListAlmostEqual(actual, expect)
+            actual = remap_dct_yield.inverse_transform2(vector)
             self.assertListAlmostEqual(actual, expect)
 
     def tst_fast_dct_lee_invertibility(self):

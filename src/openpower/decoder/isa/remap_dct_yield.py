@@ -9,6 +9,7 @@
 # Copyright (c) 2020 Project Nayuki. (MIT License)
 # https://www.nayuki.io/page/fast-discrete-cosine-transform-algorithms
 
+from copy import deepcopy
 import math
 
 # bits of the integer 'val'.
@@ -31,7 +32,7 @@ def halfrev2(vec, pre_rev=True):
     res = []
     for i in range(len(vec)):
         if pre_rev:
-            res.append(i ^ (i>>1))
+            res.append(vec[i ^ (i>>1)])
         else:
             ri = i
             bl = i.bit_length()
@@ -137,7 +138,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    #print ("inner butterfly", mode, SVSHAPE.skip)
+    print ("inner butterfly", mode, SVSHAPE.skip, "submode", SVSHAPE.submode2)
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
@@ -167,6 +168,8 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     if inplace_mode and SVSHAPE.submode2 == 0b01:
         #print ("inplace mode")
         ji = halfrev2(ji, True)
+    if inplace_mode and SVSHAPE.submode2 == 0b11:
+        ji = halfrev2(ji, False)
 
     print ("ri", ri)
     print ("ji", ji)
@@ -191,7 +194,9 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                 jr = list(range(i+halfsize, i + size))
                 jr.reverse()
                 # invert if requested
-                if SVSHAPE.invxyz[2]: j_r.reverse()
+                if SVSHAPE.invxyz[2]:
+                    j.reverse()
+                    jr.reverse()
                 hz2 = halfsize // 2 # zero stops reversing 1-item lists
                 #print ("xform jr", jr)
                 # loop over 1st order dimension
@@ -200,9 +205,15 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                     z_end = jl == j[-1]
                     # now depending on MODE return the index.  inner butterfly
                     if SVSHAPE.skip == 0b00: # in [0b00, 0b10]:
-                        result = ri[ji[jl]]        # lower half
+                        if SVSHAPE.submode2 == 0b11: # iDCT
+                            result = ji[ri[jl]]        # lower half
+                        else:
+                            result = ri[ji[jl]]        # lower half
                     elif SVSHAPE.skip == 0b01: # in [0b01, 0b11]:
-                        result = ri[ji[jh]] # upper half
+                        if SVSHAPE.submode2 == 0b11: # iDCT
+                            result = ji[ri[jl+halfsize]] # upper half
+                        else:
+                            result = ri[ji[jh]] # upper half
                     elif mode == 4:
                         # COS table pre-generated mode
                         if SVSHAPE.skip == 0b10: #
@@ -224,7 +235,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                 if inplace_mode:
                     for ci, (jl, jh) in enumerate(zip(j[:hz2], jr[:hz2])):
                         jlh = jl+halfsize
-                        #print ("inplace swap", jh, jlh)
+                        print ("inplace swap", jh, jlh)
                         tmp1, tmp2 = ji[jlh], ji[jh]
                         ji[jlh], ji[jh] = tmp2, tmp1
 
@@ -257,7 +268,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
 
     # I-DCT, reference (read/write) the in-place data in *reverse-bit-order*
     ri = list(range(n))
-    if SVSHAPE.submode2 == 0b11:
+    if SVSHAPE.submode2 in [0b11, 0b01]:
         levels = n.bit_length() - 1
         ri = [ri[reverse_bits(i, levels)] for i in range(n)]
 
@@ -299,17 +310,29 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
                     if mode == 4:
                         # COS table pre-generated mode
                         if SVSHAPE.skip == 0b00: # in [0b00, 0b10]:
-                            result = ri[ji[jh]]        # lower half
+                            if SVSHAPE.submode2 == 0b11: # iDCT
+                                result = ji[ri[jh]] # upper half
+                            else:
+                                result = ri[ji[jh]]        # lower half
                         elif SVSHAPE.skip == 0b01: # in [0b01, 0b11]:
-                            result = ri[ji[jh+size]] # upper half
+                            if SVSHAPE.submode2 == 0b11: # iDCT
+                                result = ji[ri[jh+size]] # upper half
+                            else:
+                                result = ri[ji[jh+size]] # upper half
                         elif SVSHAPE.skip == 0b10: #
                             result = k # cos table offset
                     else:
                         # COS table generated on-demand ("Vertical-First") mode
                         if SVSHAPE.skip == 0b00: # in [0b00, 0b10]:
-                            result = ri[ji[jh]]        # lower half
+                            if SVSHAPE.submode2 == 0b11: # iDCT
+                                result = ji[ri[jh]]        # lower half
+                            else:
+                                result = ri[ji[jh]]        # lower half
                         elif SVSHAPE.skip == 0b01: # in [0b01, 0b11]:
-                            result = ri[ji[jh+size]] # upper half
+                            if SVSHAPE.submode2 == 0b11: # iDCT
+                                result = ji[ri[jh+size]] # upper half
+                            else:
+                                result = ri[ji[jh+size]] # upper half
                         elif SVSHAPE.skip == 0b10: #
                             result = ci # coefficient helper
                         elif SVSHAPE.skip == 0b11: #
@@ -379,6 +402,191 @@ def pprint_schedule_outer(schedule, n):
                                 "end", bin(je)[2:], bin(je)[2:])
                 idx += 1
         size *= 2
+
+
+# totally cool *in-place* inverse DCT algorithm using yield REMAPs
+def inverse_transform2(vec):
+
+    vec = deepcopy(vec)
+
+    # Initialization
+    n = len(vec)
+    print ()
+    print ("inverse_transform2", n)
+    levels = n.bit_length() - 1
+
+    # set up dims
+    xdim = n
+
+    # divide element 0 by 2
+    vec[0] /= 2.0
+
+    # reference (read/write) the in-place data in *reverse-bit-order*
+    ri = list(range(n))
+    ri = [ri[reverse_bits(i, levels)] for i in range(n)]
+
+    # pretend we LDed data in half-swapped *and* bit-reversed order as well
+    # TODO: merge these two
+    vec = [vec[ri[i]] for i in range(n)]
+    vec = halfrev2(vec, True)
+
+    print("inverse_transform2 post-alter", vec)
+
+    # create a cos table: not strictly necessary but here for illustrative
+    # purposes, to demonstrate the point that it really *is* iterative.
+    # this table could be cached and used multiple times rather than
+    # computed every time.
+    ctable = []
+    size = 2
+    while size <= n:
+        halfsize = size // 2
+        for ci in range(halfsize):
+            coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+            ctable.append(coeff)
+            print ("coeff", size,  "ci", ci, "k", len(ctable)-1,
+                   "i/n", (ci+0.5)/size, coeff)
+        size *= 2
+
+    # set up an SVSHAPE
+    class SVSHAPE:
+        pass
+
+    # XXX TODO
+    if False:
+        # ci schedule
+        SVSHAPE0 = SVSHAPE()
+        SVSHAPE0.lims = [xdim, 4, 0]
+        SVSHAPE0.mode = 0b01
+        SVSHAPE0.submode2 = 0b01
+        SVSHAPE0.skip = 0b10
+        SVSHAPE0.offset = 0       # experiment with different offset, here
+        SVSHAPE0.invxyz = [1,0,1] # inversion if desired
+        # size schedule
+        SVSHAPE1 = SVSHAPE()
+        SVSHAPE1.lims = [xdim, 4, 0]
+        SVSHAPE1.mode = 0b01
+        SVSHAPE1.submode2 = 0b01
+        SVSHAPE1.skip = 0b11
+        SVSHAPE1.offset = 0       # experiment with different offset, here
+        SVSHAPE1.invxyz = [1,0,1] # inversion if desired
+        # k schedule
+        SVSHAPE2 = SVSHAPE()
+        SVSHAPE2.lims = [xdim, 4, 0]
+        SVSHAPE2.mode = 0b01
+        SVSHAPE2.submode2 = 0b01
+        SVSHAPE2.skip = 0b00
+        SVSHAPE2.offset = 0       # experiment with different offset, here
+        SVSHAPE2.invxyz = [1,0,1] # inversion if desired
+
+        # enumerate over the iterator function, getting new indices
+        i0 = iterate_dct_inner_costable_indices(SVSHAPE0)
+        i1 = iterate_dct_inner_costable_indices(SVSHAPE1)
+        i2 = iterate_dct_inner_costable_indices(SVSHAPE2)
+        for ((ci, cie), (size, sze), (k, ke)) in \
+                    zip(i0, i1, i2):
+            print ("xform2 cos", ci, size, k)
+            coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+            assert coeff == ctable[k]
+            print ("coeff", size,  "ci", ci, "k", k,
+                   "i/n", (ci+0.5)/size, coeff,
+                    "end", bin(cie), bin(sze), bin(ke))
+            if cie == 0b111: # all loops end
+                break
+
+    # now things are in the right order for the outer butterfly.
+
+    # j schedule
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, 0b0000010, 0]
+    SVSHAPE0.submode2 = 0b11
+    SVSHAPE0.mode = 0b11
+    SVSHAPE0.skip = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [1,0,1] # inversion if desired
+    # j+halfstep schedule
+    SVSHAPE1 = SVSHAPE()
+    SVSHAPE1.lims = [xdim, 0b0000010, 0]
+    SVSHAPE1.mode = 0b11
+    SVSHAPE1.submode2 = 0b11
+    SVSHAPE1.skip = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [1,0,1] # inversion if desired
+
+    # enumerate over the iterator function, getting new indices
+    i0 = iterate_dct_outer_butterfly_indices(SVSHAPE0)
+    i1 = iterate_dct_outer_butterfly_indices(SVSHAPE1)
+    for k, ((jl, jle), (jh, jhe)) in enumerate(zip(i0, i1)):
+        print ("itersum    jr", jl, jh,
+                "end", bin(jle), bin(jhe),
+                vec[jl], vec[jh], vec[jh]+vec[jl])
+        vec[jh] += vec[jl]
+        size //= 2
+        if jle == 0b111: # all loops end
+            break
+
+    print("transform2 pre-itersum", vec)
+
+    ################
+    # INNER butterfly
+    ################
+
+    # j schedule
+    SVSHAPE0 = SVSHAPE()
+    SVSHAPE0.lims = [xdim, 0b000001, 0]
+    SVSHAPE0.mode = 0b11
+    SVSHAPE0.submode2 = 0b11
+    SVSHAPE0.skip = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+    # j+halfstep schedule
+    SVSHAPE1 = SVSHAPE()
+    SVSHAPE1.lims = [xdim, 0b000001, 0]
+    SVSHAPE1.mode = 0b11
+    SVSHAPE1.submode2 = 0b11
+    SVSHAPE1.skip = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [0,0,0] # inversion if desired
+    # ci schedule
+    SVSHAPE2 = SVSHAPE()
+    SVSHAPE2.lims = [xdim, 0b000001, 0]
+    SVSHAPE2.mode = 0b11
+    SVSHAPE2.submode2 = 0b11
+    SVSHAPE2.skip = 0b10
+    SVSHAPE2.offset = 0       # experiment with different offset, here
+    SVSHAPE2.invxyz = [0,0,0] # inversion if desired
+    # size schedule
+    SVSHAPE3 = SVSHAPE()
+    SVSHAPE3.lims = [xdim, 0b000001, 0]
+    SVSHAPE3.mode = 0b11
+    SVSHAPE3.submode2 = 0b11
+    SVSHAPE3.skip = 0b11
+    SVSHAPE3.offset = 0       # experiment with different offset, here
+    SVSHAPE3.invxyz = [0,0,0] # inversion if desired
+
+    # enumerate over the iterator function, getting new indices
+    i0 = iterate_dct_inner_butterfly_indices(SVSHAPE0)
+    i1 = iterate_dct_inner_butterfly_indices(SVSHAPE1)
+    i2 = iterate_dct_inner_butterfly_indices(SVSHAPE2)
+    i3 = iterate_dct_inner_butterfly_indices(SVSHAPE3)
+    for k, ((jl, jle), (jh, jhe), (ci, cie), (size, sze)) in \
+                enumerate(zip(i0, i1, i2, i3)):
+        t1, t2 = vec[jl], vec[jh]
+        print ("xform2", jl, jh, ci, size)
+        coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
+        #assert coeff == ctable[k]
+        vec[jl] = t1 + t2/coeff
+        vec[jh] = t1 - t2/coeff
+        print ("coeff", size, "ci", ci,
+                "jl", jl, "jh", jh,
+               "i/n", (ci+0.5)/size, coeff, "t1/2", t1, t2,
+                "+/-", vec[jl], vec[jh],
+                "end", bin(jle), bin(jhe))
+        if jle == 0b111: # all loops end
+            break
+
+    print("transform2 result", vec)
+
+    return vec
 
 
 # totally cool *in-place* DCT algorithm using yield REMAPs
@@ -455,7 +663,7 @@ def transform2(vec):
         coeff = (math.cos((ci + 0.5) * math.pi / size) * 2.0)
         assert coeff == ctable[k]
         print ("coeff", size,  "ci", ci, "k", k,
-               "i/n", (ci+0.5)/size, coeff, 
+               "i/n", (ci+0.5)/size, coeff,
                 "end", bin(cie), bin(sze), bin(ke))
         if cie == 0b111: # all loops end
             break
