@@ -781,7 +781,7 @@ def demo_idct():
     # j schedule
     SVSHAPE0 = SVSHAPE()
     SVSHAPE0.lims = [xdim, 0b0000010, 0]
-    SVSHAPE0.submode2 = 0b100
+    SVSHAPE0.submode2 = 0b11
     SVSHAPE0.mode = 0b11
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
@@ -790,7 +790,7 @@ def demo_idct():
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, 0b0000010, 0]
     SVSHAPE1.mode = 0b11
-    SVSHAPE1.submode2 = 0b100
+    SVSHAPE1.submode2 = 0b11
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
     SVSHAPE1.invxyz = [1,0,1] # inversion if desired
