@@ -1,6 +1,6 @@
-# B.1 BCD-to-DPD Translation
+# B.1 BCD-to-DPD Translation; B.2 DPD-to-BCD Translation
 
-The following describes conversion from 3-digit BCD to 10-bit DPD.
+The following describes conversions between 3-digit BCD and 10-bit DPD formats.
 
 <!-- Power ISA Book I Version 3.0C Section B.1 page 795 -->
 
@@ -36,3 +36,40 @@ The following describes conversion from 3-digit BCD to 10-bit DPD.
         y <- m
 
         return (p || q || r || s || t || u || v || w || x || y)
+
+<!-- Power ISA Book I Version 3.0C Section B.2 page 795 -->
+
+    def DPD_TO_BCD(DPD):
+        p <- DPD[0]
+        q <- DPD[1]
+        r <- DPD[2]
+        s <- DPD[3]
+        t <- DPD[4]
+        u <- DPD[5]
+        v <- DPD[6]
+        w <- DPD[7]
+        x <- DPD[8]
+        y <- DPD[9]
+
+        a <- ((¬s & v & w) | (t & v & w & s) | (v & w & ¬x))
+        b <- ((p & s & x & ¬t) | (p & ¬w) | (p & ¬v))
+        c <- ((q & s & x & ¬t) | (q & ¬w) | (q & ¬v))
+        d <- r
+
+        e <- ((v & ¬w & x) | (s & v & w & x) |
+            (¬t & v & x & w))
+        f <- ((p & t & v & w & x & ¬s) | (s & ¬x & v) |
+            (s & ¬v))
+        g <- ((q & t & w & v & x & ¬s) | (t & ¬x & v) |
+            (t & ¬v))
+        h <- u
+
+        i <- ((t & v & w & x) | (s & v & w & x) |
+            (v & ¬w & ¬x))
+        j <- ((p & ¬s & ¬t & w & v) | (s & v & ¬w & x) |
+            (p & w & ¬x & v) | (w & ¬v))
+        k <- ((q & ¬s & ¬t & v & w) | (t & v & ¬w & x) |
+            (q & v & w & ¬x) | (x & ¬v))
+        m <- y
+
+        return (a || b || c || d || e || f || g || h || i || j || k || m)
