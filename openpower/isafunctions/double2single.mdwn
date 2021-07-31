@@ -141,10 +141,11 @@ Round to Single-Precision instruction.
 
 <!-- Power ISA v3.0B p140 section 4.6.2 -->
 
-    def SINGLE(WORD):
+    def DOUBLE(WORD):
         exp <- [0] * 11
         frac <- [0] * 53
         sign <- 0b0
+        FRT <- [0] * 64
         # Normalized Operand
         if (WORD[1:8] >u 0) & (WORD[1:8] <u 255) then
             FRT[0:1] <- WORD[0:1]
@@ -171,3 +172,4 @@ Round to Single-Precision instruction.
             FRT[3] <- WORD[1]
             FRT[4] <- WORD[1]
             FRT[5:63] <- WORD[2:31] || [0]*29
+        return FRT

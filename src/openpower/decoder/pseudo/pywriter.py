@@ -35,13 +35,14 @@ from openpower.decoder.orderedset import OrderedSet
 
 fpheader = """
 from openpower.decoder.helpers import (
-                                 DOUBLE, SINGLE,
+                                 SINGLE,
                                  FPADD32, FPSUB32, FPMUL32, FPDIV32,
                                  FPADD64, FPSUB64, FPMUL64, FPDIV64,
                                  FPMULADD32,
                                  FPSIN32, FPCOS32,
                                 )
 from openpower.decoder.isafunctions.fpfromint import INT2FP
+from openpower.decoder.isafunctions.double2single import DOUBLE
 
 
 """
