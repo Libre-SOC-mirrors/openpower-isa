@@ -126,7 +126,7 @@ class SVSHAPE(SelectableInt):
                 iterate_fn = iterate_dct_inner_butterfly_indices
             elif self.ydimsz == 3:
                 iterate_fn = iterate_dct_outer_butterfly_indices
-            elif self.ydimsz == 5:
+            elif self.ydimsz in [5, 13]:
                 iterate_fn = iterate_dct_inner_costable_indices
             elif self.ydimsz == 6:
                 iterate_fn = iterate_dct_inner_halfswap_loadstore

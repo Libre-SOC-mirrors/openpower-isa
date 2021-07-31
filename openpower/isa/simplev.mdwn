@@ -219,7 +219,7 @@ Pseudo-code:
         # for FRA and FRT
         SVSHAPE1[28:29] <- 0b01           # j+halfstep schedule
     # set schedule up for DCT COS table generation
-    if (SVRM = 0b0101) then
+    if (SVRM = 0b0101) | (SVRM = 0b1101) then
         # calculate O(N log2 N)
         vlen[0:6] <- [0] * 7
         itercount[0:6] <- (0b00 || SVxd) + 0b0000001
@@ -236,7 +236,8 @@ Pseudo-code:
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode
         SVSHAPE0[6:11] <- 0b000100       # DCT Inner Butterfly COS-gen mode
-        SVSHAPE0[21:23] <- 0b001         # "inverse" on outer loop
+        if (SVRM = 0b0101) then
+            SVSHAPE0[21:23] <- 0b001     # "inverse" on outer loop for DCT
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
         SVSHAPE2[0:31] <- SVSHAPE0[0:31]

@@ -264,7 +264,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
     if len(x_r) == 0:
         return
 
-    #print ("outer butterfly")
+    print ("outer butterfly", mode, SVSHAPE.skip, "submode", SVSHAPE.submode2)
 
     # I-DCT, reference (read/write) the in-place data in *reverse-bit-order*
     ri = list(range(n))
@@ -584,7 +584,7 @@ def inverse_transform2(vec):
         if jle == 0b111: # all loops end
             break
 
-    print("transform2 result", vec)
+    print("inverse_transform2 result", vec)
 
     return vec
 
