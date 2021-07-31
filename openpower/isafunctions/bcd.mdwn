@@ -1,0 +1,38 @@
+# B.1 BCD-to-DPD Translation
+
+The following describes conversion from 3-digit BCD to 10-bit DPD.
+
+<!-- Power ISA Book I Version 3.0C Section B.1 page 795 -->
+
+    def BCD_TO_DPD( BCD ):
+        a <- BCD[0]
+        b <- BCD[1]
+        c <- BCD[2]
+        d <- BCD[3]
+        e <- BCD[4]
+        f <- BCD[5]
+        g <- BCD[6]
+        h <- BCD[7]
+        i <- BCD[8]
+        j <- BCD[9]
+        k <- BCD[10]
+        m <- BCD[11]
+
+        p <- ((f & a & i & ¬e) | (j & a & ¬i) | (b & ¬a))
+        q <- ((g & a & i & ¬e) | (k & a & ¬i) | (c & ¬a))
+        r <- d
+
+        s <- ((j & ¬a & e & ¬i) | (f & ¬i & ¬e) |
+            (f & ¬a & ¬e) | (e & i))
+        t <- ((k & ¬a & e & ¬i) | (g & ¬i & ¬e) |
+            (g & ¬a & ¬e) | (a & i))
+
+        u <- h
+
+        v <- (a | e | i)
+
+        w <- ((¬e & j & ¬i) | (e & i) | a)
+        x <- ((¬a & k & ¬i) | (a & i) | e)
+        y <- m
+
+        return (p || q || r || s || t || u || v || w || x || y)
