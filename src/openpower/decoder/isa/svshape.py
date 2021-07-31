@@ -118,7 +118,7 @@ class SVSHAPE(SelectableInt):
         log ("SVSHAPE get_iterator", self.mode, self.ydimsz)
         if self.mode == 0b00:
             iterate_fn = iterate_indices
-        elif self.mode == 0b01:
+        elif self.mode in [0b01, 0b11]:
             # further sub-selection
             if self.ydimsz == 1:
                 iterate_fn = iterate_butterfly_indices

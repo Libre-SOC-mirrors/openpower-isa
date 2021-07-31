@@ -205,11 +205,12 @@ Pseudo-code:
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         if (SVRM = 0b1011) then
-            SVSHAPE0[30:31] <- 0b11          # iDCT mode
-            SVSHAPE0[18:20] <- 0b011         # iDCT Outer Butterfly sub-mode
+            SVSHAPE0[30:31] <- 0b11      # iDCT mode
+            SVSHAPE0[18:20] <- 0b011     # iDCT Outer Butterfly sub-mode
+            SVSHAPE0[21:23] <- 0b101     # "inverse" on outer and inner loop
         else
-            SVSHAPE0[30:31] <- 0b01          # DCT mode
-            SVSHAPE0[18:20] <- 0b100         # DCT Outer Butterfly sub-mode
+            SVSHAPE0[30:31] <- 0b01      # DCT mode
+            SVSHAPE0[18:20] <- 0b100     # DCT Outer Butterfly sub-mode
         SVSHAPE0[6:11] <- 0b000010       # DCT Butterfly mode
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
