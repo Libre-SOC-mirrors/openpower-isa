@@ -139,3 +139,35 @@ Round to Single-Precision instruction.
 
         return result
 
+<!-- Power ISA v3.0B p140 section 4.6.2 -->
+
+    def SINGLE(WORD):
+        exp <- [0] * 11
+        frac <- [0] * 53
+        sign <- 0b0
+        # Normalized Operand
+        if (WORD[1:8] >u 0) & (WORD[1:8] <u 255) then
+            FRT[0:1] <- WORD[0:1]
+            FRT[2] <- ¬WORD[1]
+            FRT[3] <- ¬WORD[1]
+            FRT[4] <- ¬WORD[1]
+            FRT[5:63] <- WORD[2:31] || [0]*29
+        # Denormalized Operand
+        if (WORD[1:8] = 0) & (WORD[9:31] != 0) then
+            sign <- WORD[0]
+            exp <- -126
+            frac[0:52] <- 0b0 || WORD[9:31] || [0]*29
+            #normalize the operand
+            do while frac[0] = 0
+                frac[0:52] <- frac[1:52] || 0b0
+                exp <- exp - 1
+            FRT[0] <- sign
+            FRT[1:11] <- exp + 1023
+            FRT[12:63] <- frac[1:52]
+        # Zero / Infinity / NaN
+        if (WORD[1:8] = 255) | (WORD[1:31] = 0) then
+            FRT[0:1] <- WORD[0:1]
+            FRT[2] <- WORD[1]
+            FRT[3] <- WORD[1]
+            FRT[4] <- WORD[1]
+            FRT[5:63] <- WORD[2:31] || [0]*29
