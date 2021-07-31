@@ -73,6 +73,8 @@ class ISAFunctions:
                 print ("examining", repr(l))
                 if l.startswith("    "):
                     break
+                if l.startswith('<!--'):
+                    continue
 
             # get pseudocode
             li = [l[4:]] # first line detected with 4-space
@@ -81,6 +83,8 @@ class ISAFunctions:
                 print ("examining", repr(l))
                 if len(l) == 0:
                     li.append(l)
+                    continue
+                if l.startswith('<!--'):
                     continue
                 assert l.startswith('    '), ("4spcs not found in line %s" % l)
                 l = l[4:]  # lose 4 spaces
