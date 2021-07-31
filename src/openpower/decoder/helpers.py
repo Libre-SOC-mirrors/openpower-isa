@@ -161,56 +161,6 @@ def undefined(v):
     """
     return v
 
-def DOUBLE(WORD):
-    """convert incoming WORD to double.  v3.0B p140 section 4.6.2
-    """
-    # result, FRT, start off all zeros
-    log ("WORD", WORD)
-    FRT = SelectableInt(0, 64)
-    z1 = SelectableInt(0, 1)
-    z29 = SelectableInt(0, 29)
-    e = WORD[1:9]
-    m = WORD[9:32]
-    s = WORD[0]
-    log ("word s e m", s, e, m)
-
-    # Normalized Operand
-    if e.value > 0 and e.value  < 255:
-        log ("normalised")
-        FRT[0:2] = WORD[0:2]
-        FRT[2] = ~WORD[1]
-        FRT[3] = ~WORD[1]
-        FRT[4] = ~WORD[1]
-        FRT[5:64] = selectconcat(WORD[2:32], z29)
-
-        # Denormalized Operand
-        if e.value  == 0 and m.value != 0:
-            log ("denormalised")
-            sign = WORD[0]
-            exp = -126
-            frac = selectconcat(z1, WORD[9:32], z29)
-            # normalize the operand
-            while frac[0].value  == 0:
-                frac[0:53] = selectconcat(frac[1:53], z1)
-                exp = exp - 1
-            FRT[0] = sign
-            FRT[1:12] = exp + 1023
-            FRT[12:64] = frac[1:53]
-
-    # Zero / Infinity / NaN
-    if e.value  == 255 or WORD[1:32].value  == 0:
-        log ("z/inf/nan")
-        FRT[0:2] = WORD[0:2]
-        FRT[2] = WORD[1]
-        FRT[3] = WORD[1]
-        FRT[4] = WORD[1]
-        FRT[5:64] = selectconcat(WORD[2:32], z29)
-
-    log ("Double s e m", FRT[0].value, FRT[1:12].value-1023,
-                           FRT[12:64].value)
-
-    return FRT
-
 
 def SINGLE(FRS):
     """convert incoming FRS into 32-bit word.  v3.0B p144 section 4.6.3
@@ -316,6 +266,7 @@ def signinv(res, sign):
 
 def FPMUL32(FRA, FRB, sign=1):
     from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+    from openpower.decoder.isafunctions.double2single import DOUBLE
     #return FPMUL64(FRA, FRB)
     FRA = DOUBLE(SINGLE(FRA))
     FRB = DOUBLE(SINGLE(FRB))
