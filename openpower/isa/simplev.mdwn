@@ -244,11 +244,13 @@ Pseudo-code:
         # for cos coefficient
         SVSHAPE1[28:29] <- 0b10           # ci schedule
         SVSHAPE2[28:29] <- 0b11           # size schedule
-    # set schedule up for DCT inverse of half-swapped ordering
-    if (SVRM = 0b0110) then
+    # set schedule up for iDCT / DCT inverse of half-swapped ordering
+    if (SVRM = 0b0110) | (SVRM = 0b1110) then
         vlen[0:6] <- (0b00 || SVxd) + 0b0000001
         # set up template in SVSHAPE0
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
+        if (SVRM = 0b1110) then
+            SVSHAPE0[18:20] <- 0b001     # DCT opposite half-swap
         SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode
         SVSHAPE0[6:11] <- 0b000101       # DCT "half-swap" mode
     # set VL, MVL and Vertical-First

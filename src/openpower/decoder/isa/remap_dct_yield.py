@@ -48,7 +48,8 @@ def iterate_dct_inner_halfswap_loadstore(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    print ("inner halfswap loadstore", n, mode, SVSHAPE.skip)
+    print ("inner halfswap loadstore", n, mode, SVSHAPE.skip,
+            "submode", SVSHAPE.submode2)
 
     # reference list for not needing to do data-swaps, just swap what
     # *indices* are referenced (two levels of indirection at the moment)
@@ -56,11 +57,14 @@ def iterate_dct_inner_halfswap_loadstore(SVSHAPE):
     ji = list(range(n))
 
     levels = n.bit_length() - 1
-    ji = halfrev2(ji, False)
+    if SVSHAPE.submode2 == 0b001:
+        ji = halfrev2(ji, True)
+    else:
+        ji = halfrev2(ji, False)
+
     if False: # swap: TODO, add extra bit-reverse mode
         ri = [reverse_bits(i, levels) for i in range(n)]
         ji = [ji[ri[i]] for i in range(n)]
-
 
     # invert order if requested
     if SVSHAPE.invxyz[0]:
