@@ -10,6 +10,8 @@ neg,,2P,EXTRA3,d:RT,s:RA,0,0,RA,0,0,RT,0,0,0
 popcntb,,2P,EXTRA3,d:RA,s:RS,0,0,RS,0,0,RA,0,0,0
 prtyw,,2P,EXTRA3,d:RA,s:RS,0,0,RS,0,0,RA,0,0,0
 prtyd,,2P,EXTRA3,d:RA,s:RS,0,0,RS,0,0,RA,0,0,0
+cdtbcd,,2P,EXTRA3,d:RA,s:RS,0,0,RS,0,0,RA,0,0,0
+cbcdtd,,2P,EXTRA3,d:RA,s:RS,0,0,RS,0,0,RA,0,0,0
 mfspr,,2P,EXTRA3,d:RS,s:SPR,0,0,SPR,0,0,RT,0,0,0
 popcntw,,2P,EXTRA3,d:RA,s:RS,0,0,RS,0,0,RA,0,0,0
 mtspr,,2P,EXTRA3,d:SPR,s:RS,0,0,RS,0,0,SPR,0,0,0
