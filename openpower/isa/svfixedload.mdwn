@@ -1,18 +1,18 @@
-<!-- This defines SVP64 bit-reversed Load instructions -->
+<!-- This defines SVP64 Shifted Load instructions -->
 <!-- They are augmented variants of v3.0B Load instructions -->
-<!-- and are designed specifically for Cooley-Tukey FFT/DCT -->
+<!-- and are designed to help with Cooley-Tukey FFT/DCT -->
 
 # Load Byte and Zero
 
 SVD-Form
 
-* lbzbr RT,SVD(RA),RC
+* lbzsh RT,SVD(RA),RC
 
 Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- b + SHL64(EXTS(SVD), n)
     RT <- [0]*56 || MEM(EA, 1)
 
 Special Registers Altered:
@@ -23,12 +23,12 @@ Special Registers Altered:
 
 SVD-Form
 
-* lbzubr RT,SVD(RA),RC
+* lbzush RT,SVD(RA),RC
 
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- (RA) + SHL64(EXTS(SVD), n)
     RT <- [0] * 56 || MEM(EA, 1)
     RA <- EA
 
@@ -40,13 +40,13 @@ Special Registers Altered:
 
 SVD-Form
 
-* lhzbr RT,SVD(RA),RC
+* lhzsh RT,SVD(RA),RC
 
 Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- b + SHL64(EXTS(SVD), n)
     RT <- [0] * 48 || MEM(EA, 2)
 
 Special Registers Altered:
@@ -57,12 +57,12 @@ Special Registers Altered:
 
 SVD-Form
 
-* lhzubr RT,SVD(RA),RC
+* lhzush RT,SVD(RA),RC
 
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- (RA) + SHL64(EXTS(SVD), n)
     RT <- [0] * 48 || MEM(EA, 2)
     RA <- EA
 
@@ -74,13 +74,13 @@ Special Registers Altered:
 
 SVD-Form
 
-* lhabr RT,SVD(RA),RC
+* lhash RT,SVD(RA),RC
 
 Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- b + SHL64(EXTS(SVD), n)
     RT <- EXTS(MEM(EA, 2))
 
 Special Registers Altered:
@@ -91,12 +91,12 @@ Special Registers Altered:
 
 SVD-Form
 
-* lhaubr RT,SVD(RA),RC
+* lhaush RT,SVD(RA),RC
 
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- (RA) + SHL64(EXTS(SVD), n)
     RT <- EXTS(MEM(EA, 2))
     RA <- EA
 
@@ -108,13 +108,13 @@ Special Registers Altered:
 
 SVD-Form
 
-* lwzbr RT,SVD(RA),RC
+* lwzsh RT,SVD(RA),RC
 
 Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- b + SHL64(EXTS(SVD), n)
     RT <- [0] * 32 || MEM(EA, 4)
 
 Special Registers Altered:
@@ -125,12 +125,12 @@ Special Registers Altered:
 
 SVD-Form
 
-* lwzubr RT,SVD(RA),RC
+* lwzush RT,SVD(RA),RC
 
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- (RA) + SHL64(EXTS(SVD), n)
     RT <- [0]*32 || MEM(EA, 4)
     RA <- EA
 
@@ -142,13 +142,13 @@ Special Registers Altered:
 
 SVDS-Form
 
-* lwabr RT,SVDS(RA),RC
+* lwash RT,SVDS(RA),RC
 
 Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(srcstep, VL) * EXTS(SVDS || 0b00), n)
+    EA <- b + SHL64(bitrev(EXTS(SVDS || 0b00), n)
     RT <- EXTS(MEM(EA, 4))
 
 Special Registers Altered:
@@ -159,13 +159,13 @@ Special Registers Altered:
 
 SVDS-Form
 
-* ldbr RT,SVDS(RA),RC
+* ldsh RT,SVDS(RA),RC
 
 Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(srcstep, VL) * EXTS(SVDS || 0b00), n)
+    EA <- b + SHL64(EXTS(SVDS || 0b00), n)
     RT <- MEM(EA, 8)
 
 Special Registers Altered:
@@ -176,12 +176,12 @@ Special Registers Altered:
 
 SVDS-Form
 
-* ldubr RT,SVDS(RA),RC
+* ldush RT,SVDS(RA),RC
 
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(bitrev(srcstep, VL) * EXTS(SVDS || 0b00), n)
+    EA <- (RA) + SHL64(EXTS(SVDS || 0b00), n)
     RT <- MEM(EA, 8)
     RA <- EA
 
