@@ -921,7 +921,7 @@ class DCTTestCase(FHDLTestCase):
         """>>> lst = [# LOAD bit-reversed with half-swap
                       "svshape 8, 1, 1, 6, 0",
                       "svremap 1, 0, 0, 0, 0, 0, 0, 1",
-                      "sv.lfsbr 0.v, 4(1), 2",
+                      "sv.lfssh 0.v, 4(1), 2",
                       # Inner butterfly, twin +/- MUL-ADD-SUB
                       "svremap 31, 1, 0, 2, 0, 1, 1",
                       "svshape 8, 1, 1, 4, 0",
@@ -939,7 +939,7 @@ class DCTTestCase(FHDLTestCase):
         lst = SVP64Asm( ["addi 1, 0, 0x000",
                          "svshape 8, 1, 1, 6, 0",
                          "svremap 1, 0, 0, 0, 0, 0, 0, 1",
-                         "sv.lfsbr 0.v, 4(1), 2",
+                         "sv.lfssh 0.v, 4(1), 2",
                          "svremap 31, 1, 0, 2, 0, 1, 1",
                          "svshape 8, 1, 1, 4, 0",
                          "sv.fdmadds 0.v, 0.v, 0.v, 8.v",

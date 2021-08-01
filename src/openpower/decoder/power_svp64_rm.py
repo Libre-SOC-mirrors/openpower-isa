@@ -182,9 +182,9 @@ class SVP64RMModeDecode(Elaboratable):
                     with m.If(self.rc_in):
                         comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
 
-            # Bit-reversed Mode
-            with m.If(mode[SVP64MODE.LDST_BITREV]):
-                comb += self.ldstmode.eq(SVP64LDSTmode.BITREVERSE)
+            # Shifted Mode
+            with m.If(mode[SVP64MODE.LDST_SHIFT]):
+                comb += self.ldstmode.eq(SVP64LDSTmode.SHIFT)
             # RA is vectorised
             with m.Elif(self.ldst_ra_vec):
                 comb += self.ldstmode.eq(SVP64LDSTmode.INDEXED)

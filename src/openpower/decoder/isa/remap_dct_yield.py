@@ -57,13 +57,15 @@ def iterate_dct_inner_halfswap_loadstore(SVSHAPE):
     ji = list(range(n))
 
     levels = n.bit_length() - 1
-    if SVSHAPE.submode2 == 0b001:
+    ri = [reverse_bits(i, levels) for i in range(n)]
+
+    if SVSHAPE.mode == 0b01: # FFT, bitrev only
+        ji = [ji[ri[i]] for i in range(n)]
+    elif SVSHAPE.submode2 == 0b001:
+        ji = [ji[ri[i]] for i in range(n)]
         ji = halfrev2(ji, True)
     else:
         ji = halfrev2(ji, False)
-
-    if False: # swap: TODO, add extra bit-reverse mode
-        ri = [reverse_bits(i, levels) for i in range(n)]
         ji = [ji[ri[i]] for i in range(n)]
 
     # invert order if requested

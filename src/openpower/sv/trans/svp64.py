@@ -290,17 +290,17 @@ class SVP64Asm:
             v30b_op = v30b_op[:-1]
 
         # sigh again, have to recognised LD/ST bit-reverse instructions
-        # this has to be "processed" to fit into a v3.0B without the "br"
-        # e.g. ldbr is actually ld
-        ldst_bitreverse = v30b_op.startswith("l") and v30b_op.endswith("br")
+        # this has to be "processed" to fit into a v3.0B without the "sh"
+        # e.g. ldsh is actually ld
+        ldst_shift = v30b_op.startswith("l") and v30b_op.endswith("sh")
 
         if v30b_op not in isa.instr:
             raise Exception("opcode %s of '%s' not supported" % \
                             (v30b_op, insn))
 
-        if ldst_bitreverse:
+        if ldst_shift:
             # okaay we need to process the fields and make this:
-            #     ldbr RT, SVD(RA), RC  - 11 bits for SVD, 5 for RC
+            #     ldsh RT, SVD(RA), RC  - 11 bits for SVD, 5 for RC
             # into this:
             #     ld RT, D(RA)          - 16 bits
             # likewise same for SVDS (9 bits for SVDS, 5 for RC, 14 bits for DS)
@@ -329,9 +329,9 @@ class SVP64Asm:
             newfields[1] = "%d(%s)" % (immed, RA)
             fields = newfields
 
-            # and strip off "br" from end, and add "br" to opmodes, instead
+            # and strip off "sh" from end, and add "sh" to opmodes, instead
             v30b_op = v30b_op[:-2]
-            opmodes.append("br")
+            opmodes.append("sh")
             log ("rewritten", v30b_op, opmodes, fields)
 
         if v30b_op not in svp64.instrs:
@@ -630,9 +630,9 @@ class SVP64Asm:
                 smmode, smask = decode_predicate(encmode[3:])
                 mmode = smmode
                 has_smask = True
-            # bitreverse LD/ST
-            elif encmode.startswith("br"):
-                ldst_bitreverse = True
+            # shifted LD/ST
+            elif encmode.startswith("sh"):
+                ldst_shift = True
             # vec2/3/4
             elif encmode.startswith("vec"):
                 subvl = decode_subvl(encmode[3:])
@@ -730,10 +730,10 @@ class SVP64Asm:
             assert has_pmask or mask_m_specified, \
                 "dest zeroing requires a dest predicate"
 
-        # check LDST bitreverse, only available in "normal" mode
-        if is_ldst and ldst_bitreverse:
+        # check LDST shifted, only available in "normal" mode
+        if is_ldst and ldst_shift:
             assert sv_mode is None, \
-                "LD bit-reverse cannot have modes (%s) applied" % sv_mode
+                "LD shift cannot have modes (%s) applied" % sv_mode
 
         ######################################
         # "normal" mode
@@ -743,9 +743,9 @@ class SVP64Asm:
             if is_ldst:
                 # TODO: for now, LD/ST-indexed is ignored.
                 mode |= ldst_elstride << SVP64MODE.ELS_NORMAL # element-strided
-                # bitreverse mode
-                if ldst_bitreverse:
-                    mode |= 1 << SVP64MODE.LDST_BITREV
+                # shifted mode
+                if ldst_shift:
+                    mode |= 1 << SVP64MODE.LDST_SHIFT
             else:
                 # TODO, reduce and subvector mode
                 # 00  1   dz CRM  reduce mode (mapreduce), SUBVL=1
@@ -1089,8 +1089,8 @@ if __name__ == '__main__':
     lst = [
              'sv.addi win2.v, win.v, -1',
              'sv.add./mrr 5.v, 2.v, 1.v',
-             #'sv.lhzbr 5.v, 11(9.v), 15',
-             #'sv.lwzbr 5.v, 11(9.v), 15',
+             #'sv.lhzsh 5.v, 11(9.v), 15',
+             #'sv.lwzsh 5.v, 11(9.v), 15',
              'sv.ffmadds 6.v, 2.v, 4.v, 6.v',
     ]
     lst = [
@@ -1101,8 +1101,8 @@ if __name__ == '__main__':
              'svshape 8, 1, 1, 1, 1',
             ]
     lst = [
-             #'sv.lfsbr 4.v, 11(8.v), 15',
-             #'sv.lwzbr 4.v, 11(8.v), 15',
+             #'sv.lfssh 4.v, 11(8.v), 15',
+             #'sv.lwzsh 4.v, 11(8.v), 15',
              #'sv.svstep. 2.v, 4, 0',
              #'sv.fcfids. 48.v, 64.v',
              'sv.fcoss. 80.v, 0.v',

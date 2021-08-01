@@ -28,7 +28,7 @@ from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
 
 from openpower.decoder.power_enums import SVPtype
 
-from openpower.decoder.helpers import (exts, gtu, ltu, undefined, bitrev)
+from openpower.decoder.helpers import (exts, gtu, ltu, undefined)
 from openpower.consts import PIb, MSRb  # big-endian (PowerISA versions)
 from openpower.consts import SVP64CROffs
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
@@ -931,8 +931,6 @@ class ISACaller:
         yield self.dec2.dec.raw_opcode_in.eq(ins & 0xffffffff) # v3.0B suffix
         yield self.dec2.sv_rm.eq(sv_rm)                        # svp64 prefix
         yield Settle()
-        # store this for use in get_src_dststeps()
-        self.ldstmode = yield self.dec2.rm_dec.ldstmode
 
     def execute_one(self):
         """execute one instruction
@@ -1318,13 +1316,13 @@ class ISACaller:
         replace_d = False # update / replace constant in pseudocode
         if self.is_svp64_mode:
             ldstmode = yield self.dec2.rm_dec.ldstmode
-            # bitreverse mode reads SVD (or SVDS - TODO)
+            # shift mode reads SVD (or SVDS - TODO)
             # *BUT*... because this is "overloading" of LD operations,
             # it gets *STORED* into D (or DS, TODO)
-            if ldstmode == SVP64LDSTmode.BITREVERSE.value:
+            if ldstmode == SVP64LDSTmode.SHIFT.value:
                 imm = yield self.dec2.dec.fields.FormSVD.SVD[0:11]
                 imm = exts(imm, 11) # sign-extend to integer
-                log ("bitrev SVD", imm)
+                log ("shift SVD", imm)
                 replace_d = True
             else:
                 if info.form == 'DS':
@@ -1348,11 +1346,11 @@ class ISACaller:
                 offsmul = dststep
                 log("D-field dst", imm, offsmul)
             # bit-reverse mode, rev already done through get_src_dst_steps()
-            if ldstmode == SVP64LDSTmode.BITREVERSE.value:
+            if ldstmode == SVP64LDSTmode.SHIFT.value:
                 # manually look up RC, sigh
                 RC = yield self.dec2.dec.RC[0:5]
                 RC = self.gpr(RC)
-                log ("LD-BITREVERSE:", "VL", vl,
+                log ("LD-SHIFT:", "VL", vl,
                       "RC", RC.value, "imm", imm,
                      "offs", bin(offsmul),
                      )
@@ -1665,21 +1663,9 @@ class ISACaller:
         log ("    new dststep", dststep)
 
     def get_src_dststeps(self):
-        """gets srcstep and dststep but performs bit-reversal on srcstep if
-        required.  use this ONLY to perform calculations, do NOT update
-        SVSTATE with the bit-reversed value of srcstep
-
-        ARGH, had to store self.ldstmode and VL due to yield issues
+        """gets srcstep and dststep 
         """
-        srcstep, dststep = self.new_srcstep, self.new_dststep
-        if self.is_svp64_mode:
-            if self.ldstmode == SVP64LDSTmode.BITREVERSE.value:
-                vl = self.svstate.vl
-                log ("SRCSTEP-BITREVERSE:", "VL", vl, "srcstep", srcstep,
-                     "rev", bin(bitrev(srcstep, vl)))
-                srcstep = bitrev(srcstep, vl)
-
-        return (srcstep, dststep)
+        return self.new_srcstep, self.new_dststep
 
     def update_new_svstate_steps(self):
         # note, do not get the bit-reversed srcstep here!

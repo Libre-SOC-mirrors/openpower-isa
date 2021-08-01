@@ -530,10 +530,16 @@ class FFTTestCase(FHDLTestCase):
 
             however it turns out that they can be *merged*, and for
             the first one (sv.fmadds/sv.fmsubs) the scalar arguments (RT, RB)
-            *ignore* their REMAPs (by definition), and for the second
-            one (sv.ffads) exactly the right REMAPs are also ignored!
+            *ignore* their REMAPs (by definition, because you can't REMAP
+            scalar operands), and for the second one (sv.ffads) exactly the
+            right REMAPs are also ignored!
 
+            therefore we can merge:
+                "svremap 5, 1, 0, 2, 0, 0, 1",
+                "svremap 26, 0, 0, 0, 0, 1, 1",
+            into:
                 "svremap 31, 1, 0, 2, 0, 1, 1",
+            and save one instruction.
         """
         lst = SVP64Asm( [
                         # set triple butterfly mode with persistent "REMAP"
@@ -682,7 +688,7 @@ class FFTTestCase(FHDLTestCase):
 
     def test_sv_remap_fpmadds_fft_ldst(self):
         """>>>lst = ["setvl 0, 0, 8, 0, 1, 1",
-                         "sv.lfsbr 0.v, 4(0), 20", # bit-reversed
+                         "sv.lfssh 0.v, 4(0), 20", # bit-reversed
                          "svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
                          "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
@@ -690,8 +696,9 @@ class FFTTestCase(FHDLTestCase):
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform, using bit-reversed LD/ST
         """
-        lst = SVP64Asm( ["setvl 0, 0, 8, 0, 1, 1",
-                         "sv.lfsbr 0.v, 4(0), 20", # bit-reversed
+        lst = SVP64Asm( ["svshape 8, 1, 1, 15, 0",
+                         "svremap 1, 0, 0, 0, 0, 0, 0, 0",
+                         "sv.lfssh 0.v, 4(0), 20", # shifted
                          "svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
                          "sv.ffmadds 0.v, 0.v, 0.v, 8.v"

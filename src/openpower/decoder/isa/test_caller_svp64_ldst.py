@@ -118,7 +118,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(12), SelectableInt(0x1234, 64))
             self.assertEqual(sim.gpr(13), SelectableInt(0x1235, 64))
 
-    def test_sv_load_store_bitreverse(self):
+    def test_sv_load_store_shifted(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
@@ -127,21 +127,11 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
                         "sv.stw 5.v, 0(1)",
-                        "sv.lwzbr 12.v, 4(1), 2"]
+                        "sv.lwzsh 12.v, 4(1), 2"]
 
-        note: bitreverse mode is... odd.  it's the butterfly generator
-        from Cooley-Tukey FFT:
-        https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
-
-        bitreverse LD is computed as:
+        shifted LD is computed as:
         for i in range(VL):
-            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
-
-        bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
-        produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
-
-        and thus creates the butterfly needed for one iteration of FFT.
-        the RC (shift) is to be able to offset the LDs by Radix-2 spans
+            EA = (RA|0) + (EXTS(D) * LDSTsize * i) << RC
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
@@ -150,7 +140,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
                         "sv.stw 5.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
-                        "sv.lwzbr 12.v, 4(1), 2"]) # bit-reversed
+                        "sv.lwzsh 12.v, 4(1), 2"]) # bit-reversed
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
@@ -173,21 +163,21 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(7), SelectableInt(0x303, 64))
             self.assertEqual(sim.gpr(8), SelectableInt(0x404, 64))
             # r1=0x10, RC=0, offs=4: contents of memory expected at:
-            #    element 0:   EA = r1 + bitrev(0b00)*4 => 0x10 + 0b00*4 => 0x10
-            #    element 1:   EA = r1 + bitrev(0b01)*4 => 0x10 + 0b10*4 => 0x18
-            #    element 2:   EA = r1 + bitrev(0b10)*4 => 0x10 + 0b01*4 => 0x14
-            #    element 3:   EA = r1 + bitrev(0b11)*4 => 0x10 + 0b10*4 => 0x1c
+            #    element 0:   EA = r1 + 0b00*4 => 0x10 + 0b00*4 => 0x10
+            #    element 1:   EA = r1 + 0b01*4 => 0x10 + 0b01*4 => 0x18
+            #    element 2:   EA = r1 + 0b10*4 => 0x10 + 0b10*4 => 0x14
+            #    element 3:   EA = r1 + 0b11*4 => 0x10 + 0b11*4 => 0x1c
             # therefore loaded from (bit-reversed indexing):
             #    r9  => mem[0x10] which was stored from r5
             #    r10 => mem[0x18] which was stored from r6
             #    r11 => mem[0x18] which was stored from r7
             #    r12 => mem[0x1c] which was stored from r8
             self.assertEqual(sim.gpr(12), SelectableInt(0x101, 64))
-            self.assertEqual(sim.gpr(13), SelectableInt(0x303, 64))
-            self.assertEqual(sim.gpr(14), SelectableInt(0x202, 64))
+            self.assertEqual(sim.gpr(13), SelectableInt(0x202, 64))
+            self.assertEqual(sim.gpr(14), SelectableInt(0x303, 64))
             self.assertEqual(sim.gpr(15), SelectableInt(0x404, 64))
 
-    def test_sv_load_store_bitreverse_fp(self):
+    def test_sv_load_store_shifted_fp(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
@@ -198,19 +188,9 @@ class DecoderTestCase(FHDLTestCase):
                         "sv.std 5.v, 0(1)",
                         "sv.lfdbr 12.v, 4(1), 2"]
 
-        note: bitreverse mode is... odd.  it's the butterfly generator
-        from Cooley-Tukey FFT:
-        https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
-
-        bitreverse LD is computed as:
+        shifted LD is computed as:
         for i in range(VL):
-            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
-
-        bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
-        produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
-
-        and thus creates the butterfly needed for one iteration of FFT.
-        the RC (shift) is to be able to offset the LDs by Radix-2 spans
+            EA = (RA|0) + (EXTS(D) * LDSTsize * i) << RC
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
@@ -219,7 +199,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
                         "sv.std 5.v, 0(1)", # scalar r1 + 0 + wordlen*offs
-                        "sv.lfdbr 12.v, 8(1), 2"]) # bit-reversed
+                        "sv.lfdsh 12.v, 8(1), 2"]) # shifted
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
@@ -258,35 +238,26 @@ class DecoderTestCase(FHDLTestCase):
             #    r11 => mem[0x18] which was stored from r7
             #    r12 => mem[0x1c] which was stored from r8
             self.assertEqual(sim.fpr(12), SelectableInt(0x101, 64))
-            self.assertEqual(sim.fpr(13), SelectableInt(0x303, 64))
-            self.assertEqual(sim.fpr(14), SelectableInt(0x202, 64))
+            self.assertEqual(sim.fpr(13), SelectableInt(0x202, 64))
+            self.assertEqual(sim.fpr(14), SelectableInt(0x303, 64))
             self.assertEqual(sim.fpr(15), SelectableInt(0x404, 64))
 
-    def test_sv_load_store_bitreverse2(self):
+    def test_sv_load_store_shifted2(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
                         "sv.stfs 4.v, 0(1)",
-                        "sv.lfsbr 12.v, 4(1), 2"]
+                        "sv.lfssh 12.v, 4(1), 2"]
 
-        note: bitreverse mode is... odd.  it's the butterfly generator
-        from Cooley-Tukey FFT:
-        https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Data_reordering,_bit_reversal,_and_in-place_algorithms
-
-        bitreverse LD is computed as:
+        shifted LD is computed as:
         for i in range(VL):
-            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
+            EA = (RA|0) + (EXTS(D) * LDSTsize * i) << RC
 
-        bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
-        produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
-
-        and thus creates the butterfly needed for one iteration of FFT.
-        the RC (shift) is to be able to offset the LDs by Radix-2 spans
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
                         "sv.stfs 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
-                        "sv.lfsbr 12.v, 4(1), 2"]) # bit-reversed
+                        "sv.lfssh 12.v, 4(1), 2"]) # shifted (by zero, but hey)
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
@@ -306,8 +277,8 @@ class DecoderTestCase(FHDLTestCase):
         # expected results, remember that bit-reversed load has been done
         expected_fprs = deepcopy(fprs)
         expected_fprs[12] = fprs[4] # 0b00 -> 0b00
-        expected_fprs[13] = fprs[6] # 0b01 -> 0b10
-        expected_fprs[14] = fprs[5] # 0b10 -> 0b01
+        expected_fprs[13] = fprs[5] # 0b10 -> 0b01
+        expected_fprs[14] = fprs[6] # 0b01 -> 0b10
         expected_fprs[15] = fprs[7] # 0b11 -> 0b11
 
         with Program(lst, bigendian=False) as program:
@@ -362,7 +333,7 @@ class DecoderTestCase(FHDLTestCase):
                         "svshape 3, 3, 4, 0, 0",
                         "svremap 1, 1, 2, 0, 0, 0, 0, 1",
                         "sv.lwz 20.v, 0(1)",
-                        #"sv.lwzbr 12.v, 4(1), 2", # bit-reversed
+                        #"sv.lwzsh 12.v, 4(1), 2", # bit-reversed
                         ])
         lst = list(lst)
 
@@ -419,11 +390,11 @@ class DecoderTestCase(FHDLTestCase):
                         "sv.stw 5.v, 0(1)",
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0, 0",
-                        "sv.lwzbr 12.v, 4(1), 2"]
+                        "sv.lwzsh 12.v, 4(1), 2"]
 
-        bitreverse LD is computed as:
+        shifted LD is computed as:
         for i in range(VL):
-            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
+            EA = (RA|0) + (EXTS(D) * LDSTsize * i) << RC
 
         bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
         produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
@@ -448,7 +419,7 @@ class DecoderTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 1, 0, 0, 0, 0, 0, 0, 1",
                         #"setvl 0, 0, 8, 0, 1, 1",
-                        "sv.lwzbr 12.v, 4(1), 2",  # bit-reversed
+                        "sv.lwzsh 12.v, 4(1), 2",  # bit-reversed
                         #"sv.lwz 12.v, 0(1)"
                         ])
         lst = list(lst)
@@ -506,11 +477,11 @@ class DecoderTestCase(FHDLTestCase):
                         "sv.stw 5.v, 0(1)",
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0, 0",
-                        "sv.lwzbr 12.v, 4(1), 2"]
+                        "sv.lwzsh 12.v, 4(1), 2"]
 
         bitreverse LD is computed as:
         for i in range(VL):
-            EA = (RA|0) + (EXTS(D) * LDSTsize * bitreverse(i, VL)) << RC
+            EA = (RA|0) + (EXTS(D) * LDSTsize * i) << RC
 
         bitreversal of 0 1 2 3 in binary 0b00 0b01 0b10 0b11
         produces       0 2 1 3 in binary 0b00 0b10 0b01 0b11
@@ -535,7 +506,7 @@ class DecoderTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 14, 0",
                         "svremap 16, 0, 0, 0, 0, 0, 0, 1",
                         #"setvl 0, 0, 8, 0, 1, 1",
-                        "sv.lwzbr 12.v, 4(1), 2",  # bit-reversed
+                        "sv.lwzsh 12.v, 4(1), 2",  # bit-reversed
                         #"sv.lwz 12.v, 0(1)"
                         ])
         lst = list(lst)

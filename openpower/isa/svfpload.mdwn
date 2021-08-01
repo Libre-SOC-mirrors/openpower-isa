@@ -6,13 +6,13 @@
 
 SVD-Form
 
-* lfsbr FRT,SVD(RA),RC
+* lfssh FRT,SVD(RA),RC
 
 Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- b + SHL64(srcstep * EXTS(SVD), n)
     FRT <- DOUBLE(MEM(EA, 4))
 
 Special Registers Altered:
@@ -23,12 +23,12 @@ Special Registers Altered:
 
 SVD-Form
 
-* lfsubr FRT,SVD(RA),RC
+* lfsush FRT,SVD(RA),RC
 
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- (RA) + SHL64(srcstep * EXTS(SVD), n)
     FRT <- DOUBLE(MEM(EA, 4))
     RA <- EA
 
@@ -40,13 +40,13 @@ Special Registers Altered:
 
 SVD-Form
 
-* lfdbr FRT,SVD(RA),RC
+* lfdsh FRT,SVD(RA),RC
 
 Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- b + SHL64(srcstep * EXTS(SVD), n)
     FRT <- MEM(EA, 8)
 
 Special Registers Altered:
@@ -57,12 +57,12 @@ Special Registers Altered:
 
 SVD-Form
 
-* lfdubr FRT,SVD(RA),RC
+* lfdush FRT,SVD(RA),RC
 
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(bitrev(srcstep, VL) * EXTS(SVD), n)
+    EA <- (RA) + SHL64(srcstep * EXTS(SVD), n)
     FRT <- MEM(EA, 8)
     RA <- EA
 

@@ -1008,7 +1008,7 @@ class PowerDecodeSubset(Elaboratable):
             with m.If(self.is_svp64_mode & is_major_ld):
                 # straight-up: "it's a LD".  this gives enough info
                 # for SVP64 RM Mode decoding to detect LD/ST, and
-                # consequently detect the BITREVERSE mode. sigh
+                # consequently detect the SHIFT mode. sigh
                 comb += rm_dec.fn_in.eq(Function.LDST)
             with m.Else():
                 comb += rm_dec.fn_in.eq(fn) # decode needs to know Fn type
@@ -1021,9 +1021,9 @@ class PowerDecodeSubset(Elaboratable):
 
             # main PowerDecoder2 determines if different SVP64 modes enabled
             if not self.final:
-                # if bit-reverse mode requested
-                bitrev = rm_dec.ldstmode == SVP64LDSTmode.BITREVERSE
-                comb += self.use_svp64_ldst_dec.eq(bitrev)
+                # if shift mode requested
+                shiftmode = rm_dec.ldstmode == SVP64LDSTmode.SHIFT
+                comb += self.use_svp64_ldst_dec.eq(shiftmode)
             # detect if SVP64 FFT mode enabled (really bad hack),
             # exclude fcfids and others
             # XXX this is a REALLY bad hack, REALLY has to be done better.

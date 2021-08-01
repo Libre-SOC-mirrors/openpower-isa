@@ -12,7 +12,7 @@ Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(EXTS(SVD), n)
+    EA <- b + SHL64(srcstep * EXTS(SVD), n)
     RT <- [0]*56 || MEM(EA, 1)
 
 Special Registers Altered:
@@ -28,7 +28,7 @@ SVD-Form
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(EXTS(SVD), n)
+    EA <- (RA) + SHL64(srcstep * EXTS(SVD), n)
     RT <- [0] * 56 || MEM(EA, 1)
     RA <- EA
 
@@ -46,7 +46,7 @@ Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(EXTS(SVD), n)
+    EA <- b + SHL64(srcstep * EXTS(SVD), n)
     RT <- [0] * 48 || MEM(EA, 2)
 
 Special Registers Altered:
@@ -62,7 +62,7 @@ SVD-Form
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(EXTS(SVD), n)
+    EA <- (RA) + SHL64(srcstep * EXTS(SVD), n)
     RT <- [0] * 48 || MEM(EA, 2)
     RA <- EA
 
@@ -80,7 +80,7 @@ Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(EXTS(SVD), n)
+    EA <- b + SHL64(srcstep * EXTS(SVD), n)
     RT <- EXTS(MEM(EA, 2))
 
 Special Registers Altered:
@@ -96,7 +96,7 @@ SVD-Form
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(EXTS(SVD), n)
+    EA <- (RA) + SHL64(srcstep * EXTS(SVD), n)
     RT <- EXTS(MEM(EA, 2))
     RA <- EA
 
@@ -114,7 +114,7 @@ Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(EXTS(SVD), n)
+    EA <- b + SHL64(srcstep * EXTS(SVD), n)
     RT <- [0] * 32 || MEM(EA, 4)
 
 Special Registers Altered:
@@ -130,7 +130,7 @@ SVD-Form
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(EXTS(SVD), n)
+    EA <- (RA) + SHL64(srcstep * EXTS(SVD), n)
     RT <- [0]*32 || MEM(EA, 4)
     RA <- EA
 
@@ -148,7 +148,7 @@ Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(bitrev(EXTS(SVDS || 0b00), n)
+    EA <- b + SHL64(srcstep * EXTS(SVDS || 0b00), n)
     RT <- EXTS(MEM(EA, 4))
 
 Special Registers Altered:
@@ -165,7 +165,7 @@ Pseudo-code:
 
     b <- (RA|0)
     n <- (RC)[58:63]
-    EA <- b + SHL64(EXTS(SVDS || 0b00), n)
+    EA <- b + SHL64(srcstep * EXTS(SVDS || 0b00), n)
     RT <- MEM(EA, 8)
 
 Special Registers Altered:
@@ -181,7 +181,7 @@ SVDS-Form
 Pseudo-code:
 
     n <- (RC)[58:63]
-    EA <- (RA) + SHL64(EXTS(SVDS || 0b00), n)
+    EA <- (RA) + SHL64(srcstep * EXTS(SVDS || 0b00), n)
     RT <- MEM(EA, 8)
     RA <- EA
 
