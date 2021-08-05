@@ -3,8 +3,9 @@
    | PO   |      LI  |AA|LK |
 
 #1.6.2 B-FORM
-   |0     |6   |11     |16     |30|31 |
-   | PO   |  BO|   BI  |   BD  |AA|LK |
+   |0     |6   |11     |16     |30 |31 |
+   | PO   |  BO|   BI  |   BD  |AA |LK |
+   | PO   |  BO|   BI  |   BD  |BRc|LK |
 
 #1.6.3 SC-FORM
    |0     |6    |11    |16    |20     |27  |30 |31  |
@@ -105,9 +106,9 @@
    | PO   |       RT      | /// |L3     |     ///     |   XO | /  |
 
 # 1.6.8 XL-FORM
-   |0     |6    |9  |11  |14   |16    |19|20|21    |31 |
+   |0     |6    |9  |11  |14   |16|17 |19|20|21    |31 |
    | PO   |   BT    |     BA   |    BB      |   XO | / |
-   | PO   |   BO    |     BI   |  /// |BH   |   XO |LK |
+   | PO   |   BO    |     BI   |Bc|// |BH   |   XO |LK |
    | PO   |         |    ///             |S |   XO | / |
    | PO   |  BF |// |BFA |//   |     ///    |   XO | / |
    | PO   |              ///                |   XO | / |
@@ -321,6 +322,9 @@
          Field used to specify a bit in the CR to be used as
          a source.
          Formats: XL
+    Bc (16)
+        SVP64-only Branch-Conditional version of Rc for bclr
+        Formats: XL
     BC (21:25)
          Field used to specify a bit in the CR to be used as
          a source.
@@ -363,6 +367,9 @@
          tional instructions. The encoding is described in
          Section 2.4, 'Branch Instructions'.
          Formats: B, XL, X, XL
+    BRc (30)
+        SVP64-only Branch-Conditional version of Rc
+        Formats: B
     BT (6:10)
          Field used to specify a bit in the CR or in the
          FPSCR to be used as a target.
