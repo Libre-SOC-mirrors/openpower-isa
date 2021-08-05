@@ -37,9 +37,11 @@ sv_input_record_layout = [
     ]
 
 """RM Mode
-there are three Mode variants, two for LD/ST and one for everything else
+there are four Mode variants, two for LD/ST, one for Branch-Conditional,
+and one for everything else
 https://libre-soc.org/openpower/sv/svp64/
 https://libre-soc.org/openpower/sv/ldst/
+https://libre-soc.org/openpower/sv/branches/
 
 LD/ST immed:
 00	0	dz els	normal mode (with element-stride)
@@ -68,17 +70,29 @@ Arithmetic:
 10	N	sz dz	sat mode: N=0/1 u/s
 11	inv	CR-bit	Rc=1: pred-result CR sel
 11	inv	dz RC1	Rc=0: pred-result z/nonz
+
+Branch Conditional:
+00	SNZ	ALL sz	normal mode
+01	VLI	ALL sz	VLSET mode
+10	SNZ	ALL sz	svstep mode
+11	VLI	ALL sz	svstep VLSET mode, in Horizontal-First
+11	VLI	SNZ sz	svstep VLSET mode, in Vertical-First
 """
 
 class SVP64RMModeDecode(Elaboratable):
     def __init__(self, name=None):
         ##### inputs #####
         self.rm_in = SVP64Rec(name=name)
-        self.fn_in = Signal(Function) # LD/ST is different
+        self.fn_in = Signal(Function) # LD/ST and Branch is different
+        self.svp64_vf_in = Signal()  # Vertical-First Mode
         self.ptype_in = Signal(SVPtype)
         self.rc_in = Signal()
         self.ldst_ra_vec = Signal() # set when RA is vec, indicate Index mode
         self.ldst_imz_in = Signal() # set when LD/ST immediate is zero
+        self.bc_vlset = Signal()    # Branch-Conditional VLSET
+        self.bc_svstep = Signal()   # Branch-Conditional svstep
+        self.bc_snz = Signal()   # Branch-Conditional zeroing-actually-"oneing"
+        self.bc_all = Signal()   # Branch-Conditional "All tests must pass"
 
         ##### outputs #####
 
@@ -108,7 +122,9 @@ class SVP64RMModeDecode(Elaboratable):
 
         # decode pieces of mode
         is_ldst = Signal()
+        is_bc = Signal()
         comb += is_ldst.eq(self.fn_in == Function.LDST)
+        comb += is_bc.eq(self.fn_in == Function.BRANCH)
         mode2 = sel(m, mode, SVP64MODE.MOD2)
         with m.Switch(mode2):
             with m.Case(0): # needs further decoding (LDST no mapreduce)

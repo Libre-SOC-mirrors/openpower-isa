@@ -186,6 +186,7 @@ class SVP64RMMode(Enum):
     FFIRST = 2
     SATURATE = 3
     PREDRES = 4
+    BRANCH = 5
 
 
 @unique
