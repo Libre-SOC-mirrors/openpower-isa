@@ -777,6 +777,17 @@ class SVP64Asm:
             assert sv_mode is None, \
                 "LD shift cannot have modes (%s) applied" % sv_mode
 
+        # now create mode and (overridden) src/dst widths
+        # XXX TODO: sanity-check bc modes
+        if is_bc:
+            sv_mode = ((bc_svstep << SVP64MODE.MOD2_MSB) |
+                      (bc_vlset << SVP64MODE.MOD2_LSB) |
+                      (bc_snz << SVP64MODE.BC_SNZ))
+            srcwid = (bc_brc << 1) | bc_vsb
+            destwid = (bc_all << 1) | bc_lru
+
+        else:
+
             ######################################
             # "normal" mode
             if sv_mode is None:
@@ -854,15 +865,6 @@ class SVP64Asm:
                     assert dst_zero == 0, "dst-zero not allowed in pr-mode BO"
                     assert rc_mode, "pr-mode BO only possible when Rc=1"
                     mode |= (predresult << SVP64MODE.BO_LSB) # set BO
-
-        # now create mode and (overridden) src/dst widths
-        # XXX TODO: sanity-check bc modes
-        if is_bc:
-            sv_mode = ((bc_svstep << SVP64MODE.MOD2_MSB) |
-                      (bc_vlset << SVP64MODE.MOD2_LSB) |
-                      (bc_snz << SVP64MODE.BC_SNZ))
-            srcwid = (bc_brc << 1) | bc_vsb
-            destwid = (bc_all << 1) | bc_lru
 
         # whewww.... modes all done :)
         # now put into svp64_rm
