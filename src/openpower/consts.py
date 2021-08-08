@@ -225,6 +225,7 @@ class SVP64MODEb:
     LDST_SHIFT = 2 # set =1 for shift mode
     # when predicate not set: 0=ignore/skip 1=zero
     DZ = 3  # for destination
+    BC_SNZ = 3  # for branch-conditional mode
     SZ = 4  # for source
     # reduce mode
     REDUCE = 2  # 0=normal predication 1=reduce mode

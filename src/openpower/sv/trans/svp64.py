@@ -514,7 +514,7 @@ class SVP64Asm:
                     else:
                         # range is CR0-CR127 in increments of 8
                         assert sv_extra & 0b11 == 0, \
-                            "vector CR %s cannot fit into EXTRA2 %s" % \
+                            "vector CR %s cannot fit into EXTRA3 %s" % \
                                 (rname, str(extras[extra_idx]))
                         # all good: encode as vector (bit 3 set)
                         sv_extra = 0b100 | (sv_extra >> 2)
@@ -582,6 +582,11 @@ class SVP64Asm:
         # see https://libre-soc.org/openpower/sv/ldst/
         is_ldst = is_ld or is_st
 
+        # branch-conditional detection
+        is_bc = v30b_op in [
+            "bc", "bclr",
+        ]
+
         # parts of svp64_rm
         mmode = 0  # bit 0
         pmask = 0  # bits 1-3
@@ -608,6 +613,16 @@ class SVP64Asm:
         predresult = False
         failfirst = False
         ldst_elstride = 0
+
+        # branch-conditional bits
+        bc_all = 0
+        bc_lru = 0
+        bc_brc = 0
+        bc_svstep = 0
+        bc_vsb = 0
+        bc_vlset = 0
+        bc_vli = 0
+        bc_snz = 0
 
         # ok let's start identifying opcode augmentation fields
         for encmode in opmodes:
@@ -685,6 +700,33 @@ class SVP64Asm:
                 mapreduce_crm = True
             elif encmode == 'svm': # sub-vector mode
                 mapreduce_svm = True
+            elif is_bc:
+                if encmode == 'all':
+                    bc_all = 1
+                elif encmode == 'st': # svstep mode
+                    bc_step = 1
+                elif encmode == 'sr': # svstep BRc mode
+                    bc_step = 1
+                    bc_brc = 1
+                elif encmode == 'vs': # VLSET mode
+                    bc_vlset = 1
+                elif encmode == 'vsi': # VLSET mode with VLI (VL inclusives)
+                    bc_vlset = 1
+                    bc_vli = 1
+                elif encmode == 'vsb': # VLSET mode with VSb
+                    bc_vlset = 1
+                    bc_vsb = 1
+                elif encmode == 'vsbi': # VLSET mode with VLI and VSb
+                    bc_vlset = 1
+                    bc_vli = 1
+                    bc_vsb = 1
+                elif encmode == 'snz': # sz (only) already set above
+                    src_zero = 1
+                    bc_snz = 1
+                elif encmode == 'lu': # LR update mode
+                    bc_lru = 1
+                else:
+                    raise AssertionError("unknown encmode %s" % encmode)
             else:
                 raise AssertionError("unknown encmode %s" % encmode)
 
@@ -735,83 +777,92 @@ class SVP64Asm:
             assert sv_mode is None, \
                 "LD shift cannot have modes (%s) applied" % sv_mode
 
-        ######################################
-        # "normal" mode
-        if sv_mode is None:
-            mode |= src_zero << SVP64MODE.SZ # predicate zeroing
-            mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
-            if is_ldst:
-                # TODO: for now, LD/ST-indexed is ignored.
-                mode |= ldst_elstride << SVP64MODE.ELS_NORMAL # element-strided
-                # shifted mode
-                if ldst_shift:
-                    mode |= 1 << SVP64MODE.LDST_SHIFT
-            else:
-                # TODO, reduce and subvector mode
-                # 00  1   dz CRM  reduce mode (mapreduce), SUBVL=1
-                # 00  1   SVM CRM subvector reduce mode, SUBVL>1
-                pass
-            sv_mode = 0b00
-
-        ######################################
-        # "mapreduce" modes
-        elif sv_mode == 0b00:
-            mode |= (0b1<<SVP64MODE.REDUCE) # sets mapreduce
-            assert dst_zero == 0, "dest-zero not allowed in mapreduce mode"
-            if reverse_gear:
-                mode |= (0b1<<SVP64MODE.RG) # sets Reverse-gear mode
-            if mapreduce_crm:
-                mode |= (0b1<<SVP64MODE.CRM) # sets CRM mode
-                assert rc_mode, "CRM only allowed when Rc=1"
-            # bit of weird encoding to jam zero-pred or SVM mode in.
-            # SVM mode can be enabled only when SUBVL=2/3/4 (vec2/3/4)
-            if subvl == 0:
+            ######################################
+            # "normal" mode
+            if sv_mode is None:
+                mode |= src_zero << SVP64MODE.SZ # predicate zeroing
                 mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
-            elif mapreduce_svm:
-                mode |= (0b1<<SVP64MODE.SVM) # sets SVM mode
+                if is_ldst:
+                    # TODO: for now, LD/ST-indexed is ignored.
+                    mode |= ldst_elstride << SVP64MODE.ELS_NORMAL # el-strided
+                    # shifted mode
+                    if ldst_shift:
+                        mode |= 1 << SVP64MODE.LDST_SHIFT
+                else:
+                    # TODO, reduce and subvector mode
+                    # 00  1   dz CRM  reduce mode (mapreduce), SUBVL=1
+                    # 00  1   SVM CRM subvector reduce mode, SUBVL>1
+                    pass
+                sv_mode = 0b00
 
-        ######################################
-        # "failfirst" modes
-        elif sv_mode == 0b01:
-            assert src_zero == 0, "dest-zero not allowed in failfirst mode"
-            if failfirst == 'RC1':
-                mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
-            elif failfirst == '~RC1':
-                mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                mode |= (0b1<<SVP64MODE.INV) # ... with inversion
-                assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
-            else:
-                assert dst_zero == 0, "dst-zero not allowed in ffirst BO"
-                assert rc_mode, "ffirst BO only possible when Rc=1"
-                mode |= (failfirst << SVP64MODE.BO_LSB) # set BO
+            ######################################
+            # "mapreduce" modes
+            elif sv_mode == 0b00:
+                mode |= (0b1<<SVP64MODE.REDUCE) # sets mapreduce
+                assert dst_zero == 0, "dest-zero not allowed in mapreduce mode"
+                if reverse_gear:
+                    mode |= (0b1<<SVP64MODE.RG) # sets Reverse-gear mode
+                if mapreduce_crm:
+                    mode |= (0b1<<SVP64MODE.CRM) # sets CRM mode
+                    assert rc_mode, "CRM only allowed when Rc=1"
+                # bit of weird encoding to jam zero-pred or SVM mode in.
+                # SVM mode can be enabled only when SUBVL=2/3/4 (vec2/3/4)
+                if subvl == 0:
+                    mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
+                elif mapreduce_svm:
+                    mode |= (0b1<<SVP64MODE.SVM) # sets SVM mode
 
-        ######################################
-        # "saturation" modes
-        elif sv_mode == 0b10:
-            mode |= src_zero << SVP64MODE.SZ # predicate zeroing
-            mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
-            mode |= (saturation << SVP64MODE.N) # signed/unsigned saturation
+            ######################################
+            # "failfirst" modes
+            elif sv_mode == 0b01:
+                assert src_zero == 0, "dest-zero not allowed in failfirst mode"
+                if failfirst == 'RC1':
+                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
+                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
+                    assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
+                elif failfirst == '~RC1':
+                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
+                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
+                    mode |= (0b1<<SVP64MODE.INV) # ... with inversion
+                    assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
+                else:
+                    assert dst_zero == 0, "dst-zero not allowed in ffirst BO"
+                    assert rc_mode, "ffirst BO only possible when Rc=1"
+                    mode |= (failfirst << SVP64MODE.BO_LSB) # set BO
 
-        ######################################
-        # "predicate-result" modes.  err... code-duplication from ffirst
-        elif sv_mode == 0b11:
-            assert src_zero == 0, "dest-zero not allowed in predresult mode"
-            if predresult == 'RC1':
-                mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
-            elif predresult == '~RC1':
-                mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                mode |= (0b1<<SVP64MODE.INV) # ... with inversion
-                assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
-            else:
-                assert dst_zero == 0, "dst-zero not allowed in pr-mode BO"
-                assert rc_mode, "pr-mode BO only possible when Rc=1"
-                mode |= (predresult << SVP64MODE.BO_LSB) # set BO
+            ######################################
+            # "saturation" modes
+            elif sv_mode == 0b10:
+                mode |= src_zero << SVP64MODE.SZ # predicate zeroing
+                mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
+                mode |= (saturation << SVP64MODE.N) # signed/us saturation
+
+            ######################################
+            # "predicate-result" modes.  err... code-duplication from ffirst
+            elif sv_mode == 0b11:
+                assert src_zero == 0, "dest-zero not allowed in predresult mode"
+                if predresult == 'RC1':
+                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
+                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
+                    assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
+                elif predresult == '~RC1':
+                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
+                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
+                    mode |= (0b1<<SVP64MODE.INV) # ... with inversion
+                    assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
+                else:
+                    assert dst_zero == 0, "dst-zero not allowed in pr-mode BO"
+                    assert rc_mode, "pr-mode BO only possible when Rc=1"
+                    mode |= (predresult << SVP64MODE.BO_LSB) # set BO
+
+        # now create mode and (overridden) src/dst widths
+        # XXX TODO: sanity-check bc modes
+        if is_bc:
+            sv_mode = ((bc_svstep << SVP64MODE.MOD2_MSB) |
+                      (bc_vlset << SVP64MODE.MOD2_LSB) |
+                      (bc_snz << SVP64MODE.BC_SNZ))
+            srcwid = (bc_brc << 1) | bc_vsb
+            destwid = (bc_all << 1) | bc_lru
 
         # whewww.... modes all done :)
         # now put into svp64_rm
@@ -1108,6 +1159,10 @@ if __name__ == '__main__':
              'sv.fcoss. 80.v, 0.v',
              'sv.fcoss. 20.v, 0.v',
         ]
+    lst = [
+        'sv.bc/all 3,12,192',
+        'sv.bclr/vsbi 3,81.v,192',
+    ]
     isa = SVP64Asm(lst, macros=macros)
     print ("list", list(isa))
     csvs = SVP64RM()
