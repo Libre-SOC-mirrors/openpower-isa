@@ -64,6 +64,8 @@ def create_key(row):
         if key in ['in1', 'in2', 'in3']:
             if 'in' not in res:
                 res['in'] = 0
+            if row['unit'] == 'BRANCH': # branches must not include Vector SPRs
+                continue
             if isreg(row[key]):
                 res['in'] += 1
 
@@ -205,7 +207,9 @@ def process_csvs():
                 continue # skip pseudo-alias lxxxbr
             if insn_name in ['mcrxr', 'mcrxrx', 'darn']:
                 continue
-            if insn_name.startswith('bc') or 'rfid' in insn_name:
+            if insn_name in ['bctar', 'bcctr']:
+                continue
+            if  'rfid' in insn_name:
                 continue
             if insn_name in ['setvl',]: # SVP64 opcodes
                 continue
@@ -380,6 +384,8 @@ def process_csvs():
                     else:
                         regs.append('')
 
+            print ("regs", insn_name, regs)
+
             # for LD/ST FP, use FRT/FRS not RT/RS, and use CR1 not CR0
             if insn_name.startswith("lf"):
                 dRT = 'd:FRT'
@@ -490,6 +496,9 @@ def process_csvs():
                 elif regs == ['','FRB','','FRT','','CR1']:
                     res['0'] = 'd:FRT;d:CR1' # FRT,CR1: Rdest1_EXTRA3
                     res['1'] = 's:FRB' # FRB: Rsrc1_EXTRA3
+                elif insn_name.startswith('bc'):
+                    res['0'] = 'd:BI' # BI: Rdest1_EXTRA3
+                    res['1'] = 's:BI' # BI: Rsrc1_EXTRA3
                 else:
                     res['0'] = 'TODO'
 
