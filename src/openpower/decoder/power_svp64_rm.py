@@ -18,7 +18,10 @@ https://libre-soc.org/openpower/sv/svp64/
 
 from nmigen import Elaboratable, Module, Signal, Const
 from openpower.decoder.power_enums import (SVP64RMMode, Function, SVPtype,
-                                    SVP64PredMode, SVP64sat, SVP64LDSTmode)
+                                    SVP64PredMode, SVP64sat, SVP64LDSTmode,
+                                    SVP64BCPredMode, SVP64BCVLSETMode,
+                                    SVP64BCGate, SVP64BCStep,
+                                    )
 from openpower.consts import EXTRA3, SVP64MODE
 from openpower.sv.svp64 import SVP64Rec
 from nmutil.util import sel
@@ -72,12 +75,17 @@ Arithmetic:
 11	inv	dz RC1	Rc=0: pred-result z/nonz
 
 Branch Conditional:
-00	SNZ	ALL sz	normal mode
-01	VLI	ALL sz	VLSET mode
-10	SNZ	ALL sz	svstep mode
-11	VLI	ALL sz	svstep VLSET mode, in Horizontal-First
-11	VLI	SNZ sz	svstep VLSET mode, in Vertical-First
+note that additional BC modes are in *other bits*, specifically
+the element-width fields: SVP64Rec.ewsrc and SVP64Rec.elwidth
+
+elwidth   ewsrc    mode
+4   5     6   7    19 20    21  22  23
+ALL LRu   /   /     0  0	/ 	SNZ sz	normal mode
+ALL LRu   /   VSb   0  1	VLI	SNZ sz	       VLSET mode
+ALL LRu   BRc /     1  0	/ 	SNZ sz	svstep       mode
+ALL LRu   BRc VSb   1  1	VLI	SNZ sz	svstep VLSET mode
 """
+
 
 class SVP64RMModeDecode(Elaboratable):
     def __init__(self, name=None):
@@ -89,15 +97,18 @@ class SVP64RMModeDecode(Elaboratable):
         self.rc_in = Signal()
         self.ldst_ra_vec = Signal() # set when RA is vec, indicate Index mode
         self.ldst_imz_in = Signal() # set when LD/ST immediate is zero
-        self.bc_vlset = Signal()    # Branch-Conditional VLSET
-        self.bc_svstep = Signal()   # Branch-Conditional svstep
-        self.bc_snz = Signal()   # Branch-Conditional zeroing-actually-"oneing"
-        self.bc_all = Signal()   # Branch-Conditional "All tests must pass"
 
         ##### outputs #####
 
-        # main mode (normal, reduce, saturate, ffirst, pred-result)
+        # main mode (normal, reduce, saturate, ffirst, pred-result, branch)
         self.mode = Signal(SVP64RMMode)
+
+        # Branch Conditional Modes
+        self.bc_vlset = Signal(SVP64BCVLSETMode) # Branch-Conditional VLSET
+        self.bc_step = Signal(SVP64BCStep)   # Branch-Conditional svstep mode
+        self.bc_pred = Signal(SVP64BCPredMode) # BC predicate mode
+        self.bc_gate = Signal(SVP64BCGate)     # BC ALL or ANY gate
+        self.bc_lru  = Signal()                # BC Link Register Update
 
         # predication
         self.predmode = Signal(SVP64PredMode)
@@ -126,91 +137,113 @@ class SVP64RMModeDecode(Elaboratable):
         comb += is_ldst.eq(self.fn_in == Function.LDST)
         comb += is_bc.eq(self.fn_in == Function.BRANCH)
         mode2 = sel(m, mode, SVP64MODE.MOD2)
-        with m.Switch(mode2):
-            with m.Case(0): # needs further decoding (LDST no mapreduce)
-                with m.If(is_ldst):
-                    comb += self.mode.eq(SVP64RMMode.NORMAL)
-                with m.Elif(mode[SVP64MODE.REDUCE]):
-                    comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
-                with m.Else():
-                    comb += self.mode.eq(SVP64RMMode.NORMAL)
-            with m.Case(1):
-                comb += self.mode.eq(SVP64RMMode.FFIRST) # fail-first
-            with m.Case(2):
-                comb += self.mode.eq(SVP64RMMode.SATURATE) # saturate
-            with m.Case(3):
-                comb += self.mode.eq(SVP64RMMode.PREDRES) # predicate result
 
-        # extract "reverse gear" for mapreduce mode
-        with m.If((~is_ldst) &                     # not for LD/ST
-                    (mode2 == 0) &                 # first 2 bits == 0
-                    mode[SVP64MODE.REDUCE] &       # bit 2 == 1
-                   (~mode[SVP64MODE.PARALLEL])):   # not parallel mapreduce
-            comb += self.reverse_gear.eq(mode[SVP64MODE.RG]) # finally, whew
-
-        # extract zeroing
-        with m.Switch(mode2):
-            with m.Case(0): # needs further decoding (LDST no mapreduce)
-                with m.If(is_ldst):
-                    # XXX TODO, work out which of these is most appropriate
-                    # set both? or just the one? or one if LD, the other if ST?
-                    comb += self.pred_sz.eq(mode[SVP64MODE.DZ])
-                    comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
-                with m.Elif(mode[SVP64MODE.REDUCE]):
-                    with m.If(self.rm_in.subvl == Const(0, 2)): # no SUBVL
-                        comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+        with m.If(is_bc):
+            # Branch-Conditional is completely different
+            # svstep mode
+            with m.If(mode2[0]):
+                with m.If(self.rm_in.ewsrc[0]):
+                    comb += self.bc_step.eq(SVP64BCStep.STEP_RC)
                 with m.Else():
-                    comb += self.pred_sz.eq(mode[SVP64MODE.SZ])
-                    comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
-            with m.Case(1, 3):
-                with m.If(is_ldst):
-                    with m.If(~self.ldst_ra_vec):
-                        comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
-                with m.Elif(self.rc_in):
-                    comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
-            with m.Case(2):
-                with m.If(is_ldst & ~self.ldst_ra_vec):
-                    comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+                    comb += self.bc_step.eq(SVP64BCStep.STEP)
+            # VLSET mode
+            with m.If(mode2[1]):
+                with m.If(self.rm_in.ewsrc[1]):
+                    comb += self.bc_step.eq(SVP64BCVLSETMode.VL_INCL)
                 with m.Else():
-                    comb += self.pred_sz.eq(mode[SVP64MODE.SZ])
-                    comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
-
-        # extract saturate
-        with m.Switch(mode2):
-            with m.Case(2):
-                with m.If(mode[SVP64MODE.N]):
-                    comb += self.saturate.eq(SVP64sat.UNSIGNED)
-                with m.Else():
-                    comb += self.saturate.eq(SVP64sat.SIGNED)
-            with m.Default():
-                comb += self.saturate.eq(SVP64sat.NONE)
-
-        # extract els (element strided mode bit)
-        # see https://libre-soc.org/openpower/sv/ldst/
-        els = Signal()
-        with m.If(is_ldst):
+                    comb += self.bc_step.eq(SVP64BCVLSETMode.VL_EXCL)
+            # BC Mode ALL or ANY (Great-Big-AND-gate or Great-Big-OR-gate)
+            comb += self.bc_gate.eq(self.rm_in.elwidth[0])
+            # Link-Register Update
+            comb += self.bc_lru.eq(self.rm_in.elwidth[1])
+        with m.Else():
+            # combined arith / ldst decoding due to similarity
             with m.Switch(mode2):
-                with m.Case(0):
-                    comb += els.eq(mode[SVP64MODE.ELS_NORMAL])
+                with m.Case(0): # needs further decoding (LDST no mapreduce)
+                    with m.If(is_ldst):
+                        comb += self.mode.eq(SVP64RMMode.NORMAL)
+                    with m.Elif(mode[SVP64MODE.REDUCE]):
+                        comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
+                    with m.Else():
+                        comb += self.mode.eq(SVP64RMMode.NORMAL)
+                with m.Case(1):
+                    comb += self.mode.eq(SVP64RMMode.FFIRST) # fail-first
                 with m.Case(2):
-                    comb += els.eq(mode[SVP64MODE.ELS_SAT])
-                with m.Case(1, 3):
-                    with m.If(self.rc_in):
-                        comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
+                    comb += self.mode.eq(SVP64RMMode.SATURATE) # saturate
+                with m.Case(3):
+                    comb += self.mode.eq(SVP64RMMode.PREDRES) # pred result
 
-            # Shifted Mode
-            with m.If(mode[SVP64MODE.LDST_SHIFT]):
-                comb += self.ldstmode.eq(SVP64LDSTmode.SHIFT)
-            # RA is vectorised
-            with m.Elif(self.ldst_ra_vec):
-                comb += self.ldstmode.eq(SVP64LDSTmode.INDEXED)
-            # not element-strided, therefore unit...
-            with m.Elif(~els):
-                comb += self.ldstmode.eq(SVP64LDSTmode.UNITSTRIDE)
-            # but if the LD/ST immediate is zero, allow cache-inhibited
-            # loads from same location, therefore don't do element-striding
-            with m.Elif(~self.ldst_imz_in):
-                comb += self.ldstmode.eq(SVP64LDSTmode.ELSTRIDE)
+            # extract "reverse gear" for mapreduce mode
+            with m.If((~is_ldst) &                     # not for LD/ST
+                        (mode2 == 0) &                 # first 2 bits == 0
+                        mode[SVP64MODE.REDUCE] &       # bit 2 == 1
+                       (~mode[SVP64MODE.PARALLEL])):   # not parallel mapreduce
+                comb += self.reverse_gear.eq(mode[SVP64MODE.RG]) # finally whew
+
+            # extract zeroing
+            with m.Switch(mode2):
+                with m.Case(0): # needs further decoding (LDST no mapreduce)
+                    with m.If(is_ldst):
+                        # XXX TODO, work out which of these is most
+                        # appropriate set both? or just the one?
+                        # or one if LD, the other if ST?
+                        comb += self.pred_sz.eq(mode[SVP64MODE.DZ])
+                        comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+                    with m.Elif(mode[SVP64MODE.REDUCE]):
+                        with m.If(self.rm_in.subvl == Const(0, 2)): # no SUBVL
+                            comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+                    with m.Else():
+                        comb += self.pred_sz.eq(mode[SVP64MODE.SZ])
+                        comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+                with m.Case(1, 3):
+                    with m.If(is_ldst):
+                        with m.If(~self.ldst_ra_vec):
+                            comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+                    with m.Elif(self.rc_in):
+                        comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+                with m.Case(2):
+                    with m.If(is_ldst & ~self.ldst_ra_vec):
+                        comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+                    with m.Else():
+                        comb += self.pred_sz.eq(mode[SVP64MODE.SZ])
+                        comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+
+            # extract saturate
+            with m.Switch(mode2):
+                with m.Case(2):
+                    with m.If(mode[SVP64MODE.N]):
+                        comb += self.saturate.eq(SVP64sat.UNSIGNED)
+                    with m.Else():
+                        comb += self.saturate.eq(SVP64sat.SIGNED)
+                with m.Default():
+                    comb += self.saturate.eq(SVP64sat.NONE)
+
+            # extract els (element strided mode bit)
+            # see https://libre-soc.org/openpower/sv/ldst/
+            els = Signal()
+            with m.If(is_ldst):
+                with m.Switch(mode2):
+                    with m.Case(0):
+                        comb += els.eq(mode[SVP64MODE.ELS_NORMAL])
+                    with m.Case(2):
+                        comb += els.eq(mode[SVP64MODE.ELS_SAT])
+                    with m.Case(1, 3):
+                        with m.If(self.rc_in):
+                            comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
+
+                # Shifted Mode
+                with m.If(mode[SVP64MODE.LDST_SHIFT]):
+                    comb += self.ldstmode.eq(SVP64LDSTmode.SHIFT)
+                # RA is vectorised
+                with m.Elif(self.ldst_ra_vec):
+                    comb += self.ldstmode.eq(SVP64LDSTmode.INDEXED)
+                # not element-strided, therefore unit...
+                with m.Elif(~els):
+                    comb += self.ldstmode.eq(SVP64LDSTmode.UNITSTRIDE)
+                # but if the LD/ST immediate is zero, allow cache-inhibited
+                # loads from same location, therefore don't do element-striding
+                with m.Elif(~self.ldst_imz_in):
+                    comb += self.ldstmode.eq(SVP64LDSTmode.ELSTRIDE)
 
         # extract src/dest predicate.  use EXTRA3.MASK because EXTRA2.MASK
         # is in exactly the same bits

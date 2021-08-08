@@ -190,6 +190,34 @@ class SVP64RMMode(Enum):
 
 
 @unique
+class SVP64BCPredMode(Enum):
+    NONE = 0
+    MASKZERO = 1
+    MASKONE = 2
+
+@unique
+class SVP64BCVLSETMode(Enum):
+    NONE = 0
+    VL_INCL = 1
+    VL_EXCL = 2
+
+
+# note that these are chosen to be exactly the same as
+# SVP64 RM bit 4.  ALL=1 => bit4=1
+@unique
+class SVP64BCGate(Enum):
+    ANY = 0
+    ALL = 1
+
+
+@unique
+class SVP64BCStep(Enum):
+    NONE = 0
+    STEP = 1
+    STEP_RC = 2
+
+
+@unique
 class SVP64width(Enum):
     DEFAULT = 0
     EW_32 = 1
