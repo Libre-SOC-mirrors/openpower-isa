@@ -762,6 +762,28 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
                            row_subset=row_subset,
                            conditions=conditions)
 
+# test function from 
+#https://github.com/apertus-open-source-cinema/naps/blob/9ebbc0/naps/soc/cli.py#L17
+def fragment_repr(original):
+    from textwrap import indent
+    attrs_str = "\n"
+    for attr in ['ports', 'drivers', 'statements', 'attrs',
+                 'generated', 'flatten']:
+        attrs_str += f"{attr}={repr(getattr(original, attr))},\n"
+
+    domains_str = "\n"
+    for name, domain in original.domains.items():
+        # TODO: this is not really sound because domains could be non local
+        domains_str += f"{name}: {domain.name}\n"
+    attrs_str += f"domains={{{indent(domains_str, '  ')}}},\n"
+
+    children_str = "\n"
+    for child, name in original.subfragments:
+        children_str += f"[{name}, {fragment_repr(child)}]\n"
+    attrs_str += f"children=[{indent(children_str, '  ')}],\n"
+
+    return f"Fragment({indent(attrs_str, '  ')})"
+
 
 if __name__ == '__main__':
 
@@ -790,14 +812,22 @@ if __name__ == '__main__':
         with open("row_subset_decoder.v", "w") as f:
             f.write(vl)
 
-        exit(0)
-
         # col subset
 
-        pdecode = create_pdecode(name="fusubset", col_subset={'function_unit'})
+        pdecode = create_pdecode(name="fusubset", col_subset={'function_unit'},
+                                 conditions=conditions)
         vl = rtlil.convert(pdecode, ports=pdecode.ports())
         with open("col_subset_decoder.il", "w") as f:
             f.write(vl)
+
+        from nmigen.hdl.ir import Fragment
+        elaborated = Fragment.get(pdecode, platform=None)
+        elaborated_repr = fragment_repr(elaborated)
+        print (elaborated_repr)
+
+        exit(0)
+
+        exit(0)
 
     # full decoder
     pdecode = create_pdecode(include_fp=True)
@@ -810,3 +840,5 @@ if __name__ == '__main__':
     vl = rtlil.convert(pdecode, ports=pdecode.ports())
     with open("decoder_svp64.il", "w") as f:
         f.write(vl)
+
+
