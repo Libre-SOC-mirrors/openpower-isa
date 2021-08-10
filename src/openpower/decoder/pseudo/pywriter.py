@@ -30,6 +30,7 @@ from openpower.decoder.helpers import (EXTS, EXTS64, EXTZ64, ROTL64, ROTL32,
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.selectable_int import selectconcat as concat
 from openpower.decoder.orderedset import OrderedSet
+from openpower.decoder.isafunctions.bcd import BCD_TO_DPD, DPD_TO_BCD
 
 """
 
@@ -43,8 +44,6 @@ from openpower.decoder.helpers import (
                                 )
 from openpower.decoder.isafunctions.fpfromint import INT2FP
 from openpower.decoder.isafunctions.double2single import DOUBLE
-from openpower.decoder.isafunctions.bcd import BCD_TO_DPD, DPD_TO_BCD
-
 
 """
 
