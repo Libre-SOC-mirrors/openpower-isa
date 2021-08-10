@@ -107,6 +107,7 @@ class SVP64RMModeDecode(Elaboratable):
         self.bc_vlset = Signal(SVP64BCVLSETMode) # Branch-Conditional VLSET
         self.bc_step = Signal(SVP64BCStep)   # Branch-Conditional svstep mode
         self.bc_pred = Signal(SVP64BCPredMode) # BC predicate mode
+        self.bc_vsb = Signal()                 # BC VLSET-branch (like BO[1])
         self.bc_gate = Signal(SVP64BCGate)     # BC ALL or ANY gate
         self.bc_lru  = Signal()                # BC Link Register Update
 
@@ -148,14 +149,16 @@ class SVP64RMModeDecode(Elaboratable):
                     comb += self.bc_step.eq(SVP64BCStep.STEP)
             # VLSET mode
             with m.If(mode2[1]):
-                with m.If(self.rm_in.ewsrc[1]):
-                    comb += self.bc_step.eq(SVP64BCVLSETMode.VL_INCL)
+                with m.If(mode[SVP64MODE.BC_VLI]):
+                    comb += self.bc_vlset.eq(SVP64BCVLSETMode.VL_INCL)
                 with m.Else():
-                    comb += self.bc_step.eq(SVP64BCVLSETMode.VL_EXCL)
+                    comb += self.bc_vlset.eq(SVP64BCVLSETMode.VL_EXCL)
             # BC Mode ALL or ANY (Great-Big-AND-gate or Great-Big-OR-gate)
             comb += self.bc_gate.eq(self.rm_in.elwidth[0])
             # Link-Register Update
             comb += self.bc_lru.eq(self.rm_in.elwidth[1])
+            comb += self.bc_vsb.eq(self.rm_in.ewsrc[1])
+
         with m.Else():
             # combined arith / ldst decoding due to similarity
             with m.Switch(mode2):
