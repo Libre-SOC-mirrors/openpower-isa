@@ -1224,7 +1224,7 @@ class ISACaller:
 
         # see if srcstep/dststep need skipping over masked-out predicate bits
         if (self.is_svp64_mode or ins_name == 'setvl' or
-           ins_name.startswith("sv")):
+           ins_name in ['svremap', 'svstate']):
             yield from self.svstate_pre_inc()
         if self.is_svp64_mode:
             pre = yield from self.update_new_svstate_steps()
