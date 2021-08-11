@@ -755,17 +755,21 @@ class ISACaller:
         self.namespace['srcstep'] = srcstep
 
         # sv.bc* need some extra fields
-        if self.is_svp64_mode and insn_name.startswith("bc"):
+        if self.is_svp64_mode and insn_name.startswith("sv.bc"):
             # blegh grab bits manually
             mode = yield self.dec2.rm_dec.rm_in.mode
             bc_vlset = (mode & SVP64MODE.BC_VLSET) != 0
             bc_vli = (mode & SVP64MODE.BC_VLI) != 0
+            bc_snz = (mode & SVP64MODE.BC_SNZ) != 0
             bc_vsb = yield self.dec2.rm_dec.bc_vsb
             bc_lru = yield self.dec2.rm_dec.bc_lru
+            sz = yield self.dec2.rm_dec.pred_sz
             self.namespace['VSb'] = SelectableInt(bc_vsb, 1)
             self.namespace['LRu'] = SelectableInt(bc_lru, 1)
             self.namespace['VLSET'] = SelectableInt(bc_vlset, 1)
             self.namespace['VLI'] = SelectableInt(bc_vli, 1)
+            self.namespace['sz'] = SelectableInt(sz, 1)
+            self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
 
     def handle_carry_(self, inputs, outputs, already_done):
         inv_a = yield self.dec2.e.do.invert_in
@@ -1175,6 +1179,13 @@ class ISACaller:
             illegal = False
             ins_name = 'ffadds'
 
+        # branch-conditional redirects to sv.bc
+        if asmop.startswith('bc') and self.is_svp64_mode:
+            ins_name = 'sv.%s' % ins_name
+
+        log("   post-processed name", ins_name, asmop)
+
+        # illegal instructions call TRAP at 0x700
         if illegal:
             print("illegal", ins_name, asmop)
             self.call_trap(0x700, PIb.ILLEG)
@@ -1194,6 +1205,7 @@ class ISACaller:
             self.update_pc_next()
             return
 
+        # look up instruction in ISA.instrs, prepare namespace
         info = self.instrs[ins_name]
         yield from self.prep_namespace(ins_name, info.form, info.op_fields)
 
