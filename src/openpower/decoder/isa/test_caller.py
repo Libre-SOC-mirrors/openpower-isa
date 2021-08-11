@@ -18,7 +18,7 @@ class Register:
         self.num = num
 
 
-class TestRunner(FHDLTestCase):
+class ISATestRunner(FHDLTestCase):
     def __init__(self, tst_data, include_fp=True):
         super().__init__("run_all")
         self.test_data = tst_data
