@@ -194,20 +194,23 @@ DPD_TO_BCD_REGEX = re.compile(DPD_TO_BCD_PATTERN, re.M)
 
 def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
                                      initial_cr=0, mem=None,
-                                     initial_fprs=None):
+                                     initial_fprs=None,
+                                     pdecode2=None):
     if initial_sprs is None:
         initial_sprs = {}
     m = Module()
     comb = m.d.comb
     instruction = Signal(32)
 
-    pdecode = create_pdecode(include_fp=initial_fprs is not None)
+    if pdecode2 is None:
+        pdecode = create_pdecode(include_fp=initial_fprs is not None)
+        pdecode2 = PowerDecode2(pdecode)
 
     gen = list(generator.generate_instructions())
     insncode = generator.assembly.splitlines()
     instructions = list(zip(gen, insncode))
 
-    m.submodules.pdecode2 = pdecode2 = PowerDecode2(pdecode)
+    m.submodules.pdecode2 = pdecode2
     simulator = ISA(pdecode2, initial_regs, initial_sprs, initial_cr,
                     initial_insns=gen, respect_pc=True,
                     initial_svstate=svstate,
@@ -255,6 +258,11 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
 
 
 class BCDTestCase(FHDLTestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pdecode = create_pdecode(include_fp=True)
+        self.pdecode2 = PowerDecode2(pdecode)
+
     def test_cdtbcd(self):
         # This test is a terrible slowpoke; let's check first 20 values
         # for now, and come up with some clever ideas on how to make
@@ -290,7 +298,7 @@ class BCDTestCase(FHDLTestCase):
                     self.assertEqual(sim.gpr(0), SelectableInt(dpd, 64))
 
     def run_tst_program(self, prog, initial_regs=[0] * 32):
-        simulator = run_tst(prog, initial_regs)
+        simulator = run_tst(prog, initial_regs, pdecode2=self.pdecode2)
         simulator.gpr.dump()
         return simulator
 
