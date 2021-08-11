@@ -46,16 +46,16 @@ class ISATestRunner(FHDLTestCase):
                     insncode = generator.assembly.splitlines()
                     instructions = list(zip(gen, insncode))
 
-                    simulator = ISA(pdecode2, test.initial_regs,
-                                    test.initial_sprs,
-                                    test.initial_cr,
+                    simulator = ISA(pdecode2, test.regs,
+                                    test.sprs,
+                                    test.cr,
                                     initial_insns=gen, respect_pc=True,
                                     initial_svstate=test.svstate,
-                                    initial_mem=mem,
-                                    fpregfile=test.initial_fprs,
+                                    initial_mem=test.mem,
+                                    fpregfile=None,
                                     disassembly=insncode,
                                     bigendian=0,
-                                    mmu=mmu)
+                                    mmu=False)
 
                     print ("GPRs")
                     simulator.gpr.dump()
@@ -89,7 +89,6 @@ class ISATestRunner(FHDLTestCase):
         with sim.write_vcd("simulator.vcd", "simulator.gtkw",
                            traces=[]):
             sim.run()
-        return simulator
 
 
 def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
