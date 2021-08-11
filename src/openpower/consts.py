@@ -229,6 +229,8 @@ class SVP64MODEb:
     # for branch-conditional
     BC_SNZ = 3  # for branch-conditional mode
     BC_VLI = 2  # for VL include/exclude on VLSET mode
+    BC_VLSET = 1 # VLSET mode
+    BC_SVSTEP = 0 # svstep mode
     # reduce mode
     REDUCE = 2  # 0=normal predication 1=reduce mode
     PARALLEL = 3 # 1=parallel reduce, 0=scalar reduce

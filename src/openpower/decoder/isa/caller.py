@@ -30,7 +30,9 @@ from openpower.decoder.power_enums import SVPtype
 
 from openpower.decoder.helpers import (exts, gtu, ltu, undefined)
 from openpower.consts import PIb, MSRb  # big-endian (PowerISA versions)
-from openpower.consts import SVP64CROffs
+from openpower.consts import (SVP64MODE,
+                              SVP64CROffs,
+                             )
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 
 from openpower.decoder.isa.radixmmu import RADIX
@@ -720,7 +722,7 @@ class ISACaller:
     def memassign(self, ea, sz, val):
         self.mem.memassign(ea, sz, val)
 
-    def prep_namespace(self, formname, op_fields):
+    def prep_namespace(self, insn_name, formname, op_fields):
         # TODO: get field names from form in decoder*1* (not decoder2)
         # decoder2 is hand-created, and decoder1.sigform is auto-generated
         # from spec
@@ -751,6 +753,19 @@ class ISACaller:
         srcstep = self.svstate.srcstep
         self.namespace['VL'] = vl
         self.namespace['srcstep'] = srcstep
+
+        # sv.bc* need some extra fields
+        if self.is_svp64_mode and insn_name.startswith("bc"):
+            # blegh grab bits manually
+            mode = yield self.dec2.rm_dec.rm_in.mode
+            bc_vlset = (mode & SVP64MODE.BC_VLSET) != 0
+            bc_vli = (mode & SVP64MODE.BC_VLI) != 0
+            bc_vsb = yield self.dec2.rm_dec.bc_vsb
+            bc_lru = yield self.dec2.rm_dec.bc_lru
+            self.namespace['VSb'] = SelectableInt(bc_vsb, 1)
+            self.namespace['LRu'] = SelectableInt(bc_lru, 1)
+            self.namespace['VLSET'] = SelectableInt(bc_vlset, 1)
+            self.namespace['VLI'] = SelectableInt(bc_vli, 1)
 
     def handle_carry_(self, inputs, outputs, already_done):
         inv_a = yield self.dec2.e.do.invert_in
@@ -1180,7 +1195,7 @@ class ISACaller:
             return
 
         info = self.instrs[ins_name]
-        yield from self.prep_namespace(info.form, info.op_fields)
+        yield from self.prep_namespace(ins_name, info.form, info.op_fields)
 
         # preserve order of register names
         input_names = create_args(list(info.read_regs) +

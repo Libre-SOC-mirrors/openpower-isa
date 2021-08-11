@@ -142,13 +142,13 @@ class SVP64RMModeDecode(Elaboratable):
         with m.If(is_bc):
             # Branch-Conditional is completely different
             # svstep mode
-            with m.If(mode2[0]):
+            with m.If(mode[SVP64MODE.BC_SVSTEP]):
                 with m.If(self.rm_in.ewsrc[0]):
                     comb += self.bc_step.eq(SVP64BCStep.STEP_RC)
                 with m.Else():
                     comb += self.bc_step.eq(SVP64BCStep.STEP)
             # VLSET mode
-            with m.If(mode2[1]):
+            with m.If(mode[SVP64MODE.BC_VLSET]):
                 with m.If(mode[SVP64MODE.BC_VLI]):
                     comb += self.bc_vlset.eq(SVP64BCVLSETMode.VL_INCL)
                 with m.Else():

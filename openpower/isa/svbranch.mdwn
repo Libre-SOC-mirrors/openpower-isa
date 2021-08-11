@@ -1,0 +1,100 @@
+<!-- Instructions here part of Draft SVP64 Vectorised Branch -->
+
+<!-- Section 2.4 Branch Instructions. Pages 33 - 39 -->
+
+<!-- The sequence of instruction execution can be changed by the Branch -->
+<!-- instructions. Because all instructions are on word boundaries, bits 62 and 63 -->
+<!-- of the generated branch target address are ignored by the processor in -->
+<!-- performing the branch. -->
+
+<!-- target_addr specifies the branch target address. -->
+
+<!-- If AA=0 then the branch target address is the sum of LI || 0b00 sign-extended -->
+<!-- and the address of this instruction, with the high-order 32 bits of the branch -->
+<!-- target address set to 0 in 32-bit mode. -->
+
+<!-- If AA=1 then the branch target address is the value LI || 0b00 sign-extended, -->
+<!-- with the high-order 32 bits of the branch target address set to 0 in 32-bit -->
+<!-- mode. -->
+
+<!-- If LK=1 then the effective address of the instruction following the Branch -->
+<!-- instruction is placed into the Link Register. -->
+
+# Branch Conditional
+
+B-Form
+
+* sv.bc BO,BI,target_addr (AA=0 LK=0)
+* sv.bca BO,BI,target_addr (AA=1 LK=0)
+* sv.bcl BO,BI,target_addr (AA=0 LK=1)
+* sv.bcla BO,BI,target_addr (AA=1 LK=1)
+
+Pseudo-code:
+
+    # get SVP64 extended CR field 0..127
+    # SVCRf = sVP64EXTRA(BI>>2)
+    # if svstep_mode then
+    #    new_srcstep, CRbits = SVSTATE_NEXT(srcstep)
+    # else
+    #    CRbits = CR{SVCRf}
+    # select predicate bit or zero/one
+    # XXX if predicate[srcstep] then
+    # XXX     if BRc = 1 then # CR0 vectorised
+    # XXX         CR{SVCRf+srcstep} = CRbits
+    # XXX         testbit = CRbits[BI & 0b11]
+    if sz then
+        testbit = SNZ
+    else
+        testbit <- CR[BI+32]
+    # actual element test here
+    cond_ok <- BO[0] | ¬(testbit ^ BO[1])
+    # test for VL to be set (and exit)
+    if VLSET & (cond_ok = VSb) then
+        if VLI then
+            SVSTATE[7:13] <- (srcstep+1)
+        else
+            SVSTATE[7:13] <- srcstep+1
+    # XXX if svstep_mode then
+    # XXX   SVSTATE.srcstep = new_srcstep
+    # actual branch
+    if (mode_is_64bit) then M <- 0
+    else M <- 32
+    if ¬BO[2] then CTR <- CTR - 1
+    ctr_ok <- BO[2] | ((CTR[M:63] != 0) ^ BO[3])
+    lr_ok <- LRu
+    if ctr_ok & cond_ok then
+      if AA then NIA <-iea EXTS(BD || 0b00)
+      else       NIA <-iea CIA + EXTS(BD || 0b00)
+      lr_ok <- 0b1
+    if LK & lr_ok then LR <-iea CIA + 4
+
+Special Registers Altered:
+
+    CTR                    (if BO2=0)
+    LR                       (if LK=1)
+
+# Branch Conditional to Link Register
+
+XL-Form
+
+* sv.bclr BO,BI,BH (LK=0)
+* sv.bclrl BO,BI,BH (LK=1)
+
+Pseudo-code:
+
+    if (mode_is_64bit) then M <- 0
+    else M <- 32
+    if ¬BO[2]  then CTR <- CTR - 1
+    ctr_ok <- BO[2] | ((CTR[M:63] != 0) ^ BO[3])
+    cond_ok <- BO[0] | ¬(CR[BI+32] ^  BO[1])
+    lr_ok <- LRu
+    if ctr_ok & cond_ok then
+        NIA <-iea LR[0:61] || 0b00
+        lr_ok <- 0b1
+    if LK & lr_ok then LR <-iea CIA + 4
+
+Special Registers Altered:
+
+    CTR                    (if BO2=0)
+    LR                       (if LK=1)
+
