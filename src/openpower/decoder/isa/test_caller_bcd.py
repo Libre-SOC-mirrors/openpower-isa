@@ -293,6 +293,8 @@ class BCDTestCase(FHDLTestCase):
                            (int(match[0][1]) << 4) |
                            (int(digit) << 0))
                     dpd = int(match[1 + digit], 16)
+                    # TODO: append 32 instructions here
+                    # "cbcdtd %d %d" % (regnum, regnum)
                     lst = ["cbcdtd 0, 1"]
                     initial_regs[1] = bcd
                     with Program(lst, bigendian=False) as program:
