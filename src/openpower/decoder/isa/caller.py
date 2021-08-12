@@ -770,6 +770,9 @@ class ISACaller:
             self.namespace['VLI'] = SelectableInt(bc_vli, 1)
             self.namespace['sz'] = SelectableInt(sz, 1)
             self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
+            # use these to detect if the branch took place
+            self.namespace['ctr_ok'] = SelectableInt(0, 1)
+            self.namespace['cond_ok'] = SelectableInt(0, 1)
 
     def handle_carry_(self, inputs, outputs, already_done):
         inv_a = yield self.dec2.e.do.invert_in
