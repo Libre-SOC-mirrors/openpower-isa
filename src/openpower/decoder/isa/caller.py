@@ -806,8 +806,6 @@ class ISACaller:
             self.namespace['VLI'] = SelectableInt(bc_vli, 1)
             self.namespace['sz'] = SelectableInt(sz, 1)
             self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
-            # use these to detect if the branch took place
-            self.namespace['end_loop'] = SelectableInt(0, 1)
 
     def handle_carry_(self, inputs, outputs, already_done):
         inv_a = yield self.dec2.e.do.invert_in
@@ -1454,6 +1452,14 @@ class ISACaller:
         # clear trap (trap) NIA
         self.trap_nia = None
 
+        # check if this was an sv.bc* and create an indicator that
+        # this is the last check to be made as a loop.  combined with
+        # the ALL/ANY mode we can early-exit
+        if self.is_svp64_mode and ins_name.startswith("sv.bc"):
+            no_in_vec = yield self.dec2.no_in_vec # BI is scalar
+            end_loop = no_in_vec or srcstep == vl-1 or dststep == vl-1
+            self.namespace['end_loop'] = SelectableInt(end_loop, 1)
+
         # execute actual instruction here (finally)
         log("inputs", inputs)
         results = info.func(self, *inputs)
@@ -1797,7 +1803,7 @@ class ISACaller:
             # check if this was an sv.bc* and if so did it succeed
             if self.is_svp64_mode and insn_name.startswith("sv.bc"):
                 end_loop = self.namespace['end_loop']
-                log("branch ctr/cond", end_loop)
+                log("branch %s end_loop" % insn_name, end_loop)
                 if end_loop.value:
                     self.svp64_reset_loop()
                     self.update_pc_next()
