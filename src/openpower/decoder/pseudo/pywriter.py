@@ -93,8 +93,12 @@ class PyISAWriter(ISA):
                 op_fname = "op_%s" % page.replace(".", "_")
                 f.write("    @inject()\n")
                 f.write("    def %s(%s):\n" % (op_fname, args))
-                if 'NIA' in pycode:  # HACK - TODO fix
-                    f.write("        global NIA\n")
+                # blech! this works in combination with ISACaller
+                # @inject decorator, which works by injecting
+                # global variables into the function namespace.
+                for blech in ['NIA', 'cond_ok', 'ctr_ok']:
+                    if blech in pycode:  # HACK - TODO fix
+                        f.write("        global %s\n" % blech)
                 pycode = pycode.split("\n")
                 pycode = '\n'.join(map(lambda x: "        %s" % x, pycode))
                 pycode = pycode.rstrip()

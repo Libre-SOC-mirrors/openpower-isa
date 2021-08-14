@@ -51,13 +51,15 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(10), SelectableInt(0x1235, 64))
 
     def test_sv_branch_cond(self):
-        for i in [0]: #[0, 10]:
+        for i in [0, 10]: #[0, 10]:
             lst = SVP64Asm(
                 [f"addi 1, 0, {i}",  # set r1 to i
+                 f"addi 2, 0, {i}",  # set r2 to i
                 "cmpi cr0, 1, 1, 10",  # compare r1 with 10 and store to cr0
-                "sv.bc 12, 2, 0x8",    # beq 0x8 -
+                "cmpi cr1, 1, 2, 10",  # compare r2 with 10 and store to cr1
+                "sv.bc 12, 2.v, 0x8",    # beq 0x8 -
                                        # branch if r1 equals 10 to the nop below
-                "addi 2, 0, 0x1234",   # if r1 == 10 this shouldn't execute
+                "addi 3, 0, 0x1234",   # if r1 == 10 this shouldn't execute
                 "or 0, 0, 0"]          # branch target
                 )
             lst = list(lst)
@@ -71,9 +73,9 @@ class DecoderTestCase(FHDLTestCase):
             with Program(lst, bigendian=False) as program:
                 sim = self.run_tst_program(program, svstate=svstate)
                 if i == 10:
-                    self.assertEqual(sim.gpr(2), SelectableInt(0, 64))
+                    self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
                 else:
-                    self.assertEqual(sim.gpr(2), SelectableInt(0x1234, 64))
+                    self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
 
     def tst_sv_add_cr(self):
         """>>> lst = ['sv.add. 1.v, 5.v, 9.v'

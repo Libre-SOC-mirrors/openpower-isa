@@ -21,7 +21,7 @@ from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
                                      insns, MicrOp, In1Sel, In2Sel, In3Sel,
-                                     OutSel, CROutSel, LDSTMode,
+                                     OutSel, CRInSel, CROutSel, LDSTMode,
                                      SVP64RMMode, SVP64PredMode,
                                      SVP64PredInt, SVP64PredCR,
                                      SVP64LDSTmode)
@@ -72,6 +72,7 @@ REG_SORT_ORDER = {
     "RB": 0,
     "RC": 0,
     "RS": 0,
+    "BI": 0,
     "CR": 0,
     "LR": 0,
     "CTR": 0,
@@ -442,6 +443,30 @@ def get_pdecode_idx_in(dec2, name):
 
 
 # TODO, really should just be using PowerDecoder2
+def get_pdecode_cr_in(dec2, name):
+    op = dec2.dec.op
+    in_sel = yield op.cr_in
+    in_bitfield = yield dec2.dec_cr_in.cr_bitfield.data
+    sv_cr_in = yield op.sv_cr_in
+    spec = yield dec2.crin_svdec.spec
+    sv_override = yield dec2.dec_cr_in.sv_override
+    # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
+    in1 = yield dec2.e.read_cr1.data
+    cr_isvec = yield dec2.cr_in_isvec
+    log ("get_pdecode_cr_in", in_sel, CROutSel.CR0.value, in1, cr_isvec)
+    log ("    sv_cr_in", sv_cr_in)
+    log ("    cr_bf", in_bitfield)
+    log ("    spec", spec)
+    log ("    override", sv_override)
+    # identify which regnames map to in / o2
+    if name == 'BI':
+        if in_sel == CRInSel.BI.value:
+            return in1, cr_isvec
+    log ("get_pdecode_cr_in not found", name)
+    return None, False
+
+
+# TODO, really should just be using PowerDecoder2
 def get_pdecode_cr_out(dec2, name):
     op = dec2.dec.op
     out_sel = yield op.cr_out
@@ -731,11 +756,22 @@ class ISACaller:
         fields = self.decoder.sigforms[formname]
         log("prep_namespace", formname, op_fields)
         for name in op_fields:
-            if name == 'spr':
-                sig = getattr(fields, name.upper())
-            else:
+            # CR immediates. deal with separately.  needs modifying
+            # pseudocode 
+            if self.is_svp64_mode and name in ['BI']: # TODO, more CRs
+                # BI is a 5-bit, must reconstruct the value
+                regnum, is_vec = yield from get_pdecode_cr_in(self.dec2, name)
                 sig = getattr(fields, name)
-            val = yield sig
+                val = yield sig
+                # low 2 LSBs (CR field selector) remain same, CR num extended
+                assert regnum <= 7, "sigh, TODO, 128 CR fields"
+                val = (val & 0b11) | (regnum<<2)
+            else:
+                if name == 'spr':
+                    sig = getattr(fields, name.upper())
+                else:
+                    sig = getattr(fields, name)
+                val = yield sig
             # these are all opcode fields involved in index-selection of CR,
             # and need to do "standard" arithmetic.  CR[BA+32] for example
             # would, if using SelectableInt, only be 5-bit.
@@ -1557,7 +1593,7 @@ class ISACaller:
             else:
                 if self.allow_next_step_inc == 2:
                     log ("SVSTATE_NEXT: read")
-                    yield from self.svstate_post_inc()
+                    yield from self.svstate_post_inc(ins_name)
                 else:
                     log ("SVSTATE_NEXT: post-inc")
                 # use actual src/dst-step here to check end, do NOT
@@ -1597,7 +1633,7 @@ class ISACaller:
                     self.svstate.vfirst = 0
 
         elif self.is_svp64_mode:
-            yield from self.svstate_post_inc()
+            yield from self.svstate_post_inc(ins_name)
         else:
             # XXX only in non-SVP64 mode!
             # record state of whether the current operation was an svshape,
@@ -1718,7 +1754,7 @@ class ISACaller:
         # nothing needs doing (TODO zeroing): just do next instruction
         return srcstep == vl or dststep == vl
 
-    def svstate_post_inc(self, vf=0):
+    def svstate_post_inc(self, insn_name, vf=0):
         # check if SV "Vertical First" mode is enabled
         vfirst = self.svstate.vfirst
         log ("    SV Vertical First", vf, vfirst)
@@ -1758,9 +1794,21 @@ class ISACaller:
         if svp64_is_vector and srcstep != vl-1 and dststep != vl-1:
             self.svstate.srcstep += SelectableInt(1, 7)
             self.svstate.dststep += SelectableInt(1, 7)
+            self.namespace['SVSTATE'] = self.svstate
+            # check if this was an sv.bc* and if so did it succeed
+            if self.is_svp64_mode and insn_name.startswith("sv.bc"):
+                ctr_ok = self.namespace['ctr_ok']
+                cond_ok = self.namespace['cond_ok']
+                log("branch ctr/cond", ctr_ok, cond_ok)
+                if ctr_ok.value and cond_ok.value :
+                    self.svp64_reset_loop()
+                    self.update_pc_next()
+                    return True
+            # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
+            # (by default, NIA is CIA+4 if v3.0B or CIA+8 if SVP64)
+            # this way we keep repeating the same instruction (with new steps)
             self.pc.NIA.value = self.pc.CIA.value
             self.namespace['NIA'] = self.pc.NIA
-            self.namespace['SVSTATE'] = self.svstate
             log("end of sub-pc call", self.namespace['CIA'],
                                  self.namespace['NIA'])
             return False # DO NOT allow PC update whilst Sub-PC loop running
@@ -1788,6 +1836,7 @@ class ISACaller:
     def update_nia(self):
         self.pc.update_nia(self.is_svp64_mode)
         self.namespace['NIA'] = self.pc.NIA
+
 
 def inject():
     """Decorator factory.
@@ -1819,6 +1868,10 @@ def inject():
                   args[0].namespace['NIA'],
                   args[0].namespace['SVSTATE'])
             args[0].namespace = func_globals
+            if 'cond_ok' in args[0].namespace:
+                log("args[0] cond_ok ctr_ok",
+                      args[0].namespace['cond_ok'],
+                      args[0].namespace['ctr_ok'])
             #exec (func.__code__, func_globals)
 
             # finally:
