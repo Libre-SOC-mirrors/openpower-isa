@@ -807,8 +807,7 @@ class ISACaller:
             self.namespace['sz'] = SelectableInt(sz, 1)
             self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
             # use these to detect if the branch took place
-            self.namespace['ctr_ok'] = SelectableInt(0, 1)
-            self.namespace['cond_ok'] = SelectableInt(0, 1)
+            self.namespace['end_loop'] = SelectableInt(0, 1)
 
     def handle_carry_(self, inputs, outputs, already_done):
         inv_a = yield self.dec2.e.do.invert_in
@@ -1797,10 +1796,9 @@ class ISACaller:
             self.namespace['SVSTATE'] = self.svstate
             # check if this was an sv.bc* and if so did it succeed
             if self.is_svp64_mode and insn_name.startswith("sv.bc"):
-                ctr_ok = self.namespace['ctr_ok']
-                cond_ok = self.namespace['cond_ok']
-                log("branch ctr/cond", ctr_ok, cond_ok)
-                if ctr_ok.value and cond_ok.value :
+                end_loop = self.namespace['end_loop']
+                log("branch ctr/cond", end_loop)
+                if end_loop.value:
                     self.svp64_reset_loop()
                     self.update_pc_next()
                     return True
@@ -1868,10 +1866,6 @@ def inject():
                   args[0].namespace['NIA'],
                   args[0].namespace['SVSTATE'])
             args[0].namespace = func_globals
-            if 'cond_ok' in args[0].namespace:
-                log("args[0] cond_ok ctr_ok",
-                      args[0].namespace['cond_ok'],
-                      args[0].namespace['ctr_ok'])
             #exec (func.__code__, func_globals)
 
             # finally:

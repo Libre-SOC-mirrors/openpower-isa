@@ -66,6 +66,7 @@ Pseudo-code:
       if AA then NIA <-iea EXTS(BD || 0b00)
       else       NIA <-iea CIA + EXTS(BD || 0b00)
       lr_ok <- 0b1
+      end_loop <- 0b1
     if LK & lr_ok then LR <-iea CIA + 4
 
 Special Registers Altered:

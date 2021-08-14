@@ -96,7 +96,7 @@ class PyISAWriter(ISA):
                 # blech! this works in combination with ISACaller
                 # @inject decorator, which works by injecting
                 # global variables into the function namespace.
-                for blech in ['NIA', 'cond_ok', 'ctr_ok']:
+                for blech in ['NIA', 'end_loop']:
                     if blech in pycode:  # HACK - TODO fix
                         f.write("        global %s\n" % blech)
                 pycode = pycode.split("\n")
