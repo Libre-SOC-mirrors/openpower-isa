@@ -23,32 +23,32 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_load_store(self):
-        """>>> lst = ["addi 1, 0, 0x0010",
-                        "addi 2, 0, 0x0008",
-                        "addi 5, 0, 0x1234",
-                        "addi 6, 0, 0x1235",
-                        "sv.stw 5.v, 0(1.v)",
-                        "sv.lwz 9.v, 0(1.v)"]
+        """>>> lst = ["addi 16, 0, 0x0010",
+                        "addi 17, 0, 0x0008",
+                        "addi 4, 0, 0x1234",
+                        "addi 5, 0, 0x1235",
+                        "sv.stw 4.v, 0(1.v)",
+                        "sv.lwz 8.v, 0(1.v)"]
         """
-        lst = SVP64Asm(["addi 1, 0, 0x0010",
-                        "addi 2, 0, 0x0008",
-                        "addi 5, 0, 0x1234",
-                        "addi 6, 0, 0x1235",
-                        "sv.stw 5.v, 0(1.v)",
-                        "sv.lwz 9.v, 0(1.v)"])
+        lst = SVP64Asm(["addi 16, 0, 0x0010",
+                        "addi 17, 0, 0x0008",
+                        "addi 4, 0, 0x1234",
+                        "addi 5, 0, 0x1235",
+                        "sv.stw 4.v, 0(16.v)",
+                        "sv.lwz 8.v, 0(16.v)"])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
             print(sim.gpr(1))
-            self.assertEqual(sim.gpr(9), SelectableInt(0x1234, 64))
-            self.assertEqual(sim.gpr(10), SelectableInt(0x1235, 64))
+            self.assertEqual(sim.gpr(8), SelectableInt(0x1234, 64))
+            self.assertEqual(sim.gpr(9), SelectableInt(0x1235, 64))
 
     def test_sv_add(self):
         """>>> lst = ['sv.add 1.v, 5.v, 9.v'
@@ -70,9 +70,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = initial_regs[5] + initial_regs[9]  # 0x5555
@@ -101,9 +101,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = initial_regs[5] + initial_regs[9] # 0x5555
@@ -132,9 +132,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = initial_regs[5] + initial_regs[9]   # 0x5555
@@ -163,9 +163,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=0)
         svstate = SVP64State()
-        svstate.vl[0:7] = 0 # VL
-        svstate.maxvl[0:7] = 0 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 0 # VL
+        svstate.maxvl = 0 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
 
@@ -194,9 +194,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl[0:7] = 2 # VL
-        svstate.maxvl[0:7] = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.spr.asint()))
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = initial_regs[5] + initial_regs[9]  # 0x0
