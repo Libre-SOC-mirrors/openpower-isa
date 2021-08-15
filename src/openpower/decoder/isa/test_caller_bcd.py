@@ -257,49 +257,63 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
     return simulator
 
 
+def testgen(mapping):
+    zeros = [0] * 32
+    length = len(mapping)
+    iregs_whole = list(mapping.keys())
+    oregs_whole = list(mapping.values())
+    for base in range(0, length, 32):
+        iregs = (iregs_whole[base:base + 32] + zeros)[:32]
+        oregs = (oregs_whole[base:base + 32] + zeros)[:32]
+        yield (iregs, oregs)
+
+
 class BCDTestCase(FHDLTestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         pdecode = create_pdecode(include_fp=True)
         self.pdecode2 = PowerDecode2(pdecode)
 
-    def test_cdtbcd(self):
-        # This test is a terrible slowpoke; let's check first 20 values
-        # for now, and come up with some clever ideas on how to make
-        # it run faster.
-        initial_regs = [0] * 32
-        for match in DPD_TO_BCD_REGEX.findall(DPD_TO_BCD_TABLE)[0:2]:
-            for digit in range(0x10):
-                with self.subTest():
-                    dpd = int((match[0] + f"{digit:X}"), 16)
-                    bcd = ((int(match[1 + digit][0]) << 8) |
-                           (int(match[1 + digit][1]) << 4) |
-                           (int(match[1 + digit][2]) << 0))
-                    lst = ["cdtbcd 0, 1"]
-                    initial_regs[1] = dpd
-                    with Program(lst, bigendian=False) as program:
-                        sim = self.run_tst_program(program, initial_regs)
-                        self.assertEqual(sim.gpr(0), SelectableInt(bcd, 64))
+    def run_tst(self, instr, mapping):
+        lst = [f"{instr} {reg}, {reg}" for reg in range(32)]
+        for (iregs, oregs) in testgen(mapping):
+            with Program(lst, bigendian=False) as program:
+                sim = self.run_tst_program(program, iregs)
+                gprs = [sim.gpr(gpr) for gpr in range(32)]
+                for gpr in range(32):
+                    self.assertEqual(sim.gpr(gpr), SelectableInt(oregs[gpr], 64))
 
+    @unittest.skip("")
+    def test_cdtbcd(self):
+        mapping = {}
+        for match in DPD_TO_BCD_REGEX.findall(DPD_TO_BCD_TABLE):
+            for digit in range(0x10):
+                dpd = int((match[0] + f"{digit:X}"), 16)
+                bcd = ((int(match[1 + digit][0]) << 8) |
+                        (int(match[1 + digit][1]) << 4) |
+                        (int(match[1 + digit][2]) << 0))
+                mapping[dpd] = bcd
+        self.run_tst("cdtbcd", mapping)
+
+    @unittest.skip("")
     def test_cbcdtd(self):
-        # This test is a terrible slowpoke; let's check first 20 values
-        # for now, and come up with some clever ideas on how to make
-        # it run faster.
-        initial_regs = [0] * 32
-        for match in BCD_TO_DPD_REGEX.findall(BCD_TO_DPD_TABLE)[0:2]:
+        mapping = {}
+        for match in BCD_TO_DPD_REGEX.findall(BCD_TO_DPD_TABLE):
             for digit in range(10):
-                with self.subTest():
-                    bcd = ((int(match[0][0]) << 8) |
-                           (int(match[0][1]) << 4) |
-                           (int(digit) << 0))
-                    dpd = int(match[1 + digit], 16)
-                    # TODO: append 32 instructions here
-                    # "cbcdtd %d %d" % (regnum, regnum)
-                    lst = ["cbcdtd 0, 1"]
-                    initial_regs[1] = bcd
-                    with Program(lst, bigendian=False) as program:
-                        sim = self.run_tst_program(program, initial_regs)
-                        self.assertEqual(sim.gpr(0), SelectableInt(dpd, 64))
+                bcd = ((int(match[0][0]) << 8) |
+                        (int(match[0][1]) << 4) |
+                        (int(digit) << 0))
+                dpd = int(match[1 + digit], 16)
+                mapping[bcd] = dpd
+        self.run_tst("cbcdtd", mapping)
+
+    def test_400(self):
+        iregs = [0] * 32
+        iregs[0] = 0x400
+        lst = ["cbcdtd 0, 0"]
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, iregs)
+            self.assertEqual(sim.gpr(0), SelectableInt(0x200, 64))
 
     def run_tst_program(self, prog, initial_regs=[0] * 32):
         simulator = run_tst(prog, initial_regs, pdecode2=self.pdecode2)
