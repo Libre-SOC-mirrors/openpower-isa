@@ -170,6 +170,7 @@ class FieldSelectableIntTestCase(unittest.TestCase):
         fs[0:2] = 0b10
         self.assertEqual(fs.get_range(), 0b1011)
 
+
 class SelectableInt:
     """SelectableInt - a class that behaves exactly like python int
 
@@ -182,8 +183,9 @@ class SelectableInt:
     including negative start/end points.
     """
 
-    def __init__(self, value, bits):
+    def __init__(self, value, bits=None):
         if isinstance(value, SelectableInt):
+            bits = value.bits
             value = value.value
         mask = (1 << bits) - 1
         self.value = value & mask
