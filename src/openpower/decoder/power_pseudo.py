@@ -185,7 +185,13 @@ SVSTATE_next = """
 SVSTATE_NEXT(5)
 """
 
-code = SVSTATE_next
+logictest = """
+x <- (y * 5) + 3
+y <- (z + 5) * 3
+"""
+
+code = logictest
+#code = SVSTATE_next
 #code = hextest
 #code = lswx
 #code = testcond
