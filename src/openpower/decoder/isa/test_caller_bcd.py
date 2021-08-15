@@ -281,7 +281,8 @@ class BCDTestCase(FHDLTestCase):
                 sim = self.run_tst_program(program, iregs)
                 gprs = [sim.gpr(gpr) for gpr in range(32)]
                 for gpr in range(32):
-                    self.assertEqual(sim.gpr(gpr), SelectableInt(oregs[gpr], 64))
+                    self.assertEqual(sim.gpr(gpr),
+                                     SelectableInt(oregs[gpr], 64))
 
     @unittest.skip("")
     def test_cdtbcd(self):
