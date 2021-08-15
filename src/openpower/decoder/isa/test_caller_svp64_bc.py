@@ -51,13 +51,13 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(10), SelectableInt(0x1235, 64))
 
     def test_sv_branch_cond(self):
-        for i in [0, 10]: #[0, 10]:
+        for i in [0, 10]: #, 10]: #[0, 10]:
             lst = SVP64Asm(
                 [f"addi 1, 0, {i}",  # set r1 to i
                  f"addi 2, 0, {i}",  # set r2 to i
                 "cmpi cr0, 1, 1, 10",  # compare r1 with 10 and store to cr0
                 "cmpi cr1, 1, 2, 10",  # compare r2 with 10 and store to cr1
-                "sv.bc 12, 2.v, 0x8",    # beq 0x8 -
+                "sv.bc 12, 2.v, 0xc",    # beq 0xc -
                                        # branch if r1 equals 10 to the nop below
                 "addi 3, 0, 0x1234",   # if r1 == 10 this shouldn't execute
                 "or 0, 0, 0"]          # branch target
@@ -73,6 +73,33 @@ class DecoderTestCase(FHDLTestCase):
             with Program(lst, bigendian=False) as program:
                 sim = self.run_tst_program(program, svstate=svstate)
                 if i == 10:
+                    self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
+                else:
+                    self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
+
+    def test_sv_branch_cond_all(self):
+        for i in [7, 8, 9]:
+            lst = SVP64Asm(
+                [f"addi 1, 0, {i+1}",  # set r1 to i
+                 f"addi 2, 0, {i}",  # set r2 to i
+                "cmpi cr0, 1, 1, 8",  # compare r1 with 10 and store to cr0
+                "cmpi cr1, 1, 2, 8",  # compare r2 with 10 and store to cr1
+                "sv.bc/all 12, 1.v, 0xc",    # bgt 0xc - branch if BOTH
+                                       # r1 AND r2 greater 8 to the nop below
+                "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
+                "or 0, 0, 0"]          # branch target
+                )
+            lst = list(lst)
+
+            # SVSTATE (in this case, VL=2)
+            svstate = SVP64State()
+            svstate.vl = 2 # VL
+            svstate.maxvl = 2 # MAXVL
+            print ("SVSTATE", bin(svstate.asint()))
+
+            with Program(lst, bigendian=False) as program:
+                sim = self.run_tst_program(program, svstate=svstate)
+                if i == 9:
                     self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
                 else:
                     self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))

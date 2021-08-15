@@ -799,7 +799,9 @@ class ISACaller:
             bc_snz = (mode & SVP64MODE.BC_SNZ) != 0
             bc_vsb = yield self.dec2.rm_dec.bc_vsb
             bc_lru = yield self.dec2.rm_dec.bc_lru
+            bc_gate = yield self.dec2.rm_dec.bc_gate
             sz = yield self.dec2.rm_dec.pred_sz
+            self.namespace['ALL'] = SelectableInt(bc_gate, 1)
             self.namespace['VSb'] = SelectableInt(bc_vsb, 1)
             self.namespace['LRu'] = SelectableInt(bc_lru, 1)
             self.namespace['VLSET'] = SelectableInt(bc_vlset, 1)
@@ -1019,7 +1021,8 @@ class ISACaller:
         if not self.respect_pc:
             self.fake_pc += 4
 
-        log("execute one, CIA NIA", self.pc.CIA.value, self.pc.NIA.value)
+        log("execute one, CIA NIA", hex(self.pc.CIA.value),
+                                    hex(self.pc.NIA.value))
 
     def get_assembly_name(self):
         # TODO, asmregs is from the spec, e.g. add RT,RA,RB
@@ -1581,6 +1584,7 @@ class ISACaller:
         # this is our Sub-Program-Counter loop from 0 to VL-1
         pre = False
         post = False
+        nia_update = True
         if self.allow_next_step_inc:
             log("SVSTATE_NEXT: inc requested, mode",
                     self.svstate_next_mode, self.allow_next_step_inc)
@@ -1598,7 +1602,7 @@ class ISACaller:
             else:
                 if self.allow_next_step_inc == 2:
                     log ("SVSTATE_NEXT: read")
-                    yield from self.svstate_post_inc(ins_name)
+                    nia_update = (yield from self.svstate_post_inc(ins_name))
                 else:
                     log ("SVSTATE_NEXT: post-inc")
                 # use actual src/dst-step here to check end, do NOT
@@ -1638,7 +1642,7 @@ class ISACaller:
                     self.svstate.vfirst = 0
 
         elif self.is_svp64_mode:
-            yield from self.svstate_post_inc(ins_name)
+            nia_update = (yield from self.svstate_post_inc(ins_name))
         else:
             # XXX only in non-SVP64 mode!
             # record state of whether the current operation was an svshape,
@@ -1647,7 +1651,8 @@ class ISACaller:
             # to interrupt in between. sigh.
             self.last_op_svshape = asmop == 'svremap'
 
-        self.update_pc_next()
+        if nia_update:
+            self.update_pc_next()
 
     def SVSTATE_NEXT(self, mode, submode):
         """explicitly moves srcstep/dststep on to next element, for
@@ -1796,18 +1801,18 @@ class ISACaller:
             svp64_is_vector = (out_vec or in_vec)
         else:
             svp64_is_vector = out_vec
+        # check if this was an sv.bc* and if so did it succeed
+        if self.is_svp64_mode and insn_name.startswith("sv.bc"):
+            end_loop = self.namespace['end_loop']
+            log("branch %s end_loop" % insn_name, end_loop)
+            if end_loop.value:
+                self.svp64_reset_loop()
+                self.update_pc_next()
+                return False
         if svp64_is_vector and srcstep != vl-1 and dststep != vl-1:
             self.svstate.srcstep += SelectableInt(1, 7)
             self.svstate.dststep += SelectableInt(1, 7)
             self.namespace['SVSTATE'] = self.svstate
-            # check if this was an sv.bc* and if so did it succeed
-            if self.is_svp64_mode and insn_name.startswith("sv.bc"):
-                end_loop = self.namespace['end_loop']
-                log("branch %s end_loop" % insn_name, end_loop)
-                if end_loop.value:
-                    self.svp64_reset_loop()
-                    self.update_pc_next()
-                    return True
             # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
             # (by default, NIA is CIA+4 if v3.0B or CIA+8 if SVP64)
             # this way we keep repeating the same instruction (with new steps)
@@ -1871,6 +1876,8 @@ def inject():
             log("args[0]", args[0].namespace['CIA'],
                   args[0].namespace['NIA'],
                   args[0].namespace['SVSTATE'])
+            if 'end_loop' in func_globals:
+                log("args[0] end_loop", func_globals['end_loop'])
             args[0].namespace = func_globals
             #exec (func.__code__, func_globals)
 

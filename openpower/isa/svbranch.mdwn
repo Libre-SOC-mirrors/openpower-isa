@@ -54,6 +54,7 @@ Pseudo-code:
             SVSTATE[7:13] <- (srcstep+1)
         else
             SVSTATE[7:13] <- srcstep+1
+        end_loop <- 0b1
     # XXX if svstep_mode then
     # XXX   SVSTATE.srcstep = new_srcstep
     # actual branch
@@ -61,8 +62,17 @@ Pseudo-code:
     else M <- 32
     if ¬BO[2] then CTR <- CTR - 1
     ctr_ok <- BO[2] | ((CTR[M:63] != 0) ^ BO[3])
+    test_branch <- 0b1
+    if ALL then
+        # in ALL mode only try branching at end of loop
+        if ¬end_loop then
+            test_branch <- 0b0
+        # test early-exit. ALL will exit if cond_ok fails
+        if ¬cond_ok then
+            end_loop <- 0b1
+            test_branch <- 0b0
     lr_ok <- LRu
-    if ctr_ok & cond_ok then
+    if test_branch & ctr_ok & cond_ok then
       if AA then NIA <-iea EXTS(BD || 0b00)
       else       NIA <-iea CIA + EXTS(BD || 0b00)
       lr_ok <- 0b1

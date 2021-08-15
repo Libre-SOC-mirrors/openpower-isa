@@ -783,8 +783,8 @@ class SVP64Asm:
             sv_mode = ((bc_svstep << SVP64MODE.MOD2_MSB) |
                       (bc_vlset << SVP64MODE.MOD2_LSB) |
                       (bc_snz << SVP64MODE.BC_SNZ))
-            srcwid = (bc_brc << 1) | bc_vsb
-            destwid = (bc_all << 1) | bc_lru
+            srcwid = (bc_vsb << 1) | bc_lru
+            destwid = (bc_lru << 1) | bc_all
 
         else:
 
