@@ -1359,9 +1359,9 @@ class ISACaller:
             if not self.is_svp64_mode or not pred_src_zero:
                 log('reading reg %s %s' % (name, str(regnum)), is_vec)
                 if name in fregs:
-                    reg_val = self.fpr(regnum)
+                    reg_val = SelectableInt(self.fpr(regnum))
                 elif name is not None:
-                    reg_val = self.gpr(regnum)
+                    reg_val = SelectableInt(self.gpr(regnum))
             else:
                 log('zero input reg %s %s' % (name, str(regnum)), is_vec)
                 reg_val = 0
