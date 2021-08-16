@@ -5,13 +5,13 @@ launch_args_be = ['qemu-system-ppc64',
                   '-machine', 'powernv9',
                   '-cpu', 'power9',
                   '-nographic',
-                  '-s', '-S', '-m', 'size=4096']
+                  '-s', '-S', '-m', 'size=1024']
 
 launch_args_le = ['qemu-system-ppc64le',
                   '-machine', 'powernv9',
                   '-cpu', 'power9',
                   '-nographic',
-                  '-s', '-S', '-m', 'size=4096']
+                  '-s', '-S', '-m', 'size=1024']
 
 
 def swap_order(x, nbytes):
