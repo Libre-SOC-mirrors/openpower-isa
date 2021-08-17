@@ -289,7 +289,6 @@ class BCDTestCase(FHDLTestCase):
                         self.assertEqual(sim.gpr(gpr),
                                          SelectableInt(oregs[gpr], 64))
 
-    @unittest.skip("")
     def test_cdtbcd(self):
         mapping = {}
         for match in DPD_TO_BCD_REGEX.findall(DPD_TO_BCD_TABLE):
@@ -301,7 +300,6 @@ class BCDTestCase(FHDLTestCase):
                 mapping[dpd] = bcd
         self.run_tst("cdtbcd", mapping)
 
-    @unittest.skip("")
     def test_cbcdtd(self):
         mapping = {}
         for match in BCD_TO_DPD_REGEX.findall(BCD_TO_DPD_TABLE):
@@ -312,14 +310,6 @@ class BCDTestCase(FHDLTestCase):
                 dpd = int(match[1 + digit], 16)
                 mapping[bcd] = dpd
         self.run_tst("cbcdtd", mapping)
-
-    def test_400(self):
-        iregs = [0] * 32
-        iregs[0] = 0x400
-        lst = ["cbcdtd 0, 0"]
-        with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, iregs)
-            self.assertEqual(sim.gpr(0), SelectableInt(0x200, 64))
 
     def run_tst_program(self, prog, initial_regs=[0] * 32):
         simulator = run_tst(prog, initial_regs, pdecode2=self.pdecode2)
