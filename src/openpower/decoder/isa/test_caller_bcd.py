@@ -1,3 +1,4 @@
+import itertools
 import re
 from nmigen import Module, Signal
 from nmigen.back.pysim import Simulator, Settle
@@ -11,6 +12,10 @@ from openpower.decoder.isa.caller import ISACaller, inject
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
+
+
+# addg6s product limitations
+ADDG6S_PRODUCT_LIMIT = 16
 
 
 # PowerISA Version 3.0C Book 1 App. B, Table 129
@@ -310,6 +315,71 @@ class BCDTestCase(FHDLTestCase):
                 dpd = int(match[1 + digit], 16)
                 mapping[bcd] = dpd
         self.run_tst("cbcdtd", mapping)
+
+    def test_addg6s(self):
+        def half_adder(a, b):
+            (a, b) = map(bool, [a, b])
+            carry = a & b
+            sum = a ^ b
+            return (int(sum), int(carry))
+
+        def full_adder(a, b, c):
+            (a, b, c) = map(bool, [a, b, c])
+            (sum0, carry0) = half_adder(a, b)
+            (sum, carry1) = half_adder(sum0, c)
+            carry = (carry0 | carry1)
+            return (int(sum), int(carry))
+
+        def full_adder64(a, b):
+            sum = [0] * 64
+            carry = [0] * 64
+            (sum[0], carry[0]) = half_adder(a[0], b[0])
+            for bit in range(1, 64, 1):
+                (sum[bit], carry[bit]) = full_adder(a[bit], b[bit], carry[bit - 1])
+            return (sum + [carry[63]])
+
+        def addg6s(a, b):
+            BIT = lambda value, bit: int(bool((value >> bit) & 1))
+            a = list(reversed(list(map(lambda bit: BIT(a, bit), range(63, -1, -1)))))
+            b = list(reversed(list(map(lambda bit: BIT(b, bit), range(63, -1, -1)))))
+            sum = full_adder64(a, b)
+
+            a_in = lambda bit: a[bit]
+            b_in = lambda bit: b[bit]
+            sum_with_carry = lambda bit: sum[bit]
+
+            addg6s = [0] * 64
+            for i in range(15):
+                lo = i * 4
+                hi = (i + 1) * 4
+                if (a_in(hi) ^ b_in(hi) ^ (sum_with_carry(hi) == 0)):
+                    addg6s[lo + 3] = 0
+                    addg6s[lo + 2] = 1
+                    addg6s[lo + 1] = 1
+                    addg6s[lo + 0] = 0
+            if sum_with_carry(64) == 0:
+                addg6s[63] = 0
+                addg6s[62] = 1
+                addg6s[61] = 1
+                addg6s[60] = 0
+            return int("".join(map(str, reversed(addg6s))), 2)
+
+        cond = lambda item: item[0] < ADDG6S_PRODUCT_LIMIT
+        bcd = map(lambda digit: f"{digit:04b}", range(10))
+        product = enumerate(itertools.product(bcd, repeat=16))
+        sequences = (seq for (_, seq) in itertools.takewhile(cond, product))
+        numbers = [int("".join(seq), 2) for seq in sequences]
+        iregs = [0] * 32
+        for a in numbers:
+            for b in numbers:
+                rv = addg6s(a, b)
+                with self.subTest():
+                    iregs[2] = b
+                    iregs[1] = a
+                    lst = ["addg6s 0, 1, 2"]
+                    with Program(lst, bigendian=False) as program:
+                        sim = self.run_tst_program(program, iregs)
+                        self.assertEqual(sim.gpr(0), SelectableInt(rv, 64))
 
     def run_tst_program(self, prog, initial_regs=[0] * 32):
         simulator = run_tst(prog, initial_regs, pdecode2=self.pdecode2)
