@@ -345,14 +345,12 @@ class BCDTestCase(FHDLTestCase):
         rng10 = lambda: random.randrange(0, 10)
         bcdrng = lambda: int("".join((bcd[rng10()] for _ in range(16))), 2)
 
-        lst = []
+        lst = [f"addg6s {gpr}, {gpr + 0}, {gpr + 1}" for gpr in range(31)]
         oregs = [0] * 32
-        iregs = [bcdrng() for _ in range(32)]
-        for gpr in range(31):
-            lst += [f"addg6s {gpr}, {gpr + 0}, {gpr + 1}"]
-            oregs[gpr] = addg6s(iregs[gpr + 0], iregs[gpr + 1])
-
         for _ in range(16):
+            iregs = [bcdrng() for _ in range(32)]
+            for gpr in range(31):
+                oregs[gpr] = addg6s(iregs[gpr + 0], iregs[gpr + 1])
             with self.subTest():
                 with Program(lst, bigendian=False) as program:
                     sim = self.run_tst_program(program, iregs)
