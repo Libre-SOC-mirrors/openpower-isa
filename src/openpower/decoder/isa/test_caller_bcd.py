@@ -319,6 +319,8 @@ class BCDTestCase(FHDLTestCase):
         self.run_tst("cbcdtd", mapping)
 
     def test_addg6s(self):
+        # Reference implementation for addg6s, adopted to Python.
+        # https://github.com/antonblanchard/microwatt/blob/master/execute1.vhdl
         def addg6s(a, b):
             def bits(value, bits):
                 lsb = [((value >> bit) & 1) for bit in range(bits, -1, -1)]
