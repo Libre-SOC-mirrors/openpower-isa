@@ -336,13 +336,15 @@ class BCDTestCase(FHDLTestCase):
             carry = [0] * 64
             (sum[0], carry[0]) = half_adder(a[0], b[0])
             for bit in range(1, 64, 1):
-                (sum[bit], carry[bit]) = full_adder(a[bit], b[bit], carry[bit - 1])
+                (sum[bit], carry[bit]) = full_adder(a[bit], b[bit],
+                                                    carry[bit - 1])
             return (sum + [carry[63]])
 
         def addg6s(a, b):
             BIT = lambda value, bit: int(bool((value >> bit) & 1))
-            a = list(reversed(list(map(lambda bit: BIT(a, bit), range(63, -1, -1)))))
-            b = list(reversed(list(map(lambda bit: BIT(b, bit), range(63, -1, -1)))))
+            r64 = range(63, -1, -1)
+            a = list(reversed(list(map(lambda bit: BIT(a, bit), r64))))
+            b = list(reversed(list(map(lambda bit: BIT(b, bit), r64))))
             sum = full_adder64(a, b)
 
             a_in = lambda bit: a[bit]
