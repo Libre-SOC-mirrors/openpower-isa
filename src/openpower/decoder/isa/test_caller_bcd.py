@@ -16,10 +16,6 @@ from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
 
 
-# addg6s product limitations
-ADDG6S_PRODUCT_LIMIT = 2
-
-
 # PowerISA Version 3.0C Book 1 App. B, Table 129
 DPD_TO_BCD_TABLE = """
     0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
@@ -291,7 +287,6 @@ class BCDTestCase(FHDLTestCase):
             with self.subTest():
                 with Program(lst, bigendian=False) as program:
                     sim = self.run_tst_program(program, iregs)
-                    gprs = [sim.gpr(gpr) for gpr in range(32)]
                     for gpr in range(32):
                         self.assertEqual(sim.gpr(gpr),
                                          SelectableInt(oregs[gpr], 64))
@@ -359,8 +354,6 @@ class BCDTestCase(FHDLTestCase):
 
         for _ in range(16):
             with self.subTest():
-                for line in lst:
-                    print(line)
                 with Program(lst, bigendian=False) as program:
                     sim = self.run_tst_program(program, iregs)
                     for gpr in range(31):
