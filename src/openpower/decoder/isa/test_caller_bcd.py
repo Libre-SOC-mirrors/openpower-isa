@@ -330,15 +330,9 @@ class BCDTestCase(FHDLTestCase):
                 lo = i * 4
                 hi = (i + 1) * 4
                 if (a_in[hi] ^ b_in[hi] ^ (sum_with_carry[hi] == 0)):
-                    addg6s[lo + 3] = 0
-                    addg6s[lo + 2] = 1
-                    addg6s[lo + 1] = 1
-                    addg6s[lo + 0] = 0
+                    addg6s[lo:lo + 3 + 1] = [0, 1, 1, 0]
             if sum_with_carry[64] == 0:
-                addg6s[63] = 0
-                addg6s[62] = 1
-                addg6s[61] = 1
-                addg6s[60] = 0
+                addg6s[60:63] = [0, 1, 1, 0]
             return int("".join(map(str, reversed(addg6s))), 2)
 
         bcd = [f"{digit:04b}" for digit in range(10)]
