@@ -682,7 +682,8 @@ class ISACaller:
                                'MSR': self.msr,
                                'undefined': undefined,
                                'mode_is_64bit': True,
-                               'SO': XER_bits['SO']
+                               'SO': XER_bits['SO'],
+                               'XLEN': 64  # elwidth overrides, later
                                })
 
         # update pc to requested start point
