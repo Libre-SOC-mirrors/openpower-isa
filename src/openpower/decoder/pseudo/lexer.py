@@ -346,7 +346,7 @@ class PowerLexer:
     #t_NUMBER = r'\d+'
     # taken from decmial.py but without the leading sign
     def t_NUMBER(self, t):
-        r"""[-]?(\d+(\.\d*)?|\.\d+)([eE][-+]? \d+)?"""
+        r"""(\d+(\.\d*)?|\.\d+)([eE][-+]? \d+)?"""
         t.value = int(t.value)
         return t
 
