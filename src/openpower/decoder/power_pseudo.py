@@ -190,7 +190,12 @@ x <- (y * 5) + 3
 y <- (z + 5) * 3
 """
 
-code = logictest
+XLEN_test = """
+RA[XLEN:XLEN - 1]
+"""
+
+code = XLEN_test
+#code = logictest
 #code = SVSTATE_next
 #code = hextest
 #code = lswx
