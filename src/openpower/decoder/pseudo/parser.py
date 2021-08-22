@@ -653,7 +653,7 @@ class PowerParser:
                       | comparison BITXOR comparison
                       | comparison BITAND comparison
                       | PLUS comparison
-                      | comparison MINUS
+                      | MINUS comparison
                       | INVERT comparison
                       | comparison APPEND comparison
                       | power"""
