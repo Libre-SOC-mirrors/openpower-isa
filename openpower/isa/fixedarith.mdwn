@@ -331,9 +331,9 @@ XO-Form
 
 Pseudo-code:
 
-    prod[0:63] <- MULS((RA)[32:63], (RB)[32:63])
-    RT[32:63] <- prod[0:31]
-    RT[0:31] <- undefined(prod[0:31])
+    prod[0:XLEN-1] <- MULS((RA)[XLEN/2:XLEN-1], (RB)[XLEN/2:XLEN-1])
+    RT[XLEN/2:XLEN-1] <- prod[0:(XLEN/2)-1]
+    RT[0:(XLEN/2)-1] <- undefined(prod[0:(XLEN/2)-1])
 
 Special Registers Altered:
 
