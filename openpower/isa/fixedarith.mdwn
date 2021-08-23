@@ -350,10 +350,10 @@ XO-Form
 
 Pseudo-code:
 
-    prod[0:63] <- MULS((RA)[32:63], (RB)[32:63])
+    prod[0:XLEN-1] <- MULS((RA)[XLEN/2:XLEN-1], (RB)[XLEN/2:XLEN-1])
     RT <- prod
-    overflow <- ((prod[0:32] != [0]*33) &
-                 (prod[0:32] != [1]*33))
+    overflow <- ((prod[0:XLEN/2] != [0]*((XLEN/2)+1)) &
+                 (prod[0:XLEN/2] != [1]*((XLEN/2)+1)))
 
 Special Registers Altered:
 
