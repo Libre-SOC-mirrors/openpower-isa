@@ -567,10 +567,10 @@ XO-Form
 
 Pseudo-code:
 
-    prod[0:127] <- MULS((RA), (RB))
-    RT <- prod[64:127]
-    overflow <- ((prod[0:64] != [0]*65) &
-                 (prod[0:64] != [1]*65))
+    prod[0:(XLEN*2)-1] <- MULS((RA), (RB))
+    RT <- prod[XLEN:(XLEN*2)-1]
+    overflow <- ((prod[0:XLEN] != [0]*(XLEN+1)) &
+                 (prod[0:XLEN] != [1]*(XLEN+1)))
 
 Special Registers Altered:
 
