@@ -695,10 +695,10 @@ XO-Form
 
 Pseudo-code:
 
-    dividend[0:63] <- (RA)
-    divisor[0:63] <- (RB)
-    if (divisor = [0]*64) then
-        RT[0:63] <- undefined([0]*64)
+    dividend[0:XLEN-1] <- (RA)
+    divisor[0:XLEN-1] <- (RB)
+    if (divisor = [0]*XLEN) then
+        RT[0:XLEN-1] <- undefined([0]*XLEN)
         overflow <- 1
     else
         RT <- dividend / divisor
