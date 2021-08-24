@@ -586,8 +586,8 @@ XO-Form
 
 Pseudo-code:
 
-    prod[0:127] <- MULS((RA), (RB))
-    RT <- prod[0:63]
+    prod[0:(XLEN*2)-1] <- MULS((RA), (RB))
+    RT <- prod[0:XLEN-1]
 
 Special Registers Altered:
 
