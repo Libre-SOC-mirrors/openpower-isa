@@ -617,9 +617,9 @@ VA-Form
 
 Pseudo-code:
 
-    prod[0:127] <- MULS((RA), (RB))
-    sum[0:127] <- prod + EXTS(RC)
-    RT <- sum[0:63]
+    prod[0:(XLEN*2)-1] <- MULS((RA), (RB))
+    sum[0:(XLEN*2)-1] <- prod + EXTS(RC)[0:XLEN*2]
+    RT <- sum[0:XLEN-1]
 
 Special Registers Altered:
 
