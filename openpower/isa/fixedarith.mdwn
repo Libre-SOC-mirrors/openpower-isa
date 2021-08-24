@@ -753,19 +753,19 @@ XO-Form
 
 Pseudo-code:
 
-    dividend[0:127] <- (RA) || [0]*64
-    divisor[0:127] <- [0]*64 || (RB)
-    if divisor = [0]*128 then
+    dividend[0:(XLEN*2)-1] <- (RA) || [0]*XLEN
+    divisor[0:(XLEN*2)-1] <- [0]*XLEN || (RB)
+    if divisor = [0]*(XLEN*2) then
         overflow <- 1
     else
         result <- dividend / divisor
         if (RA) <u (RB) then
-            RT <- result[64:127]
+            RT <- result[XLEN:(XLEN*2)-1]
             overflow <- 0
         else
             overflow <- 1
     if overflow = 1 then
-        RT[0:63] <- undefined([0]*64)
+        RT[0:XLEN-1] <- undefined([0]*XLEN)
 
 Special Registers Altered:
 
