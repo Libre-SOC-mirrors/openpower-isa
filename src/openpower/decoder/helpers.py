@@ -22,6 +22,16 @@ Links:
 """
 
 
+def RANGE(start, end):
+    if start > end:
+        # auto-subtract-one (sigh) due to python range
+        end -= 1
+    else:
+        # auto-add-one (sigh) due to python range
+        end += 1
+    return range(start, end)
+
+
 def exts(value, bits):
     sign = 1 << (bits - 1)
     return (value & (sign - 1)) - (value & sign)

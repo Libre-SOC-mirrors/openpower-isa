@@ -26,6 +26,7 @@ from openpower.decoder.helpers import (EXTS, EXTS64, EXTZ64, ROTL64, ROTL32,
                                  trunc_divs, trunc_rems, MULS, DIVS, MODS,
                                  EXTS128, undefined,
                                  bitrev, SHL64,
+                                 RANGE,
                                 )
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.selectable_int import selectconcat as concat
