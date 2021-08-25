@@ -257,12 +257,12 @@ X-Form
 
 Pseudo-code:
 
-    n <- 32
-    do while n < 64
+    n <- (XLEN/2)
+    do while n < XLEN
        if (RS)[n] = 1 then
            leave
        n <- n + 1
-    RA <- n - 32
+    RA <- n - (XLEN/2)
 
 Special Registers Altered:
 
