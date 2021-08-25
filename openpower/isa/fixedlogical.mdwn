@@ -427,7 +427,7 @@ X-Form
 Pseudo-code:
 
     n <- 0
-    do while n < 64
+    do while n < XLEN
       if (RS)[n]  = 1 then
          leave
       n <- n + 1
