@@ -314,7 +314,7 @@ X-Form
 
 Pseudo-code:
 
-    do i = 0 to 7
+    do i = 0 to ((XLEN/8)-1)
        n <-  0
        do j = 0 to 7
           if (RS)[(i*8)+j] = 1 then
