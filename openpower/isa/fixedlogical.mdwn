@@ -408,7 +408,7 @@ X-Form
 Pseudo-code:
 
     n <- 0
-    do i = 0 to 63
+    do i = 0 to (XLEN-1)
        if (RS)[i] = 1 then
            n <-  n+1
     RA <- n
