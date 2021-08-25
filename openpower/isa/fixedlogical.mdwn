@@ -447,8 +447,8 @@ X-Form
 Pseudo-code:
 
     n  <- 0
-    do while n < 64
-       if (RS)[63-n] = 0b1 then
+    do while n < XLEN
+       if (RS)[XLEN-1-n] = 0b1 then
             leave
        n  <- n + 1
     RA <- EXTZ64(n)
