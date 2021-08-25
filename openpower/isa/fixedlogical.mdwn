@@ -468,11 +468,11 @@ Pseudo-code:
     perm <- [0] * 8
     for i = 0 to 7
        index <- (RS)[8*i:8*i+7]
-       if index <u 64 then
+       if index <u XLEN then
             perm[i] <- (RB)[index]
        else
             perm[i] <- 0
-    RA <- [0]*56 || perm[0:7]
+    RA <- [0]*(XLEN-8) || perm[0:7]
 
 Special Registers Altered:
 
