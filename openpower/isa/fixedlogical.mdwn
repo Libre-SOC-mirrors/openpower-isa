@@ -296,7 +296,7 @@ X-Form
 
 Pseudo-code:
 
-    do n = 0 to 7
+    do n = 0 to ((XLEN/8)-1)
         if RS[8*n:8* n+7] = (RB)[8*n:8*n+7] then
            RA[8*n:8* n+7] <- [1]*8
         else
