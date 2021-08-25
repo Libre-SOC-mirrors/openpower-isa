@@ -391,9 +391,9 @@ X-Form
 
 Pseudo-code:
 
-    s <- (RS)[32]
-    RA[32:63] <- (RS)[32:63]
-    RA[0:31] <- [s]*32
+    s <- (RS)[XLEN/2]
+    RA[XLEN/2:XLEN-1] <- (RS)[XLEN/2:XLEN-1]
+    RA[0:(XLEN/2)-1] <- [s]*(XLEN/2)
 
 Special Registers Altered:
 
