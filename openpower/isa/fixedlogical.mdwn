@@ -46,7 +46,7 @@ D-Form
 
 Pseudo-code:
 
-    RA <- (RS) & ([0]*32 || UI || [0]*16)
+    RA <- (RS) & ([0]*(XLEN-32) || UI || [0]*16)
 
 Special Registers Altered:
 
