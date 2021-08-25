@@ -315,8 +315,8 @@ D-Form
 
 Pseudo-code:
 
-    prod[0:127] <- MULS((RA), EXTS(SI))
-    RT <- prod[64:127]
+    prod[0:(XLEN*2)-1] <- MULS((RA), EXTS(SI))
+    RT <- prod[XLEN:(XLEN*2)-1]
 
 Special Registers Altered:
 
