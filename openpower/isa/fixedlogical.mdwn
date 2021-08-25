@@ -353,9 +353,9 @@ X-Form
 Pseudo-code:
 
     s <- 0
-    do i = 0 to 7
+    do i = 0 to ((XLEN/8)-1)
         s <- s ^ (RS)[i*8+7]
-    RA <- [0] * 63 || s
+    RA <- [0] * (XLEN-1) || s
 
 Special Registers Altered:
 
