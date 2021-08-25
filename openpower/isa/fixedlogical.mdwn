@@ -371,12 +371,12 @@ Pseudo-code:
 
     s <- 0
     t <- 0
-    do i = 0 to 3
+    do i = 0 to ((XLEN/8/2)-1)
         s <-  s ^ (RS)[i*8+7]
-    do i = 4 to 7
+    do i = 4 to ((XLEN/8)-1)
         t <-  t ^ (RS)[i*8+7]
-    RA[0:31] <- [0]*31 || s
-    RA[32:63] <- [0]*31 || t
+    RA[0:(XLEN/2)-1] <- [0]*((XLEN/2)-1) || s
+    RA[XLEN/2:XLEN-1] <- [0]*((XLEN/2)-1) || t
 
 Special Registers Altered:
 
