@@ -504,16 +504,16 @@ X-Form
 
 Pseudo-code:
 
-    dividend[0:31] <- (RA)[32:63]
-    divisor[0:31] <- (RB)[32:63]
-    if (((dividend = 0x8000_0000) &
-         (divisor = [1]*32)) |
-         (divisor = [0]*32)) then
-        RT[0:63] <- undefined([0]*64)
+    dividend[0:(XLEN/2)-1] <- (RA)[XLEN/2:XLEN-1]
+    divisor[0:(XLEN/2)-1] <- (RB)[XLEN/2:XLEN-1]
+    if (((dividend = (0b1 || ([0b0] * ((XLEN/2)-1)))) &
+         (divisor = [1]*(XLEN/2))) |
+         (divisor = [0]*(XLEN/2))) then
+        RT[0:XLEN-1] <- undefined([0]*XLEN)
         overflow <- 1
     else
-        RT[0:63] <- EXTS64(MODS(dividend, divisor))
-        RT[0:31] <- undefined(RT[0:31])
+        RT[0:XLEN-1] <- EXTS64(MODS(dividend, divisor))
+        RT[0:(XLEN/2)-1] <- undefined(RT[0:(XLEN/2)-1])
         overflow <- 0
 
 Special Registers Altered:
