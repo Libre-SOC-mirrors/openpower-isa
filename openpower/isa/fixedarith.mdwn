@@ -668,12 +668,12 @@ XO-Form
 
 Pseudo-code:
 
-    dividend[0:63] <- (RA)
-    divisor[0:63] <- (RB)
-    if (((dividend = 0x8000_0000_0000_0000) &
-         (divisor = [1]*64)) |
-         (divisor = [0]*64)) then
-        RT[0:63] <- undefined([0]*64)
+    dividend[0:XLEN-1] <- (RA)
+    divisor[0:XLEN-1] <- (RB)
+    if (((dividend = (0b1 || ([0b0] * (XLEN-1)))) &
+         (divisor = [1]*XLEN)) |
+         (divisor = [0]*XLEN)) then
+        RT[0:XLEN-1] <- undefined([0]*XLEN)
         overflow <- 1
     else
         RT <- DIVS(dividend, divisor)
