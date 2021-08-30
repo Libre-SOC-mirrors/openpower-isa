@@ -237,173 +237,173 @@ class ALUHelpers:
     def set_int_ra(alu, dec2, inp):
         # TODO: immediate RA zero.
         if 'ra' in inp:
-            yield alu.p.data_i.ra.eq(inp['ra'])
+            yield alu.p.i_data.ra.eq(inp['ra'])
         else:
-            yield alu.p.data_i.ra.eq(0)
+            yield alu.p.i_data.ra.eq(0)
 
     def set_int_rb(alu, dec2, inp):
-        yield alu.p.data_i.rb.eq(0)
+        yield alu.p.i_data.rb.eq(0)
         if 'rb' in inp:
-            yield alu.p.data_i.rb.eq(inp['rb'])
+            yield alu.p.i_data.rb.eq(inp['rb'])
         if not hasattr(dec2.e.do, "imm_data"):
             return
         # If there's an immediate, set the B operand to that
         imm_ok = yield dec2.e.do.imm_data.ok
         if imm_ok:
             data2 = yield dec2.e.do.imm_data.data
-            yield alu.p.data_i.rb.eq(data2)
+            yield alu.p.i_data.rb.eq(data2)
 
     def set_int_rc(alu, dec2, inp):
         if 'rc' in inp:
-            yield alu.p.data_i.rc.eq(inp['rc'])
+            yield alu.p.i_data.rc.eq(inp['rc'])
         else:
-            yield alu.p.data_i.rc.eq(0)
+            yield alu.p.i_data.rc.eq(0)
 
     def set_xer_ca(alu, dec2, inp):
         if 'xer_ca' in inp:
-            yield alu.p.data_i.xer_ca.eq(inp['xer_ca'])
+            yield alu.p.i_data.xer_ca.eq(inp['xer_ca'])
             print("extra inputs: CA/32", bin(inp['xer_ca']))
 
     def set_xer_ov(alu, dec2, inp):
         if 'xer_ov' in inp:
-            yield alu.p.data_i.xer_ov.eq(inp['xer_ov'])
+            yield alu.p.i_data.xer_ov.eq(inp['xer_ov'])
             print("extra inputs: OV/32", bin(inp['xer_ov']))
 
     def set_xer_so(alu, dec2, inp):
         if 'xer_so' in inp:
             so = inp['xer_so']
             print("extra inputs: so", so)
-            yield alu.p.data_i.xer_so.eq(so)
+            yield alu.p.i_data.xer_so.eq(so)
 
     def set_msr(alu, dec2, inp):
         print("TODO: deprecate set_msr")
         if 'msr' in inp:
-            yield alu.p.data_i.msr.eq(inp['msr'])
+            yield alu.p.i_data.msr.eq(inp['msr'])
 
     def set_cia(alu, dec2, inp):
         print("TODO: deprecate set_cia")
         if 'cia' in inp:
-            yield alu.p.data_i.cia.eq(inp['cia'])
+            yield alu.p.i_data.cia.eq(inp['cia'])
 
     def set_slow_spr1(alu, dec2, inp):
         if 'spr1' in inp:
-            yield alu.p.data_i.spr1.eq(inp['spr1'])
+            yield alu.p.i_data.spr1.eq(inp['spr1'])
 
     def set_slow_spr2(alu, dec2, inp):
         if 'spr2' in inp:
-            yield alu.p.data_i.spr2.eq(inp['spr2'])
+            yield alu.p.i_data.spr2.eq(inp['spr2'])
 
     def set_fast_spr1(alu, dec2, inp):
         if 'fast1' in inp:
-            yield alu.p.data_i.fast1.eq(inp['fast1'])
+            yield alu.p.i_data.fast1.eq(inp['fast1'])
 
     def set_fast_spr2(alu, dec2, inp):
         if 'fast2' in inp:
-            yield alu.p.data_i.fast2.eq(inp['fast2'])
+            yield alu.p.i_data.fast2.eq(inp['fast2'])
 
     def set_fast_spr3(alu, dec2, inp):
         if 'fast3' in inp:
-            yield alu.p.data_i.fast3.eq(inp['fast3'])
+            yield alu.p.i_data.fast3.eq(inp['fast3'])
 
     def set_cr_a(alu, dec2, inp):
         if 'cr_a' in inp:
-            yield alu.p.data_i.cr_a.eq(inp['cr_a'])
+            yield alu.p.i_data.cr_a.eq(inp['cr_a'])
 
     def set_cr_b(alu, dec2, inp):
         if 'cr_b' in inp:
-            yield alu.p.data_i.cr_b.eq(inp['cr_b'])
+            yield alu.p.i_data.cr_b.eq(inp['cr_b'])
 
     def set_cr_c(alu, dec2, inp):
         if 'cr_c' in inp:
-            yield alu.p.data_i.cr_c.eq(inp['cr_c'])
+            yield alu.p.i_data.cr_c.eq(inp['cr_c'])
 
     def set_full_cr(alu, dec2, inp):
         if 'full_cr' in inp:
             full_reg = yield dec2.dec_cr_in.whole_reg.data
             full_reg_ok = yield dec2.dec_cr_in.whole_reg.ok
             full_cr_mask = mask_extend(full_reg, 8, 4)
-            yield alu.p.data_i.full_cr.eq(inp['full_cr'] & full_cr_mask)
+            yield alu.p.i_data.full_cr.eq(inp['full_cr'] & full_cr_mask)
         else:
-            yield alu.p.data_i.full_cr.eq(0)
+            yield alu.p.i_data.full_cr.eq(0)
 
     def get_slow_spr1(res, alu, dec2):
-        spr1_valid = yield alu.n.data_o.spr1.ok
+        spr1_valid = yield alu.n.o_data.spr1.ok
         if spr1_valid:
-            res['spr1'] = yield alu.n.data_o.spr1.data
+            res['spr1'] = yield alu.n.o_data.spr1.data
 
     def get_slow_spr2(res, alu, dec2):
-        spr2_valid = yield alu.n.data_o.spr2.ok
+        spr2_valid = yield alu.n.o_data.spr2.ok
         if spr2_valid:
-            res['spr2'] = yield alu.n.data_o.spr2.data
+            res['spr2'] = yield alu.n.o_data.spr2.data
 
     def get_fast_spr1(res, alu, dec2):
-        spr1_valid = yield alu.n.data_o.fast1.ok
+        spr1_valid = yield alu.n.o_data.fast1.ok
         if spr1_valid:
-            res['fast1'] = yield alu.n.data_o.fast1.data
+            res['fast1'] = yield alu.n.o_data.fast1.data
 
     def get_fast_spr2(res, alu, dec2):
-        spr2_valid = yield alu.n.data_o.fast2.ok
+        spr2_valid = yield alu.n.o_data.fast2.ok
         if spr2_valid:
-            res['fast2'] = yield alu.n.data_o.fast2.data
+            res['fast2'] = yield alu.n.o_data.fast2.data
 
     def get_fast_spr3(res, alu, dec2):
-        spr3_valid = yield alu.n.data_o.fast3.ok
+        spr3_valid = yield alu.n.o_data.fast3.ok
         if spr3_valid:
-            res['fast3'] = yield alu.n.data_o.fast3.data
+            res['fast3'] = yield alu.n.o_data.fast3.data
 
     def get_cia(res, alu, dec2):
-        res['cia'] = yield alu.p.data_i.cia
+        res['cia'] = yield alu.p.i_data.cia
 
     def get_nia(res, alu, dec2):
-        nia_valid = yield alu.n.data_o.nia.ok
+        nia_valid = yield alu.n.o_data.nia.ok
         if nia_valid:
-            res['nia'] = yield alu.n.data_o.nia.data
+            res['nia'] = yield alu.n.o_data.nia.data
 
     def get_msr(res, alu, dec2):
-        msr_valid = yield alu.n.data_o.msr.ok
+        msr_valid = yield alu.n.o_data.msr.ok
         if msr_valid:
-            res['msr'] = yield alu.n.data_o.msr.data
+            res['msr'] = yield alu.n.o_data.msr.data
 
     def get_int_o1(res, alu, dec2):
         out_reg_valid = yield dec2.e.write_ea.ok
         if out_reg_valid:
-            res['o1'] = yield alu.n.data_o.o1.data
+            res['o1'] = yield alu.n.o_data.o1.data
 
     def get_int_o(res, alu, dec2):
         out_reg_valid = yield dec2.e.write_reg.ok
         if out_reg_valid:
-            res['o'] = yield alu.n.data_o.o.data
+            res['o'] = yield alu.n.o_data.o.data
 
     def get_cr_a(res, alu, dec2):
         cridx_ok = yield dec2.e.write_cr.ok
         if cridx_ok:
-            res['cr_a'] = yield alu.n.data_o.cr0.data
+            res['cr_a'] = yield alu.n.o_data.cr0.data
 
     def get_xer_so(res, alu, dec2):
         oe = yield dec2.e.do.oe.oe
         oe_ok = yield dec2.e.do.oe.ok
         xer_out = yield dec2.e.xer_out
-        if not (yield alu.n.data_o.xer_so.ok):
+        if not (yield alu.n.o_data.xer_so.ok):
             return
         if xer_out or (oe and oe_ok):
-            res['xer_so'] = yield alu.n.data_o.xer_so.data[0]
+            res['xer_so'] = yield alu.n.o_data.xer_so.data[0]
 
     def get_xer_ov(res, alu, dec2):
         oe = yield dec2.e.do.oe.oe
         oe_ok = yield dec2.e.do.oe.ok
         xer_out = yield dec2.e.xer_out
-        if not (yield alu.n.data_o.xer_ov.ok):
+        if not (yield alu.n.o_data.xer_ov.ok):
             return
         if xer_out or (oe and oe_ok):
-            res['xer_ov'] = yield alu.n.data_o.xer_ov.data
+            res['xer_ov'] = yield alu.n.o_data.xer_ov.data
 
     def get_xer_ca(res, alu, dec2):
         cry_out = yield dec2.e.do.output_carry
         xer_out = yield dec2.e.xer_out
-        if not (yield alu.n.data_o.xer_ca.ok):
+        if not (yield alu.n.o_data.xer_ca.ok):
             return
         if xer_out or (cry_out):
-            res['xer_ca'] = yield alu.n.data_o.xer_ca.data
+            res['xer_ca'] = yield alu.n.o_data.xer_ca.data
 
     def get_sim_int_o(res, sim, dec2):
         out_reg_valid = yield dec2.e.write_reg.ok
@@ -456,7 +456,7 @@ class ALUHelpers:
             res['spr1'] = sim.spr[spr_name].value
 
     def get_wr_sim_xer_ca(res, sim, dec2):
-        # if not (yield alu.n.data_o.xer_ca.ok):
+        # if not (yield alu.n.o_data.xer_ca.ok):
         #    return
         cry_out = yield dec2.e.do.output_carry
         xer_out = yield dec2.e.xer_out
@@ -470,7 +470,7 @@ class ALUHelpers:
         oe_ok = yield dec2.e.do.oe.ok
         xer_out = yield dec2.e.xer_out
         print("get_wr_sim_xer_ov", xer_out)
-        if not (yield alu.n.data_o.xer_ov.ok):
+        if not (yield alu.n.o_data.xer_ov.ok):
             return
         if xer_out or (oe and oe_ok):
             expected_ov = 1 if sim.spr['XER'][XER_bits['OV']] else 0
@@ -481,7 +481,7 @@ class ALUHelpers:
         oe = yield dec2.e.do.oe.oe
         oe_ok = yield dec2.e.do.oe.ok
         xer_out = yield dec2.e.xer_out
-        if not (yield alu.n.data_o.xer_so.ok):
+        if not (yield alu.n.o_data.xer_so.ok):
             return
         if xer_out or (oe and oe_ok):
             res['xer_so'] = 1 if sim.spr['XER'][XER_bits['SO']] else 0
