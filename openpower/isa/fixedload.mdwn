@@ -116,7 +116,7 @@ Pseudo-code:
 
     b <- (RA|0)
     EA <- b + (RB)
-    RT <- [0] * 48 || MEM(EA, 2)
+    RT <- ([0] * (XLEN-16)) || MEM(EA, 2)
 
 Special Registers Altered:
 
