@@ -206,7 +206,17 @@ concat_test3 = """
 [0]*XLEN
 """
 
-code = concat_test3
+assign_test = """
+prod[0:63] <- 5
+prod[0:XLEN-1] <- 5
+"""
+
+assign_test2 = """
+prod[0:XLEN-1] <- 5
+"""
+
+code = assign_test2
+#code = concat_test3
 #code = concat_test1
 #code = XLEN_test
 #code = logictest
