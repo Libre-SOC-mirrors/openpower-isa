@@ -176,10 +176,21 @@ def check_concat(node):  # checks if the comparison is already a concat
 
 # identify SelectableInt pattern [something] * N
 # must return concat(something, repeat=N)
+# here is a TEMPORARY hack to support minimal expressions
+# such as (XLEN-16), looking for ast.BinOp
+# have to keep an eye on this
 def identify_sint_mul_pattern(p):
+    """here we are looking for patterns of this type:
+        [item] * something
+    these must specifically be returned as concat(item, repeat=something)
+    """
+    #print ("identify_sint_mul_pattern")
+    #for pat in p:
+    #    print("    ", astor.dump_tree(pat))
     if p[2] != '*':  # multiply
         return False
-    if not isinstance(p[3], ast.Constant):  # rhs = Num
+    if (not isinstance(p[3], ast.Constant) and  # rhs = Num
+        not isinstance(p[3], ast.BinOp)):       # rhs = (XLEN-something)
         return False
     if not isinstance(p[1], ast.List):  # lhs is a list
         return False

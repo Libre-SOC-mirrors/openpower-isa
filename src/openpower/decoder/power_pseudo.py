@@ -194,7 +194,17 @@ XLEN_test = """
 RA[XLEN:XLEN - 1]
 """
 
-code = XLEN_test
+concat_test1 = """
+[0]*16
+"""
+
+concat_test2 = """
+[0]*(XLEN-16)
+"""
+
+code = concat_test2
+#code = concat_test1
+#code = XLEN_test
 #code = logictest
 #code = SVSTATE_next
 #code = hextest
