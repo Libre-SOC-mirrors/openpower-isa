@@ -215,7 +215,13 @@ assign_test2 = """
 prod[0:XLEN-1] <- 5
 """
 
-code = assign_test2
+assign_test = """
+prod[0:XLEN-1] <- MULS((RA)[XLEN/2:XLEN-1], (RB)[XLEN/2:XLEN-1])
+RT[XLEN/2:XLEN-1] <- prod[0:(XLEN/2)-1]
+RT[0:(XLEN/2)-1] <- undefined(prod[0:(XLEN/2)-1])
+"""
+
+code = assign_test
 #code = concat_test3
 #code = concat_test1
 #code = XLEN_test

@@ -28,7 +28,7 @@ fregs = ['FRA', 'FRS', 'FRB', 'FRC', 'FRT', 'FRS']
 
 def Assign(autoassign, assignname, left, right, iea_mode):
     names = []
-    print("Assign", assignname, left, right)
+    print("Assign", autoassign, assignname, left, right)
     if isinstance(left, ast.Name):
         # Single assignment on left
         # XXX when doing IntClass, which will have an "eq" function,
@@ -62,10 +62,12 @@ def Assign(autoassign, assignname, left, right, iea_mode):
             # the declaration makes the slice-assignment "work"
             lower, upper, step = ls.lower, ls.upper, ls.step
             print("lower, upper, step", repr(lower), repr(upper), step)
-            if not isinstance(lower, ast.Constant) or \
-               not isinstance(upper, ast.Constant):
-                return res
-            qty = ast.Num(upper.value-lower.value)
+            # XXX relax constraint that indices on auto-assign have
+            # to be constants x[0:32]
+            #if not isinstance(lower, ast.Constant) or \
+            #   not isinstance(upper, ast.Constant):
+            #    return res
+            qty = ast.BinOp(upper, binary_ops['-'], lower)
             keywords = [ast.keyword(arg='repeat', value=qty)]
             l = [ast.Num(0)]
             right = ast.Call(ast.Name("concat", ast.Load()), l, keywords)
@@ -438,8 +440,14 @@ class PowerParser:
             if isinstance(p[1], ast.Name):
                 name = p[1].id
             elif isinstance(p[1], ast.Subscript):
+                print ("assign subscript", p[1].value,
+                                           self.declared_vars,
+                                           self.fnparm_vars,
+                                           self.special_regs)
+                print(astor.dump_tree(p[1]))
                 if isinstance(p[1].value, ast.Name):
                     name = p[1].value.id
+                    print ("assign subscript value to name", name)
                     if name in self.gprs:
                         # add to list of uninitialised
                         self.uninit_regs.add(name)
