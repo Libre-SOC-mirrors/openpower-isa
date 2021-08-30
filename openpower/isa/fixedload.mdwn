@@ -52,7 +52,7 @@ Pseudo-code:
 
     b <- (RA|0)
     EA <- b + (RB)
-    RT <- [0] * 56 || MEM(EA, 1)
+    RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
 
 Special Registers Altered:
 
