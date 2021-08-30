@@ -202,7 +202,11 @@ concat_test2 = """
 [0]*(XLEN-16)
 """
 
-code = concat_test2
+concat_test3 = """
+[0]*XLEN
+"""
+
+code = concat_test3
 #code = concat_test1
 #code = XLEN_test
 #code = logictest
