@@ -19,17 +19,17 @@ MODS = trunc_rems
 """
 Links:
 * https://bugs.libre-soc.org/show_bug.cgi?id=324 - add trunc_div and trunc_rem
+* https://bugs.libre-soc.org/show_bug.cgi?id=671#c38 - RANGE (and bugfixes)
 """
 
 
 def RANGE(start, end):
     if start > end:
+        # reverse direction
         # auto-subtract-one (sigh) due to python range
-        end -= 1
-    else:
-        # auto-add-one (sigh) due to python range
-        end += 1
-    return range(start, end)
+        return range(start, end-1, -1)
+    # auto-add-one (sigh) due to python range
+    return range(start, end+1)
 
 
 def exts(value, bits):
