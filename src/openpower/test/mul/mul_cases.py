@@ -91,6 +91,18 @@ class MulTestCases2Arg(TestAccumulatorBase):
             initial_regs[2] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
 
+    def case_mulli(self):
+
+        for i in range(40):
+            imm = random.randint(-1 << 15, (1 << 15) - 1)
+            ra = random.randint(0, (1 << 64) - 1)
+            l = [f"mulli 0, 1, {imm}"]
+            # use "with" so as to close the files used
+            with Program(l, bigendian) as prog:
+                initial_regs = [0] * 32
+                initial_regs[1] = ra
+                self.add_case(prog, initial_regs)
+
     def case_rand_mulhd(self):
         insns = ["mulhd", "mulhd."]
         for i in range(40):
