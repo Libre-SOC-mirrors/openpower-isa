@@ -67,7 +67,7 @@ D-Form
 Pseudo-code:
 
     EA <- (RA) + EXTS(D)
-    RT <- [0] * 56 || MEM(EA, 1)
+    RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
     RA <- EA
 
 Special Registers Altered:
