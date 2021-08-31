@@ -367,8 +367,8 @@ XS-Form
 Pseudo-code:
 
     n  <- sh
-    r  <- ROTL64(EXTS64(RS[32:63]), n)
-    m  <- MASK(0, 63-n)
+    r  <- ROTL64(EXTS64(RS[XLEN/2:XLEN-1]), n)
+    m  <- MASK(0, XLEN-1-n)
     RA <- r & m
 
 Special Registers Altered:
