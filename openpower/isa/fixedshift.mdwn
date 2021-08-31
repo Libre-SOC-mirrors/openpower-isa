@@ -37,7 +37,7 @@ M-Form
 
 Pseudo-code:
 
-    n <- (RB)[59:63]
+    n <- (RB)[XLEN-5:XLEN-1]
     r <- ROTL32((RS)[32:63], n)
     m <- MASK32(MB, ME)
     RA <- r & m
