@@ -76,7 +76,7 @@ Pseudo-code:
     n <- sh
     r <- ROTL64((RS), n)
     b <- mb[5] || mb[0:4]
-    m <- MASK(b, 63)
+    m <- MASK(b, (XLEN-1))
     RA <- r & m
 
 Special Registers Altered:
