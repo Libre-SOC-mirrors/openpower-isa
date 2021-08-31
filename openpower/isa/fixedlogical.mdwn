@@ -333,12 +333,14 @@ X-Form
 
 Pseudo-code:
 
+    e <- (XLEN/2)-1
     do i = 0 to 1
+       s <- i*XLEN/2
        n <-  0
-       do j = 0 to ((XLEN/2)-1)
-          if (RS)[(i*(XLEN/2))+j] = 1 then
+       do j = 0 to e
+          if (RS)[s+j] = 1 then
               n <- n+1
-       RA[(i*(XLEN/2)):(i*(XLEN/2))+((XLEN/2)-1)] <- n
+       RA[s:s+e] <- n
 
 Special Registers Altered:
 
