@@ -149,7 +149,7 @@ MDS-Form
 
 Pseudo-code:
 
-    n <- (RB)[58:63]
+    n <- (RB)[XLEN-5:XLEN-1]
     r <- ROTL64((RS), n)
     e <- me[5] || me[0:4]
     m <- MASK(0, e)
