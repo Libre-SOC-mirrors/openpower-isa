@@ -319,10 +319,10 @@ XS-Form
 Pseudo-code:
 
     n <- sh
-    r <- ROTL64((RS), 64-n)
-    m <- MASK(n, 63)
+    r <- ROTL64((RS), XLEN-n)
+    m <- MASK(n, (XLEN-1))
     s <- (RS)[0]
-    RA <- r&m | ([s]*64)& ¬m
+    RA <- r&m | ([s]*XLEN)& ¬m
     carry <- s & ((r& ¬m) != 0)
     CA    <- carry
     CA32  <- carry
