@@ -278,11 +278,11 @@ X-Form
 
 Pseudo-code:
 
-    n <- (RB)[58:63]
+    n <- (RB)[XLEN-5:XLEN-1]
     r <- ROTL64((RS), n)
-    if (RB)[57] = 0 then
-         m <- MASK(0, 63-n)
-    else m <- [0]*64
+    if (RB)[XLEN-7] = 0 then
+         m <- MASK(0, XLEN-1-n)
+    else m <- [0]*XLEN
     RA <- r & m
 
 Special Registers Altered:
