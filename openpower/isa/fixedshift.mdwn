@@ -231,11 +231,11 @@ X-Form
 Pseudo-code:
 
     n <- SH
-    r <- ROTL32((RS)[32:63], 64-n)
-    m <- MASK32(n, 31)
-    s <- (RS)[32]
-    RA <- r&m | ([s]*64)& ¬m
-    carry <- s & ((r&¬m)[32:63] != 0)
+    r <- ROTL32((RS)[XLEN/2:XLEN-1], 64-n)
+    m <- MASK32(n, ((XLEN/2)-1))
+    s <- (RS)[XLEN/2]
+    RA <- r&m | ([s]*XLEN)& ¬m
+    carry <- s & ((r&¬m)[XLEN/2:XLEN-1] != 0)
     CA    <- carry
     CA32  <- carry
 
