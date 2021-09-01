@@ -278,7 +278,7 @@ X-Form
 
 Pseudo-code:
 
-    n <- (RB)[XLEN-5:XLEN-1]
+    n <- (RB)[XLEN-6:XLEN-1]
     r <- ROTL64((RS), n)
     if (RB)[XLEN-7] = 0 then
          m <- MASK(0, XLEN-1-n)
@@ -298,7 +298,7 @@ X-Form
 
 Pseudo-code:
 
-    n <- (RB)[XLEN-5:XLEN-1]
+    n <- (RB)[XLEN-6:XLEN-1]
     r <- ROTL64((RS), XLEN-n)
     if (RB)[XLEN-7] = 0 then
         m <-  MASK(n, (XLEN-1))
