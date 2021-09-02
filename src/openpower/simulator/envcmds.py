@@ -10,6 +10,6 @@ for cmd in ['objcopy', 'as', 'ld', 'gcc', 'ar', 'gdb']:
         default = cmd
     else:
         default = "powerpc64-linux-gnu-%s" % cmd
-    cmds[cmd] = os.environ.get(cmd.upper(), actual)
+    cmds[cmd] = os.environ.get(cmd.upper(), default)
 
 
