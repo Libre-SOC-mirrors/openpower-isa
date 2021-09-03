@@ -71,7 +71,7 @@ X-Form
 Pseudo-code:
 
     EA <- (RA) + (RB)
-    MEM(EA, 1) <- (RS)[56:63]
+    MEM(EA, 1) <- (RS)[XLEN-8:XLEN-1]
     RA <- EA
 
 Special Registers Altered:
