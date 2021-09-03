@@ -89,20 +89,23 @@ class ISATestRunner(FHDLTestCase):
 
 def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
                                      initial_cr=0, mem=None,
-                                     initial_fprs=None):
+                                     initial_fprs=None,
+                                     pdecode2=None):
     if initial_sprs is None:
         initial_sprs = {}
     m = Module()
     comb = m.d.comb
     instruction = Signal(32)
 
-    pdecode = create_pdecode(include_fp=initial_fprs is not None)
+    if pdecode2 is None:
+        pdecode = create_pdecode(include_fp=initial_fprs is not None)
+        pdecode2 = PowerDecode2(pdecode)
+    m.submodules.pdecode2 = pdecode2
 
     gen = list(generator.generate_instructions())
     insncode = generator.assembly.splitlines()
     instructions = list(zip(gen, insncode))
 
-    m.submodules.pdecode2 = pdecode2 = PowerDecode2(pdecode)
     simulator = ISA(pdecode2, initial_regs, initial_sprs, initial_cr,
                     initial_insns=gen, respect_pc=True,
                     initial_svstate=svstate,
