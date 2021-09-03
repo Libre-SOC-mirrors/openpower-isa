@@ -15,6 +15,8 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.all import ISA
 
+from openpower.decoder.isa.test_runner import run_tst
+
 
 # PowerISA Version 3.0C Book 1 App. B, Table 129
 DPD_TO_BCD_TABLE = """
@@ -197,71 +199,6 @@ BCD_TO_DPD_PATTERN = (r"^(\d{2})_\s" +
                       r"\s".join([r"([0-9A-F]{3})"] * 10) +
                       r"$")
 BCD_TO_DPD_REGEX = re.compile(BCD_TO_DPD_PATTERN, re.M)
-
-
-def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
-                                     initial_cr=0, mem=None,
-                                     initial_fprs=None,
-                                     pdecode2=None):
-    if initial_sprs is None:
-        initial_sprs = {}
-    m = Module()
-    comb = m.d.comb
-    instruction = Signal(32)
-
-    if pdecode2 is None:
-        pdecode = create_pdecode(include_fp=initial_fprs is not None)
-        pdecode2 = PowerDecode2(pdecode)
-
-    gen = list(generator.generate_instructions())
-    insncode = generator.assembly.splitlines()
-    instructions = list(zip(gen, insncode))
-
-    m.submodules.pdecode2 = pdecode2
-    simulator = ISA(pdecode2, initial_regs, initial_sprs, initial_cr,
-                    initial_insns=gen, respect_pc=True,
-                    initial_svstate=svstate,
-                    initial_mem=mem,
-                    fpregfile=initial_fprs,
-                    disassembly=insncode,
-                    bigendian=0,
-                    mmu=mmu)
-    comb += pdecode2.dec.raw_opcode_in.eq(instruction)
-    sim = Simulator(m)
-
-    def process():
-
-        print ("GPRs")
-        simulator.gpr.dump()
-        print ("FPRs")
-        simulator.fpr.dump()
-
-        yield pdecode2.dec.bigendian.eq(0)  # little / big?
-        pc = simulator.pc.CIA.value
-        index = pc//4
-        while index < len(instructions):
-            print("instr pc", pc)
-            try:
-                yield from simulator.setup_one()
-            except KeyError:  # indicates instruction not in imem: stop
-                break
-            yield Settle()
-
-            ins, code = instructions[index]
-            print("    0x{:X}".format(ins & 0xffffffff))
-            opname = code.split(' ')[0]
-            print(code, opname)
-
-            # ask the decoder to decode this binary data (endian'd)
-            yield from simulator.execute_one()
-            pc = simulator.pc.CIA.value
-            index = pc//4
-
-    sim.add_process(process)
-    with sim.write_vcd("simulator.vcd", "simulator.gtkw",
-                       traces=[]):
-        sim.run()
-    return simulator
 
 
 def testgen(mapping):
