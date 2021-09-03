@@ -168,7 +168,7 @@ Pseudo-code:
 
     b <- (RA|0)
     EA <- b + (RB)
-    MEM(EA, 4) <- (RS)[32:63]
+    MEM(EA, 4) <- (RS)[XLEN-32:XLEN-1]
 
 Special Registers Altered:
 
