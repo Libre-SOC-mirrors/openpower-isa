@@ -24,7 +24,7 @@ Pseudo-code:
 
     b <- (RA|0)
     EA <- b + EXTS(D)
-    MEM(EA, 1) <- (RS)[56:63]
+    MEM(EA, 1) <- (RS)[XLEN-8:XLEN-1]
 
 Special Registers Altered:
 
