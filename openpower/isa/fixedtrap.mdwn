@@ -34,8 +34,8 @@ X-Form
 
 Pseudo-code:
 
-    a <- EXTS((RA)[32:63])
-    b <- EXTS((RB)[32:63])
+    a <- EXTS((RA)[XLEN/2:XLEN-1])
+    b <- EXTS((RB)[XLEN/2:XLEN-1])
     if (a < b) & TO[0] then TRAP
     if (a > b) & TO[1] then TRAP
     if (a = b) & TO[2] then TRAP
