@@ -20,7 +20,7 @@ from nmigen import Elaboratable, Module, Signal, Const
 from openpower.decoder.power_enums import (SVP64RMMode, Function, SVPtype,
                                     SVP64PredMode, SVP64sat, SVP64LDSTmode,
                                     SVP64BCPredMode, SVP64BCVLSETMode,
-                                    SVP64BCGate, SVP64BCStep,
+                                    SVP64BCGate, SVP64BCCTRMode,
                                     )
 from openpower.consts import EXTRA3, SVP64MODE
 from openpower.sv.svp64 import SVP64Rec
@@ -105,7 +105,7 @@ class SVP64RMModeDecode(Elaboratable):
 
         # Branch Conditional Modes
         self.bc_vlset = Signal(SVP64BCVLSETMode) # Branch-Conditional VLSET
-        self.bc_step = Signal(SVP64BCStep)   # Branch-Conditional svstep mode
+        self.bc_ctrtest = Signal(SVP64BCCTRMode) # Branch-Conditional CTR-Test
         self.bc_pred = Signal(SVP64BCPredMode) # BC predicate mode
         self.bc_vsb = Signal()                 # BC VLSET-branch (like BO[1])
         self.bc_gate = Signal(SVP64BCGate)     # BC ALL or ANY gate
@@ -141,12 +141,12 @@ class SVP64RMModeDecode(Elaboratable):
 
         with m.If(is_bc):
             # Branch-Conditional is completely different
-            # svstep mode
-            with m.If(mode[SVP64MODE.BC_SVSTEP]):
+            # Counter-Test Mode.
+            with m.If(mode[SVP64MODE.BC_CTRTEST]):
                 with m.If(self.rm_in.ewsrc[0]):
-                    comb += self.bc_step.eq(SVP64BCStep.STEP_RC)
+                    comb += self.bc_ctrtest.eq(SVP64BCCTRMode.TEST_INV)
                 with m.Else():
-                    comb += self.bc_step.eq(SVP64BCStep.STEP)
+                    comb += self.bc_ctrtest.eq(SVP64BCCTRMode.TEST)
             # VLSET mode
             with m.If(mode[SVP64MODE.BC_VLSET]):
                 with m.If(mode[SVP64MODE.BC_VLI]):

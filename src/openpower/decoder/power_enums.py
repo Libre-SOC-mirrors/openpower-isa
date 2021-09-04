@@ -210,11 +210,10 @@ class SVP64BCGate(Enum):
     ALL = 1
 
 
-@unique
-class SVP64BCStep(Enum):
+class SVP64BCCTRMode(Enum):
     NONE = 0
-    STEP = 1
-    STEP_RC = 2
+    TEST = 1
+    TEST_INV = 2
 
 
 @unique
