@@ -99,11 +99,11 @@ X-Form
 
 Pseudo-code:
 
-    src1    <- EXTZ((RA)[56:63])
-    src21hi <- EXTZ((RB)[32:39])
-    src21lo <- EXTZ((RB)[40:47])
-    src22hi <- EXTZ((RB)[48:55])
-    src22lo <- EXTZ((RB)[56:63])
+    src1    <- EXTZ((RA)[XLEN-8:XLEN-1])
+    src21hi <- EXTZ((RB)[XLEN-32:XLEN-23])
+    src21lo <- EXTZ((RB)[XLEN-24:XLEN-17])
+    src22hi <- EXTZ((RB)[XLEN-16:XLEN-9])
+    src22lo <- EXTZ((RB)[XLEN-8:XLEN-1])
     if L=0 then
        in_range <-  (src22lo  <= src1) & (src1 <=  src22hi)
     else
