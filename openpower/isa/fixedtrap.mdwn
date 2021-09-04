@@ -15,7 +15,7 @@ D-Form
 
 Pseudo-code:
 
-    a <- EXTS((RA)[32:63])
+    a <- EXTS((RA)[XLEN/2:XLEN-1])
     if (a < EXTS(SI)) & TO[0]  then TRAP
     if (a > EXTS(SI)) & TO[1]  then TRAP
     if (a = EXTS(SI)) & TO[2]  then TRAP
