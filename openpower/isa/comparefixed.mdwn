@@ -57,10 +57,10 @@ D-Form
 
 Pseudo-code:
 
-    if L = 0 then a <- [0]*32 || (RA)[32:63]
+    if L = 0 then a <- [0]*(XLEN/2) || (RA)[XLEN/2:XLEN-1]
     else a <- (RA)
-    if      a <u ([0]*48 || UI) then c <- 0b100
-    else if a >u ([0]*48 || UI) then c <- 0b010
+    if      a <u ([0]*(XLEN-16) || UI) then c <- 0b100
+    else if a >u ([0]*(XLEN-16) || UI) then c <- 0b010
     else                             c <- 0b001
     CR[4*BF+32:4*BF+35] <- c || XER[SO]
 
