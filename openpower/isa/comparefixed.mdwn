@@ -77,8 +77,8 @@ X-Form
 Pseudo-code:
 
     if L = 0 then
-        a <- [0]*32 || (RA)[32:63]
-        b <- [0]*32 || (RB)[32:63]
+        a <- [0]*(XLEN/2) || (RA)[XLEN/2:XLEN-1]
+        b <- [0]*(XLEN/2) || (RB)[XLEN/2:XLEN-1]
     else
         a <-  (RA)
         b <-  (RB)
