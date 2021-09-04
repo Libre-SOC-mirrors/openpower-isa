@@ -127,15 +127,10 @@ X-Form
 Pseudo-code:
 
     src1 <- GPR[RA]
-    src1 <- src1[56:63]
-    match <- ((src1 = (RB)[00:07]) |
-              (src1 = (RB)[08:15]) |
-              (src1 = (RB)[16:23]) |
-              (src1 = (RB)[24:31]) |
-              (src1 = (RB)[32:39]) |
-              (src1 = (RB)[40:47]) |
-              (src1 = (RB)[48:55]) |
-              (src1 = (RB)[56:63]))
+    src1 <- src1[XLEN-8:XLEN-1]
+    match <- 0b0
+    for i = 0 to ((XLEN/8)-1)
+        match <- (match | (src1 = (RB)[8*i:8*i+7]))
     CR[4*BF+32] <- 0b0
     CR[4*BF+33] <- match
     CR[4*BF+34] <- 0b0
