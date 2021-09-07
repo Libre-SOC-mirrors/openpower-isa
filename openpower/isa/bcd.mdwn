@@ -15,11 +15,15 @@ X-Form
 
 Pseudo-code:
 
+    src <- [0]*64
+    src[64-XLEN:63] <- (RS)
+    result <- [0]*64
     do i = 0 to 1
       n <- i * 32
-      RA[n+0:n+7] <- 0
-      RA[n+8:n+19 ] <- DPD_TO_BCD ( (RS)[n+12:n+21] )
-      RA[n+20:n+31] <- DPD_TO_BCD ( (RS)[n+22:n+31] )
+      result[n+0:n+7] <- 0
+      result[n+8:n+19] <- DPD_TO_BCD(src[n+12:n+21])
+      result[n+20:n+31] <- DPD_TO_BCD(src[n+22:n+31])
+    RA <- result[64-XLEN:63]
 
 Special Registers Altered:
 
@@ -33,15 +37,11 @@ XO-Form
 
 Pseudo-code:
 
-    dc <- [0]*16
-    do i = 0 to 15
-        temp <- (0b0 || RA[4*i:63]) + (0b0 || RB[4*i:63])
-        dc[i] <- temp[0]
-    c <- ([dc[0]]*4 || [dc[1]]*4 || [dc[2]]*4 || [dc[3]]*4 ||
-            [dc[4]]*4 || [dc[5]]*4 || [dc[6]]*4 || [dc[7]]*4 ||
-            [dc[8]]*4 || [dc[9]]*4 || [dc[10]]*4 || [dc[11]]*4 ||
-            [dc[12]]*4 || [dc[13]]*4 || [dc[14]]*4 || [dc[15]]*4)
-    RT <- (¬c) & 0x6666_6666_6666_6666
+    sum <- (0b0000 || (RA)) + (0b0000 || (RB))
+    carries <- sum ^ (0b0000 || (RA)) ^ (0b0000 || (RB))
+    ones <- [0b0001] * (XLEN / 4)
+    nibbles_need_sixes <- ¬carries[0:XLEN-1] & ones
+    RT <- nibbles_need_sixes * 0b0110
 
 Special Registers Altered:
 
@@ -55,11 +55,15 @@ X-Form
 
 Pseudo-code:
 
+    src <- [0]*64
+    src[64-XLEN:63] <- (RS)
+    result <- [0]*64
     do i = 0 to 1
       n <- i * 32
-      RA[n+0:n+11] <- 0
-      RA[n+12:n+21] <- BCD_TO_DPD ( (RS)[n+8:n+19] )
-      RA[n+22:n+31] <- BCD_TO_DPD ( (RS)[n+20:n+31] )
+      result[n+0:n+11] <- 0
+      result[n+12:n+21] <- BCD_TO_DPD(src[n+8:n+19])
+      result[n+22:n+31] <- BCD_TO_DPD(src[n+20:n+31])
+    RA <- result[64-XLEN:63]
 
 Special Registers Altered:
 
