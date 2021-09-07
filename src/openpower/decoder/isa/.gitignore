@@ -19,5 +19,9 @@
 /stringldst.py
 /system.py
 /simplev.py
+/svbranch.py
+/svfixedload.py
+/svfparith.py
+/svfpload.py
 *.orig
 *.rej
