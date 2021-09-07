@@ -1,19 +1,12 @@
-import itertools
 import random
 import re
-from nmigen import Module, Signal
-from nmigen.back.pysim import Simulator, Settle
 from nmutil.formaltest import FHDLTestCase
 import unittest
 
-from openpower.decoder.isa.caller import ISACaller
 from openpower.decoder.power_decoder import create_pdecode
 from openpower.decoder.power_decoder2 import (PowerDecode2)
 from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, inject
 from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
 
 from openpower.decoder.isa.test_runner import run_tst
 
@@ -201,7 +194,7 @@ BCD_TO_DPD_PATTERN = (r"^(\d{2})_\s" +
 BCD_TO_DPD_REGEX = re.compile(BCD_TO_DPD_PATTERN, re.M)
 
 
-def testgen(mapping):
+def tstgen(mapping):
     zeros = [0] * 32
     length = len(mapping)
     iregs_whole = list(mapping.keys())
@@ -220,7 +213,7 @@ class BCDTestCase(FHDLTestCase):
 
     def run_tst(self, instr, mapping):
         lst = [f"{instr} {reg}, {reg}" for reg in range(32)]
-        for (iregs, oregs) in testgen(mapping):
+        for (iregs, oregs) in tstgen(mapping):
             with self.subTest():
                 with Program(lst, bigendian=False) as program:
                     sim = self.run_tst_program(program, iregs)
@@ -234,8 +227,8 @@ class BCDTestCase(FHDLTestCase):
             for digit in range(0x10):
                 dpd = int((match[0] + f"{digit:X}"), 16)
                 bcd = ((int(match[1 + digit][0]) << 8) |
-                        (int(match[1 + digit][1]) << 4) |
-                        (int(match[1 + digit][2]) << 0))
+                       (int(match[1 + digit][1]) << 4) |
+                       (int(match[1 + digit][2]) << 0))
                 mapping[dpd] = bcd
         self.run_tst("cdtbcd", mapping)
 
@@ -244,8 +237,8 @@ class BCDTestCase(FHDLTestCase):
         for match in BCD_TO_DPD_REGEX.findall(BCD_TO_DPD_TABLE):
             for digit in range(10):
                 bcd = ((int(match[0][0]) << 8) |
-                        (int(match[0][1]) << 4) |
-                        (int(digit) << 0))
+                       (int(match[0][1]) << 4) |
+                       (int(digit) << 0))
                 dpd = int(match[1 + digit], 16)
                 mapping[bcd] = dpd
         self.run_tst("cbcdtd", mapping)
@@ -273,8 +266,8 @@ class BCDTestCase(FHDLTestCase):
             return int("".join(map(str, reversed(addg6s))), 2)
 
         bcd = [f"{digit:04b}" for digit in range(10)]
-        rng10 = lambda: random.randrange(0, 10)
-        bcdrng = lambda: int("".join((bcd[rng10()] for _ in range(16))), 2)
+        def rng10(): return random.randrange(0, 10)
+        def bcdrng(): return int("".join((bcd[rng10()] for _ in range(16))), 2)
 
         lst = [f"addg6s {gpr}, {gpr + 0}, {gpr + 1}" for gpr in range(31)]
         oregs = [0] * 32
@@ -287,7 +280,7 @@ class BCDTestCase(FHDLTestCase):
                     sim = self.run_tst_program(program, iregs)
                     for gpr in range(31):
                         self.assertEqual(sim.gpr(gpr),
-                            SelectableInt(oregs[gpr], 64))
+                                         SelectableInt(oregs[gpr], 64))
 
     def run_tst_program(self, prog, initial_regs=[0] * 32):
         simulator = run_tst(prog, initial_regs, pdecode2=self.pdecode2)
