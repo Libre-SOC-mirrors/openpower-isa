@@ -16,6 +16,7 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[2] = 11
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
+            self.assertEqual(sim.gpr(3), SelectableInt(0x8800, 64))
 
     def test_case_srw_1(self):
         lst = ["sraw 3, 1, 2"]
