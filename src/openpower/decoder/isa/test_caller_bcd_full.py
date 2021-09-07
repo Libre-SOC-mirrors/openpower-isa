@@ -7,6 +7,7 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.isa.test_runner import run_tst
 import power_instruction_analyzer as pia
 from hashlib import sha256
+from textwrap import dedent
 
 
 class BCDFullTestCase(FHDLTestCase):
@@ -98,9 +99,11 @@ class BCDFullTestCase(FHDLTestCase):
 
 for i in range(BCDFullTestCase.TEST_INDEX_COUNT):
     for j in 'addg6s', 'cdtbcd', 'cbcdtd':
-        def tst_fn(self):
-            getattr(self, f"tst_{j}")(i)
-        setattr(BCDFullTestCase, f"test_{j}_{i}", tst_fn)
+        exec(dedent(f"""
+            def tst_{j}_{i}(self):
+                self.tst_{j}({i})
+            BCDFullTestCase.test_{j}_{i} = tst_{j}_{i}
+        """))
 
 if __name__ == "__main__":
     unittest.main()
