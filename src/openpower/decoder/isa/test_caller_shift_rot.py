@@ -93,7 +93,7 @@ class DecoderTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, initial_regs)
             self.assertEqual(sim.gpr(3), SelectableInt(0x123456, 64))
 
-    def test_case_srw_1(self):
+    def test_case_srw_2(self):
         lst = ["sraw 3, 1, 2"]
         initial_regs = [0] * 32
         initial_regs[1] = 0x82345678  # test the carry
