@@ -3,6 +3,7 @@ import random
 from openpower.consts import FastRegsEnum
 from openpower.decoder.power_enums import SPRfull as SPR, spr_dict
 
+
 # note that we can get away with using SPRfull here because the values
 # (numerical values) are what is used for lookup.
 spr_to_fast = { SPR.CTR: FastRegsEnum.CTR,
