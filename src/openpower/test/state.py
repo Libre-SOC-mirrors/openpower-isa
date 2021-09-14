@@ -115,8 +115,9 @@ global state_factory
 state_factory = {'sim': SimState}
 
 
-def state_add(sdic):
-    state_factory.update(sdic)
+def state_add(name, kls):
+    log("state_add", name, kls)
+    state_factory[name] = kls
 
 
 def TestState(state_type, to_test, dut, code):
