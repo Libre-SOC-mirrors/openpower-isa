@@ -112,42 +112,29 @@ class SimState(State):
 
 
 class ExpectedState(State):
-    def __init__(self):
-        pass
+    def __init__(self, intregs, pc, crregs, so, ov, ca):
+        self.intregs = intregs
+        self.pc = pc
+        self.crregs = crregs
+        self.so = so
+        self.ov = ov
+        self.ca = ca
 
     def get_intregs(self):
         if False:
             yield
-        self.intregs = []
-        for i in range(32):
-            self.intregs.append(0)
-        log("class expected int regs", list(map(hex, self.intregs)))
 
     def get_crregs(self):
         if False:
             yield
-        self.crregs = []
-        for i in range(8):
-            self.crregs.append(0)
-        log("class expected cr regs", list(map(hex, self.crregs)))
 
     def get_xregs(self):
         if False:
             yield
-        self.xregs = []
-        self.so = 0
-        self.ov = 0
-        self.ca = 0
-        self.xregs.extend((self.so, self.ov, self.ca))
-        log("class expected xregs", list(map(hex, self.xregs)))
 
     def get_pc(self):
         if False:
             yield
-        self.pcl = []
-        self.pc = 0
-        self.pcl.append(self.pc)
-        log("class expected pc", hex(self.pc))
 
 
 global state_factory
