@@ -1,5 +1,6 @@
 from nmutil.formaltest import FHDLTestCase
 import unittest
+from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.isa.test_runner import run_tst
@@ -14,10 +15,14 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[1] = 0x11faafff1111aa11
         #initial_regs[2] = 31
         initial_regs[2] = 11
+        # Trying to get a blank expected state, no bueno on test running
+        # it doesn't care what goes there
+        e = yield from ExpectedState()
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
             self.assertEqual(sim.gpr(3), SelectableInt(0x8800, 64))
 
+    """
     def test_case_srw_1(self):
         lst = ["sraw 3, 1, 2"]
         initial_regs = [0] * 32
@@ -197,12 +202,12 @@ class DecoderTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
             self.assertEqual(sim.gpr(3), SelectableInt(0xffffffff80122900, 64))
+    """
 
     def run_tst_program(self, prog, initial_regs=[0] * 32, initial_mem=None):
         simulator = run_tst(prog, initial_regs, mem=initial_mem)
         simulator.gpr.dump()
         return simulator
-
 
 if __name__ == "__main__":
     unittest.main()
