@@ -155,3 +155,20 @@ def TestState(state_type, to_test, dut, code):
     state.code = code
     yield from state.get_state()
     return state
+
+
+def teststate_check_regs(dut, states, test, code):
+    """teststate_check_regs: compares a set of Power ISA objects
+    to check if they have the same "state" (registers only, at the moment)
+    """
+    slist = []
+    # create one TestState per "thing"
+    for stype, totest in states.items():
+        state = yield from TestState(stype, totest, dut, code)
+        slist.append(state)
+    # compare each "thing" against the next "thing" in the list.
+    # (no need to do an O(N^2) comparison here, they *all* have to be the same
+    for i in range(len(slist)-1):
+        state, against = slist[i], slist[i+1]
+        state.compare(against)
+
