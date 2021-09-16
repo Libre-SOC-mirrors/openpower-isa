@@ -122,7 +122,7 @@ class ExpectedState(State):
         self.pc = pc
         if crregs is None:
             crregs = 8
-        if isinstance(int_regs, int):
+        if isinstance(crregs, int):
             crregs = [0] * crregs
         self.crregs = crregs
         self.so = so
