@@ -112,8 +112,8 @@ class SimState(State):
 
 
 class ExpectedState(State):
-    def __init__(self, int_regs = None, pc = 0, crregs = None,
-                 so = 0, ov = 0, ca=0):
+    def __init__(self, int_regs=None, pc=0, crregs=None,
+                 so=0, ov=0, ca=0):
         if int_regs is None:
             int_regs = 32
         if isinstance(int_regs, int):
@@ -144,7 +144,7 @@ def state_add(name, kls):
     state_factory[name] = kls
 
 
-def TestState(state_type, to_test, dut, code = 0):
+def TestState(state_type, to_test, dut, code=0):
     state_class = state_factory[state_type]
     state = state_class(to_test)
     state.to_test = to_test
