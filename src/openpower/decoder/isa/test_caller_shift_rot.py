@@ -1,5 +1,6 @@
 from nmutil.formaltest import FHDLTestCase
 import unittest
+from openpower.decoder.power_enums import XER_bits
 from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
@@ -15,23 +16,24 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[1] = 0x11faafff1111aa11
         #initial_regs[2] = 31
         initial_regs[2] = 11
-        # Trying to get a blank expected state, no bueno on test running
-        # it doesn't care what goes there
-        e = yield from ExpectedState()
+        # set expected (intregs, pc, [crregs], so, ov, ca)
+        e = ExpectedState(initial_regs, 4, [0,0,0,0,0,0,0,0], 0, 0, 0)
+        e.intregs[3] = 0x8800
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
-            self.assertEqual(sim.gpr(3), SelectableInt(0x8800, 64))
+            self.check_regs(sim, e)
 
-    """
     def test_case_srw_1(self):
         lst = ["sraw 3, 1, 2"]
         initial_regs = [0] * 32
         initial_regs[1] = 0x12345678
         initial_regs[2] = 8
+        e = ExpectedState(initial_regs, 4, [0,0,0,0,0,0,0,0], 0, 0, 0)
+        e.intregs[3] = 0x123456
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
-            self.assertEqual(sim.gpr(3), SelectableInt(0x123456, 64))
-
+            self.check_regs(sim, e)
+    """
     def test_case_srw_2(self):
         lst = ["sraw 3, 1, 2"]
         initial_regs = [0] * 32
@@ -208,6 +210,35 @@ class DecoderTestCase(FHDLTestCase):
         simulator = run_tst(prog, initial_regs, mem=initial_mem)
         simulator.gpr.dump()
         return simulator
+
+    def check_regs(self, sim, e):
+        # int regs
+        for i in range(32):
+            self.assertEqual(sim.gpr(i), SelectableInt(e.intregs[i], 64),
+                "int reg %d -> sim not equal to expected." % (i))
+        # pc
+        self.assertEqual(sim.pc.CIA.value, SelectableInt(e.pc, 64),
+                "pc -> sim not equal to expected.")
+        # cr
+        for i in range(8):
+            self.assertEqual(sim.crl[7 - i].get_range().value,
+                SelectableInt(e.crregs[7-i], 64),
+                "cr reg %d -> sim not equal to expected." % (i))
+        # xer
+        self.so = sim.spr['XER'][XER_bits['SO']].value
+        self.ov = sim.spr['XER'][XER_bits['OV']].value
+        self.ov32 = sim.spr['XER'][XER_bits['OV32']].value
+        self.ca = sim.spr['XER'][XER_bits['CA']].value
+        self.ca32 = sim.spr['XER'][XER_bits['CA32']].value
+        self.ov = self.ov | (self.ov32 << 1)
+        self.ca = self.ca | (self.ca32 << 1)
+        self.assertEqual(self.so, SelectableInt(e.so, 64),
+            "so -> sim not equal to expected.")
+        self.assertEqual(self.ov, SelectableInt(e.ov, 64),
+            "ov -> sim not equal to expected.")
+        self.assertEqual(self.ca, SelectableInt(e.ca, 64),
+            "ca -> sim not equal to expected.")
+
 
 if __name__ == "__main__":
     unittest.main()
