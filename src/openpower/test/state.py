@@ -129,21 +129,10 @@ class ExpectedState(State):
         self.ov = ov
         self.ca = ca
 
-    def get_intregs(self):
-        if False:
-            yield
-
-    def get_crregs(self):
-        if False:
-            yield
-
-    def get_xregs(self):
-        if False:
-            yield
-
-    def get_pc(self):
-        if False:
-            yield
+    def get_intregs(self): if False: yield
+    def get_crregs(self): if False: yield
+    def get_xregs(self): if False: yield
+    def get_pc(self): if False: yield
 
 
 global state_factory
