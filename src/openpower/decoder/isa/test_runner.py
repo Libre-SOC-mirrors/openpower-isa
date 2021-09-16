@@ -6,6 +6,7 @@ from openpower.decoder.power_decoder2 import (PowerDecode2)
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import ISACaller, inject
 from openpower.decoder.isa.all import ISA
+from openpower.test.state import TestState
 from nmutil.formaltest import FHDLTestCase
 
 
@@ -87,10 +88,17 @@ class ISATestRunner(FHDLTestCase):
             sim.run()
 
 
+def check_regs(dut, sim, expected, test, code):
+    # create the two states and compare
+    testdic = {'sim': sim, 'expected': expected}
+    yield from teststate_check_regs(dut, testdic, test, code)
+
+
 def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
                                      initial_cr=0, mem=None,
                                      initial_fprs=None,
-                                     pdecode2=None):
+                                     pdecode2=None,
+                                     state=None): # (dut, code)
     if initial_sprs is None:
         initial_sprs = {}
     m = Module()
@@ -116,6 +124,8 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
                     mmu=mmu)
     comb += pdecode2.dec.raw_opcode_in.eq(instruction)
     sim = Simulator(m)
+
+    process_state = state
 
     def process():
 
@@ -145,10 +155,16 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
             pc = simulator.pc.CIA.value
             index = pc//4
 
+        # use this to test against expected (static) results at end of run
+        if process_state is not None:
+            (dut, code) = process_state
+            simulator.state = yield from TestState("sim", simulator, dut, code)
+
     sim.add_process(process)
     with sim.write_vcd("simulator.vcd", "simulator.gtkw",
                        traces=[]):
         sim.run()
+
     return simulator
 
 

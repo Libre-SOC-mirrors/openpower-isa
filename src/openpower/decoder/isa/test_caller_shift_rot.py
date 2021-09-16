@@ -5,6 +5,7 @@ from openpower.test.state import ExpectedState, TestState
 from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.isa.test_runner import run_tst
+from openpower.test.state import TestState
 
 
 class DecoderTestCase(FHDLTestCase):
@@ -21,8 +22,7 @@ class DecoderTestCase(FHDLTestCase):
         e.intregs[3] = 0x8800
         with Program(lst, bigendian=False) as program:
             # and here lies the rabbit hole...at least for me
-            sim = self.run_tst_program(program, initial_regs)
-            yield from self.check_regs(sim, e)
+            sim = self.run_tst_program(program, initial_regs, expected=e)
     """
     def test_case_srw_1(self):
         lst = ["sraw 3, 1, 2"]
@@ -207,15 +207,22 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(3), SelectableInt(0xffffffff80122900, 64))
     """
 
-    def run_tst_program(self, prog, initial_regs=[0] * 32, initial_mem=None):
-        simulator = run_tst(prog, initial_regs, mem=initial_mem)
+    def run_tst_program(self, prog, initial_regs=[0] * 32, initial_mem=None,
+                                    expected=None):
+        simulator = run_tst(prog, initial_regs, mem=initial_mem,
+                                   state=(self, 0))
+
         simulator.gpr.dump()
+        # this is by no means perfect... needs work but it's functional
+        if expected is not None:
+            # have to put these in manually
+            expected.to_test = expected
+            expected.dut = self
+            expected.state_type = "expected"
+            expected.code = 0
+            # do actual comparison
+            simulator.state.compare(expected)
         return simulator
-
-
-    def check_regs(self, sim, e):
-        simstate = yield from TestState("sim",sim,self)
-        yield from simstate.compare(e)
 
     """
     def check_regs(self, sim, e):
