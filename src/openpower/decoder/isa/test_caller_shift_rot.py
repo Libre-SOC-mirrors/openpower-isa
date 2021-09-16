@@ -1,7 +1,7 @@
 from nmutil.formaltest import FHDLTestCase
 import unittest
 from openpower.decoder.power_enums import XER_bits
-from openpower.test.state import ExpectedState
+from openpower.test.state import ExpectedState, TestState
 from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.isa.test_runner import run_tst
@@ -17,12 +17,13 @@ class DecoderTestCase(FHDLTestCase):
         #initial_regs[2] = 31
         initial_regs[2] = 11
         # set expected (intregs, pc, [crregs], so, ov, ca)
-        e = ExpectedState(initial_regs, 4, [0,0,0,0,0,0,0,0], 0, 0, 0)
+        e = ExpectedState(initial_regs, 4)
         e.intregs[3] = 0x8800
         with Program(lst, bigendian=False) as program:
+            # and here lies the rabbit hole...at least for me
             sim = self.run_tst_program(program, initial_regs)
-            self.check_regs(sim, e)
-
+            yield from self.check_regs(sim, e)
+    """
     def test_case_srw_1(self):
         lst = ["sraw 3, 1, 2"]
         initial_regs = [0] * 32
@@ -33,7 +34,7 @@ class DecoderTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
             self.check_regs(sim, e)
-    """
+
     def test_case_srw_2(self):
         lst = ["sraw 3, 1, 2"]
         initial_regs = [0] * 32
@@ -211,6 +212,12 @@ class DecoderTestCase(FHDLTestCase):
         simulator.gpr.dump()
         return simulator
 
+
+    def check_regs(self, sim, e):
+        simstate = yield from TestState("sim",sim,self)
+        yield from simstate.compare(e)
+
+    """
     def check_regs(self, sim, e):
         # int regs
         for i in range(32):
@@ -238,6 +245,7 @@ class DecoderTestCase(FHDLTestCase):
             "ov -> sim not equal to expected.")
         self.assertEqual(self.ca, SelectableInt(e.ca, 64),
             "ca -> sim not equal to expected.")
+    """
 
 
 if __name__ == "__main__":
