@@ -124,8 +124,7 @@ class SimState(State):
         keys = list(self.sim.mem.mem.keys())
         self.mem = []
         for k in keys:
-            if self.sim.mem.mem[k] !=0:  # Don't store potential 0 for compare
-                self.mem.append(((k*8), self.sim.mem.mem[k]))
+            self.mem.append(((k*8), self.sim.mem.mem[k]))
 
 
 class ExpectedState(State):
