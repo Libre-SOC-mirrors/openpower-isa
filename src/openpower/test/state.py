@@ -32,6 +32,7 @@ class State:
         yield from self.get_crregs()
         yield from self.get_xregs()
         yield from self.get_pc()
+        yield from self.get_mem()
 
     def compare(self, s2):
         # Compare int registers
@@ -64,6 +65,13 @@ class State:
         # pc
         self.dut.assertEqual(self.pc, s2.pc, "pc mismatch (%s != %s) %s" %
             (self.state_type, s2.state_type, repr(self.code)))
+
+    def compare_mem(self, s2):
+        for i, (self.mem, s2.mem) in enumerate(
+                  zip(self.mem, s2.mem)):
+            self.dut.assertEqual(self.mem, s2.mem,
+                "mem mismatch %s %d %s %s" % (self.code, i,
+                self.mem, s2.mem))
 
 
 class SimState(State):
@@ -110,6 +118,15 @@ class SimState(State):
         self.pcl.append(self.pc)
         log("class sim pc", hex(self.pc))
 
+    def get_mem(self):
+        if False:
+            yield
+        keys = list(self.sim.mem.mem.keys())
+        self.mem = []
+        for k in keys:
+            if self.sim.mem.mem[k] !=0:  # Don't store potential 0 for compare
+                self.mem.append(((k*8), self.sim.mem.mem[k]))
+
 
 class ExpectedState(State):
     def __init__(self, int_regs=None, pc=0, crregs=None,
@@ -136,6 +153,8 @@ class ExpectedState(State):
     def get_xregs(self):
         if False: yield
     def get_pc(self):
+        if False: yield
+    def get_mem(self):
         if False: yield
 
 
