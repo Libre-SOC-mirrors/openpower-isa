@@ -127,7 +127,7 @@ class SimState(State):
         simmem = self.sim.mem
         self.mem = []
         for i in range(simmem.depth):
-            self.mem.append((i*8), simmem.ld(i*8, 8, False)))
+            self.mem.append((i*8), simmem.ld(i*8, 8, False))
 
 
 class ExpectedState(State):
