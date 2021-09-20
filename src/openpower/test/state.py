@@ -121,10 +121,13 @@ class SimState(State):
     def get_mem(self):
         if False:
             yield
-        keys = list(self.sim.mem.mem.keys())
+        # obtain full list of contents of memory.  assume starts
+        # at address zero.  assumes 64-bit addresses.  use
+        # Mem.ld in order to get data in the correct byteorder
+        simmem = self.sim.mem
         self.mem = []
-        for k in keys:
-            self.mem.append(((k*8), self.sim.mem.mem[k]))
+        for i in range(simmem.depth):
+            self.mem.append((i*8), simmem.ld(i*8, 8, False)))
 
 
 class ExpectedState(State):
