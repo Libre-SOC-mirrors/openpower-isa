@@ -67,11 +67,9 @@ class State:
             (self.state_type, s2.state_type, repr(self.code)))
 
     def compare_mem(self, s2):
-        for i, (self.mem, s2.mem) in enumerate(
-                  zip(self.mem, s2.mem)):
-            self.dut.assertEqual(self.mem, s2.mem,
-                "mem mismatch %s %d %s %s" % (self.code, i,
-                self.mem, s2.mem))
+        for i in self.mem:
+            self.dut.assertEqual(self.mem[i], s2.mem[i],
+                "mem mismatch location %d %s" % (i, self.code))
 
 
 class SimState(State):
@@ -195,3 +193,18 @@ def teststate_check_regs(dut, states, test, code):
         state, against = slist[i], slist[i+1]
         state.compare(against)
 
+
+def teststate_check_mem(dut, states, test, code):
+    """teststate_check_mem: compares a set of Power ISA objects
+    to check if they have the same "state" (memory)
+    """
+    slist = []
+    # create one TestState per "thing"
+    for stype, totest in states.items():
+        state = yield from TestState(stype, totest, dut, code)
+        slist.append(state)
+    # compare each "thing" against the next "thing" in the list.
+    # (no need to do an O(N^2) comparison here, they *all* have to be the same
+    for i in range(len(slist)-1):
+        state, against = slist[i], slist[i+1]
+        state.compare_mem(against)
