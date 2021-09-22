@@ -5,6 +5,7 @@ from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.power_enums import XER_bits
 from openpower.decoder.isa.caller import special_sprs
+from openpower.test.state import ExpectedState
 import unittest
 
 
@@ -109,7 +110,9 @@ class ALUTestCase(TestAccumulatorBase):
         print(lst)
         initial_regs = [0] * 32
         initial_regs[0] = 5
-        self.add_case(Program(lst, bigendian), initial_regs)
+        e = ExpectedState(initial_regs, pc=4)
+        e.intregs[3] = 0x10000
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_addis_nonzero_r0(self):
         for i in range(10):
