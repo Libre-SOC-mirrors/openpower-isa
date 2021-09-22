@@ -620,6 +620,7 @@ class ISACaller:
         self.msr = SelectableInt(initial_msr, 64)  # underlying reg
         self.pc = PC()
         # GPR FPR SPR registers
+        initial_sprs = copy(initial_sprs) # so as not to get modified
         self.gpr = GPR(decoder2, self, self.svstate, regfile)
         self.fpr = GPR(decoder2, self, self.svstate, fpregfile)
         self.spr = SPR(decoder2, initial_sprs) # initialise SPRs before MMU
