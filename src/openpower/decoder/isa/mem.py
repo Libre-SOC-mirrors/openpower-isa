@@ -31,6 +31,27 @@ def swap_order(x, nbytes):
 class MemException(Exception):
     pass
 
+def process_mem(initial_mem, row_bytes=8):
+    res = {}
+    # different types of memory data structures recognised (for convenience)
+    if isinstance(initial_mem, list):
+        initial_mem = (0, initial_mem)
+    if isinstance(initial_mem, tuple):
+        startaddr, mem = initial_mem
+        initial_mem = {}
+        for i, val in enumerate(mem):
+            initial_mem[startaddr + row_bytes*i] = (val, row_bytes)
+
+    for addr, val in initial_mem.items():
+        if isinstance(val, tuple):
+            (val, width) = val
+        else:
+            width = row_bytes # assume same width
+        #val = swap_order(val, width)
+        res[addr] = (val, width)
+
+    return res
+
 
 class Mem:
 
@@ -44,20 +65,7 @@ class Mem:
         if not initial_mem:
             return
 
-        # different types of memory data structures recognised (for convenience)
-        if isinstance(initial_mem, list):
-            initial_mem = (0, initial_mem)
-        if isinstance(initial_mem, tuple):
-            startaddr, mem = initial_mem
-            initial_mem = {}
-            for i, val in enumerate(mem):
-                initial_mem[startaddr + row_bytes*i] = (val, row_bytes)
-
-        for addr, val in initial_mem.items():
-            if isinstance(val, tuple):
-                (val, width) = val
-            else:
-                width = row_bytes # assume same width
+        for addr, (val, width) in process_mem(initial_mem, row_bytes).items():
             #val = swap_order(val, width)
             self.st(addr, val, width, swap=False)
 
