@@ -67,8 +67,14 @@ class State:
             (self.state_type, s2.state_type, repr(self.code)))
 
     def compare_mem(self, s2):
-        for i in self.mem:
-            self.dut.assertEqual(self.mem[i], s2.mem[i],
+        # copy dics to preserve state mem then pad empty locs
+        s1mem, s2mem = self.mem.copy(), s2.mem.copy()
+        for i in set(self.mem).difference(set(s2.mem)):
+            s2mem[i] = 0
+        for i in set(s2.mem).difference(set(self.mem)):
+            s1mem[i] = 0
+        for i in s1mem:
+            self.dut.assertEqual(s1mem[i], s2mem[i],
                 "mem mismatch location %d %s" % (i, self.code))
 
 
