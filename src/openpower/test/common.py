@@ -102,14 +102,16 @@ class TestAccumulatorBase:
     def add_case(self, prog, initial_regs=None, initial_sprs=None,
                  initial_cr=0, initial_msr=0,
                  initial_mem=None,
-                 initial_svstate=0):
+                 initial_svstate=0,
+                 expected=None):
 
         test_name = inspect.stack()[1][3]  # name of caller of this function
         tc = TestCase(prog, test_name,
                       regs=initial_regs, sprs=initial_sprs, cr=initial_cr,
                       msr=initial_msr,
                       mem=initial_mem,
-                      svstate=initial_svstate)
+                      svstate=initial_svstate,
+                      expected=expected)
 
         self.test_data.append(tc)
 
