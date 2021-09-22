@@ -119,7 +119,8 @@ class TestCase:
                  msr=0,
                  do_sim=True,
                  extra_break_addr=None,
-                 svstate=0):
+                 svstate=0,
+                 expected=None):
 
         self.program = program
         self.name = name
@@ -138,6 +139,7 @@ class TestCase:
         self.do_sim = do_sim
         self.extra_break_addr = extra_break_addr
         self.svstate = svstate
+        self.expected = expected # expected results from the test
 
 
 class ALUHelpers:
