@@ -126,6 +126,39 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(1), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
 
+    def test_fp_single_ldst_idx(self):
+        """>>> lst = ["lfsx 1, 0, 0",   # load fp 1 from mem location 0
+                      "stfsx 1, 2, 1", # store fp 1 into mem 0x10, no update
+                      "lfs 2, 4(2)",   # re-load from NOT updated r2
+                     ]
+        """
+        lst = ["lfsx 1, 0, 0",
+               "stfsx 1, 2, 1",
+               "lfs 2, 4(2)",
+                     ]
+        initial_mem = {0x0000: (0x42013333, 8),
+                       0x0008: (0x42026666, 8),
+                       0x0020: (0x1828384822324252, 8),
+                        }
+        # create an offset of 0x10 (2+3)
+        initial_regs = [0]*32
+        initial_regs[1] = 0x4
+        initial_regs[2] = 0xc
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=initial_regs,
+                                                initial_mem=initial_mem)
+            print("FPR 1", sim.fpr(1))
+            print("FPR 2", sim.fpr(2))
+            print("GPR 1", sim.gpr(1)) # should be 0x4
+            print("GPR 2", sim.gpr(2)) # should be 0xc (no update)
+            print("mem dump")
+            print(sim.mem.dump())
+            self.assertEqual(sim.gpr(1), SelectableInt(0x4, 64))
+            self.assertEqual(sim.gpr(2), SelectableInt(0xc, 64))
+            self.assertEqual(sim.fpr(1), SelectableInt(0x4040266660000000, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
+
     def test_fp_mv(self):
         """>>> lst = ["fmr 1, 2",
                      ]
