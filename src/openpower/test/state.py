@@ -32,6 +32,8 @@ class StateRunner:
     near-identical in concept to python unittest.TestCase
     """
     def __init__(self, dut, **kwargs): pass
+    def setup_for_test(self): pass
+    def setup_during_test(self): pass
     def prepare_for_test(self): pass
     def step_test(self): pass
     def end_test(self): pass
