@@ -26,6 +26,18 @@ from openpower.decoder.power_enums import XER_bits
 from openpower.util import log
 
 
+# TBD an Abstract Base Class
+class StateRunner:
+    """StateRunner: an Abstract Base Class for preparing and running "State".
+    near-identical in concept to python unittest.TestCase
+    """
+    def __init__(self, dut, **kwargs): pass
+    def prepare_for_test(self): pass
+    def step_test(self): pass
+    def end_test(self): pass
+    def cleanup(self): pass
+
+
 class State:
     def get_state(self):
         yield from self.get_intregs()
