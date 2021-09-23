@@ -38,6 +38,22 @@ class DecoderTestCase(FHDLTestCase):
             print("FPR 1", sim.fpr(1))
             self.assertEqual(sim.fpr(1), SelectableInt(0x4040266660000000, 64))
 
+    def test_fpload_imm(self):
+        """>>> lst = ["lfs 1, 8(1)",
+                     ]
+        """
+        lst = ["lfs 1, 8(1)",
+                     ]
+        initial_mem = {0x0000: (0x42013333, 8),
+                       0x0008: (0x42026666, 8),
+                       0x0020: (0x1828384822324252, 8),
+                        }
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_mem=initial_mem)
+            print("FPR 1", sim.fpr(1))
+            self.assertEqual(sim.fpr(1), SelectableInt(0x40404cccc0000000, 64))
+
     def test_fpload2(self):
         """>>> lst = ["lfsx 1, 0, 0",
                      ]
