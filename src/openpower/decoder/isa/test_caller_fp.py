@@ -176,6 +176,23 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(3), SelectableInt(0, 64))
 
+    def test_fp_subs(self):
+        """>>> lst = ["fsubs 3, 1, 2",
+                     ]
+        """
+        lst = ["fsubs 3, 1, 2", # 0 - -32.3 = 32.3
+                     ]
+
+        fprs = [0] * 32
+        fprs[1] = 0x0
+        fprs[2] = 0xC040266660000000
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            self.assertEqual(sim.fpr(1), SelectableInt(0x0, 64))
+            self.assertEqual(sim.fpr(2), SelectableInt(0xC040266660000000, 64))
+            self.assertEqual(sim.fpr(3), SelectableInt(0x4040266660000000, 64))
+
     def test_fp_add(self):
         """>>> lst = ["fadd 3, 1, 2",
                      ]
