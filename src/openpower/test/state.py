@@ -40,6 +40,12 @@ class StateRunner:
     def cleanup(self): pass
 
 
+class SimRunner(StateRunner):
+    def __init__(self, dut, **kwargs):
+        self.pspec = kwargs['pspec']
+        self.m = kwargs['m']
+
+
 class State:
     def get_state(self):
         yield from self.get_intregs()
