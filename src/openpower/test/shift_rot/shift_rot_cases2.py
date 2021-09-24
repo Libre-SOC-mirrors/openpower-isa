@@ -1,13 +1,12 @@
 from openpower.test.common import TestAccumulatorBase
 from openpower.endian import bigendian
-import unittest
-from openpower.decoder.power_enums import XER_bits
 from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.test.state import ExpectedState
+import unittest
 
 
-class ShiftRotTestCase(TestAccumulatorBase):
+class ShiftRotTestCase2(TestAccumulatorBase):
 
     def case_0_proof_regression_rlwnm(self):
         lst = ["rlwnm 3, 1, 2, 16, 20"]
