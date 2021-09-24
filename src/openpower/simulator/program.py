@@ -88,12 +88,12 @@ class Program:
                     self.obj_fmt,
                     "-o",
                     outfile.name]
-            p = subprocess.Popen(args, stdin=subprocess.PIPE)
-            p.communicate(self.assembly.encode('utf-8'))
-            if p.wait() != 0:
-                print("Error in program:")
-                print(self.assembly)
-                sys.exit(1)
+            with subprocess.Popen(args, stdin=subprocess.PIPE) as p:
+                p.communicate(self.assembly.encode('utf-8'))
+                if p.wait() != 0:
+                    print("Error in program:")
+                    print(self.assembly)
+                    sys.exit(1)
             self._link(outfile)
 
     def _get_instructions(self):
