@@ -62,13 +62,17 @@ class Program:
         self.close()
 
     def _get_binary(self, elffile):
-        self.binfile = tempfile.NamedTemporaryFile(suffix=".bin")
-        args = [cmds['objcopy'],
-                "-O", "binary",
-                "-I", self.endian_fmt,
-                elffile.name,
-                self.binfile.name]
-        subprocess.check_output(args)
+        with tempfile.NamedTemporaryFile(suffix=".bin") as binfile:
+            args = [cmds['objcopy'],
+                    "-O", "binary",
+                    "-I", self.endian_fmt,
+                    elffile.name,
+                    binfile.name]
+            subprocess.check_output(args)
+            # copy over to persistent binfile (BytesIO)
+            self.binfile = BytesIO()
+            self.binfile.write(binfile.read())
+            self.binfile.seek(0)
 
     def _link(self, ofile):
         with tempfile.NamedTemporaryFile(suffix=".elf") as elffile:
