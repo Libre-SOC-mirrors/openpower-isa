@@ -25,13 +25,24 @@ methods, the use of yield from/yield is required.
 from openpower.decoder.power_enums import XER_bits
 from openpower.util import log
 
+global staterunner_factory
+staterunner_factory = {}
+
+
+def staterunner_add(name, kls):
+    log("staterunner_add", name, kls)
+    staterunner_factory[name] = kls
+
+
 
 # TBD an Abstract Base Class
 class StateRunner:
     """StateRunner: an Abstract Base Class for preparing and running "State".
     near-identical in concept to python unittest.TestCase
     """
-    def __init__(self, dut, **kwargs): pass
+    def __init__(self, name, kls):
+        staterunner_add(name, kls)
+
     def setup_for_test(self):
         if False: yield
     def setup_during_test(self):
@@ -48,6 +59,7 @@ class StateRunner:
 
 class SimRunner(StateRunner):
     def __init__(self, dut, **kwargs):
+        super().__init__("sim", SimRunner)
         self.pspec = kwargs['pspec']
         self.m = kwargs['m']
 
