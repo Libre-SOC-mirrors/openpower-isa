@@ -453,6 +453,15 @@ class HelperTests(unittest.TestCase):
         return self.assertEqual(a, b, msg)
 
 
+class ISACallerHelper:
+    def __init__(self, XLEN: int) -> None:
+        self.__XLEN = XLEN
+
+    @property
+    def XLEN(self):
+        return self.__XLEN
+
+
 if __name__ == '__main__':
     log(SelectableInt.__bases__)
     unittest.main()
