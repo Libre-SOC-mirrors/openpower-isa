@@ -1,5 +1,6 @@
 import unittest
 import struct
+import sys
 from openpower.decoder.selectable_int import (SelectableInt, onebit,
                                               selectconcat)
 from nmutil.divmod import trunc_divs, trunc_rems
@@ -460,6 +461,9 @@ class ISACallerHelper:
     @property
     def XLEN(self):
         return self.__XLEN
+
+    def __getattr__(self, attr):
+        return getattr(sys.modules[ISACallerHelper.__module__], attr)
 
 
 if __name__ == '__main__':
