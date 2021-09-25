@@ -42,6 +42,7 @@ class StateRunner:
     """
     def __init__(self, name, kls):
         staterunner_add(name, kls)
+        self.name = name
 
     def setup_for_test(self):
         if False: yield
