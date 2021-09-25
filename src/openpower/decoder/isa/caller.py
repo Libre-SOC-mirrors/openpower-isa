@@ -28,7 +28,8 @@ from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
 
 from openpower.decoder.power_enums import SVPtype
 
-from openpower.decoder.helpers import (exts, gtu, ltu, undefined)
+from openpower.decoder.helpers import (exts, gtu, ltu, undefined,
+                                       ISACallerHelper)
 from openpower.consts import PIb, MSRb  # big-endian (PowerISA versions)
 from openpower.consts import (SVP64MODE,
                               SVP64CROffs,
@@ -559,7 +560,7 @@ def get_pdecode_idx_out2(dec2, name):
     return None, False
 
 
-class ISACaller:
+class ISACaller(ISACallerHelper):
     # decoder2 - an instance of power_decoder2
     # regfile - a list of initial values for the registers
     # initial_{etc} - initial values for SPRs, Condition Register, Mem, MSR
