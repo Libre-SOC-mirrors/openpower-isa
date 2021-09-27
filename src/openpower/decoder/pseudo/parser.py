@@ -378,10 +378,11 @@ class PowerParser:
     def p_parameters(self, p):
         """parameters : LPAR RPAR
                       | LPAR varargslist RPAR"""
-        if len(p) == 3:
-            args = []
-        else:
-            args = p[2]
+        args = []
+        if self.helper:
+            args.append("self")
+        if len(p) != 3:
+            args += p[2]
         p[0] = ast.arguments(args=args, vararg=None, kwarg=None, defaults=[])
         # during the time between parameters identified and suite is not
         # there is a window of opportunity to declare the function parameters
@@ -951,6 +952,8 @@ class GardenSnakeParser(PowerParser):
     def parse(self, code):
         # self.lexer.input(code)
         result = self.parser.parse(code, lexer=self.lexer, debug=self.debug)
+        if self.helper:
+            result = [ast.ClassDef("ISACallerFnHelper", [], [], result, decorator_list=[])]
         return ast.Module(result)
 
 
