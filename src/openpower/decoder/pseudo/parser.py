@@ -935,7 +935,7 @@ class PowerParser:
 
 
 class GardenSnakeParser(PowerParser):
-    def __init__(self, lexer=None, debug=False, form=None, incl_carry=False):
+    def __init__(self, lexer=None, debug=False, form=None, incl_carry=False, helper=False):
         if form is not None:
             self.sd = create_pdecode()
         PowerParser.__init__(self, form, incl_carry)
@@ -944,6 +944,7 @@ class GardenSnakeParser(PowerParser):
             lexer = IndentLexer(debug=0)
         self.lexer = lexer
         self.tokens = lexer.tokens
+        self.helper = helper
         self.parser = yacc.yacc(module=self, start="file_input_end",
                                 debug=debug, write_tables=False)
 
@@ -962,19 +963,19 @@ _CACHE_PARSERS = True
 
 
 class GardenSnakeCompiler(object):
-    def __init__(self, debug=False, form=None, incl_carry=False):
+    def __init__(self, debug=False, form=None, incl_carry=False, helper=False):
         if _CACHE_PARSERS:
             try:
-                parser = _CACHED_PARSERS[debug, form, incl_carry]
+                parser = _CACHED_PARSERS[debug, form, incl_carry, helper]
             except KeyError:
                 parser = GardenSnakeParser(debug=debug, form=form,
-                                           incl_carry=incl_carry)
-                _CACHED_PARSERS[debug, form, incl_carry] = parser
+                                           incl_carry=incl_carry, helper=helper)
+                _CACHED_PARSERS[debug, form, incl_carry, helper] = parser
 
             self.parser = deepcopy(parser)
         else:
             self.parser = GardenSnakeParser(debug=debug, form=form,
-                                            incl_carry=incl_carry)
+                                            incl_carry=incl_carry, helper=helper)
 
     def compile(self, code, mode="exec", filename="<string>"):
         tree = self.parser.parse(code)
