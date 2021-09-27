@@ -25,32 +25,7 @@ import ast
 
 regs = ['RA', 'RS', 'RB', 'RC', 'RT']
 fregs = ['FRA', 'FRS', 'FRB', 'FRC', 'FRT', 'FRS']
-HELPERS = {
-    "EXTS",
-    "EXTS128",
-    "EXTS64",
-    "EXTZ64",
-    "FPADD32",
-    "FPADD64",
-    "FPCOS32",
-    "FPDIV32",
-    "FPDIV64",
-    "FPMUL32",
-    "FPMUL64",
-    "FPMULADD32",
-    "FPSIN32",
-    "FPSUB32",
-    "FPSUB64",
-    "MASK",
-    "MASK32",
-    "MULS",
-    "ROTL32",
-    "ROTL64",
-    "SHL64",
-    "SINGLE",
-    "SVSTATE_NEXT",
-    "TRAP",
-}
+SPECIAL_HELPERS = {'concat', 'MEM', 'GPR', 'FPR', 'SPR'}
 
 def Assign(autoassign, assignname, left, right, iea_mode):
     names = []
@@ -241,8 +216,8 @@ def apply_trailer(atom, trailer, read_regs):
                 name = arg.id
                 if name in regs + fregs:
                     read_regs.add(name)
-        # special-case, these functions must be made "self.xxxx"
-        if atom.id in HELPERS:
+        # special-case, these functions must NOT be made "self.xxxx"
+        if atom.id not in SPECIAL_HELPERS:
             name = ast.Name("self", ast.Load())
             atom = ast.Attribute(name, atom, ast.Load())
         return ast.Call(atom, trailer[1], [])
@@ -439,7 +414,7 @@ class PowerParser:
                       | expr_stmt"""
         if isinstance(p[1], ast.Call):
             p[0] = ast.Expr(p[1])
-        elif isinstance(p[1], ast.Name) and p[1].id in HELPERS:
+        elif isinstance(p[1], ast.Name) and p[1].id not in SPECIAL_HELPERS:
             fname = p[1].id
             name = ast.Name("self", ast.Load())
             name = ast.Attribute(name, fname, ast.Load())
@@ -953,7 +928,7 @@ class GardenSnakeParser(PowerParser):
         # self.lexer.input(code)
         result = self.parser.parse(code, lexer=self.lexer, debug=self.debug)
         if self.helper:
-            result = [ast.ClassDef("ISACallerFnHelper", [], [], result, decorator_list=[])]
+            result = [ast.ClassDef("ISACallerFnHelper", ["ISACallerHelper"], [], result, decorator_list=[])]
         return ast.Module(result)
 
 
