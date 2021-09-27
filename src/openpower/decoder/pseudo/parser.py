@@ -312,8 +312,9 @@ class PowerParser:
         ("left", "INVERT"),
     )
 
-    def __init__(self, form, include_carry_in_write=False):
+    def __init__(self, form, include_carry_in_write=False, helper=False):
         self.include_ca_in_write = include_carry_in_write
+        self.helper = helper
         self.gprs = {}
         if form is not None:
             form = self.sd.sigforms[form]
@@ -938,13 +939,12 @@ class GardenSnakeParser(PowerParser):
     def __init__(self, lexer=None, debug=False, form=None, incl_carry=False, helper=False):
         if form is not None:
             self.sd = create_pdecode()
-        PowerParser.__init__(self, form, incl_carry)
+        PowerParser.__init__(self, form, incl_carry, helper=helper)
         self.debug = debug
         if lexer is None:
             lexer = IndentLexer(debug=0)
         self.lexer = lexer
         self.tokens = lexer.tokens
-        self.helper = helper
         self.parser = yacc.yacc(module=self, start="file_input_end",
                                 debug=debug, write_tables=False)
 
