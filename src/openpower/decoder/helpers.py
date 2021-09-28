@@ -276,8 +276,6 @@ def signinv(res, sign):
 
 
 def FPMUL32(FRA, FRB, sign=1):
-    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
-    from openpower.decoder.isafunctions.double2single import DOUBLE
     #return FPMUL64(FRA, FRB)
     FRA = DOUBLE(SINGLE(FRA))
     FRB = DOUBLE(SINGLE(FRB))
@@ -455,7 +453,7 @@ class HelperTests(unittest.TestCase):
 
 
 class ISACallerHelper:
-    def __init__(self, XLEN: int) -> None:
+    def __init__(self, XLEN):
         self.__XLEN = XLEN
 
     @property
