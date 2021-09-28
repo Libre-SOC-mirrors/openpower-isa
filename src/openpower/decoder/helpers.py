@@ -214,58 +214,6 @@ def SINGLE(FRS):
 # XXX NOTE: these are very quick hacked functions for utterly basic
 # FP support
 
-def fp64toselectable(frt):
-    """convert FP number to 64 bit SelectableInt
-    """
-    b = struct.pack(">d", frt)
-    val = int.from_bytes(b, byteorder='big', signed=False)
-    return SelectableInt(val, 64)
-
-
-def FPSIN32(FRB):
-    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
-    #FRB = DOUBLE(SINGLE(FRB))
-    result = math.sin(float(FRB))
-    cvt = fp64toselectable(result)
-    cvt = DOUBLE2SINGLE(cvt)
-    log ("FPSIN32", FRB, float(FRB), "=", result, cvt)
-    return cvt
-
-
-def FPCOS32(FRB):
-    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
-    #FRB = DOUBLE(SINGLE(FRB))
-    result = math.cos(float(FRB))
-    cvt = fp64toselectable(result)
-    cvt = DOUBLE2SINGLE(cvt)
-    log ("FPCOS32", FRB, float(FRB), "=", result, cvt)
-    return cvt
-
-
-def FPADD32(FRA, FRB):
-    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
-    #return FPADD64(FRA, FRB)
-    #FRA = DOUBLE(SINGLE(FRA))
-    #FRB = DOUBLE(SINGLE(FRB))
-    result = float(FRA) + float(FRB)
-    cvt = fp64toselectable(result)
-    cvt = DOUBLE2SINGLE(cvt)
-    log ("FPADD32", FRA, FRB, float(FRA), "+", float(FRB), "=", result, cvt)
-    return cvt
-
-
-def FPSUB32(FRA, FRB):
-    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
-    #return FPSUB64(FRA, FRB)
-    #FRA = DOUBLE(SINGLE(FRA))
-    #FRB = DOUBLE(SINGLE(FRB))
-    result = float(FRA) - float(FRB)
-    cvt = fp64toselectable(result)
-    cvt = DOUBLE2SINGLE(cvt)
-    log ("FPSUB32", FRA, FRB, float(FRA), "-", float(FRB), "=", result, cvt)
-    return cvt
-
-
 def signinv(res, sign):
     if sign == 1:
         return res
@@ -275,56 +223,98 @@ def signinv(res, sign):
         return -res
 
 
-def FPMUL32(FRA, FRB, sign=1):
-    #return FPMUL64(FRA, FRB)
-    FRA = DOUBLE(SINGLE(FRA))
-    FRB = DOUBLE(SINGLE(FRB))
-    result = signinv(float(FRA) * float(FRB), sign)
-    log ("FPMUL32", FRA, FRB, float(FRA), float(FRB), result, sign)
-    cvt = fp64toselectable(result)
-    cvt = DOUBLE2SINGLE(cvt)
-    log ("      cvt", cvt)
-    return cvt
+def fp64toselectable(frt):
+    """convert FP number to 64 bit SelectableInt
+    """
+    b = struct.pack(">d", frt)
+    val = int.from_bytes(b, byteorder='big', signed=False)
+    return SelectableInt(val, 64)
 
 
-def FPMULADD32(FRA, FRC, FRB, mulsign, addsign):
-    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
-    #return FPMUL64(FRA, FRB)
-    #FRA = DOUBLE(SINGLE(FRA))
-    #FRB = DOUBLE(SINGLE(FRB))
-    if addsign == 1:
-        if mulsign == 1:
-            result = float(FRA) * float(FRC) + float(FRB) # fmadds
-        elif mulsign == -1:
-            result = -(float(FRA) * float(FRC) - float(FRB))  # fnmsubs
-    elif addsign == -1:
-        if mulsign == 1:
-            result = float(FRA) * float(FRC) - float(FRB) # fmsubs
-        elif mulsign == -1:
-            result = -(float(FRA) * float(FRC) + float(FRB))  # fnmadds
-    elif addsign == 0:
-        result = 0.0
-    log ("FPMULADD32 FRA FRC FRB", FRA, FRC, FRB)
-    log ("      FRA", float(FRA))
-    log ("      FRC", float(FRC))
-    log ("      FRB", float(FRB))
-    log ("      (FRA*FRC)+FRB=", mulsign, addsign, result)
-    cvt = fp64toselectable(result)
-    cvt = DOUBLE2SINGLE(cvt)
-    log ("      cvt", cvt)
-    return cvt
+class ISAFPHelpers:
 
+    def FPSIN32(self, FRB):
+        #FRB = DOUBLE(SINGLE(FRB))
+        result = math.sin(float(FRB))
+        cvt = fp64toselectable(result)
+        cvt = self.DOUBLE2SINGLE(cvt)
+        log ("FPSIN32", FRB, float(FRB), "=", result, cvt)
+        return cvt
 
-def FPDIV32(FRA, FRB, sign=1):
-    from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
-    #return FPDIV64(FRA, FRB)
-    #FRA = DOUBLE(SINGLE(FRA))
-    #FRB = DOUBLE(SINGLE(FRB))
-    result = signinv(float(FRA) / float(FRB), sign)
-    cvt = fp64toselectable(result)
-    cvt = DOUBLE2SINGLE(cvt)
-    log ("FPDIV32", FRA, FRB, result, cvt)
-    return cvt
+    def FPCOS32(self, FRB):
+        #FRB = DOUBLE(SINGLE(FRB))
+        result = math.cos(float(FRB))
+        cvt = fp64toselectable(result)
+        cvt = self.DOUBLE2SINGLE(cvt)
+        log ("FPCOS32", FRB, float(FRB), "=", result, cvt)
+        return cvt
+
+    def FPADD32(self, FRA, FRB):
+        #return FPADD64(FRA, FRB)
+        #FRA = DOUBLE(SINGLE(FRA))
+        #FRB = DOUBLE(SINGLE(FRB))
+        result = float(FRA) + float(FRB)
+        cvt = fp64toselectable(result)
+        cvt = self.DOUBLE2SINGLE(cvt)
+        log ("FPADD32", FRA, FRB, float(FRA), "+", float(FRB), "=", result, cvt)
+        return cvt
+
+    def FPSUB32(self, FRA, FRB):
+        #return FPSUB64(FRA, FRB)
+        #FRA = DOUBLE(SINGLE(FRA))
+        #FRB = DOUBLE(SINGLE(FRB))
+        result = float(FRA) - float(FRB)
+        cvt = fp64toselectable(result)
+        cvt = self.DOUBLE2SINGLE(cvt)
+        log ("FPSUB32", FRA, FRB, float(FRA), "-", float(FRB), "=", result, cvt)
+        return cvt
+
+    def FPMUL32(self, FRA, FRB, sign=1):
+        #return FPMUL64(FRA, FRB)
+        FRA = self.DOUBLE(SINGLE(FRA))
+        FRB = self.DOUBLE(SINGLE(FRB))
+        result = signinv(float(FRA) * float(FRB), sign)
+        log ("FPMUL32", FRA, FRB, float(FRA), float(FRB), result, sign)
+        cvt = fp64toselectable(result)
+        cvt = self.DOUBLE2SINGLE(cvt)
+        log ("      cvt", cvt)
+        return cvt
+
+    def FPMULADD32(self, FRA, FRC, FRB, mulsign, addsign):
+        #return FPMUL64(FRA, FRB)
+        #FRA = DOUBLE(SINGLE(FRA))
+        #FRB = DOUBLE(SINGLE(FRB))
+        if addsign == 1:
+            if mulsign == 1:
+                result = float(FRA) * float(FRC) + float(FRB) # fmadds
+            elif mulsign == -1:
+                result = -(float(FRA) * float(FRC) - float(FRB))  # fnmsubs
+        elif addsign == -1:
+            if mulsign == 1:
+                result = float(FRA) * float(FRC) - float(FRB) # fmsubs
+            elif mulsign == -1:
+                result = -(float(FRA) * float(FRC) + float(FRB))  # fnmadds
+        elif addsign == 0:
+            result = 0.0
+        log ("FPMULADD32 FRA FRC FRB", FRA, FRC, FRB)
+        log ("      FRA", float(FRA))
+        log ("      FRC", float(FRC))
+        log ("      FRB", float(FRB))
+        log ("      (FRA*FRC)+FRB=", mulsign, addsign, result)
+        cvt = fp64toselectable(result)
+        cvt = self.DOUBLE2SINGLE(cvt)
+        log ("      cvt", cvt)
+        return cvt
+
+    def FPDIV32(self, FRA, FRB, sign=1):
+        #return FPDIV64(FRA, FRB)
+        #FRA = DOUBLE(SINGLE(FRA))
+        #FRB = DOUBLE(SINGLE(FRB))
+        result = signinv(float(FRA) / float(FRB), sign)
+        cvt = fp64toselectable(result)
+        cvt = self.DOUBLE2SINGLE(cvt)
+        log ("FPDIV32", FRA, FRB, result, cvt)
+        return cvt
 
 
 def FPADD64(FRA, FRB):
