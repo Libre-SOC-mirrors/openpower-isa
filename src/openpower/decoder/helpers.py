@@ -450,6 +450,9 @@ class ISACallerHelper:
     def XLEN(self):
         return self.__XLEN
 
+    def XLCASTS(self, value):
+        return SelectableInt(exts(value.value, self.XLEN), self.XLEN)
+
     def XLCASTU(self, value):
         bits = min(value.bits, self.XLEN)
         return SelectableInt(value.value & ((1 << bits) - 1), self.XLEN)
