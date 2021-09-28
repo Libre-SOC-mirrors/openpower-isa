@@ -10,7 +10,11 @@ from openpower.decoder.isa.test_caller import run_tst
 from openpower.sv.trans.svp64 import SVP64Asm
 from copy import deepcopy
 from openpower.decoder.helpers import fp64toselectable, SINGLE
-from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+from openpower.decoder.isafunctions.double2single import ISACallerFnHelper
+
+# really bad hack.  need to access the DOUBLE2SINGLE function auto-generated
+# from pseudo-code.
+fph = ISACallerFnHelper(XLEN=64)
 
 
 def transform_radix2(vec, exptable, reverse=False):
@@ -185,7 +189,7 @@ class FFTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -268,7 +272,7 @@ class FFTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -379,7 +383,7 @@ class FFTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -424,8 +428,8 @@ class FFTTestCase(FHDLTestCase):
             mul = a * c
             t = b + mul
             u = b - mul
-            t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
-            u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            t = fph.DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            u = fph.DOUBLE2SINGLE(fp64toselectable(u)) # from double
             res.append((t, u))
             print ("FFT", i, "in", a, b, "coeff", c, "mul", mul, "res", t, u)
 
@@ -469,8 +473,8 @@ class FFTTestCase(FHDLTestCase):
             fprs[i+6] = fp64toselectable(b)
             t = b + a
             u = b - a
-            t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
-            u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            t = fph.DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            u = fph.DOUBLE2SINGLE(fp64toselectable(u)) # from double
             res.append((t, u))
             print ("FFT", i, "in", a, b, "res", t, u)
 
@@ -623,7 +627,7 @@ class FFTTestCase(FHDLTestCase):
                        "expected_i", expected_i)
             for i, (expected_r, expected_i) in enumerate(zip(res_r, res_i)):
                 # convert to Power single
-                expected_r = DOUBLE2SINGLE(fp64toselectable(expected_r ))
+                expected_r = fph.DOUBLE2SINGLE(fp64toselectable(expected_r ))
                 expected_r = float(expected_r)
                 actual_r = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -632,7 +636,7 @@ class FFTTestCase(FHDLTestCase):
                 err = abs(actual_r - expected_r ) / expected_r
                 self.assertTrue(err < 1e-6)
                 # convert to Power single
-                expected_i = DOUBLE2SINGLE(fp64toselectable(expected_i ))
+                expected_i = fph.DOUBLE2SINGLE(fp64toselectable(expected_i ))
                 expected_i = float(expected_i)
                 actual_i = float(sim.fpr(i+8))
                 # approximate error calculation, good enough test
@@ -661,8 +665,8 @@ class FFTTestCase(FHDLTestCase):
         for i in range(4):
             t = scalar_b + scalar_a
             u = scalar_b - scalar_a
-            t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
-            u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            t = fph.DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            u = fph.DOUBLE2SINGLE(fp64toselectable(u)) # from double
             res.append((t, u))
             print ("FFT", i, "res", t, u)
 
@@ -747,7 +751,7 @@ class FFTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
