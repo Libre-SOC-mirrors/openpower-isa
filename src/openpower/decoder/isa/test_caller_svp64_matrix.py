@@ -15,7 +15,6 @@ from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.consts import SVP64CROffs
 from copy import deepcopy
 from openpower.decoder.helpers import fp64toselectable
-from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
 from functools import reduce
 import operator
 
