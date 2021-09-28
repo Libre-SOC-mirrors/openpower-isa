@@ -9,7 +9,7 @@ from openpower.decoder.isa.test_caller import run_tst
 from openpower.sv.trans.svp64 import SVP64Asm
 from copy import deepcopy
 from openpower.decoder.helpers import fp64toselectable, SINGLE
-from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+from openpower.decoder.isafunctions.double2single import ISACallerFnHelper
 from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
                                          iterate_dct_inner_butterfly_indices,
                                          iterate_dct_outer_butterfly_indices,
@@ -17,6 +17,10 @@ from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
 from openpower.decoder.isa.fastdctlee import inverse_transform_iter
 import unittest
 import math
+
+# really bad hack.  need to access the DOUBLE2SINGLE function auto-generated
+# from pseudo-code.
+fph = ISACallerFnHelper(XLEN=64)
 
 
 def transform_inner_radix2_dct(vec, ctable):
@@ -281,11 +285,11 @@ class DCTTestCase(FHDLTestCase):
             # and FPSUB32 directly to be honest.
             t = a + b
             diff = (a - b)
-            diff = DOUBLE2SINGLE(fp64toselectable(diff)) # FP32 round
+            diff = fph.DOUBLE2SINGLE(fp64toselectable(diff)) # FP32 round
             diff = float(diff)
             u = diff * c
-            tc = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
-            uc = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            tc = fph.DOUBLE2SINGLE(fp64toselectable(t)) # cvt to Power single
+            uc = fph.DOUBLE2SINGLE(fp64toselectable(u)) # from double
             res.append((uc, tc))
             print ("DCT", i, "in", a, b, "c", c, "res", t, u)
 
@@ -366,7 +370,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -428,7 +432,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -486,7 +490,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -537,7 +541,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -619,7 +623,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -688,7 +692,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -907,7 +911,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("i", i, float(sim.fpr(i)), "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -997,7 +1001,7 @@ class DCTTestCase(FHDLTestCase):
 
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
@@ -1089,7 +1093,7 @@ class DCTTestCase(FHDLTestCase):
 
             for i, expected in enumerate(res):
                 # convert to Power single
-                expected = DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
                 actual = float(sim.fpr(i))
                 # approximate error calculation, good enough test
