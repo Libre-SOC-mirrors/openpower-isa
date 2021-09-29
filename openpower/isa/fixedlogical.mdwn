@@ -88,7 +88,7 @@ D-Form
 
 Pseudo-code:
 
-    RA <- (RS) ^ ([0]*(XLEN-16) || UI)
+    RA <- (RS) ^ XLCASTU(UI)
 
 Special Registers Altered:
 
