@@ -195,7 +195,7 @@ def identify_sint_mul_pattern(p):
         return False
     if (not isinstance(p[3], ast.Constant) and  # rhs = Num
         not isinstance(p[3], ast.BinOp) and     # rhs = (XLEN-something)
-        not isinstance(p[3], ast.Name)):        # rhs = XLEN
+        not isinstance(p[3], ast.Attribute)):   # rhs = XLEN
         return False
     if not isinstance(p[1], ast.List):  # lhs is a list
         return False
@@ -751,7 +751,11 @@ class PowerParser:
                      'SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3']:
             self.special_regs.add(name)
             self.write_regs.add(name)  # and add to list to write
-        p[0] = ast.Name(id=name, ctx=ast.Load())
+        if name in {'XLEN'}:
+            attr = ast.Name("self", ast.Load())
+            p[0] = ast.Attribute(attr, name, ast.Load())
+        else:
+            p[0] = ast.Name(id=name, ctx=ast.Load())
 
     def p_atom_number(self, p):
         """atom : BINARY
