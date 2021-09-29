@@ -699,6 +699,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         self.decoder = decoder2.dec
         self.dec2 = decoder2
 
+        super().__init__(XLEN=self.namespace["XLEN"])
+
+    @property
+    def XLEN(self):
+        return self.namespace["XLEN"]
+
     def call_trap(self, trap_addr, trap_bit):
         """calls TRAP and sets up NIA to the new execution location.
         next instruction will begin at trap_addr.
