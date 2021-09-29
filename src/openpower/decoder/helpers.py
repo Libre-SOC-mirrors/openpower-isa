@@ -458,7 +458,10 @@ class ISACallerHelper:
         return SelectableInt(value.value & ((1 << bits) - 1), self.XLEN)
 
     def __getattr__(self, attr):
-        return getattr(sys.modules[ISACallerHelper.__module__], attr)
+        try:
+            return globals()[attr]
+        except KeyError:
+            raise AttributeError(attr)
 
 
 if __name__ == '__main__':
