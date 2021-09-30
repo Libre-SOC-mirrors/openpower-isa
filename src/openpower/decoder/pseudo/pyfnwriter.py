@@ -39,12 +39,19 @@ class PyISAFnWriter(ISAFunctions):
         isadir = get_isafn_src_dir()
         os.makedirs(isadir, exist_ok=True)
         fname = os.path.join(isadir, "%s.py" % pagename)
+        sourcecache = dict()
         with open(fname, "w") as f:
             f.write(header % function['desc'])  # write out header
             # go through all instructions
             pcode = function['pcode']
             print(pcode)
-            pycode = convert_to_pure_python(pcode, True)
+            # check if the code has already been compiled
+            phash = hash(pcode)
+            if phash in sourcecache:
+                pycode = sourcecache[phash]
+            else:
+                pycode = convert_to_pure_python(pcode, True)
+                sourcecache[phash] = pycode
             f.write(pycode)
 
     def write_isa_class(self):

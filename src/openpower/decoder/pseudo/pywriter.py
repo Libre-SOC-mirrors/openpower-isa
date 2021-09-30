@@ -53,7 +53,7 @@ iinfo_template = """instruction_info(func=%s,
 
 class PyISAWriter(ISA):
     def __init__(self):
-        ISA.__init__(self, first_encountered_instr=True)
+        ISA.__init__(self)
         self.pages_written = []
 
     def write_pysource(self, pagename):
