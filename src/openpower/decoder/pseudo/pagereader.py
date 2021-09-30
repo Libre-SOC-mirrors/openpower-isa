@@ -64,11 +64,13 @@ def get_isa_dir():
 
 class ISA:
 
-    def __init__(self):
+    def __init__(self, first_encountered_instr=False):
         self.instr = OrderedDict()
         self.forms = {}
         self.page = {}
         self.verbose = False
+        # only add the first-encountered instruction (marked by "*")
+        self.first_encountered_instr = first_encountered_instr
         for pth in os.listdir(os.path.join(get_isa_dir())):
             if self.verbose:
                 print("examining", get_isa_dir(), pth)
@@ -282,6 +284,14 @@ class ISA:
             # add in opcode
             for o in opcodes:
                 self.add_op(o, d)
+                if self.first_encountered_instr:
+                    # turns out that because the pseudocode is identical,
+                    # you don't actually need to add any more than the
+                    # first listed opcode for pseudocode-generation.
+                    # therefore, save compiler time and skip all others.
+                    # detection of "." and "o" etc is handled in ISACaller
+                    # and ends up replicating the instruction that way
+                    break
 
             # expect and drop whitespace
             while lines:
