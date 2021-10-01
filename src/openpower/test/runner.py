@@ -93,7 +93,7 @@ class SimRunner(StateRunner):
 
 class TestRunnerBase(FHDLTestCase):
     def __init__(self, tst_data, microwatt_mmu=False, rom=None,
-                        svp64=True, run_hdl=True, run_sim=True):
+                        svp64=True, run_hdl=None, run_sim=True):
         super().__init__("run_all")
         self.test_data = tst_data
         self.microwatt_mmu = microwatt_mmu
