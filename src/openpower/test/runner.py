@@ -402,7 +402,7 @@ class TestRunnerBase(FHDLTestCase):
         # optionally, if a wishbone-based ROM is passed in, run that as an
         # extra emulated process
         if self.rom is not None:
-            dcache = core.fus.fus["mmu0"].alu.dcache
+            dcache = hdlrun.issuer.core.fus.fus["mmu0"].alu.dcache
             default_mem = self.rom
             sim.add_sync_process(wrap(wb_get(dcache, default_mem, "DCACHE")))
 
