@@ -389,9 +389,7 @@ X-Form
 
 Pseudo-code:
 
-    s <- (RS)[XLEN/2]
-    RA[XLEN/2:XLEN-1] <- (RS)[XLEN/2:XLEN-1]
-    RA[0:(XLEN/2)-1] <- [s]*(XLEN/2)
+    RA <- EXTSXL(RS, 32)
 
 Special Registers Altered:
 
