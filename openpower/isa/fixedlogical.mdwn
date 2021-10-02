@@ -223,9 +223,7 @@ X-Form
 
 Pseudo-code:
 
-    s <- (RS)[56]
-    RA[56:63] <- (RS)[56:63]
-    RA[0:55] <- [s]*56
+    RA <- EXTSXL(RS, 8)
 
 Special Registers Altered:
 
