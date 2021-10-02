@@ -457,6 +457,9 @@ class ISACallerHelper:
         # SelectableInt already takes care of masking out the bits
         return SelectableInt(value.value, self.XLEN)
 
+    def EXTSXL(self, value, bits):
+        return SelectableInt(exts(value.value, bits), self.XLEN)
+
     def __getattr__(self, attr):
         try:
             return globals()[attr]
