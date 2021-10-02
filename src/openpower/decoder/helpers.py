@@ -454,8 +454,8 @@ class ISACallerHelper:
         return SelectableInt(exts(value.value, self.XLEN), self.XLEN)
 
     def XLCASTU(self, value):
-        bits = min(value.bits, self.XLEN)
-        return SelectableInt(value.value & ((1 << bits) - 1), self.XLEN)
+        # SelectableInt already takes care of masking out the bits
+        return SelectableInt(value.value, self.XLEN)
 
     def __getattr__(self, attr):
         try:
