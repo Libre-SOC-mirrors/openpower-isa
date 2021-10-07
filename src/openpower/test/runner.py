@@ -35,6 +35,9 @@ from openpower.test.state import TestState, StateRunner
 
 
 class SimRunner(StateRunner):
+    """SimRunner:  Implements methods for the setup, preparation, and
+    running of tests using ISACaller simulation
+    """
     def __init__(self, dut, m, pspec):
         super().__init__("sim", SimRunner)
         self.dut = dut
@@ -92,6 +95,15 @@ class SimRunner(StateRunner):
 
 
 class TestRunnerBase(FHDLTestCase):
+    """TestRunnerBase:  Sets up and executes the running of tests
+    contained in tst_data. run_hdl (if provided) is an HDLRunner
+    object.  If not provided, hdl simulation is skipped.
+
+    ISACaller simulation can be skipped by setting run_sim=False.
+
+    When using an Expected state to test with, the expected state
+    is passed in with tst_data.
+    """
     def __init__(self, tst_data, microwatt_mmu=False, rom=None,
                         svp64=True, run_hdl=None, run_sim=True):
         super().__init__("run_all")
@@ -127,6 +139,10 @@ class TestRunnerBase(FHDLTestCase):
                              reg_wid=64)
 
         ###### SETUP PHASE #######
+        # Determine the simulations needed and add to state_list
+        # for setup and running
+        # The methods contained in the respective Runner classes are
+        # called using this list when possible
 
         state_list = []
 
@@ -233,6 +249,7 @@ class TestRunnerBase(FHDLTestCase):
                         for state in sim_states:
                             print (state)
 
+                    # compare the states
                     if self.run_hdl and self.run_sim:
                         for simstate, hdlstate in zip(sim_states, hdl_states):
                             simstate.compare(hdlstate)     # register check
