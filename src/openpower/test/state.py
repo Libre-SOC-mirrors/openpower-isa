@@ -34,7 +34,6 @@ def staterunner_add(name, kls):
     staterunner_factory[name] = kls
 
 
-
 # TBD an Abstract Base Class
 class StateRunner:
     """StateRunner: an Abstract Base Class for preparing and running "State".
@@ -58,14 +57,17 @@ class StateRunner:
         if False: yield
 
 
-class SimRunner(StateRunner):
-    def __init__(self, dut, **kwargs):
-        super().__init__("sim", SimRunner)
-        self.pspec = kwargs['pspec']
-        self.m = kwargs['m']
-
-
 class State:
+    """State: Base class for the "state" of the Power ISA object to be tested
+    including methods to compare various registers and memory between
+    them.
+
+    All methods implemented must be generators.
+
+    FPRs and CRs - stored as lists
+    XERs/PC - simple members
+    memory - stored as a dictionary {location: data}
+    """
     def get_state(self):
         yield from self.get_intregs()
         yield from self.get_crregs()
@@ -106,7 +108,8 @@ class State:
             (self.state_type, s2.state_type, repr(self.code)))
 
     def compare_mem(self, s2):
-        # copy dics to preserve state mem then pad empty locs
+        # copy dics to preserve state mem then pad empty locs since
+        # different Power ISA objects may differ how theystore memory
         s1mem, s2mem = self.mem.copy(), s2.mem.copy()
         for i in set(self.mem).difference(set(s2.mem)):
             s2mem[i] = 0
@@ -118,6 +121,10 @@ class State:
 
 
 class SimState(State):
+    """SimState: Obtains registers and memory from an ISACaller object.
+    Note that yields are "faked" to maintain consistency and compatability
+    within the API.
+    """
     def __init__(self, sim):
         self.sim = sim
 
@@ -174,6 +181,12 @@ class SimState(State):
 
 
 class ExpectedState(State):
+    """ExpectedState: A user defined state set manually.
+    No methods, just pass into what expected values you want to test
+    with against other states.
+
+    see openpower/test/shift_rot/shift_rot_cases2.py for examples
+    """
     def __init__(self, int_regs=None, pc=0, crregs=None,
                  so=0, ov=0, ca=0):
         if int_regs is None:
@@ -213,6 +226,17 @@ def state_add(name, kls):
 
 
 def TestState(state_type, to_test, dut, code=0):
+    """TestState: Factory that returns a TestState object loaded with
+    registers and memory that can then be compared.
+
+    state_type: Type of state to create from global state_factory dictionary
+    to_test: The Power ISA object to test
+    dut: The unittest object
+    code: Actual machine code of what is being tested
+
+    The state_type can be added to the factory types using the state_add
+    function in this module.
+    """
     state_class = state_factory[state_type]
     state = state_class(to_test)
     state.to_test = to_test
