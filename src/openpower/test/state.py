@@ -64,7 +64,7 @@ class State:
 
     All methods implemented must be generators.
 
-    FPRs and CRs - stored as lists
+    GPRs and CRs - stored as lists
     XERs/PC - simple members
     memory - stored as a dictionary {location: data}
     """
