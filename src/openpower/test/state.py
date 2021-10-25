@@ -216,14 +216,18 @@ class ExpectedState(State):
     def get_mem(self):
         if False: yield
 
-    def dump_state_tofile(self, state, testname):
+    def dump_state_tofile(self, state, testname, testfile):
         """dump_state_tofile:  Takes a passed in teststate object along
-        with a test name and generates a code file located at /tmp/testname
-        to set an expected state object
+        with a test name and generates a code file located at
+        /tmp/testfile/testname to set an expected state object
         """
         lindent = ' '*8 # indent for code
-        path = "/tmp/expected/"  # temp for now
+        # create the path
+        path = "/tmp/expected/"
+        if testfile is not None:
+            path += testfile + '/'
         os.makedirs(path, exist_ok=True)
+
         with open("%s%s.py" % (path, testname), "w") as sout:
             # pc and intregs
             sout.write("%se = ExpectedState(pc=%d)\n" % (lindent, state.pc))

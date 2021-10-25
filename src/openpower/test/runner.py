@@ -259,7 +259,8 @@ class TestRunnerBase(FHDLTestCase):
                     # setting expected state to last_sim
                     if test.expected is None:
                         e = ExpectedState()
-                        e.dump_state_tofile(last_sim, test.name)
+                        e.dump_state_tofile(last_sim, test.name,
+                                            test.test_file)
 
                     # compare against expected results
                     if test.expected is not None:
