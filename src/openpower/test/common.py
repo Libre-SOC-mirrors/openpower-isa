@@ -6,6 +6,7 @@ Bugreports:
 import inspect
 import functools
 import types
+import os
 
 from openpower.decoder.power_enums import XER_bits, CryIn, spr_dict
 from openpower.util import fast_reg_to_spr, slow_reg_to_spr  # HACK!
@@ -106,12 +107,16 @@ class TestAccumulatorBase:
                  expected=None):
 
         test_name = inspect.stack()[1][3]  # name of caller of this function
+        # name of file containing test case
+        test_file = os.path.splitext(os.path.basename(
+                                    inspect.stack()[1][1]))[0]
         tc = TestCase(prog, test_name,
                       regs=initial_regs, sprs=initial_sprs, cr=initial_cr,
                       msr=initial_msr,
                       mem=initial_mem,
                       svstate=initial_svstate,
-                      expected=expected)
+                      expected=expected,
+                      test_file=test_file)
 
         self.test_data.append(tc)
 
@@ -122,7 +127,8 @@ class TestCase:
                  do_sim=True,
                  extra_break_addr=None,
                  svstate=0,
-                 expected=None):
+                 expected=None,
+                 test_file=None):
 
         self.program = program
         self.name = name
@@ -142,7 +148,7 @@ class TestCase:
         self.extra_break_addr = extra_break_addr
         self.svstate = svstate
         self.expected = expected # expected results from the test
-
+        self.test_file = test_file
 
 class ALUHelpers:
 
