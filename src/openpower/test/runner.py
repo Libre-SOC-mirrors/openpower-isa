@@ -31,7 +31,7 @@ from openpower.decoder.power_decoder2 import PowerDecode2
 from soc.config.test.test_loadstore import TestMemPspec
 from nmutil.util import wrap
 from soc.experiment.test.test_mmu_dcache import wb_get
-from openpower.test.state import TestState, StateRunner
+from openpower.test.state import TestState, StateRunner, ExpectedState
 
 
 class SimRunner(StateRunner):
@@ -254,6 +254,12 @@ class TestRunnerBase(FHDLTestCase):
                         for simstate, hdlstate in zip(sim_states, hdl_states):
                             simstate.compare(hdlstate)     # register check
                             simstate.compare_mem(hdlstate) # memory check
+
+                    # if no expected, create /tmp/case_name.py with code
+                    # setting expected state to last_sim
+                    if test.expected is None:
+                        e = ExpectedState()
+                        e.dump_state_tofile(last_sim, test.name)
 
                     # compare against expected results
                     if test.expected is not None:

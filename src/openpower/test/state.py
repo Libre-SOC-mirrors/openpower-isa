@@ -215,6 +215,36 @@ class ExpectedState(State):
     def get_mem(self):
         if False: yield
 
+    def dump_state_tofile(self, state, testname):
+        """dump_state_tofile:  Takes a passed in teststate object along
+        with a test name and generates a code file located at /tmp/testname
+        to set an expected state object
+        """
+        lindent = ' '*8 # indent for code
+        with open("/tmp/{0}.py".format(testname), "w") as sout:
+            # pc and intregs
+            sout.write(f"{lindent}e = ExpectedState(pc={state.pc})\n")
+            for i in range(32):
+                if(state.intregs[i] != 0):
+                    sout.write("{0}e.intregs[{1}] = 0x{2:x}\n".format(
+                               lindent,
+                               i,
+                               state.intregs[i]))
+            # cr
+            for i in range(8):
+                if(state.crregs[i] != 0):
+                    sout.write("{0}e.crregs[{1}] = 0x{2:x}\n".format(
+                               lindent,
+                               i,
+                               state.crregs[i]))
+            # XER
+            if(state.so != 0):
+                sout.write(f"{lindent}e.so = 0x{state.so}\n")
+            if(state.ov != 0):
+                sout.write(f"{lindent}e.sv = 0x{state.ov}\n")
+            if(state.ca != 0):
+                sout.write(f"{lindent}e.ca = 0x{state.ca}\n")
+
 
 global state_factory
 state_factory = {'sim': SimState, 'expected': ExpectedState}
