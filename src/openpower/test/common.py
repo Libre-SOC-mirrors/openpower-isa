@@ -150,6 +150,7 @@ class TestCase:
         self.expected = expected # expected results from the test
         self.test_file = test_file
 
+
 class ALUHelpers:
 
     def get_sim_fast_reg(res, sim, dec2, reg, name):
