@@ -236,10 +236,11 @@ class ExpectedState(State):
                     msg = "%se.intregs[%d] = 0x%x\n"
                     sout.write( msg % (lindent, i, reg))
             # cr
-            for i, reg in enumerate(state.crregs):
-                if(reg != 0):
+            for i in range(8):
+                cri = state.crregs[7 - i]
+                if(cri != 0):
                     msg = "%se.crregs[%d] = 0x%x\n"
-                    sout.write( msg % (lindent, i, reg))
+                    sout.write( msg % (lindent, i, cri))
             # XER
             if(state.so != 0):
                 sout.write("%se.so = 0x%x\n" % (lindent, state.so))
