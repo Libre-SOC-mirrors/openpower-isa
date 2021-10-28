@@ -455,5 +455,7 @@ def create_dct(fname, n, redir=True):
 
 
 if __name__ == '__main__':
-    create_dct("dct_butterfly.svg", 16)
-    create_idct("idct_butterfly.svg", 16)
+    create_dct("dct_butterfly_8.svg", 8)
+    create_idct("idct_butterfly_8.svg", 8)
+    create_dct("dct_butterfly_16.svg", 16)
+    create_idct("idct_butterfly_16.svg", 16)
