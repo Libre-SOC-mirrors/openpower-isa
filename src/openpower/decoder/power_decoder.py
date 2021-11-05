@@ -91,13 +91,13 @@ from collections import namedtuple, OrderedDict
 from nmigen import Module, Elaboratable, Signal, Cat, Mux, Const
 from nmigen.cli import rtlil, verilog
 from openpower.decoder.power_enums import (Function, Form, MicrOp,
-                                     In1Sel, In2Sel, In3Sel, OutSel,
-                                     SVEXTRA, SVEtype, SVPtype,  # Simple-V
-                                     RC, LdstLen, LDSTMode, CryIn,
-                                     single_bit_flags, CRInSel,
-                                     CROutSel, get_signal_name,
-                                     default_values, insns, asmidx,
-                                     asmlen)
+                                           In1Sel, In2Sel, In3Sel, OutSel,
+                                           SVEXTRA, SVEtype, SVPtype,  # Simple-V
+                                           RC, LdstLen, LDSTMode, CryIn,
+                                           single_bit_flags, CRInSel,
+                                           CROutSel, get_signal_name,
+                                           default_values, insns, asmidx,
+                                           asmlen)
 from openpower.decoder.power_fields import DecodeFields
 from openpower.decoder.power_fieldsn import SigDecode, SignalBitRange
 from openpower.decoder.power_svp64 import SVP64RM
@@ -259,8 +259,8 @@ class PowerOp:
         # process the comment field, strip out "equals" for FP
         if "=" in asmcode:
             asmcode = asmcode.split("=")[-1]
-            log ("asmcode stripping =", asmcode,
-                    asmcode in asmidx, hasattr(self, "asmcode"))
+            log("asmcode stripping =", asmcode,
+                asmcode in asmidx, hasattr(self, "asmcode"))
         if hasattr(self, "asmcode") and asmcode in asmidx:
             res.append(self.asmcode.eq(asmidx[asmcode]))
         for bit in single_bit_flags:
@@ -321,12 +321,12 @@ class PowerDecoder(Elaboratable):
     """
 
     def __init__(self, width, dec, name=None, col_subset=None,
-                       row_subset=None, conditions=None):
+                 row_subset=None, conditions=None):
         if conditions is None:
             # XXX conditions = {}
             conditions = {'SVP64BREV': Const(0, 1),
                           'SVP64FFT': Const(0, 1),
-                         }
+                          }
         self.actually_does_something = False
         self.pname = name
         self.conditions = conditions
@@ -356,15 +356,15 @@ class PowerDecoder(Elaboratable):
     def find_conditions(self, opcodes):
         # look for conditions, create dictionary entries for them
         # sorted by opcode
-        rows = OrderedDict() # start as a dictionary, get as list (after)
+        rows = OrderedDict()  # start as a dictionary, get as list (after)
         for row in opcodes:
             condition = row['CONDITIONS']
             opcode = row['opcode']
             if condition:
                 # check it's expected
                 assert (condition in self.conditions or
-                       (condition[0] == '~' and
-                        condition[1:] in self.conditions)), \
+                        (condition[0] == '~' and
+                         condition[1:] in self.conditions)), \
                     "condition %s not in %s" % (condition, str(conditions))
                 if opcode not in rows:
                     rows[opcode] = {}
@@ -373,7 +373,7 @@ class PowerDecoder(Elaboratable):
                 # check it's unique
                 assert opcode not in rows, \
                     "opcode %s already in rows for %s" % \
-                                        (opcode, self.pname)
+                    (opcode, self.pname)
                 rows[opcode] = row
         # after checking for conditions, get just the values (ordered)
         return list(rows.values())
@@ -458,7 +458,7 @@ class PowerDecoder(Elaboratable):
                     # get the FIRST item (will be the same opcode), and it
                     # had BETTER have the same unit and also pass other
                     # row subset conditions.
-                    if 'opcode' not in row: # must be a "CONDITIONS" dict...
+                    if 'opcode' not in row:  # must be a "CONDITIONS" dict...
                         is_conditions = True
                         _row = row[list(row.keys())[0]]
                     else:
@@ -511,9 +511,9 @@ class PowerDecoder(Elaboratable):
                                           col_subset=self.col_subset,
                                           row_subset=self.row_subsetfn,
                                           conditions=self.conditions)
-                log ("subdecoder", mname, subdecoder)
+                log("subdecoder", mname, subdecoder)
                 if not subdecoder.tree_analyse():  # doesn't do anything
-                    log ("analysed, DELETING", mname)
+                    log("analysed, DELETING", mname)
                     del subdecoder
                     continue                      # skip
                 submodules[mname] = subdecoder
@@ -575,7 +575,7 @@ class TopPowerDecoder(PowerDecoder):
     """
 
     def __init__(self, width, dec, name=None, col_subset=None,
-                                   row_subset=None, conditions=None):
+                 row_subset=None, conditions=None):
         PowerDecoder.__init__(self, width, dec, name,
                               col_subset, row_subset, conditions)
         self.fields = df = DecodeFields(SignalBitRange, [self.opcode_in])
@@ -650,12 +650,12 @@ class TopPowerDecoder(PowerDecoder):
 # PRIMARY FUNCTION SPECIFYING ALTERNATIVE SVP64 POWER DECODER
 
 def create_pdecode_svp64_ldst(name=None, col_subset=None, row_subset=None,
-                   include_fp=False):
+                              include_fp=False):
     """create_pdecode - creates a cascading hierarchical POWER ISA decoder
 
     subsetting of the PowerOp decoding is possible by setting col_subset
     """
-    log ("create_pdecode_svp64_ldst", name, col_subset, row_subset, include_fp)
+    log("create_pdecode_svp64_ldst", name, col_subset, row_subset, include_fp)
 
     # some alteration to the CSV files is required for SV so we use
     # a class to do it
@@ -667,7 +667,7 @@ def create_pdecode_svp64_ldst(name=None, col_subset=None, row_subset=None,
         Subdecoder(pattern=58, opcodes=get_csv("svldst_minor_58.csv"),
                    opint=True, bitsel=(0, 2), suffix=None, subdecoders=[]),
         # nope - needs 4-in regs
-        #Subdecoder(pattern=62, opcodes=get_csv("svldst_minor_62.csv"),
+        # Subdecoder(pattern=62, opcodes=get_csv("svldst_minor_62.csv"),
         #           opint=True, bitsel=(0, 2), suffix=None, subdecoders=[]),
     ]
 
@@ -675,14 +675,14 @@ def create_pdecode_svp64_ldst(name=None, col_subset=None, row_subset=None,
     if False and include_fp:
         pminor.append(
             Subdecoder(pattern=63, opcodes=get_csv("minor_63.csv"),
-                                 opint=False, bitsel=(1, 11), suffix=None,
-                                 subdecoders=[]),
-            )
+                       opint=False, bitsel=(1, 11), suffix=None,
+                       subdecoders=[]),
+        )
         pminor.append(
             Subdecoder(pattern=59, opcodes=get_csv("minor_59.csv"),
-                                 opint=False, bitsel=(1, 11), suffix=None,
-                                 subdecoders=[]),
-            )
+                       opint=False, bitsel=(1, 11), suffix=None,
+                       subdecoders=[]),
+        )
 
     # top level: extra merged with major
     dec = []
@@ -703,7 +703,7 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
 
     subsetting of the PowerOp decoding is possible by setting col_subset
     """
-    log ("create_pdecode", name, col_subset, row_subset, include_fp)
+    log("create_pdecode", name, col_subset, row_subset, include_fp)
 
     # some alteration to the CSV files is required for SV so we use
     # a class to do it
@@ -717,7 +717,7 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
                           subdecoders=[]))
     # XXX problem with sub-decoders (can only handle one),
     # sort this another time
-    #m19.append(Subdecoder(pattern=19, opcodes=get_csv("minor_19_00000.csv"),
+    # m19.append(Subdecoder(pattern=19, opcodes=get_csv("minor_19_00000.csv"),
     #                      opint=True, bitsel=(1, 6), suffix=None,
     #                      subdecoders=[]))
 
@@ -740,14 +740,14 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
     if include_fp:
         pminor.append(
             Subdecoder(pattern=63, opcodes=get_csv("minor_63.csv"),
-                                 opint=False, bitsel=(1, 11), suffix=None,
-                                 subdecoders=[]),
-            )
+                       opint=False, bitsel=(1, 11), suffix=None,
+                       subdecoders=[]),
+        )
         pminor.append(
             Subdecoder(pattern=59, opcodes=get_csv("minor_59.csv"),
-                                 opint=False, bitsel=(1, 11), suffix=None,
-                                 subdecoders=[]),
-            )
+                       opint=False, bitsel=(1, 11), suffix=None,
+                       subdecoders=[]),
+        )
 
     # top level: extra merged with major
     dec = []
@@ -762,8 +762,10 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
                            row_subset=row_subset,
                            conditions=conditions)
 
-# test function from 
-#https://github.com/apertus-open-source-cinema/naps/blob/9ebbc0/naps/soc/cli.py#L17
+# test function from
+# https://github.com/apertus-open-source-cinema/naps/blob/9ebbc0/naps/soc/cli.py#L17
+
+
 def fragment_repr(original):
     from textwrap import indent
     attrs_str = "\n"
@@ -796,10 +798,10 @@ if __name__ == '__main__':
 
         conditions = {'SVP64BREV': Signal(name="svp64brev", reset_less=True),
                       'SVP64FFT': Signal(name="svp64fft", reset_less=True),
-                     }
+                      }
         pdecode = create_pdecode(name="rowsub",
                                  col_subset={'opcode', 'function_unit',
-                                              'asmcode',
+                                             'asmcode',
                                              'in2_sel', 'in3_sel'},
                                  row_subset=rowsubsetfn,
                                  include_fp=True,
@@ -823,7 +825,7 @@ if __name__ == '__main__':
         from nmigen.hdl.ir import Fragment
         elaborated = Fragment.get(pdecode, platform=None)
         elaborated_repr = fragment_repr(elaborated)
-        print (elaborated_repr)
+        print(elaborated_repr)
 
         exit(0)
 
@@ -840,5 +842,3 @@ if __name__ == '__main__':
     vl = rtlil.convert(pdecode, ports=pdecode.ports())
     with open("decoder_svp64.il", "w") as f:
         f.write(vl)
-
-
