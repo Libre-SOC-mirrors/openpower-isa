@@ -734,6 +734,8 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
                    opint=True, bitsel=(0, 2), suffix=None, subdecoders=[]),
         Subdecoder(pattern=22, opcodes=get_csv("minor_22.csv"),
                    opint=True, bitsel=(1, 5), suffix=None, subdecoders=[]),
+        Subdecoder(pattern=5, opcodes=get_csv("minor_5.csv"),
+                   opint=True, bitsel=(0, 11), suffix=None, subdecoders=[]),
     ]
 
     # FP 63L/H decoders. TODO: move mffsfamily to separate subdecoder

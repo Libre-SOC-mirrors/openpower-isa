@@ -283,6 +283,10 @@
    |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
    | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
 
+# 1.6.34 TI-FORM
+   |0   |6   |11   |16   |21   |29  |31 |
+   | PO | RT |  RA |  RB | TII | XO |Rc |
+
 # 1.6.28 Instruction Fields
     A (6)
         Field used by the tbegin. instruction to specify an
@@ -824,6 +828,10 @@
          and dcbtst instructions (see Section 4.3.2 of Book
          II).
          Formats: X
+    TII (21:28)
+         Field used by the ternaryi instruction as the
+         look-up table.
+         Formats: TI
     TO (6:10)
          Field used to specify the conditions on which to
          trap.     The    encoding     is    described   in
@@ -948,6 +956,9 @@
     XO (27:30)
         Extended opcode field.
         Formats: MDS
+    XO (29:30)
+        Extended opcode field.
+        Formats: TI
     XO (29:31)
         Extended opcode field.
         Formats: DQ

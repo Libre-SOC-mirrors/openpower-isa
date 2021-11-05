@@ -120,6 +120,7 @@ class Form(Enum):
     SVDS = 31  # Simple-V for LD/ST bit-reverse, variant of DS-Form
     SVM = 32  # Simple-V SHAPE mode - TEMPORARY TEMPORARY TEMPORARY
     SVRM = 33  # Simple-V REMAP mode - TEMPORARY TEMPORARY TEMPORARY
+    TI = 34  # ternaryi
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
@@ -329,6 +330,7 @@ _insns = [
     "subf", "subfc", "subfco", "subfe", "subfeo", "subfic",
     "subfme", "subfmeo", "subfo", "subfze", "subfzeo",
     "sync",
+    "ternaryi",
     "td", "tdi",
     "tlbie", "tlbiel",
     "tw", "twi",
@@ -433,6 +435,7 @@ class MicrOp(Enum):
     OP_ADDG6S = 83
     OP_CDTBCD = 84
     OP_CBCDTD = 85
+    OP_TERNARYI = 86
 
 
 @unique
@@ -475,6 +478,7 @@ class In3Sel(Enum):
     FRS = 3
     FRC = 4
     RC = 5  # for SVP64 bit-reverse LD/ST
+    CONST_TII = 6  # for ternaryi
 
 
 @unique
