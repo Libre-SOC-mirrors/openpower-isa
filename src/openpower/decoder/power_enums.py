@@ -195,6 +195,7 @@ class SVP64BCPredMode(Enum):
     MASKZERO = 1
     MASKONE = 2
 
+
 @unique
 class SVP64BCVLSETMode(Enum):
     NONE = 0
@@ -237,6 +238,7 @@ class SVP64sat(Enum):
     NONE = 0
     SIGNED = 1
     UNSIGNED = 2
+
 
 @unique
 class SVP64LDSTmode(Enum):
@@ -283,18 +285,18 @@ _insns = [
     "hrfid", "icbi", "icbt", "isel", "isync",
     "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
     "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
-    #"lbzbr", "lbzubr",  # load byte SVP64 bit-reversed
-    #"ldbr", "ldubr",    # load double SVP64 bit-reversed
+    # "lbzbr", "lbzubr",  # load byte SVP64 bit-reversed
+    # "ldbr", "ldubr",    # load double SVP64 bit-reversed
     "lfs", "lfsx", "lfsu", "lfsux",                     # FP load single
-    "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax", # FP load double
+    "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax",  # FP load double
     "lha", "lharx", "lhau", "lhaux", "lhax",            # load half
     "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
-    #"lhabr", "lhaubr",  # load half SVP64 bit-reversed
-    #"lhzbr", "lhzubr",  # more load half SVP64 bit-reversed
+    # "lhabr", "lhaubr",  # load half SVP64 bit-reversed
+    # "lhzbr", "lhzubr",  # more load half SVP64 bit-reversed
     "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
     "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
-    #"lwabr",           # load word SVP64 bit-reversed
-    #"lwzbr", "lwzubr", # more load word SVP64 bit-reversed
+    # "lwabr",           # load word SVP64 bit-reversed
+    # "lwzbr", "lwzubr", # more load word SVP64 bit-reversed
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
@@ -423,7 +425,7 @@ class MicrOp(Enum):
     OP_TLBIE = 75
     OP_SETVL = 76
     OP_FPOP = 77  # temporary: replace with actual ops
-    OP_FPOP_I = 78 # temporary: replace with actual ops
+    OP_FPOP_I = 78  # temporary: replace with actual ops
     OP_FP_MADD = 79
     OP_SVREMAP = 80
     OP_SVSHAPE = 81
@@ -461,8 +463,8 @@ class In2Sel(Enum):
     SPR = 12
     RS = 13  # for shiftrot (M-Form)
     FRB = 14
-    CONST_SVD = 15 # for SVD-Form
-    CONST_SVDS = 16 # for SVDS-Form
+    CONST_SVD = 15  # for SVD-Form
+    CONST_SVDS = 16  # for SVDS-Form
 
 
 @unique
@@ -553,7 +555,7 @@ def get_spr_enum(full_file):
                   'SVSTATE0', 'SVSTATE1', 'SVSTATE2', 'SVSTATE3',
                   'SPRG0_priv', 'SPRG1_priv', 'SPRG2_priv', 'SPRG3_priv',
                   'SPRG3'
-                 }
+                  }
     spr_csv = []
     for row in get_csv("sprs.csv"):
         if full_file or row['SPR'] in short_list:
@@ -571,6 +573,7 @@ def get_spr_enum(full_file):
     fields = [(row['SPR'], int(row['Idx'])) for row in spr_csv]
     SPR = Enum('SPR', fields)
     return SPR, spr_dict, spr_byname
+
 
 SPRfull, spr_dict, spr_byname = get_spr_enum(full_file=True)
 SPRreduced, _, _ = get_spr_enum(full_file=False)
