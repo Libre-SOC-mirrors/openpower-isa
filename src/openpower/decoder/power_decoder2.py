@@ -942,8 +942,8 @@ class PowerDecodeSubset(Elaboratable):
                               (spr == SPR.PIDR.value))
         # MMU must receive MMU SPRs
         with m.If(is_spr_mv & (fn == Function.SPR) & is_mmu_spr):
-            comb += self.do_copy("fn_unit", Function.NONE)
-            comb += self.do_copy("insn_type", MicrOp.OP_ILLEGAL)
+            comb += self.do_copy("fn_unit", Function.MMU)
+            comb += self.do_copy("insn_type", internal_op)
         # SPR pipe must *not* receive MMU SPRs
         with m.Elif(is_spr_mv & (fn == Function.MMU) & ~is_mmu_spr):
             comb += self.do_copy("fn_unit", Function.NONE)
