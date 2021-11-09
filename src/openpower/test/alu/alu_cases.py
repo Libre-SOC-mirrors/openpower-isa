@@ -15,7 +15,10 @@ class ALUTestCase(TestAccumulatorBase):
         lst = [f"extsw 3, 1"]
         initial_regs = [0] * 32
         initial_regs[1] = 0xb6a1fc6c8576af91
-        self.add_case(Program(lst, bigendian), initial_regs)
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xb6a1fc6c8576af91
+        e.intregs[3] = 0xffffffff8576af91
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
         lst = [f"subf 3, 1, 2"]
         initial_regs = [0] * 32
         initial_regs[1] = 0x3d7f3f7ca24bac7b
