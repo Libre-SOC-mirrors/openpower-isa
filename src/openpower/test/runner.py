@@ -401,17 +401,21 @@ class TestRunnerBase(FHDLTestCase):
         if self.microwatt_mmu:
             traces += [
                 {'comment': 'microwatt_mmu'},
-                'core.fus.mmu0.alu_mmu0.illegal',
-                'core.fus.mmu0.alu_mmu0.debug0[3:0]',
-                'core.fus.mmu0.alu_mmu0.mmu.state',
-                'core.fus.mmu0.alu_mmu0.mmu.pid[31:0]',
-                'core.fus.mmu0.alu_mmu0.mmu.prtbl[63:0]',
+                'core.mmu0.illegal',
+                'core.mmu0.debug0[3:0]',
+                'core.mmu.state',
+                'core.mmu.pid[31:0]',
+                'core.mmu.prtbl[63:0]',
                 {'comment': 'wishbone_memory'},
-                'core.fus.mmu0.alu_mmu0.dcache.stb',
-                'core.fus.mmu0.alu_mmu0.dcache.cyc',
-                'core.fus.mmu0.alu_mmu0.dcache.we',
-                'core.fus.mmu0.alu_mmu0.dcache.ack',
-                'core.fus.mmu0.alu_mmu0.dcache.stall,'
+                'core.dcache.wb_in_ack',
+                'core.dcache.wb_in_stall,'
+                'core.dcache.wb_in_dat,'
+                'core.dcache.wb_out_cyc',
+                'core.dcache.wb_out_stb',
+                'core.dcache.wb_out_we',
+                'core.dcache.wb_out_adr',
+                'core.dcache.wb_out_dat',
+                'core.dcache.wb_out_sel',
             ]
 
         write_gtkw("issuer_simulator.gtkw",
