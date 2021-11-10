@@ -381,7 +381,7 @@ class TestRunnerBase(FHDLTestCase):
 
         traces += [('ld/st port interface', {'submodule': pi_module}, [
             'oper_r__insn_type',
-            'oper_r__msr',
+            'oper_r__msr[63:0]',
             'ldst_port0_is_ld_i',
             'ldst_port0_is_st_i',
             'ldst_port0_busy_o',
