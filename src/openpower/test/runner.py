@@ -393,6 +393,7 @@ class TestRunnerBase(FHDLTestCase):
             'ldst_port0_st_data_i_ok',
             'ldst_port0_ld_data_o[63:0]',
             'ldst_port0_ld_data_o_ok',
+            'ldst_port0_msr_pr',
             'exc_o_happened',
             'cancel'
         ])]
