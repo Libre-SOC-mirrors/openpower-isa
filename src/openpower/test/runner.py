@@ -311,7 +311,7 @@ class TestRunnerBase(FHDLTestCase):
                 'is_last', 'dec2.no_out_vec']),
             {'comment': 'fetch and decode'},
             (None, 'dec', [
-                'cia[63:0]', 'nia[63:0]', 'pc[63:0]',
+                'cia[63:0]', 'nia[63:0]', 'pc[63:0]', 'msr[63:0]',
                 'cur_pc[63:0]', 'core_core_cia[63:0]']),
             'raw_insn_i[31:0]',
             'raw_opcode_in[31:0]', 'insn_type', 'dec2.dec2_exc_happened',
