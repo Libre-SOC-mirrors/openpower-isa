@@ -478,7 +478,8 @@ class In3Sel(Enum):
     FRS = 3
     FRC = 4
     RC = 5  # for SVP64 bit-reverse LD/ST
-    CONST_TII = 6  # for ternaryi
+    CONST_TII = 6  # for ternaryi - XXX TODO: REMOVE THIS (from CSV, first)
+    RT = 7 # for ternary
 
 
 @unique
