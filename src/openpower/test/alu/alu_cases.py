@@ -53,7 +53,11 @@ class ALUTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[1] = 0x2e08ae202742baf8
         initial_regs[2] = 0x86c43ece9efe5baa
-        self.add_case(Program(lst, bigendian), initial_regs)
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0x2e08ae202742baf8
+        e.intregs[2] = 0x86c43ece9efe5baa
+        e.intregs[3] = 0xb4cceceec64116a2
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_rand(self):
         insns = ["add", "add.", "subf"]
