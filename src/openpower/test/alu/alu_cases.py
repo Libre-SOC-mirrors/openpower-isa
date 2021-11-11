@@ -89,10 +89,26 @@ class ALUTestCase(TestAccumulatorBase):
                 initial_regs[16] = value
                 initial_sprs = {}
                 xer = SelectableInt(0, 64)
-                xer[XER_bits['CA']] = 0
+                xer[XER_bits['CA']] = 0  # input carry is 0 (see test below)
                 initial_sprs[special_sprs['XER']] = xer
+
+                # create expected results.  pc should be 4 (one instruction)
+                e = ExpectedState(pc=4)
+                # input value should not be modified
+                e.intregs[16] = value
+                # carry-out should always occur
+                e.ca = 0x3
+                # create output value
+                if value == 0x7ffffffff:
+                    e.intregs[6] = 0x7fffffffe
+                else:
+                    e.intregs[6] = 0xffff7ffff
+                # CR version needs an expected CR
+                if '.' in choice:
+                    e.crregs[0] = 0x4
                 self.add_case(Program(lst, bigendian),
-                              initial_regs, initial_sprs)
+                              initial_regs, initial_sprs,
+                              expected=e)
 
     def case_addme_ca_1(self):
         insns = ["addme", "addme.", "addmeo", "addmeo."]
@@ -104,7 +120,7 @@ class ALUTestCase(TestAccumulatorBase):
                 initial_regs[16] = value
                 initial_sprs = {}
                 xer = SelectableInt(0, 64)
-                xer[XER_bits['CA']] = 1
+                xer[XER_bits['CA']] = 1 # input carry is 1 (differs from above)
                 initial_sprs[special_sprs['XER']] = xer
                 self.add_case(Program(lst, bigendian),
                               initial_regs, initial_sprs)
