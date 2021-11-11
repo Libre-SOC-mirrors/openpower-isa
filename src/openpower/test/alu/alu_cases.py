@@ -69,7 +69,7 @@ class ALUTestCase(TestAccumulatorBase):
         e.intregs[3] = 0xb4cceceec64116a2
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def cse_rand(self):
+    def case_rand(self):
         insns = ["add", "add.", "subf"]
         for i in range(40):
             choice = random.choice(insns)
@@ -79,7 +79,7 @@ class ALUTestCase(TestAccumulatorBase):
             initial_regs[2] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
 
-    def cse_addme_ca_0(self):
+    def case_addme_ca_0(self):
         insns = ["addme", "addme.", "addmeo", "addmeo."]
         for choice in insns:
             lst = [f"{choice} 6, 16"]
@@ -94,7 +94,7 @@ class ALUTestCase(TestAccumulatorBase):
                 self.add_case(Program(lst, bigendian),
                               initial_regs, initial_sprs)
 
-    def cse_addme_ca_1(self):
+    def case_addme_ca_1(self):
         insns = ["addme", "addme.", "addmeo", "addmeo."]
         for choice in insns:
             lst = [f"{choice} 6, 16"]
@@ -109,7 +109,7 @@ class ALUTestCase(TestAccumulatorBase):
                 self.add_case(Program(lst, bigendian),
                               initial_regs, initial_sprs)
 
-    def cse_addme_ca_so_3(self):
+    def case_addme_ca_so_3(self):
         """bug where SO does not get passed through to CR0
         """
         lst = ["addme. 6, 16"]
@@ -123,7 +123,7 @@ class ALUTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs)
 
-    def cse_addze(self):
+    def case_addze(self):
         insns = ["addze", "addze.", "addzeo", "addzeo."]
         for choice in insns:
             lst = [f"{choice} 6, 16"]
@@ -137,7 +137,7 @@ class ALUTestCase(TestAccumulatorBase):
             else:
                 self.add_case(Program(lst, bigendian), initial_regs)
 
-    def cse_addis_nonzero_r0_regression(self):
+    def case_addis_nonzero_r0_regression(self):
         lst = [f"addis 3, 0, 1"]
         print(lst)
         initial_regs = [0] * 32
@@ -146,7 +146,7 @@ class ALUTestCase(TestAccumulatorBase):
         e.intregs[3] = 0x10000
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def cse_addis_nonzero_r0(self):
+    def case_addis_nonzero_r0(self):
         for i in range(10):
             imm = random.randint(-(1 << 15), (1 << 15)-1)
             lst = [f"addis 3, 0, {imm}"]
@@ -155,7 +155,7 @@ class ALUTestCase(TestAccumulatorBase):
             initial_regs[0] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
 
-    def cse_rand_imm(self):
+    def case_rand_imm(self):
         insns = ["addi", "addis", "subfic"]
         for i in range(10):
             choice = random.choice(insns)
@@ -166,7 +166,7 @@ class ALUTestCase(TestAccumulatorBase):
             initial_regs[1] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
 
-    def cse_0_adde(self):
+    def case_0_adde(self):
         lst = ["adde. 5, 6, 7"]
         for i in range(10):
             initial_regs = [0] * 32
@@ -179,7 +179,7 @@ class ALUTestCase(TestAccumulatorBase):
             self.add_case(Program(lst, bigendian),
                           initial_regs, initial_sprs)
 
-    def cse_cmp(self):
+    def case_cmp(self):
         lst = ["subf. 1, 6, 7",
                "cmp cr2, 1, 6, 7"]
         initial_regs = [0] * 32
@@ -187,7 +187,7 @@ class ALUTestCase(TestAccumulatorBase):
         initial_regs[7] = 0x05
         self.add_case(Program(lst, bigendian), initial_regs, {})
 
-    def cse_cmp2(self):
+    def case_cmp2(self):
         lst = ["cmp cr2, 0, 2, 3"]
         initial_regs = [0] * 32
         initial_regs[2] = 0xffffffffaaaaaaaa
@@ -200,7 +200,7 @@ class ALUTestCase(TestAccumulatorBase):
         initial_regs[5] = 0xffffffffaaaaaaaa
         self.add_case(Program(lst, bigendian), initial_regs, {})
 
-    def cse_cmp3(self):
+    def case_cmp3(self):
         lst = ["cmp cr2, 1, 2, 3"]
         initial_regs = [0] * 32
         initial_regs[2] = 0xffffffffaaaaaaaa
@@ -213,7 +213,7 @@ class ALUTestCase(TestAccumulatorBase):
         initial_regs[5] = 0xffffffffaaaaaaaa
         self.add_case(Program(lst, bigendian), initial_regs, {})
 
-    def cse_cmpl_microwatt_0(self):
+    def case_cmpl_microwatt_0(self):
         """microwatt 1.bin:
            115b8:   40 50 d1 7c     .long 0x7cd15040 # cmpl 6, 0, 17, 10
             register_file.vhdl: Reading GPR 11 000000000001C026
@@ -233,7 +233,7 @@ class ALUTestCase(TestAccumulatorBase):
                                 initial_sprs = {'XER': XER},
                                 initial_cr = CR)
 
-    def cse_cmpl_microwatt_0_disasm(self):
+    def case_cmpl_microwatt_0_disasm(self):
         """microwatt 1.bin: disassembled version
            115b8:   40 50 d1 7c     .long 0x7cd15040 # cmpl 6, 0, 17, 10
             register_file.vhdl: Reading GPR 11 000000000001C026
@@ -256,7 +256,7 @@ class ALUTestCase(TestAccumulatorBase):
                                 initial_sprs = {'XER': XER},
                                 initial_cr = CR)
 
-    def cse_cmplw_microwatt_1(self):
+    def case_cmplw_microwatt_1(self):
         """microwatt 1.bin:
            10d94:   40 20 96 7c     cmplw   cr1,r22,r4
             gpr: 00000000ffff6dc1 <- r4
@@ -274,7 +274,7 @@ class ALUTestCase(TestAccumulatorBase):
                                 initial_sprs = {'XER': XER},
                                 initial_cr = CR)
 
-    def cse_cmpli_microwatt(self):
+    def case_cmpli_microwatt(self):
         """microwatt 1.bin: cmpli
            123ac:   9c 79 8d 2a     cmpli   cr5,0,r13,31132
             gpr: 00000000301fc7a7 <- r13
@@ -293,7 +293,7 @@ class ALUTestCase(TestAccumulatorBase):
                                 initial_sprs = {'XER': XER},
                                 initial_cr = CR)
 
-    def cse_extsb(self):
+    def case_extsb(self):
         insns = ["extsb", "extsh", "extsw"]
         for i in range(10):
             choice = random.choice(insns)
@@ -303,7 +303,7 @@ class ALUTestCase(TestAccumulatorBase):
             initial_regs[1] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
 
-    def cse_cmpeqb(self):
+    def case_cmpeqb(self):
         lst = ["cmpeqb cr1, 1, 2"]
         for i in range(20):
             initial_regs = [0] * 32
