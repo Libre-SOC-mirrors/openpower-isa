@@ -228,7 +228,7 @@ class ExpectedState(State):
             path += testfile + '/'
         os.makedirs(path, exist_ok=True)
 
-        with open("%s%s.py" % (path, testname), "w") as sout:
+        with open("%s%s.py" % (path, testname), "a") as sout:
             # pc and intregs
             sout.write("%se = ExpectedState(pc=%d)\n" % (lindent, state.pc))
             for i, reg in enumerate(state.intregs):
