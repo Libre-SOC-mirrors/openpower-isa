@@ -78,23 +78,26 @@ class State:
 
     def compare(self, s2):
         # Compare int registers
-        for i, (self.intregs, s2.intregs) in enumerate(
+        for i, (intreg, intreg2) in enumerate(
                 zip(self.intregs, s2.intregs)):
-            log("asserting...reg", i, self.intregs, s2.intregs)
+            log("asserting...reg", i, intreg, intreg2)
             log("code, frepr(code)", self.code, repr(self.code))
-            self.dut.assertEqual(self.intregs, s2.intregs,
+            self.dut.assertEqual(intreg, intreg2,
                 "int reg %d (%s) not equal (%s) %s. got %x  expected %x" %
                 (i, self.state_type, s2.state_type, repr(self.code),
-                self.intregs, s2.intregs))
+                intreg, intreg2))
 
         # CR registers
-        for i, (self.crregs, s2.crregs) in enumerate(
+        for i, (crreg, crreg2) in enumerate(
                 zip(self.crregs, s2.crregs)):
-            log("asserting...cr", i, self.crregs, s2.crregs)
-            self.dut.assertEqual(self.crregs, s2.crregs,
+            log("asserting...cr", i, crreg, crreg2)
+
+        for i, (crreg, crreg2) in enumerate(
+                zip(self.crregs, s2.crregs)):
+            self.dut.assertEqual(crreg, crreg2,
                 "cr reg %d (%s) not equal (%s) %s. got %x  expected %x" %
                 (i, self.state_type, s2.state_type, repr(self.code),
-                self.crregs, s2.crregs))
+                crreg, crreg2))
 
         # XER
         self.dut.assertEqual(self.so, s2.so, "so mismatch (%s != %s) %s" %
@@ -228,7 +231,7 @@ class ExpectedState(State):
             path += testfile + '/'
         os.makedirs(path, exist_ok=True)
 
-        with open("%s%s.py" % (path, testname), "a") as sout:
+        with open("%s%s.py" % (path, testname), "a+") as sout:
             # pc and intregs
             sout.write("%se = ExpectedState(pc=%d)\n" % (lindent, state.pc))
             for i, reg in enumerate(state.intregs):
