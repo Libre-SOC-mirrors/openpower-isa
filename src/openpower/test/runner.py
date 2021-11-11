@@ -406,6 +406,7 @@ class TestRunnerBase(FHDLTestCase):
                 'core.mmu.state',
                 'core.mmu.pid[31:0]',
                 'core.mmu.prtbl[63:0]',
+                'core.state', # actually LoadStore1
                 {'comment': 'wishbone_memory'},
                 'core.dcache.wb_in_ack',
                 'core.dcache.wb_in_stall,'
