@@ -146,7 +146,7 @@ class SimState(State):
             yield
         self.crregs = []
         for i in range(8):
-            cri = self.sim.crl[7 - i].get_range().value
+            cri = self.sim.crl[i].get_range().value
             self.crregs.append(cri)
         log("class sim cr regs", list(map(hex, self.crregs)))
 
@@ -240,7 +240,7 @@ class ExpectedState(State):
                     sout.write( msg % (lindent, i, reg))
             # CR fields
             for i in range(8):
-                cri = state.crregs[i] # Power ISA numbering already sorted
+                cri = state.crregs[i]
                 if(cri != 0):
                     msg = "%se.crregs[%d] = 0x%x\n"
                     sout.write( msg % (lindent, i, cri))
