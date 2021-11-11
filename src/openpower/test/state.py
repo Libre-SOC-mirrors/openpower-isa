@@ -235,9 +235,9 @@ class ExpectedState(State):
                 if(reg != 0):
                     msg = "%se.intregs[%d] = 0x%x\n"
                     sout.write( msg % (lindent, i, reg))
-            # cr
+            # CR fields
             for i in range(8):
-                cri = state.crregs[7 - i]
+                cri = state.crregs[i] # Power ISA numbering already sorted
                 if(cri != 0):
                     msg = "%se.crregs[%d] = 0x%x\n"
                     sout.write( msg % (lindent, i, cri))

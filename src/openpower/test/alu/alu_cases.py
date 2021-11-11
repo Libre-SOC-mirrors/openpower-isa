@@ -52,9 +52,7 @@ class ALUTestCase(TestAccumulatorBase):
         e.intregs[1] = 0xc523e996a8ff6215
         e.intregs[2] = 0xe1e5b9cc9864c4a8
         e.intregs[3] = 0xa709a363416426bd
-        # XXX unexpected value, investigating
-        # e.crregs[0] = 0x8
-        e.crregs[0] = 0x0
+        e.crregs[0] = 0x8
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
         lst = [f"add 3, 1, 2"]
         initial_regs = [0] * 32
