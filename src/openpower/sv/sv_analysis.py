@@ -573,7 +573,12 @@ def process_csvs():
 
             elif value == 'RM-1P-3S1D':
                 res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
-                if insn_name == 'isel':
+                if regs == ['RA', 'RB', 'RT', 'RT', '', 'CR0']:
+                    res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
+                    res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
+                    res['3'] = 's:RT'  # RT: Rsrc3_EXTRA2
+                elif insn_name == 'isel':
                     res['0'] = 'd:RT'  # RT: Rdest1_EXTRA2
                     res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
                     res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
