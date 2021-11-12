@@ -31,8 +31,10 @@ def write_csv(name, items, headers):
 
 # This will return True if all values are true.
 # Not sure what this is about
+
+
 def blank_key(row):
-    #for v in row.values():
+    # for v in row.values():
     #    if 'SPR' in v: # skip all SPRs
     #        return True
     for v in row.values():
@@ -43,6 +45,8 @@ def blank_key(row):
 # General purpose registers have names like: RA, RT, R1, ...
 # Floating point registers names like: FRT, FRA, FR1, ..., FRTp, ...
 # Return True if field is a register
+
+
 def isreg(field):
     return (field.startswith('R') or field.startswith('FR') or
             field == 'SPR')
@@ -51,10 +55,11 @@ def isreg(field):
 # These are the attributes of the instructions,
 # register names
 keycolumns = ['unit', 'in1', 'in2', 'in3', 'out', 'CR in', 'CR out',
-                 ] # don't think we need these: 'ldst len', 'rc', 'lk']
+              ]  # don't think we need these: 'ldst len', 'rc', 'lk']
 
 tablecols = ['unit', 'in', 'outcnt', 'CR in', 'CR out', 'imm'
-                 ] # don't think we need these: 'ldst len', 'rc', 'lk']
+             ]  # don't think we need these: 'ldst len', 'rc', 'lk']
+
 
 def create_key(row):
     res = OrderedDict()
@@ -64,7 +69,7 @@ def create_key(row):
         if key in ['in1', 'in2', 'in3']:
             if 'in' not in res:
                 res['in'] = 0
-            if row['unit'] == 'BRANCH': # branches must not include Vector SPRs
+            if row['unit'] == 'BRANCH':  # branches must not include Vector SPRs
                 continue
             if isreg(row[key]):
                 res['in'] += 1
@@ -89,7 +94,7 @@ def create_key(row):
                 res['crop'] = '1'
         # unit
         if key == 'unit':
-            if row[key] == 'LDST': # we care about LDST units
+            if row[key] == 'LDST':  # we care about LDST units
                 res[key] = row[key]
             else:
                 res[key] = 'OTHER'
@@ -114,24 +119,27 @@ def create_key(row):
     res['in'] = str(res['in'])
     res['outcnt'] = str(res['outcnt'])
 
-
     # constants
     if row['in2'].startswith('CONST_'):
-        res['imm'] = "1" # row['in2'].split("_")[1]
+        res['imm'] = "1"  # row['in2'].split("_")[1]
     else:
         res['imm'] = ''
 
     return res
 
 #
+
+
 def dformat(d):
     res = []
     for k, v in d.items():
         res.append("%s: %s" % (k, v))
     return ' '.join(res)
 
+
 def tformat(d):
     return ' | '.join(d) + " |"
+
 
 def keyname(row):
     res = []
@@ -162,21 +170,21 @@ def process_csvs():
     primarykeys = set()
     dictkeys = OrderedDict()
     immediates = {}
-    insns = {} # dictionary of CSV row, by instruction
+    insns = {}  # dictionary of CSV row, by instruction
     insn_to_csv = {}
 
-    print ("# OpenPOWER ISA register 'profile's")
-    print ('')
-    print ("this page is auto-generated, do not edit")
-    print ("created by http://libre-soc.org/openpower/sv_analysis.py")
-    print ('')
+    print("# OpenPOWER ISA register 'profile's")
+    print('')
+    print("this page is auto-generated, do not edit")
+    print("created by http://libre-soc.org/openpower/sv_analysis.py")
+    print('')
 
     # Expand that (all .csv files)
     pth = find_wiki_file("*.csv")
 
     # Ignore those containing: valid test sprs
     for fname in glob(pth):
-        print ("sv analysis checking", fname)
+        print("sv analysis checking", fname)
         _, name = os.path.split(fname)
         if '-' in name:
             continue
@@ -199,23 +207,23 @@ def process_csvs():
         for row in csv:
             if blank_key(row):
                 continue
-            print ("row", row)
+            print("row", row)
             insn_name = row['comment']
             condition = row['CONDITIONS']
             # skip instructions that are not suitable
             if insn_name.startswith("l") and insn_name.endswith("br"):
-                continue # skip pseudo-alias lxxxbr
+                continue  # skip pseudo-alias lxxxbr
             if insn_name in ['mcrxr', 'mcrxrx', 'darn']:
                 continue
             if insn_name in ['bctar', 'bcctr']:
                 continue
-            if  'rfid' in insn_name:
+            if 'rfid' in insn_name:
                 continue
-            if insn_name in ['setvl',]: # SVP64 opcodes
+            if insn_name in ['setvl', ]:  # SVP64 opcodes
                 continue
 
-            insns[(insn_name, condition)] = row # accumulate csv data 
-            insn_to_csv[insn_name] = csvname_ # CSV file name by instruction
+            insns[(insn_name, condition)] = row  # accumulate csv data
+            insn_to_csv[insn_name] = csvname_  # CSV file name by instruction
             dkey = create_key(row)
             key = tuple(dkey.values())
             # print("key=", key)
@@ -271,20 +279,20 @@ def process_csvs():
               'LDST-3R-CRo': 'LDSTRM-2P-3S',  # st*x
               'LDST-3R-1W': 'LDSTRM-2P-2S1D',  # st*x
               }
-    print ("# map to old SV Prefix")
-    print ('')
-    print ('[[!table  data="""')
+    print("# map to old SV Prefix")
+    print('')
+    print('[[!table  data="""')
     for key in primarykeys:
         name = keyname(dictkeys[key])
         value = mapsto.get(name, "-")
-        print (tformat([name, value+ " "]))
-    print ('"""]]')
-    print ('')
+        print(tformat([name, value + " "]))
+    print('"""]]')
+    print('')
 
-    print ("# keys")
-    print ('')
-    print ('[[!table  data="""')
-    print (tformat(tablecols) + " imms | name |")
+    print("# keys")
+    print('')
+    print('[[!table  data="""')
+    print(tformat(tablecols) + " imms | name |")
 
     # print out the keys and the table from which they're derived
     for key in primarykeys:
@@ -294,38 +302,38 @@ def process_csvs():
         imms.sort()
         row += " %s | " % ("/".join(imms))
         row += " %s |" % name
-        print (row)
-    print ('"""]]')
-    print ('')
+        print(row)
+    print('"""]]')
+    print('')
 
     # print out, by remap name, all the instructions under that category
     for key in primarykeys:
         name = keyname(dictkeys[key])
         value = mapsto.get(name, "-")
-        print ("## %s (%s)" % (name, value))
-        print ('')
-        print ('[[!table  data="""')
-        print (tformat(['CSV', 'opcode', 'asm', 'form']))
+        print("## %s (%s)" % (name, value))
+        print('')
+        print('[[!table  data="""')
+        print(tformat(['CSV', 'opcode', 'asm', 'form']))
         rows = bykey[key]
         rows.sort()
         for row in rows:
-            print (tformat(row))
-        print ('"""]]')
-        print ('')
+            print(tformat(row))
+        print('"""]]')
+        print('')
 
-    #for fname, csv in csvs.items():
+    # for fname, csv in csvs.items():
     #    print (fname)
 
-    #for insn, row in insns.items():
+    # for insn, row in insns.items():
     #    print (insn, row)
 
-    print ("# svp64 remaps")
+    print("# svp64 remaps")
     svp64 = OrderedDict()
     # create a CSV file, per category, with SV "augmentation" info
     # XXX note: 'out2' not added here, needs to be added to CSV files
     # KEEP TRACK OF THESE https://bugs.libre-soc.org/show_bug.cgi?id=619
     csvcols = ['insn', 'CONDITIONS', 'Ptype', 'Etype', '0', '1', '2', '3']
-    csvcols += ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out'] # temporary
+    csvcols += ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']  # temporary
     for key in primarykeys:
         # get the decoded key containing row-analysis, and name/value
         dkey = dictkeys[key]
@@ -335,7 +343,7 @@ def process_csvs():
             continue
 
         # print out svp64 tables by category
-        print ("* **%s**: %s" % (name, value))
+        print("* **%s**: %s" % (name, value))
 
         # store csv entries by svp64 RM category
         if value not in svp64:
@@ -345,11 +353,11 @@ def process_csvs():
         rows.sort()
 
         for row in rows:
-            #for idx in range(len(row)):
+            # for idx in range(len(row)):
             #    if row[idx] == 'NONE':
             #        row[idx] = ''
             # get the instruction
-            print (key, row)
+            print(key, row)
             insn_name = row[2]
             condition = row[3]
             insn = insns[(insn_name, condition)]
@@ -357,7 +365,7 @@ def process_csvs():
             res = OrderedDict()
             res['insn'] = insn_name
             res['CONDITIONS'] = condition
-            res['Ptype'] = value.split('-')[1] # predication type (RM-xN-xxx)
+            res['Ptype'] = value.split('-')[1]  # predication type (RM-xN-xxx)
             # get whether R_xxx_EXTRAn fields are 2-bit or 3-bit
             res['Etype'] = 'EXTRA2'
             # go through each register matching to Rxxxx_EXTRAx
@@ -366,7 +374,7 @@ def process_csvs():
             # create "fake" out2 (TODO, needs to be added to CSV files)
             # KEEP TRACK HERE https://bugs.libre-soc.org/show_bug.cgi?id=619
             res['out2'] = 'NONE'
-            if insn['upd'] == '1': # LD/ST with update has RA as out2
+            if insn['upd'] == '1':  # LD/ST with update has RA as out2
                 res['out2'] = 'RA'
 
             # temporary useful info
@@ -384,7 +392,7 @@ def process_csvs():
                     else:
                         regs.append('')
 
-            print ("regs", insn_name, regs)
+            print("regs", insn_name, regs)
 
             # for LD/ST FP, use FRT/FRS not RT/RS, and use CR1 not CR0
             if insn_name.startswith("lf"):
@@ -404,186 +412,187 @@ def process_csvs():
             # but the patterns are pretty regular.
 
             if value == 'LDSTRM-2P-1S1D':
-                res['Etype'] = 'EXTRA3' # RM EXTRA3 type
+                res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
                 res['0'] = dRT    # RT: Rdest_EXTRA3
-                res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
+                res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
 
             elif value == 'LDSTRM-2P-1S2D':
-                res['Etype'] = 'EXTRA2' # RM EXTRA2 type
+                res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
                 res['0'] = dRT    # RT: Rdest_EXTRA3
-                res['1'] = 'd:RA' # RA: Rdest2_EXTRA2
-                res['2'] = 's:RA' # RA: Rsrc1_EXTRA2
+                res['1'] = 'd:RA'  # RA: Rdest2_EXTRA2
+                res['2'] = 's:RA'  # RA: Rsrc1_EXTRA2
 
             elif value == 'LDSTRM-2P-2S':
                 # stw, std, sth, stb
-                res['Etype'] = 'EXTRA3' # RM EXTRA2 type
+                res['Etype'] = 'EXTRA3'  # RM EXTRA2 type
                 res['0'] = sRS    # RS: Rdest1_EXTRA2
-                res['1'] = 's:RA' # RA: Rsrc1_EXTRA2
+                res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
 
             elif value == 'LDSTRM-2P-2S1D':
-                if 'st' in insn_name and 'x' not in insn_name: # stwu/stbu etc
-                    res['Etype'] = 'EXTRA2' # RM EXTRA2 type
-                    res['0'] = 'd:RA' # RA: Rdest1_EXTRA2
+                if 'st' in insn_name and 'x' not in insn_name:  # stwu/stbu etc
+                    res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
+                    res['0'] = 'd:RA'  # RA: Rdest1_EXTRA2
                     res['1'] = sRS    # RS: Rdsrc1_EXTRA2
-                    res['2'] = 's:RA' # RA: Rsrc2_EXTRA2
-                elif 'st' in insn_name and 'x' in insn_name: # stwux
-                    res['Etype'] = 'EXTRA2' # RM EXTRA2 type
-                    res['0'] = 'd:RA' # RA: Rdest1_EXTRA2
-                    res['1'] = sRS+'s:RA' # RS: Rdest2_EXTRA2, RA: Rsrc1_EXTRA2
-                    res['2'] = 's:RB' # RB: Rsrc2_EXTRA2
-                elif 'u' in insn_name: # ldux etc.
-                    res['Etype'] = 'EXTRA2' # RM EXTRA2 type
+                    res['2'] = 's:RA'  # RA: Rsrc2_EXTRA2
+                elif 'st' in insn_name and 'x' in insn_name:  # stwux
+                    res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
+                    res['0'] = 'd:RA'  # RA: Rdest1_EXTRA2
+                    # RS: Rdest2_EXTRA2, RA: Rsrc1_EXTRA2
+                    res['1'] = sRS+'s:RA'
+                    res['2'] = 's:RB'  # RB: Rsrc2_EXTRA2
+                elif 'u' in insn_name:  # ldux etc.
+                    res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
                     res['0'] = dRT    # RT: Rdest1_EXTRA2
-                    res['1'] = 'd:RA' # RA: Rdest2_EXTRA2
-                    res['2'] = 's:RB' # RB: Rsrc1_EXTRA2
+                    res['1'] = 'd:RA'  # RA: Rdest2_EXTRA2
+                    res['2'] = 's:RB'  # RB: Rsrc1_EXTRA2
                 else:
-                    res['Etype'] = 'EXTRA2' # RM EXTRA2 type
+                    res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
                     res['0'] = dRT     # RT: Rdest1_EXTRA2
-                    res['1'] = 's:RA' # RA: Rsrc1_EXTRA2
-                    res['2'] = 's:RB' # RB: Rsrc2_EXTRA2
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
+                    res['2'] = 's:RB'  # RB: Rsrc2_EXTRA2
 
             elif value == 'LDSTRM-2P-3S':
-                res['Etype'] = 'EXTRA2' # RM EXTRA2 type
+                res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
                 if 'cx' in insn_name:
-                    res['0'] = sRS+dCR # RS: Rsrc1_EXTRA2 CR0: dest
+                    res['0'] = sRS+dCR  # RS: Rsrc1_EXTRA2 CR0: dest
                 else:
-                    res['0'] = sRS # RS: Rsrc1_EXTRA2
-                res['1'] = 's:RA' # RA: Rsrc2_EXTRA2
-                res['2'] = 's:RB' # RA: Rsrc3_EXTRA2
+                    res['0'] = sRS  # RS: Rsrc1_EXTRA2
+                res['1'] = 's:RA'  # RA: Rsrc2_EXTRA2
+                res['2'] = 's:RB'  # RA: Rsrc3_EXTRA2
 
             elif value == 'RM-2P-1S1D':
-                res['Etype'] = 'EXTRA3' # RM EXTRA3 type
+                res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
                 if insn_name == 'mtspr':
-                    res['0'] = 'd:SPR' # SPR: Rdest1_EXTRA3
-                    res['1'] = 's:RS' # RS: Rsrc1_EXTRA3
+                    res['0'] = 'd:SPR'  # SPR: Rdest1_EXTRA3
+                    res['1'] = 's:RS'  # RS: Rsrc1_EXTRA3
                 elif insn_name == 'mfspr':
-                    res['0'] = 'd:RS' # RS: Rdest1_EXTRA3
-                    res['1'] = 's:SPR' # SPR: Rsrc1_EXTRA3
+                    res['0'] = 'd:RS'  # RS: Rdest1_EXTRA3
+                    res['1'] = 's:SPR'  # SPR: Rsrc1_EXTRA3
                 elif name == 'CRio' and insn_name == 'mcrf':
-                    res['0'] = 'd:BF' # BFA: Rdest1_EXTRA3
-                    res['1'] = 's:BFA' # BFA: Rsrc1_EXTRA3
+                    res['0'] = 'd:BF'  # BFA: Rdest1_EXTRA3
+                    res['1'] = 's:BFA'  # BFA: Rsrc1_EXTRA3
                 elif 'mfcr' in insn_name or 'mfocrf' in insn_name:
-                    res['0'] = 'd:RT' # RT: Rdest1_EXTRA3
-                    res['1'] = 's:CR' # CR: Rsrc1_EXTRA3
+                    res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
+                    res['1'] = 's:CR'  # CR: Rsrc1_EXTRA3
                 elif insn_name == 'setb':
-                    res['0'] = 'd:RT' # RT: Rdest1_EXTRA3
-                    res['1'] = 's:BFA' # BFA: Rsrc1_EXTRA3
-                elif insn_name.startswith('cmp'): # cmpi
-                    res['0'] = 'd:BF' # BF: Rdest1_EXTRA3
-                    res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
-                elif regs == ['RA','','','RT','','']:
-                    res['0'] = 'd:RT' # RT: Rdest1_EXTRA3
-                    res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
-                elif regs == ['RA','','','RT','','CR0']:
-                    res['0'] = 'd:RT;d:CR0' # RT,CR0: Rdest1_EXTRA3
-                    res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
-                elif (regs == ['RS','','','RA','','CR0'] or
-                      regs == ['','','RS','RA','','CR0']):
-                    res['0'] = 'd:RA;d:CR0' # RA,CR0: Rdest1_EXTRA3
-                    res['1'] = 's:RS' # RS: Rsrc1_EXTRA3
-                elif regs == ['RS','','','RA','','']:
-                    res['0'] = 'd:RA' # RA: Rdest1_EXTRA3
-                    res['1'] = 's:RS' # RS: Rsrc1_EXTRA3
-                elif regs == ['','FRB','','FRT','0','CR1']:
-                    res['0'] = 'd:FRT;d:CR1' # FRT,CR1: Rdest1_EXTRA3
-                    res['1'] = 's:FRA' # FRA: Rsrc1_EXTRA3
-                elif regs == ['','FRB','','','','CR1']:
-                    res['0'] = 'd:CR1' # CR1: Rdest1_EXTRA3
-                    res['1'] = 's:FRB' # FRA: Rsrc1_EXTRA3
-                elif regs == ['','FRB','','','','BF']:
-                    res['0'] = 'd:BF' # BF: Rdest1_EXTRA3
-                    res['1'] = 's:FRB' # FRA: Rsrc1_EXTRA3
-                elif regs == ['','FRB','','FRT','','CR1']:
-                    res['0'] = 'd:FRT;d:CR1' # FRT,CR1: Rdest1_EXTRA3
-                    res['1'] = 's:FRB' # FRB: Rsrc1_EXTRA3
+                    res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
+                    res['1'] = 's:BFA'  # BFA: Rsrc1_EXTRA3
+                elif insn_name.startswith('cmp'):  # cmpi
+                    res['0'] = 'd:BF'  # BF: Rdest1_EXTRA3
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
+                elif regs == ['RA', '', '', 'RT', '', '']:
+                    res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
+                elif regs == ['RA', '', '', 'RT', '', 'CR0']:
+                    res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA3
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
+                elif (regs == ['RS', '', '', 'RA', '', 'CR0'] or
+                      regs == ['', '', 'RS', 'RA', '', 'CR0']):
+                    res['0'] = 'd:RA;d:CR0'  # RA,CR0: Rdest1_EXTRA3
+                    res['1'] = 's:RS'  # RS: Rsrc1_EXTRA3
+                elif regs == ['RS', '', '', 'RA', '', '']:
+                    res['0'] = 'd:RA'  # RA: Rdest1_EXTRA3
+                    res['1'] = 's:RS'  # RS: Rsrc1_EXTRA3
+                elif regs == ['', 'FRB', '', 'FRT', '0', 'CR1']:
+                    res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA3
+                    res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA3
+                elif regs == ['', 'FRB', '', '', '', 'CR1']:
+                    res['0'] = 'd:CR1'  # CR1: Rdest1_EXTRA3
+                    res['1'] = 's:FRB'  # FRA: Rsrc1_EXTRA3
+                elif regs == ['', 'FRB', '', '', '', 'BF']:
+                    res['0'] = 'd:BF'  # BF: Rdest1_EXTRA3
+                    res['1'] = 's:FRB'  # FRA: Rsrc1_EXTRA3
+                elif regs == ['', 'FRB', '', 'FRT', '', 'CR1']:
+                    res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA3
+                    res['1'] = 's:FRB'  # FRB: Rsrc1_EXTRA3
                 elif insn_name.startswith('bc'):
-                    res['0'] = 'd:BI' # BI: Rdest1_EXTRA3
-                    res['1'] = 's:BI' # BI: Rsrc1_EXTRA3
+                    res['0'] = 'd:BI'  # BI: Rdest1_EXTRA3
+                    res['1'] = 's:BI'  # BI: Rsrc1_EXTRA3
                 else:
                     res['0'] = 'TODO'
 
             elif value == 'RM-1P-2S1D':
-                res['Etype'] = 'EXTRA3' # RM EXTRA3 type
+                res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
                 if insn_name.startswith('cr'):
-                    res['0'] = 'd:BT' # BT: Rdest1_EXTRA3
-                    res['1'] = 's:BA' # BA: Rsrc1_EXTRA3
-                    res['2'] = 's:BB' # BB: Rsrc2_EXTRA3
-                elif regs == ['FRA','','FRC','FRT','','CR1']:
-                    res['0'] = 'd:FRT;d:CR1' # FRT,CR1: Rdest1_EXTRA3
-                    res['1'] = 's:FRA' # FRA: Rsrc1_EXTRA3
-                    res['2'] = 's:FRC' # FRC: Rsrc1_EXTRA3
+                    res['0'] = 'd:BT'  # BT: Rdest1_EXTRA3
+                    res['1'] = 's:BA'  # BA: Rsrc1_EXTRA3
+                    res['2'] = 's:BB'  # BB: Rsrc2_EXTRA3
+                elif regs == ['FRA', '', 'FRC', 'FRT', '', 'CR1']:
+                    res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA3
+                    res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA3
+                    res['2'] = 's:FRC'  # FRC: Rsrc1_EXTRA3
                 # should be for fcmp
-                elif regs == ['FRA','FRB','','','','BF']:
-                    res['0'] = 'd:BF' # BF: Rdest1_EXTRA3
-                    res['1'] = 's:FRA' # FRA: Rsrc1_EXTRA3
-                    res['2'] = 's:FRB' # FRB: Rsrc1_EXTRA3
-                elif regs == ['FRA','FRB','','FRT','','']:
-                    res['0'] = 'd:FRT' # FRT: Rdest1_EXTRA3
-                    res['1'] = 's:FRA' # FRA: Rsrc1_EXTRA3
-                    res['2'] = 's:FRB' # FRB: Rsrc1_EXTRA3
-                elif regs == ['FRA','FRB','','FRT','','CR1']:
-                    res['0'] = 'd:FRT;d:CR1' # FRT,CR1: Rdest1_EXTRA3
-                    res['1'] = 's:FRA' # FRA: Rsrc1_EXTRA3
-                    res['2'] = 's:FRB' # FRB: Rsrc1_EXTRA3
-                elif name == '2R-1W' or insn_name == 'cmpb': # cmpb
+                elif regs == ['FRA', 'FRB', '', '', '', 'BF']:
+                    res['0'] = 'd:BF'  # BF: Rdest1_EXTRA3
+                    res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA3
+                    res['2'] = 's:FRB'  # FRB: Rsrc1_EXTRA3
+                elif regs == ['FRA', 'FRB', '', 'FRT', '', '']:
+                    res['0'] = 'd:FRT'  # FRT: Rdest1_EXTRA3
+                    res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA3
+                    res['2'] = 's:FRB'  # FRB: Rsrc1_EXTRA3
+                elif regs == ['FRA', 'FRB', '', 'FRT', '', 'CR1']:
+                    res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA3
+                    res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA3
+                    res['2'] = 's:FRB'  # FRB: Rsrc1_EXTRA3
+                elif name == '2R-1W' or insn_name == 'cmpb':  # cmpb
                     if insn_name in ['bpermd', 'cmpb']:
-                        res['0'] = 'd:RA' # RA: Rdest1_EXTRA3
-                        res['1'] = 's:RS' # RS: Rsrc1_EXTRA3
+                        res['0'] = 'd:RA'  # RA: Rdest1_EXTRA3
+                        res['1'] = 's:RS'  # RS: Rsrc1_EXTRA3
                     else:
-                        res['0'] = 'd:RT' # RT: Rdest1_EXTRA3
-                        res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
-                    res['2'] = 's:RB' # RB: Rsrc1_EXTRA3
-                elif insn_name.startswith('cmp'): # cmp
-                    res['0'] = 'd:BF' # BF: Rdest1_EXTRA3
-                    res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
-                    res['2'] = 's:RB' # RB: Rsrc1_EXTRA3
-                elif (regs == ['','RB','RS','RA','','CR0'] or
-                      regs == ['RS','RB','','RA','','CR0']):
-                    res['0'] = 'd:RA;d:CR0' # RA,CR0: Rdest1_EXTRA3
-                    res['1'] = 's:RB' # RB: Rsrc1_EXTRA3
-                    res['2'] = 's:RS' # RS: Rsrc1_EXTRA3
-                elif regs == ['RA','RB','','RT','','CR0']:
-                    res['0'] = 'd:RT;d:CR0' # RT,CR0: Rdest1_EXTRA3
-                    res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
-                    res['2'] = 's:RB' # RB: Rsrc1_EXTRA3
-                elif regs == ['RA','','RS','RA','','CR0']:
-                    res['0'] = 'd:RA;d:CR0' # RA,CR0: Rdest1_EXTRA3
-                    res['1'] = 's:RA' # RA: Rsrc1_EXTRA3
-                    res['2'] = 's:RS' # RS: Rsrc1_EXTRA3
+                        res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
+                        res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
+                    res['2'] = 's:RB'  # RB: Rsrc1_EXTRA3
+                elif insn_name.startswith('cmp'):  # cmp
+                    res['0'] = 'd:BF'  # BF: Rdest1_EXTRA3
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
+                    res['2'] = 's:RB'  # RB: Rsrc1_EXTRA3
+                elif (regs == ['', 'RB', 'RS', 'RA', '', 'CR0'] or
+                      regs == ['RS', 'RB', '', 'RA', '', 'CR0']):
+                    res['0'] = 'd:RA;d:CR0'  # RA,CR0: Rdest1_EXTRA3
+                    res['1'] = 's:RB'  # RB: Rsrc1_EXTRA3
+                    res['2'] = 's:RS'  # RS: Rsrc1_EXTRA3
+                elif regs == ['RA', 'RB', '', 'RT', '', 'CR0']:
+                    res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA3
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
+                    res['2'] = 's:RB'  # RB: Rsrc1_EXTRA3
+                elif regs == ['RA', '', 'RS', 'RA', '', 'CR0']:
+                    res['0'] = 'd:RA;d:CR0'  # RA,CR0: Rdest1_EXTRA3
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
+                    res['2'] = 's:RS'  # RS: Rsrc1_EXTRA3
                 else:
                     res['0'] = 'TODO'
 
             elif value == 'RM-2P-2S1D':
-                res['Etype'] = 'EXTRA2' # RM EXTRA2 type
-                if insn_name.startswith('mt'): # mtcrf
-                    res['0'] = 'd:CR' # CR: Rdest1_EXTRA2
-                    res['1'] = 's:RS' # RS: Rsrc1_EXTRA2
-                    res['2'] = 's:CR' # CR: Rsrc2_EXTRA2
+                res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
+                if insn_name.startswith('mt'):  # mtcrf
+                    res['0'] = 'd:CR'  # CR: Rdest1_EXTRA2
+                    res['1'] = 's:RS'  # RS: Rsrc1_EXTRA2
+                    res['2'] = 's:CR'  # CR: Rsrc2_EXTRA2
                 else:
                     res['0'] = 'TODO'
 
             elif value == 'RM-1P-3S1D':
-                res['Etype'] = 'EXTRA2' # RM EXTRA2 type
+                res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
                 if insn_name == 'isel':
-                    res['0'] = 'd:RT' # RT: Rdest1_EXTRA2
-                    res['1'] = 's:RA' # RA: Rsrc1_EXTRA2
-                    res['2'] = 's:RB' # RT: Rsrc2_EXTRA2
-                    res['3'] = 's:BC' # BC: Rsrc3_EXTRA2
+                    res['0'] = 'd:RT'  # RT: Rdest1_EXTRA2
+                    res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
+                    res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
+                    res['3'] = 's:BC'  # BC: Rsrc3_EXTRA2
                 else:
-                    res['0'] = 'd:FRT;d:CR1' # FRT, CR1: Rdest1_EXTRA2
-                    res['1'] = 's:FRA' # FRA: Rsrc1_EXTRA2
-                    res['2'] = 's:FRB' # FRB: Rsrc2_EXTRA2
-                    res['3'] = 's:FRC' # FRC: Rsrc3_EXTRA2
+                    res['0'] = 'd:FRT;d:CR1'  # FRT, CR1: Rdest1_EXTRA2
+                    res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA2
+                    res['2'] = 's:FRB'  # FRB: Rsrc2_EXTRA2
+                    res['3'] = 's:FRC'  # FRC: Rsrc3_EXTRA2
 
             elif value == 'RM-1P-1D':
-                res['Etype'] = 'EXTRA3' # RM EXTRA3 type
+                res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
                 if insn_name == 'svstep':
-                    res['0'] = 'd:RT;d:CR0' # RT,CR0: Rdest1_EXTRA2
+                    res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
 
             # add to svp64 csvs
-            #for k in ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']:
+            # for k in ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']:
             #    del res[k]
-            #if res['0'] != 'TODO':
+            # if res['0'] != 'TODO':
             for k in res:
                 if k == 'CONDITIONS':
                     continue
@@ -594,16 +603,16 @@ def process_csvs():
             csv_fname = insn_to_csv[insn_name]
             csvs_svp64[csv_fname].append(res)
 
-    print ('')
+    print('')
 
     # now write out the csv files
     for value, csv in svp64.items():
         # print out svp64 tables by category
-        print ("## %s" % value)
-        print ('')
-        print ('[[!table format=csv file="openpower/isatables/%s.csv"]]' % \
-                    value)
-        print ('')
+        print("## %s" % value)
+        print('')
+        print('[[!table format=csv file="openpower/isatables/%s.csv"]]' %
+              value)
+        print('')
 
         #csvcols = ['insn', 'Ptype', 'Etype', '0', '1', '2', '3']
         write_csv("%s.csv" % value, csv, csvcols + ['out2'])
@@ -617,7 +626,7 @@ def process_csvs():
 
     # Ignore those containing: valid test sprs
     for fname in glob(pth):
-        print ("post-checking", fname)
+        print("post-checking", fname)
         _, name = os.path.split(fname)
         if '-' in name:
             continue
@@ -646,7 +655,7 @@ def process_csvs():
         vhdl.write("\n")
 
         # first create array types
-        lens = {'major' : 63,
+        lens = {'major': 63,
                 'minor_4': 63,
                 'minor_19': 7,
                 'minor_30': 15,
@@ -672,7 +681,7 @@ def process_csvs():
 
         # now output structs
         sv_cols = ['sv_in1', 'sv_in2', 'sv_in3', 'sv_out', 'sv_out2',
-                                'sv_cr_in', 'sv_cr_out']
+                   'sv_cr_in', 'sv_cr_out']
         fullcols = csvcols + sv_cols
         hdr = "\n" \
               "    constant sv_%s_decode_rom_array :\n" \
@@ -705,7 +714,7 @@ def process_csvs():
                     re = re.replace("1P", "P1")
                     re = re.replace("2P", "P2")
                     row.append(re)
-                print ("sventry", sventry)
+                print("sventry", sventry)
                 for colname in sv_cols:
                     if sventry is None:
                         re = 'NONE'
@@ -715,6 +724,7 @@ def process_csvs():
                 row = ', '.join(row)
                 vhdl.write("    %13s => (%s), -- %s\n" % (op, row, insn))
             vhdl.write(ftr)
+
 
 if __name__ == '__main__':
     process_csvs()
