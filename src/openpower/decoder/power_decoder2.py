@@ -28,11 +28,11 @@ from openpower.decoder.power_decoder import (create_pdecode,
                                              create_pdecode_svp64_ldst,
                                              PowerOp)
 from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
-                                     CRInSel, CROutSel,
-                                     LdstLen, In1Sel, In2Sel, In3Sel,
-                                     OutSel, SPRfull, SPRreduced,
-                                     RC, SVP64LDSTmode, LDSTMode,
-                                     SVEXTRA, SVEtype, SVPtype)
+                                           CRInSel, CROutSel,
+                                           LdstLen, In1Sel, In2Sel, In3Sel,
+                                           OutSel, SPRfull, SPRreduced,
+                                           RC, SVP64LDSTmode, LDSTMode,
+                                           SVEXTRA, SVEtype, SVPtype)
 from openpower.decoder.decode2execute1 import (Decode2ToExecute1Type, Data,
                                                Decode2ToOperand)
 
@@ -57,7 +57,8 @@ def instr_is_priv(m, op, insn):
         with m.Case(MicrOp.OP_ATTN, MicrOp.OP_MFMSR, MicrOp.OP_MTMSRD,
                     MicrOp.OP_MTMSR, MicrOp.OP_RFID):
             comb += is_priv_insn.eq(1)
-        with m.Case(MicrOp.OP_TLBIE) : comb += is_priv_insn.eq(1)
+        with m.Case(MicrOp.OP_TLBIE):
+            comb += is_priv_insn.eq(1)
         with m.Case(MicrOp.OP_MFSPR, MicrOp.OP_MTSPR):
             with m.If(insn[20]):  # field XFX.spr[-1] i think
                 comb += is_priv_insn.eq(1)
@@ -195,7 +196,7 @@ class DecodeAImm(Elaboratable):
         self.dec = dec
         self.sel_in = Signal(In1Sel, reset_less=True)
         self.immz_out = Signal(reset_less=True)
-        self.sv_nz = Signal(1) # EXTRA bits from SVP64
+        self.sv_nz = Signal(1)  # EXTRA bits from SVP64
 
     def elaborate(self, platform):
         m = Module()
@@ -205,8 +206,8 @@ class DecodeAImm(Elaboratable):
         ra = Signal(5, reset_less=True)
         comb += ra.eq(self.dec.RA)
         with m.If((self.sel_in == In1Sel.RA_OR_ZERO) &
-                    (ra == Const(0, 5)) &
-                    (self.sv_nz == Const(0, 1))):
+                  (ra == Const(0, 5)) &
+                  (self.sv_nz == Const(0, 1))):
             comb += self.immz_out.eq(1)
 
         return m
@@ -227,7 +228,7 @@ class DecodeB(Elaboratable):
         self.sel_in = Signal(In2Sel, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(7, "reg_b")
-        self.reg_isvec = Signal(1, name="reg_b_isvec") # TODO: in reg_out
+        self.reg_isvec = Signal(1, name="reg_b_isvec")  # TODO: in reg_out
         self.fast_out = Data(3, "fast_b")
 
     def elaborate(self, platform):
@@ -268,6 +269,7 @@ class DecodeB(Elaboratable):
 class DecodeBImm(Elaboratable):
     """DecodeB immediate from instruction
     """
+
     def __init__(self, dec):
         self.dec = dec
         self.sel_in = Signal(In2Sel, reset_less=True)
@@ -279,7 +281,7 @@ class DecodeBImm(Elaboratable):
 
         # select Register B Immediate
         with m.Switch(self.sel_in):
-            with m.Case(In2Sel.CONST_UI): # unsigned
+            with m.Case(In2Sel.CONST_UI):  # unsigned
                 comb += self.imm_out.data.eq(self.dec.UI)
                 comb += self.imm_out.ok.eq(1)
             with m.Case(In2Sel.CONST_SI):  # sign-extended 16-bit
@@ -292,33 +294,33 @@ class DecodeBImm(Elaboratable):
                 comb += si_hi.eq(self.dec.SI << 16)
                 comb += self.imm_out.data.eq(exts(si_hi, 32, 64))
                 comb += self.imm_out.ok.eq(1)
-            with m.Case(In2Sel.CONST_UI_HI): # unsigned
+            with m.Case(In2Sel.CONST_UI_HI):  # unsigned
                 ui = Signal(16, reset_less=True)
                 comb += ui.eq(self.dec.UI)
                 comb += self.imm_out.data.eq(ui << 16)
                 comb += self.imm_out.ok.eq(1)
-            with m.Case(In2Sel.CONST_LI): # sign-extend 24+2=26 bit
+            with m.Case(In2Sel.CONST_LI):  # sign-extend 24+2=26 bit
                 li = Signal(26, reset_less=True)
                 comb += li.eq(self.dec.LI << 2)
                 comb += self.imm_out.data.eq(exts(li, 26, 64))
                 comb += self.imm_out.ok.eq(1)
-            with m.Case(In2Sel.CONST_BD): # sign-extend (14+2)=16 bit
+            with m.Case(In2Sel.CONST_BD):  # sign-extend (14+2)=16 bit
                 bd = Signal(16, reset_less=True)
                 comb += bd.eq(self.dec.BD << 2)
                 comb += self.imm_out.data.eq(exts(bd, 16, 64))
                 comb += self.imm_out.ok.eq(1)
-            with m.Case(In2Sel.CONST_DS): # sign-extended (14+2=16) bit
+            with m.Case(In2Sel.CONST_DS):  # sign-extended (14+2=16) bit
                 ds = Signal(16, reset_less=True)
                 comb += ds.eq(self.dec.DS << 2)
                 comb += self.imm_out.data.eq(exts(ds, 16, 64))
                 comb += self.imm_out.ok.eq(1)
-            with m.Case(In2Sel.CONST_M1): # signed (-1)
+            with m.Case(In2Sel.CONST_M1):  # signed (-1)
                 comb += self.imm_out.data.eq(~Const(0, 64))  # all 1s
                 comb += self.imm_out.ok.eq(1)
-            with m.Case(In2Sel.CONST_SH): # unsigned - for shift
+            with m.Case(In2Sel.CONST_SH):  # unsigned - for shift
                 comb += self.imm_out.data.eq(self.dec.sh)
                 comb += self.imm_out.ok.eq(1)
-            with m.Case(In2Sel.CONST_SH32): # unsigned - for shift
+            with m.Case(In2Sel.CONST_SH32):  # unsigned - for shift
                 comb += self.imm_out.data.eq(self.dec.SH32)
                 comb += self.imm_out.ok.eq(1)
 
@@ -453,11 +455,11 @@ class DecodeOut2(Elaboratable):
         self.dec = dec
         self.op = op
         self.sel_in = Signal(OutSel, reset_less=True)
-        self.svp64_fft_mode = Signal(reset_less=True) # SVP64 FFT mode
+        self.svp64_fft_mode = Signal(reset_less=True)  # SVP64 FFT mode
         self.lk = Signal(reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o2")
-        self.fp_madd_en = Signal(reset_less=True) # FFT instruction detected
+        self.fp_madd_en = Signal(reset_less=True)  # FFT instruction detected
         self.fast_out = Data(3, "fast_o2")
         self.fast_out3 = Data(3, "fast_o3")
 
@@ -490,12 +492,12 @@ class DecodeOut2(Elaboratable):
             with m.Case(MicrOp.OP_RFID):
                 comb += self.fast_out.data.eq(FastRegsEnum.SRR1)  # SRR1
                 comb += self.fast_out.ok.eq(1)
-                comb += self.fast_out3.data.eq(FastRegsEnum.SVSRR0) # SVSRR0
+                comb += self.fast_out3.data.eq(FastRegsEnum.SVSRR0)  # SVSRR0
                 comb += self.fast_out3.ok.eq(1)
 
         # SVP64 FFT mode, FP mul-add: 2nd output reg (FRS) same as FRT
         # will be offset by VL in hardware
-        #with m.Case(MicrOp.OP_FP_MADD):
+        # with m.Case(MicrOp.OP_FP_MADD):
         with m.If(self.svp64_fft_mode):
             comb += self.reg_out.data.eq(self.dec.FRT)
             comb += self.reg_out.ok.eq(1)
@@ -600,14 +602,14 @@ class DecodeCRIn(Elaboratable):
         self.cr_bitfield_b = Data(3, "cr_bitfield_b")
         self.cr_bitfield_o = Data(3, "cr_bitfield_o")
         self.whole_reg = Data(8,  "cr_fxm")
-        self.sv_override = Signal(2, reset_less=True) # do not do EXTRA spec
+        self.sv_override = Signal(2, reset_less=True)  # do not do EXTRA spec
 
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
         op = self.op
         m.submodules.ppick = ppick = PriorityPicker(8, reverse_i=True,
-                                                       reverse_o=True)
+                                                    reverse_o=True)
 
         # zero-initialisation
         comb += self.cr_bitfield.ok.eq(0)
@@ -621,11 +623,11 @@ class DecodeCRIn(Elaboratable):
             with m.Case(CRInSel.NONE):
                 pass  # No bitfield activated
             with m.Case(CRInSel.CR0):
-                comb += self.cr_bitfield.data.eq(0) # CR0 (MSB0 numbering)
+                comb += self.cr_bitfield.data.eq(0)  # CR0 (MSB0 numbering)
                 comb += self.cr_bitfield.ok.eq(1)
                 comb += self.sv_override.eq(1)
             with m.Case(CRInSel.CR1):
-                comb += self.cr_bitfield.data.eq(1) # CR1 (MSB0 numbering)
+                comb += self.cr_bitfield.data.eq(1)  # CR1 (MSB0 numbering)
                 comb += self.cr_bitfield.ok.eq(1)
                 comb += self.sv_override.eq(2)
             with m.Case(CRInSel.BI):
@@ -647,7 +649,7 @@ class DecodeCRIn(Elaboratable):
             with m.Case(CRInSel.WHOLE_REG):
                 comb += self.whole_reg.ok.eq(1)
                 move_one = Signal(reset_less=True)
-                comb += move_one.eq(self.insn_in[20]) # MSB0 bit 11
+                comb += move_one.eq(self.insn_in[20])  # MSB0 bit 11
                 with m.If((op.internal_op == MicrOp.OP_MFCR) & move_one):
                     # must one-hot the FXM field
                     comb += ppick.i.eq(self.dec.FXM)
@@ -674,14 +676,14 @@ class DecodeCROut(Elaboratable):
         self.insn_in = Signal(32, reset_less=True)
         self.cr_bitfield = Data(3, "cr_bitfield")
         self.whole_reg = Data(8,  "cr_fxm")
-        self.sv_override = Signal(2, reset_less=True) # do not do EXTRA spec
+        self.sv_override = Signal(2, reset_less=True)  # do not do EXTRA spec
 
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
         op = self.op
         m.submodules.ppick = ppick = PriorityPicker(8, reverse_i=True,
-                                                       reverse_o=True)
+                                                    reverse_o=True)
 
         comb += self.cr_bitfield.ok.eq(0)
         comb += self.whole_reg.ok.eq(0)
@@ -697,11 +699,11 @@ class DecodeCROut(Elaboratable):
             with m.Case(CROutSel.NONE):
                 pass  # No bitfield activated
             with m.Case(CROutSel.CR0):
-                comb += self.cr_bitfield.data.eq(0) # CR0 (MSB0 numbering)
+                comb += self.cr_bitfield.data.eq(0)  # CR0 (MSB0 numbering)
                 comb += self.cr_bitfield.ok.eq(self.rc_in)  # only when RC=1
                 comb += self.sv_override.eq(1)
             with m.Case(CROutSel.CR1):
-                comb += self.cr_bitfield.data.eq(1) # CR1 (MSB0 numbering)
+                comb += self.cr_bitfield.data.eq(1)  # CR1 (MSB0 numbering)
                 comb += self.cr_bitfield.ok.eq(self.rc_in)  # only when RC=1
                 comb += self.sv_override.eq(2)
             with m.Case(CROutSel.BF):
@@ -721,7 +723,7 @@ class DecodeCROut(Elaboratable):
                         with m.If(ppick.en_o):
                             comb += self.whole_reg.data.eq(ppick.o)
                         with m.Else():
-                            comb += self.whole_reg.data.eq(0b00000001) # CR7
+                            comb += self.whole_reg.data.eq(0b00000001)  # CR7
                     with m.Else():
                         comb += self.whole_reg.data.eq(self.dec.FXM)
                 with m.Else():
@@ -729,6 +731,7 @@ class DecodeCROut(Elaboratable):
                     comb += self.whole_reg.data.eq(0xff)
 
         return m
+
 
 # dictionary of Input Record field names that, if they exist,
 # will need a corresponding CSV Decoder file column (actually, PowerOp)
@@ -761,20 +764,21 @@ class PowerDecodeSubset(Elaboratable):
 
     only fields actually requested are copied over. hence, "subset" (duh).
     """
+
     def __init__(self, dec, opkls=None, fn_name=None, final=False, state=None,
-                            svp64_en=True, regreduce_en=False):
+                 svp64_en=True, regreduce_en=False):
 
         self.svp64_en = svp64_en
         self.regreduce_en = regreduce_en
         if svp64_en:
-            self.is_svp64_mode = Signal() # mark decoding as SVP64 Mode
-            self.use_svp64_ldst_dec = Signal() # must use LDST decoder
+            self.is_svp64_mode = Signal()  # mark decoding as SVP64 Mode
+            self.use_svp64_ldst_dec = Signal()  # must use LDST decoder
             self.use_svp64_fft = Signal()      # FFT Mode
-            self.sv_rm = SVP64Rec(name="dec_svp64") # SVP64 RM field
+            self.sv_rm = SVP64Rec(name="dec_svp64")  # SVP64 RM field
             self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
             # set these to the predicate mask bits needed for the ALU
-            self.pred_sm = Signal() # TODO expand to SIMD mask width
-            self.pred_dm = Signal() # TODO expand to SIMD mask width
+            self.pred_sm = Signal()  # TODO expand to SIMD mask width
+            self.pred_dm = Signal()  # TODO expand to SIMD mask width
         self.sv_a_nz = Signal(1)
         self.final = final
         self.opkls = opkls
@@ -795,7 +799,7 @@ class PowerDecodeSubset(Elaboratable):
         if svp64_en:
             conditions = {'SVP64BREV': self.use_svp64_ldst_dec,
                           'SVP64FFT': self.use_svp64_fft,
-                         }
+                          }
         else:
             conditions = None
 
@@ -807,8 +811,8 @@ class PowerDecodeSubset(Elaboratable):
         # create decoder if one not already given
         if dec is None:
             dec = create_pdecode(name=fn_name, col_subset=col_subset,
-                                      row_subset=row_subset,
-                                      conditions=conditions)
+                                 row_subset=row_subset,
+                                 conditions=conditions)
         self.dec = dec
 
         # set up a copy of the PowerOp
@@ -820,11 +824,11 @@ class PowerDecodeSubset(Elaboratable):
         self.state = state
 
     def get_col_subset(self, do):
-        subset = { 'cr_in', 'cr_out', 'rc_sel'} # needed, non-optional
+        subset = {'cr_in', 'cr_out', 'rc_sel'}  # needed, non-optional
         for k, v in record_names.items():
             if hasattr(do, k):
                 subset.add(v)
-        log ("get_col_subset", self.fn_name, do.fields, subset)
+        log("get_col_subset", self.fn_name, do.fields, subset)
         return subset
 
     def rowsubsetfn(self, opcode, row):
@@ -842,8 +846,8 @@ class PowerDecodeSubset(Elaboratable):
                 # really this should be done by modifying the CSV syntax
                 # to support multiple tasks (unit column multiple entries)
                 # see https://bugs.libre-soc.org/show_bug.cgi?id=310
-               (self.fn_name == 'MMU' and row['unit'] == 'SPR' and
-                row['internal op'] in ['OP_MTSPR', 'OP_MFSPR'])
+                (self.fn_name == 'MMU' and row['unit'] == 'SPR' and
+                 row['internal op'] in ['OP_MTSPR', 'OP_MFSPR'])
                 )
 
     def ports(self):
@@ -851,8 +855,8 @@ class PowerDecodeSubset(Elaboratable):
         if self.svp64_en:
             ports += self.sv_rm.ports()
             ports.append(self.is_svp64_mode)
-            ports.append(self.use_svp64_ldst_dec )
-            ports.append(self.use_svp64_fft )
+            ports.append(self.use_svp64_ldst_dec)
+            ports.append(self.use_svp64_fft)
         return ports
 
     def needs_field(self, field, op_field):
@@ -896,7 +900,7 @@ class PowerDecodeSubset(Elaboratable):
             else:
                 name = self.fn_name + "tmp"
             self.e_tmp = Decode2ToExecute1Type(name=name, opkls=self.opkls,
-                                           regreduce_en=self.regreduce_en)
+                                               regreduce_en=self.regreduce_en)
 
         # set up submodule decoders
         m.submodules.dec = dec = self.dec
@@ -932,7 +936,7 @@ class PowerDecodeSubset(Elaboratable):
         # for SPR set/get
         fn = self.op_get("function_unit")
         spr = Signal(10, reset_less=True)
-        comb += spr.eq(decode_spr_num(self.dec.SPR)) # from XFX
+        comb += spr.eq(decode_spr_num(self.dec.SPR))  # from XFX
 
         # Microwatt doesn't implement the partition table
         # instead has PRTBL register (SPR) to point to process table
@@ -965,7 +969,7 @@ class PowerDecodeSubset(Elaboratable):
         if self.needs_field("imm_data", "in2_sel"):
             m.submodules.dec_bi = dec_bi = DecodeBImm(self.dec)
             comb += dec_bi.sel_in.eq(self.op_get("in2_sel"))
-            comb += self.do_copy("imm_data", dec_bi.imm_out) # imm in RB
+            comb += self.do_copy("imm_data", dec_bi.imm_out)  # imm in RB
 
         # rc and oe out
         comb += self.do_copy("rc", dec_rc.rc_out)
@@ -981,7 +985,7 @@ class PowerDecodeSubset(Elaboratable):
         rc_out = self.dec_rc.rc_out.data
         with m.Switch(self.op_get("cr_out")):
             with m.Case(CROutSel.CR0, CROutSel.CR1):
-                comb += self.do_copy("write_cr0", rc_out) # only when RC=1
+                comb += self.do_copy("write_cr0", rc_out)  # only when RC=1
             with m.Case(CROutSel.BF, CROutSel.BT):
                 comb += self.do_copy("write_cr0", 1)
 
@@ -1000,7 +1004,8 @@ class PowerDecodeSubset(Elaboratable):
             # BLECH! TODO: these should be done using "mini decoders",
             # using row and column subsets
             is_major_ld = Signal()
-            major = Signal(6) # bits... errr... MSB0 0..5 which is 26:32 python
+            # bits... errr... MSB0 0..5 which is 26:32 python
+            major = Signal(6)
             comb += major.eq(self.dec.opcode_in[26:32])
             comb += is_major_ld.eq((major == 34) | (major == 35) |
                                    (major == 50) | (major == 51) |
@@ -1015,13 +1020,13 @@ class PowerDecodeSubset(Elaboratable):
                 # consequently detect the SHIFT mode. sigh
                 comb += rm_dec.fn_in.eq(Function.LDST)
             with m.Else():
-                comb += rm_dec.fn_in.eq(fn) # decode needs to know Fn type
-            comb += rm_dec.ptype_in.eq(sv_ptype) # Single/Twin predicated
-            comb += rm_dec.rc_in.eq(rc_out) # Rc=1
-            comb += rm_dec.rm_in.eq(self.sv_rm) # SVP64 RM mode
+                comb += rm_dec.fn_in.eq(fn)  # decode needs to know Fn type
+            comb += rm_dec.ptype_in.eq(sv_ptype)  # Single/Twin predicated
+            comb += rm_dec.rc_in.eq(rc_out)  # Rc=1
+            comb += rm_dec.rm_in.eq(self.sv_rm)  # SVP64 RM mode
             if self.needs_field("imm_data", "in2_sel"):
                 bzero = dec_bi.imm_out.ok & ~dec_bi.imm_out.data.bool()
-                comb += rm_dec.ldst_imz_in.eq(bzero) # B immediate is zero
+                comb += rm_dec.ldst_imz_in.eq(bzero)  # B immediate is zero
 
             # main PowerDecoder2 determines if different SVP64 modes enabled
             if not self.final:
@@ -1032,9 +1037,9 @@ class PowerDecodeSubset(Elaboratable):
             # exclude fcfids and others
             # XXX this is a REALLY bad hack, REALLY has to be done better.
             # likely with a sub-decoder.
-            xo5 = Signal(1) # 1 bit from Minor 59 XO field == 0b0XXXX
+            xo5 = Signal(1)  # 1 bit from Minor 59 XO field == 0b0XXXX
             comb += xo5.eq(self.dec.opcode_in[5])
-            xo = Signal(5) # 5 bits from Minor 59 fcfids == 0b01110
+            xo = Signal(5)  # 5 bits from Minor 59 fcfids == 0b01110
             comb += xo.eq(self.dec.opcode_in[1:6])
             comb += self.use_svp64_fft.eq((major == 59) & (xo5 == 0b0) &
                                           (xo != 0b01110))
@@ -1059,7 +1064,7 @@ class PowerDecodeSubset(Elaboratable):
         # copy over SVP64 input record fields (if they exist)
         if self.svp64_en:
             # TODO, really do we have to do these explicitly?? sigh
-            #for (field, _) in sv_input_record_layout:
+            # for (field, _) in sv_input_record_layout:
             #    comb += self.do_copy(field, self.rm_dec.op_get(field))
             comb += self.do_copy("sv_saturate", self.rm_dec.saturate)
             comb += self.do_copy("sv_Ptype", self.rm_dec.ptype_in)
@@ -1106,7 +1111,7 @@ class PowerDecode2(PowerDecodeSubset):
     """
 
     def __init__(self, dec, opkls=None, fn_name=None, final=False,
-                            state=None, svp64_en=True, regreduce_en=False):
+                 state=None, svp64_en=True, regreduce_en=False):
         super().__init__(dec, opkls, fn_name, final, state, svp64_en,
                          regreduce_en=False)
         self.ldst_exc = LDSTException("dec2_exc")
@@ -1126,9 +1131,9 @@ class PowerDecode2(PowerDecodeSubset):
             self.in3_step = Signal(7, name="reg_c_step")
             self.o_step = Signal(7, name="reg_o_step")
             self.o2_step = Signal(7, name="reg_o2_step")
-            self.remap_active = Signal(5, name="remap_active") # per reg
-            self.no_in_vec = Signal(1, name="no_in_vec") # no inputs vector
-            self.no_out_vec = Signal(1, name="no_out_vec") # no outputs vector
+            self.remap_active = Signal(5, name="remap_active")  # per reg
+            self.no_in_vec = Signal(1, name="no_in_vec")  # no inputs vector
+            self.no_out_vec = Signal(1, name="no_out_vec")  # no outputs vector
             self.loop_continue = Signal(1, name="loop_continue")
         else:
             self.no_in_vec = Const(1, 1)
@@ -1236,7 +1241,8 @@ class PowerDecode2(PowerDecodeSubset):
 
             #######
             # CR out
-            comb += crout_svdec.idx.eq(self.op_get("sv_cr_out")) # SVP64 CR out
+            # SVP64 CR out
+            comb += crout_svdec.idx.eq(self.op_get("sv_cr_out"))
             comb += self.cr_out_isvec.eq(crout_svdec.isvec)
 
             #######
@@ -1259,7 +1265,8 @@ class PowerDecode2(PowerDecodeSubset):
             # indices are slightly different, BA/BB mess sorted above
             comb += crin_svdec.idx.eq(cr_a_idx)       # SVP64 CR in A
             comb += crin_svdec_b.idx.eq(cr_b_idx)     # SVP64 CR in B
-            comb += crin_svdec_o.idx.eq(self.op_get("sv_cr_out")) # SVP64 CR out
+            # SVP64 CR out
+            comb += crin_svdec_o.idx.eq(self.op_get("sv_cr_out"))
 
             # get SVSTATE srcstep (TODO: elwidth etc.) needed below
             vl = Signal.like(self.state.svstate.vl)
@@ -1280,11 +1287,11 @@ class PowerDecode2(PowerDecodeSubset):
                 ("RB", e.read_reg2, dec_b.reg_out, in2_svdec, in2_step, False),
                 ("RC", e.read_reg3, dec_c.reg_out, in3_svdec, in3_step, False),
                 ("RT", e.write_reg, dec_o.reg_out, o_svdec, o_step, True),
-                ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, o2_step, True))):
+                    ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, o2_step, True))):
                 rname, to_reg, fromreg, svdec, remapstep, out = stuff
                 comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
                 comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
-                comb += svdec.reg_in.eq(fromreg.data) # 3-bit (CR0/BC/BFA)
+                comb += svdec.reg_in.eq(fromreg.data)  # 3-bit (CR0/BC/BFA)
                 comb += to_reg.ok.eq(fromreg.ok)
                 # *screaam* FFT mode needs an extra offset for RB
                 # similar to FRS/FRT (below).  all of this needs cleanup
@@ -1298,7 +1305,7 @@ class PowerDecode2(PowerDecodeSubset):
                     with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
                         with m.If(~self.remap_active[i]):
                             with m.If(svdec.isvec):
-                                comb += offs.eq(vl) # VL for Vectors
+                                comb += offs.eq(vl)  # VL for Vectors
                 # detect if Vectorised: add srcstep/dststep if yes.
                 # to_reg is 7-bits, outs get dststep added, ins get srcstep
                 with m.If(svdec.isvec):
@@ -1317,11 +1324,12 @@ class PowerDecode2(PowerDecodeSubset):
                     comb += to_reg.data.eq(offs+svdec.reg_out)
 
             # SVP64 in/out fields
-            comb += in1_svdec.idx.eq(self.op_get("sv_in1")) # reg #1 (in1_sel)
+            comb += in1_svdec.idx.eq(self.op_get("sv_in1"))  # reg #1 (in1_sel)
             comb += in2_svdec.idx.eq(self.op_get("sv_in2"))  # reg #2 (in2_sel)
             comb += in3_svdec.idx.eq(self.op_get("sv_in3"))  # reg #3 (in3_sel)
             comb += o_svdec.idx.eq(self.op_get("sv_out"))    # output (out_sel)
-            comb += o2_svdec.idx.eq(self.op_get("sv_out2"))  # output (implicit)
+            # output (implicit)
+            comb += o2_svdec.idx.eq(self.op_get("sv_out2"))
             # XXX TODO - work out where this should come from.  the problem is
             # that LD-with-update is implied (computed from "is instruction in
             # "update mode" rather than specified cleanly as its own CSV column
@@ -1341,10 +1349,10 @@ class PowerDecode2(PowerDecodeSubset):
                 comb += offs.eq(0)
                 with m.If(~self.remap_active[4]):
                     with m.If(o2_svdec.isvec):
-                        comb += offs.eq(vl) # VL for Vectors
+                        comb += offs.eq(vl)  # VL for Vectors
                     with m.Else():
                         comb += offs.eq(1)  # add 1 if scalar
-                svdec = o_svdec # yes take source as o_svdec...
+                svdec = o_svdec  # yes take source as o_svdec...
                 with m.If(svdec.isvec):
                     step = Signal(7, name="step_%s" % rname.lower())
                     with m.If(self.remap_active[4]):
@@ -1365,14 +1373,16 @@ class PowerDecode2(PowerDecodeSubset):
 
             # TODO add SPRs here.  must be True when *all* are scalar
             l = map(lambda svdec: svdec.isvec, [in1_svdec, in2_svdec, in3_svdec,
-                                        crin_svdec, crin_svdec_b, crin_svdec_o])
-            comb += self.no_in_vec.eq(~Cat(*l).bool()) # all input scalar
-            l = map(lambda svdec: svdec.isvec, [o2_svdec, o_svdec, crout_svdec])
+                                                crin_svdec, crin_svdec_b, crin_svdec_o])
+            comb += self.no_in_vec.eq(~Cat(*l).bool())  # all input scalar
+            l = map(lambda svdec: svdec.isvec, [
+                    o2_svdec, o_svdec, crout_svdec])
             # in mapreduce mode, scalar out is *allowed*
             with m.If(self.rm_dec.mode == SVP64RMMode.MAPREDUCE.value):
                 comb += self.no_out_vec.eq(0)
             with m.Else():
-                comb += self.no_out_vec.eq(~Cat(*l).bool()) # all output scalar
+                # all output scalar
+                comb += self.no_out_vec.eq(~Cat(*l).bool())
             # now create a general-purpose "test" as to whether looping
             # should continue.  this doesn't include predication bit-tests
             loop = self.loop_continue
@@ -1393,26 +1403,26 @@ class PowerDecode2(PowerDecodeSubset):
                 (e.read_cr1, self.dec_cr_in, "cr_bitfield", crin_svdec, 0),
                 (e.read_cr2, self.dec_cr_in, "cr_bitfield_b", crin_svdec_b, 0),
                 (e.read_cr3, self.dec_cr_in, "cr_bitfield_o", crin_svdec_o, 0),
-                (e.write_cr, self.dec_cr_out, "cr_bitfield", crout_svdec, 1)):
+                    (e.write_cr, self.dec_cr_out, "cr_bitfield", crout_svdec, 1)):
                 fromreg = getattr(cr, name)
                 comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
                 comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
-                comb += svdec.cr_in.eq(fromreg.data) # 3-bit (CR0/BC/BFA)
+                comb += svdec.cr_in.eq(fromreg.data)  # 3-bit (CR0/BC/BFA)
                 with m.If(svdec.isvec):
                     # check if this is CR0 or CR1: treated differently
                     # (does not "listen" to EXTRA2/3 spec for a start)
                     # also: the CRs start from completely different locations
                     step = dststep if out else srcstep
-                    with m.If(cr.sv_override == 1): # CR0
+                    with m.If(cr.sv_override == 1):  # CR0
                         offs = SVP64CROffs.CR0
                         comb += to_reg.data.eq(step+offs)
-                    with m.Elif(cr.sv_override == 2): # CR1
+                    with m.Elif(cr.sv_override == 2):  # CR1
                         offs = SVP64CROffs.CR1
                         comb += to_reg.data.eq(step+1)
                     with m.Else():
-                        comb += to_reg.data.eq(step+svdec.cr_out) # 7-bit out
+                        comb += to_reg.data.eq(step+svdec.cr_out)  # 7-bit out
                 with m.Else():
-                    comb += to_reg.data.eq(svdec.cr_out) # 7-bit output
+                    comb += to_reg.data.eq(svdec.cr_out)  # 7-bit output
                 comb += to_reg.ok.eq(fromreg.ok)
 
             # sigh must determine if RA is nonzero (7 bit)
@@ -1429,16 +1439,16 @@ class PowerDecode2(PowerDecodeSubset):
 
             # connect up to/from read/write CRs
             for to_reg, cr, name in (
-                        (e.read_cr1, self.dec_cr_in, "cr_bitfield", ),
-                        (e.read_cr2, self.dec_cr_in, "cr_bitfield_b", ),
-                        (e.read_cr3, self.dec_cr_in, "cr_bitfield_o", ),
-                        (e.write_cr, self.dec_cr_out, "cr_bitfield", )):
+                (e.read_cr1, self.dec_cr_in, "cr_bitfield", ),
+                (e.read_cr2, self.dec_cr_in, "cr_bitfield_b", ),
+                (e.read_cr3, self.dec_cr_in, "cr_bitfield_o", ),
+                    (e.write_cr, self.dec_cr_out, "cr_bitfield", )):
                 fromreg = getattr(cr, name)
                 comb += to_reg.data.eq(fromreg.data)
                 comb += to_reg.ok.eq(fromreg.ok)
 
         if self.svp64_en:
-            comb += self.rm_dec.ldst_ra_vec.eq(self.in1_isvec) # RA is vector
+            comb += self.rm_dec.ldst_ra_vec.eq(self.in1_isvec)  # RA is vector
 
         # SPRs out
         comb += e.read_spr1.eq(dec_a.spr_out)
@@ -1449,16 +1459,16 @@ class PowerDecode2(PowerDecodeSubset):
         comb += e.read_fast2.eq(dec_b.fast_out)
         comb += e.write_fast1.eq(dec_o.fast_out)   # SRR0 (OP_RFID)
         comb += e.write_fast2.eq(dec_o2.fast_out)  # SRR1 (ditto)
-        comb += e.write_fast3.eq(dec_o2.fast_out3) # SVSRR0 (ditto)
+        comb += e.write_fast3.eq(dec_o2.fast_out3)  # SVSRR0 (ditto)
 
         # sigh this is exactly the sort of thing for which the
         # decoder is designed to not need.  MTSPR, MFSPR and others need
         # access to the XER bits.  however setting e.oe is not appropriate
         internal_op = self.op_get("internal_op")
         with m.If(internal_op == MicrOp.OP_MFSPR):
-            comb += e.xer_in.eq(0b111) # SO, CA, OV
+            comb += e.xer_in.eq(0b111)  # SO, CA, OV
         with m.If(internal_op == MicrOp.OP_CMP):
-            comb += e.xer_in.eq(1<<XERRegsEnum.SO) # SO
+            comb += e.xer_in.eq(1 << XERRegsEnum.SO)  # SO
         with m.If(internal_op == MicrOp.OP_MTSPR):
             comb += e.xer_out.eq(1)
 
@@ -1466,7 +1476,7 @@ class PowerDecode2(PowerDecodeSubset):
         with m.If(op.internal_op == MicrOp.OP_TRAP):
             # *DO NOT* call self.trap here.  that would reset absolutely
             # everything including destroying read of RA and RB.
-            comb += self.do_copy("trapaddr", 0x70) # strip first nibble
+            comb += self.do_copy("trapaddr", 0x70)  # strip first nibble
 
         ####################
         # ok so the instruction's been decoded, blah blah, however
@@ -1486,8 +1496,8 @@ class PowerDecode2(PowerDecodeSubset):
         illeg_ok = Signal()
         ldst_exc = self.ldst_exc
 
-        comb += ext_irq_ok.eq(ext_irq & msr[MSR.EE]) # v3.0B p944 (MSR.EE)
-        comb += dec_irq_ok.eq(dec_spr[63] & msr[MSR.EE]) # 6.5.11 p1076
+        comb += ext_irq_ok.eq(ext_irq & msr[MSR.EE])  # v3.0B p944 (MSR.EE)
+        comb += dec_irq_ok.eq(dec_spr[63] & msr[MSR.EE])  # 6.5.11 p1076
         comb += priv_ok.eq(is_priv_insn & msr[MSR.PR])
         comb += illeg_ok.eq(op.internal_op == MicrOp.OP_ILLEGAL)
 
@@ -1580,13 +1590,13 @@ class PowerDecode2(PowerDecodeSubset):
         comb += self.do_copy("insn", self.dec.opcode_in, True)
         comb += self.do_copy("insn_type", MicrOp.OP_TRAP, True)
         comb += self.do_copy("fn_unit", Function.TRAP, True)
-        comb += self.do_copy("trapaddr", trapaddr >> 4, True) # bottom 4 bits
+        comb += self.do_copy("trapaddr", trapaddr >> 4, True)  # bottom 4 bits
         comb += self.do_copy("traptype", traptype, True)  # request type
         comb += self.do_copy("ldst_exc", ldst_exc, True)  # request type
-        comb += self.do_copy("msr", self.state.msr, True) # copy of MSR "state"
+        comb += self.do_copy("msr", self.state.msr,
+                             True)  # copy of MSR "state"
         comb += self.do_copy("cia", self.state.pc, True)  # copy of PC "state"
         comb += self.do_copy("svstate", self.state.svstate, True)  # SVSTATE
-
 
 
 def get_rdflags(e, cu):
