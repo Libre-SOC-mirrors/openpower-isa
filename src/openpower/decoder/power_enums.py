@@ -435,7 +435,7 @@ class MicrOp(Enum):
     OP_ADDG6S = 83
     OP_CDTBCD = 84
     OP_CBCDTD = 85
-    OP_TERNARYI = 86
+    OP_TERNARY = 86
 
 
 @unique
