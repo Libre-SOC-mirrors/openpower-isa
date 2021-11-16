@@ -127,7 +127,7 @@ class Decode2ToExecute1Type(RecordObject):
 
         self.read_cr1 = Data(7, name="cr_in1")
         self.read_cr2 = Data(7, name="cr_in2")
-        self.read_cr3 = Data(7, name="cr_in2")
+        self.read_cr3 = Data(7, name="cr_in3")
         self.write_cr = Data(7, name="cr_out")
 
         # decode operand data
