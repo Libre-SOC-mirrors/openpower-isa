@@ -145,7 +145,7 @@ def regspec_decode_write(e, regfile, name):
         if name == 'full_cr': # full CR (from FXM field)
             return e.do.write_cr_whole.ok, e.do.write_cr_whole.data
         if name == 'cr_a': # CR A
-            return e.write_cr.ok, 1<<(7-e.write_cr.data)
+            return e.write_cr.ok, (1<<(7-e.write_cr.data))[0:8]
 
     # XER regfile
 
