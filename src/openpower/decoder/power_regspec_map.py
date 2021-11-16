@@ -37,6 +37,7 @@ see https://libre-soc.org/3d_gpu/architecture/regfile/ section on regspecs
 from nmigen import Const
 from openpower.consts import XERRegsEnum, FastRegsEnum, StateRegsEnum
 from openpower.decoder.power_enums import CryIn
+from openpower.util import log
 
 
 def regspec_decode_read(e, regfile, name):
@@ -125,14 +126,16 @@ def regspec_decode_write(e, regfile, name):
     """regspec_decode_write
     """
 
+    #log("regspec_decode_write", regfile, name, e.__class__.__name__)
+
     # INT regfile
 
     if regfile == 'INT':
         # Int register numbering is *unary* encoded
         if name == 'o': # RT
-            return e.write_reg, e.write_reg.data
+            return e.write_reg.ok, e.write_reg.data
         if name == 'o1': # RA (update mode: LD/ST EA)
-            return e.write_ea, e.write_ea.data
+            return e.write_ea.ok, e.write_ea.data
 
     # CR regfile
 
@@ -142,7 +145,7 @@ def regspec_decode_write(e, regfile, name):
         if name == 'full_cr': # full CR (from FXM field)
             return e.do.write_cr_whole.ok, e.do.write_cr_whole.data
         if name == 'cr_a': # CR A
-            return e.write_cr, 1<<(7-e.write_cr.data)
+            return e.write_cr.ok, 1<<(7-e.write_cr.data)
 
     # XER regfile
 
@@ -177,18 +180,18 @@ def regspec_decode_write(e, regfile, name):
     if regfile == 'FAST':
         # FAST register numbering is *unary* encoded
         if name == 'fast1':
-            return e.write_fast1, e.write_fast1.data
+            return e.write_fast1.ok, e.write_fast1.data
         if name == 'fast2':
-            return e.write_fast2, e.write_fast2.data
+            return e.write_fast2.ok, e.write_fast2.data
         if name == 'fast3':
-            return e.write_fast3, e.write_fast3.data
+            return e.write_fast3.ok, e.write_fast3.data
 
     # SPR regfile
 
     if regfile == 'SPR':
         # SPR register numbering is *binary* encoded
         if name == 'spr1': # SPR1
-            return e.write_spr, e.write_spr.data
+            return e.write_spr.ok, e.write_spr.data
 
     assert False, "regspec not found %s %s" % (regfile, name)
 
