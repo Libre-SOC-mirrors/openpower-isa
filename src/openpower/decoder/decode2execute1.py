@@ -57,6 +57,7 @@ class IssuerDecode2ToOperand(RecordObject):
         self.rc = Data(1, "rc")
         self.oe = Data(1, "oe")
         self.input_carry = Signal(CryIn, reset_less=True)
+        self.output_carry = Signal(reset_less=True)
         self.traptype  = Signal(TT.size, reset_less=True) # trap main_stage.py
         self.ldst_exc  = LDSTException("exc")
         self.trapaddr  = Signal(13, reset_less=True)

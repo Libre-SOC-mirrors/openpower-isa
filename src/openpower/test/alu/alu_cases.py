@@ -126,6 +126,19 @@ class ALUTestCase(TestAccumulatorBase):
                 self.add_case(Program(lst, bigendian),
                               initial_regs, initial_sprs)
 
+    def case_addme_ca_so_4(self):
+        """test of SO being set
+        """
+        lst = ["addmeo. 6, 16"]
+        initial_regs = [0] * 32
+        initial_regs[16] = 0x7fffffffffffffff
+        initial_sprs = {}
+        xer = SelectableInt(0, 64)
+        xer[XER_bits['CA']] = 1
+        initial_sprs[special_sprs['XER']] = xer
+        self.add_case(Program(lst, bigendian),
+                      initial_regs, initial_sprs)
+
     def case_addme_ca_so_3(self):
         """bug where SO does not get passed through to CR0
         """

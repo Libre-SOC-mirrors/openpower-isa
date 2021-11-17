@@ -155,11 +155,14 @@ def regspec_decode_write(e, regfile, name):
         CA = 1<<XERRegsEnum.CA
         OV = 1<<XERRegsEnum.OV
         if name == 'xer_so':
-            return e.xer_out, SO # hmmm
+            return (e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
+                    SO) # hmmm
         if name == 'xer_ov':
-            return e.xer_out, OV # hmmm
+            return (e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
+                    OV) # hmmm
         if name == 'xer_ca':
-            return e.xer_out, CA # hmmm
+            return (e.xer_out | (e.do.output_carry),
+                    CA) # hmmm
 
     # STATE regfile
 
