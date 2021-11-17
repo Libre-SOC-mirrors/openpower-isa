@@ -12,6 +12,18 @@ import unittest
 class ALUTestCase(TestAccumulatorBase):
 
     def case_1_regression(self):
+        lst = [f"add. 3, 1, 2"]
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xc523e996a8ff6215
+        initial_regs[2] = 0xe1e5b9cc9864c4a8
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xc523e996a8ff6215
+        e.intregs[2] = 0xe1e5b9cc9864c4a8
+        e.intregs[3] = 0xa709a363416426bd
+        e.crregs[0] = 0x8
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_2_regression(self):
         lst = [f"extsw 3, 1"]
         initial_regs = [0] * 32
         initial_regs[1] = 0xb6a1fc6c8576af91
@@ -46,17 +58,6 @@ class ALUTestCase(TestAccumulatorBase):
         e = ExpectedState(pc=4)
         e.intregs[1] = 0x7f9497aaff900ea0
         e.intregs[3] = 0xffffffffffffffa0
-        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
-
-        lst = [f"add. 3, 1, 2"]
-        initial_regs = [0] * 32
-        initial_regs[1] = 0xc523e996a8ff6215
-        initial_regs[2] = 0xe1e5b9cc9864c4a8
-        e = ExpectedState(pc=4)
-        e.intregs[1] = 0xc523e996a8ff6215
-        e.intregs[2] = 0xe1e5b9cc9864c4a8
-        e.intregs[3] = 0xa709a363416426bd
-        e.crregs[0] = 0x8
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
         lst = [f"add 3, 1, 2"]
