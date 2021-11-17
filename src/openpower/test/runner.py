@@ -105,12 +105,14 @@ class TestRunnerBase(FHDLTestCase):
     is passed in with tst_data.
     """
     def __init__(self, tst_data, microwatt_mmu=False, rom=None,
-                        svp64=True, run_hdl=None, run_sim=True):
+                        svp64=True, run_hdl=None, run_sim=True,
+                        allow_overlap=False):
         super().__init__("run_all")
         self.test_data = tst_data
         self.microwatt_mmu = microwatt_mmu
         self.rom = rom
         self.svp64 = svp64
+        self.allow_overlap = allow_overlap
         self.run_hdl = run_hdl
         self.run_sim = run_sim
 
@@ -135,6 +137,7 @@ class TestRunnerBase(FHDLTestCase):
                              gpio=False,
                              regreduce=True,
                              svp64=self.svp64,
+                             allow_overlap=self.allow_overlap,
                              mmu=self.microwatt_mmu,
                              reg_wid=64)
 
