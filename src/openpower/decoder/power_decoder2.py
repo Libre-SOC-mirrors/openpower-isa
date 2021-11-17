@@ -365,7 +365,7 @@ class DecodeC(Elaboratable):
                 comb += reg.data.eq(self.dec.RC)
                 comb += reg.ok.eq(1)
             with m.Case(In3Sel.RT):
-                # for TI-form ternary
+                # for TLI-form ternlogi
                 comb += reg.data.eq(self.dec.RT)
                 comb += reg.ok.eq(1)
 

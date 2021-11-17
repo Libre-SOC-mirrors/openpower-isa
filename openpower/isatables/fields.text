@@ -283,9 +283,9 @@
    |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
    | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
 
-# 1.6.34 TI-FORM
-   |0   |6   |11   |16   |21  |29  |31 |
-   | PO | RT |  RA |  RB | TI | XO |Rc |
+# 1.6.34 TLI-FORM
+   |0   |6   |11   |16   |21   |29  |31 |
+   | PO | RT |  RA |  RB | TLI | XO |Rc |
 
 # 1.6.28 Instruction Fields
     A (6)
@@ -828,10 +828,10 @@
          and dcbtst instructions (see Section 4.3.2 of Book
          II).
          Formats: X
-    TI (21:28)
-         Field used by the ternaryi instruction as the
+    TLI (21:28)
+         Field used by the ternlogi instruction as the
          look-up table.
-         Formats: TI
+         Formats: TLI
     TO (6:10)
          Field used to specify the conditions on which to
          trap.     The    encoding     is    described   in
@@ -958,7 +958,7 @@
         Formats: MDS
     XO (29:30)
         Extended opcode field.
-        Formats: TI
+        Formats: TLI
     XO (29:31)
         Extended opcode field.
         Formats: DQ
