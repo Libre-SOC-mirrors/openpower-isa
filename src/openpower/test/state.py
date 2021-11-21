@@ -25,6 +25,7 @@ methods, the use of yield from/yield is required.
 from openpower.decoder.power_enums import XER_bits
 from openpower.util import log
 import os
+import sys
 
 global staterunner_factory
 staterunner_factory = {}
@@ -83,9 +84,10 @@ class State:
             log("asserting...reg", i, intreg, intreg2)
             log("code, frepr(code)", self.code, repr(self.code))
             self.dut.assertEqual(intreg, intreg2,
-                "int reg %d (%s) not equal (%s) %s. got %x  expected %x" %
+                "int reg %d (%s) not equal (%s) %s. "
+                " got %x  expected %x at pc %x %x\n" %
                 (i, self.state_type, s2.state_type, repr(self.code),
-                intreg, intreg2))
+                intreg, intreg2, self.pc, s2.pc))
 
         # CR registers
         for i, (crreg, crreg2) in enumerate(
@@ -122,6 +124,45 @@ class State:
         for i in s1mem:
             self.dut.assertEqual(s1mem[i], s2mem[i],
                 "mem mismatch location %d %s" % (i, self.code))
+
+    def dump_state_tofile(self, testname=None, testfile=None):
+        """dump_state_tofile:  Takes a passed in teststate object along
+        with a test name and generates a code file located at
+        /tmp/testfile/testname to set an expected state object
+        """
+        lindent = ' '*8 # indent for code
+        # create the path
+        if testname is not None:
+            path = "/tmp/expected/"
+            if testfile is not None:
+                path += testfile + '/'
+            os.makedirs(path, exist_ok=True)
+            sout = open("%s%s.py" % (path, testname), "a+")
+        else:
+            sout = sys.stdout
+
+        # pc and intregs
+        sout.write("%se = ExpectedState(pc=%d)\n" % (lindent, self.pc))
+        for i, reg in enumerate(self.intregs):
+            if(reg != 0):
+                msg = "%se.intregs[%d] = 0x%x\n"
+                sout.write( msg % (lindent, i, reg))
+        # CR fields
+        for i in range(8):
+            cri = self.crregs[i]
+            if(cri != 0):
+                msg = "%se.crregs[%d] = 0x%x\n"
+                sout.write( msg % (lindent, i, cri))
+        # XER
+        if(self.so != 0):
+            sout.write("%se.so = 0x%x\n" % (lindent, self.so))
+        if(self.ov != 0):
+            sout.write("%se.ov = 0x%x\n" % (lindent, self.ov))
+        if(self.ca != 0):
+            sout.write("%se.ca = 0x%x\n" % (lindent, self.ca))
+
+        if sout != sys.stdout:
+            sout.close()
 
 
 class SimState(State):
@@ -218,39 +259,6 @@ class ExpectedState(State):
         if False: yield
     def get_mem(self):
         if False: yield
-
-    def dump_state_tofile(self, state, testname, testfile):
-        """dump_state_tofile:  Takes a passed in teststate object along
-        with a test name and generates a code file located at
-        /tmp/testfile/testname to set an expected state object
-        """
-        lindent = ' '*8 # indent for code
-        # create the path
-        path = "/tmp/expected/"
-        if testfile is not None:
-            path += testfile + '/'
-        os.makedirs(path, exist_ok=True)
-
-        with open("%s%s.py" % (path, testname), "a+") as sout:
-            # pc and intregs
-            sout.write("%se = ExpectedState(pc=%d)\n" % (lindent, state.pc))
-            for i, reg in enumerate(state.intregs):
-                if(reg != 0):
-                    msg = "%se.intregs[%d] = 0x%x\n"
-                    sout.write( msg % (lindent, i, reg))
-            # CR fields
-            for i in range(8):
-                cri = state.crregs[i]
-                if(cri != 0):
-                    msg = "%se.crregs[%d] = 0x%x\n"
-                    sout.write( msg % (lindent, i, cri))
-            # XER
-            if(state.so != 0):
-                sout.write("%se.so = 0x%x\n" % (lindent, state.so))
-            if(state.ov != 0):
-                sout.write("%se.ov = 0x%x\n" % (lindent, state.ov))
-            if(state.ca != 0):
-                sout.write("%se.ca = 0x%x\n" % (lindent, state.ca))
 
 
 global state_factory
