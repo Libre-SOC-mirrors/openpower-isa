@@ -91,6 +91,11 @@ class SimRunner(StateRunner):
             state = yield from TestState("sim", sim, dut, code)
             sim_states.append(state)
 
+        if self.dut.allow_overlap:
+            # get last state, at end of run
+            state = yield from TestState("sim", sim, dut, code)
+            sim_states.append(state)
+
         return sim_states
 
 
@@ -254,6 +259,17 @@ class TestRunnerBase(FHDLTestCase):
 
                     # compare the states
                     if self.run_hdl and self.run_sim:
+                        # if allow_overlap is enabled, because allow_overlap
+                        # can commit out-of-order, only compare the last ones
+                        if self.allow_overlap:
+                            print ("allow_overlap: truncating %d %d "
+                                    "states to last" % (len(sim_states),
+                                                        len(hdl_states)))
+                            sim_states = sim_states[-1:]
+                            hdl_states = hdl_states[-1:]
+                            sim_states[-1].dump_state_tofile()
+                            print ("allow_overlap: last hdl_state")
+                            hdl_states[-1].dump_state_tofile()
                         for simstate, hdlstate in zip(sim_states, hdl_states):
                             simstate.compare(hdlstate)     # register check
                             simstate.compare_mem(hdlstate) # memory check
@@ -261,9 +277,7 @@ class TestRunnerBase(FHDLTestCase):
                     # if no expected, create /tmp/case_name.py with code
                     # setting expected state to last_sim
                     if test.expected is None:
-                        e = ExpectedState()
-                        e.dump_state_tofile(last_sim, test.name,
-                                            test.test_file)
+                        last_sim.dump_state_tofile(test.name, test.test_file)
 
                     # compare against expected results
                     if test.expected is not None:
