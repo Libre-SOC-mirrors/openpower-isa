@@ -248,13 +248,21 @@ class ALUTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[2] = 0xffffffffaaaaaaaa
         initial_regs[3] = 0x00000000aaaaaaaa
-        self.add_case(Program(lst, bigendian), initial_regs, {})
+        e = ExpectedState(pc=4)
+        e.intregs[2] = 0xffffffffaaaaaaaa
+        e.intregs[3] = 0xaaaaaaaa
+        e.crregs[2] = 0x8
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
         lst = ["cmp cr2, 1, 4, 5"]
         initial_regs = [0] * 32
         initial_regs[4] = 0x00000000aaaaaaaa
         initial_regs[5] = 0xffffffffaaaaaaaa
-        self.add_case(Program(lst, bigendian), initial_regs, {})
+        e = ExpectedState(pc=4)
+        e.intregs[4] = 0xaaaaaaaa
+        e.intregs[5] = 0xffffffffaaaaaaaa
+        e.crregs[2] = 0x4
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_cmpl_microwatt_0(self):
         """microwatt 1.bin:
