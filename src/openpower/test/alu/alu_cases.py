@@ -159,13 +159,12 @@ class ALUTestCase(TestAccumulatorBase):
             lst = [f"{choice} 6, 16"]
             initial_regs = [0] * 32
             initial_regs[16] = 0x00ff00ff00ff0080
-            if choice == "addze":
-                e = ExpectedState(pc=4)
-                e.intregs[6] = 0xff00ff00ff0080
-                e.intregs[16] = 0xff00ff00ff0080
-                self.add_case(Program(lst, bigendian), initial_regs, expected=e)
-            else:
-                self.add_case(Program(lst, bigendian), initial_regs)
+            e = ExpectedState(pc=4)
+            e.intregs[16] = 0xff00ff00ff0080
+            e.intregs[6] = 0xff00ff00ff0080
+            if '.' in choice:
+                e.crregs[0] = 0x4
+            self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_addis_nonzero_r0_regression(self):
         lst = [f"addis 3, 0, 1"]
