@@ -159,8 +159,14 @@ class ALUTestCase(TestAccumulatorBase):
         xer[XER_bits['CA']] = 1
         xer[XER_bits['SO']] = 1
         initial_sprs[special_sprs['XER']] = xer
+        e = ExpectedState(pc=4)
+        e.intregs[16] = 0x7ffffffff
+        e.intregs[6] = 0x7ffffffff
+        e.crregs[0] = 0x5
+        e.so = 0x1
+        e.ca = 0x3
         self.add_case(Program(lst, bigendian),
-                      initial_regs, initial_sprs)
+                      initial_regs, initial_sprs, expected=e)
 
     def case_addze(self):
         insns = ["addze", "addze.", "addzeo", "addzeo."]
