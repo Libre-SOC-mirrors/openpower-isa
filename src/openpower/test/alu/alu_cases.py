@@ -300,9 +300,21 @@ class ALUTestCase(TestAccumulatorBase):
         XER = 0xe00c0000
         CR = 0x35055050
 
+        e = ExpectedState(pc=4)
+        e.intregs[10] = 0xfedf3fff0001c025
+        e.intregs[17] = 0x1c026
+        e.crregs[0] = 0x3
+        e.crregs[1] = 0x5
+        e.crregs[3] = 0x5
+        e.crregs[4] = 0x5
+        e.crregs[6] = 0x5
+        e.so = 0x1
+        e.ov = 0x3
+        e.ca = 0x3
+
         self.add_case(Program(lst, bigendian), initial_regs,
                                 initial_sprs = {'XER': XER},
-                                initial_cr = CR)
+                                initial_cr = CR, expected=e)
 
     def case_cmpl_microwatt_0_disasm(self):
         """microwatt 1.bin: disassembled version
