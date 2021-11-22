@@ -431,5 +431,14 @@ class ALUTestCase(TestAccumulatorBase):
             initial_regs = [0] * 32
             initial_regs[1] = i
             initial_regs[2] = 0x0001030507090b0f
-            self.add_case(Program(lst, bigendian), initial_regs, {})
+
+            e = ExpectedState(pc=4)
+            e.intregs[1] = i
+            e.intregs[2] = 0x1030507090b0f
+            matlst = [ 0x00, 0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0f ]
+            for j in matlst:
+                if j == i:
+                    e.crregs[1] = 0x4
+
+            self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
