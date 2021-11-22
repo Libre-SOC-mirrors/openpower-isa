@@ -228,6 +228,37 @@ class ALUTestCase(TestAccumulatorBase):
             self.add_case(Program(lst, bigendian),
                           initial_regs, initial_sprs)
 
+    def cse_0_adde_expected(self):
+        lst = ["adde. 5, 6, 7"]
+        for i in range(10):
+            initial_regs = [0] * 32
+            initial_regs[6] = random.randint(0, (1 << 64)-1)
+            initial_regs[7] = random.randint(0, (1 << 64)-1)
+            initial_sprs = {}
+            xer = SelectableInt(0, 64)
+            xer[XER_bits['CA']] = 1
+            initial_sprs[special_sprs['XER']] = xer
+            # calculate result *including carry* and mask it to 64-bit
+            # (if it overflows, we don't care, because this is not addeo)
+            result = 1 + initial_regs[6] + initial_regs[7]
+            carry_out = result & (1<<64) # detect 65th bit as carry-out?
+            carry_out32 = result & (1<<32) # detect 33rd bit as carry-out?
+            result = result & ((1<<64)-1) # round
+            # TODO: calculate CR0
+            eq = 0
+            gt = 0
+            le = 0
+            # now construct the state
+            e = ExpectedState(pc=4)
+            e.intregs[6] = initial_regs[6] # should be same as initial
+            e.intregs[7] = initial_regs[7] # should be same as initial
+            e.intregs[5] = result
+            e.ca = carry_out | (carry_out32<<1)  # maybe other way round
+            e.crregs[0] = eq | (gt<<1) | (le<<2) # something like this
+
+            self.add_case(Program(lst, bigendian),
+                          initial_regs, initial_sprs, expected=e)
+
     def case_cmp(self):
         lst = ["subf. 1, 6, 7",
                "cmp cr2, 1, 6, 7"]
