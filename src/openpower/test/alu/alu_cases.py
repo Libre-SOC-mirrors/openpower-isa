@@ -145,8 +145,13 @@ class ALUTestCase(TestAccumulatorBase):
         xer = SelectableInt(0, 64)
         xer[XER_bits['CA']] = 1
         initial_sprs[special_sprs['XER']] = xer
+        e = ExpectedState(pc=4)
+        e.intregs[16] = 0x7fffffffffffffff
+        e.intregs[6] = 0x7fffffffffffffff
+        e.ca = 0x3
+        e.crregs[0] = 0x4
         self.add_case(Program(lst, bigendian),
-                      initial_regs, initial_sprs)
+                      initial_regs, initial_sprs, expected=e)
 
     def case_addme_ca_so_3(self):
         """bug where SO does not get passed through to CR0
