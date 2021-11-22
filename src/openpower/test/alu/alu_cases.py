@@ -384,9 +384,22 @@ class ALUTestCase(TestAccumulatorBase):
         XER = 0xe00c0000
         CR = 0x90215393
 
+        e = ExpectedState(pc=4)
+        e.intregs[13] = 0x301fc7a7
+        e.crregs[0] = 0x9
+        e.crregs[2] = 0x2
+        e.crregs[3] = 0x1
+        e.crregs[4] = 0x5
+        e.crregs[5] = 0x5
+        e.crregs[6] = 0x9
+        e.crregs[7] = 0x3
+        e.so = 0x1
+        e.ov = 0x3
+        e.ca = 0x3
+
         self.add_case(Program(lst, bigendian), initial_regs,
                                 initial_sprs = {'XER': XER},
-                                initial_cr = CR)
+                                initial_cr = CR, expected=e)
 
     def case_extsb(self):
         insns = ["extsb", "extsh", "extsw"]
