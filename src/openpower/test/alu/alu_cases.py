@@ -248,13 +248,19 @@ class ALUTestCase(TestAccumulatorBase):
             eq = 0
             gt = 0
             le = 0
+            if (result & (1<<63)) != 0:
+                le = 1
+            elif result == 0:
+                eq = 1
+            else:
+                gt = 1
             # now construct the state
             e = ExpectedState(pc=4)
             e.intregs[6] = initial_regs[6] # should be same as initial
             e.intregs[7] = initial_regs[7] # should be same as initial
             e.intregs[5] = result
             e.ca = carry_out | (carry_out32<<1)  # maybe other way round
-            e.crregs[0] = eq | (gt<<1) | (le<<2) # something like this
+            e.crregs[0] = (eq<<1) | (gt<<2) | (le<<3) # something like this
 
             self.add_case(Program(lst, bigendian),
                           initial_regs, initial_sprs, expected=e)
