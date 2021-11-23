@@ -78,7 +78,40 @@ class ALUTestCase(TestAccumulatorBase):
             initial_regs = [0] * 32
             initial_regs[1] = random.randint(0, (1 << 64)-1)
             initial_regs[2] = random.randint(0, (1 << 64)-1)
-            self.add_case(Program(lst, bigendian), initial_regs)
+
+            e = ExpectedState(pc=4)
+            e.intregs[1] = initial_regs[1]
+            e.intregs[2] = initial_regs[2]
+            if choice == "add":
+                result = initial_regs[1] + initial_regs[2]
+                if result < 0:
+                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
+                else:
+                    e.intregs[3] = result & ((2**64)-1)
+            elif choice == "add.":
+                result = initial_regs[1] + initial_regs[2]
+                if result < 0:
+                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
+                else:
+                    e.intregs[3] = result & ((2**64)-1)
+                eq = 0
+                gt = 0
+                le = 0
+                if (e.intregs[3] & (1<<63)) != 0:
+                    le = 1
+                elif e.intregs[3] == 0:
+                    eq = 1
+                else:
+                    gt = 1
+                e.crregs[0] = (eq<<1) | (gt<<2) | (le<<3)
+            elif choice == "subf":
+                result = ~initial_regs[1] + initial_regs[2] + 1
+                if result < 0:
+                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
+                else:
+                    e.intregs[3] = result & ((2**64)-1)
+
+            self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_addme_ca_0(self):
         insns = ["addme", "addme.", "addmeo", "addmeo."]
