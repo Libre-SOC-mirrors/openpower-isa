@@ -46,10 +46,10 @@ class HazardTestCase(TestAccumulatorBase):
         e.intregs[7] = 4
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def case_div_add_overlap_write_after_write(self):
+    def case_div_add_overlap_write_after_write_1(self):
         lst = ["divd 3, 1, 2",
                "add 3, 7, 6", # 2+4=6, overwrites divd
-               "add 5, 3, 2"  # 3+2=5
+               "add 5, 3, 2"  # 3+6=8
                ]
         initial_regs = [0] * 32
         initial_regs[1] = 6
@@ -59,8 +59,8 @@ class HazardTestCase(TestAccumulatorBase):
         e = ExpectedState(pc=12)
         e.intregs[1] = 6
         e.intregs[2] = 2
-        e.intregs[3] = 3 # 2 plus 4 == 6, overwriting div
-        e.intregs[5] = 5 # 3 plus 2 == 5
+        e.intregs[3] = 6 # 2 plus 4 == 6, overwriting div
+        e.intregs[5] = 8 # 3 plus 6 == 8
         e.intregs[6] = 2
         e.intregs[7] = 4
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
