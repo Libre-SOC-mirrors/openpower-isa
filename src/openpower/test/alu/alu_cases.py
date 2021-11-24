@@ -302,9 +302,9 @@ class ALUTestCase(TestAccumulatorBase):
             # (if it overflows, we don't care, because this is not addeo)
             result = 1 + initial_regs[6] + initial_regs[7]
             carry_out = result & (1<<64) != 0 # detect 65th bit as carry-out?
-            carry_out32 = ((initial_regs[6] & 0xffff_ffff) + (initial_regs[7] & 0xffff_ffff)) & (1<<32)
+            carry_out32 = ((initial_regs[6] & 0xffff_ffff) + \
+                    (initial_regs[7] & 0xffff_ffff)) & (1<<32)
             result = result & ((1<<64)-1) # round
-            # TODO: calculate CR0
             eq = 0
             gt = 0
             le = 0
