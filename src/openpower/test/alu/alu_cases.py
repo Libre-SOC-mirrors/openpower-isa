@@ -267,7 +267,7 @@ class ALUTestCase(TestAccumulatorBase):
             # calculate result *including carry* and mask it to 64-bit
             # (if it overflows, we don't care, because this is not addeo)
             result = 1 + initial_regs[6] + initial_regs[7]
-            carry_out = result & (1<<64) # detect 65th bit as carry-out?
+            carry_out = result & (1<<64) != 0 # detect 65th bit as carry-out?
             carry_out32 = ((initial_regs[6] & 0xffff_ffff) + (initial_regs[7] & 0xffff_ffff)) & (1<<32)
             result = result & ((1<<64)-1) # round
             # TODO: calculate CR0
@@ -285,7 +285,10 @@ class ALUTestCase(TestAccumulatorBase):
             e.intregs[6] = initial_regs[6] # should be same as initial
             e.intregs[7] = initial_regs[7] # should be same as initial
             e.intregs[5] = result
-            e.ca = (carry_out>>64) | (carry_out32>>31)
+            # carry_out goes into bit 0 of ca, carry_out32 into bit 1
+            e.ca = carry_out | (carry_out32>>31)
+            # eq goes into bit 1 of CR0, gt into bit 2, le into bit 3.
+            # SO goes into bit 0 but overflow doesn't occur here [we hope]
             e.crregs[0] = (eq<<1) | (gt<<2) | (le<<3)
 
             self.add_case(Program(lst, bigendian),
