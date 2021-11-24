@@ -89,11 +89,10 @@ class HazardTestCase(TestAccumulatorBase):
 
     def case_add_self_overlap_1(self):
         lst = ["addi 5, 5, 2",  # r5 = 8+2       r5=10
-               "divd 4, 5, 6",  # r4 = 10//2     r4=5
-               "add 5, 3, 4"]   # r5 = 4+5       r5=9
+               ]
         initial_regs = [0] * 32
         initial_regs[5] = 8
-        e = ExpectedState(pc=20)
+        e = ExpectedState(pc=4)
         e.intregs[5] = 10 # 8 plus immediate of 2 = 10
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
