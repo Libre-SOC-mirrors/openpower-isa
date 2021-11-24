@@ -252,7 +252,41 @@ class ALUTestCase(TestAccumulatorBase):
             print(lst)
             initial_regs = [0] * 32
             initial_regs[1] = random.randint(0, (1 << 64)-1)
-            self.add_case(Program(lst, bigendian), initial_regs)
+
+            e = ExpectedState(pc=4)
+            e.intregs[1] = initial_regs[1]
+            if choice == "addi":
+                result = initial_regs[1] + imm
+                if result < 0:
+                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
+                else:
+                    e.intregs[3] = result & ((2**64)-1)
+            elif choice == "addis":
+                result = initial_regs[1] + (imm<<16)
+                if result < 0:
+                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
+                else:
+                    e.intregs[3] = result & ((2**64)-1)
+            elif choice == "subfic":
+                result = ~initial_regs[1] + imm + 1
+                if imm >= 0:
+                    value = (~initial_regs[1]+2**64) + (imm) + 1
+                else:
+                    value = (~initial_regs[1]+2**64) + (imm+2**64) + 1
+                carry_out = value & (1<<64) != 0
+                if imm >= 0:
+                    carry_out32 = (((~initial_regs[1]+2**64) & 0xffff_ffff) + \
+                            (imm) + 1) & (1<<32)
+                else:
+                    carry_out32 = (((~initial_regs[1]+2**64) & 0xffff_ffff) + \
+                            (imm+2**32) + 1) & (1<<32)
+                if result < 0:
+                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
+                else:
+                    e.intregs[3] = result & ((2**64)-1)
+                e.ca = carry_out | (carry_out32>>31)
+
+            self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_0_adde(self):
         lst = ["adde. 5, 6, 7"]
