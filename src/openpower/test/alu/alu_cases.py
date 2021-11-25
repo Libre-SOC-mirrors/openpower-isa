@@ -237,10 +237,7 @@ class ALUTestCase(TestAccumulatorBase):
             initial_regs[0] = random.randint(0, (1 << 64)-1)
             e = ExpectedState(pc=4)
             e.intregs[0] = initial_regs[0]
-            if imm < 0:
-                e.intregs[3] = (imm + 2**48)<<16
-            else:
-                e.intregs[3] = imm << 16
+            e.intregs[3] = (imm << 16) & ((1<<64)-1)
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_rand_imm(self):
