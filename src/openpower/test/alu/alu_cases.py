@@ -257,10 +257,7 @@ class ALUTestCase(TestAccumulatorBase):
             e.intregs[1] = initial_regs[1]
             if choice == "addi":
                 result = initial_regs[1] + imm
-                if result < 0:
-                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
-                else:
-                    e.intregs[3] = result & ((2**64)-1)
+                e.intregs[3] = result & ((2**64)-1)
             elif choice == "addis":
                 result = initial_regs[1] + (imm<<16)
                 if result < 0:
@@ -269,10 +266,9 @@ class ALUTestCase(TestAccumulatorBase):
                     e.intregs[3] = result & ((2**64)-1)
             elif choice == "subfic":
                 result = ~initial_regs[1] + imm + 1
-                if imm >= 0:
-                    value = (~initial_regs[1]+2**64) + (imm) + 1
-                else:
-                    value = (~initial_regs[1]+2**64) + (imm+2**64) + 1
+                value = (~initial_regs[1]+2**64) + (imm) + 1
+                if imm < 0:
+                    value =+ 2**64
                 carry_out = value & (1<<64) != 0
                 if imm >= 0:
                     carry_out32 = (((~initial_regs[1]+2**64) & 0xffff_ffff) + \
