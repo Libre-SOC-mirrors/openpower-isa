@@ -504,24 +504,21 @@ class ALUTestCase(TestAccumulatorBase):
             e.intregs[1] = initial_regs[1]
             if choice == "extsb":
                 s = ((initial_regs[1] & 0x1000_0000_0000_0080)>>7)&0x1
+                value = 0
                 if s == 1:
                     value = 0xffff_ffff_ffff_ff<<8
-                else:
-                    value = 0x0
                 e.intregs[3] = value | (initial_regs[1] & 0xff)
             elif choice == "extsh":
                 s = ((initial_regs[1] & 0x1000_0000_0000_8000)>>15)&0x1
+                value = 0
                 if s == 1:
                     value = 0xffff_ffff_ffff<<16
-                else:
-                    value = 0x0
                 e.intregs[3] = value | (initial_regs[1] & 0xffff)
             else:
                 s = ((initial_regs[1] & 0x1000_0000_8000_0000)>>31)&0x1
+                value = 0
                 if s == 1:
                     value = 0xffff_ffff<<32
-                else:
-                    value = 0x0
                 e.intregs[3] = value | (initial_regs[1] & 0xffff_ffff)
 
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
