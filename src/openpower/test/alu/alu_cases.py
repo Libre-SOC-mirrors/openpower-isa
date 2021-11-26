@@ -5,6 +5,7 @@ from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.power_enums import XER_bits
 from openpower.decoder.isa.caller import special_sprs
+from openpower.decoder.helpers import exts
 from openpower.test.state import ExpectedState
 import unittest
 
@@ -503,23 +504,11 @@ class ALUTestCase(TestAccumulatorBase):
             e = ExpectedState(pc=4)
             e.intregs[1] = initial_regs[1]
             if choice == "extsb":
-                s = ((initial_regs[1] & 0x1000_0000_0000_0080)>>7)&0x1
-                value = 0
-                if s == 1:
-                    value = 0xffff_ffff_ffff_ff<<8
-                e.intregs[3] = value | (initial_regs[1] & 0xff)
+                e.intregs[3] = exts(initial_regs[1], 8) & ((1<<64)-1)
             elif choice == "extsh":
-                s = ((initial_regs[1] & 0x1000_0000_0000_8000)>>15)&0x1
-                value = 0
-                if s == 1:
-                    value = 0xffff_ffff_ffff<<16
-                e.intregs[3] = value | (initial_regs[1] & 0xffff)
+                e.intregs[3] = exts(initial_regs[1], 16) & ((1<<64)-1)
             else:
-                s = ((initial_regs[1] & 0x1000_0000_8000_0000)>>31)&0x1
-                value = 0
-                if s == 1:
-                    value = 0xffff_ffff<<32
-                e.intregs[3] = value | (initial_regs[1] & 0xffff_ffff)
+                e.intregs[3] = exts(initial_regs[1], 32) & ((1<<64)-1)
 
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
