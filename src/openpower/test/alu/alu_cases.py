@@ -257,27 +257,19 @@ class ALUTestCase(TestAccumulatorBase):
                 e.intregs[3] = result & ((2**64)-1)
             elif choice == "addis":
                 result = initial_regs[1] + (imm<<16)
-                if result < 0:
-                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
-                else:
-                    e.intregs[3] = result & ((2**64)-1)
+                e.intregs[3] = result & ((2**64)-1)
             elif choice == "subfic":
                 result = ~initial_regs[1] + imm + 1
                 value = (~initial_regs[1]+2**64) + (imm) + 1
                 if imm < 0:
                     value += 2**64
                 carry_out = value & (1<<64) != 0
-                if imm >= 0:
-                    carry_out32 = (((~initial_regs[1]+2**64) & 0xffff_ffff) + \
-                            (imm) + 1) & (1<<32)
-                else:
-                    carry_out32 = (((~initial_regs[1]+2**64) & 0xffff_ffff) + \
-                            (imm+2**32) + 1) & (1<<32)
-                if result < 0:
-                    e.intregs[3] = (result + 2**64) & ((2**64)-1)
-                else:
-                    e.intregs[3] = result & ((2**64)-1)
-                e.ca = carry_out | (carry_out32>>31)
+                value = (~initial_regs[1]+2**64 & 0xffff_ffff) + imm + 1
+                if imm < 0:
+                    value += 2**32
+                carry_out32 = value & (1<<32) != 0
+                e.intregs[3] = result & ((2**64)-1)
+                e.ca = carry_out | (carry_out32<<1)
 
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
