@@ -116,3 +116,25 @@ class HazardTestCase(TestAccumulatorBase):
         e.intregs[6] = 2
         e.intregs[7] = 4
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_div_add_overlap_5(self):
+        lst = ["divd 3, 1, 2",  # r3 = 8//2      r3=4
+               "mullw 5, 7, 6", # r5 = 2*4       r5=8
+               "addi 5, 5, 2",  # r5 = 8+2       r5=10   - waits for MUL
+               "divd 4, 5, 6",  # r4 = 10//2     r4=5    - delays the MUL
+               "mullw 4, 4, 2", # r4 = 2*4       r5=8    - MUL waits for DIV
+               "add 5, 3, 4"]   # r5 = 4+5       r5=9    - add waits for MUL
+        initial_regs = [0] * 32
+        initial_regs[1] = 8
+        initial_regs[2] = 2
+        initial_regs[6] = 2
+        initial_regs[7] = 4
+        e = ExpectedState(pc=24)
+        e.intregs[1] = 8
+        e.intregs[2] = 2
+        e.intregs[3] = 4 # 8 divided by 2 == 4
+        e.intregs[4] = 10 # 10 divided by 2 == 5, times 2 == 10
+        e.intregs[5] = 14 # 4 plus 10 == 14
+        e.intregs[6] = 2
+        e.intregs[7] = 4
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
