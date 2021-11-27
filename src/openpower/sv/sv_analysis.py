@@ -179,6 +179,20 @@ class Format(enum.Enum):
     def __str__(self):
         return self.name.lower()
 
+    def wrap_comment(self, lines):
+        def wrap_comment_binutils(lines):
+            yield "/*"
+            yield from map(lambda line: f" * {line}", lines)
+            yield "*/"
+
+        def wrap_comment_vhdl(lines):
+            yield from map(lambda line: f"-- {line}", lines)
+
+        yield from {
+            Format.BINUTILS: wrap_comment_binutils,
+            Format.VHDL: wrap_comment_vhdl,
+        }[self](lines)
+
 
 def process_csvs(format):
     csvs = {}
@@ -677,16 +691,24 @@ def process_csvs(format):
         output(format, svt, csvcols, insns, csvs_svp64, stream)
 
 
+def output_autogen_disclaimer(format, stream):
+    lines = (
+        "this file is auto-generated, do not edit",
+        "http://libre-soc.org/openpower/sv_analysis.py",
+        "part of Libre-SOC, sponsored by NLnet",
+    )
+    for line in format.wrap_comment(lines):
+        stream.write(line)
+        stream.write("\n")
+    stream.write("\n")
+
+
 def output(format, svt, csvcols, insns, csvs_svp64, stream):
+    output_autogen_disclaimer(format, stream)
+
     if format == Format.BINUTILS:
         stream.write("/* TODO: implement proper support */\n")
         return
-
-    # autogeneration warning
-    stream.write("-- this file is auto-generated, do not edit\n")
-    stream.write("-- http://libre-soc.org/openpower/sv_analysis.py\n")
-    stream.write("-- part of Libre-SOC, sponsored by NLnet\n")
-    stream.write("\n")
 
     # first create array types
     lens = {'major': 63,
