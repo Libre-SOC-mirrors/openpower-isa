@@ -12,7 +12,9 @@
 # then goes through the categories and creates svp64 CSV augmentation
 # tables on a per-opcode basis
 
+import argparse
 import csv
+import enum
 import os
 from os.path import dirname, join
 from glob import glob
@@ -163,7 +165,20 @@ def keyname(row):
     return '-'.join(res)
 
 
-def process_csvs():
+class Format(enum.Enum):
+    VHDL = enum.auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        return {
+            "vhdl": Format.VHDL,
+        }[value.lower()]
+
+    def __str__(self):
+        return self.name.lower()
+
+
+def process_csvs(format):
     csvs = {}
     csvs_svp64 = {}
     bykey = {}
@@ -650,86 +665,99 @@ def process_csvs():
     csvcols = ['insn', 'Ptype', 'Etype']
     csvcols += ['in1', 'in2', 'in3', 'out', 'out2', 'CR in', 'CR out']
 
-    # and a nice microwatt VHDL file
-    file_path = find_wiki_file("sv_decode.vhdl")
-    with open(file_path, 'w') as vhdl:
-        # autogeneration warning
-        vhdl.write("-- this file is auto-generated, do not edit\n")
-        vhdl.write("-- http://libre-soc.org/openpower/sv_analysis.py\n")
-        vhdl.write("-- part of Libre-SOC, sponsored by NLnet\n")
-        vhdl.write("\n")
+    if format == Format.VHDL:
+        # and a nice microwatt VHDL file
+        file_path = find_wiki_file("sv_decode.vhdl")
 
-        # first create array types
-        lens = {'major': 63,
-                'minor_4': 63,
-                'minor_19': 7,
-                'minor_30': 15,
-                'minor_31': 1023,
-                'minor_58': 63,
-                'minor_59': 31,
-                'minor_62': 63,
-                'minor_63l': 511,
-                'minor_63h': 16,
-                }
-        for value, csv in csvs_svp64.items():
-            # munge name
-            value = value.lower()
-            value = value.replace("-", "_")
-            if value not in lens:
-                todo = "    -- TODO %s (or no SVP64 augmentation)\n"
-                vhdl.write(todo % value)
-                continue
-            width = lens[value]
-            typarray = "    type sv_%s_rom_array_t is " \
-                       "array(0 to %d) of sv_decode_rom_t;\n"
-            vhdl.write(typarray % (value, width))
+    with open(file_path, 'w') as stream:
+        output(format, svt, csvcols, insns, csvs_svp64, stream)
 
-        # now output structs
-        sv_cols = ['sv_in1', 'sv_in2', 'sv_in3', 'sv_out', 'sv_out2',
-                   'sv_cr_in', 'sv_cr_out']
-        fullcols = csvcols + sv_cols
-        hdr = "\n" \
-              "    constant sv_%s_decode_rom_array :\n" \
-              "             sv_%s_rom_array_t := (\n" \
-              "        -- %s\n"
-        ftr = "          others  => sv_illegal_inst\n" \
-              "    );\n\n"
-        for value, csv in csvs_svp64.items():
-            # munge name
-            value = value.lower()
-            value = value.replace("-", "_")
-            if value not in lens:
-                continue
-            vhdl.write(hdr % (value, value, "  ".join(fullcols)))
-            for entry in csv:
-                insn = str(entry['insn'])
-                condition = str(entry['CONDITIONS'])
-                sventry = svt.svp64_instrs.get(insn, None)
-                op = insns[(insn, condition)]['opcode']
-                # binary-to-vhdl-binary
-                if op.startswith("0b"):
-                    op = "2#%s#" % op[2:]
-                row = []
-                for colname in csvcols[1:]:
-                    re = entry[colname]
-                    # zero replace with NONE
-                    if re == '0':
-                        re = 'NONE'
-                    # 1/2 predication
-                    re = re.replace("1P", "P1")
-                    re = re.replace("2P", "P2")
-                    row.append(re)
-                print("sventry", sventry)
-                for colname in sv_cols:
-                    if sventry is None:
-                        re = 'NONE'
-                    else:
-                        re = sventry[colname]
-                    row.append(re)
-                row = ', '.join(row)
-                vhdl.write("    %13s => (%s), -- %s\n" % (op, row, insn))
-            vhdl.write(ftr)
+
+def output(format, svt, csvcols, insns, csvs_svp64, stream):
+    _ = format
+
+    # autogeneration warning
+    stream.write("-- this file is auto-generated, do not edit\n")
+    stream.write("-- http://libre-soc.org/openpower/sv_analysis.py\n")
+    stream.write("-- part of Libre-SOC, sponsored by NLnet\n")
+    stream.write("\n")
+
+    # first create array types
+    lens = {'major': 63,
+            'minor_4': 63,
+            'minor_19': 7,
+            'minor_30': 15,
+            'minor_31': 1023,
+            'minor_58': 63,
+            'minor_59': 31,
+            'minor_62': 63,
+            'minor_63l': 511,
+            'minor_63h': 16,
+            }
+    for value, csv in csvs_svp64.items():
+        # munge name
+        value = value.lower()
+        value = value.replace("-", "_")
+        if value not in lens:
+            todo = "    -- TODO %s (or no SVP64 augmentation)\n"
+            stream.write(todo % value)
+            continue
+        width = lens[value]
+        typarray = "    type sv_%s_rom_array_t is " \
+                    "array(0 to %d) of sv_decode_rom_t;\n"
+        stream.write(typarray % (value, width))
+
+    # now output structs
+    sv_cols = ['sv_in1', 'sv_in2', 'sv_in3', 'sv_out', 'sv_out2',
+                'sv_cr_in', 'sv_cr_out']
+    fullcols = csvcols + sv_cols
+    hdr = "\n" \
+            "    constant sv_%s_decode_rom_array :\n" \
+            "             sv_%s_rom_array_t := (\n" \
+            "        -- %s\n"
+    ftr = "          others  => sv_illegal_inst\n" \
+            "    );\n\n"
+    for value, csv in csvs_svp64.items():
+        # munge name
+        value = value.lower()
+        value = value.replace("-", "_")
+        if value not in lens:
+            continue
+        stream.write(hdr % (value, value, "  ".join(fullcols)))
+        for entry in csv:
+            insn = str(entry['insn'])
+            condition = str(entry['CONDITIONS'])
+            sventry = svt.svp64_instrs.get(insn, None)
+            op = insns[(insn, condition)]['opcode']
+            # binary-to-vhdl-binary
+            if op.startswith("0b"):
+                op = "2#%s#" % op[2:]
+            row = []
+            for colname in csvcols[1:]:
+                re = entry[colname]
+                # zero replace with NONE
+                if re == '0':
+                    re = 'NONE'
+                # 1/2 predication
+                re = re.replace("1P", "P1")
+                re = re.replace("2P", "P2")
+                row.append(re)
+            print("sventry", sventry)
+            for colname in sv_cols:
+                if sventry is None:
+                    re = 'NONE'
+                else:
+                    re = sventry[colname]
+                row.append(re)
+            row = ', '.join(row)
+            stream.write("    %13s => (%s), -- %s\n" % (op, row, insn))
+        stream.write(ftr)
 
 
 if __name__ == '__main__':
-    process_csvs()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--format",
+        type=Format, choices=Format, default=Format.VHDL,
+        help="format to be used (VHDL)")
+    args = parser.parse_args()
+    process_csvs(args.format)
