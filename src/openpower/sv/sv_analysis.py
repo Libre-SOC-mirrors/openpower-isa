@@ -166,11 +166,13 @@ def keyname(row):
 
 
 class Format(enum.Enum):
+    BINUTILS = enum.auto()
     VHDL = enum.auto()
 
     @classmethod
     def _missing_(cls, value):
         return {
+            "binutils": Format.BINUTILS,
             "vhdl": Format.VHDL,
         }[value.lower()]
 
@@ -668,13 +670,17 @@ def process_csvs(format):
     if format == Format.VHDL:
         # and a nice microwatt VHDL file
         file_path = find_wiki_file("sv_decode.vhdl")
+    elif format == Format.BINUTILS:
+        file_path = find_wiki_file("binutils.c")
 
     with open(file_path, 'w') as stream:
         output(format, svt, csvcols, insns, csvs_svp64, stream)
 
 
 def output(format, svt, csvcols, insns, csvs_svp64, stream):
-    _ = format
+    if format == Format.BINUTILS:
+        stream.write("/* TODO: implement proper support */\n")
+        return
 
     # autogeneration warning
     stream.write("-- this file is auto-generated, do not edit\n")
@@ -758,6 +764,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--format",
         type=Format, choices=Format, default=Format.VHDL,
-        help="format to be used (VHDL)")
+        help="format to be used (binutils or VHDL)")
     args = parser.parse_args()
     process_csvs(args.format)
