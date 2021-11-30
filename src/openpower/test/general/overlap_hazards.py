@@ -180,3 +180,36 @@ class HazardTestCase(TestAccumulatorBase):
         e.intregs[9] = 10 # 8+2 == 10
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+
+class RandomHazardTestCase(TestAccumulatorBase):
+
+    def case_random(self):
+        selection_1 = ['mulli', 'addi']
+        selection_2 = ['mullw', 'add']
+        rrange = 8
+        n_ops = 10
+        lst = []
+        for i in range(n_ops):
+            if random.randint(0, 1) == 0:
+                select = selection_1[random.randint(0, len(selection_1)-1)]
+                dst = random.randint(0, rrange)
+                reg1 = random.randint(0, rrange)
+                imm = random.randint(-20, +20)
+                insn = "%s %d, %d, %d" % (select, dst, reg1, imm)
+            else:
+                select = selection_2[random.randint(0, len(selection_2)-1)]
+                dst = random.randint(0, rrange)
+                reg1 = random.randint(0, rrange)
+                reg2 = random.randint(0, rrange)
+                insn = "%s %d, %d, %d" % (select, dst, reg1, reg2)
+            lst.append(insn)
+        initial_regs = [0] * 32
+        for i in range(rrange):
+            initial_regs[i] = random.randint(-20, +20)
+        self.add_case(Program(lst, bigendian), initial_regs)
+
+    def case_regression(self):
+        lst = ['addi 1,8,14',
+               'addi 3,0,5',
+               'mulli 1,3,-11'
+              ]
