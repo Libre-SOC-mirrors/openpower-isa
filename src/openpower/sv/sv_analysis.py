@@ -181,9 +181,13 @@ class Format(enum.Enum):
 
     def wrap_comment(self, lines):
         def wrap_comment_binutils(lines):
-            yield "/*"
-            yield from map(lambda line: f" * {line}", lines)
-            yield "*/"
+            lines = tuple(lines)
+            if len(lines) == 1:
+                yield f"/* {lines[0]} */"
+            else:
+                yield "/*"
+                yield from map(lambda line: f" * {line}", lines)
+                yield " */"
 
         def wrap_comment_vhdl(lines):
             yield from map(lambda line: f"-- {line}", lines)
