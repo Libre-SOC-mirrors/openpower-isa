@@ -685,10 +685,10 @@ def process_csvs(format):
     csvcols = ['insn', 'Ptype', 'Etype']
     csvcols += ['in1', 'in2', 'in3', 'out', 'out2', 'CR in', 'CR out']
 
-    if format == Format.VHDL:
+    if format is Format.VHDL:
         # and a nice microwatt VHDL file
         file_path = find_wiki_file("sv_decode.vhdl")
-    elif format == Format.BINUTILS:
+    elif format is Format.BINUTILS:
         file_path = find_wiki_file("binutils.c")
 
     with open(file_path, 'w') as stream:
@@ -710,7 +710,7 @@ def output_autogen_disclaimer(format, stream):
 def output(format, svt, csvcols, insns, csvs_svp64, stream):
     output_autogen_disclaimer(format, stream)
 
-    if format == Format.BINUTILS:
+    if format is Format.BINUTILS:
         stream.write("/* TODO: implement proper support */\n")
         return
 
