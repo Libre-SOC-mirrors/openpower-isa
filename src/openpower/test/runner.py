@@ -140,7 +140,7 @@ class TestRunnerBase(FHDLTestCase):
                              nocore=False,
                              xics=False,
                              gpio=False,
-                             regreduce=True,
+                             regreduce=not self.allow_overlap,
                              svp64=self.svp64,
                              allow_overlap=self.allow_overlap,
                              mmu=self.microwatt_mmu,

@@ -1298,7 +1298,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         remap_en = self.svstate.SVme
         persist = self.svstate.RMpst
         active = (persist or self.last_op_svshape) and remap_en != 0
-        yield self.dec2.remap_active.eq(remap_en if active else 0)
+        if self.is_svp64_mode:
+            yield self.dec2.remap_active.eq(remap_en if active else 0)
         yield Settle()
         if persist or self.last_op_svshape:
             remaps = self.get_remap_indices()
@@ -1345,7 +1346,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # after that, settle down (combinatorial) to let Vector reg numbers
         # work themselves out
         yield Settle()
-        remap_active = yield self.dec2.remap_active
+        if self.is_svp64_mode:
+            remap_active = yield self.dec2.remap_active
+        else:
+            remap_active = False
         log ("remap active", bin(remap_active))
 
         # main input registers (RT, RA ...)
