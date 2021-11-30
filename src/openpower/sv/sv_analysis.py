@@ -18,6 +18,7 @@ import enum
 import os
 from os.path import dirname, join
 from glob import glob
+from collections import defaultdict
 from collections import OrderedDict
 from openpower.decoder.power_svp64 import SVP64RM
 from openpower.decoder.power_enums import find_wiki_file, get_csv
@@ -178,6 +179,49 @@ class Format(enum.Enum):
 
     def __str__(self):
         return self.name.lower()
+
+    def declarations(self, values, lens):
+        def declaration_binutils(value, width):
+            yield f"/* TODO: implement binutils declaration (value={value!r}, width={width!r}) */"
+
+        def declaration_vhdl(value, width):
+            yield f"    type sv_{value}_rom_array_t is " \
+                f"array(0 to {width}) of sv_decode_rom_t;"
+
+        for value in values:
+            if value not in lens:
+                todo = [f"TODO {value} (or no SVP64 augmentation)"]
+                todo = self.wrap_comment(todo)
+                yield from map(lambda line: f"    {line}", todo)
+            else:
+                width = lens[value]
+                yield from {
+                    Format.BINUTILS: declaration_binutils,
+                    Format.VHDL: declaration_vhdl,
+                }[self](value, width)
+
+    def definitions(self, entries_svp64, fullcols):
+        def definitions_vhdl():
+            for (value, entries) in entries_svp64.items():
+                yield ""
+                yield f"    constant sv_{value}_decode_rom_array :"
+                yield f"             sv_{value}_rom_array_t := ("
+                yield f"        -- {'  '.join(fullcols)}"
+
+                for (op, insn, row) in entries:
+                    yield f"    {op:>13} => ({', '.join(row)}), -- {insn}"
+
+                yield f"    {'others':>13} => sv_illegal_inst"
+                yield "    );"
+                yield ""
+
+        def definitions_binutils():
+            yield f"/* TODO: implement binutils definitions */"
+
+        yield from {
+            Format.BINUTILS: definitions_binutils,
+            Format.VHDL: definitions_vhdl,
+        }[self]()
 
     def wrap_comment(self, lines):
         def wrap_comment_binutils(lines):
@@ -708,54 +752,39 @@ def output_autogen_disclaimer(format, stream):
 
 
 def output(format, svt, csvcols, insns, csvs_svp64, stream):
+    lens = {
+        'major': 63,
+        'minor_4': 63,
+        'minor_19': 7,
+        'minor_30': 15,
+        'minor_31': 1023,
+        'minor_58': 63,
+        'minor_59': 31,
+        'minor_62': 63,
+        'minor_63l': 511,
+        'minor_63h': 16,
+    }
+    def svp64_canonicalize(item):
+        (value, csv) = item
+        value = value.lower().replace("-", "_")
+        return (value, csv)
+
+    csvs_svp64_canon = dict(map(svp64_canonicalize, csvs_svp64.items()))
+
+    # disclaimer
     output_autogen_disclaimer(format, stream)
 
-    if format is Format.BINUTILS:
-        stream.write("/* TODO: implement proper support */\n")
-        return
+    # declarations
+    for line in format.declarations(csvs_svp64_canon.keys(), lens):
+        stream.write(f"{line}\n")
 
-    # first create array types
-    lens = {'major': 63,
-            'minor_4': 63,
-            'minor_19': 7,
-            'minor_30': 15,
-            'minor_31': 1023,
-            'minor_58': 63,
-            'minor_59': 31,
-            'minor_62': 63,
-            'minor_63l': 511,
-            'minor_63h': 16,
-            }
-    for value, csv in csvs_svp64.items():
-        # munge name
-        value = value.lower()
-        value = value.replace("-", "_")
-        if value not in lens:
-            todo = "    -- TODO %s (or no SVP64 augmentation)\n"
-            stream.write(todo % value)
-            continue
-        width = lens[value]
-        typarray = "    type sv_%s_rom_array_t is " \
-                    "array(0 to %d) of sv_decode_rom_t;\n"
-        stream.write(typarray % (value, width))
-
-    # now output structs
+    # definitions
     sv_cols = ['sv_in1', 'sv_in2', 'sv_in3', 'sv_out', 'sv_out2',
                 'sv_cr_in', 'sv_cr_out']
     fullcols = csvcols + sv_cols
-    hdr = "\n" \
-            "    constant sv_%s_decode_rom_array :\n" \
-            "             sv_%s_rom_array_t := (\n" \
-            "        -- %s\n"
-    ftr = "          others  => sv_illegal_inst\n" \
-            "    );\n\n"
-    for value, csv in csvs_svp64.items():
-        # munge name
-        value = value.lower()
-        value = value.replace("-", "_")
-        if value not in lens:
-            continue
-        stream.write(hdr % (value, value, "  ".join(fullcols)))
+
+    entries_svp64 = defaultdict(list)
+    for (value, csv) in filter(lambda kv: kv[0] in lens, csvs_svp64_canon.items()):
         for entry in csv:
             insn = str(entry['insn'])
             condition = str(entry['CONDITIONS'])
@@ -781,9 +810,10 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
                 else:
                     re = sventry[colname]
                 row.append(re)
-            row = ', '.join(row)
-            stream.write("    %13s => (%s), -- %s\n" % (op, row, insn))
-        stream.write(ftr)
+            entries_svp64[value].append((op, insn, row))
+
+    for line in format.definitions(entries_svp64, fullcols):
+        stream.write(f"{line}\n")
 
 
 if __name__ == '__main__':
