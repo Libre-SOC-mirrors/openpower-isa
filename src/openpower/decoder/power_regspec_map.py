@@ -198,3 +198,9 @@ def regspec_decode_write(e, regfile, name):
 
     assert False, "regspec not found %s %s" % (regfile, name)
 
+
+def regspec_decode(readmode, e, regfile, name):
+    if readmode:
+        return regspec_decode_read(e, regfile, name)
+    return regspec_decode_write(e, regfile, name)
+
