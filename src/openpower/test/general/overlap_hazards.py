@@ -187,7 +187,7 @@ class RandomHazardTestCase(TestAccumulatorBase):
         selection_1 = ['mulli', 'addi']
         selection_2 = ['mullw', 'add']
         rrange = 8
-        n_ops = 10
+        n_ops = 20
         lst = []
         for i in range(n_ops):
             if random.randint(0, 1) == 0:
@@ -208,8 +208,16 @@ class RandomHazardTestCase(TestAccumulatorBase):
             initial_regs[i] = random.randint(-20, +20)
         self.add_case(Program(lst, bigendian), initial_regs)
 
-    def case_regression(self):
+    def case_twin_addi_regression(self):
+        """twin addi instruction with double-dependencies.
+        useful for testing ReservationStations
+        """
         lst = ['addi 1,8,14',
                'addi 3,0,5',
                'mulli 1,3,-11'
               ]
+        initial_regs = [0] * 32
+        for i in range(10):
+            initial_regs[i] = i
+        self.add_case(Program(lst, bigendian), initial_regs)
+
