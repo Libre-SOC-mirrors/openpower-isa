@@ -169,12 +169,11 @@ class HazardTestCase(TestAccumulatorBase):
         initial_regs[2] = 2
         initial_regs[6] = 2
         initial_regs[7] = 4
-        e = ExpectedState(pc=20)
+        e = ExpectedState(pc=12)
         e.intregs[1] = 8
         e.intregs[2] = 2
-        e.intregs[3] = 4 # 8 divided by 2 == 4
         e.intregs[4] = 5 # 10 divided by 2 == 5
-        e.intregs[5] = 9 # 4 plus 5 == 9
+        e.intregs[5] = 8 # 4 times 2 == 8
         e.intregs[6] = 2
         e.intregs[7] = 4
         e.intregs[9] = 10 # 8+2 == 10
