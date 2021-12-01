@@ -144,7 +144,7 @@ class HazardTestCase(TestAccumulatorBase):
         instruction followed by a 1-operand.
         """
         lst = ["mullw 5, 7, 6", # r5 = 2*4       r5=8
-               "addi 1, 8, 2",  # r5 = 8+2       r5=10
+               "addi 1, 8, 2",  # r5 = 8+2       r5=2
                ]
         initial_regs = [0] * 32
         initial_regs[2] = 2
@@ -152,9 +152,10 @@ class HazardTestCase(TestAccumulatorBase):
         initial_regs[6] = 2
         initial_regs[7] = 4
         e = ExpectedState(pc=8)
+        e.intregs[1] = 2 # 2 + 0 = 2
         e.intregs[2] = 2
         e.intregs[3] = 4
-        e.intregs[5] = 10 # 4 plus 5 == 9
+        e.intregs[5] = 8 # 2*4 = 8
         e.intregs[6] = 2
         e.intregs[7] = 4
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
