@@ -1606,8 +1606,8 @@ def get_rdflags(m, e, cu):
     rdl = []
     for idx in range(cu.n_src):
         regfile, regname, _ = cu.get_in_spec(idx)
-        rdflag, read = regspec_decode_read(m, e, regfile, regname)
-        rdl.append(rdflag)
+        decinfo = regspec_decode_read(m, e, regfile, regname)
+        rdl.append(decinfo.okflag)
     log("rdflags", rdl)
     return Cat(*rdl)
 
