@@ -1599,11 +1599,14 @@ class PowerDecode2(PowerDecodeSubset):
         comb += self.do_copy("svstate", self.state.svstate, True)  # SVSTATE
 
 
-def get_rdflags(e, cu):
+def get_rdflags(m, e, cu):
+    """returns a sequential list of the read "ok" flags for a given FU.
+    this list is in order of the CompUnit input specs
+    """
     rdl = []
     for idx in range(cu.n_src):
         regfile, regname, _ = cu.get_in_spec(idx)
-        rdflag, read = regspec_decode_read(e, regfile, regname)
+        rdflag, read = regspec_decode_read(m, e, regfile, regname)
         rdl.append(rdflag)
     log("rdflags", rdl)
     return Cat(*rdl)
