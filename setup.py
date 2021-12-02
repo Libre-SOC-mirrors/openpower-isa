@@ -60,7 +60,7 @@ setup(
         'console_scripts': [
             'pywriter=openpower.decoder.pseudo.pywriter:pywriter',
             'pyfnwriter=openpower.decoder.pseudo.pyfnwriter:pyfnwriter',
-            'sv_analysis=openpower.sv.sv_analysis:process_csvs',
+            'sv_analysis=openpower.sv.sv_analysis:main',
             'pypowersim=openpower.decoder.isa.pypowersim:run_simulation',
             'pysvp64asm=openpower.sv.trans.svp64:asm_process'
         ]

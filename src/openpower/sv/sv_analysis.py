@@ -817,10 +817,16 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
         stream.write(f"{line}\n")
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--format",
                         type=Format, choices=Format, default=Format.VHDL,
                         help="format to be used (binutils or VHDL)")
     args = parser.parse_args()
     process_csvs(args.format)
+
+
+if __name__ == '__main__':
+    # don't do anything other than call main() here, cuz this code is bypassed
+    # by the sv_analysis command created by setup.py
+    main()
