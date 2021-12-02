@@ -38,7 +38,9 @@ from nmigen import Const
 from openpower.consts import XERRegsEnum, FastRegsEnum, StateRegsEnum
 from openpower.decoder.power_enums import CryIn
 from openpower.util import log
+from collections import namedtuple
 
+RegDecodeInfo = namedtuple("RedDecodeInfo", ['okflag', 'regport'])
 
 def regspec_decode_read(m, e, regfile, name):
     """regspec_decode_read
@@ -49,24 +51,24 @@ def regspec_decode_read(m, e, regfile, name):
     if regfile == 'INT':
         # Int register numbering is *unary* encoded
         if name == 'ra': # RA
-            return e.read_reg1.ok, e.read_reg1.data
+            return RegDecodeInfo(e.read_reg1.ok, e.read_reg1.data)
         if name == 'rb': # RB
-            return e.read_reg2.ok, e.read_reg2.data
+            return RegDecodeInfo(e.read_reg2.ok, e.read_reg2.data)
         if name == 'rc': # RS
-            return e.read_reg3.ok, e.read_reg3.data
+            return RegDecodeInfo(e.read_reg3.ok, e.read_reg3.data)
 
     # CR regfile
 
     if regfile == 'CR':
         # CRRegs register numbering is *unary* encoded
         if name == 'full_cr': # full CR (from FXM field)
-            return e.do.read_cr_whole.ok, e.do.read_cr_whole.data
+            return RegDecodeInfo(e.do.read_cr_whole.ok, e.do.read_cr_whole.data)
         if name == 'cr_a': # CR A
-            return e.read_cr1.ok, 1<<(7-e.read_cr1.data)
+            return RegDecodeInfo(e.read_cr1.ok, 1<<(7-e.read_cr1.data))
         if name == 'cr_b': # CR B
-            return e.read_cr2.ok, 1<<(7-e.read_cr2.data)
+            return RegDecodeInfo(e.read_cr2.ok, 1<<(7-e.read_cr2.data))
         if name == 'cr_c': # CR C
-            return e.read_cr3.ok, 1<<(7-e.read_cr3.data)
+            return RegDecodeInfo(e.read_cr3.ok, 1<<(7-e.read_cr3.data))
 
     # XER regfile
 
@@ -78,14 +80,15 @@ def regspec_decode_read(m, e, regfile, name):
         if name == 'xer_so':
             # SO needs to be read for overflow *and* for creation
             # of CR0 and also for MFSPR
-            return ((e.do.oe.oe[0] & e.do.oe.ok) | (e.xer_in & SO == SO)|
-                     (e.do.rc.rc & e.do.rc.ok)), SO
+            return RegDecodeInfo(((e.do.oe.oe[0] & e.do.oe.ok) |
+                                  (e.xer_in & SO == SO)|
+                                  (e.do.rc.rc & e.do.rc.ok)), SO)
         if name == 'xer_ov':
-            return ((e.do.oe.oe[0] & e.do.oe.ok) |
-                    (e.xer_in & CA == CA)), OV
+            return RegDecodeInfo(((e.do.oe.oe[0] & e.do.oe.ok) |
+                                  (e.xer_in & CA == CA)), OV)
         if name == 'xer_ca':
-            return ((e.do.input_carry == CryIn.CA.value) |
-                    (e.xer_in & OV == OV)), CA
+            return RegDecodeInfo(((e.do.input_carry == CryIn.CA.value) |
+                                  (e.xer_in & OV == OV)), CA)
 
     # STATE regfile
 
@@ -95,29 +98,32 @@ def regspec_decode_read(m, e, regfile, name):
         MSR = 1<<StateRegsEnum.MSR
         SVSTATE = 1<<StateRegsEnum.SVSTATE
         if name in ['cia', 'nia']:
-            return Const(1), PC # TODO: detect read-conditions
+            return RegDecodeInfo(Const(1),
+                                 PC) # TODO: detect read-conditions
         if name == 'msr':
-            return Const(1), MSR # TODO: detect read-conditions
+            return RegDecodeInfo(Const(1),
+                                 MSR) # TODO: detect read-conditions
         if name == 'svstate':
-            return Const(1), SVSTATE # TODO: detect read-conditions
+            return RegDecodeInfo(Const(1),
+                                 SVSTATE) # TODO: detect read-conditions
 
     # FAST regfile
 
     if regfile == 'FAST':
         # FAST register numbering is *unary* encoded
         if name == 'fast1':
-            return e.read_fast1.ok, e.read_fast1.data
+            return RegDecodeInfo(e.read_fast1.ok, e.read_fast1.data)
         if name == 'fast2':
-            return e.read_fast2.ok, e.read_fast2.data
+            return RegDecodeInfo(e.read_fast2.ok, e.read_fast2.data)
         if name == 'fast3':
-            return e.read_fast3.ok, e.read_fast3.data
+            return RegDecodeInfo(e.read_fast3.ok, e.read_fast3.data)
 
     # SPR regfile
 
     if regfile == 'SPR':
         # SPR register numbering is *binary* encoded
         if name == 'spr1':
-            return e.read_spr1.ok, e.read_spr1.data
+            return RegDecodeInfo(e.read_spr1.ok, e.read_spr1.data)
 
     assert False, "regspec not found %s %s" % (regfile, name)
 
@@ -133,9 +139,9 @@ def regspec_decode_write(m, e, regfile, name):
     if regfile == 'INT':
         # Int register numbering is *unary* encoded
         if name == 'o': # RT
-            return e.write_reg.ok, e.write_reg.data
+            return RegDecodeInfo(e.write_reg.ok, e.write_reg.data)
         if name == 'o1': # RA (update mode: LD/ST EA)
-            return e.write_ea.ok, e.write_ea.data
+            return RegDecodeInfo(e.write_ea.ok, e.write_ea.data)
 
     # CR regfile
 
@@ -143,9 +149,10 @@ def regspec_decode_write(m, e, regfile, name):
         # CRRegs register numbering is *unary* encoded
         # *sigh*.  numbering inverted on part-CRs.  because POWER.
         if name == 'full_cr': # full CR (from FXM field)
-            return e.do.write_cr_whole.ok, e.do.write_cr_whole.data
+            return RegDecodeInfo(e.do.write_cr_whole.ok,
+                                 e.do.write_cr_whole.data)
         if name == 'cr_a': # CR A
-            return e.write_cr.ok, (1<<(7-e.write_cr.data))[0:8]
+            return RegDecodeInfo(e.write_cr.ok, (1<<(7-e.write_cr.data))[0:8])
 
     # XER regfile
 
@@ -155,14 +162,14 @@ def regspec_decode_write(m, e, regfile, name):
         CA = 1<<XERRegsEnum.CA
         OV = 1<<XERRegsEnum.OV
         if name == 'xer_so':
-            return (e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
-                    SO) # hmmm
+            return RegDecodeInfo(e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
+                                    SO) # hmmm
         if name == 'xer_ov':
-            return (e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
-                    OV) # hmmm
+            return RegDecodeInfo(e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
+                                    OV) # hmmm
         if name == 'xer_ca':
-            return (e.xer_out | (e.do.output_carry),
-                    CA) # hmmm
+            return RegDecodeInfo(e.xer_out | (e.do.output_carry),
+                                    CA) # hmmm
 
     # STATE regfile
 
@@ -172,29 +179,29 @@ def regspec_decode_write(m, e, regfile, name):
         MSR = 1<<StateRegsEnum.MSR
         SVSTATE = 1<<StateRegsEnum.SVSTATE
         if name in ['cia', 'nia']:
-            return None, PC # hmmm
+            return RegDecodeInfo(None, PC) # hmmm
         if name == 'msr':
-            return None, MSR # hmmm
+            return RegDecodeInfo(None, MSR) # hmmm
         if name == 'svstate':
-            return None, SVSTATE # hmmm
+            return RegDecodeInfo(None, SVSTATE) # hmmm
 
     # FAST regfile
 
     if regfile == 'FAST':
         # FAST register numbering is *unary* encoded
         if name == 'fast1':
-            return e.write_fast1.ok, e.write_fast1.data
+            return RegDecodeInfo(e.write_fast1.ok, e.write_fast1.data)
         if name == 'fast2':
-            return e.write_fast2.ok, e.write_fast2.data
+            return RegDecodeInfo(e.write_fast2.ok, e.write_fast2.data)
         if name == 'fast3':
-            return e.write_fast3.ok, e.write_fast3.data
+            return RegDecodeInfo(e.write_fast3.ok, e.write_fast3.data)
 
     # SPR regfile
 
     if regfile == 'SPR':
         # SPR register numbering is *binary* encoded
         if name == 'spr1': # SPR1
-            return e.write_spr.ok, e.write_spr.data
+            return RegDecodeInfo(e.write_spr.ok, e.write_spr.data)
 
     assert False, "regspec not found %s %s" % (regfile, name)
 
