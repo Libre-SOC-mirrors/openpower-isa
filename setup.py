@@ -20,7 +20,7 @@ install_requires = [
     # https://git.libre-soc.org/?p=nmutil.git
     'libresoc-nmutil',
     # these should be fine
-    'pygdbmi', # gdb machine interfave
+    'pygdbmi',  # gdb machine interfave
     'ply',     # python lex yacc. very cool
     'astor',   # python AST manipulation
 ]
@@ -56,7 +56,7 @@ setup(
     install_requires=install_requires,
     tests_require=test_requires,
     test_suite='nose.collector',
-    entry_points = {
+    entry_points={
         'console_scripts': [
             'pywriter=openpower.decoder.pseudo.pywriter:pywriter',
             'pyfnwriter=openpower.decoder.pseudo.pyfnwriter:pyfnwriter',

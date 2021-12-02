@@ -764,6 +764,7 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
         'minor_63l': 511,
         'minor_63h': 16,
     }
+
     def svp64_canonicalize(item):
         (value, csv) = item
         value = value.lower().replace("-", "_")
@@ -780,7 +781,7 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
 
     # definitions
     sv_cols = ['sv_in1', 'sv_in2', 'sv_in3', 'sv_out', 'sv_out2',
-                'sv_cr_in', 'sv_cr_out']
+               'sv_cr_in', 'sv_cr_out']
     fullcols = csvcols + sv_cols
 
     entries_svp64 = defaultdict(list)
@@ -819,7 +820,7 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--format",
-        type=Format, choices=Format, default=Format.VHDL,
-        help="format to be used (binutils or VHDL)")
+                        type=Format, choices=Format, default=Format.VHDL,
+                        help="format to be used (binutils or VHDL)")
     args = parser.parse_args()
     process_csvs(args.format)
