@@ -32,7 +32,7 @@ is set, then carried into read_fast2 in PowerDecode2).
 
 The SPR regfile on the other hand is *binary*-encoded, and, furthermore,
 has to be "remapped" to internal SPR Enum indices (see SPRMap in PowerDecode2)
-see https://libre-soc.org/3d_gpu/architecture/regfile/ section on regspecs
+see https://libre-so:.org/3d_gpu/architecture/regfile/ section on regspecs
 """
 from nmigen import Const, Signal
 from openpower.consts import XERRegsEnum, FastRegsEnum, StateRegsEnum
@@ -146,15 +146,16 @@ def regspec_decode_write(m, e, regfile, name):
     """
 
     #log("regspec_decode_write", regfile, name, e.__class__.__name__)
+    wr = None
 
     # INT regfile
 
     if regfile == 'INT':
         # Int register numbering is *unary* encoded
         if name == 'o': # RT
-            rd = RegDecodeInfo(e.write_reg.ok, e.write_reg.data, 5)
+            wr = RegDecodeInfo(e.write_reg.ok, e.write_reg.data, 5)
         if name == 'o1': # RA (update mode: LD/ST EA)
-            rd = RegDecodeInfo(e.write_ea.ok, e.write_ea.data, 5)
+            wr = RegDecodeInfo(e.write_ea.ok, e.write_ea.data, 5)
 
     # CR regfile
 
@@ -162,10 +163,10 @@ def regspec_decode_write(m, e, regfile, name):
         # CRRegs register numbering is *unary* encoded
         # *sigh*.  numbering inverted on part-CRs.  because POWER.
         if name == 'full_cr': # full CR (from FXM field)
-            rd = RegDecodeInfo(e.do.write_cr_whole.ok,
+            wr = RegDecodeInfo(e.do.write_cr_whole.ok,
                                  e.do.write_cr_whole.data, 8)
         if name == 'cr_a': # CR A
-            rd = RegDecodeInfo(e.write_cr.ok,
+            wr = RegDecodeInfo(e.write_cr.ok,
                                1<<(7-e.write_cr.data), 8)
 
     # XER regfile
@@ -176,13 +177,13 @@ def regspec_decode_write(m, e, regfile, name):
         CA = 1<<XERRegsEnum.CA
         OV = 1<<XERRegsEnum.OV
         if name == 'xer_so':
-            rd = RegDecodeInfo(e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
+            wr = RegDecodeInfo(e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
                                     SO, 3) # hmmm
         if name == 'xer_ov':
-            rd = RegDecodeInfo(e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
+            wr = RegDecodeInfo(e.xer_out | (e.do.oe.oe[0] & e.do.oe.ok),
                                     OV, 3) # hmmm
         if name == 'xer_ca':
-            rd = RegDecodeInfo(e.xer_out | (e.do.output_carry),
+            wr = RegDecodeInfo(e.xer_out | (e.do.output_carry),
                                     CA, 3) # hmmm
 
     # STATE regfile
@@ -193,33 +194,43 @@ def regspec_decode_write(m, e, regfile, name):
         MSR = 1<<StateRegsEnum.MSR
         SVSTATE = 1<<StateRegsEnum.SVSTATE
         if name in ['cia', 'nia']:
-            rd = RegDecodeInfo(None, PC, 3) # hmmm
+            wr = RegDecodeInfo(None, PC, 3) # hmmm
         if name == 'msr':
-            rd = RegDecodeInfo(None, MSR, 3) # hmmm
+            wr = RegDecodeInfo(None, MSR, 3) # hmmm
         if name == 'svstate':
-            rd = RegDecodeInfo(None, SVSTATE, 3) # hmmm
+            wr = RegDecodeInfo(None, SVSTATE, 3) # hmmm
 
     # FAST regfile
 
     if regfile == 'FAST':
         # FAST register numbering is *unary* encoded
         if name == 'fast1':
-            rd = RegDecodeInfo(e.write_fast1.ok, e.write_fast1.data, 4)
+            wr = RegDecodeInfo(e.write_fast1.ok, e.write_fast1.data, 4)
         if name == 'fast2':
-            rd = RegDecodeInfo(e.write_fast2.ok, e.write_fast2.data, 4)
+            wr = RegDecodeInfo(e.write_fast2.ok, e.write_fast2.data, 4)
         if name == 'fast3':
-            rd = RegDecodeInfo(e.write_fast3.ok, e.write_fast3.data, 4)
+            wr = RegDecodeInfo(e.write_fast3.ok, e.write_fast3.data, 4)
 
     # SPR regfile
 
     if regfile == 'SPR':
         # SPR register numbering is *binary* encoded
         if name == 'spr1': # SPR1
-            rd = RegDecodeInfo(e.write_spr.ok, e.write_spr.data, 10)
+            wr = RegDecodeInfo(e.write_spr.ok, e.write_spr.data, 10)
 
-    assert rd is not None, "regspec not found %s %s" % (regfile, name)
+    assert wr is not None, "regspec not found %s %s" % (regfile, name)
 
-    return rd
+    rname="wr_decode_%s_%s" % (regfile, name)
+    if wr.okflag is not None:
+        ok = Signal(name=rname+"_ok", reset_less=True)
+        m.d.comb += ok.eq(wr.okflag)
+    else:
+        # XXX urrrr, really do have to deal with this some time
+        ok = None
+    data = Signal(wr.portlen, name=rname+"_port", reset_less=True)
+    m.d.comb += data.eq(wr.regport)
+
+    return RegDecodeInfo(ok, data, wr.portlen)
 
 
 def regspec_decode(m, readmode, e, regfile, name):
