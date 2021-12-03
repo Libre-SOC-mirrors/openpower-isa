@@ -387,7 +387,14 @@ class TestRunnerBase(FHDLTestCase):
             'core.int.rp_src1.memory(7)[63:0]',
             'core.int.rp_src1.memory(9)[63:0]',
             'core.int.rp_src1.memory(10)[63:0]',
-            'core.int.rp_src1.memory(13)[63:0]'
+            'core.int.rp_src1.memory(13)[63:0]',
+            # Exceptions: see list archive for description of the chain
+            # http://lists.libre-soc.org/pipermail/libre-soc-dev/2021-December/004220.html
+            ('exceptions', 'closed', [
+                'exc_happened',
+                'pdecode2.exc_happened',
+                'core.exc_happened',
+                'core.fus.ldst0.exc_o_happened']),
         ]
 
         # PortInterface module path varies depending on MMU option
