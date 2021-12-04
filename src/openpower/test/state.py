@@ -23,6 +23,7 @@ methods, the use of yield from/yield is required.
 
 
 from openpower.decoder.power_enums import XER_bits
+from openpower.decoder.isa.radixmmu import RADIX
 from openpower.util import log
 import os
 import sys
@@ -216,12 +217,15 @@ class SimState(State):
     def get_mem(self):
         if False:
             yield
-        keys = list(self.sim.mem.mem.keys())
+        mem = self.sim.mem
+        if isinstance(mem, RADIX):
+            mem = mem.mem
+        keys = list(mem.mem.keys())
         self.mem = {}
         # from each address in the underlying mem-simulated dictionary
         # issue a 64-bit LD (with no byte-swapping)
         for k in keys:
-            data = self.sim.mem.ld(k*8, 8, False)
+            data = mem.ld(k*8, 8, False)
             self.mem[k*8] = data
 
 
