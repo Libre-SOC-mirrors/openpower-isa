@@ -42,6 +42,7 @@ class SimRunner(StateRunner):
         super().__init__("sim", SimRunner)
         self.dut = dut
 
+        self.mmu = pspec.mmu == True
         regreduce_en = pspec.regreduce_en == True
         self.simdec2 = simdec2 = PowerDecode2(None, regreduce_en=regreduce_en)
         m.submodules.simdec2 = simdec2  # pain in the neck
@@ -64,7 +65,8 @@ class SimRunner(StateRunner):
                   initial_insns=gen, respect_pc=True,
                   disassembly=insncode,
                   bigendian=bigendian,
-                  initial_svstate=test.svstate)
+                  initial_svstate=test.svstate,
+                  mmu=self.mmu)
 
         # run the loop of the instructions on the current test
         index = sim.pc.CIA.value//4
