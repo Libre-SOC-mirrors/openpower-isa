@@ -1018,13 +1018,19 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         try:
             yield from self.call(opname)         # execute the instruction
         except MemException as e:                # check for memory errors
-            if e.args[0] != 'unaligned':         # only doing aligned at the mo
-                raise e                          # ... re-raise
-            # run a Trap but set DAR first
-            print ("memory unaligned exception, DAR", e.dar)
-            self.spr['DAR'] = SelectableInt(e.dar, 64)
-            self.call_trap(0x600, PIb.PRIV)                # 0x600, privileged
-            return
+            if e.args[0] == 'unaligned':         # alignment error
+               # run a Trap but set DAR first
+                print ("memory unaligned exception, DAR", e.dar)
+                self.spr['DAR'] = SelectableInt(e.dar, 64)
+                self.call_trap(0x600, PIb.PRIV)    # 0x600, privileged
+                return
+            elif e.args[0] == 'invalid':         # invalid
+               # run a Trap but set DAR first
+                log ("RADIX MMU memory invalid error")
+                self.call_trap(0x300, PIb.PRIV)    # 0x300, privileged
+                return
+            # not supported yet:
+            raise e                          # ... re-raise
 
         # don't use this except in special circumstances
         if not self.respect_pc:

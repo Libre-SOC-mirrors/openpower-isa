@@ -18,7 +18,7 @@ from copy import copy
 from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 from openpower.decoder.helpers import exts, gtu, ltu, undefined
-from openpower.decoder.isa.mem import Mem
+from openpower.decoder.isa.mem import Mem, MemException
 from openpower.consts import MSRb  # big-endian (PowerISA versions)
 
 import math
@@ -444,7 +444,7 @@ class RADIX:
 
         # WIP
         if mbits == 0:
-            return "invalid"
+            raise MemException("invalid")
 
         # mask_size := mbits(4 downto 0);
         mask_size = mbits[0:5]
@@ -487,7 +487,7 @@ class RADIX:
 
             print("    valid, leaf", valid, leaf)
             if not valid:
-                return "invalid" # TODO: return error
+                raise MemException("invalid")
             if leaf:
                 print ("is leaf, checking perms")
                 ok = self._check_perms(data, priv, mode)
