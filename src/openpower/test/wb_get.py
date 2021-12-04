@@ -3,9 +3,11 @@
 
 stop = False
 
-def wb_get(wb, mem):
+def wb_get(wb, mem, name=None):
     """simulator process for getting memory load requests
     """
+    if name is None:
+        name = ""
 
     global stop
     assert (stop == False)
@@ -21,7 +23,8 @@ def wb_get(wb, mem):
             yield
         addr = (yield wb.adr) << 3
         if addr not in mem:
-            print ("    WB LOOKUP NO entry @ %x, returning zero" % (addr))
+            print ("    %s WB LOOKUP NO entry @ %x, returning zero" % \
+                        (name, addr))
 
         # read or write?
         we = (yield wb.we)
@@ -38,11 +41,11 @@ def wb_get(wb, mem):
                 else:
                     res |= data & mask
             mem[addr] = res
-            print ("    DCACHE set %x mask %x data %x" % (addr, sel, res))
+            print ("    %s set %x mask %x data %x" % (name, addr, sel, res))
         else:
             data = mem.get(addr, 0)
             yield wb.dat_r.eq(data)
-            print ("    DCACHE get %x data %x" % (addr, data))
+            print ("    %s get %x data %x" % (name, addr, data))
 
         yield wb.ack.eq(1)
         yield
