@@ -30,7 +30,7 @@ from openpower.decoder.power_decoder2 import PowerDecode2
 
 from soc.config.test.test_loadstore import TestMemPspec
 from nmutil.util import wrap
-from soc.experiment.test.test_mmu_dcache import wb_get
+from openpower.test.wb_get import wb_get
 from openpower.test.state import TestState, StateRunner, ExpectedState
 
 
