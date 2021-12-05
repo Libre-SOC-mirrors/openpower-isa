@@ -427,22 +427,23 @@ class TestRunnerBase(FHDLTestCase):
         if self.microwatt_mmu:
             traces += [
                 {'comment': 'microwatt_mmu'},
-                'core.mmu0.illegal',
-                'core.mmu0.debug0[3:0]',
-                'core.mmu.state',
-                'core.mmu.pid[31:0]',
-                'core.mmu.prtbl[63:0]',
-                'core.state', # actually LoadStore1
+                'core.fus.mmu0.alu_mmu0.illegal',
+                'core.fus.mmu0.alu_mmu0.debug0[3:0]',
+                'core.fus.mmu0.alu_mmu0.mmu.state',
+                'core.fus.mmu0.alu_mmu0.mmu.pid[31:0]',
+                'core.fus.mmu0.alu_mmu0.mmu.prtbl[63:0]',
                 {'comment': 'wishbone_memory'},
-                'core.dcache.wb_in_ack',
-                'core.dcache.wb_in_stall,'
-                'core.dcache.wb_in_dat,'
-                'core.dcache.wb_out_cyc',
-                'core.dcache.wb_out_stb',
-                'core.dcache.wb_out_we',
-                'core.dcache.wb_out_adr',
-                'core.dcache.wb_out_dat',
-                'core.dcache.wb_out_sel',
+                'core.l0.pimem.bus__ack',
+                'core.l0.pimem.bus__adr[4:0]',
+                'core.l0.pimem.bus__bte',
+                'core.l0.pimem.bus__cti',
+                'core.l0.pimem.bus__cyc',
+                'core.l0.pimem.bus__dat_r[63:0]',
+                'core.l0.pimem.bus__dat_w[63:0]',
+                'core.l0.pimem.bus__dat_err',
+                'core.l0.pimem.bus__dat_sel[7:0]',
+                'core.l0.pimem.bus__dat_stb',
+                'core.l0.pimem.bus__dat_we',
             ]
 
         write_gtkw("issuer_simulator.gtkw",
