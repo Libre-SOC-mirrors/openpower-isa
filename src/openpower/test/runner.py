@@ -461,7 +461,8 @@ class TestRunnerBase(FHDLTestCase):
         if self.rom is not None:
             dcache = hdlrun.issuer.core.fus.fus["mmu0"].alu.dcache
             default_mem = self.rom
-            sim.add_sync_process(wrap(wb_get(dcache, default_mem, "DCACHE")))
+            sim.add_sync_process(wrap(wb_get(dcache.bus,
+                                             default_mem, "DCACHE")))
 
         with sim.write_vcd("issuer_simulator.vcd"):
             sim.run()
