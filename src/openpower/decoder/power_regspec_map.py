@@ -32,7 +32,7 @@ is set, then carried into read_fast2 in PowerDecode2).
 
 The SPR regfile on the other hand is *binary*-encoded, and, furthermore,
 has to be "remapped" to internal SPR Enum indices (see SPRMap in PowerDecode2)
-see https://libre-so:.org/3d_gpu/architecture/regfile/ section on regspecs
+see https://libre-soc.org/3d_gpu/architecture/regfile/ section on regspecs
 """
 from nmigen import Const, Signal
 from openpower.consts import XERRegsEnum, FastRegsEnum, StateRegsEnum
