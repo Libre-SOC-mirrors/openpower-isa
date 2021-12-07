@@ -436,6 +436,7 @@ class MicrOp(Enum):
     OP_CDTBCD = 84
     OP_CBCDTD = 85
     OP_TERNLOG = 86
+    OP_FETCH_FAILED = 86
 
 
 @unique
