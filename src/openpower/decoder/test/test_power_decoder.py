@@ -3,6 +3,7 @@ from nmigen import Module, Signal
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
 # Also, check out the cxxsim nmigen branch, and latest yosys from git
 from nmutil.sim_tmp_alternative import Simulator, Delay, Settle
+from pysim import PySimEngine
 
 from nmutil.formaltest import FHDLTestCase
 from nmigen.cli import rtlil
@@ -53,7 +54,7 @@ class DecoderTestCase(FHDLTestCase):
                  cry_in.eq(dut.op.cry_in),
                  internal_op.eq(dut.op.internal_op)]
 
-        sim = Simulator(m)
+        sim = Simulator(m, engine=PySimEngine)
         opcodes = get_csv(csvname)
 
         def process():
