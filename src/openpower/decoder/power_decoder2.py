@@ -1108,13 +1108,17 @@ class PowerDecode2(PowerDecodeSubset):
     to make this work, TestIssuer must notice "exception.happened"
     after the (failed) LD/ST and copies the LDSTException info from
     the output, into here (PowerDecoder2).  without incrementing PC.
+
+    also instr_fault works the same way: the instruction is "rewritten"
+    so that the "fake" op that gets created is OP_FETCH_FAILED
     """
 
     def __init__(self, dec, opkls=None, fn_name=None, final=False,
                  state=None, svp64_en=True, regreduce_en=False):
         super().__init__(dec, opkls, fn_name, final, state, svp64_en,
                          regreduce_en=False)
-        self.ldst_exc = LDSTException("dec2_exc")
+        self.ldst_exc = LDSTException("dec2_exc") # rewrites as OP_TRAP
+        self.instr_fault = Signal() # rewrites instruction as OP_FETCH_FAILED
 
         if self.svp64_en:
             self.cr_out_isvec = Signal(1, name="cr_out_isvec")
@@ -1503,12 +1507,15 @@ class PowerDecode2(PowerDecodeSubset):
         comb += illeg_ok.eq(op.internal_op == MicrOp.OP_ILLEGAL)
 
         # absolute top priority: check for an instruction failed
-        #with m.If(self.instr_):
-        #    e = self.e
-        #    comb += e.eq(0)  # reset eeeeeverything
+        with m.If(self.instr_fault):
+            comb += self.e.eq(0)  # reset eeeeeverything
+            comb += self.do_copy("insn_type", MicrOp.OP_FETCH_FAILED, True)
+            comb += self.do_copy("fn_unit", Function.MMU, True)
+            comb += self.do_copy("nia", self.state.pc, True)  # PC
+
         # LD/ST exceptions.  TestIssuer copies the exception info at us
         # after a failed LD/ST.
-        with m.If(ldst_exc.happened):
+        with m.Elif(ldst_exc.happened):
             with m.If(ldst_exc.alignment):
                 self.trap(m, TT.PRIV, 0x600)
             with m.Elif(ldst_exc.instr_fault):
