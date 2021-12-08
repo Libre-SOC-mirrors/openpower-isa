@@ -4,9 +4,18 @@ from nmutil.iocontrol import RecordObject
 from nmigen import Signal
 from collections import namedtuple
 
-exc_types = ['alignment', 'instr_fault', 'invalid', 'badtree',
-             'perm_error', 'rc_error', 'segment_fault',
-              'happened', ] # must be last: may overlap with Data.ok
+exc_types = ['alignment',
+             'instr_fault', # this one is not an actual exception
+                            # but information *about* the type of
+                            # exception that must be generated
+             'invalid',
+             'badtree',
+             'perm_error',
+             'rc_error',
+             'segment_fault',
+             'happened', # must be last: may overlap with Data.ok
+            ]
+
 LDSTExceptionTuple = namedtuple("LDSTExceptionTuple", exc_types)
 
 # https://bugs.libre-soc.org/show_bug.cgi?id=465
