@@ -278,11 +278,19 @@ class _LHSValueCompiler(_ValueCompiler):
 
         def gen(arg):
             value_mask = (1 << len(value)) - 1
+            name = ''
+            # TODO: useful trick, actually put the name into the c code
+            # but this has to be done consistently right across the board.
+            # all occurrences of next_{....} have to use the same trick
+            # but at least then the names in the auto-generated c-code
+            # are readable...
+            #if hasattr(value, "name") and value.name is not None:
+            #    name = value.name
             if value.shape().signed:
                 value_sign = f"sign({value_mask} & {arg}, {-1 << (len(value) - 1)})"
             else: # unsigned
                 value_sign = f"{value_mask} & {arg}"
-            self.emitter.append(f"next_{self.state.get_signal(value)} = {value_sign};")
+            self.emitter.append(f"next_{name}{self.state.get_signal(value)} = {value_sign};")
         return gen
 
     def on_Operator(self, value):
