@@ -54,7 +54,10 @@ class DecoderTestCase(FHDLTestCase):
                  cry_in.eq(dut.op.cry_in),
                  internal_op.eq(dut.op.internal_op)]
 
-        sim = Simulator(m, engine=PySimEngine)
+        sim = Simulator(m)
+        # Use the below line instead to run the work-in-progress C simulator.
+        #sim = Simulator(m, engine=PySimEngine)
+
         opcodes = get_csv(csvname)
 
         def process():

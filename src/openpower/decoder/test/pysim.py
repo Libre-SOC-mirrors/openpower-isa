@@ -3,9 +3,9 @@ import itertools
 from vcd import VCDWriter
 from vcd.gtkw import GTKWSave
 
-from nmigen.hdl import *
+from nmigen.hdl import ClockSignal, ResetSignal
 from nmigen.hdl.ast import SignalDict
-from nmigen.sim._base import *
+from nmigen.sim._base import BaseSignalState, BaseSimulation, BaseEngine
 from _pyrtl import _FragmentCompiler
 from nmigen.sim._pycoro import PyCoroProcess
 from nmigen.sim._pyclock import PyClockProcess
