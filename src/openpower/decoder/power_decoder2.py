@@ -1373,7 +1373,8 @@ class PowerDecode2(PowerDecodeSubset):
 
             # TODO add SPRs here.  must be True when *all* are scalar
             l = map(lambda svdec: svdec.isvec, [in1_svdec, in2_svdec, in3_svdec,
-                                                crin_svdec, crin_svdec_b, crin_svdec_o])
+                                                crin_svdec, crin_svdec_b,
+                                                crin_svdec_o])
             comb += self.no_in_vec.eq(~Cat(*l).bool())  # all input scalar
             l = map(lambda svdec: svdec.isvec, [
                     o2_svdec, o_svdec, crout_svdec])
@@ -1501,6 +1502,10 @@ class PowerDecode2(PowerDecodeSubset):
         comb += priv_ok.eq(is_priv_insn & msr[MSR.PR])
         comb += illeg_ok.eq(op.internal_op == MicrOp.OP_ILLEGAL)
 
+        # absolute top priority: check for an instruction failed
+        #with m.If(self.instr_):
+        #    e = self.e
+        #    comb += e.eq(0)  # reset eeeeeverything
         # LD/ST exceptions.  TestIssuer copies the exception info at us
         # after a failed LD/ST.
         with m.If(ldst_exc.happened):
