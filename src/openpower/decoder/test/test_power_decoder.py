@@ -3,7 +3,8 @@ from nmigen import Module, Signal
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
 # Also, check out the cxxsim nmigen branch, and latest yosys from git
 from nmutil.sim_tmp_alternative import Simulator, Delay, Settle
-from pysim import PySimEngine
+# to be renamed for a c-based module.
+from openpower.decoder.test.pysim import PySimEngine
 
 from nmutil.formaltest import FHDLTestCase
 from nmigen.cli import rtlil
