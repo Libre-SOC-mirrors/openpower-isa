@@ -386,6 +386,9 @@ class _StatementCompiler(StatementVisitor, _Compiler):
             with self.emitter.nest():
                 self(stmts)
 
+    def on_Display(self, stmt):
+        raise NotImplementedError # :nocov:
+
     def on_Assert(self, stmt):
         raise NotImplementedError # :nocov:
 
