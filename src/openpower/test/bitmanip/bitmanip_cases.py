@@ -12,7 +12,7 @@ def hash_256(v):
 
 
 class BitManipTestCase(TestAccumulatorBase):
-    def case_ternaryi(self):
+    def case_ternlogi(self):
         po = 5
         rt = 3
         ra = 4
@@ -20,7 +20,7 @@ class BitManipTestCase(TestAccumulatorBase):
         rc = 1
         xo = 0
         for i in range(100):
-            imm = hash_256(f"ternaryi imm {i}") & 0xFF
+            imm = hash_256(f"ternlogi imm {i}") & 0xFF
             instr = po
             instr = (instr << 5) | rt
             instr = (instr << 5) | ra
@@ -30,7 +30,7 @@ class BitManipTestCase(TestAccumulatorBase):
             instr = (instr << 1) | rc
             lst = [f".4byte {hex(instr)}"]
             initial_regs = [0] * 32
-            initial_regs[3] = hash_256(f"ternaryi rt {i}") % 2 ** 64
-            initial_regs[4] = hash_256(f"ternaryi ra {i}") % 2 ** 64
-            initial_regs[5] = hash_256(f"ternaryi rb {i}") % 2 ** 64
+            initial_regs[3] = hash_256(f"ternlogi rt {i}") % 2 ** 64
+            initial_regs[4] = hash_256(f"ternlogi ra {i}") % 2 ** 64
+            initial_regs[5] = hash_256(f"ternlogi rb {i}") % 2 ** 64
             self.add_case(Program(lst, bigendian), initial_regs)
