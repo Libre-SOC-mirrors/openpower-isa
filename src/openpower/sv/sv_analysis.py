@@ -691,6 +691,12 @@ def process_csvs(format):
 
     # now write out the csv files
     for value, csv in svp64.items():
+        if value == '-':
+            from time import sleep
+            print ("WARNING, filename '-' should NOT exist. instrs missing")
+            print ("TODO: fix this (and put in the bugreport number here)")
+            sleep(2)
+            continue
         # print out svp64 tables by category
         print("## %s" % value)
         print('')
