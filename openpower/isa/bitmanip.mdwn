@@ -1,0 +1,24 @@
+<!-- Draft Instructions here described in https://libre-soc.org/openpower/sv/bitmanip/ -->
+<!-- These instructions are *not yet official* -->
+
+# Ternary Bitwise Logic Immediate
+
+TLI-Form
+
+* ternlogi RT, RA, RB, TLI (Rc=0)
+* ternlogi. RT, RA, RB, TLI (Rc=1)
+
+Pseudo-code:
+
+    result <- [0] * XLEN
+    idx <- [0] * 3
+    do i = 0 to XLEN - 1
+      idx[0] <- (RT)[i]
+      idx[1] <- (RA)[i]
+      idx[2] <- (RB)[i]
+      result[i] <- (TLI & ROTL64(1, idx)) != 0
+    RT <- result
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
