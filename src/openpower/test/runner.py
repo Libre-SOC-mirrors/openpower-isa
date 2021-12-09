@@ -127,10 +127,16 @@ class TestRunnerBase(FHDLTestCase):
         m = Module()
         comb = m.d.comb
         if self.microwatt_mmu:
-            ldst_ifacetype = 'test_mmu_cache_wb'
+            # do not wire these up to anything if wb_get is to be used
+            if self.rom is not None:
+                ldst_ifacetype = 'mmu_cache_wb'
+                imem_ifacetype = 'bare_wb'
+            else:
+                ldst_ifacetype = 'test_mmu_cache_wb'
+                imem_ifacetype = 'test_bare_wb'
         else:
             ldst_ifacetype = 'test_bare_wb'
-        imem_ifacetype = 'test_bare_wb'
+            imem_ifacetype = 'test_bare_wb'
 
         pspec = TestMemPspec(ldst_ifacetype=ldst_ifacetype,
                              imem_ifacetype=imem_ifacetype,
@@ -461,9 +467,12 @@ class TestRunnerBase(FHDLTestCase):
         # extra emulated process
         if self.rom is not None:
             dcache = hdlrun.issuer.core.fus.fus["mmu0"].alu.dcache
+            icache = hdlrun.issuer.core.fus.fus["mmu0"].alu.icache
             default_mem = self.rom
             sim.add_sync_process(wrap(wb_get(dcache.bus,
                                              default_mem, "DCACHE")))
+            sim.add_sync_process(wrap(wb_get(icache.bus,
+                                             default_mem, "ICACHE")))
 
         with sim.write_vcd("issuer_simulator.vcd"):
             sim.run()
