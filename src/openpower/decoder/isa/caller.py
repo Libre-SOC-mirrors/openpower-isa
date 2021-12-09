@@ -1233,6 +1233,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             illegal = False
             ins_name = 'ffadds'
 
+        if asmop == 'ternlogi' or asmop == 'ternlogi.':
+            illegal = False
+            ins_name = asmop
+
         # branch-conditional redirects to sv.bc
         if asmop.startswith('bc') and self.is_svp64_mode:
             ins_name = 'sv.%s' % ins_name
