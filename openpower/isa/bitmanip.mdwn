@@ -5,8 +5,7 @@
 
 TLI-Form
 
-* ternlogi RT, RA, RB, TLI (Rc=0)
-* ternlogi. RT, RA, RB, TLI (Rc=1)
+* ternlogi RT, RA, RB, TLI
 
 Pseudo-code:
 
@@ -21,4 +20,4 @@ Pseudo-code:
 
 Special Registers Altered:
 
-    CR0                    (if Rc=1)
+    None

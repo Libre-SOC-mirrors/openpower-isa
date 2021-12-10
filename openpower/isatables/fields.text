@@ -284,8 +284,8 @@
    | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
 
 # 1.6.34 TLI-FORM
-   |0   |6   |11   |16   |21   |29  |31 |
-   | PO | RT |  RA |  RB | TLI | XO |Rc |
+   |0   |6   |11   |16   |21   |29  |
+   | PO | RT |  RA |  RB | TLI | XO |
 
 # 1.6.28 Instruction Fields
     A (6)
@@ -956,12 +956,9 @@
     XO (27:30)
         Extended opcode field.
         Formats: MDS
-    XO (29:30)
-        Extended opcode field.
-        Formats: TLI
     XO (29:31)
         Extended opcode field.
-        Formats: DQ
+        Formats: DQ, TLI
     XO (30)
         Extended opcode field.
         Formats: SC

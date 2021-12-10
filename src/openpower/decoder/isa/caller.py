@@ -1233,7 +1233,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             illegal = False
             ins_name = 'ffadds'
 
-        if asmop == 'ternlogi' or asmop == 'ternlogi.':
+        if asmop == 'ternlogi':
             illegal = False
             ins_name = asmop
 
