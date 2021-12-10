@@ -1,3 +1,4 @@
+from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.endian import bigendian
 from openpower.simulator.program import Program
@@ -12,24 +13,13 @@ def hash_256(v):
 
 
 class BitManipTestCase(TestAccumulatorBase):
-    def do_case_ternlogi(self, rt_v, ra_v, rb_v, imm):
-        po = 5
-        xo = 0
-        rt = 3
-        ra = 4
-        rb = 5
-        instr = po
-        instr = (instr << 5) | rt
-        instr = (instr << 5) | ra
-        instr = (instr << 5) | rb
-        instr = (instr << 8) | imm
-        instr = (instr << 3) | xo
-        asm = f"ternlogi {rt}, {ra}, {rb}, {imm}"
-        lst = [f".4byte {hex(instr)} # {asm}"]
+    def do_case_ternlogi(self, rt, ra, rb, imm):
+        lst = [f"ternlogi 3, 4, 5, {imm}"]
         initial_regs = [0] * 32
-        initial_regs[3] = rt_v % 2 ** 64
-        initial_regs[4] = ra_v % 2 ** 64
-        initial_regs[5] = rb_v % 2 ** 64
+        initial_regs[3] = rt % 2 ** 64
+        initial_regs[4] = ra % 2 ** 64
+        initial_regs[5] = rb % 2 ** 64
+        lst = list(SVP64Asm(lst, bigendian))
         self.add_case(Program(lst, bigendian), initial_regs)
 
     def case_ternlogi_0(self):
@@ -43,7 +33,7 @@ class BitManipTestCase(TestAccumulatorBase):
     def case_ternlogi_random(self):
         for i in range(100):
             imm = hash_256(f"ternlogi imm {i}") & 0xFF
-            rt_v = hash_256(f"ternlogi rt {i}") % 2 ** 64
-            ra_v = hash_256(f"ternlogi ra {i}") % 2 ** 64
-            rb_v = hash_256(f"ternlogi rb {i}") % 2 ** 64
-            self.do_case_ternlogi(rt_v, ra_v, rb_v, imm)
+            rt = hash_256(f"ternlogi rt {i}") % 2 ** 64
+            ra = hash_256(f"ternlogi ra {i}") % 2 ** 64
+            rb = hash_256(f"ternlogi rb {i}") % 2 ** 64
+            self.do_case_ternlogi(rt, ra, rb, imm)
