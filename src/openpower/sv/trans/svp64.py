@@ -15,17 +15,18 @@ Encoding format of LDST: https://libre-soc.org/openpower/sv/ldst/
 Bugtracker: https://bugs.libre-soc.org/show_bug.cgi?id=578
 """
 
-import os, sys
+import os
+import sys
 from collections import OrderedDict
 
 from openpower.decoder.isa.caller import (SVP64PrefixFields, SV64P_MAJOR_SIZE,
-                                    SV64P_PID_SIZE, SVP64RMFields,
-                                    SVP64RM_EXTRA2_SPEC_SIZE,
-                                    SVP64RM_EXTRA3_SPEC_SIZE,
-                                    SVP64RM_MODE_SIZE, SVP64RM_SMASK_SIZE,
-                                    SVP64RM_MMODE_SIZE, SVP64RM_MASK_SIZE,
-                                    SVP64RM_SUBVL_SIZE, SVP64RM_EWSRC_SIZE,
-                                    SVP64RM_ELWIDTH_SIZE)
+                                          SV64P_PID_SIZE, SVP64RMFields,
+                                          SVP64RM_EXTRA2_SPEC_SIZE,
+                                          SVP64RM_EXTRA3_SPEC_SIZE,
+                                          SVP64RM_MODE_SIZE, SVP64RM_SMASK_SIZE,
+                                          SVP64RM_MMODE_SIZE, SVP64RM_MASK_SIZE,
+                                          SVP64RM_SUBVL_SIZE, SVP64RM_EWSRC_SIZE,
+                                          SVP64RM_ELWIDTH_SIZE)
 from openpower.decoder.pseudo.pagereader import ISA
 from openpower.decoder.power_svp64 import SVP64RM, get_regtype, decode_extra
 from openpower.decoder.selectable_int import SelectableInt
@@ -36,7 +37,7 @@ from openpower.util import log
 
 
 # decode GPR into sv extra
-def  get_extra_gpr(etype, regmode, field):
+def get_extra_gpr(etype, regmode, field):
     if regmode == 'scalar':
         # cut into 2-bits 5-bits SS FFFFF
         sv_extra = field >> 5
@@ -49,7 +50,7 @@ def  get_extra_gpr(etype, regmode, field):
 
 
 # decode 3-bit CR into sv extra
-def  get_extra_cr_3bit(etype, regmode, field):
+def get_extra_cr_3bit(etype, regmode, field):
     if regmode == 'scalar':
         # cut into 2-bits 3-bits SS FFF
         sv_extra = field >> 3
@@ -79,24 +80,24 @@ def decode_elwidth(encoding):
 
 # decodes predicate register encoding
 def decode_predicate(encoding):
-    pmap = { # integer
-            '1<<r3': (0, 0b001),
-            'r3'   : (0, 0b010),
-            '~r3'   : (0, 0b011),
-            'r10'   : (0, 0b100),
-            '~r10'  : (0, 0b101),
-            'r30'   : (0, 0b110),
-            '~r30'  : (0, 0b111),
-            # CR
-            'lt'    : (1, 0b000),
-            'nl'    : (1, 0b001), 'ge'    : (1, 0b001), # same value
-            'gt'    : (1, 0b010),
-            'ng'    : (1, 0b011), 'le'    : (1, 0b011), # same value
-            'eq'    : (1, 0b100),
-            'ne'    : (1, 0b101),
-            'so'    : (1, 0b110), 'un'    : (1, 0b110), # same value
-            'ns'    : (1, 0b111), 'nu'    : (1, 0b111), # same value
-           }
+    pmap = {  # integer
+        '1<<r3': (0, 0b001),
+        'r3': (0, 0b010),
+        '~r3': (0, 0b011),
+        'r10': (0, 0b100),
+        '~r10': (0, 0b101),
+        'r30': (0, 0b110),
+        '~r30': (0, 0b111),
+        # CR
+        'lt': (1, 0b000),
+        'nl': (1, 0b001), 'ge': (1, 0b001),  # same value
+        'gt': (1, 0b010),
+        'ng': (1, 0b011), 'le': (1, 0b011),  # same value
+        'eq': (1, 0b100),
+        'ne': (1, 0b101),
+        'so': (1, 0b110), 'un': (1, 0b110),  # same value
+        'ns': (1, 0b111), 'nu': (1, 0b111),  # same value
+    }
     assert encoding in pmap, \
         "encoding %s for predicate not recognised" % encoding
     return pmap[encoding]
@@ -104,21 +105,23 @@ def decode_predicate(encoding):
 
 # decodes "Mode" in similar way to BO field (supposed to, anyway)
 def decode_bo(encoding):
-    pmap = { # TODO: double-check that these are the same as Branch BO
-            'lt'    : 0b000,
-            'nl'    : 0b001, 'ge'    : 0b001, # same value
-            'gt'    : 0b010,
-            'ng'    : 0b011, 'le'    : 0b011, # same value
-            'eq'    : 0b100,
-            'ne'    : 0b101,
-            'so'    : 0b110, 'un'    : 0b110, # same value
-            'ns'    : 0b111, 'nu'    : 0b111, # same value
-           }
+    pmap = {  # TODO: double-check that these are the same as Branch BO
+        'lt': 0b000,
+        'nl': 0b001, 'ge': 0b001,  # same value
+        'gt': 0b010,
+        'ng': 0b011, 'le': 0b011,  # same value
+        'eq': 0b100,
+        'ne': 0b101,
+        'so': 0b110, 'un': 0b110,  # same value
+        'ns': 0b111, 'nu': 0b111,  # same value
+    }
     assert encoding in pmap, \
         "encoding %s for BO Mode not recognised" % encoding
     return pmap[encoding]
 
 # partial-decode fail-first mode
+
+
 def decode_ffirst(encoding):
     if encoding in ['RC1', '~RC1']:
         return encoding
@@ -128,13 +131,13 @@ def decode_ffirst(encoding):
 def decode_reg(field):
     # decode the field number. "5.v" or "3.s" or "9"
     field = field.split(".")
-    regmode = 'scalar' # default
+    regmode = 'scalar'  # default
     if len(field) == 2:
         if field[1] == 's':
             regmode = 'scalar'
         elif field[1] == 'v':
             regmode = 'vector'
-    field = int(field[0]) # actual register number
+    field = int(field[0])  # actual register number
     return field, regmode
 
 
@@ -154,8 +157,8 @@ class SVP64Asm:
         self.macros = macros
         self.lst = lst
         self.trans = self.translate(lst)
-        self.isa = ISA() # reads the v3.0B pseudo-code markdown files
-        self.svp64 = SVP64RM() # reads the svp64 Remap entries for registers
+        self.isa = ISA()  # reads the v3.0B pseudo-code markdown files
+        self.svp64 = SVP64RM()  # reads the svp64 Remap entries for registers
         assert bigendian == False, "error, bigendian not supported yet"
 
     def __iter__(self):
@@ -173,28 +176,28 @@ class SVP64Asm:
         # now find opcode fields
         fields = ''.join(ls[1:]).split(',')
         mfields = list(map(str.strip, fields))
-        log ("opcode, fields", ls, opcode, mfields)
+        log("opcode, fields", ls, opcode, mfields)
         fields = []
         # macro substitution
         for field in mfields:
             fields.append(macro_subst(macros, field))
-        log ("opcode, fields substed", ls, opcode, fields)
+        log("opcode, fields substed", ls, opcode, fields)
 
         # sigh have to do setvl here manually for now...
         # note the subtract one from SVi.
         if opcode in ["setvl", "setvl."]:
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
-            insn |= fields[0] << (31-10) # RT       , bits 6-10
-            insn |= fields[1] << (31-15) # RA       , bits 11-15
-            insn |= (fields[2]-1) << (31-22) # SVi      , bits 16-22
-            insn |= fields[3] << (31-25) # ms       , bit  25
-            insn |= fields[4] << (31-24) # vs       , bit  24
-            insn |= fields[5] << (31-23) # vf       , bit  23
-            insn |= 0b00000   << (31-30) # XO       , bits 26..30
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= fields[1] << (31-15)  # RA       , bits 11-15
+            insn |= (fields[2]-1) << (31-22)  # SVi      , bits 16-22
+            insn |= fields[3] << (31-25)  # ms       , bit  25
+            insn |= fields[4] << (31-24)  # vs       , bit  24
+            insn |= fields[5] << (31-23)  # vf       , bit  23
+            insn |= 0b00000 << (31-30)  # XO       , bits 26..30
             if opcode == 'setvl.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("setvl", bin(insn))
+            log("setvl", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -203,13 +206,13 @@ class SVP64Asm:
         if opcode in ["svstep", "svstep."]:
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
-            insn |= fields[0] << (31-10) # RT       , bits 6-10
-            insn |= (fields[1]-1) << (31-22) # SVi      , bits 16-22
-            insn |= fields[2] << (31-25) # vf       , bit  25
-            insn |= 0b00011   << (31-30) # XO       , bits 26..30
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= (fields[1]-1) << (31-22)  # SVi      , bits 16-22
+            insn |= fields[2] << (31-25)  # vf       , bit  25
+            insn |= 0b00011 << (31-30)  # XO       , bits 26..30
             if opcode == 'svstep.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("svstep", bin(insn))
+            log("svstep", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -217,14 +220,14 @@ class SVP64Asm:
         if opcode == 'svshape':
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
-            insn |= (fields[0]-1) << (31-10) # SVxd       , bits 6-10
-            insn |= (fields[1]-1) << (31-15) # SVyd       , bits 11-15
-            insn |= (fields[2]-1) << (31-20) # SVzd       , bits 16-20
-            insn |= (fields[3])   << (31-24) # SVRM       , bits 21-24
-            insn |= (fields[4])   << (31-25) # vf         , bits 25
-            insn |= 0b00001   << (31-30) # XO       , bits 26..30
+            insn |= (fields[0]-1) << (31-10)  # SVxd       , bits 6-10
+            insn |= (fields[1]-1) << (31-15)  # SVyd       , bits 11-15
+            insn |= (fields[2]-1) << (31-20)  # SVzd       , bits 16-20
+            insn |= (fields[3]) << (31-24)  # SVRM       , bits 21-24
+            insn |= (fields[4]) << (31-25)  # vf         , bits 25
+            insn |= 0b00001 << (31-30)  # XO       , bits 26..30
             #insn &= ((1<<32)-1)
-            log ("svshape", bin(insn))
+            log("svshape", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -232,16 +235,16 @@ class SVP64Asm:
         if opcode == 'svremap':
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
-            insn |= fields[0] << (31-10) # SVme       , bits 6-10
-            insn |= fields[1] << (31-12) # mi0        , bits 11-12
-            insn |= fields[2] << (31-14) # mi1        , bits 13-14
-            insn |= fields[3] << (31-16) # mi2        , bits 15-16
-            insn |= fields[4] << (31-18) # m00        , bits 17-18
-            insn |= fields[5] << (31-20) # m01        , bits 19-20
-            insn |= fields[6] << (31-21) # m01        , bit 21
-            insn |= 0b00010   << (31-30) # XO       , bits 26..30
+            insn |= fields[0] << (31-10)  # SVme       , bits 6-10
+            insn |= fields[1] << (31-12)  # mi0        , bits 11-12
+            insn |= fields[2] << (31-14)  # mi1        , bits 13-14
+            insn |= fields[3] << (31-16)  # mi2        , bits 15-16
+            insn |= fields[4] << (31-18)  # m00        , bits 17-18
+            insn |= fields[5] << (31-20)  # m01        , bits 19-20
+            insn |= fields[6] << (31-21)  # m01        , bit 21
+            insn |= 0b00010 << (31-30)  # XO       , bits 26..30
             #insn &= ((1<<32)-1)
-            log ("svremap", bin(insn))
+            log("svremap", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -250,13 +253,13 @@ class SVP64Asm:
         # however we are out of space with opcode 22
         if opcode.startswith('fsins'):
             fields = list(map(int, fields))
-            insn = 59            << (31-5)  # opcode 59, bits 0-5
-            insn |= fields[0]    << (31-10) # RT       , bits 6-10
-            insn |= fields[1]    << (31-20) # RB       , bits 16-20
-            insn |= 0b1000001110 << (31-30) # XO       , bits 21..30
+            insn = 59 << (31-5)  # opcode 59, bits 0-5
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= fields[1] << (31-20)  # RB       , bits 16-20
+            insn |= 0b1000001110 << (31-30)  # XO       , bits 21..30
             if opcode == 'fsins.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("fsins", bin(insn))
+            log("fsins", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -265,13 +268,13 @@ class SVP64Asm:
         # however we are out of space with opcode 22
         if opcode.startswith('fcoss'):
             fields = list(map(int, fields))
-            insn = 59            << (31-5)  # opcode 59, bits 0-5
-            insn |= fields[0]    << (31-10) # RT       , bits 6-10
-            insn |= fields[1]    << (31-20) # RB       , bits 16-20
-            insn |= 0b1000101110 << (31-30) # XO       , bits 21..30
+            insn = 59 << (31-5)  # opcode 59, bits 0-5
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= fields[1] << (31-20)  # RB       , bits 16-20
+            insn |= 0b1000101110 << (31-30)  # XO       , bits 21..30
             if opcode == 'fcoss.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("fcoss", bin(insn))
+            log("fcoss", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -279,10 +282,10 @@ class SVP64Asm:
         if not opcode.startswith('sv.'):
             yield insn  # unaltered
             return
-        opcode = opcode[3:] # strip leading "sv"
+        opcode = opcode[3:]  # strip leading "sv"
 
         # start working on decoding the svp64 op: sv.basev30Bop/vec2/mode
-        opmodes = opcode.split("/") # split at "/"
+        opmodes = opcode.split("/")  # split at "/"
         v30b_op = opmodes.pop(0)    # first is the v3.0B
         # check instruction ends with dot
         rc_mode = v30b_op.endswith('.')
@@ -295,7 +298,7 @@ class SVP64Asm:
         ldst_shift = v30b_op.startswith("l") and v30b_op.endswith("sh")
 
         if v30b_op not in isa.instr:
-            raise Exception("opcode %s of '%s' not supported" % \
+            raise Exception("opcode %s of '%s' not supported" %
                             (v30b_op, insn))
 
         if ldst_shift:
@@ -304,7 +307,7 @@ class SVP64Asm:
             # into this:
             #     ld RT, D(RA)          - 16 bits
             # likewise same for SVDS (9 bits for SVDS, 5 for RC, 14 bits for DS)
-            form = isa.instr[v30b_op].form # get form (SVD-Form, SVDS-Form)
+            form = isa.instr[v30b_op].form  # get form (SVD-Form, SVDS-Form)
 
             newfields = []
             for field in fields:
@@ -317,31 +320,31 @@ class SVP64Asm:
 
             immed, RA = newfields[1]
             immed = int(immed)
-            RC = int(newfields.pop(2)) # better be an integer number!
-            if form == 'SVD': # 16 bit: immed 11 bits, RC shift up 11
-                immed = (immed & 0b11111111111) | (RC<<11)
-                if immed & (1<<15): # should be negative
-                    immed -= 1<<16
-            if form == 'SVDS': # 14 bit: immed 9 bits, RC shift up 9
-                immed = (immed & 0b111111111) | (RC<<9)
-                if immed & (1<<13): # should be negative
-                    immed -= 1<<14
+            RC = int(newfields.pop(2))  # better be an integer number!
+            if form == 'SVD':  # 16 bit: immed 11 bits, RC shift up 11
+                immed = (immed & 0b11111111111) | (RC << 11)
+                if immed & (1 << 15):  # should be negative
+                    immed -= 1 << 16
+            if form == 'SVDS':  # 14 bit: immed 9 bits, RC shift up 9
+                immed = (immed & 0b111111111) | (RC << 9)
+                if immed & (1 << 13):  # should be negative
+                    immed -= 1 << 14
             newfields[1] = "%d(%s)" % (immed, RA)
             fields = newfields
 
             # and strip off "sh" from end, and add "sh" to opmodes, instead
             v30b_op = v30b_op[:-2]
             opmodes.append("sh")
-            log ("rewritten", v30b_op, opmodes, fields)
+            log("rewritten", v30b_op, opmodes, fields)
 
         if v30b_op not in svp64.instrs:
-            raise Exception("opcode %s of '%s' not an svp64 instruction" % \
+            raise Exception("opcode %s of '%s' not an svp64 instruction" %
                             (v30b_op, insn))
-        v30b_regs = isa.instr[v30b_op].regs[0] # get regs info "RT, RA, RB"
+        v30b_regs = isa.instr[v30b_op].regs[0]  # get regs info "RT, RA, RB"
         rm = svp64.instrs[v30b_op]             # one row of the svp64 RM CSV
-        log ("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
-        log ("v3.0B regs", opcode, v30b_regs)
-        log ("RM", rm)
+        log("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
+        log("v3.0B regs", opcode, v30b_regs)
+        log("RM", rm)
 
         # right.  the first thing to do is identify the ordering of
         # the registers, by name.  the EXTRA2/3 ordering is in
@@ -356,15 +359,15 @@ class SVP64Asm:
         decode = decode_extra(rm)
         dest_reg_cr, src_reg_cr, svp64_src, svp64_dest = decode
 
-        log ("EXTRA field index, src", svp64_src)
-        log ("EXTRA field index, dest", svp64_dest)
+        log("EXTRA field index, src", svp64_src)
+        log("EXTRA field index, dest", svp64_dest)
 
         # okaaay now we identify the field value (opcode N,N,N) with
         # the pseudo-code info (opcode RT, RA, RB)
         assert len(fields) == len(v30b_regs), \
             "length of fields %s must match insn `%s` fields %s" % \
-                    (str(v30b_regs), insn, str(fields))
-        opregfields = zip(fields, v30b_regs) # err that was easy
+            (str(v30b_regs), insn, str(fields))
+        opregfields = zip(fields, v30b_regs)  # err that was easy
 
         # now for each of those find its place in the EXTRA encoding
         # note there is the possibility (for LD/ST-with-update) of
@@ -374,28 +377,28 @@ class SVP64Asm:
         for idx, (field, regname) in enumerate(opregfields):
             imm, regname = decode_imm(regname)
             rtype = get_regtype(regname)
-            log ("    idx find", rtype, idx, field, regname, imm)
+            log("    idx find", rtype, idx, field, regname, imm)
             if rtype is None:
                 # probably an immediate field, append it straight
                 extras[('imm', idx, False)] = (idx, field, None, None, None)
                 continue
             extra = svp64_src.get(regname, None)
             if extra is not None:
-                extra = ('s', extra, False) # not a duplicate
+                extra = ('s', extra, False)  # not a duplicate
                 extras[extra] = (idx, field, regname, rtype, imm)
-                log ("    idx src", idx, extra, extras[extra])
+                log("    idx src", idx, extra, extras[extra])
             dextra = svp64_dest.get(regname, None)
-            log ("regname in", regname, dextra)
+            log("regname in", regname, dextra)
             if dextra is not None:
-                is_a_duplicate = extra is not None # duplicate spotted
+                is_a_duplicate = extra is not None  # duplicate spotted
                 dextra = ('d', dextra, is_a_duplicate)
                 extras[dextra] = (idx, field, regname, rtype, imm)
-                log ("    idx dst", idx, extra, extras[dextra])
+                log("    idx dst", idx, extra, extras[dextra])
 
         # great! got the extra fields in their associated positions:
         # also we know the register type. now to create the EXTRA encodings
-        etype = rm['Etype'] # Extra type: EXTRA3/EXTRA2
-        ptype = rm['Ptype'] # Predication type: Twin / Single
+        etype = rm['Etype']  # Extra type: EXTRA3/EXTRA2
+        ptype = rm['Ptype']  # Predication type: Twin / Single
         extra_bits = 0
         v30b_newfields = []
         for extra_idx, (idx, field, rname, rtype, iname) in extras.items():
@@ -411,8 +414,8 @@ class SVP64Asm:
                 immed, field = field[:-1].split("(")
 
             field, regmode = decode_reg(field)
-            log ("    ", extra_idx, rname, rtype,
-                           regmode, iname, field, end=" ")
+            log("    ", extra_idx, rname, rtype,
+                regmode, iname, field, end=" ")
 
             # see Mode field https://libre-soc.org/openpower/sv/svp64/
             # XXX TODO: the following is a bit of a laborious repeated
@@ -430,7 +433,7 @@ class SVP64Asm:
                         # range is r0-r63 in increments of 1
                         assert (sv_extra >> 1) == 0, \
                             "scalar GPR %s cannot fit into EXTRA2 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as scalar
                         sv_extra = sv_extra & 0b01
                     else:
@@ -438,7 +441,7 @@ class SVP64Asm:
                         assert sv_extra & 0b01 == 0, \
                             "%s: vector field %s cannot fit " \
                             "into EXTRA2 %s" % \
-                                (insn, rname, str(extras[extra_idx]))
+                            (insn, rname, str(extras[extra_idx]))
                         # all good: encode as vector (bit 2 set)
                         sv_extra = 0b10 | (sv_extra >> 1)
                 elif regmode == 'vector':
@@ -454,14 +457,14 @@ class SVP64Asm:
                         # range is CR0-CR15 in increments of 1
                         assert (sv_extra >> 1) == 0, \
                             "scalar CR %s cannot fit into EXTRA2 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as scalar
                         sv_extra = sv_extra & 0b01
                     else:
                         # range is CR0-CR127 in increments of 16
                         assert sv_extra & 0b111 == 0, \
                             "vector CR %s cannot fit into EXTRA2 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as vector (bit 2 set)
                         sv_extra = 0b10 | (sv_extra >> 3)
                 else:
@@ -469,14 +472,14 @@ class SVP64Asm:
                         # range is CR0-CR31 in increments of 1
                         assert (sv_extra >> 2) == 0, \
                             "scalar CR %s cannot fit into EXTRA2 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as scalar
                         sv_extra = sv_extra & 0b11
                     else:
                         # range is CR0-CR127 in increments of 8
                         assert sv_extra & 0b11 == 0, \
                             "vector CR %s cannot fit into EXTRA2 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as vector (bit 3 set)
                         sv_extra = 0b100 | (sv_extra >> 2)
 
@@ -485,7 +488,7 @@ class SVP64Asm:
             # passed through
             elif rtype == 'CR_5bit':
                 cr_subfield = field & 0b11
-                field = field >> 2 # strip bottom 2 bits
+                field = field >> 2  # strip bottom 2 bits
                 sv_extra, field = get_extra_cr_3bit(etype, regmode, field)
                 # now sanity-check (and shrink afterwards)
                 if etype == 'EXTRA2':
@@ -493,14 +496,14 @@ class SVP64Asm:
                         # range is CR0-CR15 in increments of 1
                         assert (sv_extra >> 1) == 0, \
                             "scalar CR %s cannot fit into EXTRA2 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as scalar
                         sv_extra = sv_extra & 0b01
                     else:
                         # range is CR0-CR127 in increments of 16
                         assert sv_extra & 0b111 == 0, \
                             "vector CR %s cannot fit into EXTRA2 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as vector (bit 2 set)
                         sv_extra = 0b10 | (sv_extra >> 3)
                 else:
@@ -508,48 +511,50 @@ class SVP64Asm:
                         # range is CR0-CR31 in increments of 1
                         assert (sv_extra >> 2) == 0, \
                             "scalar CR %s cannot fit into EXTRA2 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as scalar
                         sv_extra = sv_extra & 0b11
                     else:
                         # range is CR0-CR127 in increments of 8
                         assert sv_extra & 0b11 == 0, \
                             "vector CR %s cannot fit into EXTRA3 %s" % \
-                                (rname, str(extras[extra_idx]))
+                            (rname, str(extras[extra_idx]))
                         # all good: encode as vector (bit 3 set)
                         sv_extra = 0b100 | (sv_extra >> 2)
                 # reconstruct the actual 5-bit CR field
                 field = (field << 2) | cr_subfield
 
             else:
-                print ("no type match", rtype)
+                print("no type match", rtype)
 
             # capture the extra field info
-            log ("=>", "%5s" % bin(sv_extra), field)
+            log("=>", "%5s" % bin(sv_extra), field)
             extras[extra_idx] = sv_extra
 
             # append altered field value to v3.0b, differs for LDST
             # note that duplicates are skipped e.g. EXTRA2 contains
             # *BOTH* s:RA *AND* d:RA which happens on LD/ST-with-update
             srcdest, idx, duplicate = extra_idx
-            if duplicate: # skip adding to v3.0b fields, already added
+            if duplicate:  # skip adding to v3.0b fields, already added
                 continue
             if ldst_imm:
                 v30b_newfields.append(("%s(%s)" % (immed, str(field))))
             else:
                 v30b_newfields.append(str(field))
 
-        log ("new v3.0B fields", v30b_op, v30b_newfields)
-        log ("extras", extras)
+        log("new v3.0B fields", v30b_op, v30b_newfields)
+        log("extras", extras)
 
         # rright.  now we have all the info. start creating SVP64 RM
         svp64_rm = SVP64RMFields()
 
         # begin with EXTRA fields
         for idx, sv_extra in extras.items():
-            log (idx)
-            if idx is None: continue
-            if idx[0] == 'imm': continue
+            log(idx)
+            if idx is None:
+                continue
+            if idx[0] == 'imm':
+                continue
             srcdest, idx, duplicate = idx
             if etype == 'EXTRA2':
                 svp64_rm.extra2[idx].eq(
@@ -561,22 +566,22 @@ class SVP64Asm:
         # identify if the op is a LD/ST. the "blegh" way. copied
         # from power_enums.  TODO, split the list _insns down.
         is_ld = v30b_op in [
-        "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
-        "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
-        "lfs", "lfsx", "lfsu", "lfsux",                     # FP load single
-        "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax", # FP load double
-        "lha", "lharx", "lhau", "lhaux", "lhax",            # load half
-        "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
-        "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
-        "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
+            "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
+            "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
+            "lfs", "lfsx", "lfsu", "lfsux",                     # FP load single
+            "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax",  # FP load double
+            "lha", "lharx", "lhau", "lhaux", "lhax",            # load half
+            "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
+            "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
+            "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
         ]
         is_st = v30b_op in [
-        "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
-        "std", "stdbrx", "stdcx", "stdu", "stdux", "stdx",
-        "stfs", "stfsx", "stfsu", "stfux",                  # FP store single
-        "stfd", "stfdx", "stfdu", "stfdux", "stfiwx",       # FP store double
-        "sth", "sthbrx", "sthcx", "sthu", "sthux", "sthx",
-        "stw", "stwbrx", "stwcx", "stwu", "stwux", "stwx",
+            "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
+            "std", "stdbrx", "stdcx", "stdu", "stdux", "stdx",
+            "stfs", "stfsx", "stfsu", "stfux",                  # FP store single
+            "stfd", "stfdx", "stfdu", "stfdux", "stfiwx",       # FP store double
+            "sth", "sthbrx", "sthcx", "sthu", "sthux", "sthx",
+            "stw", "stwbrx", "stwcx", "stwu", "stwux", "stwx",
         ]
         # use this to determine if the SVP64 RM format is different.
         # see https://libre-soc.org/openpower/sv/ldst/
@@ -590,11 +595,11 @@ class SVP64Asm:
         # parts of svp64_rm
         mmode = 0  # bit 0
         pmask = 0  # bits 1-3
-        destwid = 0 # bits 4-5
-        srcwid = 0 # bits 6-7
+        destwid = 0  # bits 4-5
+        srcwid = 0  # bits 6-7
         subvl = 0   # bits 8-9
-        smask = 0 # bits 16-18 but only for twin-predication
-        mode = 0 # bits 19-23
+        smask = 0  # bits 16-18 but only for twin-predication
+        mode = 0  # bits 19-23
 
         mask_m_specified = False
         has_pmask = False
@@ -694,36 +699,36 @@ class SVP64Asm:
                 assert sv_mode is None
                 sv_mode = 0b00
                 mapreduce = True
-            elif encmode == 'crm': # CR on map-reduce
+            elif encmode == 'crm':  # CR on map-reduce
                 assert sv_mode is None
                 sv_mode = 0b00
                 mapreduce_crm = True
-            elif encmode == 'svm': # sub-vector mode
+            elif encmode == 'svm':  # sub-vector mode
                 mapreduce_svm = True
             elif is_bc:
                 if encmode == 'all':
                     bc_all = 1
-                elif encmode == 'st': # svstep mode
+                elif encmode == 'st':  # svstep mode
                     bc_step = 1
-                elif encmode == 'sr': # svstep BRc mode
+                elif encmode == 'sr':  # svstep BRc mode
                     bc_step = 1
                     bc_brc = 1
-                elif encmode == 'vs': # VLSET mode
+                elif encmode == 'vs':  # VLSET mode
                     bc_vlset = 1
-                elif encmode == 'vsi': # VLSET mode with VLI (VL inclusives)
-                    bc_vlset = 1
-                    bc_vli = 1
-                elif encmode == 'vsb': # VLSET mode with VSb
-                    bc_vlset = 1
-                    bc_vsb = 1
-                elif encmode == 'vsbi': # VLSET mode with VLI and VSb
+                elif encmode == 'vsi':  # VLSET mode with VLI (VL inclusives)
                     bc_vlset = 1
                     bc_vli = 1
+                elif encmode == 'vsb':  # VLSET mode with VSb
+                    bc_vlset = 1
                     bc_vsb = 1
-                elif encmode == 'snz': # sz (only) already set above
+                elif encmode == 'vsbi':  # VLSET mode with VLI and VSb
+                    bc_vlset = 1
+                    bc_vli = 1
+                    bc_vsb = 1
+                elif encmode == 'snz':  # sz (only) already set above
                     src_zero = 1
                     bc_snz = 1
-                elif encmode == 'lu': # LR update mode
+                elif encmode == 'lu':  # LR update mode
                     bc_lru = 1
                 else:
                     raise AssertionError("unknown encmode %s" % encmode)
@@ -751,7 +756,7 @@ class SVP64Asm:
             if has_pmask and has_smask:
                 assert smmode == pmmode, \
                     "predicate masks %s and %s must be same reg type" % \
-                        (pme, sme)
+                    (pme, sme)
 
         # sanity-check that twin-predication mask only specified in 2P mode
         if ptype == '1P':
@@ -781,8 +786,8 @@ class SVP64Asm:
         # XXX TODO: sanity-check bc modes
         if is_bc:
             sv_mode = ((bc_svstep << SVP64MODE.MOD2_MSB) |
-                      (bc_vlset << SVP64MODE.MOD2_LSB) |
-                      (bc_snz << SVP64MODE.BC_SNZ))
+                       (bc_vlset << SVP64MODE.MOD2_LSB) |
+                       (bc_snz << SVP64MODE.BC_SNZ))
             srcwid = (bc_vsb << 1) | bc_lru
             destwid = (bc_lru << 1) | bc_all
 
@@ -791,11 +796,11 @@ class SVP64Asm:
             ######################################
             # "normal" mode
             if sv_mode is None:
-                mode |= src_zero << SVP64MODE.SZ # predicate zeroing
-                mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
+                mode |= src_zero << SVP64MODE.SZ  # predicate zeroing
+                mode |= dst_zero << SVP64MODE.DZ  # predicate zeroing
                 if is_ldst:
                     # TODO: for now, LD/ST-indexed is ignored.
-                    mode |= ldst_elstride << SVP64MODE.ELS_NORMAL # el-strided
+                    mode |= ldst_elstride << SVP64MODE.ELS_NORMAL  # el-strided
                     # shifted mode
                     if ldst_shift:
                         mode |= 1 << SVP64MODE.LDST_SHIFT
@@ -809,62 +814,62 @@ class SVP64Asm:
             ######################################
             # "mapreduce" modes
             elif sv_mode == 0b00:
-                mode |= (0b1<<SVP64MODE.REDUCE) # sets mapreduce
+                mode |= (0b1 << SVP64MODE.REDUCE)  # sets mapreduce
                 assert dst_zero == 0, "dest-zero not allowed in mapreduce mode"
                 if reverse_gear:
-                    mode |= (0b1<<SVP64MODE.RG) # sets Reverse-gear mode
+                    mode |= (0b1 << SVP64MODE.RG)  # sets Reverse-gear mode
                 if mapreduce_crm:
-                    mode |= (0b1<<SVP64MODE.CRM) # sets CRM mode
+                    mode |= (0b1 << SVP64MODE.CRM)  # sets CRM mode
                     assert rc_mode, "CRM only allowed when Rc=1"
                 # bit of weird encoding to jam zero-pred or SVM mode in.
                 # SVM mode can be enabled only when SUBVL=2/3/4 (vec2/3/4)
                 if subvl == 0:
-                    mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
+                    mode |= dst_zero << SVP64MODE.DZ  # predicate zeroing
                 elif mapreduce_svm:
-                    mode |= (0b1<<SVP64MODE.SVM) # sets SVM mode
+                    mode |= (0b1 << SVP64MODE.SVM)  # sets SVM mode
 
             ######################################
             # "failfirst" modes
             elif sv_mode == 0b01:
                 assert src_zero == 0, "dest-zero not allowed in failfirst mode"
                 if failfirst == 'RC1':
-                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                    assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
+                    mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
+                    mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
+                    assert rc_mode == False, "ffirst RC1 only possible when Rc=0"
                 elif failfirst == '~RC1':
-                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                    mode |= (0b1<<SVP64MODE.INV) # ... with inversion
-                    assert rc_mode==False, "ffirst RC1 only possible when Rc=0"
+                    mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
+                    mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
+                    mode |= (0b1 << SVP64MODE.INV)  # ... with inversion
+                    assert rc_mode == False, "ffirst RC1 only possible when Rc=0"
                 else:
                     assert dst_zero == 0, "dst-zero not allowed in ffirst BO"
                     assert rc_mode, "ffirst BO only possible when Rc=1"
-                    mode |= (failfirst << SVP64MODE.BO_LSB) # set BO
+                    mode |= (failfirst << SVP64MODE.BO_LSB)  # set BO
 
             ######################################
             # "saturation" modes
             elif sv_mode == 0b10:
-                mode |= src_zero << SVP64MODE.SZ # predicate zeroing
-                mode |= dst_zero << SVP64MODE.DZ # predicate zeroing
-                mode |= (saturation << SVP64MODE.N) # signed/us saturation
+                mode |= src_zero << SVP64MODE.SZ  # predicate zeroing
+                mode |= dst_zero << SVP64MODE.DZ  # predicate zeroing
+                mode |= (saturation << SVP64MODE.N)  # signed/us saturation
 
             ######################################
             # "predicate-result" modes.  err... code-duplication from ffirst
             elif sv_mode == 0b11:
                 assert src_zero == 0, "dest-zero not allowed in predresult mode"
                 if predresult == 'RC1':
-                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                    assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
+                    mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
+                    mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
+                    assert rc_mode == False, "pr-mode RC1 only possible when Rc=0"
                 elif predresult == '~RC1':
-                    mode |= (0b1<<SVP64MODE.RC1) # sets RC1 mode
-                    mode |= (dst_zero << SVP64MODE.DZ) # predicate dst-zeroing
-                    mode |= (0b1<<SVP64MODE.INV) # ... with inversion
-                    assert rc_mode==False, "pr-mode RC1 only possible when Rc=0"
+                    mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
+                    mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
+                    mode |= (0b1 << SVP64MODE.INV)  # ... with inversion
+                    assert rc_mode == False, "pr-mode RC1 only possible when Rc=0"
                 else:
                     assert dst_zero == 0, "dst-zero not allowed in pr-mode BO"
                     assert rc_mode, "pr-mode BO only possible when Rc=1"
-                    mode |= (predresult << SVP64MODE.BO_LSB) # set BO
+                    mode |= (predresult << SVP64MODE.BO_LSB)  # set BO
 
         # whewww.... modes all done :)
         # now put into svp64_rm
@@ -893,25 +898,27 @@ class SVP64Asm:
         # nice debug printout. (and now for something completely different)
         # https://youtu.be/u0WOIwlXE9g?t=146
         svp64_rm_value = svp64_rm.spr.value
-        log ("svp64_rm", hex(svp64_rm_value), bin(svp64_rm_value))
-        log ("    mmode  0    :", bin(mmode))
-        log ("    pmask  1-3  :", bin(pmask))
-        log ("    dstwid 4-5  :", bin(destwid))
-        log ("    srcwid 6-7  :", bin(srcwid))
-        log ("    subvl  8-9  :", bin(subvl))
-        log ("    mode   19-23:", bin(mode))
-        offs = 2 if etype == 'EXTRA2' else 3 # 2 or 3 bits
+        log("svp64_rm", hex(svp64_rm_value), bin(svp64_rm_value))
+        log("    mmode  0    :", bin(mmode))
+        log("    pmask  1-3  :", bin(pmask))
+        log("    dstwid 4-5  :", bin(destwid))
+        log("    srcwid 6-7  :", bin(srcwid))
+        log("    subvl  8-9  :", bin(subvl))
+        log("    mode   19-23:", bin(mode))
+        offs = 2 if etype == 'EXTRA2' else 3  # 2 or 3 bits
         for idx, sv_extra in extras.items():
-            if idx is None: continue
-            if idx[0] == 'imm': continue
+            if idx is None:
+                continue
+            if idx[0] == 'imm':
+                continue
             srcdest, idx, duplicate = idx
             start = (10+idx*offs)
             end = start + offs-1
-            log ("    extra%d %2d-%2d:" % (idx, start, end),
-                    bin(sv_extra))
+            log("    extra%d %2d-%2d:" % (idx, start, end),
+                bin(sv_extra))
         if ptype == '2P':
-            log ("    smask  16-17:", bin(smask))
-        log ()
+            log("    smask  16-17:", bin(smask))
+        log()
 
         # first, construct the prefix from its subfields
         svp64_prefix = SVP64PrefixFields()
@@ -926,10 +933,10 @@ class SVP64Asm:
         # argh, sv.fmadds etc. need to be done manually
         if v30b_op == 'ffmadds':
             opcode = 59 << (32-6)    # bits 0..6 (MSB0)
-            opcode |= int(v30b_newfields[0]) << (32-11) # FRT
-            opcode |= int(v30b_newfields[1]) << (32-16) # FRA
-            opcode |= int(v30b_newfields[2]) << (32-21) # FRB
-            opcode |= int(v30b_newfields[3]) << (32-26) # FRC
+            opcode |= int(v30b_newfields[0]) << (32-11)  # FRT
+            opcode |= int(v30b_newfields[1]) << (32-16)  # FRA
+            opcode |= int(v30b_newfields[2]) << (32-21)  # FRB
+            opcode |= int(v30b_newfields[3]) << (32-26)  # FRC
             opcode |= 0b00101 << (32-31)   # bits 26-30
             if rc:
                 opcode |= 1  # Rc, bit 31.
@@ -937,10 +944,10 @@ class SVP64Asm:
         # argh, sv.fdmadds need to be done manually
         elif v30b_op == 'fdmadds':
             opcode = 59 << (32-6)    # bits 0..6 (MSB0)
-            opcode |= int(v30b_newfields[0]) << (32-11) # FRT
-            opcode |= int(v30b_newfields[1]) << (32-16) # FRA
-            opcode |= int(v30b_newfields[2]) << (32-21) # FRB
-            opcode |= int(v30b_newfields[3]) << (32-26) # FRC
+            opcode |= int(v30b_newfields[0]) << (32-11)  # FRT
+            opcode |= int(v30b_newfields[1]) << (32-16)  # FRA
+            opcode |= int(v30b_newfields[2]) << (32-21)  # FRB
+            opcode |= int(v30b_newfields[3]) << (32-26)  # FRC
             opcode |= 0b01111 << (32-31)   # bits 26-30
             if rc:
                 opcode |= 1  # Rc, bit 31.
@@ -948,9 +955,9 @@ class SVP64Asm:
         # argh, sv.ffadds etc. need to be done manually
         elif v30b_op == 'ffadds':
             opcode = 59 << (32-6)    # bits 0..6 (MSB0)
-            opcode |= int(v30b_newfields[0]) << (32-11) # FRT
-            opcode |= int(v30b_newfields[1]) << (32-16) # FRA
-            opcode |= int(v30b_newfields[2]) << (32-21) # FRB
+            opcode |= int(v30b_newfields[0]) << (32-11)  # FRT
+            opcode |= int(v30b_newfields[1]) << (32-16)  # FRA
+            opcode |= int(v30b_newfields[2]) << (32-21)  # FRB
             opcode |= 0b01101 << (32-31)   # bits 26-30
             if rc:
                 opcode |= 1  # Rc, bit 31.
@@ -958,43 +965,43 @@ class SVP64Asm:
         # sigh have to do svstep here manually for now...
         elif opcode in ["svstep", "svstep."]:
             insn = 22 << (31-5)          # opcode 22, bits 0-5
-            insn |= int(v30b_newfields[0]) << (31-10) # RT       , bits 6-10
-            insn |= int(v30b_newfields[1]) << (31-22) # SVi      , bits 16-22
-            insn |= int(v30b_newfields[2]) << (31-25) # vf       , bit  25
-            insn |= 0b00011   << (31-30) # XO       , bits 26..30
+            insn |= int(v30b_newfields[0]) << (31-10)  # RT       , bits 6-10
+            insn |= int(v30b_newfields[1]) << (31-22)  # SVi      , bits 16-22
+            insn |= int(v30b_newfields[2]) << (31-25)  # vf       , bit  25
+            insn |= 0b00011 << (31-30)  # XO       , bits 26..30
             if opcode == 'svstep.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("svstep", bin(insn))
+            log("svstep", bin(insn))
             yield ".long 0x%x" % insn
 
         elif v30b_op in ["setvl", "setvl."]:
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
-            insn |= fields[0] << (31-10) # RT       , bits 6-10
-            insn |= fields[1] << (31-15) # RA       , bits 11-15
-            insn |= (fields[2]-1) << (31-22) # SVi      , bits 16-22
-            insn |= fields[3] << (31-25) # ms       , bit  25
-            insn |= fields[4] << (31-24) # vs       , bit  24
-            insn |= fields[5] << (31-23) # vf       , bit  23
-            insn |= 0b00000   << (31-30) # XO       , bits 26..30
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= fields[1] << (31-15)  # RA       , bits 11-15
+            insn |= (fields[2]-1) << (31-22)  # SVi      , bits 16-22
+            insn |= fields[3] << (31-25)  # ms       , bit  25
+            insn |= fields[4] << (31-24)  # vs       , bit  24
+            insn |= fields[5] << (31-23)  # vf       , bit  23
+            insn |= 0b00000 << (31-30)  # XO       , bits 26..30
             if opcode == 'setvl.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("setvl", bin(insn))
+            log("setvl", bin(insn))
             yield ".long 0x%x" % insn
 
         elif v30b_op in ["fcoss", "fcoss."]:
-            insn = 59            << (31-5)  # opcode 59, bits 0-5
-            insn |= int(v30b_newfields[0]) << (31-10) # RT       , bits 6-10
-            insn |= int(v30b_newfields[1]) << (31-20) # RB       , bits 16-20
-            insn |= 0b1000101110 << (31-30) # XO       , bits 21..30
+            insn = 59 << (31-5)  # opcode 59, bits 0-5
+            insn |= int(v30b_newfields[0]) << (31-10)  # RT       , bits 6-10
+            insn |= int(v30b_newfields[1]) << (31-20)  # RB       , bits 16-20
+            insn |= 0b1000101110 << (31-30)  # XO       , bits 21..30
             if opcode == 'fcoss.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log ("fcoss", bin(insn))
+            log("fcoss", bin(insn))
             yield ".long 0x%x" % insn
 
         else:
             yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
-        log ("new v3.0B fields", v30b_op, v30b_newfields)
+        log("new v3.0B fields", v30b_op, v30b_newfields)
 
     def translate(self, lst):
         for insn in lst:
@@ -1003,38 +1010,38 @@ class SVP64Asm:
 
 def macro_subst(macros, txt):
     again = True
-    print ("subst", txt, macros)
+    print("subst", txt, macros)
     while again:
         again = False
         for macro, value in macros.items():
             if macro == txt:
                 again = True
                 replaced = txt.replace(macro, value)
-                print ("macro", txt, "replaced", replaced, macro, value)
+                print("macro", txt, "replaced", replaced, macro, value)
                 txt = replaced
                 continue
             toreplace = '%s.s' % macro
             if toreplace == txt:
                 again = True
                 replaced = txt.replace(toreplace, "%s.s" % value)
-                print ("macro", txt, "replaced", replaced, toreplace, value)
+                print("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
             toreplace = '%s.v' % macro
             if toreplace == txt:
                 again = True
                 replaced = txt.replace(toreplace, "%s.v" % value)
-                print ("macro", txt, "replaced", replaced, toreplace, value)
+                print("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
             toreplace = '(%s)' % macro
             if toreplace in txt:
                 again = True
                 replaced = txt.replace(toreplace, '(%s)' % value)
-                print ("macro", txt, "replaced", replaced, toreplace, value)
+                print("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
-    print ("    processed", txt)
+    print("    processed", txt)
     return txt
 
 
@@ -1059,7 +1066,7 @@ def asm_process():
         # read the whole lot in advance in case of in-place
         lines = list(infile.readlines())
     elif len(args) != 2:
-        print ("pysvp64asm [infile | -] [outfile | -]")
+        print("pysvp64asm [infile | -] [outfile | -]")
         exit(0)
     else:
         if args[0] == '--':
@@ -1075,7 +1082,7 @@ def asm_process():
             outfile = open(args[1], "w")
 
     # read the line, look for "sv", process it
-    macros = {} # macros which start ".set"
+    macros = {}  # macros which start ".set"
     isa = SVP64Asm([])
     for line in lines:
         ls = line.split("#")
@@ -1094,7 +1101,7 @@ def asm_process():
         if len(ls) != 2:
             outfile.write(line)
             continue
-        potential= ls[1].strip()
+        potential = ls[1].strip()
         if not potential.startswith("sv."):
             outfile.write(line)
             continue
@@ -1108,64 +1115,64 @@ def asm_process():
 
 if __name__ == '__main__':
     lst = ['slw 3, 1, 4',
-                 'extsw 5, 3',
-                 'sv.extsw 5, 3',
-                 'sv.cmpi 5, 1, 3, 2',
-                 'sv.setb 5, 31',
-                 'sv.isel 64.v, 3, 2, 65.v',
-                 'sv.setb/dm=r3/sm=1<<r3 5, 31',
-                 'sv.setb/m=r3 5, 31',
-                 'sv.setb/vec2 5, 31',
-                 'sv.setb/sw=8/ew=16 5, 31',
-                 'sv.extsw./ff=eq 5, 31',
-                 'sv.extsw./satu/sz/dz/sm=r3/dm=r3 5, 31',
-                 'sv.extsw./pr=eq 5.v, 31',
-                 'sv.add. 5.v, 2.v, 1.v',
-                 'sv.add./m=r3 5.v, 2.v, 1.v',
-                ]
+           'extsw 5, 3',
+           'sv.extsw 5, 3',
+           'sv.cmpi 5, 1, 3, 2',
+           'sv.setb 5, 31',
+           'sv.isel 64.v, 3, 2, 65.v',
+           'sv.setb/dm=r3/sm=1<<r3 5, 31',
+           'sv.setb/m=r3 5, 31',
+           'sv.setb/vec2 5, 31',
+           'sv.setb/sw=8/ew=16 5, 31',
+           'sv.extsw./ff=eq 5, 31',
+           'sv.extsw./satu/sz/dz/sm=r3/dm=r3 5, 31',
+           'sv.extsw./pr=eq 5.v, 31',
+           'sv.add. 5.v, 2.v, 1.v',
+           'sv.add./m=r3 5.v, 2.v, 1.v',
+           ]
     lst += [
-                 'sv.stw 5.v, 4(1.v)',
-                 'sv.ld 5.v, 4(1.v)',
-                 'setvl. 2, 3, 4, 0, 1, 1',
-                 'sv.setvl. 2, 3, 4, 0, 1, 1',
-          ]
-    lst = [
-            "sv.stfsu 0.v, 16(4.v)",
+        'sv.stw 5.v, 4(1.v)',
+        'sv.ld 5.v, 4(1.v)',
+        'setvl. 2, 3, 4, 0, 1, 1',
+        'sv.setvl. 2, 3, 4, 0, 1, 1',
     ]
     lst = [
-            "sv.stfsu/els 0.v, 16(4)",
+        "sv.stfsu 0.v, 16(4.v)",
     ]
     lst = [
-             'sv.add./mr 5.v, 2.v, 1.v',
+        "sv.stfsu/els 0.v, 16(4)",
+    ]
+    lst = [
+        'sv.add./mr 5.v, 2.v, 1.v',
     ]
     macros = {'win2': '50', 'win': '60'}
     lst = [
-             'sv.addi win2.v, win.v, -1',
-             'sv.add./mrr 5.v, 2.v, 1.v',
-             #'sv.lhzsh 5.v, 11(9.v), 15',
-             #'sv.lwzsh 5.v, 11(9.v), 15',
-             'sv.ffmadds 6.v, 2.v, 4.v, 6.v',
+        'sv.addi win2.v, win.v, -1',
+        'sv.add./mrr 5.v, 2.v, 1.v',
+        #'sv.lhzsh 5.v, 11(9.v), 15',
+        #'sv.lwzsh 5.v, 11(9.v), 15',
+        'sv.ffmadds 6.v, 2.v, 4.v, 6.v',
     ]
     lst = [
-             #'sv.fmadds 0.v, 8.v, 16.v, 4.v',
-             #'sv.ffadds 0.v, 8.v, 4.v',
-             'svremap 11, 0, 1, 2, 3, 2, 1',
-             'svshape 8, 1, 1, 1, 0',
-             'svshape 8, 1, 1, 1, 1',
-            ]
+        #'sv.fmadds 0.v, 8.v, 16.v, 4.v',
+        #'sv.ffadds 0.v, 8.v, 4.v',
+        'svremap 11, 0, 1, 2, 3, 2, 1',
+        'svshape 8, 1, 1, 1, 0',
+        'svshape 8, 1, 1, 1, 1',
+    ]
     lst = [
-             #'sv.lfssh 4.v, 11(8.v), 15',
-             #'sv.lwzsh 4.v, 11(8.v), 15',
-             #'sv.svstep. 2.v, 4, 0',
-             #'sv.fcfids. 48.v, 64.v',
-             'sv.fcoss. 80.v, 0.v',
-             'sv.fcoss. 20.v, 0.v',
-        ]
+        #'sv.lfssh 4.v, 11(8.v), 15',
+        #'sv.lwzsh 4.v, 11(8.v), 15',
+        #'sv.svstep. 2.v, 4, 0',
+        #'sv.fcfids. 48.v, 64.v',
+        'sv.fcoss. 80.v, 0.v',
+        'sv.fcoss. 20.v, 0.v',
+    ]
     lst = [
         'sv.bc/all 3,12,192',
         'sv.bclr/vsbi 3,81.v,192',
     ]
     isa = SVP64Asm(lst, macros=macros)
-    print ("list", list(isa))
+    print("list", list(isa))
     csvs = SVP64RM()
-    #asm_process()
+    # asm_process()
