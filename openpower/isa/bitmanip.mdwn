@@ -10,11 +10,8 @@ TLI-Form
 Pseudo-code:
 
     result <- [0] * XLEN
-    idx <- [0] * 3
     do i = 0 to XLEN - 1
-      idx[0] <- (RT)[i]
-      idx[1] <- (RA)[i]
-      idx[2] <- (RB)[i]
+      idx <- (RT)[i] || (RA)[i] || (RB)[i]
       result[i] <- (TLI & ROTL64(1, idx)) != 0
     RT <- result
 
