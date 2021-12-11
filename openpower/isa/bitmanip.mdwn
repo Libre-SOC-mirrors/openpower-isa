@@ -12,7 +12,7 @@ Pseudo-code:
     result <- [0] * XLEN
     do i = 0 to XLEN - 1
       idx <- (RT)[i] || (RA)[i] || (RB)[i]
-      result[i] <- (TLI & ROTL64(1, idx)) != 0
+      result[i] <- TLI[7-idx]
     RT <- result
 
 Special Registers Altered:
