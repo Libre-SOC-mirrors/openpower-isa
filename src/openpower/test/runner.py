@@ -131,7 +131,7 @@ class TestRunnerBase(FHDLTestCase):
             # do not wire these up to anything if wb_get is to be used
             if self.rom is not None:
                 ldst_ifacetype = 'mmu_cache_wb'
-                imem_ifacetype = 'bare_wb'
+                imem_ifacetype = 'mmu_cache_wb'
             else:
                 ldst_ifacetype = 'test_mmu_cache_wb'
                 imem_ifacetype = 'test_bare_wb'
