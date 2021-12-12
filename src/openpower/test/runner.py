@@ -16,6 +16,7 @@ related bugs:
 
 from nmigen import Module, ClockSignal
 from copy import copy
+from pprint import pprint
 
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
 # Also, check out the cxxsim nmigen branch, and latest yosys from git
@@ -466,6 +467,8 @@ class TestRunnerBase(FHDLTestCase):
         # optionally, if a wishbone-based ROM is passed in, run that as an
         # extra emulated process
         if self.rom is not None:
+            print ("TestRunner with MMU ROM")
+            pprint (self.rom)
             dcache = hdlrun.issuer.core.fus.fus["mmu0"].alu.dcache
             icache = hdlrun.issuer.core.fus.fus["mmu0"].alu.icache
             default_mem = self.rom
