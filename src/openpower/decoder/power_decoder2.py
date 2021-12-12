@@ -1509,9 +1509,12 @@ class PowerDecode2(PowerDecodeSubset):
         # absolute top priority: check for an instruction failed
         with m.If(self.instr_fault):
             comb += self.e.eq(0)  # reset eeeeeverything
+            comb += self.do_copy("insn", self.dec.opcode_in, True)
             comb += self.do_copy("insn_type", MicrOp.OP_FETCH_FAILED, True)
             comb += self.do_copy("fn_unit", Function.MMU, True)
             comb += self.do_copy("nia", self.state.pc, True)  # PC
+            # special override on internal_op, due to being a "fake" op
+            comb += self.dec.op.internal_op.eq(MicrOp.OP_FETCH_FAILED)
 
         # LD/ST exceptions.  TestIssuer copies the exception info at us
         # after a failed LD/ST.
