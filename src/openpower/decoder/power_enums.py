@@ -593,6 +593,8 @@ XER_bits = {
     'CA32': 45
 }
 
+MSRSpec = namedtuple("MSRSpec", ["dr", "pr", "sf"])
+
 if __name__ == '__main__':
     # find out what the heck is in SPR enum :)
     print("sprs full", len(SPRfull))
