@@ -155,7 +155,7 @@ void imdct36(float *out, float *buf, float *in, const float *win)
         t0 = tmp[i];
         if (predicate) t1 = tmp[i + 2]; else t1 = 0.0;
         s0 = t1 + t0;
-        if (predicate) s2 = t1 - t0; else t1 = 0.0;
+        if (predicate) s2 = t1 - t0; else s2 = 0.0;
 
         t2 = tmp[i + 1];
         if (predicate) t3 = tmp[i + 3]; else t3 = 0.0;
