@@ -32,6 +32,7 @@ from openpower.decoder.power_decoder2 import PowerDecode2
 from soc.config.test.test_loadstore import TestMemPspec
 from nmutil.util import wrap
 from openpower.test.wb_get import wb_get
+import openpower.test.wb_get as wbget
 from openpower.test.state import TestState, StateRunner, ExpectedState
 
 
@@ -160,6 +161,10 @@ class TestRunnerBase(FHDLTestCase):
         # for setup and running
         # The methods contained in the respective Runner classes are
         # called using this list when possible
+
+        # allow wb_get to run
+        if self.rom is not None:
+            wbget.stop = False
 
         state_list = []
 
@@ -313,6 +318,10 @@ class TestRunnerBase(FHDLTestCase):
 
             for runner in state_list:
                 yield from runner.cleanup() # TODO, some arguments?
+
+            # finally stop wb_get from going
+            if self.rom is not None:
+                wbget.stop = True
 
         styles = {
             'dec': {'base': 'dec'},
