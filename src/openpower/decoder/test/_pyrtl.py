@@ -1,6 +1,8 @@
 import os
 import shutil
 import tempfile
+import importlib
+from cffi import FFI
 from contextlib import contextmanager
 
 from nmigen.hdl.ast import SignalSet
@@ -195,7 +197,7 @@ class _RHSValueCompiler(_ValueCompiler):
         elif len(value.operands) == 3:
             if value.operator == "m":
                 sel, val1, val0 = value.operands
-                return f"({self(val1)} if {mask(sel)} else {self(val0)})"
+                return f"(({mask(sel)}) ? ({self(val1)}) : ({self(val0)}))"
         raise NotImplementedError("Operator '{}' not implemented".format(value.operator)) # :nocov:
 
     def on_Slice(self, value):
@@ -454,14 +456,54 @@ class _FragmentCompiler:
                     signal_index = self.state.get_signal(signal)
                     emitter.append(f"set(&slots[{signal_index}], next_{signal_index});")
 
-            # There shouldn't be any exceptions raised by the generated code, but if there are
-            # (almost certainly due to a bug in the code generator), use this environment variable
-            # to make backtraces useful.
-            code = emitter.flush()
+            code = ""
+            code += "#include <stdint.h>\n"
+            code += "typedef struct slot_t\n"
+            code += "{\n"
+            code += "    uint64_t curr;\n"
+            code += "    uint64_t next;\n"
+            code += "} slot_t;\n"
 
-            file = open(f"crtl/{id(fragment)}_{domain_name or ''}_{index}.c", "w")
+            code += f"slot_t slots[{len(self.state.slots)}] =\n"
+            code += "{\n"
+
+            for slot in self.state.slots:
+                code += "    {" + str(slot.curr) + ", " + str(slot.next) + "},\n"
+
+            code += "};\n"
+
+            code += "void set(slot_t *slot, uint64_t value)\n"
+            code += "{\n"
+            code += "    if (slot->next == value)\n"
+            code += "        return;\n"
+            code += "    slot->next = value;\n"
+            code += "}\n"
+
+            code += emitter.flush()
+
+            try:
+                os.mkdir("crtl")
+            except FileExistsError:
+                pass
+
+            basename = f"{id(fragment)}_{domain_name or ''}_{index}"
+
+            file = open(f"crtl/{basename}.c", "w")
             file.write(code)
             file.close()
+
+            cdef = "void run(void);"
+
+            ffibuilder = FFI()
+            ffibuilder.cdef(cdef)
+            ffibuilder.set_source(f"crtl._{basename}",
+                                  cdef,
+                                  sources=[f"crtl/{basename}.c"],
+                                  include_dirs=["/usr/include/python3.7m"])
+            ffibuilder.compile(verbose=True)
+
+            domain_process.run = importlib.import_module(f"crtl._{basename}").lib.run
+            processes.add(domain_process)
 
         for subfragment_index, (subfragment, subfragment_name) in enumerate(fragment.subfragments):
             if subfragment_name is None:
