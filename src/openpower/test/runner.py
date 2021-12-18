@@ -306,9 +306,13 @@ class TestRunnerBase(FHDLTestCase):
                         # do actual comparison, against last item
                         last_sim.compare(test.expected)
 
+                    # check number of instructions run (sanity)
                     if self.run_hdl and self.run_sim:
-                        self.assertTrue(len(hdl_states) == len(sim_states),
-                                    "number of instructions run not the same")
+                        n_hdl = len(hdl_states)
+                        n_sim = len(sim_states)
+                        self.assertTrue(n_hdl == n_sim,
+                                    "number of instructions %d %d "
+                                    "run not the same" % (n_hdl, n_sim))
 
                 ###### END OF A TEST #######
                 # StateRunner.end_test()
