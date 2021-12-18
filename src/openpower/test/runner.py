@@ -483,7 +483,7 @@ class TestRunnerBase(FHDLTestCase):
             default_mem = self.rom
             sim.add_sync_process(wrap(wb_get(dcache.bus,
                                              default_mem, "DCACHE")))
-            sim.add_sync_process(wrap(wb_get(icache.ibus,
+            sim.add_sync_process(wrap(wb_get(icache.bus,
                                              default_mem, "ICACHE")))
 
         with sim.write_vcd("issuer_simulator.vcd"):
