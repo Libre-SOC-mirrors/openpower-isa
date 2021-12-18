@@ -151,6 +151,7 @@ class TestRunnerBase(FHDLTestCase):
                              xics=False,
                              gpio=False,
                              regreduce=not self.allow_overlap,
+                             core_domain="sync", # no alternative domain
                              svp64=self.svp64,
                              allow_overlap=self.allow_overlap,
                              mmu=self.microwatt_mmu,
@@ -181,6 +182,8 @@ class TestRunnerBase(FHDLTestCase):
         # but Simulation-only fails without it
         intclk = ClockSignal("coresync")
         comb += intclk.eq(ClockSignal())
+        dbgclk = ClockSignal("dbgsync")
+        comb += dbgclk.eq(ClockSignal())
 
         # nmigen Simulation - everything runs around this, so it
         # still has to be created.
