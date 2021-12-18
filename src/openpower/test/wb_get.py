@@ -1,10 +1,11 @@
 """useful function for emulating a wishbone interface
 """
+from nmigen.sim import Settle
 
 stop = False
 
 def wb_get(wb, mem, name=None):
-    """simulator process for getting memory load requests
+    """simulator process for emulating wishbone (classic) out of a dictionary
     """
     if name is None:
         name = ""
@@ -23,12 +24,13 @@ def wb_get(wb, mem, name=None):
             yield
         addr = (yield wb.adr) << 3
         if addr not in mem:
-            print ("    %s WB LOOKUP NO entry @ %x, returning zero" % \
+            print ("    %s WB NO entry @ %x, returning zero" % \
                         (name, addr))
 
         # read or write?
         we = (yield wb.we)
         if we:
+            # WRITE
             store = (yield wb.dat_w)
             sel = (yield wb.sel)
             data = mem.get(addr, 0)
@@ -41,12 +43,14 @@ def wb_get(wb, mem, name=None):
                 else:
                     res |= data & mask
             mem[addr] = res
-            print ("    %s set %x mask %x data %x" % (name, addr, sel, res))
+            print ("    %s WB set %x mask %x data %x" % (name, addr, sel, res))
         else:
+            # READ
             data = mem.get(addr, 0)
             yield wb.dat_r.eq(data)
-            print ("    %s get %x data %x" % (name, addr, data))
+            print ("    %s WB get %x data %x" % (name, addr, data))
 
+        # a dumb "single-ack", this is non-pipeline
         yield wb.ack.eq(1)
         yield
         yield wb.ack.eq(0)
