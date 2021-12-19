@@ -1027,7 +1027,18 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             elif e.args[0] == 'invalid':         # invalid
                # run a Trap but set DAR first
                 log ("RADIX MMU memory invalid error, mode %s" % e.mode)
-                self.call_trap(0x300, PIb.PRIV)    # 0x300, privileged
+                if e.mode == 'EXECUTE':
+                    # XXX TODO: must set a few bits in SRR1,
+                    # see microwatt loadstore1.vhdl
+                    # if m_in.segerr = '0' then
+                    #     v.srr1(47 - 33) := m_in.invalid;
+                    #     v.srr1(47 - 35) := m_in.perm_error; -- noexec fault
+                    #     v.srr1(47 - 44) := m_in.badtree;
+                    #     v.srr1(47 - 45) := m_in.rc_error;
+                    #     v.intr_vec := 16#400#;
+                    # else
+                    #     v.intr_vec := 16#480#;
+                    self.call_trap(0x400, PIb.PRIV)    # 0x400, privileged
                 return
             # not supported yet:
             raise e                          # ... re-raise
