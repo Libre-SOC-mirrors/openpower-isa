@@ -1026,7 +1026,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 return
             elif e.args[0] == 'invalid':         # invalid
                # run a Trap but set DAR first
-                log ("RADIX MMU memory invalid error")
+                log ("RADIX MMU memory invalid error, mode %s" % e.mode)
                 self.call_trap(0x300, PIb.PRIV)    # 0x300, privileged
                 return
             # not supported yet:

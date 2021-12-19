@@ -293,13 +293,14 @@ class RADIX:
 
     def ld(self, address, width=8, swap=True, check_in_mem=False,
                  instr_fetch=False):
-        print("RADIX: ld from addr 0x%x width %d" % (address, width))
-
-        priv = ~(self.msr[MSRb.PR].value) # problem-state ==> privileged
         if instr_fetch:
             mode = 'EXECUTE'
         else:
             mode = 'LOAD'
+        print("RADIX: ld from addr 0x%x width %d mode %s" % \
+               (address, width, mode))
+
+        priv = ~(self.msr[MSRb.PR].value) # problem-state ==> privileged
         addr = SelectableInt(address, 64)
         pte = self._walk_tree(addr, mode, priv)
 
@@ -444,7 +445,9 @@ class RADIX:
 
         # WIP
         if mbits == 0:
-            raise MemException("invalid")
+            exc = MemException("invalid")
+            exc.mode = mode
+            raise exc
 
         # mask_size := mbits(4 downto 0);
         mask_size = mbits[0:5]
@@ -487,7 +490,9 @@ class RADIX:
 
             print("    valid, leaf", valid, leaf)
             if not valid:
-                raise MemException("invalid")
+                exc = MemException("invalid")
+                exc.mode = mode
+                raise exc
             if leaf:
                 print ("is leaf, checking perms")
                 ok = self._check_perms(data, priv, mode)
