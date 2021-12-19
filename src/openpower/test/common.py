@@ -104,7 +104,8 @@ class TestAccumulatorBase:
                  initial_cr=0, initial_msr=0,
                  initial_mem=None,
                  initial_svstate=0,
-                 expected=None):
+                 expected=None,
+                 stop_at_pc=None):
 
         test_name = inspect.stack()[1][3]  # name of caller of this function
         # name of file containing test case
@@ -116,6 +117,7 @@ class TestAccumulatorBase:
                       mem=initial_mem,
                       svstate=initial_svstate,
                       expected=expected,
+                      stop_at_pc=stop_at_pc,
                       test_file=test_file)
 
         self.test_data.append(tc)
@@ -128,6 +130,7 @@ class TestCase:
                  extra_break_addr=None,
                  svstate=0,
                  expected=None,
+                 stop_at_pc=None,
                  test_file=None):
 
         self.program = program
@@ -148,6 +151,7 @@ class TestCase:
         self.extra_break_addr = extra_break_addr
         self.svstate = svstate
         self.expected = expected # expected results from the test
+        self.stop_at_pc = stop_at_pc # hard-stop address (do not attempt to run)
         self.test_file = test_file
 
 
