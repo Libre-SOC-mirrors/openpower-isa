@@ -469,8 +469,12 @@ class TestRunnerBase(FHDLTestCase):
                 'core.l0.pimem.bus__dat_we',
             ]
 
-        write_gtkw("issuer_simulator.gtkw",
-                   "issuer_simulator.vcd",
+        gtkname = "issuer_simulator"
+        if self.rom:
+            gtkname += "_mmu"
+
+        write_gtkw("%s.gtkw" % gtkname,
+                   "%s.vcd" % gtkname,
                    traces, styles, module='top.issuer')
 
         # add run of instructions
@@ -493,5 +497,5 @@ class TestRunnerBase(FHDLTestCase):
             sim.add_sync_process(wrap(wb_get(icache.ibus,
                                              default_mem, "ICACHE")))
 
-        with sim.write_vcd("issuer_simulator.vcd"):
+        with sim.write_vcd("%s.vcd" % gtkname):
             sim.run()
