@@ -405,7 +405,7 @@ class _StatementCompiler(StatementVisitor, _Compiler):
         output_indexes = [state.get_signal(signal) for signal in stmt._lhs_signals()]
         emitter = _PythonEmitter()
         for signal_index in output_indexes:
-            emitter.append(f"next_{signal_index} = slots[{signal_index}].next")
+            emitter.append(f"uint64_t next_{signal_index} = slots[{signal_index}].next")
         compiler = cls(state, emitter)
         compiler(stmt)
         for signal_index in output_indexes:
@@ -471,7 +471,7 @@ class _FragmentCompiler:
 
                     for signal in domain_signals:
                         signal_index = self.state.get_signal(signal)
-                        emitter.append(f"next_{signal_index} = slots[{signal_index}].next;")
+                        emitter.append(f"uint64_t next_{signal_index} = slots[{signal_index}].next;")
 
                     _StatementCompiler(self.state, emitter)(domain_stmts)
 
