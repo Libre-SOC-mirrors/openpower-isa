@@ -412,6 +412,29 @@ class _StatementCompiler(StatementVisitor, _Compiler):
             emitter.append(f"slots[{signal_index}].set(next_{signal_index})")
         return emitter.flush()
 
+# TODO: for use in the linux kernel stdint.h will not be available. ok for now
+code_hdr = """\
+#include <stdint.h>
+typedef struct slot_t
+{
+    uint64_t curr;
+    uint64_t next;
+} slot_t;
+slot_t slots[%d] =
+{
+"""
+
+code_ftr = """\
+};
+
+static void set(slot_t *slot, uint64_t value)
+{
+    if (slot->next == value)
+        return;
+    slot->next = value;
+}
+"""
+
 
 class _FragmentCompiler:
     def __init__(self, state):
@@ -456,29 +479,11 @@ class _FragmentCompiler:
                     signal_index = self.state.get_signal(signal)
                     emitter.append(f"set(&slots[{signal_index}], next_{signal_index});")
 
-            code = ""
-            code += "#include <stdint.h>\n"
-            code += "typedef struct slot_t\n"
-            code += "{\n"
-            code += "    uint64_t curr;\n"
-            code += "    uint64_t next;\n"
-            code += "} slot_t;\n"
-
-            code += f"slot_t slots[{len(self.state.slots)}] =\n"
-            code += "{\n"
-
+            # create code header, slots, footer, followed by emit actual code
+            code = code_hdr % len(self.state.slots)
             for slot in self.state.slots:
-                code += "    {" + str(slot.curr) + ", " + str(slot.next) + "},\n"
-
-            code += "};\n"
-
-            code += "void set(slot_t *slot, uint64_t value)\n"
-            code += "{\n"
-            code += "    if (slot->next == value)\n"
-            code += "        return;\n"
-            code += "    slot->next = value;\n"
-            code += "}\n"
-
+                code += "    {%s, %s},\n" % (str(slot.curr), str(slot.next))
+            code += code_ftr
             code += emitter.flush()
 
             try:
