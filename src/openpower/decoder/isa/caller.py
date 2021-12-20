@@ -1039,6 +1039,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                     # else
                     #     v.intr_vec := 16#480#;
                     self.call_trap(0x400, PIb.PRIV)    # 0x400, privileged
+                else:
+                    self.call_trap(0x300, PIb.PRIV)    # 0x300, privileged
                 return
             # not supported yet:
             raise e                          # ... re-raise
