@@ -15,7 +15,7 @@ related bugs:
 """
 
 from nmigen import Module, ClockSignal
-from copy import copy
+from copy import copy, deepcopy
 from pprint import pprint
 
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
@@ -204,6 +204,13 @@ class TestRunnerBase(FHDLTestCase):
                 with self.subTest(test.name):
 
                     ###### PREPARATION PHASE AT START OF TEST #######
+
+                    # HACK: if there is test memory and wb_get is in use,
+                    # overwrite (reset) the wb_get memory dictionary with
+                    # the test's memory contents
+                    if self.rom is not None and test.mem is not None:
+                        self.default_mem.clear()
+                        self.default_mem.update(deepcopy(test.mem))
 
                     for runner in state_list:
                         yield from runner.prepare_for_test(test)
@@ -491,11 +498,11 @@ class TestRunnerBase(FHDLTestCase):
             pprint (self.rom)
             dcache = hdlrun.issuer.core.fus.fus["mmu0"].alu.dcache
             icache = hdlrun.issuer.core.fus.fus["mmu0"].alu.icache
-            default_mem = self.rom
+            self.default_mem = deepcopy(self.rom)
             sim.add_sync_process(wrap(wb_get(dcache.bus,
-                                             default_mem, "DCACHE")))
+                                             self.default_mem, "DCACHE")))
             sim.add_sync_process(wrap(wb_get(icache.ibus,
-                                             default_mem, "ICACHE")))
+                                             self.default_mem, "ICACHE")))
 
         with sim.write_vcd("%s.vcd" % gtkname):
             sim.run()
