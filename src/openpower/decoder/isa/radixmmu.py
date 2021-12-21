@@ -297,19 +297,19 @@ class RADIX:
             mode = 'EXECUTE'
         else:
             mode = 'LOAD'
-        print("RADIX: ld from addr 0x%x width %d mode %s" % \
-               (address, width, mode))
-
         priv = ~(self.msr[MSRb.PR].value) # problem-state ==> privileged
+        virt = (self.msr[MSRb.DR].value)  # DR -> virtual
+        print("RADIX: ld from addr 0x%x width %d mode %s "
+               "priv %d virt %d" % (address, width, mode, priv, virt))
+
+        # virtual mode does a lookup to new address, otherwise use real addr
         addr = SelectableInt(address, 64)
-        pte = self._walk_tree(addr, mode, priv)
+        if virt:
+            addr = self._walk_tree(addr, mode, priv)
+        addr = addr.value
 
-        if type(pte)==str:
-            print("error on load",pte)
-            return 0
-
-        # use pte to load from phys address
-        data = self.mem.ld(pte.value, width, swap, check_in_mem)
+        # use address to load from phys address
+        data = self.mem.ld(addr, width, swap, check_in_mem)
         self.last_ld_addr = self.mem.last_ld_addr
 
         # XXX set SPRs on error
@@ -317,15 +317,21 @@ class RADIX:
 
     # TODO implement
     def st(self, address, v, width=8, swap=True):
-        print("RADIX: st to addr 0x%x width %d data %x" % (address, width, v))
 
         priv = ~(self.msr[MSRb.PR].value) # problem-state ==> privileged
+        virt = (self.msr[MSRb.DR].value)  # DR -> virtual
+        print("RADIX: st to addr 0x%x width %d data %x "
+              "priv %d virt %d " % (address, width, v, priv, virt))
         mode = 'STORE'
-        addr = SelectableInt(address, 64)
-        pte = self._walk_tree(addr, mode, priv)
 
-        # use pte to store at phys address
-        res = self.mem.st(pte.value, v, width, swap)
+        # virtual mode does a lookup to new address, otherwise use real addr
+        addr = SelectableInt(address, 64)
+        if virt:
+            addr = self._walk_tree(addr, mode, priv)
+        addr = addr.value
+
+        # use address to store at phys address
+        res = self.mem.st(addr, v, width, swap)
         self.last_st_addr = self.mem.last_st_addr
 
         # XXX set SPRs on error
