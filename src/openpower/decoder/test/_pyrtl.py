@@ -13,7 +13,7 @@ __all__ = ["PyRTLProcess"]
 
 
 class PyRTLProcess(BaseProcess):
-    __slots__ = ("is_comb", "runnable", "passive", "run")
+    __slots__ = ("is_comb", "runnable", "passive", "crtl")
 
     def __init__(self, *, is_comb):
         self.is_comb  = is_comb
@@ -412,25 +412,56 @@ class _StatementCompiler(StatementVisitor, _Compiler):
             emitter.append(f"slots[{signal_index}].set(next_{signal_index})")
         return emitter.flush()
 
-# TODO: for use in the linux kernel stdint.h will not be available. ok for now
-code_hdr = """\
+code_includes = """\
 #include <stdint.h>
-typedef struct slot_t
+"""
+
+code_cdef = """\
+typedef struct signal_t
 {
     uint64_t curr;
     uint64_t next;
-} slot_t;
-slot_t slots[%d] =
+} signal_t;
+
+uint64_t capture(uint64_t id);
+uint64_t get_curr(uint64_t id);
+uint64_t get_next(uint64_t id);
+void run(void);
+"""
+
+code_header = code_includes
+code_header += "\n"
+code_header += code_cdef
+code_header += """
+signal_t slots[%d] =
 {
 """
 
-code_ftr = """\
+code_footer = """\
 };
 
-static void set(slot_t *slot, uint64_t value)
+uint64_t capture(uint64_t id)
 {
-    if (slot->next == value)
-        return;
+    if (slots[id].curr == slots[id].next)
+        return 0;
+
+    slots[id].curr = slots[id].next;
+
+    return 1;
+}
+
+uint64_t get_curr(uint64_t id)
+{
+    return slots[id].curr;
+}
+
+uint64_t get_next(uint64_t id)
+{
+    return slots[id].next;
+}
+
+static void set(signal_t *slot, uint64_t value)
+{
     slot->next = value;
 }
 """
@@ -480,10 +511,10 @@ class _FragmentCompiler:
                     emitter.append(f"set(&slots[{signal_index}], next_{signal_index});")
 
             # create code header, slots, footer, followed by emit actual code
-            code = code_hdr % len(self.state.slots)
+            code = code_header % len(self.state.slots)
             for slot in self.state.slots:
-                code += "    {%s, %s},\n" % (str(slot.curr), str(slot.next))
-            code += code_ftr
+                code += "    {%s, %s},\n" % (str(slot.signal.reset), str(slot.signal.reset))
+            code += code_footer
             code += emitter.flush()
 
             try:
@@ -497,17 +528,16 @@ class _FragmentCompiler:
             file.write(code)
             file.close()
 
-            cdef = "void run(void);"
-
             ffibuilder = FFI()
-            ffibuilder.cdef(cdef)
+            ffibuilder.cdef(code_cdef)
             ffibuilder.set_source(f"crtl._{basename}",
-                                  cdef,
+                                  code_cdef,
                                   sources=[f"crtl/{basename}.c"],
                                   include_dirs=["/usr/include/python3.7m"])
             ffibuilder.compile(verbose=True)
 
-            domain_process.run = importlib.import_module(f"crtl._{basename}").lib.run
+            #domain_process.run = importlib.import_module(f"crtl._{basename}").lib.run
+            domain_process.crtl = importlib.import_module(f"crtl._{basename}").lib
             processes.add(domain_process)
 
         for subfragment_index, (subfragment, subfragment_name) in enumerate(fragment.subfragments):

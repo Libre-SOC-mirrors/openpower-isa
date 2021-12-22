@@ -199,39 +199,67 @@ class _Timeline:
         return True
 
 
-class _PySignalState(BaseSignalState):
-    __slots__ = ("signal", "curr", "next", "waiters", "pending")
+class _PySignalState:
+    __slots__ = ("signal", "waiters", "pending", "_crtl", "_id", "_curr", "_next")
 
-    def __init__(self, signal, pending):
+    def __init__(self, signal, pending, id, crtl):
         self.signal = signal
         self.pending = pending
         self.waiters = dict()
-        self.curr = self.next = signal.reset
+        self._id = id
+        self._crtl = crtl 
+
+        if self._crtl is None:
+            self._curr = self._next = signal.reset
 
     def set(self, value):
-        if self.next == value:
+        if self._crtl is not None:
+            # Shouldn't be called from Python if the signal is implemented through CRTL.
+            raise NotImplementedError
+
+        if self._next == value:
             return
-        self.next = value
+
+        self._next = value
         self.pending.add(self)
 
     def commit(self):
-        if self.curr == self.next:
-            return False
-        self.curr = self.next
+        if self._crtl is not None:
+            if self._crtl.capture(self._id) == 0:
+                return False
+        else:
+            if self._curr == self._next:
+                return False
+            self._curr = self._next
 
         awoken_any = False
         for process, trigger in self.waiters.items():
             if trigger is None or trigger == self.curr:
                 process.runnable = awoken_any = True
         return awoken_any
+    
+    @property
+    def curr(self):
+        if self._crtl is not None:
+            return self._crtl.get_curr(self._id)
+        
+        return self._curr
+
+    @property
+    def next(self):
+        if self._crtl is not None:
+            return self._crtl.get_next(self._id)
+
+        return self._next
 
 
-class _PySimulation(BaseSimulation):
+class _PySimulation:
     def __init__(self):
         self.timeline = _Timeline()
         self.signals  = SignalDict()
         self.slots    = []
         self.pending  = set()
+        self.crtl = None
 
     def reset(self):
         self.timeline.reset()
@@ -243,10 +271,10 @@ class _PySimulation(BaseSimulation):
         try:
             return self.signals[signal]
         except KeyError:
-            index = len(self.slots)
-            self.slots.append(_PySignalState(signal, self.pending))
-            self.signals[signal] = index
-            return index
+            id = len(self.slots)
+            self.slots.append(_PySignalState(signal, self.pending, id, self.crtl))
+            self.signals[signal] = id
+            return id
 
     def add_trigger(self, process, signal, *, trigger=None):
         index = self.get_signal(signal)
@@ -305,7 +333,11 @@ class PySimEngine(BaseEngine):
             for process in self._processes:
                 if process.runnable:
                     process.runnable = False
-                    process.run()
+
+                    if hasattr(process, "crtl"):
+                        process.crtl.run()
+                    else:
+                        process.run()
 
             # 2. commit: apply every queued signal change, waking up any waiting processes
             converged = self._state.commit(changed)
