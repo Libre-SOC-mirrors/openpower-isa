@@ -11,9 +11,13 @@ from nmigen.sim._pycoro import PyCoroProcess
 from nmigen.sim._pyclock import PyClockProcess
 
 import os
+import sys
 import shutil
 import importlib
 from cffi import FFI
+from os.path import dirname, join
+from collections import namedtuple
+
 
 __all__ = ["PySimEngine"]
 
@@ -299,9 +303,10 @@ class PySimEngine(BaseEngine):
 
         self._fragment = fragment
 
+        # blow away and recreate crtl subdirectory.  (hope like hell
+        # nobody is using this in their current working directory)
         if PySimEngine._crtl_counter == 1:
             shutil.rmtree("crtl", True)
-
         try:
             os.mkdir("crtl")
         except FileExistsError:
@@ -309,36 +314,50 @@ class PySimEngine(BaseEngine):
 
         self._processes = _FragmentCompiler(self._state)(self._fragment)
 
-        cdef_file = open("crtl_template.h")
-        cdef = cdef_file.read() % (len(self._state.slots), len(self._state.slots))
+        # get absolute path of this directory as the base
+        filedir = os.path.dirname(os.path.abspath(__file__))
+
+        # read header file template
+        chdr = os.path.join(filedir, "crtl_template.h")
+        with open(chdr) as cdef_file:
+            template = cdef_file.read()
+
+        # fill in the template
+        cdef = template % (len(self._state.slots), len(self._state.slots))
         for process in self._processes:
             cdef += f"void run_{process.name}(void);\n"
-        cdef_file.close()
 
-        cdef_file = open("crtl/common.h", "w")
-        cdef_file.write(cdef)
-        cdef_file.close()
+        # write out the header file
+        with open("crtl/common.h", "w") as cdef_file :
+            cdef_file.write(cdef)
 
-        src_file = open("crtl_template.c")
-        src = src_file.read() % (len(self._state.slots), len(self._state.slots))
-        src_file.close()
+        # same with c template: read template first
+        srcf = os.path.join(filedir, "crtl_template.c")
+        with open(srcf) as src_file:
+            template = src_file.read()
 
-        src_file = open("crtl/common.c", "w")
-        src_file.write(src)
-        src_file.close()
+        # fill it out
+        src = template % (len(self._state.slots), len(self._state.slots))
 
+        # write it out
+        with open("crtl/common.c", "w") as src_file:
+            src_file.write(src)
+
+        # build module named crtlNNN in crtl subdirectory
+        srcname = "crtl%d" % PySimEngine._crtl_counter
+        sources = ["crtl/common.c"]
+        sources += [f"crtl/{process.name}.c" for process in self._processes]
         ffibuilder = FFI()
         ffibuilder.cdef(cdef)
-        ffibuilder.set_source(f"crtl.crtl{PySimEngine._crtl_counter}",
-                              cdef,
-                              sources=["crtl/common.c"]
-                                      + [f"crtl/{process.name}.c" for process in self._processes])
+        ffibuilder.set_source(srcname, cdef, sources=sources)
         ffibuilder.compile(verbose=True)
         
-        self._state.crtl = importlib.import_module(f"crtl.crtl{PySimEngine._crtl_counter}").lib
+        # append search path of crtl directory before attempting import
+        sys.path.append(os.path.join(os.getcwd()))
+        self._state.crtl = importlib.import_module(srcname).lib
 
-        # Use a counter to generate unique names for modules, because Python won't reload C
-        # extension modules.
+        # Use a counter to generate unique names for modules, because Python
+        # won't reload C extension modules.
         PySimEngine._crtl_counter += 1
 
         for process in self._processes:
