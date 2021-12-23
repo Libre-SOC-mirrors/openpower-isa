@@ -46,7 +46,8 @@ class _NameExtractor:
                 if not isinstance(signal, (ClockSignal, ResetSignal)):
                     add_signal_name(signal)
 
-        for subfragment_index, (subfragment, subfragment_name) in enumerate(fragment.subfragments):
+        for subfragment_index, (subfragment, subfragment_name) in \
+                                enumerate(fragment.subfragments):
             if subfragment_name is None:
                 subfragment_name = "U${}".format(subfragment_index)
             self(subfragment, hierarchy=(*hierarchy, subfragment_name))
@@ -91,7 +92,8 @@ class _VCDWriter:
         if self.vcd_writer is None:
             return
 
-        for signal, names in itertools.chain(signal_names.items(), trace_names.items()):
+        for signal, names in (itertools.chain(signal_names.items(),
+                              trace_names.items())):
             if signal.decoder:
                 var_type = "string"
                 var_size = 1
@@ -214,7 +216,7 @@ class _PySignalState:
         self.signal = signal
         self.waiters = dict()
         self.index = index
-        self.sim_state = sim_state # Ugly. We just need it to have a reference to crtl.
+        self.sim_state = sim_state # Ugly. need it to have a reference to crtl.
 
     def set(self, value):
         self.sim_state.crtl.set(self.index, value)
@@ -312,6 +314,8 @@ class PySimEngine(BaseEngine):
         except FileExistsError:
             pass
 
+        # "Processes" are the compiled modules.  Each module ends up
+        # with its own run() function
         self._processes = _FragmentCompiler(self._state)(self._fragment)
 
         # get absolute path of this directory as the base
@@ -360,6 +364,7 @@ class PySimEngine(BaseEngine):
         # won't reload C extension modules.
         PySimEngine._crtl_counter += 1
 
+        # for each process (fragment/module) get its run() function
         for process in self._processes:
             process.crtl = self._state.crtl
             process.run = getattr(process.crtl, f"run_{process.name}")
@@ -367,7 +372,8 @@ class PySimEngine(BaseEngine):
         self._vcd_writers = []
 
     def add_coroutine_process(self, process, *, default_cmd):
-        self._processes.add(PyCoroProcess(self._state, self._fragment.domains, process,
+        self._processes.add(PyCoroProcess(self._state, self._fragment.domains,
+                                          process,
                                           default_cmd=default_cmd))
 
     def add_clock_process(self, clock, *, phase, period):
@@ -385,13 +391,15 @@ class PySimEngine(BaseEngine):
         # Performs the two phases of a delta cycle in a loop:
         converged = False
         while not converged:
-            # 1. eval: run and suspend every non-waiting process once, queueing signal changes
+            # 1. eval: run and suspend every non-waiting process once,
+            # queueing signal changes
             for process in self._processes:
                 if process.runnable:
                     process.runnable = False
                     process.run()
 
-            # 2. commit: apply every queued signal change, waking up any waiting processes
+            # 2. commit: apply every queued signal change,
+            # waking up any waiting processes
             converged = self._state.commit(changed)
 
         for vcd_writer in self._vcd_writers:
