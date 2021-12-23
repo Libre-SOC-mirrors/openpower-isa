@@ -10,6 +10,8 @@ from openpower.decoder.test._pyrtl import _FragmentCompiler
 from nmigen.sim._pycoro import PyCoroProcess
 from nmigen.sim._pyclock import PyClockProcess
 
+import importlib
+from cffi import FFI
 
 __all__ = ["PySimEngine"]
 
@@ -200,57 +202,36 @@ class _Timeline:
 
 
 class _PySignalState:
-    __slots__ = ("signal", "waiters", "pending", "_crtl", "_id", "_curr", "_next")
+    __slots__ = ("signal", "waiters", "sim_state", "index")
 
-    def __init__(self, signal, pending, id, crtl):
+    def __init__(self, signal, index, sim_state):
         self.signal = signal
-        self.pending = pending
         self.waiters = dict()
-        self._id = id
-        self._crtl = crtl 
-
-        if self._crtl is None:
-            self._curr = self._next = signal.reset
+        self.index = index
+        self.sim_state = sim_state # Ugly. We just need it to have a reference to crtl.
 
     def set(self, value):
-        if self._crtl is not None:
-            # Shouldn't be called from Python if the signal is implemented through CRTL.
-            raise NotImplementedError
-
-        if self._next == value:
-            return
-
-        self._next = value
-        self.pending.add(self)
+        self.sim_state.crtl.set(self.index, value)
 
     def commit(self):
-        if self._crtl is not None:
-            if self._crtl.capture(self._id) == 0:
-                return False
-        else:
-            if self._curr == self._next:
-                return False
-            self._curr = self._next
+        if self.sim_state.crtl.capture(self.index) == 0:
+            return False
 
+        # Waiters are not implemented in C yet.
         awoken_any = False
         for process, trigger in self.waiters.items():
             if trigger is None or trigger == self.curr:
                 process.runnable = awoken_any = True
+
         return awoken_any
     
     @property
     def curr(self):
-        if self._crtl is not None:
-            return self._crtl.get_curr(self._id)
-        
-        return self._curr
+        return self.sim_state.crtl.get_curr(self.index)
 
     @property
     def next(self):
-        if self._crtl is not None:
-            return self._crtl.get_next(self._id)
-
-        return self._next
+        return self.sim_state.crtl.get_next(self.index)
 
 
 class _PySimulation:
@@ -259,7 +240,7 @@ class _PySimulation:
         self.signals  = SignalDict()
         self.slots    = []
         self.pending  = set()
-        self.crtl = None
+        self.crtl     = None # Initialized later.
 
     def reset(self):
         self.timeline.reset()
@@ -271,10 +252,10 @@ class _PySimulation:
         try:
             return self.signals[signal]
         except KeyError:
-            id = len(self.slots)
-            self.slots.append(_PySignalState(signal, self.pending, id, self.crtl))
-            self.signals[signal] = id
-            return id
+            index = len(self.slots)
+            self.slots.append(_PySignalState(signal, index, self))
+            self.signals[signal] = index
+            return index
 
     def add_trigger(self, process, signal, *, trigger=None):
         index = self.get_signal(signal)
@@ -292,14 +273,19 @@ class _PySimulation:
 
     def commit(self, changed=None):
         converged = True
-        for signal_state in self.pending:
+
+        for pending_index in range(self.crtl.pending_count):
+            index = self.crtl.pending[pending_index]
+            signal_state = self.slots[index]
+
             if signal_state.commit():
                 converged = False
-        if changed is not None:
-            changed.update(self.pending)
-        self.pending.clear()
-        return converged
 
+            if changed is not None:
+                changed.add(signal_state)
+
+        self.crtl.clear_pending()
+        return converged
 
 class PySimEngine(BaseEngine):
     def __init__(self, fragment):
@@ -308,6 +294,38 @@ class PySimEngine(BaseEngine):
 
         self._fragment = fragment
         self._processes = _FragmentCompiler(self._state)(self._fragment)
+
+        cdef_file = open("crtl_template.h")
+        cdef = cdef_file.read() % (len(self._state.slots), len(self._state.slots))
+        for process in self._processes:
+            cdef += f"void run_{process.name}(void);\n"
+        cdef_file.close()
+
+        cdef_file = open("crtl/common.h", "w")
+        cdef_file.write(cdef)
+        cdef_file.close()
+
+        src_file = open("crtl_template.c")
+        src = src_file.read() % (len(self._state.slots), len(self._state.slots))
+        src_file.close()
+
+        src_file = open("crtl/common.c", "w")
+        src_file.write(src)
+        src_file.close()
+
+        ffibuilder = FFI()
+        ffibuilder.cdef(cdef)
+        ffibuilder.set_source("crtl.crtl",
+                              cdef,
+                              sources=["crtl/common.c"]
+                                      + [f"crtl/{process.name}.c" for process in self._processes])
+        ffibuilder.compile(verbose=True)
+
+        self._state.crtl = importlib.import_module(f"crtl.crtl").lib
+        for process in self._processes:
+            process.crtl = self._state.crtl
+            process.run = getattr(process.crtl, f"run_{process.name}")
+
         self._vcd_writers = []
 
     def add_coroutine_process(self, process, *, default_cmd):
@@ -333,11 +351,7 @@ class PySimEngine(BaseEngine):
             for process in self._processes:
                 if process.runnable:
                     process.runnable = False
-
-                    if hasattr(process, "crtl"):
-                        process.crtl.run()
-                    else:
-                        process.run()
+                    process.run()
 
             # 2. commit: apply every queued signal change, waking up any waiting processes
             converged = self._state.commit(changed)

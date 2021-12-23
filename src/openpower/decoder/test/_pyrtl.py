@@ -1,8 +1,4 @@
 import os
-import shutil
-import tempfile
-import importlib
-from cffi import FFI
 from contextlib import contextmanager
 
 from nmigen.hdl.ast import SignalSet
@@ -13,11 +9,10 @@ __all__ = ["PyRTLProcess"]
 
 
 class PyRTLProcess(BaseProcess):
-    __slots__ = ("is_comb", "runnable", "passive", "crtl")
+    __slots__ = ("is_comb", "runnable", "passive", "name", "filename", "crtl", "run")
 
     def __init__(self, *, is_comb):
         self.is_comb  = is_comb
-
         self.reset()
 
     def reset(self):
@@ -412,60 +407,6 @@ class _StatementCompiler(StatementVisitor, _Compiler):
             emitter.append(f"slots[{signal_index}].set(next_{signal_index})")
         return emitter.flush()
 
-code_includes = """\
-#include <stdint.h>
-"""
-
-code_cdef = """\
-typedef struct signal_t
-{
-    uint64_t curr;
-    uint64_t next;
-} signal_t;
-
-uint64_t capture(uint64_t id);
-uint64_t get_curr(uint64_t id);
-uint64_t get_next(uint64_t id);
-void run(void);
-"""
-
-code_header = code_includes
-code_header += "\n"
-code_header += code_cdef
-code_header += """
-signal_t slots[%d] =
-{
-"""
-
-code_footer = """\
-};
-
-uint64_t capture(uint64_t id)
-{
-    if (slots[id].curr == slots[id].next)
-        return 0;
-
-    slots[id].curr = slots[id].next;
-
-    return 1;
-}
-
-uint64_t get_curr(uint64_t id)
-{
-    return slots[id].curr;
-}
-
-uint64_t get_next(uint64_t id)
-{
-    return slots[id].next;
-}
-
-static void set(signal_t *slot, uint64_t value)
-{
-    slot->next = value;
-}
-"""
-
 
 class _FragmentCompiler:
     def __init__(self, state):
@@ -478,8 +419,10 @@ class _FragmentCompiler:
             domain_stmts = LHSGroupFilter(domain_signals)(fragment.statements)
             domain_process = PyRTLProcess(is_comb=domain_name is None)
 
+            domain_process.name = f"{id(fragment)}_{domain_name or ''}_{index}"
+
             emitter = _PythonEmitter()
-            emitter.append(f"void run(void)")
+            emitter.append(f"void run_{domain_process.name}(void)")
             with emitter.nest():
                 if domain_name is None:
                     for signal in domain_signals:
@@ -508,13 +451,10 @@ class _FragmentCompiler:
 
                 for signal in domain_signals:
                     signal_index = self.state.get_signal(signal)
-                    emitter.append(f"set(&slots[{signal_index}], next_{signal_index});")
+                    emitter.append(f"set({signal_index}, next_{signal_index});")
 
-            # create code header, slots, footer, followed by emit actual code
-            code = code_header % len(self.state.slots)
-            for slot in self.state.slots:
-                code += "    {%s, %s},\n" % (str(slot.signal.reset), str(slot.signal.reset))
-            code += code_footer
+            code = "#include <stdint.h>\n"
+            code += "#include \"common.h\"\n"
             code += emitter.flush()
 
             try:
@@ -522,22 +462,10 @@ class _FragmentCompiler:
             except FileExistsError:
                 pass
 
-            basename = f"{id(fragment)}_{domain_name or ''}_{index}"
-
-            file = open(f"crtl/{basename}.c", "w")
+            file = open(f"crtl/{domain_process.name}.c", "w")
             file.write(code)
             file.close()
 
-            ffibuilder = FFI()
-            ffibuilder.cdef(code_cdef)
-            ffibuilder.set_source(f"crtl._{basename}",
-                                  code_cdef,
-                                  sources=[f"crtl/{basename}.c"],
-                                  include_dirs=["/usr/include/python3.7m"])
-            ffibuilder.compile(verbose=True)
-
-            #domain_process.run = importlib.import_module(f"crtl._{basename}").lib.run
-            domain_process.crtl = importlib.import_module(f"crtl._{basename}").lib
             processes.add(domain_process)
 
         for subfragment_index, (subfragment, subfragment_name) in enumerate(fragment.subfragments):
