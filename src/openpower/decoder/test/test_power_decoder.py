@@ -9,6 +9,7 @@ from openpower.decoder.test.pysim import PySimEngine
 from nmutil.formaltest import FHDLTestCase
 from nmigen.cli import rtlil
 import os
+import time
 import unittest
 from openpower.decoder.power_decoder import (create_pdecode)
 from openpower.decoder.power_enums import (Function, MicrOp,
@@ -58,61 +59,68 @@ class DecoderTestCase(FHDLTestCase):
         #sim = Simulator(m)
         # Use the below line instead to run the work-in-progress C simulator.
         sim = Simulator(m, engine=PySimEngine)
+        # for test purposes repeat the simulation to get performance stats
+        repeat_times = 10
 
         opcodes = get_csv(csvname)
 
         def process():
-            for row in opcodes:
-                if not row['unit']:
-                    continue
-                # skip "conditions" for now
-                if (row['CONDITIONS'] and
-                    row['CONDITIONS'] in ['SVP64BREV']):
-                    continue
-                op = row['opcode']
-                if not opint:  # HACK: convert 001---10 to 0b00100010
-                    op = "0b" + op.replace('-', '0')
-                print("opint", opint, row['opcode'], op)
-                print(row)
-                yield opcode.eq(0)
-                yield opcode[bitsel[0]:bitsel[1]].eq(int(op, 0))
-                if minor:
-                    print(minor)
-                    minorbits = minor[1]
-                    yield opcode[minorbits[0]:minorbits[1]].eq(minor[0])
-                else:
-                    # OR 0, 0, 0  ; 0x60000000 is decoded as a NOP
-                    # If we're testing the OR instruction, make sure
-                    # that the instruction is not 0x60000000
-                    if int(op, 0) == 24:
-                        yield opcode[24:25].eq(0b11)
+            tic = time.perf_counter()
+            for i in range(repeat_times):
+                for row in opcodes:
+                    if not row['unit']:
+                        continue
+                    # skip "conditions" for now
+                    if (row['CONDITIONS'] and
+                        row['CONDITIONS'] in ['SVP64BREV']):
+                        continue
+                    op = row['opcode']
+                    if not opint:  # HACK: convert 001---10 to 0b00100010
+                        op = "0b" + op.replace('-', '0')
+                    print("opint", opint, row['opcode'], op)
+                    print(row)
+                    yield opcode.eq(0)
+                    yield opcode[bitsel[0]:bitsel[1]].eq(int(op, 0))
+                    if minor:
+                        print(minor)
+                        minorbits = minor[1]
+                        yield opcode[minorbits[0]:minorbits[1]].eq(minor[0])
+                    else:
+                        # OR 0, 0, 0  ; 0x60000000 is decoded as a NOP
+                        # If we're testing the OR instruction, make sure
+                        # that the instruction is not 0x60000000
+                        if int(op, 0) == 24:
+                            yield opcode[24:25].eq(0b11)
 
-                yield Delay(1e-6)
-                yield Settle()
-                signals = [(function_unit, Function, 'unit'),
-                           (internal_op, MicrOp, 'internal op'),
-                           (in1_sel, In1Sel, 'in1'),
-                           (in2_sel, In2Sel, 'in2'),
-                           (in3_sel, In3Sel, 'in3'),
-                           (out_sel, OutSel, 'out'),
-                           (cr_in, CRInSel, 'CR in'),
-                           (cr_out, CROutSel, 'CR out'),
-                           (rc_sel, RC, 'rc'),
-                           (cry_in, CryIn, 'cry in'),
-                           (ldst_len, LdstLen, 'ldst len')]
-                for sig, enm, name in signals:
-                    result = yield sig
-                    expected = enm[row[name]]
-                    msg = f"{sig.name} == {enm(result)}, expected: {expected}"
-                    msg += "- op: %x, opcode %s" % (opint, row['opcode'])
-                    print (msg)
-                    self.assertEqual(enm(result), expected, msg)
-                for bit in single_bit_flags:
-                    sig = getattr(dut.op, get_signal_name(bit))
-                    result = yield sig
-                    expected = int(row[bit])
-                    msg = f"{sig.name} == {result}, expected: {expected}"
-                    self.assertEqual(expected, result, msg)
+                    yield Delay(1e-6)
+                    yield Settle()
+                    signals = [(function_unit, Function, 'unit'),
+                               (internal_op, MicrOp, 'internal op'),
+                               (in1_sel, In1Sel, 'in1'),
+                               (in2_sel, In2Sel, 'in2'),
+                               (in3_sel, In3Sel, 'in3'),
+                               (out_sel, OutSel, 'out'),
+                               (cr_in, CRInSel, 'CR in'),
+                               (cr_out, CROutSel, 'CR out'),
+                               (rc_sel, RC, 'rc'),
+                               (cry_in, CryIn, 'cry in'),
+                               (ldst_len, LdstLen, 'ldst len')]
+                    for sig, enm, name in signals:
+                        result = yield sig
+                        expected = enm[row[name]]
+                        msg = f"{sig.name} == {enm(result)}, expected: {expected}"
+                        msg += "- op: %x, opcode %s" % (opint, row['opcode'])
+                        print (msg)
+                        self.assertEqual(enm(result), expected, msg)
+                    for bit in single_bit_flags:
+                        sig = getattr(dut.op, get_signal_name(bit))
+                        result = yield sig
+                        expected = int(row[bit])
+                        msg = f"{sig.name} == {result}, expected: {expected}"
+                        self.assertEqual(expected, result, msg)
+            ticend = time.perf_counter()
+            print ("time taken:", ticend - tic)
+
         sim.add_process(process)
         prefix = os.path.splitext(csvname)[0]
         with sim.write_vcd("%s.vcd" % prefix, "%s.gtkw" % prefix, traces=[
