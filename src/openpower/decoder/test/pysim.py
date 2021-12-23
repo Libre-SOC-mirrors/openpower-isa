@@ -10,6 +10,8 @@ from openpower.decoder.test._pyrtl import _FragmentCompiler
 from nmigen.sim._pycoro import PyCoroProcess
 from nmigen.sim._pyclock import PyClockProcess
 
+import os
+import shutil
 import importlib
 from cffi import FFI
 
@@ -287,12 +289,24 @@ class _PySimulation:
         self.crtl.clear_pending()
         return converged
 
+
 class PySimEngine(BaseEngine):
+    _crtl_counter = 1
+
     def __init__(self, fragment):
         self._state = _PySimulation()
         self._timeline = self._state.timeline
 
         self._fragment = fragment
+
+        if PySimEngine._crtl_counter == 1:
+            shutil.rmtree("crtl", True)
+
+        try:
+            os.mkdir("crtl")
+        except FileExistsError:
+            pass
+
         self._processes = _FragmentCompiler(self._state)(self._fragment)
 
         cdef_file = open("crtl_template.h")
@@ -315,13 +329,18 @@ class PySimEngine(BaseEngine):
 
         ffibuilder = FFI()
         ffibuilder.cdef(cdef)
-        ffibuilder.set_source("crtl.crtl",
+        ffibuilder.set_source(f"crtl.crtl{PySimEngine._crtl_counter}",
                               cdef,
                               sources=["crtl/common.c"]
                                       + [f"crtl/{process.name}.c" for process in self._processes])
         ffibuilder.compile(verbose=True)
+        
+        self._state.crtl = importlib.import_module(f"crtl.crtl{PySimEngine._crtl_counter}").lib
 
-        self._state.crtl = importlib.import_module(f"crtl.crtl").lib
+        # Use a counter to generate unique names for modules, because Python won't reload C
+        # extension modules.
+        PySimEngine._crtl_counter += 1
+
         for process in self._processes:
             process.crtl = self._state.crtl
             process.run = getattr(process.crtl, f"run_{process.name}")

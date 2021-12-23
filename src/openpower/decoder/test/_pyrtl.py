@@ -457,11 +457,6 @@ class _FragmentCompiler:
             code += "#include \"common.h\"\n"
             code += emitter.flush()
 
-            try:
-                os.mkdir("crtl")
-            except FileExistsError:
-                pass
-
             file = open(f"crtl/{domain_process.name}.c", "w")
             file.write(code)
             file.close()
