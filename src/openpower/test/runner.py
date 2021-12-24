@@ -207,9 +207,11 @@ class TestRunnerBase(FHDLTestCase):
 
                     # HACK: if there is test memory and wb_get is in use,
                     # overwrite (reset) the wb_get memory dictionary with
-                    # the test's memory contents
+                    # the test's memory contents (oh, and put the wb_get
+                    # memory back in as well)
                     if self.rom is not None and test.mem is not None:
                         self.default_mem.clear()
+                        self.default_mem.update(deepcopy(self.rom))
                         self.default_mem.update(deepcopy(test.mem))
 
                     for runner in state_list:
