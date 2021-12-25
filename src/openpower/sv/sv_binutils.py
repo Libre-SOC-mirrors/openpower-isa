@@ -50,6 +50,10 @@ PATTERN_VHDL_BINARY = r"(?:2#[01]+#)"
 PATTERN_DECIMAL = r"(?:[0-9]+)"
 PATTERN_PARTIAL_BINARY = r"(?:[01-]+)"
 
+# Examples of the entries to be caught by the pattern below:
+# 2 => (P2, EXTRA3, RA_OR_ZERO, NONE, NONE, RT, NONE, NONE, NONE, Idx1, NONE, NONE, Idx0, NONE, NONE, NONE), -- lwz
+# -----10110 => (P2, EXTRA3, NONE, FRB, NONE, FRT, NONE, NONE, CR1, NONE, Idx1, NONE, Idx0, NONE, NONE, Idx0), -- fsqrts
+# 2#0000000000# => (P2, EXTRA3, NONE, NONE, NONE, NONE, NONE, BFA, BF, NONE, NONE, NONE, NONE, NONE, Idx1, Idx0), -- mcrf
 PATTERN = "".join((
     r"^\s*",
     rf"(?P<opcode>{PATTERN_VHDL_BINARY}|{PATTERN_DECIMAL}|{PATTERN_PARTIAL_BINARY})",
