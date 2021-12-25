@@ -1,5 +1,7 @@
 import argparse as _argparse
 import codecs as _codecs
+import dataclasses as _dataclasses
+import enum as _enum
 import pathlib as _pathlib
 import re as _re
 
@@ -17,33 +19,64 @@ from openpower.decoder.power_enums import (
 )
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Entry:
+    opcode: str
+    ptype: _SVPtype
+    etype: _SVEtype
+    in1: _In1Sel
+    in2: _In2Sel
+    in3: _In3Sel
+    out: _OutSel
+    out2: _OutSel
+    cr_in: _CRInSel
+    cr_out: _CROutSel
+    sv_in1: _SVEXTRA
+    sv_in2: _SVEXTRA
+    sv_in3: _SVEXTRA
+    sv_out: _SVEXTRA
+    sv_out2: _SVEXTRA
+    sv_cr_in: _SVEXTRA
+    sv_cr_out: _SVEXTRA
+    name: str
+
+
+def regex_enum(enum):
+    assert issubclass(enum, _enum.Enum)
+    return "|".join(item.name for item in enum)
+
+
+PATTERN_VHDL_BINARY = r"(?:2#[01]+#)"
+PATTERN_DECIMAL = r"(?:[0-9]+)"
+PATTERN_PARTIAL_BINARY = r"(?:[01-]+)"
+
 PATTERN = "".join((
     r"^\s*",
-    r"(?P<opcode>(?:2#[01]+#)|(?:[0-9]+)|(?:[01-]+))",
+    rf"(?P<opcode>{PATTERN_VHDL_BINARY}|{PATTERN_DECIMAL}|{PATTERN_PARTIAL_BINARY})",
     r"\s?=>\s?",
     r"\(",
     r",\s".join((
-        rf"(?P<ptype>{'|'.join(item.name for item in _SVPtype)})",
-        rf"(?P<etype>{'|'.join(item.name for item in _SVEtype)})",
-        rf"(?P<in1>{'|'.join(item.name for item in _In1Sel)})",
-        rf"(?P<in2>{'|'.join(item.name for item in _In2Sel)})",
-        rf"(?P<in3>{'|'.join(item.name for item in _In3Sel)})",
-        rf"(?P<out>{'|'.join(item.name for item in _OutSel)})",
-        rf"(?P<out2>{'|'.join(item.name for item in _OutSel)})",
-        rf"(?P<cr_in>{'|'.join(item.name for item in _CRInSel)})",
-        rf"(?P<cr_out>{'|'.join(item.name for item in _CROutSel)})",
-        rf"(?P<sv_in1>{'|'.join(item.name for item in _SVEXTRA)})",
-        rf"(?P<sv_in2>{'|'.join(item.name for item in _SVEXTRA)})",
-        rf"(?P<sv_in3>{'|'.join(item.name for item in _SVEXTRA)})",
-        rf"(?P<sv_out>{'|'.join(item.name for item in _SVEXTRA)})",
-        rf"(?P<sv_out2>{'|'.join(item.name for item in _SVEXTRA)})",
-        rf"(?P<sv_cr_in>{'|'.join(item.name for item in _SVEXTRA)})",
-        rf"(?P<sv_cr_out>{'|'.join(item.name for item in _SVEXTRA)})",
+        rf"(?P<ptype>{regex_enum(_SVPtype)})",
+        rf"(?P<etype>{regex_enum(_SVEtype)})",
+        rf"(?P<in1>{regex_enum(_In1Sel)})",
+        rf"(?P<in2>{regex_enum(_In2Sel)})",
+        rf"(?P<in3>{regex_enum(_In3Sel)})",
+        rf"(?P<out>{regex_enum(_OutSel)})",
+        rf"(?P<out2>{regex_enum(_OutSel)})",
+        rf"(?P<cr_in>{regex_enum(_CRInSel)})",
+        rf"(?P<cr_out>{regex_enum(_CROutSel)})",
+        rf"(?P<sv_in1>{regex_enum(_SVEXTRA)})",
+        rf"(?P<sv_in2>{regex_enum(_SVEXTRA)})",
+        rf"(?P<sv_in3>{regex_enum(_SVEXTRA)})",
+        rf"(?P<sv_out>{regex_enum(_SVEXTRA)})",
+        rf"(?P<sv_out2>{regex_enum(_SVEXTRA)})",
+        rf"(?P<sv_cr_in>{regex_enum(_SVEXTRA)})",
+        rf"(?P<sv_cr_out>{regex_enum(_SVEXTRA)})",
     )),
     r"\)",
     r",",
     r"\s?--\s?",
-    r"(?P<insn>[A-Za-z0-9_\./]+)",
+    r"(?P<name>[A-Za-z0-9_\./]+)",
     r"\s*$",
 ))
 REGEX = _re.compile(PATTERN)
@@ -53,16 +86,27 @@ def parse(stream):
     for line in stream:
         match = REGEX.match(line)
         if match is not None:
-            yield match.groupdict()
+            entry = match.groupdict()
+            for field in _dataclasses.fields(Entry):
+                cls = field.type
+                key = field.name
+                value = entry[key]
+                if issubclass(cls, _enum.Enum):
+                    value = {item.name:item for item in cls}[value]
+                elif key == "opcode":
+                    if value.startswith("2#"):
+                        value = value[2:-1]
+                else:
+                    value = cls(value)
+                entry[key] = value
+            yield Entry(**entry)
 
 
 def main(vhdl):
-    insns = []
     with _codecs.open(vhdl, "rb", "UTF-8") as stream:
-        for insn in parse(stream):
-            insns.append(insn)
+        entries = tuple(parse(stream))
 
-    print(f"{len(insns)} instructions found")
+    print(f"{len(entries)} entries found")
 
 
 if __name__ == "__main__":
