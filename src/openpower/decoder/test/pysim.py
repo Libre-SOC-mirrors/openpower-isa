@@ -348,17 +348,17 @@ class PySimEngine(BaseEngine):
             src_file.write(src)
 
         # build module named crtlNNN in crtl subdirectory
-        srcname = "crtl%d" % PySimEngine._crtl_counter
+        modulename = "crtl.crtl%d" % PySimEngine._crtl_counter
         sources = ["crtl/common.c"]
         sources += [f"crtl/{process.name}.c" for process in self._processes]
         ffibuilder = FFI()
         ffibuilder.cdef(cdef)
-        ffibuilder.set_source(srcname, cdef, sources=sources)
+        ffibuilder.set_source(modulename, cdef, sources=sources)
         ffibuilder.compile(verbose=True)
         
         # append search path of crtl directory before attempting import
         sys.path.append(os.path.join(os.getcwd()))
-        self._state.crtl = importlib.import_module(srcname).lib
+        self._state.crtl = importlib.import_module(modulename).lib
 
         # Use a counter to generate unique names for modules, because Python
         # won't reload C extension modules.
