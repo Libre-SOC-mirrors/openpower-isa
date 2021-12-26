@@ -347,7 +347,7 @@ class _StatementCompiler(StatementVisitor, _Compiler):
         for stmt in stmts:
             self(stmt)
         if not stmts:
-            self.emitter.append("pass")
+            self.emitter.append("/* pass */;")
 
     def on_Assign(self, stmt):
         gen_rhs = f"({(1 << len(stmt.rhs)) - 1} & {self.rhs(stmt.rhs)})"
@@ -361,7 +361,7 @@ class _StatementCompiler(StatementVisitor, _Compiler):
         for index, (patterns, stmts) in enumerate(stmt.cases.items()):
             gen_checks = []
             if not patterns:
-                gen_checks.append(f"True")
+                gen_checks.append(f"1 /* True */")
             else:
                 for pattern in patterns:
                     if "-" in pattern:
@@ -372,9 +372,9 @@ class _StatementCompiler(StatementVisitor, _Compiler):
                         value = int(pattern, 2)
                         gen_checks.append(f"{value} == {gen_test}")
             if index == 0:
-                self.emitter.if_(f"{' or '.join(gen_checks)}")
+                self.emitter.if_(f"{' || '.join(gen_checks)}")
             else:
-                self.emitter.else_if(f"{' or '.join(gen_checks)}")
+                self.emitter.else_if(f"{' || '.join(gen_checks)}")
             with self.emitter.nest():
                 self(stmts)
 
