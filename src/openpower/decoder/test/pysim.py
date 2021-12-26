@@ -11,9 +11,11 @@ from nmigen.sim._pycoro import PyCoroProcess
 from nmigen.sim._pyclock import PyClockProcess
 
 import os
+import re
 import sys
 import shutil
 import importlib
+
 from cffi import FFI
 from os.path import dirname, join
 from collections import namedtuple
@@ -264,6 +266,15 @@ class _PySimulation:
             self.slots.append(_PySignalState(signal, index, self))
             self.signals[signal] = index
             return index
+    
+    def get_signal_macro(self, signal):
+        index = self.get_signal(signal)
+
+        # Replace dots with double underscores, and change everything else that
+        # cannot be put in a C macro identifier to a single underscore.
+        sanitized_name = re.sub(r"\W|^(?=\d)", "_", signal.name)
+
+        return f"{sanitized_name}_{index}"
 
     def add_trigger(self, process, signal, *, trigger=None):
         index = self.get_signal(signal)
@@ -297,7 +308,7 @@ class _PySimulation:
 
 
 class PySimEngine(BaseEngine):
-    _crtl_counter = 1
+    _crtl_counter = 0
 
     def __init__(self, fragment):
         self._state = _PySimulation()
@@ -307,7 +318,7 @@ class PySimEngine(BaseEngine):
 
         # blow away and recreate crtl subdirectory.  (hope like hell
         # nobody is using this in their current working directory)
-        if PySimEngine._crtl_counter == 1:
+        if PySimEngine._crtl_counter == 0:
             shutil.rmtree("crtl", True)
         try:
             os.mkdir("crtl")
@@ -316,7 +327,7 @@ class PySimEngine(BaseEngine):
 
         # "Processes" are the compiled modules.  Each module ends up
         # with its own run() function
-        self._processes = _FragmentCompiler(self._state)(self._fragment)
+        self._processes = _FragmentCompiler(self._state)(self._fragment, "TOP")
 
         # get absolute path of this directory as the base
         filedir = os.path.dirname(os.path.abspath(__file__))
@@ -328,6 +339,16 @@ class PySimEngine(BaseEngine):
 
         # fill in the template
         cdef = template % (len(self._state.slots), len(self._state.slots))
+
+        # macros to make signals readable
+        cdef += "\n"
+        for signal in self._state.signals:
+            macro = self._state.get_signal_macro(signal)
+            index = self._state.get_signal(signal)
+            cdef += f"#define {macro} {index}\n"
+
+        # run() functions of processes
+        cdef += "\n"
         for process in self._processes:
             cdef += f"void run_{process.name}(void);\n"
 

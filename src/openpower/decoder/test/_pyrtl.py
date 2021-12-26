@@ -9,7 +9,7 @@ __all__ = ["PyRTLProcess"]
 
 
 class PyRTLProcess(BaseProcess):
-    __slots__ = ("is_comb", "runnable", "passive", "name", "filename", "crtl", "run")
+    __slots__ = ("is_comb", "runnable", "passive", "name", "crtl", "run")
 
     def __init__(self, *, is_comb):
         self.is_comb  = is_comb
@@ -121,10 +121,11 @@ class _RHSValueCompiler(_ValueCompiler):
         if self.inputs is not None:
             self.inputs.add(value)
 
+        macro = self.state.get_signal_macro(value)
         if self.mode == "curr":
-            return f"slots[{self.state.get_signal(value)}].{self.mode}"
+            return f"slots[{macro}].{self.mode}"
         else:
-            return f"next_{self.state.get_signal(value)}"
+            return f"next_{macro}"
 
     def on_Operator(self, value):
         def mask(value):
@@ -275,19 +276,13 @@ class _LHSValueCompiler(_ValueCompiler):
 
         def gen(arg):
             value_mask = (1 << len(value)) - 1
-            name = ''
-            # TODO: useful trick, actually put the name into the c code
-            # but this has to be done consistently right across the board.
-            # all occurrences of next_{....} have to use the same trick
-            # but at least then the names in the auto-generated c-code
-            # are readable...
-            #if hasattr(value, "name") and value.name is not None:
-            #    name = value.name
             if value.shape().signed:
                 value_sign = f"sign({value_mask} & {arg}, {-1 << (len(value) - 1)})"
             else: # unsigned
                 value_sign = f"{value_mask} & {arg}"
-            self.emitter.append(f"next_{name}{self.state.get_signal(value)} = {value_sign};")
+            
+            macro = self.state.get_signal_macro(value)
+            self.emitter.append(f"next_{macro} = {value_sign};")
         return gen
 
     def on_Operator(self, value):
@@ -397,14 +392,15 @@ class _StatementCompiler(StatementVisitor, _Compiler):
 
     @classmethod
     def compile(cls, state, stmt):
-        output_indexes = [state.get_signal(signal) for signal in stmt._lhs_signals()]
+        output_macros = \
+            [state.get_signal_macro(signal) for signal in stmt._lhs_signals()]
         emitter = _PythonEmitter()
-        for signal_index in output_indexes:
-            emitter.append(f"uint64_t next_{signal_index} = slots[{signal_index}].next")
+        for macro in output_macros:
+            emitter.append(f"uint64_t next_{macro} = slots[{macro}].next")
         compiler = cls(state, emitter)
         compiler(stmt)
-        for signal_index in output_indexes:
-            emitter.append(f"slots[{signal_index}].set(next_{signal_index})")
+        for macro in output_macros:
+            emitter.append(f"set({macro}, next_{macro})")
         return emitter.flush()
 
 
@@ -412,22 +408,24 @@ class _FragmentCompiler:
     def __init__(self, state):
         self.state = state
 
-    def __call__(self, fragment):
+    def __call__(self, fragment, fragment_name):
         processes = set()
 
         for index, (domain_name, domain_signals) in enumerate(fragment.drivers.items()):
             domain_stmts = LHSGroupFilter(domain_signals)(fragment.statements)
             domain_process = PyRTLProcess(is_comb=domain_name is None)
-
-            domain_process.name = f"{id(fragment)}_{domain_name or ''}_{index}"
+            domain_process.name = \
+                f"{fragment_name}__{domain_name or ''}" \
+                f"_{id(fragment)}_{index}"
 
             emitter = _PythonEmitter()
             emitter.append(f"void run_{domain_process.name}(void)")
             with emitter.nest():
                 if domain_name is None:
                     for signal in domain_signals:
-                        signal_index = self.state.get_signal(signal)
-                        emitter.append(f"uint64_t next_{signal_index} = {signal.reset};")
+                        macro = self.state.get_signal_macro(signal)
+                        emitter.append(
+                            f"uint64_t next_{macro} = {signal.reset};")
 
                     inputs = SignalSet()
                     _StatementCompiler(self.state, emitter, inputs=inputs)(domain_stmts)
@@ -444,14 +442,15 @@ class _FragmentCompiler:
                         self.state.add_trigger(domain_process, domain.rst, trigger=rst_trigger)
 
                     for signal in domain_signals:
-                        signal_index = self.state.get_signal(signal)
-                        emitter.append(f"uint64_t next_{signal_index} = slots[{signal_index}].next;")
+                        macro = self.state.get_signal_macro(signal)
+                        emitter.append(
+                            f"uint64_t next_{macro} = slots[{macro}].next;")
 
                     _StatementCompiler(self.state, emitter)(domain_stmts)
 
                 for signal in domain_signals:
-                    signal_index = self.state.get_signal(signal)
-                    emitter.append(f"set({signal_index}, next_{signal_index});")
+                    macro = self.state.get_signal_macro(signal)
+                    emitter.append(f"set({macro}, next_{macro});")
 
             code = "#include <stdint.h>\n"
             code += "#include \"common.h\"\n"
@@ -466,6 +465,6 @@ class _FragmentCompiler:
         for subfragment_index, (subfragment, subfragment_name) in enumerate(fragment.subfragments):
             if subfragment_name is None:
                 subfragment_name = "U${}".format(subfragment_index)
-            processes.update(self(subfragment))
+            processes.update(self(subfragment, subfragment_name))
 
         return processes
