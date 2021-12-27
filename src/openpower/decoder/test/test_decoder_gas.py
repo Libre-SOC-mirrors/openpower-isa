@@ -2,7 +2,7 @@ from nmigen import Module, Signal
 
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
 # Also, check out the cxxsim nmigen branch, and latest yosys from git
-from nmutil.sim_tmp_alternative import Simulator, Delay
+from nmutil.sim_tmp_alternative import Simulator, Delay, Settle
 
 from nmutil.formaltest import FHDLTestCase
 import unittest
@@ -222,9 +222,9 @@ class CmpRegOp:
         r2sel = yield pdecode2.e.read_reg2.data
         crsel = yield pdecode2.dec.BF
 
-        assert(r1sel == self.r1.num)
-        assert(r2sel == self.r2.num)
-        assert(crsel == self.cr.num)
+        assert r1sel == self.r1.num, "r1sel %d != r1 %d" % (r1sel, self.r1.num)
+        assert r2sel == self.r2.num, "r2sel %d != r2 %d" % (r2sel, self.r2.num)
+        assert crsel == self.cr.num, "crsel %d != cr %d" % (crsel, self.cr.num)
 
 
 class RotateOp:
@@ -465,7 +465,7 @@ class DecoderTestCase(FHDLTestCase):
                     # ask the decoder to decode this binary data (endian'd)
                     yield pdecode2.dec.bigendian.eq(mode)  # little / big?
                     yield instruction.eq(ibin)            # raw binary instr.
-                    yield Delay(1e-6)
+                    yield Settle()
 
                     yield from checker.check_results(pdecode2)
 
@@ -473,7 +473,7 @@ class DecoderTestCase(FHDLTestCase):
         ports = pdecode2.ports()
         print(ports)
         with sim.write_vcd("%s.vcd" % name, "%s.gtkw" % name,
-                           traces=ports):
+                           traces=[]):
             sim.run()
 
     def test_reg_reg(self):
