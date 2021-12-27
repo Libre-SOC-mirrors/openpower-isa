@@ -25,7 +25,7 @@ from openpower.state import CoreState
 
 class Decoder2TestCase(FHDLTestCase):
 
-    def run_tst(self, raw_insn):
+    def run_tst(self, raw_opcode):
         m = Module()
         comb = m.d.comb
         opcode = Signal(32)
