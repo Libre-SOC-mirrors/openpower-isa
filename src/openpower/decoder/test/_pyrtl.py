@@ -145,7 +145,7 @@ class _RHSValueCompiler(_ValueCompiler):
             if value.operator == "-":
                 return f"(-{sign(arg)})"
             if value.operator == "b":
-                return f"bool({mask(arg)})"
+                return f"!!({mask(arg)})"
             if value.operator == "r|":
                 return f"(0 != {mask(arg)})"
             if value.operator == "r&":
