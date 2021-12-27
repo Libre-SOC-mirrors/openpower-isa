@@ -291,8 +291,8 @@ class _LHSValueCompiler(_ValueCompiler):
     def on_Slice(self, value):
         def gen(arg):
             width_mask = (1 << (value.stop - value.start)) - 1
-            self(value.value)(f"({self.lrhs(value.value)} & " \
-                f"{~(width_mask << value.start)} | " \
+            self(value.value)(f"(({self.lrhs(value.value)} & " \
+                f"{~(width_mask << value.start)}) | " \
                 f"(({width_mask} & {arg}) << {value.start}))")
         return gen
 
