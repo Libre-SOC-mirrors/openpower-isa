@@ -496,6 +496,7 @@ class TestRunnerBase(FHDLTestCase):
 
         # optionally, if a wishbone-based ROM is passed in, run that as an
         # extra emulated process
+        self.default_mem = {}
         if self.rom is not None:
             print ("TestRunner with MMU ROM")
             pprint (self.rom)
