@@ -138,6 +138,36 @@ class Entry:
         yield f"struct svp64_entry {name};"
 
 
+class Codegen(_enum.Enum):
+    PPC_OPC_SVP64_H = _enum.auto()
+    PPC_OPC_SVP64_C = _enum.auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        return {
+            "ppc-opc-svp64.h": Codegen.PPC_OPC_SVP64_H,
+            "ppc-opc-svp64.c": Codegen.PPC_OPC_SVP64_C,
+        }[value]
+
+    def __str__(self):
+        return {
+            Codegen.PPC_OPC_SVP64_H: "ppc-opc-svp64.h",
+            Codegen.PPC_OPC_SVP64_C: "ppc-opc-svp64.c",
+        }[self]
+
+    def generate(self, entries):
+        def ppc_opc_svp64_h(entries):
+            yield from ()
+
+        def ppc_opc_svp64_c(entries):
+            yield from ()
+
+        return {
+            Codegen.PPC_OPC_SVP64_H: ppc_opc_svp64_h,
+            Codegen.PPC_OPC_SVP64_C: ppc_opc_svp64_c,
+        }[self](entries)
+
+
 def regex_enum(enum):
     assert issubclass(enum, _enum.Enum)
     return "|".join(item.name for item in enum)
@@ -199,14 +229,15 @@ def parse(stream):
             yield Entry(**entry)
 
 
-def main():
+def main(codegen):
     entries = tuple(parse(_sys.stdin))
-
-    print(f"{len(entries)} entries found")
+    for line in codegen.generate(entries):
+        print(line)
 
 
 if __name__ == "__main__":
     parser = _argparse.ArgumentParser()
+    parser.add_argument("codegen", type=Codegen, choices=Codegen, help="code generator")
 
     args = vars(parser.parse_args())
     main(**args)
