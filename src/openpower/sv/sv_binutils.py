@@ -5,6 +5,7 @@ import dataclasses as _dataclasses
 import enum as _enum
 import pathlib as _pathlib
 import re as _re
+import sys as _sys
 
 from openpower.decoder.power_enums import (
     In1Sel as _In1Sel,
@@ -198,16 +199,14 @@ def parse(stream):
             yield Entry(**entry)
 
 
-def main(vhdl):
-    with _codecs.open(vhdl, "rb", "UTF-8") as stream:
-        entries = tuple(parse(stream))
+def main():
+    entries = tuple(parse(_sys.stdin))
 
     print(f"{len(entries)} entries found")
 
 
 if __name__ == "__main__":
     parser = _argparse.ArgumentParser()
-    parser.add_argument("vhdl", type=_pathlib.Path, help="sv_decode.vhdl path")
 
     args = vars(parser.parse_args())
     main(**args)
