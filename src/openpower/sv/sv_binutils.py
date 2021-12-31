@@ -20,6 +20,15 @@ from openpower.decoder.power_enums import (
 )
 
 
+DISCLAIMER = (
+    "/*",
+    " * this file is auto-generated, do not edit",
+    " * http://libre-soc.org/openpower/sv_binutiks.py",
+    " * part of Libre-SOC, sponsored by NLnet",
+    " */",
+)
+
+
 def indent(strings):
     return map(lambda string: ("    " + string), strings)
 
@@ -157,7 +166,28 @@ class Codegen(_enum.Enum):
 
     def generate(self, entries):
         def ppc_opc_svp64_h(entries):
-            yield from ()
+            yield from DISCLAIMER
+            yield ""
+
+            yield f"#ifndef {self.name}"
+            yield f"#define {self.name}"
+            yield ""
+
+            enums = (
+                PType, EType,
+                In1Sel, In2Sel, In3Sel, OutSel,
+                CRInSel, CROutSel,
+                SVEXTRA,
+            )
+            for enum in enums:
+                yield from enum.c_decl()
+                yield ""
+
+            yield from Entry.c_decl()
+            yield ""
+
+            yield f"#endif /* {self.name} */"
+            yield ""
 
         def ppc_opc_svp64_c(entries):
             yield from ()
