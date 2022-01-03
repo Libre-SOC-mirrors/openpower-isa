@@ -1,6 +1,7 @@
 import abc as _abc
 import argparse as _argparse
 import codecs as _codecs
+import csv as _csv
 import dataclasses as _dataclasses
 import enum as _enum
 import pathlib as _pathlib
@@ -18,6 +19,7 @@ from openpower.decoder.power_enums import (
     SVEtype as _SVEtype,
     SVEXTRA as _SVEXTRA,
 )
+from openpower.decoder.power_svp64 import SVP64RM as _SVP64RM
 
 
 DISCLAIMER = (
@@ -113,8 +115,8 @@ class Entry:
     out2: OutSel
     cr_in: CRInSel
     cr_out: CROutSel
-    ptype: SVPType
-    etype: SVEType
+    sv_ptype: SVPType
+    sv_etype: SVEType
     sv_in1: SVEXTRA
     sv_in2: SVEXTRA
     sv_in3: SVEXTRA
@@ -174,7 +176,7 @@ class Codegen(_enum.Enum):
             yield ""
 
             enums = (
-                PType, EType,
+                SVPType, SVEType,
                 In1Sel, In2Sel, In3Sel, OutSel,
                 CRInSel, CROutSel,
                 SVEXTRA,
@@ -243,24 +245,56 @@ PATTERN = "".join((
 REGEX = _re.compile(PATTERN)
 
 
-def parse(stream):
-    for line in stream:
-        match = REGEX.match(line)
-        if match is not None:
-            entry = match.groupdict()
-            for field in _dataclasses.fields(Entry):
-                key = field.name
-                value = entry[key]
+ISA = _SVP64RM()
+FIELDS = {field.name:field for field in _dataclasses.fields(Entry)}
+def parse(path):
+    for entry in ISA.get_svp64_csv(path):
+        # skip instructions that are not suitable
+        name = entry["name"] = entry.pop("comment")
+        if name.startswith("l") and name.endswith("br"):
+            continue
+        if name in {"mcrxr", "mcrxrx", "darn"}:
+            continue
+        if name in {"bctar", "bcctr"}:
+            continue
+        if "rfid" in name:
+            continue
+        if name in {"setvl"}:
+            continue
+
+        entry = {key.lower().replace(" ", "_"):value for (key, value) in entry.items()}
+        for (key, value) in tuple(entry.items()):
+            key = key.lower().replace(" ", "_")
+            if key not in FIELDS:
+                entry.pop(key)
+            else:
+                field = FIELDS[key]
                 if issubclass(field.type, _enum.Enum):
                     value = {item.name:item for item in field.type}[value]
                 else:
                     value = field.type(value)
                 entry[key] = value
-            yield Entry(**entry)
+
+        yield Entry(**entry)
 
 
 def main(codegen):
-    entries = tuple(parse(_sys.stdin))
+    entries = []
+    paths = (
+        "minor_19.csv",
+        "minor_30.csv",
+        "minor_31.csv",
+        "minor_58.csv",
+        "minor_62.csv",
+        "minor_22.csv",
+        "minor_5.csv",
+        "minor_63.csv",
+        "minor_59.csv",
+        "major.csv",
+    )
+    for path in paths:
+        entries.extend(parse(path))
+
     for line in codegen.generate(entries):
         print(line)
 
