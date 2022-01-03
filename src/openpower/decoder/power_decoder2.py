@@ -1512,7 +1512,8 @@ class PowerDecode2(PowerDecodeSubset):
             comb += self.do_copy("insn", self.dec.opcode_in, True)
             comb += self.do_copy("insn_type", MicrOp.OP_FETCH_FAILED, True)
             comb += self.do_copy("fn_unit", Function.MMU, True)
-            comb += self.do_copy("nia", self.state.pc, True)  # PC
+            comb += self.do_copy("cia", self.state.pc, True)  # PC
+            comb += self.do_copy("msr", self.state.msr, True)  # MSR
             # special override on internal_op, due to being a "fake" op
             comb += self.dec.op.internal_op.eq(MicrOp.OP_FETCH_FAILED)
 
