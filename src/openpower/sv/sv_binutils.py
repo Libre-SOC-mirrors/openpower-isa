@@ -82,13 +82,75 @@ SVEType = Enum("SVEType", {item.name:item.value for item in _SVEtype})
 SVEXTRA = Enum("SVEXTRA", {item.name:item.value for item in _SVEXTRA})
 
 
-class Opcode(Field, str):
+class Opcode(Field):
+    def __init__(self, value, mask, bits):
+        self.__value = value
+        self.__mask = mask
+        self.__bits = bits
+
+        return super().__init__()
+
+    @property
+    def value(self):
+        return self.__value
+
+    @property
+    def mask(self):
+        return self.__mask
+
+    @property
+    def bits(self):
+        return self.__bits
+
+    def __repr__(self):
+        fmt = f"{{value:0{self.bits}b}}:{{mask:0{self.bits}b}}"
+        return fmt.format(value=self.value, mask=self.mask)
+
+    @classmethod
+    def c_decl(cls):
+        yield f"struct svp64_opcode {{"
+        yield from indent([
+            "uint32_t value;",
+            "uint32_t mask;",
+        ])
+        yield f"}};"
+
     def c_value(self, prefix="", suffix=""):
-        yield f"{prefix}\"{self}\"{suffix}"
+        yield f"{prefix}{{"
+        yield from indent([
+            f".value = {self.value},",
+            f".mask = {self.mask},",
+        ])
+        yield f"}}{suffix}"
 
     @classmethod
     def c_var(cls, name):
-        yield f"const char *{name};"
+        yield f"struct svp64_opcode {name};"
+
+
+class IntegerOpcode(Opcode):
+    def __init__(self, integer):
+        value = int(integer, 0)
+        bits = max(1, value.bit_length())
+        mask = int(("1" * bits), 2)
+
+        return super().__init__(value=value, mask=mask, bits=bits)
+
+
+class PatternOpcode(Opcode):
+    def __init__(self, pattern):
+        value = 0
+        mask = 0
+        bits = len(pattern)
+        for bit in pattern:
+            value |= (bit == "1")
+            mask |= (bit != "-")
+            value <<= 1
+            mask <<= 1
+        value >>= 1
+        mask >>= 1
+
+        return super().__init__(value=value, mask=mask, bits=bits)
 
 
 class Name(Field, str):
@@ -185,6 +247,9 @@ class Codegen(_enum.Enum):
                 yield from enum.c_decl()
                 yield ""
 
+            yield from Opcode.c_decl()
+            yield ""
+
             yield from Entry.c_decl()
             yield ""
 
@@ -247,7 +312,7 @@ REGEX = _re.compile(PATTERN)
 
 ISA = _SVP64RM()
 FIELDS = {field.name:field for field in _dataclasses.fields(Entry)}
-def parse(path):
+def parse(path, opcode_cls):
     for entry in ISA.get_svp64_csv(path):
         # skip instructions that are not suitable
         name = entry["name"] = entry.pop("comment")
@@ -271,6 +336,8 @@ def parse(path):
                 field = FIELDS[key]
                 if issubclass(field.type, _enum.Enum):
                     value = {item.name:item for item in field.type}[value]
+                elif issubclass(field.type, Opcode):
+                    value = opcode_cls(value)
                 else:
                     value = field.type(value)
                 entry[key] = value
@@ -280,20 +347,21 @@ def parse(path):
 
 def main(codegen):
     entries = []
-    paths = (
-        "minor_19.csv",
-        "minor_30.csv",
-        "minor_31.csv",
-        "minor_58.csv",
-        "minor_62.csv",
-        "minor_22.csv",
-        "minor_5.csv",
-        "minor_63.csv",
-        "minor_59.csv",
-        "major.csv",
-    )
-    for path in paths:
-        entries.extend(parse(path))
+    table = {
+        "minor_19.csv": IntegerOpcode,
+        "minor_30.csv": IntegerOpcode,
+        "minor_31.csv": IntegerOpcode,
+        "minor_58.csv": IntegerOpcode,
+        "minor_62.csv": IntegerOpcode,
+        "minor_22.csv": IntegerOpcode,
+        "minor_5.csv": PatternOpcode,
+        "minor_63.csv": PatternOpcode,
+        "minor_59.csv": PatternOpcode,
+        "major.csv": IntegerOpcode,
+        "extra.csv": PatternOpcode,
+    }
+    for (path, opcode_cls) in table.items():
+        entries.extend(parse(path, opcode_cls))
 
     for line in codegen.generate(entries):
         print(line)
