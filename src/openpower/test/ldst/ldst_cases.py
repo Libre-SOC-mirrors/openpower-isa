@@ -200,7 +200,8 @@ class LDSTTestCase(TestAccumulatorBase):
 
     def case_10_load_store_cix(self):
         lst = ["stbcix 1, 4, 2",
-               "lwzcix 3, 4, 2"]
+               "lwzcix 3, 4, 2",
+               "lbzcix 5, 4, 2"]
         initial_regs = [0] * 32
         initial_regs[1] = 0x5678
         initial_regs[2] = 0x001c

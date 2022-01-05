@@ -284,7 +284,7 @@ _insns = [
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "fsins", "fcoss",                                   # FP SIN/COS
     "hrfid", "icbi", "icbt", "isel", "isync",
-    "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
+    "lbarx", "lbz", "lbzcix", "lbzu", "lbzux", "lbzx",  # load byte
     "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
     # "lbzbr", "lbzubr",  # load byte SVP64 bit-reversed
     # "ldbr", "ldubr",    # load double SVP64 bit-reversed
