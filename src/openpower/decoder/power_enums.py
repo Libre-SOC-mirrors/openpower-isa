@@ -272,7 +272,7 @@ _insns = [
     "divd", "divde", "divdeo", "divdeu",
     "divdeuo", "divdo", "divdu", "divduo", "divw", "divwe", "divweo",
     "divweu", "divweuo", "divwo", "divwu", "divwuo",
-    "eqv",
+    "eieio", "eqv",
     "extsb", "extsh", "extsw", "extswsli",
     "fadd", "fadds", "fsub", "fsubs",                   # FP add / sub
     "fcfids", "fcfidus", "fsqrts", "fres", "frsqrtes",  # FP stuff
