@@ -332,8 +332,9 @@ _insns = [
     "sync",
     "ternlogi",
     "td", "tdi",
-    "tlbie", "tlbiel",
+    "tlbie", "tlbiel", "tlbsync",
     "tw", "twi",
+    "wait",
     "xor", "xori", "xoris",
 ]
 
