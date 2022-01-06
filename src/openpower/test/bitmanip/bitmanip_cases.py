@@ -2,25 +2,37 @@ from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.endian import bigendian
 from openpower.simulator.program import Program
-from hashlib import sha256
-
-
-def hash_256(v):
-    return int.from_bytes(
-        sha256(bytes(v, encoding='utf-8')).digest(),
-        byteorder='little'
-    )
+from openpower.test.state import ExpectedState
+from nmutil.sim_util import hash_256
 
 
 class BitManipTestCase(TestAccumulatorBase):
     def do_case_ternlogi(self, rt, ra, rb, imm):
         lst = [f"ternlogi 3, 4, 5, {imm}"]
         initial_regs = [0] * 32
-        initial_regs[3] = rt % 2 ** 64
-        initial_regs[4] = ra % 2 ** 64
-        initial_regs[5] = rb % 2 ** 64
+        rt %= 2 ** 64
+        ra %= 2 ** 64
+        rb %= 2 ** 64
+        initial_regs[3] = rt
+        initial_regs[4] = ra
+        initial_regs[5] = rb
         lst = list(SVP64Asm(lst, bigendian))
-        self.add_case(Program(lst, bigendian), initial_regs)
+        e = ExpectedState(pc=4)
+        expected = 0
+        for i in range(64):
+            lut_index = 0
+            if rb & 2 ** i:
+                lut_index |= 2 ** 0
+            if ra & 2 ** i:
+                lut_index |= 2 ** 1
+            if rt & 2 ** i:
+                lut_index |= 2 ** 2
+            if imm & 2 ** lut_index:
+                expected |= 2 ** i
+        e.intregs[3] = expected
+        e.intregs[4] = ra
+        e.intregs[5] = rb
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_ternlogi_0(self):
         self.do_case_ternlogi(0x8000_0000_FFFF_0000,
