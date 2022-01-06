@@ -88,3 +88,5 @@ sradi,,2P,EXTRA3,d:RA;d:CR0,s:RS,0,0,0,0,RS,RA,0,CR0,0
 sradi,,2P,EXTRA3,d:RA;d:CR0,s:RS,0,0,0,0,RS,RA,0,CR0,0
 extswsli,,2P,EXTRA3,d:RA;d:CR0,s:RS,0,0,0,0,RS,RA,0,CR0,0
 extswsli,,2P,EXTRA3,d:RA;d:CR0,s:RS,0,0,0,0,RS,RA,0,CR0,0
+grevi,,2P,EXTRA3,d:RT;d:CR0,s:RA,0,0,RA,0,0,RT,0,CR0,0
+grevwi,,2P,EXTRA3,d:RT;d:CR0,s:RA,0,0,RA,0,0,RT,0,CR0,0

@@ -323,6 +323,9 @@ class DecodeBImm(Elaboratable):
             with m.Case(In2Sel.CONST_SH32):  # unsigned - for shift
                 comb += self.imm_out.data.eq(self.dec.SH32)
                 comb += self.imm_out.ok.eq(1)
+            with m.Case(In2Sel.CONST_XBI):  # unsigned - for grevi
+                comb += self.imm_out.data.eq(self.dec.FormXB.XBI)
+                comb += self.imm_out.ok.eq(1)
 
         return m
 

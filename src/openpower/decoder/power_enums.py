@@ -121,6 +121,7 @@ class Form(Enum):
     SVM = 32  # Simple-V SHAPE mode - TEMPORARY TEMPORARY TEMPORARY
     SVRM = 33  # Simple-V REMAP mode - TEMPORARY TEMPORARY TEMPORARY
     TLI = 34  # ternlogi
+    XB = 35
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
@@ -438,6 +439,7 @@ class MicrOp(Enum):
     OP_CBCDTD = 85
     OP_TERNLOG = 86
     OP_FETCH_FAILED = 87
+    OP_GREV = 88
 
 
 @unique
@@ -470,6 +472,7 @@ class In2Sel(Enum):
     FRB = 14
     CONST_SVD = 15  # for SVD-Form
     CONST_SVDS = 16  # for SVDS-Form
+    CONST_XBI = 17
 
 
 @unique
