@@ -4,11 +4,12 @@ from nmutil.formaltest import FHDLTestCase
 
 from openpower.decoder.power_decoder import create_pdecode, PowerOp
 from openpower.decoder.power_enums import (In1Sel, In2Sel, In3Sel,
-                                     OutSel, RC, Form,
-                                     MicrOp, SPRfull as SPR)
+                                           OutSel, RC, Form,
+                                           MicrOp, SPRfull as SPR)
 from openpower.decoder.power_decoder2 import (PowerDecode2,
-                                        Decode2ToExecute1Type)
+                                              Decode2ToExecute1Type)
 import unittest
+
 
 class Driver(Elaboratable):
     def __init__(self):
@@ -26,7 +27,7 @@ class Driver(Elaboratable):
         pdecode = create_pdecode()
 
         self.m.submodules.pdecode2 = pdecode2 = PowerDecode2(pdecode)
-        self.comb += pdecode2.dec.bigendian.eq(1) # XXX TODO: bigendian=0
+        self.comb += pdecode2.dec.bigendian.eq(1)  # XXX TODO: bigendian=0
         self.comb += pdecode2.dec.raw_opcode_in.eq(self.instruction)
 
         self.test_in1(pdecode2, pdecode)
@@ -60,7 +61,8 @@ class Driver(Elaboratable):
                 comb += Assert(pdecode2.e.read_spr1.ok == 1)
         with m.If((op == MicrOp.OP_MFSPR) |
                   (op == MicrOp.OP_MTSPR)):
-            comb += Assert(pdecode2.e.read_spr1.data == self.instr_bits(11, 20))
+            comb += Assert(pdecode2.e.read_spr1.data ==
+                           self.instr_bits(11, 20))
             comb += Assert(pdecode2.e.read_spr1.ok == 1)
 
     def test_in2(self):
@@ -128,7 +130,7 @@ class Driver(Elaboratable):
         comb += Assert(dec.BD == self.instr_bits(16, 29))
         comb += Assert(dec.DS == self.instr_bits(16, 29))
         comb += Assert(dec.sh == Cat(self.instr_bits(16, 20),
-                                           self.instr_bits(30)))
+                                     self.instr_bits(30)))
         comb += Assert(dec.SH32 == self.instr_bits(16, 20))
 
     def test_in3(self):
@@ -137,7 +139,7 @@ class Driver(Elaboratable):
         pdecode2 = m.submodules.pdecode2
         with m.If(pdecode2.dec.op.in3_sel == In3Sel.RS):
             comb += Assert(pdecode2.e.read_reg3.ok == 1)
-            comb += Assert(pdecode2.e.read_reg3.data == self.instr_bits(6,10))
+            comb += Assert(pdecode2.e.read_reg3.data == self.instr_bits(6, 10))
 
     def test_out(self):
         m = self.m
@@ -206,6 +208,7 @@ class Decoder2TestCase(FHDLTestCase):
     def test_decoder2(self):
         module = Driver()
         self.assertFormal(module, mode="bmc", depth=4)
+
 
 if __name__ == '__main__':
     unittest.main()

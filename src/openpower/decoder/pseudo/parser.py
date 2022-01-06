@@ -50,7 +50,7 @@ def Assign(autoassign, assignname, left, right, iea_mode):
     elif isinstance(left, ast.Subscript):
         ls = left.slice
         # XXX changing meaning of "undefined" to a function
-        #if (isinstance(ls, ast.Slice) and isinstance(right, ast.Name) and
+        # if (isinstance(ls, ast.Slice) and isinstance(right, ast.Name) and
         #        right.id == 'undefined'):
         #    # undefined needs to be copied the exact same slice
         #    right = ast.Subscript(right, ls, ast.Load())
@@ -66,7 +66,7 @@ def Assign(autoassign, assignname, left, right, iea_mode):
             print("lower, upper, step", repr(lower), repr(upper), step)
             # XXX relax constraint that indices on auto-assign have
             # to be constants x[0:32]
-            #if not isinstance(lower, ast.Constant) or \
+            # if not isinstance(lower, ast.Constant) or \
             #   not isinstance(upper, ast.Constant):
             #    return res
             qty = ast.BinOp(upper, binary_ops['-'], lower)
@@ -189,13 +189,13 @@ def identify_sint_mul_pattern(p):
     these must specifically be returned as concat(item, repeat=something)
     """
     #print ("identify_sint_mul_pattern")
-    #for pat in p:
+    # for pat in p:
     #    print("    ", astor.dump_tree(pat))
     if p[2] != '*':  # multiply
         return False
     if (not isinstance(p[3], ast.Constant) and  # rhs = Num
         not isinstance(p[3], ast.BinOp) and     # rhs = (XLEN-something)
-        not isinstance(p[3], ast.Attribute)):   # rhs = XLEN
+            not isinstance(p[3], ast.Attribute)):   # rhs = XLEN
         return False
     if not isinstance(p[1], ast.List):  # lhs is a list
         return False
@@ -235,7 +235,7 @@ def apply_trailer(atom, trailer, read_regs):
             if isinstance(idx, ast.Name) and idx.id in regs + fregs:
                 read_regs.add(idx.id)
             if isinstance(idx, ast.Name) and idx.id in regs:
-                print ("single atom subscript, underscored", idx.id)
+                print("single atom subscript, underscored", idx.id)
                 idx = ast.Name("_%s" % idx.id, ast.Load())
         else:
             idx = ast.Slice(subs[0], subs[1], None)
@@ -365,7 +365,7 @@ class PowerParser:
         # in-scope, for use to not overwrite them with auto-assign
         self.fnparm_vars = set()
         for arg in args:
-            print ("adding fn parm", arg)
+            print("adding fn parm", arg)
             self.fnparm_vars.add(arg)
 
     # varargslist: (fpdef ['=' test] ',')* ('*' NAME [',' '**' NAME] |
@@ -376,7 +376,7 @@ class PowerParser:
         """varargslist : varargslist COMMA NAME
                        | NAME"""
         if len(p) == 4:
-            print (p[1], p[3])
+            print(p[1], p[3])
             p[0] = p[1] + [p[3]]
         else:
             p[0] = [p[1]]
@@ -443,14 +443,14 @@ class PowerParser:
             if isinstance(p[1], ast.Name):
                 name = p[1].id
             elif isinstance(p[1], ast.Subscript):
-                print ("assign subscript", p[1].value,
-                                           self.declared_vars,
-                                           self.fnparm_vars,
-                                           self.special_regs)
+                print("assign subscript", p[1].value,
+                      self.declared_vars,
+                      self.fnparm_vars,
+                      self.special_regs)
                 print(astor.dump_tree(p[1]))
                 if isinstance(p[1].value, ast.Name):
                     name = p[1].value.id
-                    print ("assign subscript value to name", name)
+                    print("assign subscript value to name", name)
                     if name in self.gprs:
                         # add to list of uninitialised
                         self.uninit_regs.add(name)
@@ -460,7 +460,7 @@ class PowerParser:
                                   name not in self.fnparm_vars and
                                   name not in self.special_regs)
             elif isinstance(p[1], ast.Call) and p[1].func.id in \
-                            ['GPR', 'FPR', 'SPR']:
+                    ['GPR', 'FPR', 'SPR']:
                 print(astor.dump_tree(p[1]))
                 # replace GPR(x) with GPR[x]
                 idx = p[1].args[0].id
@@ -747,8 +747,8 @@ class PowerParser:
             if name in ['CA', 'CA32']:
                 self.write_regs.add(name)
         if name in ['CR', 'LR', 'CTR', 'TAR', 'FPSCR', 'MSR',
-                     'SVSTATE', 'SVREMAP',
-                     'SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3']:
+                    'SVSTATE', 'SVREMAP',
+                    'SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3']:
             self.special_regs.add(name)
             self.write_regs.add(name)  # and add to list to write
         if name in {'XLEN'}:
@@ -933,7 +933,8 @@ class GardenSnakeParser(PowerParser):
         # self.lexer.input(code)
         result = self.parser.parse(code, lexer=self.lexer, debug=self.debug)
         if self.helper:
-            result = [ast.ClassDef("ISACallerFnHelper", ["ISACallerHelper"], [], result, decorator_list=[])]
+            result = [ast.ClassDef("ISACallerFnHelper", [
+                                   "ISACallerHelper"], [], result, decorator_list=[])]
         return ast.Module(result)
 
 

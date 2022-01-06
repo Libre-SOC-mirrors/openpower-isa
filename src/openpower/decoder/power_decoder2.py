@@ -1117,8 +1117,8 @@ class PowerDecode2(PowerDecodeSubset):
                  state=None, svp64_en=True, regreduce_en=False):
         super().__init__(dec, opkls, fn_name, final, state, svp64_en,
                          regreduce_en=False)
-        self.ldst_exc = LDSTException("dec2_exc") # rewrites as OP_TRAP
-        self.instr_fault = Signal() # rewrites instruction as OP_FETCH_FAILED
+        self.ldst_exc = LDSTException("dec2_exc")  # rewrites as OP_TRAP
+        self.instr_fault = Signal()  # rewrites instruction as OP_FETCH_FAILED
 
         if self.svp64_en:
             self.cr_out_isvec = Signal(1, name="cr_out_isvec")
