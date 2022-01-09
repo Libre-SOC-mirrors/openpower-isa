@@ -319,7 +319,7 @@ FIELDS = {field.name:field for field in _dataclasses.fields(Entry)}
 def parse(path, opcode_cls):
     for entry in ISA.get_svp64_csv(path):
         # skip instructions that are not suitable
-        name = entry["name"] = entry.pop("comment")
+        name = entry["name"] = entry.pop("comment").split("=")[-1]
         if name.startswith("l") and name.endswith("br"):
             continue
         if name in {"mcrxr", "mcrxrx", "darn"}:
