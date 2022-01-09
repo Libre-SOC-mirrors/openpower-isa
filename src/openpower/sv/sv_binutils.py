@@ -237,18 +237,17 @@ class Codegen(_enum.Enum):
             yield f"#define {self.name}"
             yield ""
 
+            yield from Opcode.c_decl()
+            yield ""
+
             enums = (
-                SVPType, SVEType,
                 In1Sel, In2Sel, In3Sel, OutSel,
                 CRInSel, CROutSel,
-                SVEXTRA,
+                SVPType, SVEType, SVEXTRA,
             )
             for enum in enums:
                 yield from enum.c_decl()
                 yield ""
-
-            yield from Opcode.c_decl()
-            yield ""
 
             yield from Entry.c_decl()
             yield ""
