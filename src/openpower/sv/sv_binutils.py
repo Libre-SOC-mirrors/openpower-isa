@@ -189,13 +189,18 @@ class Entry:
 
     @classmethod
     def c_decl(cls):
+        bits_all = 0
         yield f"struct svp64_entry {{"
         for field in _dataclasses.fields(cls):
             if issubclass(field.type, Enum):
                 bits = len(field.type).bit_length()
                 yield from indent([f"uint64_t {field.name} : {bits};"])
+                bits_all += bits
             else:
                 yield from indent(field.type.c_var(name=field.name))
+        bits_rsvd = (64 - (bits_all % 64))
+        if bits_rsvd:
+            yield from indent([f"uint64_t : {bits_rsvd};"])
         yield f"}};"
 
     def c_value(self, prefix="", suffix=""):
