@@ -1,12 +1,8 @@
 import abc as _abc
 import argparse as _argparse
-import codecs as _codecs
-import csv as _csv
 import dataclasses as _dataclasses
 import enum as _enum
-import pathlib as _pathlib
 import re as _re
-import sys as _sys
 
 from openpower.decoder.power_enums import (
     In1Sel as _In1Sel,
