@@ -187,6 +187,11 @@ class Entry:
     sv_cr_in: SVEXTRA
     sv_cr_out: SVEXTRA
 
+    def __lt__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return self.name < other.name
+
     @classmethod
     def c_decl(cls):
         bits_all = 0
@@ -366,6 +371,7 @@ def main(codegen):
     }
     for (path, opcode_cls) in table.items():
         entries.extend(parse(path, opcode_cls))
+    entries = sorted(entries)
 
     for line in codegen.generate(entries):
         print(line)
