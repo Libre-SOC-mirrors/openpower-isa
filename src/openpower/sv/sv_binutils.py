@@ -118,8 +118,8 @@ class Opcode(Field):
     def c_value(self, prefix="", suffix=""):
         yield f"{prefix}{{"
         yield from indent([
-            f".value = {self.value},",
-            f".mask = {self.mask},",
+            f".value = UINT32_C(0x{self.value:08X}),",
+            f".mask = UINT32_C(0x{self.mask:08X}),",
         ])
         yield f"}}{suffix}"
 
