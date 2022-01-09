@@ -63,7 +63,7 @@ class Enum(Field, _enum.Enum):
     @classmethod
     def c_var(cls, name):
         c_tag = f"svp64_{cls.__name__.lower()}"
-        yield f"enum {c_tag} {name};"
+        yield f"enum {c_tag} {name}"
 
 
 # Python forbids inheriting from enum unless it's empty.
@@ -121,7 +121,7 @@ class Opcode(Field):
 
     @classmethod
     def c_var(cls, name):
-        yield f"struct svp64_opcode {name};"
+        yield f"struct svp64_opcode {name}"
 
 
 class IntegerOpcode(Opcode):
@@ -159,7 +159,7 @@ class Name(Field, str):
 
     @classmethod
     def c_var(cls, name):
-        yield f"const char *{name};"
+        yield f"const char *{name}"
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -198,7 +198,7 @@ class Entry:
                 yield from indent([f"uint64_t {field.name} : {bits};"])
                 bits_all += bits
             else:
-                yield from indent(field.type.c_var(name=field.name))
+                yield from indent(field.type.c_var(name=f"{field.name};"))
         bits_rsvd = (64 - (bits_all % 64))
         if bits_rsvd:
             yield from indent([f"uint64_t : {bits_rsvd};"])
@@ -214,7 +214,7 @@ class Entry:
 
     @classmethod
     def c_var(cls, name):
-        yield f"struct svp64_entry {name};"
+        yield f"struct svp64_entry {name}"
 
 
 class Codegen(_enum.Enum):
