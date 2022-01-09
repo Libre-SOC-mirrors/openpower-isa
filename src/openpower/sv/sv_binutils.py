@@ -31,7 +31,7 @@ def indent(strings):
     return map(lambda string: ("    " + string), strings)
 
 
-class Field:
+class CType:
     @classmethod
     @_abc.abstractmethod
     def c_decl(self, name):
@@ -47,7 +47,7 @@ class Field:
         pass
 
 
-class Enum(Field, _enum.Enum):
+class Enum(CType, _enum.Enum):
     @classmethod
     def c_decl(cls):
         c_tag = f"svp64_{cls.__name__.lower()}"
@@ -78,7 +78,7 @@ SVEType = Enum("SVEType", {item.name:item.value for item in _SVEtype})
 SVEXTRA = Enum("SVEXTRA", {item.name:item.value for item in _SVEXTRA})
 
 
-class Opcode(Field):
+class Opcode(CType):
     def __init__(self, value, mask, bits):
         self.__value = value
         self.__mask = mask
@@ -149,7 +149,7 @@ class PatternOpcode(Opcode):
         return super().__init__(value=value, mask=mask, bits=bits)
 
 
-class Name(Field, str):
+class Name(CType, str):
     def __repr__(self):
         escaped = self.replace("\"", "\\\"")
         return f"\"{escaped}\""
@@ -163,7 +163,7 @@ class Name(Field, str):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Entry(Field):
+class Entry(CType):
     name: Name
     opcode: Opcode
     in1: In1Sel
