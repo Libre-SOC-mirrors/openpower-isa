@@ -163,7 +163,7 @@ class Name(Field, str):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Entry:
+class Entry(Field):
     name: Name
     opcode: Opcode
     in1: In1Sel
