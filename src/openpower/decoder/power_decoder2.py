@@ -1506,7 +1506,7 @@ class PowerDecode2(PowerDecodeSubset):
 
         comb += ext_irq_ok.eq(ext_irq & msr[MSR.EE])  # v3.0B p944 (MSR.EE)
         comb += dec_irq_ok.eq(dec_spr[63] & msr[MSR.EE])  # 6.5.11 p1076
-        #comb += priv_ok.eq(is_priv_insn & msr[MSR.PR])
+        comb += priv_ok.eq(is_priv_insn & msr[MSR.PR])
         comb += illeg_ok.eq(op.internal_op == MicrOp.OP_ILLEGAL)
 
         # absolute top priority: check for an instruction failed
