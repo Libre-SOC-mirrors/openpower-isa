@@ -143,7 +143,7 @@ class TestRunnerBase(FHDLTestCase):
 
         pspec = TestMemPspec(ldst_ifacetype=ldst_ifacetype,
                              imem_ifacetype=imem_ifacetype,
-                             addr_wid=48,
+                             addr_wid=64,
                              mask_wid=8,
                              imem_reg_wid=64,
                              # wb_data_width=32,
