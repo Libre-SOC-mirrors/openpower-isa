@@ -38,7 +38,6 @@ Special Registers Altered:
 
     CR0                    (if Rc=1)
 
-
 # Generalized Bit-Reverse Immediate
 
 XB-Form
