@@ -18,3 +18,80 @@ Pseudo-code:
 Special Registers Altered:
 
     None
+
+# Generalized Bit-Reverse
+
+X-Form
+
+* grev RT, RA, RB (Rc=0)
+* grev. RT, RA, RB (Rc=1)
+
+Pseudo-code:
+
+    result <- [0] * XLEN
+    do i = 0 to XLEN - 1
+      idx <- ((RB) ^ i) % XLEN
+      result[i] <- (RA)[idx]
+    RT <- result
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+
+# Generalized Bit-Reverse Immediate
+
+XB-Form
+
+* grevi RT, RA, XBI (Rc=0)
+* grevi. RT, RA, XBI (Rc=1)
+
+Pseudo-code:
+
+    result <- [0] * XLEN
+    do i = 0 to XLEN - 1
+      idx <- (XBI ^ i) % XLEN
+      result[i] <- (RA)[idx]
+    RT <- result
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Generalized Bit-Reverse Word
+
+X-Form
+
+* grevw RT, RA, RB (Rc=0)
+* grevw. RT, RA, RB (Rc=1)
+
+Pseudo-code:
+
+    result <- [0] * XLEN # MSB half just stays zeroed
+    do i = 0 to XLEN / 2 - 1
+      idx <- ((RB) ^ i) % (XLEN / 2)
+      result[i] <- (RA)[idx]
+    RT <- result
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Generalized Bit-Reverse Word Immediate
+
+X-Form
+
+* grevwi RT, RA, SH (Rc=0)
+* grevwi. RT, RA, SH (Rc=1)
+
+Pseudo-code:
+
+    result <- [0] * XLEN # MSB half just stays zeroed
+    do i = 0 to XLEN / 2 - 1
+      idx <- (SH ^ i) % (XLEN / 2)
+      result[i] <- (RA)[idx]
+    RT <- result
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
