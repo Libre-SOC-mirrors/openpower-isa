@@ -84,6 +84,7 @@ class Decode2ToOperand(IssuerDecode2ToOperand):
         self.is_signed = Signal(reset_less=True)
         self.data_len = Signal(4, reset_less=True) # bytes
         self.byte_reverse  = Signal(reset_less=True)
+        self.reserve  = Signal(reset_less=True) # atomic update ldarx/stdcx etc
         self.sign_extend  = Signal(reset_less=True)# do we need this?
         self.ldst_mode  = Signal(LDSTMode, reset_less=True) # LD/ST mode
         self.write_cr0 = Signal(reset_less=True)

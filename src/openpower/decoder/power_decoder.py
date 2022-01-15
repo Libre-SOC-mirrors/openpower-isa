@@ -163,6 +163,7 @@ power_op_csvmap = {'function_unit': 'unit',
                    'cr_out': 'CR out',
                    'ldst_len': 'ldst len',
                    'upd': 'upd',
+                   'rsrv': 'reserve', # atomic operation
                    'rc_sel': 'rc',
                    'cry_in': 'cry in',
                    }
