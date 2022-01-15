@@ -756,6 +756,7 @@ record_names = {'insn_type': 'internal_op',
                 'is_signed': 'sgn',
                 'lk': 'lk',
                 'data_len': 'ldst_len',
+                'reserve': 'rsrv',
                 'byte_reverse': 'br',
                 'sign_extend': 'sgn_ext',
                 'ldst_mode': 'upd',
@@ -1063,6 +1064,7 @@ class PowerDecodeSubset(Elaboratable):
         comb += self.do_copy("byte_reverse", self.op_get("br"))
         comb += self.do_copy("sign_extend", self.op_get("sgn_ext"))
         comb += self.do_copy("ldst_mode", self.op_get("upd"))  # LD/ST mode
+        comb += self.do_copy("reserve", self.op_get("rsrv"))  # atomic
 
         # copy over SVP64 input record fields (if they exist)
         if self.svp64_en:
