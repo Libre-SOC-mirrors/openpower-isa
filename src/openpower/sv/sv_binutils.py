@@ -243,6 +243,9 @@ class Codegen(_enum.Enum):
             yield f"#define {self.name}"
             yield ""
 
+            yield "#include <stdint.h>"
+            yield ""
+
             yield from Opcode.c_decl()
             yield ""
 
@@ -267,6 +270,9 @@ class Codegen(_enum.Enum):
 
         def ppc_opc_svp64_c(entries):
             yield from DISCLAIMER
+            yield ""
+
+            yield "#include \"ppc-opc-svp64.h\""
             yield ""
 
             yield "const struct svp64_entry svp64_entries[] = {{"
