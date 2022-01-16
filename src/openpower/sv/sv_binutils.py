@@ -258,11 +258,23 @@ class Codegen(_enum.Enum):
             yield from Entry.c_decl()
             yield ""
 
+            yield "extern const struct svp64_entry svp64_entries[];"
+            yield "extern const unsigned int svp64_num_entries;"
+            yield ""
+
             yield f"#endif /* {self.name} */"
             yield ""
 
         def ppc_opc_svp64_c(entries):
-            yield from ()
+            yield from DISCLAIMER
+            yield ""
+
+            yield "const struct svp64_entry svp64_entries[] = {{"
+            for (index, entry) in enumerate(entries):
+                yield from indent(entry.c_value(prefix=f"[{index}] = ", suffix=","))
+            yield f"}};"
+            yield f"const unsigned int svp64_num_entries = {len(entries)};"
+            yield ""
 
         return {
             Codegen.PPC_OPC_SVP64_H: ppc_opc_svp64_h,
@@ -367,7 +379,7 @@ def main(codegen):
     }
     for (path, opcode_cls) in table.items():
         entries.extend(parse(path, opcode_cls))
-    entries = sorted(entries)
+    entries = sorted(frozenset(entries))
 
     for line in codegen.generate(entries):
         print(line)
