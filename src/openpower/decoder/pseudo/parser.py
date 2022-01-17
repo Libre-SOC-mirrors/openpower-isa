@@ -916,21 +916,31 @@ class PowerParser:
         raise SyntaxError(p)
 
 
+_CACHE_DECODER = True
+_CACHED_DECODER = None
+
+
+def _create_cached_decoder():
+    global _CACHED_DECODER
+    if _CACHE_DECODER:
+        if _CACHED_DECODER is None:
+            _CACHED_DECODER = create_pdecode()
+        return _CACHED_DECODER
+    return create_pdecode()
+
+
 class GardenSnakeParser(PowerParser):
-    def __init__(self, lexer=None, debug=False, form=None, incl_carry=False, helper=False):
+    def __init__(self, debug=False, form=None, incl_carry=False, helper=False):
         if form is not None:
-            self.sd = create_pdecode()
+            self.sd = _create_cached_decoder()
         PowerParser.__init__(self, form, incl_carry, helper=helper)
         self.debug = debug
-        if lexer is None:
-            lexer = IndentLexer(debug=0)
-        self.lexer = lexer
-        self.tokens = lexer.tokens
+        self.lexer = IndentLexer(debug=0)
+        self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(module=self, start="file_input_end",
                                 debug=debug, write_tables=False)
 
     def parse(self, code):
-        # self.lexer.input(code)
         result = self.parser.parse(code, lexer=self.lexer, debug=self.debug)
         if self.helper:
             result = [ast.ClassDef("ISACallerFnHelper", [
@@ -950,13 +960,12 @@ class GardenSnakeCompiler(object):
     def __init__(self, debug=False, form=None, incl_carry=False, helper=False):
         if _CACHE_PARSERS:
             try:
-                parser = _CACHED_PARSERS[debug, form, incl_carry, helper]
+                self.parser = _CACHED_PARSERS[debug, form, incl_carry, helper]
             except KeyError:
-                parser = GardenSnakeParser(debug=debug, form=form,
-                                           incl_carry=incl_carry, helper=helper)
-                _CACHED_PARSERS[debug, form, incl_carry, helper] = parser
-
-            self.parser = deepcopy(parser)
+                self.parser = GardenSnakeParser(
+                    debug=debug, form=form, incl_carry=incl_carry,
+                    helper=helper)
+                _CACHED_PARSERS[debug, form, incl_carry, helper] = self.parser
         else:
             self.parser = GardenSnakeParser(debug=debug, form=form,
                                             incl_carry=incl_carry, helper=helper)
