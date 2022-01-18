@@ -288,12 +288,10 @@ class PowerParser:
         ("left", "INVERT"),
     )
 
-    def __init__(self, form, include_carry_in_write=False, helper=False):
-        self.include_ca_in_write = include_carry_in_write
-        self.helper = helper
+    def reset(self):
         self.gprs = {}
-        if form is not None:
-            form = self.sd.sigforms[form]
+        if self.form is not None:
+            form = self.sd.sigforms[self.form]
             print(form)
             formkeys = form._asdict().keys()
         else:
@@ -314,6 +312,12 @@ class PowerParser:
         self.uninit_regs = OrderedSet()
         self.write_regs = OrderedSet()
         self.special_regs = OrderedSet()  # see p_atom_name
+
+    def __init__(self, form, include_carry_in_write=False, helper=False):
+        self.include_ca_in_write = include_carry_in_write
+        self.helper = helper
+        self.form = form
+        self.reset()
 
     # The grammar comments come from Python's Grammar/Grammar file
 
@@ -941,6 +945,7 @@ class GardenSnakeParser(PowerParser):
                                 debug=debug, write_tables=False)
 
     def parse(self, code):
+        self.reset()
         result = self.parser.parse(code, lexer=self.lexer, debug=self.debug)
         if self.helper:
             result = [ast.ClassDef("ISACallerFnHelper", [
