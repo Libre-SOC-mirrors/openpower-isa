@@ -360,6 +360,15 @@ def bitrev(val, VL):
     return result
 
 
+def log2(val):
+    """return the base-2 logarithm of `val`. Only works for powers of 2."""
+    if isinstance(val, SelectableInt):
+        val = val.value
+    retval = val.bit_length() - 1
+    assert val == 2 ** retval, "value is not a power of 2"
+    return retval
+
+
 # For these tests I tried to find power instructions that would let me
 # isolate each of these helper operations. So for instance, when I was
 # testing the MASK() function, I chose rlwinm and rldicl because if I
