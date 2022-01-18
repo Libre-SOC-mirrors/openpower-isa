@@ -41,7 +41,7 @@ def exts(value, bits):
 def EXTS(value):
     """ extends sign bit out from current MSB to all 256 bits
     """
-    log ("EXTS", value, type(value))
+    log("EXTS", value, type(value))
     assert isinstance(value, SelectableInt)
     return SelectableInt(exts(value.value, value.bits) & ((1 << 256)-1), 256)
 
@@ -108,12 +108,14 @@ def ROTL32(value, bits):
         value = SelectableInt(value.value, 64)
     return rotl(value | (value << 32), bits, 64)
 
+
 def MASK32(x, y):
     if isinstance(x, SelectableInt):
         x = x.value
     if isinstance(y, SelectableInt):
         y = y.value
     return MASK(x+32, y+32)
+
 
 def MASK(x, y):
     if isinstance(x, SelectableInt):
@@ -183,36 +185,37 @@ def SINGLE(FRS):
     m = FRS[12:64]
     s = FRS[0]
 
-    log ("SINGLE", FRS)
-    log ("s e m", s.value, e.value, m.value)
+    log("SINGLE", FRS)
+    log("s e m", s.value, e.value, m.value)
 
-    #No Denormalization Required (includes Zero / Infinity / NaN)
-    if e.value > 896 or FRS[1:64].value  == 0:
-          log("nodenorm", FRS[0:2].value, hex(FRS[5:35].value))
-          WORD[0:2] = FRS[0:2]
-          WORD[2:32] = FRS[5:35]
+    # No Denormalization Required (includes Zero / Infinity / NaN)
+    if e.value > 896 or FRS[1:64].value == 0:
+        log("nodenorm", FRS[0:2].value, hex(FRS[5:35].value))
+        WORD[0:2] = FRS[0:2]
+        WORD[2:32] = FRS[5:35]
 
-    #Denormalization Required
-    if e.value  >= 874 and e.value <= 896:
-          sign = FRS[0]
-          exp = e.value - 1023
-          frac = selectconcat(SelectableInt(1, 1), FRS[12:64])
-          log("exp, fract", exp, hex(frac.value))
-          # denormalize operand
-          while exp < -126:
-              frac[0:53] = selectconcat(SelectableInt(0, 1), frac[0:52])
-              exp = exp + 1
-          WORD[0] = sign
-          WORD[1:9] = SelectableInt(0, 8)
-          WORD[9:32] = frac[1:24]
-    #else WORD = undefined # return zeros
+    # Denormalization Required
+    if e.value >= 874 and e.value <= 896:
+        sign = FRS[0]
+        exp = e.value - 1023
+        frac = selectconcat(SelectableInt(1, 1), FRS[12:64])
+        log("exp, fract", exp, hex(frac.value))
+        # denormalize operand
+        while exp < -126:
+            frac[0:53] = selectconcat(SelectableInt(0, 1), frac[0:52])
+            exp = exp + 1
+        WORD[0] = sign
+        WORD[1:9] = SelectableInt(0, 8)
+        WORD[9:32] = frac[1:24]
+    # else WORD = undefined # return zeros
 
-    log ("WORD", WORD)
+    log("WORD", WORD)
 
     return WORD
 
 # XXX NOTE: these are very quick hacked functions for utterly basic
 # FP support
+
 
 def signinv(res, sign):
     if sign == 1:
@@ -238,7 +241,7 @@ class ISAFPHelpers:
         result = math.sin(float(FRB))
         cvt = fp64toselectable(result)
         cvt = self.DOUBLE2SINGLE(cvt)
-        log ("FPSIN32", FRB, float(FRB), "=", result, cvt)
+        log("FPSIN32", FRB, float(FRB), "=", result, cvt)
         return cvt
 
     def FPCOS32(self, FRB):
@@ -246,104 +249,103 @@ class ISAFPHelpers:
         result = math.cos(float(FRB))
         cvt = fp64toselectable(result)
         cvt = self.DOUBLE2SINGLE(cvt)
-        log ("FPCOS32", FRB, float(FRB), "=", result, cvt)
+        log("FPCOS32", FRB, float(FRB), "=", result, cvt)
         return cvt
 
     def FPADD32(self, FRA, FRB):
-        #return FPADD64(FRA, FRB)
+        # return FPADD64(FRA, FRB)
         #FRA = DOUBLE(SINGLE(FRA))
         #FRB = DOUBLE(SINGLE(FRB))
         result = float(FRA) + float(FRB)
         cvt = fp64toselectable(result)
         cvt = self.DOUBLE2SINGLE(cvt)
-        log ("FPADD32", FRA, FRB, float(FRA), "+", float(FRB), "=", result, cvt)
+        log("FPADD32", FRA, FRB, float(FRA), "+", float(FRB), "=", result, cvt)
         return cvt
 
     def FPSUB32(self, FRA, FRB):
-        #return FPSUB64(FRA, FRB)
+        # return FPSUB64(FRA, FRB)
         #FRA = DOUBLE(SINGLE(FRA))
         #FRB = DOUBLE(SINGLE(FRB))
         result = float(FRA) - float(FRB)
         cvt = fp64toselectable(result)
         cvt = self.DOUBLE2SINGLE(cvt)
-        log ("FPSUB32", FRA, FRB, float(FRA), "-", float(FRB), "=", result, cvt)
+        log("FPSUB32", FRA, FRB, float(FRA), "-", float(FRB), "=", result, cvt)
         return cvt
 
     def FPMUL32(self, FRA, FRB, sign=1):
-        #return FPMUL64(FRA, FRB)
+        # return FPMUL64(FRA, FRB)
         FRA = self.DOUBLE(SINGLE(FRA))
         FRB = self.DOUBLE(SINGLE(FRB))
         result = signinv(float(FRA) * float(FRB), sign)
-        log ("FPMUL32", FRA, FRB, float(FRA), float(FRB), result, sign)
+        log("FPMUL32", FRA, FRB, float(FRA), float(FRB), result, sign)
         cvt = fp64toselectable(result)
         cvt = self.DOUBLE2SINGLE(cvt)
-        log ("      cvt", cvt)
+        log("      cvt", cvt)
         return cvt
 
     def FPMULADD32(self, FRA, FRC, FRB, mulsign, addsign):
-        #return FPMUL64(FRA, FRB)
+        # return FPMUL64(FRA, FRB)
         #FRA = DOUBLE(SINGLE(FRA))
         #FRB = DOUBLE(SINGLE(FRB))
         if addsign == 1:
             if mulsign == 1:
-                result = float(FRA) * float(FRC) + float(FRB) # fmadds
+                result = float(FRA) * float(FRC) + float(FRB)  # fmadds
             elif mulsign == -1:
                 result = -(float(FRA) * float(FRC) - float(FRB))  # fnmsubs
         elif addsign == -1:
             if mulsign == 1:
-                result = float(FRA) * float(FRC) - float(FRB) # fmsubs
+                result = float(FRA) * float(FRC) - float(FRB)  # fmsubs
             elif mulsign == -1:
                 result = -(float(FRA) * float(FRC) + float(FRB))  # fnmadds
         elif addsign == 0:
             result = 0.0
-        log ("FPMULADD32 FRA FRC FRB", FRA, FRC, FRB)
-        log ("      FRA", float(FRA))
-        log ("      FRC", float(FRC))
-        log ("      FRB", float(FRB))
-        log ("      (FRA*FRC)+FRB=", mulsign, addsign, result)
+        log("FPMULADD32 FRA FRC FRB", FRA, FRC, FRB)
+        log("      FRA", float(FRA))
+        log("      FRC", float(FRC))
+        log("      FRB", float(FRB))
+        log("      (FRA*FRC)+FRB=", mulsign, addsign, result)
         cvt = fp64toselectable(result)
         cvt = self.DOUBLE2SINGLE(cvt)
-        log ("      cvt", cvt)
+        log("      cvt", cvt)
         return cvt
 
     def FPDIV32(self, FRA, FRB, sign=1):
-        #return FPDIV64(FRA, FRB)
+        # return FPDIV64(FRA, FRB)
         #FRA = DOUBLE(SINGLE(FRA))
         #FRB = DOUBLE(SINGLE(FRB))
         result = signinv(float(FRA) / float(FRB), sign)
         cvt = fp64toselectable(result)
         cvt = self.DOUBLE2SINGLE(cvt)
-        log ("FPDIV32", FRA, FRB, result, cvt)
+        log("FPDIV32", FRA, FRB, result, cvt)
         return cvt
 
 
 def FPADD64(FRA, FRB):
     result = float(FRA) + float(FRB)
     cvt = fp64toselectable(result)
-    log ("FPADD64", FRA, FRB, result, cvt)
+    log("FPADD64", FRA, FRB, result, cvt)
     return cvt
 
 
 def FPSUB64(FRA, FRB):
     result = float(FRA) - float(FRB)
     cvt = fp64toselectable(result)
-    log ("FPSUB64", FRA, FRB, result, cvt)
+    log("FPSUB64", FRA, FRB, result, cvt)
     return cvt
 
 
 def FPMUL64(FRA, FRB, sign=1):
     result = signinv(float(FRA) * float(FRB), sign)
     cvt = fp64toselectable(result)
-    log ("FPMUL64", FRA, FRB, result, cvt, sign)
+    log("FPMUL64", FRA, FRB, result, cvt, sign)
     return cvt
 
 
 def FPDIV64(FRA, FRB, sign=1):
     result = signinv(float(FRA) / float(FRB), sign)
     cvt = fp64toselectable(result)
-    log ("FPDIV64", FRA, FRB, result, cvt, sign)
+    log("FPDIV64", FRA, FRB, result, cvt, sign)
     return cvt
-
 
 
 def bitrev(val, VL):
