@@ -13,6 +13,7 @@ related bugs:
 * https://bugs.libre-soc.org/show_bug.cgi?id=424
 """
 
+import re
 from nmigen.back.pysim import Settle
 from functools import wraps
 from copy import copy, deepcopy
@@ -1252,7 +1253,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             illegal = False
             ins_name = 'ffadds'
 
-        if asmop == 'ternlogi':
+        if asmop == 'ternlogi' \
+            or re.fullmatch(r'grevw?i?\.?', asmop or ''):
             illegal = False
             ins_name = asmop
 

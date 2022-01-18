@@ -34,6 +34,36 @@ class BitManipTestCase(TestAccumulatorBase):
         e.intregs[5] = rb
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def do_case_grev(self, w, is_imm, ra, rb):
+        bits = 32 if w else 64
+        masked_rb = rb % bits
+        if is_imm:
+            lst = [f"grev{'w' if w else ''}i. 3, 4, {masked_rb}"]
+        else:
+            lst = [f"grev{'w' if w else ''}. 3, 4, 5"]
+        initial_regs = [0] * 32
+        ra %= 2 ** 64
+        rb %= 2 ** 64
+        initial_regs[4] = ra
+        initial_regs[5] = rb
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        expected = 0
+        for i in range(bits):
+            dest_bit = i ^ masked_rb
+            if ra & 2 ** i:
+                expected |= 2 ** dest_bit
+        e.intregs[3] = expected
+        e.intregs[4] = ra
+        e.intregs[5] = rb
+        if expected & 2 ** 63:  # sign extend
+            expected -= 2 ** 64
+        eq = expected == 0
+        gt = expected > 0
+        lt = expected < 0
+        e.crregs[0] = (eq << 1) | (gt << 2) | (lt << 3)
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
     def case_ternlogi_0(self):
         self.do_case_ternlogi(0x8000_0000_FFFF_0000,
                               0x8000_0000_FF00_FF00,
@@ -49,3 +79,21 @@ class BitManipTestCase(TestAccumulatorBase):
             ra = hash_256(f"ternlogi ra {i}") % 2 ** 64
             rb = hash_256(f"ternlogi rb {i}") % 2 ** 64
             self.do_case_ternlogi(rt, ra, rb, imm)
+
+    def case_grev_random(self):
+        for i in range(100):
+            w = hash_256(f"grev w {i}") & 1
+            is_imm = hash_256(f"grev is_imm {i}") & 1
+            ra = hash_256(f"grev ra {i}") % 2 ** 64
+            rb = hash_256(f"grev rb {i}") % 2 ** 64
+            self.do_case_grev(w, is_imm, ra, rb)
+
+    def case_grevi_1(self):
+        self.do_case_grev(False, True, 14361919363078703450,
+                          8396479064514513069)
+
+    def case_grevi_2(self):
+        self.do_case_grev(True, True, 397097147229333315, 8326716970539357702)
+
+    def case_grevi_3(self):
+        self.do_case_grev(True, True, 0xFFFF_FFFF_0000_0000, 6)

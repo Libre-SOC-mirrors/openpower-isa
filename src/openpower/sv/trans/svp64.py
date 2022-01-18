@@ -297,6 +297,38 @@ class SVP64Asm:
             yield f".4byte {hex(instr)} # {asm}"
             return
 
+        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+        # however we are out of space with opcode 22
+        if opcode in ('grev', 'grevi', 'grevw', 'grevwi',
+                      'grev.', 'grevi.', 'grevw.', 'grevwi.'):
+            po = 5
+            # _ matches fields in table at:
+            # https://libre-soc.org/openpower/sv/bitmanip/
+            xo = 0b1_0010_110
+            if 'w' in opcode:
+                xo |= 0b100_000
+            if 'i' in opcode:
+                xo |= 0b1000_000
+            Rc = 1 if '.' in opcode else 0
+            rt = int(fields[0])
+            ra = int(fields[1])
+            rb_imm = int(fields[2])
+            instr = po
+            instr = (instr << 5) | rt
+            instr = (instr << 5) | ra
+            if opcode == 'grevi' or opcode == 'grevi.':
+                assert 0 <= rb_imm < 64
+                instr = (instr << 6) | rb_imm
+                instr = (instr << 9) | xo
+            else:
+                assert 0 <= rb_imm < 32
+                instr = (instr << 5) | rb_imm
+                instr = (instr << 10) | xo
+            instr = (instr << 1) | Rc
+            asm = f"{opcode} {rt}, {ra}, {rb_imm}"
+            yield f".4byte {hex(instr)} # {asm}"
+            return
+
         # identify if is a svp64 mnemonic
         if not opcode.startswith('sv.'):
             yield insn  # unaltered

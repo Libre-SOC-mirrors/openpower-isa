@@ -284,6 +284,8 @@ _insns = [
     "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "fsins", "fcoss",                                   # FP SIN/COS
+    'grev', 'grev.', 'grevi', 'grevi.',
+    'grevw', 'grevw.', 'grevwi', 'grevwi.',
     "hrfid", "icbi", "icbt", "isel", "isync",
     "lbarx", "lbz", "lbzcix", "lbzu", "lbzux", "lbzx",  # load byte
     "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
