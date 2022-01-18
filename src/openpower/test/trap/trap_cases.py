@@ -24,6 +24,15 @@ class TrapTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs)
 
+    def case_2_rfid(self):
+        lst = ["rfid"]
+        initial_regs = [0] * 32
+        initial_regs[1] = 1
+        initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0xb000000000001033}
+        self.add_case(Program(lst, bigendian),
+                      initial_regs, initial_sprs,
+                                    initial_msr=0xa000000000000003)
+
     def case_0_trap_eq_imm(self):
         insns = ["twi", "tdi"]
         for i in range(2):
@@ -54,6 +63,13 @@ class TrapTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[1] = 0xffffffffffffffff
         self.add_case(Program(lst, bigendian), initial_regs)
+
+    def case_4_mtmsrd_0_linux(self):
+        lst = ["mtmsrd 1,0"]
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xb000000000001033
+        self.add_case(Program(lst, bigendian), initial_regs,
+                                    initial_msr=0xa000000000000003)
 
     def case_4_mtmsrd_0(self):
         lst = ["mtmsrd 1,0"]
