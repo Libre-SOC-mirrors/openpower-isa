@@ -21,7 +21,7 @@ from openpower.decoder.power_svp64 import SVP64RM as _SVP64RM
 DISCLAIMER = (
     "/*",
     " * this file is auto-generated, do not edit",
-    " * http://libre-soc.org/openpower/sv_binutils.py",
+    " * https://git.libre-soc.org/?p=openpower-isa.git;a=blob;f=src/openpower/sv/sv_binutils.py",
     " * part of Libre-SOC, sponsored by NLnet",
     " */",
 )
