@@ -1,21 +1,48 @@
 import os
 import random
-from openpower.consts import FastRegsEnum
+from openpower.consts import FastRegsEnum, StateRegsEnum
 from openpower.decoder.power_enums import SPRfull as SPR, spr_dict
 
 
 # note that we can get away with using SPRfull here because the values
 # (numerical values) are what is used for lookup.
-spr_to_fast = { SPR.CTR: FastRegsEnum.CTR,
+spr_to_fast = {
                 SPR.LR: FastRegsEnum.LR,
-                SPR.TAR: FastRegsEnum.TAR,
+                SPR.CTR: FastRegsEnum.CTR,
                 SPR.SRR0: FastRegsEnum.SRR0,
                 SPR.SRR1: FastRegsEnum.SRR1,
+                SPR.HSRR0: FastRegsEnum.HSRR0,
+                SPR.HSRR1: FastRegsEnum.HSRR1,
+                SPR.SPRG0_priv: FastRegsEnum.SPRG0,
+                SPR.SPRG1_priv: FastRegsEnum.SPRG1,
+                SPR.SPRG2_priv: FastRegsEnum.SPRG2,
+                SPR.SPRG3: FastRegsEnum.SPRG3,
+                SPR.HSPRG0: FastRegsEnum.HSPRG0,
+                SPR.HSPRG1: FastRegsEnum.HSPRG1,
                 SPR.XER: FastRegsEnum.XER,
-                SPR.DEC: FastRegsEnum.DEC,
-                SPR.TB: FastRegsEnum.TB,
+                SPR.TAR: FastRegsEnum.TAR,
                 SPR.SVSRR0: FastRegsEnum.SVSRR0,
                }
+
+spr_to_state = { SPR.DEC: StateRegsEnum.DEC,
+                 SPR.TB: StateRegsEnum.TB,
+               }
+
+sprstr_to_state = {}
+state_to_spr = {}
+for (k, v) in spr_to_state.items():
+    sprstr_to_state[k.name] = v
+    state_to_spr[v] = k
+
+def state_reg_to_spr(spr_num):
+    return state_to_spr[spr_num].value
+
+
+def spr_to_state_reg(spr_num):
+    if not isinstance(spr_num, str):
+        spr_num = spr_dict[spr_num].SPR
+    return sprstr_to_state.get(spr_num, None)
+
 
 sprstr_to_fast = {}
 fast_to_spr = {}

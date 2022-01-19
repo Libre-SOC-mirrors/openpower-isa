@@ -41,7 +41,7 @@ from openpower.consts import (MSR, SPEC, EXTRA2, EXTRA3, SVP64P, field,
                               FastRegsEnum, XERRegsEnum, TT)
 
 from openpower.state import CoreState
-from openpower.util import (spr_to_fast, log)
+from openpower.util import (spr_to_fast, spr_to_state, log)
 
 
 def decode_spr_num(spr):
@@ -78,7 +78,8 @@ class SPRMap(Elaboratable):
 
         self.spr_i = Signal(10, reset_less=True)
         self.spr_o = Data(SPR, name="spr_o")
-        self.fast_o = Data(3, name="fast_o")
+        self.fast_o = Data(4, name="fast_o")
+        self.state_o = Data(3, name="state_o")
 
     def elaborate(self, platform):
         m = Module()
@@ -95,6 +96,10 @@ class SPRMap(Elaboratable):
                 with m.Case(x.value):
                     m.d.comb += self.fast_o.data.eq(v)
                     m.d.comb += self.fast_o.ok.eq(1)
+            for x, v in spr_to_state.items():
+                with m.Case(x.value):
+                    m.d.comb += self.state_o.data.eq(v)
+                    m.d.comb += self.state_o.ok.eq(1)
         return m
 
 
@@ -116,7 +121,8 @@ class DecodeA(Elaboratable):
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, name="reg_a")
         self.spr_out = Data(SPR, "spr_a")
-        self.fast_out = Data(3, "fast_a")
+        self.fast_out = Data(4, "fast_a")
+        self.state_out = Data(3, "state_a")
         self.sv_nz = Signal(1)
 
     def elaborate(self, platform):
@@ -181,6 +187,7 @@ class DecodeA(Elaboratable):
                 comb += sprmap.spr_i.eq(spr)
                 comb += self.spr_out.eq(sprmap.spr_o)
                 comb += self.fast_out.eq(sprmap.fast_o)
+                comb += self.state_out.eq(sprmap.state_o)
 
         return m
 
@@ -229,7 +236,7 @@ class DecodeB(Elaboratable):
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(7, "reg_b")
         self.reg_isvec = Signal(1, name="reg_b_isvec")  # TODO: in reg_out
-        self.fast_out = Data(3, "fast_b")
+        self.fast_out = Data(4, "fast_b")
 
     def elaborate(self, platform):
         m = Module()
@@ -393,7 +400,8 @@ class DecodeOut(Elaboratable):
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o")
         self.spr_out = Data(SPR, "spr_o")
-        self.fast_out = Data(3, "fast_o")
+        self.fast_out = Data(4, "fast_o")
+        self.state_out = Data(3, "state_o")
 
     def elaborate(self, platform):
         m = Module()
@@ -421,6 +429,7 @@ class DecodeOut(Elaboratable):
                     comb += sprmap.spr_i.eq(spr)
                     comb += self.spr_out.eq(sprmap.spr_o)
                     comb += self.fast_out.eq(sprmap.fast_o)
+                    comb += self.state_out.eq(sprmap.state_o)
 
         # determine Fast Reg
         with m.Switch(op.internal_op):
@@ -463,8 +472,8 @@ class DecodeOut2(Elaboratable):
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o2")
         self.fp_madd_en = Signal(reset_less=True)  # FFT instruction detected
-        self.fast_out = Data(3, "fast_o2")
-        self.fast_out3 = Data(3, "fast_o3")
+        self.fast_out = Data(4, "fast_o2")
+        self.fast_out3 = Data(4, "fast_o3")
 
     def elaborate(self, platform):
         m = Module()
@@ -1470,6 +1479,9 @@ class PowerDecode2(PowerDecodeSubset):
         comb += e.write_fast1.eq(dec_o.fast_out)   # SRR0 (OP_RFID)
         comb += e.write_fast2.eq(dec_o2.fast_out)  # SRR1 (ditto)
         comb += e.write_fast3.eq(dec_o2.fast_out3)  # SVSRR0 (ditto)
+        # and State regs (DEC, TB)
+        comb += e.read_state1.eq(dec_a.state_out)    # DEC/TB
+        comb += e.write_state1.eq(dec_o.state_out)   # DEC/TB
 
         # sigh this is exactly the sort of thing for which the
         # decoder is designed to not need.  MTSPR, MFSPR and others need

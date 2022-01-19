@@ -111,6 +111,8 @@ def regspec_decode_read(m, e, regfile, name):
         if name == 'svstate':
             # TODO: detect read-conditions
             rd = RegDecodeInfo(Const(1), SVSTATE, 3)
+        if name == 'state1':
+            rd = RegDecodeInfo(e.read_state1.ok, 1<<e.read_state1.data, 3)
 
     # FAST regfile
 
@@ -199,6 +201,8 @@ def regspec_decode_write(m, e, regfile, name):
             wr = RegDecodeInfo(None, MSR, 3) # hmmm
         if name == 'svstate':
             wr = RegDecodeInfo(None, SVSTATE, 3) # hmmm
+        if name == 'state1':
+            wr = RegDecodeInfo(e.write_state1.ok, 1<<e.write_state1.data, 3)
 
     # FAST regfile
 

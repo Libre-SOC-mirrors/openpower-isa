@@ -296,20 +296,29 @@ class StateRegsEnum:
     PC = 0
     MSR = 1
     SVSTATE = 2
-    N_REGS = 3 # maximum number of regs
+    DEC = 3
+    TB = 4
+    N_REGS = 5 # maximum number of regs
 
 # Fast SPRs Regfile
 class FastRegsEnum:
-    CTR = 0
-    LR = 1
-    TAR = 2
-    SRR0 = 3
-    SRR1 = 4
-    XER = 5 # non-XER bits
-    DEC = 6
-    TB = 7
-    SVSRR0 = 8
-    N_REGS = 9 # maximum number of regs
+    LR = 0
+    CTR = 1
+    SRR0 = 2
+    SRR1 = 3
+    HSRR0 = 4
+    HSRR1 = 5
+    SPRG0 = 6
+    SPRG1 = 7
+    SPRG2 = 8
+    SPRG3 = 9
+    HSPRG0 = 10
+    HSPRG1 = 11
+    XER = 12 # non-XER bits
+    TAR = 13
+    SVSRR0 = 14
+    # only one spare!
+    N_REGS = 15 # maximum number of regs
 
 # XER Regfile
 class XERRegsEnum:

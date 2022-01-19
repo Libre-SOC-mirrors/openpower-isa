@@ -565,9 +565,10 @@ def get_spr_enum(full_file):
     short_list = {'PIDR', 'DAR', 'PRTBL', 'DSISR', 'SVSRR0', 'SVSTATE',
                   'SVSTATE0', 'SVSTATE1', 'SVSTATE2', 'SVSTATE3',
                   'SPRG0_priv', 'SPRG1_priv', 'SPRG2_priv', 'SPRG3_priv',
-                  'SPRG3',
+                  'SPRG0', 'SPRG1', 'SPRG2', 'SPRG3',
                   # hmmm should not be including these, they are FAST regs
                   'CTR', 'LR', 'TAR', 'SRR0', 'SRR1', 'XER', 'DEC', 'TB', 'TBU',
+                  'HSRR0', 'HSRR1', 'HSPRG0', 'HSPRG1',
                   }
     spr_csv = []
     for row in get_csv("sprs.csv"):
