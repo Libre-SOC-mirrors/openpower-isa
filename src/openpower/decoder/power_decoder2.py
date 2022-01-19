@@ -1538,18 +1538,18 @@ class PowerDecode2(PowerDecodeSubset):
         # after a failed LD/ST.
         with m.Elif(ldst_exc.happened):
             with m.If(ldst_exc.alignment):
-                self.trap(m, TT.PRIV, 0x600)
+                self.trap(m, TT.MEMEXC, 0x600)
             with m.Elif(ldst_exc.instr_fault):
                 with m.If(ldst_exc.segment_fault):
-                    self.trap(m, TT.PRIV, 0x480)
+                    self.trap(m, TT.MEMEXC, 0x480)
                 with m.Else():
                     # pass exception info to trap to create SRR1
                     self.trap(m, TT.MEMEXC, 0x400, ldst_exc)
             with m.Else():
                 with m.If(ldst_exc.segment_fault):
-                    self.trap(m, TT.PRIV, 0x380)
+                    self.trap(m, TT.MEMEXC, 0x380)
                 with m.Else():
-                    self.trap(m, TT.PRIV, 0x300)
+                    self.trap(m, TT.MEMEXC, 0x300)
 
         # decrement counter (v3.0B p1099): TODO 32-bit version (MSR.LPCR)
         with m.Elif(dec_irq_ok):
