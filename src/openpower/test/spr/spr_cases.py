@@ -94,3 +94,19 @@ class SPRTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs)
 
+    def case_6_set_tb(self):
+        lst = [ "mtspr 268, 2",    # TB
+               "addi 1,0,0",
+               "addi 1,0,0",
+               "addi 1,0,0",
+               "addi 1,0,0",
+               "mfspr 1, 268", # TB
+                ]
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x129518230011feed
+        initial_regs[2] = 0x123518230011fee0
+        initial_sprs = {'TB': 0x12345678,
+                        }
+        self.add_case(Program(lst, bigendian),
+                      initial_regs, initial_sprs)
+

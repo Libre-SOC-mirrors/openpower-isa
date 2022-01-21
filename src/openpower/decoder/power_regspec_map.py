@@ -104,20 +104,20 @@ def regspec_decode_read(m, e, regfile, name):
         SVSTATE = 1<<StateRegsEnum.SVSTATE
         if name in ['cia', 'nia']:
             # TODO: detect read-conditions
-            rd = RegDecodeInfo(Const(1), PC, 3)
+            rd = RegDecodeInfo(Const(1), PC, 5)
         if name == 'msr':
             # TODO: detect read-conditions
-            rd = RegDecodeInfo(Const(1), MSR, 3)
+            rd = RegDecodeInfo(Const(1), MSR, 5)
         if name == 'svstate':
             # TODO: detect read-conditions
-            rd = RegDecodeInfo(Const(1), SVSTATE, 3)
+            rd = RegDecodeInfo(Const(1), SVSTATE, 5)
         if name == 'state1':
-            rd = RegDecodeInfo(e.read_state1.ok, 1<<e.read_state1.data, 3)
+            rd = RegDecodeInfo(e.read_state1.ok, 1<<e.read_state1.data, 5)
 
     # FAST regfile
 
     if regfile == 'FAST':
-        # FAST register numbering is *unary* encoded
+        # FAST register numbering is *binary* encoded
         if name == 'fast1':
             rd = RegDecodeInfo(e.read_fast1.ok, e.read_fast1.data, 4)
         if name == 'fast2':
@@ -196,18 +196,18 @@ def regspec_decode_write(m, e, regfile, name):
         MSR = 1<<StateRegsEnum.MSR
         SVSTATE = 1<<StateRegsEnum.SVSTATE
         if name in ['cia', 'nia']:
-            wr = RegDecodeInfo(None, PC, 3) # hmmm
+            wr = RegDecodeInfo(None, PC, 5) # hmmm
         if name == 'msr':
-            wr = RegDecodeInfo(None, MSR, 3) # hmmm
+            wr = RegDecodeInfo(None, MSR, 5) # hmmm
         if name == 'svstate':
-            wr = RegDecodeInfo(None, SVSTATE, 3) # hmmm
+            wr = RegDecodeInfo(None, SVSTATE, 5) # hmmm
         if name == 'state1':
-            wr = RegDecodeInfo(e.write_state1.ok, 1<<e.write_state1.data, 3)
+            wr = RegDecodeInfo(e.write_state1.ok, 1<<e.write_state1.data, 5)
 
     # FAST regfile
 
     if regfile == 'FAST':
-        # FAST register numbering is *unary* encoded
+        # FAST register numbering is *binary* encoded
         if name == 'fast1':
             wr = RegDecodeInfo(e.write_fast1.ok, e.write_fast1.data, 4)
         if name == 'fast2':
