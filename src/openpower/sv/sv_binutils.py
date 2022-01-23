@@ -246,6 +246,11 @@ class Codegen(_enum.Enum):
             yield "#include <stdint.h>"
             yield ""
 
+            yield "#ifdef __cplusplus"
+            yield "extern \"C\" {"
+            yield "#endif"
+            yield ""
+
             yield from Opcode.c_decl()
             yield ""
 
@@ -263,6 +268,11 @@ class Codegen(_enum.Enum):
 
             yield "extern const struct svp64_entry svp64_entries[];"
             yield "extern const unsigned int svp64_num_entries;"
+            yield ""
+
+            yield "#ifdef __cplusplus"
+            yield "}"
+            yield "#endif"
             yield ""
 
             yield f"#endif /* {self.name} */"
