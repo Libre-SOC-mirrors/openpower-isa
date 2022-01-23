@@ -285,7 +285,7 @@ class Codegen(_enum.Enum):
             yield "#include \"opcode/ppc-svp64.h\""
             yield ""
 
-            yield "const struct svp64_entry svp64_entries[] = {{"
+            yield "const struct svp64_entry svp64_entries[] = {"
             for (index, entry) in enumerate(entries):
                 yield from indent(entry.c_value(prefix=f"[{index}] = ", suffix=","))
             yield f"}};"
