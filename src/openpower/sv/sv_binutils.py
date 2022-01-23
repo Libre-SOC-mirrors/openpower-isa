@@ -169,9 +169,7 @@ class Name(CType, str):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Entry(CType):
-    name: Name
-    opcode: Opcode
+class Record(CType):
     in1: In1Sel
     in2: In2Sel
     in3: In3Sel
@@ -189,6 +187,38 @@ class Entry(CType):
     sv_cr_in: SVEXTRA
     sv_cr_out: SVEXTRA
 
+    @classmethod
+    def c_decl(cls):
+        bits_all = 0
+        yield f"struct svp64_record {{"
+        for field in _dataclasses.fields(cls):
+            bits = len(field.type).bit_length()
+            yield from indent([f"uint64_t {field.name} : {bits};"])
+            bits_all += bits
+        bits_rsvd = (64 - (bits_all % 64))
+        if bits_rsvd:
+            yield from indent([f"uint64_t : {bits_rsvd};"])
+        yield f"}};"
+
+    def c_value(self, prefix="", suffix=""):
+        yield f"{prefix}{{"
+        for field in _dataclasses.fields(self):
+            name = field.name
+            attr = getattr(self, name)
+            yield from indent(attr.c_value(prefix=f".{name} = ", suffix=","))
+        yield f"}}{suffix}"
+
+    @classmethod
+    def c_var(cls, name):
+        yield f"struct svp64_record {name}"
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Entry(CType):
+    name: Name
+    opcode: Opcode
+    record: Record
+
     def __lt__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
@@ -200,18 +230,9 @@ class Entry(CType):
 
     @classmethod
     def c_decl(cls):
-        bits_all = 0
         yield f"struct svp64_entry {{"
         for field in _dataclasses.fields(cls):
-            if issubclass(field.type, Enum):
-                bits = len(field.type).bit_length()
-                yield from indent([f"uint64_t {field.name} : {bits};"])
-                bits_all += bits
-            else:
-                yield from indent(field.type.c_var(name=f"{field.name};"))
-        bits_rsvd = (64 - (bits_all % 64))
-        if bits_rsvd:
-            yield from indent([f"uint64_t : {bits_rsvd};"])
+            yield from indent(field.type.c_var(name=f"{field.name};"))
         yield f"}};"
 
     def c_value(self, prefix="", suffix=""):
@@ -272,6 +293,9 @@ class Codegen(_enum.Enum):
             for enum in enums:
                 yield from enum.c_decl()
                 yield ""
+
+            yield from Record.c_decl()
+            yield ""
 
             yield from Entry.c_decl()
             yield ""
@@ -360,11 +384,12 @@ REGEX = _re.compile(PATTERN)
 
 
 ISA = _SVP64RM()
-FIELDS = {field.name:field for field in _dataclasses.fields(Entry)}
+FIELDS = {field.name:field for field in _dataclasses.fields(Record)}
+FIELDS.update({field.name:field for field in _dataclasses.fields(Entry)})
 def parse(path, opcode_cls):
-    for entry in ISA.get_svp64_csv(path):
-        # skip instructions that are not suitable
-        names = entry.pop("comment").split("=")[-1]
+    for record in ISA.get_svp64_csv(path):
+        opcode = opcode_cls(record.pop("opcode"))
+        names = record.pop("comment").split("=")[-1]
         for name in map(Name, names.split("/")):
             if name.startswith("l") and name.endswith("br"):
                 continue
@@ -377,24 +402,23 @@ def parse(path, opcode_cls):
             if name in {"setvl"}:
                 continue
 
-            entry = {key.lower().replace(" ", "_"):value for (key, value) in entry.items()}
-            for (key, value) in tuple(entry.items()):
+            record = {key.lower().replace(" ", "_"):value for (key, value) in record.items()}
+            for (key, value) in tuple(record.items()):
                 key = key.lower().replace(" ", "_")
                 if key not in FIELDS:
-                    entry.pop(key)
+                    record.pop(key)
                     continue
 
                 field = FIELDS[key]
                 if not isinstance(value, field.type):
                     if issubclass(field.type, _enum.Enum):
                         value = {item.name:item for item in field.type}[value]
-                    elif issubclass(field.type, Opcode):
-                        value = opcode_cls(value)
                     else:
                         value = field.type(value)
-                entry[key] = value
 
-            yield Entry(name=name, **entry)
+                record[key] = value
+
+            yield Entry(name=name, opcode=opcode, record=Record(**record))
 
 
 def main(codegen):
