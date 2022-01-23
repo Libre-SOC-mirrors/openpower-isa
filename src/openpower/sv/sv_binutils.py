@@ -270,6 +270,9 @@ class Codegen(_enum.Enum):
             yield "extern const unsigned int svp64_num_entries;"
             yield ""
 
+            yield f"#define SVP64_NAME_MAX {max(map(lambda entry: len(entry.name), entries))}"
+            yield ""
+
             yield "#ifdef __cplusplus"
             yield "}"
             yield "#endif"
