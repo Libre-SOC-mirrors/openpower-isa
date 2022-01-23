@@ -218,24 +218,24 @@ class Entry(CType):
 
 
 class Codegen(_enum.Enum):
-    PPC_OPC_SVP64_H = _enum.auto()
-    PPC_OPC_SVP64_C = _enum.auto()
+    PPC_SVP64_H = _enum.auto()
+    PPC_SVP64_OPC_C = _enum.auto()
 
     @classmethod
     def _missing_(cls, value):
         return {
-            "ppc-opc-svp64.h": Codegen.PPC_OPC_SVP64_H,
-            "ppc-opc-svp64.c": Codegen.PPC_OPC_SVP64_C,
+            "ppc-svp64.h": Codegen.PPC_SVP64_H,
+            "ppc-svp64-opc.c": Codegen.PPC_SVP64_OPC_C,
         }[value]
 
     def __str__(self):
         return {
-            Codegen.PPC_OPC_SVP64_H: "ppc-opc-svp64.h",
-            Codegen.PPC_OPC_SVP64_C: "ppc-opc-svp64.c",
+            Codegen.PPC_SVP64_H: "ppc-svp64.h",
+            Codegen.PPC_SVP64_OPC_C: "ppc-svp64-opc.c",
         }[self]
 
     def generate(self, entries):
-        def ppc_opc_svp64_h(entries):
+        def ppc_svp64_h(entries):
             yield from DISCLAIMER
             yield ""
 
@@ -268,11 +268,11 @@ class Codegen(_enum.Enum):
             yield f"#endif /* {self.name} */"
             yield ""
 
-        def ppc_opc_svp64_c(entries):
+        def ppc_svp64_opc_c(entries):
             yield from DISCLAIMER
             yield ""
 
-            yield "#include \"ppc-opc-svp64.h\""
+            yield "#include \"opcode/ppc-svp64.h\""
             yield ""
 
             yield "const struct svp64_entry svp64_entries[] = {{"
@@ -283,8 +283,8 @@ class Codegen(_enum.Enum):
             yield ""
 
         return {
-            Codegen.PPC_OPC_SVP64_H: ppc_opc_svp64_h,
-            Codegen.PPC_OPC_SVP64_C: ppc_opc_svp64_c,
+            Codegen.PPC_SVP64_H: ppc_svp64_h,
+            Codegen.PPC_SVP64_OPC_C: ppc_svp64_opc_c,
         }[self](entries)
 
 
