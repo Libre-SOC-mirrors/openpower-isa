@@ -354,34 +354,37 @@ FIELDS = {field.name:field for field in _dataclasses.fields(Entry)}
 def parse(path, opcode_cls):
     for entry in ISA.get_svp64_csv(path):
         # skip instructions that are not suitable
-        name = entry["name"] = entry.pop("comment").split("=")[-1]
-        if name.startswith("l") and name.endswith("br"):
-            continue
-        if name in {"mcrxr", "mcrxrx", "darn"}:
-            continue
-        if name in {"bctar", "bcctr"}:
-            continue
-        if "rfid" in name:
-            continue
-        if name in {"setvl"}:
-            continue
+        names = entry.pop("comment").split("=")[-1]
+        for name in map(Name, names.split("/")):
+            if name.startswith("l") and name.endswith("br"):
+                continue
+            if name in {"mcrxr", "mcrxrx", "darn"}:
+                continue
+            if name in {"bctar", "bcctr"}:
+                continue
+            if "rfid" in name:
+                continue
+            if name in {"setvl"}:
+                continue
 
-        entry = {key.lower().replace(" ", "_"):value for (key, value) in entry.items()}
-        for (key, value) in tuple(entry.items()):
-            key = key.lower().replace(" ", "_")
-            if key not in FIELDS:
-                entry.pop(key)
-            else:
+            entry = {key.lower().replace(" ", "_"):value for (key, value) in entry.items()}
+            for (key, value) in tuple(entry.items()):
+                key = key.lower().replace(" ", "_")
+                if key not in FIELDS:
+                    entry.pop(key)
+                    continue
+
                 field = FIELDS[key]
-                if issubclass(field.type, _enum.Enum):
-                    value = {item.name:item for item in field.type}[value]
-                elif issubclass(field.type, Opcode):
-                    value = opcode_cls(value)
-                else:
-                    value = field.type(value)
+                if not isinstance(value, field.type):
+                    if issubclass(field.type, _enum.Enum):
+                        value = {item.name:item for item in field.type}[value]
+                    elif issubclass(field.type, Opcode):
+                        value = opcode_cls(value)
+                    else:
+                        value = field.type(value)
                 entry[key] = value
 
-        yield Entry(**entry)
+            yield Entry(name=name, **entry)
 
 
 def main(codegen):
