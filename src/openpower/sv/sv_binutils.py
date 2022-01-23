@@ -289,7 +289,10 @@ class Codegen(_enum.Enum):
             for (index, entry) in enumerate(entries):
                 yield from indent(entry.c_value(prefix=f"[{index}] = ", suffix=","))
             yield f"}};"
-            yield f"const unsigned int svp64_num_entries = {len(entries)};"
+            yield ""
+
+            yield "const unsigned int svp64_num_entries = \\"
+            yield "    sizeof (svp64_entries) / sizeof (svp64_entries[0]);"
             yield ""
 
         return {
