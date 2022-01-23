@@ -102,6 +102,12 @@ class Opcode(CType):
         fmt = f"{{value:0{self.bits}b}}:{{mask:0{self.bits}b}}"
         return fmt.format(value=self.value, mask=self.mask)
 
+    def __lt__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+
+        return self.__value < other.__value
+
     @classmethod
     def c_decl(cls):
         yield f"struct svp64_opcode {{"
@@ -186,6 +192,10 @@ class Entry(CType):
     def __lt__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
+
+        if self.name == other.name:
+            return self.opcode < other.opcode
+
         return self.name < other.name
 
     @classmethod
