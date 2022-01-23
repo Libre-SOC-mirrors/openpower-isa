@@ -226,7 +226,7 @@ class Codegen(_enum.Enum):
         return {
             "ppc-svp64.h": Codegen.PPC_SVP64_H,
             "ppc-svp64-opc.c": Codegen.PPC_SVP64_OPC_C,
-        }[value]
+        }.get(value)
 
     def __str__(self):
         return {
