@@ -25,4 +25,4 @@ class LDSTException(RecordObject):
         RecordObject.__init__(self, name=name)
         for f in self._exc_types:
             setattr(self, f, Signal(name=f))
-
+        srr1 = Signal(64)
