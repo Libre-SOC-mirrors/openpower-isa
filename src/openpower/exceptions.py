@@ -26,3 +26,4 @@ class LDSTException(RecordObject):
         for f in self._exc_types:
             setattr(self, f, Signal(name=f))
         srr1 = Signal(64)
+    length = len(exc_types) + 64 # update this if adding anything else!
