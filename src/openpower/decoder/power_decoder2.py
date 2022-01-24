@@ -1582,12 +1582,6 @@ class PowerDecode2(PowerDecodeSubset):
         # Note: OP_SC could actually be modified to just be a trap
         with m.If((do_out.insn_type == MicrOp.OP_TRAP) |
                   (do_out.insn_type == MicrOp.OP_SC)):
-            # see fu/trap/main_stage.py trap() function: some bits of SRR1
-            # need to be preserved, rather than just blithely overwrite MSR.
-            # following microwatt, here.
-            # TRAP read fast2 = SRR1
-            comb += e_out.read_fast2.data.eq(FastRegsEnum.SRR1)  # SRR1
-            comb += e_out.read_fast2.ok.eq(1)
             # TRAP write fast1 = SRR0
             comb += e_out.write_fast1.data.eq(FastRegsEnum.SRR0)  # SRR0
             comb += e_out.write_fast1.ok.eq(1)
