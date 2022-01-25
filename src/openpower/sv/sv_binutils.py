@@ -380,6 +380,7 @@ ISA = _SVP64RM()
 FIELDS = {field.name:field for field in _dataclasses.fields(Record)}
 FIELDS.update({field.name:field for field in _dataclasses.fields(Entry)})
 def parse(path, opcode_cls):
+    visited = set()
     for record in ISA.get_svp64_csv(path):
         opcode = opcode_cls(record.pop("opcode"))
         names = record.pop("comment").split("=")[-1]
@@ -411,7 +412,10 @@ def parse(path, opcode_cls):
 
                 record[key] = value
 
-            yield Entry(name=name, record=Record(**record))
+            if name not in visited:
+                yield Entry(name=name, record=Record(**record))
+
+            visited.add(name)
 
 
 def main(codegen):
