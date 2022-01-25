@@ -78,6 +78,15 @@ SVEType = Enum("SVEType", {item.name:item.value for item in _SVEtype})
 SVEXTRA = Enum("SVEXTRA", {item.name:item.value for item in _SVEXTRA})
 
 
+class Bool(CType, int):
+    def c_value(self, prefix="", suffix=""):
+        yield f"{prefix}{'true' if self else 'false'}{suffix}"
+
+    @classmethod
+    def c_var(cls, name):
+        yield f"bool {name}"
+
+
 class Opcode(CType):
     def __init__(self, value, mask, bits):
         self.__value = value
@@ -186,13 +195,17 @@ class Record(CType):
     sv_out2: SVEXTRA
     sv_cr_in: SVEXTRA
     sv_cr_out: SVEXTRA
+    active: Bool=_dataclasses.field(default_factory=lambda: Bool(False))
 
     @classmethod
     def c_decl(cls):
         bits_all = 0
         yield f"struct svp64_record {{"
         for field in _dataclasses.fields(cls):
-            bits = len(field.type).bit_length()
+            if issubclass(field.type, Bool):
+                bits = 1
+            else:
+                bits = len(field.type).bit_length()
             yield from indent([f"uint64_t {field.name} : {bits};"])
             bits_all += bits
         bits_rsvd = (64 - (bits_all % 64))
@@ -270,6 +283,7 @@ class Codegen(_enum.Enum):
             yield f"#define {self.name}"
             yield ""
 
+            yield "#include <stdbool.h>"
             yield "#include <stdint.h>"
             yield ""
 
