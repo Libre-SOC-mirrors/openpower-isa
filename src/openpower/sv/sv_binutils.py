@@ -216,15 +216,11 @@ class Record(CType):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Entry(CType):
     name: Name
-    opcode: Opcode
     record: Record
 
     def __lt__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
-
-        if self.name == other.name:
-            return self.opcode < other.opcode
 
         return self.name < other.name
 
@@ -280,9 +276,6 @@ class Codegen(_enum.Enum):
             yield "#ifdef __cplusplus"
             yield "extern \"C\" {"
             yield "#endif"
-            yield ""
-
-            yield from Opcode.c_decl()
             yield ""
 
             enums = (
@@ -418,7 +411,7 @@ def parse(path, opcode_cls):
 
                 record[key] = value
 
-            yield Entry(name=name, opcode=opcode, record=Record(**record))
+            yield Entry(name=name, record=Record(**record))
 
 
 def main(codegen):
