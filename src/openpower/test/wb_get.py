@@ -4,7 +4,7 @@ from nmigen.sim import Settle
 
 stop = False
 
-def wb_get(wb, mem, name=None):
+def wb_get_classic(wb, mem, name=None):
     """simulator process for emulating wishbone (classic) out of a dictionary
     """
     if name is None:
