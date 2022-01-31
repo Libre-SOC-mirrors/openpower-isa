@@ -2,7 +2,6 @@ import abc as _abc
 import argparse as _argparse
 import dataclasses as _dataclasses
 import enum as _enum
-import re as _re
 
 from openpower.decoder.power_enums import (
     In1Sel as _In1Sel,
@@ -329,51 +328,6 @@ class Codegen(_enum.Enum):
             Codegen.PPC_SVP64_H: ppc_svp64_h,
             Codegen.PPC_SVP64_OPC_C: ppc_svp64_opc_c,
         }[self](entries)
-
-
-def regex_enum(enum):
-    assert issubclass(enum, _enum.Enum)
-    return "|".join(item.name for item in enum)
-
-
-PATTERN_VHDL_BINARY = r"(?:2#[01]+#)"
-PATTERN_DECIMAL = r"(?:[0-9]+)"
-PATTERN_PARTIAL_BINARY = r"(?:[01-]+)"
-
-# Examples of the entries to be caught by the pattern below:
-# 2 => (P2, EXTRA3, RA_OR_ZERO, NONE, NONE, RT, NONE, NONE, NONE, Idx1, NONE, NONE, Idx0, NONE, NONE, NONE), -- lwz
-# -----10110 => (P2, EXTRA3, NONE, FRB, NONE, FRT, NONE, NONE, CR1, NONE, Idx1, NONE, Idx0, NONE, NONE, Idx0), -- fsqrts
-# 2#0000000000# => (P2, EXTRA3, NONE, NONE, NONE, NONE, NONE, BFA, BF, NONE, NONE, NONE, NONE, NONE, Idx1, Idx0), -- mcrf
-PATTERN = "".join((
-    r"^\s*",
-    rf"(?P<opcode>{PATTERN_VHDL_BINARY}|{PATTERN_DECIMAL}|{PATTERN_PARTIAL_BINARY})",
-    r"\s?=>\s?",
-    r"\(",
-    r",\s".join((
-        rf"(?P<ptype>{regex_enum(_SVPtype)})",
-        rf"(?P<etype>{regex_enum(_SVEtype)})",
-        rf"(?P<in1>{regex_enum(_In1Sel)})",
-        rf"(?P<in2>{regex_enum(_In2Sel)})",
-        rf"(?P<in3>{regex_enum(_In3Sel)})",
-        rf"(?P<out>{regex_enum(_OutSel)})",
-        rf"(?P<out2>{regex_enum(_OutSel)})",
-        rf"(?P<cr_in>{regex_enum(_CRInSel)})",
-        rf"(?P<cr_out>{regex_enum(_CROutSel)})",
-        rf"(?P<sv_in1>{regex_enum(_SVEXTRA)})",
-        rf"(?P<sv_in2>{regex_enum(_SVEXTRA)})",
-        rf"(?P<sv_in3>{regex_enum(_SVEXTRA)})",
-        rf"(?P<sv_out>{regex_enum(_SVEXTRA)})",
-        rf"(?P<sv_out2>{regex_enum(_SVEXTRA)})",
-        rf"(?P<sv_cr_in>{regex_enum(_SVEXTRA)})",
-        rf"(?P<sv_cr_out>{regex_enum(_SVEXTRA)})",
-    )),
-    r"\)",
-    r",",
-    r"\s?--\s?",
-    r"(?P<name>[A-Za-z0-9_\./]+)",
-    r"\s*$",
-))
-REGEX = _re.compile(PATTERN)
 
 
 ISA = _SVP64RM()
