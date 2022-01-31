@@ -13,6 +13,7 @@ from openpower.decoder.power_enums import (
     SVPtype as _SVPtype,
     SVEtype as _SVEtype,
     SVEXTRA as _SVEXTRA,
+    RC as _RC,
 )
 from openpower.decoder.power_svp64 import SVP64RM as _SVP64RM
 
@@ -375,6 +376,9 @@ def parse(path, opcode_cls):
         names = record.pop("comment").split("=")[-1].split("/")
         names = set(filter(name_filter, names))
         if names:
+            rc = _RC[record["rc"] if record["rc"] else "NONE"]
+            if rc is _RC.RC:
+                names.update({f"{name}." for name in names})
             record = dict(filter(item_filter, map(item_mapper, record.items())))
             for name in map(Name, names):
                 yield Entry(name=name, record=Record(**record))
