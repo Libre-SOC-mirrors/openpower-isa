@@ -16,7 +16,7 @@ class BranchTestCase(TestAccumulatorBase):
             initial_regs = [0] * 32
             self.add_case(Program(lst, bigendian), initial_regs)
 
-    def case_1_regression_negbranch(self):
+    def cse_1_regression_negbranch(self):
         lst = [f"bl -3377317"]
         initial_regs = [0] * 32
         self.add_case(Program(lst, bigendian), initial_regs)
