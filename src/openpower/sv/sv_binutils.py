@@ -331,45 +331,53 @@ class Codegen(_enum.Enum):
 
 
 ISA = _SVP64RM()
-FIELDS = {field.name:field for field in _dataclasses.fields(Record)}
-FIELDS.update({field.name:field for field in _dataclasses.fields(Entry)})
+FIELDS = {field.name:field.type for field in _dataclasses.fields(Record)}
+FIELDS.update({field.name:field.type for field in _dataclasses.fields(Entry)})
+
 def parse(path, opcode_cls):
     visited = set()
+
+    def name_filter(name):
+        if name.startswith("l") and name.endswith("br"):
+            return False
+        if name in {"mcrxr", "mcrxrx", "darn"}:
+            return False
+        if name in {"bctar", "bcctr"}:
+            return False
+        if "rfid" in name:
+            return False
+        if name in {"setvl"}:
+            return False
+        if name in visited:
+            return False
+
+        visited.add(name)
+
+        return True
+
+    def item_mapper(item):
+        (key, value) = item
+        key = key.lower().replace(" ", "_")
+        cls = FIELDS.get(key, object)
+        if not isinstance(value, cls):
+            if issubclass(cls, _enum.Enum):
+                value = {item.name:item for item in cls}[value]
+            else:
+                value = cls(value)
+        return (key, value)
+
+    def item_filter(item):
+        (key, _) = item
+        return (key in FIELDS)
+
     for record in ISA.get_svp64_csv(path):
         opcode = opcode_cls(record.pop("opcode"))
-        names = record.pop("comment").split("=")[-1]
-        for name in map(Name, names.split("/")):
-            if name.startswith("l") and name.endswith("br"):
-                continue
-            if name in {"mcrxr", "mcrxrx", "darn"}:
-                continue
-            if name in {"bctar", "bcctr"}:
-                continue
-            if "rfid" in name:
-                continue
-            if name in {"setvl"}:
-                continue
-
-            record = {key.lower().replace(" ", "_"):value for (key, value) in record.items()}
-            for (key, value) in tuple(record.items()):
-                key = key.lower().replace(" ", "_")
-                if key not in FIELDS:
-                    record.pop(key)
-                    continue
-
-                field = FIELDS[key]
-                if not isinstance(value, field.type):
-                    if issubclass(field.type, _enum.Enum):
-                        value = {item.name:item for item in field.type}[value]
-                    else:
-                        value = field.type(value)
-
-                record[key] = value
-
-            if name not in visited:
+        names = record.pop("comment").split("=")[-1].split("/")
+        names = set(filter(name_filter, names))
+        if names:
+            record = dict(filter(item_filter, map(item_mapper, record.items())))
+            for name in map(Name, names):
                 yield Entry(name=name, record=Record(**record))
-
-            visited.add(name)
 
 
 def main(codegen):
