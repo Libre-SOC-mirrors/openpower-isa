@@ -1,3 +1,6 @@
+import enum as _enum
+
+
 # just... don't ask.  MSB0 is a massive pain in the neck.
 # this module, aside from creating various field constants,
 # helps out by creating alternative (identical) classes with
@@ -83,10 +86,14 @@ def field(r, msb0_start, msb0_end=None, field_width=64):
         return r[field_slice(msb0_start, msb0_end, field_width)]
 
 
+class _Const(_enum.IntEnum):
+    pass
+
+
 # Listed in V3.0B Book III Chap 4.2.1
 # MSR bit numbers, *bigendian* order (PowerISA format)
 # use this in the simulator
-class MSRb:
+class MSRb(_Const):
     SF  = 0     # Sixty-Four bit mode
     HV  = 3     # Hypervisor state
     UND = 5     # Undefined behavior state (see Bk 2, Sect. 3.2.1)
@@ -124,7 +131,7 @@ botchify(MSRb, MSR)
 # to expand traptype to cope with the increased range
 
 # use this in the simulator
-class PIb:
+class PIb(_Const):
     INVALID      = 33    # 1 for an invalid mem err
     PERMERR      = 35    # 1 for an permanent mem err
     TM_BAD_THING = 42    # 1 for a TM Bad Thing type interrupt
@@ -158,7 +165,7 @@ class TT:
 
 
 # EXTRA3 3-bit subfield (spec)
-class SPECb:
+class SPECb(_Const):
     VEC = 0  # 1 for vector, 0 for scalar
     MSB = 1  # augmented register number, MSB
     LSB = 2  # augmented register number, LSB
@@ -172,7 +179,7 @@ botchify(SPECb, SPEC, SPEC_SIZE-1)
 
 
 # EXTRA field, with EXTRA2 subfield encoding
-class EXTRA2b:
+class EXTRA2b(_Const):
     IDX0_VEC = 0
     IDX0_MSB = 1
     IDX1_VEC = 2
@@ -218,7 +225,7 @@ class SVP64CROffs:
     CRPred = 4 # TODO: increase when CRs are expanded to 128
 
 
-class SVP64MODEb:
+class SVP64MODEb(_Const):
     # mode bits
     MOD2_MSB = 0
     MOD2_LSB = 1
@@ -268,7 +275,7 @@ SVP64MODE.CR = [3, 4]
 
 
 # CR sub-fields
-class CRb:
+class CRb(_Const):
     LT = 0
     GT = 1
     EQ = 2
