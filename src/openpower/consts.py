@@ -1,20 +1,6 @@
 import enum as _enum
 
 
-# just... don't ask.  MSB0 is a massive pain in the neck.
-# this module, aside from creating various field constants,
-# helps out by creating alternative (identical) classes with
-# a "b" name to indicate "MSB0 big-endian".
-
-
-# sigh create little-ended versions of bitfield flags
-def botchify(bekls, lekls, msb=63):
-    for attr in dir(bekls):
-        if attr[0] == '_':
-            continue
-        setattr(lekls, attr, msb-getattr(bekls, attr))
-
-
 # Can't think of a better place to put these functions.
 # Return an arbitrary subfield of a larger field.
 def field_slice(msb0_start, msb0_end, field_width=64):
@@ -86,7 +72,33 @@ def field(r, msb0_start, msb0_end=None, field_width=64):
         return r[field_slice(msb0_start, msb0_end, field_width)]
 
 
+# just... don't ask.  MSB0 is a massive pain in the neck.
+# this module, aside from creating various field constants,
+# helps out by creating alternative (identical) classes with
+# a "b" name to indicate "MSB0 big-endian".
 class _Const(_enum.IntEnum):
+    pass
+
+
+class _ConstLEMeta(_enum.EnumMeta):
+    def __call__(metacls, *args, **kwargs):
+        if len(args) > 1:
+            names = args[1]
+        else:
+            names = kwargs.pop("names")
+
+        if isinstance(names, type) and issubclass(names, _enum.Enum):
+            names = dict(names.__members__)
+        if isinstance(names, dict):
+            names = tuple(names.items())
+
+        msb = kwargs.pop("msb")
+        names = {key:(msb - value) for (key, value) in names}
+
+        return super().__call__(*args, names=names, **kwargs)
+
+
+class _ConstLE(_Const, metaclass=_ConstLEMeta):
     pass
 
 
@@ -118,10 +130,8 @@ class MSRb(_Const):
     LE  = 63    # Little Endian
 
 # use this inside the HDL (where everything is little-endian)
-class MSR:
-    pass
+MSR = _ConstLE("MSR", names=MSRb, msb=63)
 
-botchify(MSRb, MSR)
 
 # Listed in V3.0B Book III 7.5.9 "Program Interrupt"
 
@@ -142,10 +152,8 @@ class PIb(_Const):
     ADR          = 47    # 0 if SRR0 = address of instruction causing exception
 
 # and use this in the HDL
-class PI:
-    pass
+PI = _ConstLE("PI", names=PIb, msb=63)
 
-botchify(PIb, PI)
 
 # see traptype (and trap main_stage.py)
 # IMPORTANT: when adding extra bits here it is CRITICALLY IMPORTANT
@@ -173,9 +181,8 @@ class SPECb(_Const):
 
 SPEC_SIZE = 3
 SPEC_AUG_SIZE = 2  # augmented subfield size (MSB+LSB above)
-class SPEC:
-    pass
-botchify(SPECb, SPEC, SPEC_SIZE-1)
+SPEC = _ConstLE("SPEC", names=SPECb, msb=SPEC_SIZE-1)
+
 
 
 # EXTRA field, with EXTRA2 subfield encoding
@@ -192,9 +199,7 @@ class EXTRA2b(_Const):
 
 
 EXTRA2_SIZE = 9
-class EXTRA2:
-    pass
-botchify(EXTRA2b, EXTRA2, EXTRA2_SIZE-1)
+EXTRA2 = _ConstLE("EXTRA2", names=EXTRA2b, msb=EXTRA2_SIZE-1)
 
 
 # EXTRA field, with EXTRA3 subfield encoding
@@ -263,11 +268,8 @@ class SVP64MODEb(_Const):
 SVP64MODE_SIZE = 5
 
 
-class SVP64MODE:
-    pass
+SVP64MODE = _ConstLE("SVP64MODE", names=SVP64MODEb, msb=SVP64MODE_SIZE-1)
 
-
-botchify(SVP64MODEb, SVP64MODE, SVP64MODE_SIZE-1)
 
 # add subfields to use with nmutil.sel
 SVP64MODE.MOD2 = [0, 1]
@@ -285,11 +287,7 @@ class CRb(_Const):
 CR_SIZE = 4
 
 
-class CR:
-    pass
-
-
-botchify(CRb, CR, CR_SIZE-1)
+CR = _ConstLE("CR", names=CRb, msb=CR_SIZE-1)
 
 
 # POWER9 Register Files
