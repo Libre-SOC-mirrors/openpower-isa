@@ -15,6 +15,7 @@ from openpower.decoder.power_enums import (
     SVEXTRA as _SVEXTRA,
     RC as _RC,
 )
+from openpower.consts import SVP64MODE as _SVP64MODE
 from openpower.decoder.power_svp64 import SVP64RM as _SVP64RM
 
 
@@ -90,6 +91,24 @@ CROutSel = Enum("CROutSel", names=_CROutSel.__members__.items())
 SVPType = Enum("SVPType", names=_SVPtype.__members__.items())
 SVEType = Enum("SVEType", names=_SVEtype.__members__.items())
 SVEXTRA = Enum("SVEXTRA", names=_SVEXTRA.__members__.items())
+
+
+class Constant(CType, _enum.Enum):
+    @classmethod
+    def c_decl(cls):
+        c_tag = f"svp64_{cls.__name__.lower()}"
+        yield f"/* {c_tag.upper()} constants */"
+        for (key, item) in cls.__members__.items():
+            key = f"{c_tag.upper()}_{key.upper()}"
+            value = f"0x{item.value:08x}U"
+            yield f"#define {key} {value}"
+
+    def c_value(self, prefix="", suffix=""):
+        c_tag = f"svp64_{self.__class__.__name__.lower()}"
+        yield f"{prefix}{c_tag.upper()}_{self.name.upper()}{suffix}"
+
+
+Mode = Constant("Mode", names=_SVP64MODE.__members__.items())
 
 
 class Opcode(CType):
@@ -296,6 +315,7 @@ class Codegen(_enum.Enum):
                 In1Sel, In2Sel, In3Sel, OutSel,
                 CRInSel, CROutSel,
                 SVPType, SVEType, SVEXTRA,
+                Mode,
             )
             for enum in enums:
                 yield from enum.c_decl()
