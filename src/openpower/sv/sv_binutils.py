@@ -47,7 +47,22 @@ class CType:
         pass
 
 
-class Enum(CType, _enum.Enum):
+class EnumMeta(_enum.EnumMeta):
+    def __call__(metacls, *args, **kwargs):
+        if len(args) > 1:
+            names = args[1]
+        else:
+            names = kwargs.pop("names")
+
+        if isinstance(names, type) and issubclass(names, _enum.Enum):
+            names = dict(names.__members__)
+        if isinstance(names, dict):
+            names = tuple(names.items())
+
+        return super().__call__(*args, names=names, **kwargs)
+
+
+class Enum(CType, _enum.Enum, metaclass=EnumMeta):
     @classmethod
     def c_decl(cls):
         c_tag = f"svp64_{cls.__name__.lower()}"
@@ -66,16 +81,15 @@ class Enum(CType, _enum.Enum):
         yield f"enum {c_tag} {name}"
 
 
-# Python forbids inheriting from enum unless it's empty.
-In1Sel = Enum("In1Sel", {item.name:item.value for item in _In1Sel})
-In2Sel = Enum("In2Sel", {item.name:item.value for item in _In2Sel})
-In3Sel = Enum("In3Sel", {item.name:item.value for item in _In3Sel})
-OutSel = Enum("OutSel", {item.name:item.value for item in _OutSel})
-CRInSel = Enum("CRInSel", {item.name:item.value for item in _CRInSel})
-CROutSel = Enum("CROutSel", {item.name:item.value for item in _CROutSel})
-SVPType = Enum("SVPType", {item.name:item.value for item in _SVPtype})
-SVEType = Enum("SVEType", {item.name:item.value for item in _SVEtype})
-SVEXTRA = Enum("SVEXTRA", {item.name:item.value for item in _SVEXTRA})
+In1Sel = Enum("In1Sel", names=_In1Sel.__members__.items())
+In2Sel = Enum("In2Sel", names=_In2Sel.__members__.items())
+In3Sel = Enum("In3Sel", names=_In3Sel.__members__.items())
+OutSel = Enum("OutSel", names=_OutSel.__members__.items())
+CRInSel = Enum("CRInSel", names=_CRInSel.__members__.items())
+CROutSel = Enum("CROutSel", names=_CROutSel.__members__.items())
+SVPType = Enum("SVPType", names=_SVPtype.__members__.items())
+SVEType = Enum("SVEType", names=_SVEtype.__members__.items())
+SVEXTRA = Enum("SVEXTRA", names=_SVEXTRA.__members__.items())
 
 
 class Opcode(CType):
