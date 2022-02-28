@@ -145,6 +145,7 @@ class TestRunnerBase(FHDLTestCase):
                              imem_ifacetype=imem_ifacetype,
                              addr_wid=64,
                              mask_wid=8,
+                             XLEN=64,
                              imem_reg_wid=64,
                              # wb_data_width=32,
                              use_pll=False,
