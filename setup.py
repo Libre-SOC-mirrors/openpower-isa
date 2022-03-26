@@ -23,8 +23,7 @@ install_requires = [
     'pygdbmi',  # gdb machine interfave
     'ply',     # python lex yacc. very cool
     'astor',   # python AST manipulation
-    'cffi',  # LuaJIT-style C FFI for Python
-    "cached-property",
+    'cffi' # LuaJIT-style C FFI for Python
 ]
 
 test_requires = [
