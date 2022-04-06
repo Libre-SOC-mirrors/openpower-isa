@@ -488,7 +488,7 @@ class SVP64Asm:
                         # all good: encode as scalar
                         sv_extra = sv_extra & 0b01
                     else:
-                        # range is r0-r127 in increments of 4
+                        # range is r0-r127 in increments of 2 (r0 r2 ... r126)
                         assert sv_extra & 0b01 == 0, \
                             "%s: vector field %s cannot fit " \
                             "into EXTRA2 %s" % \
@@ -1222,6 +1222,7 @@ if __name__ == '__main__':
     lst = [
         'sv.bc/all 3,12,192',
         'sv.bclr/vsbi 3,81.v,192',
+        'sv.ld 5.v, 4(1.v)',
     ]
     isa = SVP64Asm(lst, macros=macros)
     print("list", list(isa))
