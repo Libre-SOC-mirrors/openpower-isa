@@ -21,7 +21,8 @@ from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                               selectconcat)
 from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
-                                           insns, MicrOp, In1Sel, In2Sel, In3Sel,
+                                           insns, MicrOp,
+                                           In1Sel, In2Sel, In3Sel,
                                            OutSel, CRInSel, CROutSel, LDSTMode,
                                            SVP64RMMode, SVP64PredMode,
                                            SVP64PredInt, SVP64PredCR,
