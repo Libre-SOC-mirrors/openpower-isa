@@ -334,7 +334,7 @@ def get_predint(gpr, mask):
     r30 = gpr(30)
     log("get_predint", mask, SVP64PredInt.ALWAYS.value)
     if mask == SVP64PredInt.ALWAYS.value:
-        return 0xffff_ffff_ffff_ffff
+        return 0xffff_ffff_ffff_ffff # 64 bits of 1
     if mask == SVP64PredInt.R3_UNARY.value:
         return 1 << (gpr(3).value & 0b111111)
     if mask == SVP64PredInt.R3.value:
@@ -1729,7 +1729,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             vl, srcstep, dststep, sv_a_nz, in1, fft_mode,
             self.is_svp64_mode)
 
-        # get predicate mask
+        # get predicate mask (all 64 bits)
         srcmask = dstmask = 0xffff_ffff_ffff_ffff
 
         pmode = yield self.dec2.rm_dec.predmode
