@@ -1,4 +1,4 @@
-# SPDX-License: LGPLv3+
+# SPDX-License-Identifier: LGPL-3-or-later
 # Copyright (C) 2020, 2021 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
 # Copyright (C) 2020, Michael Nolan
 

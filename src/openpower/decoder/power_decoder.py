@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LGPL-3-or-later
 """Cascading Power ISA Decoder
 
 License: LGPLv3+

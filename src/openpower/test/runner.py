@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LGPL-2-or-later
 """TestRunner class, part of the Test API
 
 SPDX-License: LGPLv2+
