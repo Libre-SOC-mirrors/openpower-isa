@@ -1,5 +1,6 @@
 from pygdbmi.gdbcontroller import GdbController
 import subprocess
+import tempfile
 
 launch_args_be = ['qemu-system-ppc64',
                   '-machine', 'powernv9',
@@ -33,6 +34,12 @@ def find_uint128(val):
 
 class QemuController:
     def __init__(self, kernel, bigendian):
+        self.binfile = None
+        if not isinstance(kernel, str): # assume a file
+            self.binfile = tempfile.NamedTemporaryFile(suffix=".bin")
+            self.binfile.write(kernel.read())
+            kernel = self.binfile.name
+
         if bigendian:
             args = launch_args_be + ['-kernel', kernel]
         else:
@@ -218,6 +225,8 @@ class QemuController:
         outs, errs = self.qemu_popen.communicate()
         self.qemu_popen.stdout.close()
         self.qemu_popen.stdin.close()
+        if self.binfile is not None:
+            self.binfile.close()
 
     def disasm(self, start, end):
         res = self.gdb.write('-data-disassemble -s "%d" -e "%d" -- 0' % \
@@ -249,7 +258,7 @@ def run_program(program, initial_mem=None, extra_break_addr=None,
                 bigendian=False, start_addr=0x20000000, init_endian=True,
                 continuous_run=True, initial_sprs=None,
                 initial_regs=None, initial_fprs=None):
-    q = QemuController(program.binfile.name, bigendian)
+    q = QemuController(program.binfile, bigendian)
     q.connect()
     q.set_endian(init_endian)  # easier to set variables this way
 
