@@ -623,7 +623,7 @@ class SVP64Asm:
             "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
             "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
             "lfs", "lfsx", "lfsu", "lfsux",                     # FP load single
-            "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax",  # FP load double
+            "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax",  # FP load dbl
             "lha", "lharx", "lhau", "lhaux", "lhax",            # load half
             "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
             "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
@@ -632,8 +632,8 @@ class SVP64Asm:
         is_st = v30b_op in [
             "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
             "std", "stdbrx", "stdcx", "stdu", "stdux", "stdx",
-            "stfs", "stfsx", "stfsu", "stfux",                  # FP store single
-            "stfd", "stfdx", "stfdu", "stfdux", "stfiwx",       # FP store double
+            "stfs", "stfsx", "stfsu", "stfux",                  # FP store sgl
+            "stfd", "stfdx", "stfdu", "stfdux", "stfiwx",       # FP store dbl
             "sth", "sthbrx", "sthcx", "sthu", "sthux", "sthx",
             "stw", "stwbrx", "stwcx", "stwu", "stwux", "stwx",
         ]
@@ -835,6 +835,56 @@ class SVP64Asm:
         if is_ldst and ldst_shift:
             assert sv_mode is None, \
                 "LD shift cannot have modes (%s) applied" % sv_mode
+
+        # okaaay, so there are 4 different modes, here, which will be
+        # partly-merged-in: is_ldst is merged in with "normal", but
+        # is_bc is so different it's done separately.  likewise is_cr
+        # (when it is done).  here are the maps:
+
+        # for "normal" arithmetic: https://libre-soc.org/openpower/sv/normal/
+        """
+            | 0-1 |  2  |  3   4  |  description              |
+            | --- | --- |---------|-------------------------- |
+            | 00  |   0 |  dz  sz | normal mode                      |
+            | 00  |   1 | 0  RG   | scalar reduce mode (mapreduce), SUBVL=1 |
+            | 00  |   1 | 1  /    | parallel reduce mode (mapreduce), SUBVL=1 |
+            | 00  |   1 | SVM RG  | subvector reduce mode, SUBVL>1   |
+            | 01  | inv | CR-bit  | Rc=1: ffirst CR sel              |
+            | 01  | inv | VLi RC1 |  Rc=0: ffirst z/nonz |
+            | 10  |   N | dz   sz |  sat mode: N=0/1 u/s |
+            | 11  | inv | CR-bit  |  Rc=1: pred-result CR sel |
+            | 11  | inv | dz  RC1 |  Rc=0: pred-result z/nonz |
+        """
+
+        # https://libre-soc.org/openpower/sv/ldst/
+        # for LD/ST-immediate:
+        """
+            | 0-1 |  2  |  3   4  |  description               |
+            | --- | --- |---------|--------------------------- |
+            | 00  | 0   |  dz els | normal mode                |
+            | 00  | 1   |  dz shf | shift mode                 |
+            | 01  | inv | CR-bit  | Rc=1: ffirst CR sel        |
+            | 01  | inv | els RC1 |  Rc=0: ffirst z/nonz       |
+            | 10  |   N | dz  els |  sat mode: N=0/1 u/s       |
+            | 11  | inv | CR-bit  |  Rc=1: pred-result CR sel  |
+            | 11  | inv | els RC1 |  Rc=0: pred-result z/nonz  |
+        """
+
+        # for LD/ST-indexed (RA+RB):
+        """
+            | 0-1 |  2  |  3   4  |  description              |
+            | --- | --- |---------|-------------------------- |
+            | 00  | SEA |  dz  sz | normal mode        |
+            | 01  | SEA | dz sz  | Strided (scalar only source)   |
+            | 10  |   N | dz   sz |  sat mode: N=0/1 u/s |
+            | 11  | inv | CR-bit  |  Rc=1: pred-result CR sel |
+            | 11  | inv | dz  RC1 |  Rc=0: pred-result z/nonz |
+        """
+
+        # and leaving out branches and cr_ops for now because they're
+        # under development
+        """ TODO branches and cr_ops
+        """
 
         # now create mode and (overridden) src/dst widths
         # XXX TODO: sanity-check bc modes
