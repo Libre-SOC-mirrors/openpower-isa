@@ -11,7 +11,10 @@ It is very simple and straightforward, the only weirdness being the
 extraction of the register information and conversion to v3.0B numbering.
 
 Encoding format of svp64: https://libre-soc.org/openpower/sv/svp64/
+Encoding format of arithmetic: https://libre-soc.org/openpower/sv/normal/
 Encoding format of LDST: https://libre-soc.org/openpower/sv/ldst/
+**TODO format of branches: https://libre-soc.org/openpower/sv/branches/**
+**TODO format of CRs: https://libre-soc.org/openpower/sv/cr_ops/**
 Bugtracker: https://bugs.libre-soc.org/show_bug.cgi?id=578
 """
 
