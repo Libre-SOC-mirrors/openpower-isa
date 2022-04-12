@@ -20,7 +20,7 @@ install_requires = [
     # https://git.libre-soc.org/?p=nmutil.git
     'libresoc-nmutil',
     # these should be fine
-    'pygdbmi',  # gdb machine interfave
+    'pygdbmi=0.9.0.3',  # gdb machine interface, requires older version (sigh)
     'ply',     # python lex yacc. very cool
     'astor',   # python AST manipulation
     'cffi' # LuaJIT-style C FFI for Python
