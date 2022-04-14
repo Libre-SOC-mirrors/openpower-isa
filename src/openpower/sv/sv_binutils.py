@@ -324,6 +324,11 @@ class Codegen(_enum.Enum):
             yield from Record.c_decl()
             yield ""
 
+            for name in ("in1", "in2", "in3", "out", "out2", "cr_in", "cr_out"):
+                yield "unsigned char"
+                yield f"svp64_record_{name}_opsel(const struct svp64_record *record);"
+                yield ""
+
             yield from Entry.c_decl()
             yield ""
 
@@ -348,6 +353,66 @@ class Codegen(_enum.Enum):
 
             yield "#include \"opcode/ppc-svp64.h\""
             yield ""
+
+            def opsel(enum, name, table):
+                sep = (max(map(len, list(table.values()) + ["UNUSED"])) + 1)
+                c_tag = f"svp64_{enum.__name__.lower()}"
+                yield "unsigned char"
+                yield f"svp64_record_{name}_opsel(const struct svp64_record *record)"
+                yield "{"
+                yield from indent(["static const unsigned char table[] = {"])
+                for key in enum:
+                    value = table.get(key, "UNUSED")
+                    c_value = f"{c_tag.upper()}_{key.name.upper()}"
+                    yield from indent(indent([f"{value:{sep}}, /* {c_value} */"]))
+                yield from indent(["};"])
+                yield ""
+                yield from indent([f"return table[record->{name}];"])
+                yield "}"
+                yield ""
+
+            yield from opsel(In1Sel, "in1", {
+                In1Sel.RA: "RA",
+                In1Sel.RA_OR_ZERO: "RA",
+                In1Sel.SPR: "SPR",
+                In1Sel.RS: "RS",
+                In1Sel.FRA: "FRA",
+                In1Sel.FRS: "FRS",
+            })
+            yield from opsel(In2Sel, "in2", {
+                In2Sel.RB: "RB",
+                In2Sel.SPR: "SPR",
+                In2Sel.RS: "RS",
+                In2Sel.FRB: "FRB",
+            })
+            yield from opsel(In3Sel, "in3", {
+                In3Sel.RS: "RS",
+                In3Sel.RB: "RB",
+                In3Sel.FRS: "FRS",
+                In3Sel.FRC: "FRC",
+                In3Sel.RC: "RC",
+                In3Sel.RT: "RT",
+            })
+            for name in ("out", "out2"):
+                yield from opsel(OutSel, name, {
+                    OutSel.RT: "RT",
+                    OutSel.RA: "RA",
+                    OutSel.SPR: "SPR",
+                    OutSel.RT_OR_ZERO: "RT",
+                    OutSel.FRT: "FRT",
+                    OutSel.FRS: "FRS",
+                })
+            yield from opsel(CRInSel, "cr_in", {
+                CRInSel.BI: "BI",
+                CRInSel.BFA: "BFA",
+                CRInSel.BC: "CRB",
+                CRInSel.WHOLE_REG: "FXM",
+            })
+            yield from opsel(CROutSel, "cr_out", {
+                CROutSel.BF: "BF",
+                CROutSel.BT: "BT",
+                CROutSel.WHOLE_REG: "FXM",
+            })
 
             yield "const struct svp64_entry svp64_entries[] = {"
             for (index, entry) in enumerate(entries):
