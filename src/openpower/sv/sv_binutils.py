@@ -72,6 +72,10 @@ class EnumMeta(_enum.EnumMeta, CTypeMeta):
         return cls
 
     @property
+    def c_typedef(cls):
+        return f"enum {cls.c_tag}"
+
+    @property
     def c_tag(cls):
         return cls.__tag
 
@@ -79,7 +83,7 @@ class EnumMeta(_enum.EnumMeta, CTypeMeta):
 class Enum(CType, _enum.Enum, metaclass=EnumMeta):
     @classmethod
     def c_decl(cls):
-        yield f"enum {cls.c_tag} {{"
+        yield f"{cls.c_typedef} {{"
         for item in cls:
             yield from indent(item.c_value(suffix=","))
         yield f"}};"
@@ -89,7 +93,7 @@ class Enum(CType, _enum.Enum, metaclass=EnumMeta):
 
     @classmethod
     def c_var(cls, name):
-        yield f"enum {cls.c_tag} {name}"
+        yield f"{cls.c_typedef} {name}"
 
 
 In1Sel = Enum("In1Sel", _In1Sel)
@@ -120,11 +124,13 @@ Mode = Constant("Mode", _SVP64MODE)
 
 
 class StructMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, tag=None):
+    def __new__(metacls, name, bases, attrs, tag=None, **kwargs):
         if tag is None:
             tag = f"svp64_{name.lower()}"
+        if "typedef" not in kwargs:
+            kwargs["typedef"] = f"struct {tag}"
 
-        cls = super().__new__(metacls, name, bases, attrs)
+        cls = super().__new__(metacls, name, bases, attrs, **kwargs)
         cls.__tag = tag
 
         return cls
@@ -134,13 +140,13 @@ class StructMeta(CTypeMeta):
         return cls.__tag
 
     def c_decl(cls):
-        yield f"struct {cls.c_tag} {{"
+        yield f"{cls.c_typedef} {{"
         for field in _dataclasses.fields(cls):
             yield from indent(field.type.c_var(name=f"{field.name};"))
         yield f"}};"
 
     def c_var(cls, name):
-        yield f"struct {cls.c_tag} {name}"
+        yield f"{cls.c_typedef} {name}"
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
