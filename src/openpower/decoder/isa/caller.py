@@ -18,8 +18,12 @@ from nmigen.back.pysim import Settle
 from functools import wraps
 from copy import copy, deepcopy
 from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
-                                              selectconcat)
+from openpower.decoder.selectable_int import (
+    SelectableIntMapping,
+    FieldSelectableInt,
+    SelectableInt,
+    selectconcat,
+)
 from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
                                            insns, MicrOp,
                                            In1Sel, In2Sel, In3Sel,
@@ -255,29 +259,33 @@ class PC:
 
 
 # SVP64 ReMap field
-class SVP64RMFields:
-    def __init__(self, init=0):
-        self.spr = SelectableInt(init, 24)
-        # SVP64 RM fields: see https://libre-soc.org/openpower/sv/svp64/
-        self.mmode = FieldSelectableInt(self.spr, [0])
-        self.mask = FieldSelectableInt(self.spr, tuple(range(1, 4)))
-        self.elwidth = FieldSelectableInt(self.spr, tuple(range(4, 6)))
-        self.ewsrc = FieldSelectableInt(self.spr, tuple(range(6, 8)))
-        self.subvl = FieldSelectableInt(self.spr, tuple(range(8, 10)))
-        self.extra = FieldSelectableInt(self.spr, tuple(range(10, 19)))
-        self.mode = FieldSelectableInt(self.spr, tuple(range(19, 24)))
-        # these cover the same extra field, split into parts as EXTRA2
-        self.extra2 = list(range(4))
-        self.extra2[0] = FieldSelectableInt(self.spr, tuple(range(10, 12)))
-        self.extra2[1] = FieldSelectableInt(self.spr, tuple(range(12, 14)))
-        self.extra2[2] = FieldSelectableInt(self.spr, tuple(range(14, 16)))
-        self.extra2[3] = FieldSelectableInt(self.spr, tuple(range(16, 18)))
-        self.smask = FieldSelectableInt(self.spr, tuple(range(16, 19)))
-        # and here as well, but EXTRA3
-        self.extra3 = list(range(3))
-        self.extra3[0] = FieldSelectableInt(self.spr, tuple(range(10, 13)))
-        self.extra3[1] = FieldSelectableInt(self.spr, tuple(range(13, 16)))
-        self.extra3[2] = FieldSelectableInt(self.spr, tuple(range(16, 19)))
+class SVP64RMFields(SelectableIntMapping):
+    def __init__(self, value=0):
+        self.spr = SelectableInt(value=value, bits=24)
+        return super().__init__(si=self.spr, fields={
+            # SVP64 RM fields: see https://libre-soc.org/openpower/sv/svp64/
+            "mmode": (0,),
+            "mask": range(1, 4),
+            "elwidth": range(4, 6),
+            "ewsrc": range(6, 8),
+            "subvl": range(8, 10),
+            "extra": range(10, 19),
+            "mode": range(19, 24),
+            # these cover the same extra field, split into parts as EXTRA2
+            "extra2": dict(enumerate([
+                range(10, 12),
+                range(12, 14),
+                range(14, 16),
+                range(16, 18),
+            ])),
+            "smask": range(16, 19),
+            # and here as well, but EXTRA3
+            "extra3": dict(enumerate([
+                range(10, 13),
+                range(13, 16),
+                range(16, 19),
+            ])),
+        })
 
 
 SVP64RM_MMODE_SIZE = len(SVP64RMFields().mmode.br)
