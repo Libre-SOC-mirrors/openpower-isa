@@ -144,6 +144,29 @@ class Struct(CType, metaclass=StructMeta):
         yield f"}}{suffix}"
 
 
+class IntegerMeta(CTypeMeta):
+    def __new__(metacls, name, bases, attrs, typedef=None):
+        cls = super().__new__(metacls, name, bases, attrs)
+        cls.__typedef = typedef
+
+        return cls
+
+    @property
+    def c_typedef(cls):
+        return cls.__typedef
+
+    def c_decl(cls):
+        yield "#include <stdint.h>"
+
+    def c_var(cls, name):
+        yield f"{cls.c_typedef} {name}"
+
+
+class Integer(CType, int, metaclass=IntegerMeta):
+    def c_value(self, prefix="", suffix=""):
+        yield f"{prefix}{self}{suffix}"
+
+
 class Opcode(CType):
     def __init__(self, value, mask, bits):
         self.__value = value
