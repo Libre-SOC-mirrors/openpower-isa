@@ -32,23 +32,23 @@ def indent(strings):
     return map(lambda string: ("    " + string), strings)
 
 
-class CType:
-    @classmethod
+class CTypeMeta(type):
     @_abc.abstractmethod
-    def c_decl(cls, name):
+    def c_decl(cls):
         pass
 
-    @_abc.abstractmethod
-    def c_value(self, prefix="", suffix=""):
-        pass
-
-    @classmethod
     @_abc.abstractmethod
     def c_var(cls, name):
         pass
 
 
-class EnumMeta(_enum.EnumMeta):
+class CType(metaclass=CTypeMeta):
+    @_abc.abstractmethod
+    def c_value(self, prefix="", suffix=""):
+        pass
+
+
+class EnumMeta(_enum.EnumMeta, CTypeMeta):
     def __call__(metacls, name, entries, tag=None, **kwargs):
         if isinstance(entries, type) and issubclass(entries, _enum.Enum):
             entries = dict(entries.__members__)
@@ -109,7 +109,7 @@ class Constant(CType, _enum.Enum, metaclass=EnumMeta):
 Mode = Constant("Mode", _SVP64MODE)
 
 
-class StructMeta(type):
+class StructMeta(CTypeMeta):
     def __new__(metacls, name, bases, attrs, tag=None):
         if tag is None:
             tag = f"svp64_{name.lower()}"
@@ -134,7 +134,7 @@ class StructMeta(type):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Struct(metaclass=StructMeta):
+class Struct(CType, metaclass=StructMeta):
     def c_value(self, prefix="", suffix=""):
         yield f"{prefix}{{"
         for field in _dataclasses.fields(self):
