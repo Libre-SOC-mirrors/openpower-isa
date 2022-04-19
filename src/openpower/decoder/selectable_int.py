@@ -23,7 +23,7 @@ class FieldSelectableInt:
 
     def __init__(self, si, br):
         self.si = si  # target selectable int
-        if isinstance(br, list) or isinstance(br, tuple):
+        if isinstance(br, (list, tuple, range)):
             _br = BitRange()
             for i, v in enumerate(br):
                 _br[i] = v
