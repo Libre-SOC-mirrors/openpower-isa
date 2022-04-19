@@ -235,7 +235,7 @@ class Name(CType, str):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Record(CType):
+class Record(Struct):
     in1: In1Sel
     in2: In2Sel
     in3: In3Sel
@@ -266,21 +266,9 @@ class Record(CType):
             yield from indent([f"uint64_t : {bits_rsvd};"])
         yield f"}};"
 
-    def c_value(self, prefix="", suffix=""):
-        yield f"{prefix}{{"
-        for field in _dataclasses.fields(self):
-            name = field.name
-            attr = getattr(self, name)
-            yield from indent(attr.c_value(prefix=f".{name} = ", suffix=","))
-        yield f"}}{suffix}"
-
-    @classmethod
-    def c_var(cls, name):
-        yield f"struct svp64_record {name}"
-
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Entry(CType):
+class Entry(Struct):
     name: Name
     record: Record
 
@@ -289,25 +277,6 @@ class Entry(CType):
             return NotImplemented
 
         return self.name < other.name
-
-    @classmethod
-    def c_decl(cls):
-        yield f"struct svp64_entry {{"
-        for field in _dataclasses.fields(cls):
-            yield from indent(field.type.c_var(name=f"{field.name};"))
-        yield f"}};"
-
-    def c_value(self, prefix="", suffix=""):
-        yield f"{prefix}{{"
-        for field in _dataclasses.fields(self):
-            name = field.name
-            attr = getattr(self, name)
-            yield from indent(attr.c_value(prefix=f".{name} = ", suffix=","))
-        yield f"}}{suffix}"
-
-    @classmethod
-    def c_var(cls, name):
-        yield f"struct svp64_entry {name}"
 
 
 class Codegen(_enum.Enum):
