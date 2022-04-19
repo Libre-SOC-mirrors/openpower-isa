@@ -57,26 +57,29 @@ class EnumMeta(_enum.EnumMeta):
         if tag is None:
             tag = f"svp64_{name.lower()}"
 
-        return super().__call__(value=name, names=entries, **kwargs)
+        cls = super().__call__(value=name, names=entries, **kwargs)
+        cls.__tag = tag
+        return cls
+
+    @property
+    def c_tag(cls):
+        return cls.__tag
 
 
 class Enum(CType, _enum.Enum, metaclass=EnumMeta):
     @classmethod
     def c_decl(cls):
-        c_tag = f"svp64_{cls.__name__.lower()}"
-        yield f"enum {c_tag} {{"
+        yield f"enum {cls.c_tag} {{"
         for item in cls:
             yield from indent(item.c_value(suffix=","))
         yield f"}};"
 
     def c_value(self, prefix="", suffix=""):
-        c_tag = f"svp64_{self.__class__.__name__.lower()}"
-        yield f"{prefix}{c_tag.upper()}_{self.name.upper()}{suffix}"
+        yield f"{prefix}{self.__class__.c_tag.upper()}_{self.name.upper()}{suffix}"
 
     @classmethod
     def c_var(cls, name):
-        c_tag = f"svp64_{cls.__name__.lower()}"
-        yield f"enum {c_tag} {name}"
+        yield f"enum {cls.c_tag} {name}"
 
 
 In1Sel = Enum("In1Sel", _In1Sel)
@@ -93,16 +96,14 @@ SVEXTRA = Enum("SVEXTRA", _SVEXTRA)
 class Constant(CType, _enum.Enum, metaclass=EnumMeta):
     @classmethod
     def c_decl(cls):
-        c_tag = f"svp64_{cls.__name__.lower()}"
-        yield f"/* {c_tag.upper()} constants */"
+        yield f"/* {cls.c_tag.upper()} constants */"
         for (key, item) in cls.__members__.items():
-            key = f"{c_tag.upper()}_{key.upper()}"
+            key = f"{cls.c_tag.upper()}_{key.upper()}"
             value = f"0x{item.value:08x}U"
             yield f"#define {key} {value}"
 
     def c_value(self, prefix="", suffix=""):
-        c_tag = f"svp64_{self.__class__.__name__.lower()}"
-        yield f"{prefix}{c_tag.upper()}_{self.name.upper()}{suffix}"
+        yield f"{prefix}{self.__class__.c_tag.upper()}_{self.name.upper()}{suffix}"
 
 
 Mode = Constant("Mode", _SVP64MODE)
