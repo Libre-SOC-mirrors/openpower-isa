@@ -120,7 +120,7 @@ class FieldSelectableInt:
         return fi
 
     def __repr__(self):
-        return "FieldSelectableInt(si=%s, br=%s)" % (self.si, self.br)
+        return f"{self.__class__.__name__}(si={self.si}, br={self.br})"
 
     def asint(self, msb0=False):
         res = 0
