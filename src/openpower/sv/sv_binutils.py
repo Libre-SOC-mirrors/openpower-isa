@@ -109,6 +109,41 @@ class Constant(CType, _enum.Enum, metaclass=EnumMeta):
 Mode = Constant("Mode", _SVP64MODE)
 
 
+class StructMeta(type):
+    def __new__(metacls, name, bases, attrs, tag=None):
+        if tag is None:
+            tag = f"svp64_{name.lower()}"
+
+        cls = super().__new__(metacls, name, bases, attrs)
+        cls.__tag = tag
+
+        return cls
+
+    @property
+    def c_tag(cls):
+        return cls.__tag
+
+    def c_decl(cls):
+        yield f"struct {cls.c_tag} {{"
+        for field in _dataclasses.fields(cls):
+            yield from indent(field.type.c_var(name=f"{field.name};"))
+        yield f"}};"
+
+    def c_var(cls, name):
+        yield f"struct {cls.c_tag} {name}"
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Struct(metaclass=StructMeta):
+    def c_value(self, prefix="", suffix=""):
+        yield f"{prefix}{{"
+        for field in _dataclasses.fields(self):
+            name = field.name
+            attr = getattr(self, name)
+            yield from indent(attr.c_value(prefix=f".{name} = ", suffix=","))
+        yield f"}}{suffix}"
+
+
 class Opcode(CType):
     def __init__(self, value, mask, bits):
         self.__value = value
