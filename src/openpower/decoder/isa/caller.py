@@ -263,6 +263,7 @@ class SVP64RMFields(SelectableIntMapping):
     def __init__(self, value=0):
         self.spr = SelectableInt(value=value, bits=24)
         return super().__init__(si=self.spr, fields={
+            "spr": range(24),
             # SVP64 RM fields: see https://libre-soc.org/openpower/sv/svp64/
             "mmode": (0,),
             "mask": range(1, 4),
@@ -304,6 +305,7 @@ class SVP64PrefixFields(SelectableIntMapping):
     def __init__(self):
         self.insn = SelectableInt(0, 32)
         return super().__init__(si=self.insn, fields={
+            "insn": range(32),
             # 6 bit major opcode EXT001, 2 bits "identifying" (7, 9), 24 SV ReMap
             "major": range(0, 6),
             "pid": (7, 9),
