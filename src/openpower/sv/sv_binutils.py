@@ -49,18 +49,15 @@ class CType:
 
 
 class EnumMeta(_enum.EnumMeta):
-    def __call__(metacls, *args, **kwargs):
-        if len(args) > 1:
-            names = args[1]
-        else:
-            names = kwargs.pop("names")
+    def __call__(metacls, name, entries, tag=None, **kwargs):
+        if isinstance(entries, type) and issubclass(entries, _enum.Enum):
+            entries = dict(entries.__members__)
+        if isinstance(entries, dict):
+            entries = tuple(entries.items())
+        if tag is None:
+            tag = f"svp64_{name.lower()}"
 
-        if isinstance(names, type) and issubclass(names, _enum.Enum):
-            names = dict(names.__members__)
-        if isinstance(names, dict):
-            names = tuple(names.items())
-
-        return super().__call__(*args, names=names, **kwargs)
+        return super().__call__(value=name, names=entries, **kwargs)
 
 
 class Enum(CType, _enum.Enum, metaclass=EnumMeta):
@@ -82,18 +79,18 @@ class Enum(CType, _enum.Enum, metaclass=EnumMeta):
         yield f"enum {c_tag} {name}"
 
 
-In1Sel = Enum("In1Sel", names=_In1Sel.__members__.items())
-In2Sel = Enum("In2Sel", names=_In2Sel.__members__.items())
-In3Sel = Enum("In3Sel", names=_In3Sel.__members__.items())
-OutSel = Enum("OutSel", names=_OutSel.__members__.items())
-CRInSel = Enum("CRInSel", names=_CRInSel.__members__.items())
-CROutSel = Enum("CROutSel", names=_CROutSel.__members__.items())
-SVPType = Enum("SVPType", names=_SVPtype.__members__.items())
-SVEType = Enum("SVEType", names=_SVEtype.__members__.items())
-SVEXTRA = Enum("SVEXTRA", names=_SVEXTRA.__members__.items())
+In1Sel = Enum("In1Sel", _In1Sel)
+In2Sel = Enum("In2Sel", _In2Sel)
+In3Sel = Enum("In3Sel", _In3Sel)
+OutSel = Enum("OutSel", _OutSel)
+CRInSel = Enum("CRInSel", _CRInSel)
+CROutSel = Enum("CROutSel", _CROutSel)
+SVPType = Enum("SVPType", _SVPtype)
+SVEType = Enum("SVEType", _SVEtype)
+SVEXTRA = Enum("SVEXTRA", _SVEXTRA)
 
 
-class Constant(CType, _enum.Enum):
+class Constant(CType, _enum.Enum, metaclass=EnumMeta):
     @classmethod
     def c_decl(cls):
         c_tag = f"svp64_{cls.__name__.lower()}"
@@ -108,7 +105,7 @@ class Constant(CType, _enum.Enum):
         yield f"{prefix}{c_tag.upper()}_{self.name.upper()}{suffix}"
 
 
-Mode = Constant("Mode", names=_SVP64MODE.__members__.items())
+Mode = Constant("Mode", _SVP64MODE)
 
 
 class Opcode(CType):
