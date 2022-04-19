@@ -420,8 +420,8 @@ class SelectableInt:
         return self.value != 0
 
     def __repr__(self):
-        return "SelectableInt(value=0x{:x}, bits={})".format(self.value,
-                                                             self.bits)
+        value = f"value=0x{self.value:x}, bits={self.bits}"
+        return f"{self.__class__.__name__}({value})"
 
     def __len__(self):
         return self.bits
