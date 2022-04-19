@@ -438,6 +438,28 @@ class SelectableInt:
         return struct.unpack('<d', data)[0]
 
 
+class SelectableIntMapping:
+    def __init__(self, si, fields=None):
+        def field(item):
+            (key, value) = item
+            if isinstance(value, dict):
+                value = dict(map(field, value.items()))
+            else:
+                value = FieldSelectableInt(self.__si, value)
+            return (key, value)
+
+        self.__si = si
+        self.__fields = dict(map(field, fields.items()))
+
+    def __getattr__(self, attr):
+        if attr == f"_SelectableIntMapping__fields":
+            return self.__dict__["_SelectableIntMapping__fields"]
+        try:
+            return self.__fields[attr]
+        except KeyError as error:
+            raise AttributeError from error
+
+
 def onebit(bit):
     return SelectableInt(1 if bit else 0, 1)
 
