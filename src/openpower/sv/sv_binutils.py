@@ -33,6 +33,16 @@ def indent(strings):
 
 
 class CTypeMeta(type):
+    def __new__(metacls, name, bases, attrs, typedef=None):
+        cls = super().__new__(metacls, name, bases, attrs)
+        cls.__typedef = typedef
+
+        return cls
+
+    @property
+    def c_typedef(cls):
+        return cls.__typedef
+
     @_abc.abstractmethod
     def c_decl(cls):
         pass
@@ -145,16 +155,6 @@ class Struct(CType, metaclass=StructMeta):
 
 
 class IntegerMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, typedef=None):
-        cls = super().__new__(metacls, name, bases, attrs)
-        cls.__typedef = typedef
-
-        return cls
-
-    @property
-    def c_typedef(cls):
-        return cls.__typedef
-
     def c_decl(cls):
         yield "#include <stdint.h>"
 
