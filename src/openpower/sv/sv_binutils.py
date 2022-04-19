@@ -173,6 +173,42 @@ class Integer(CType, int, metaclass=IntegerMeta):
         yield f"{prefix}{self}{suffix}"
 
 
+class ArrayMeta(CTypeMeta):
+    def __new__(metacls, name, bases, attrs, type=CType, size=0):
+        cls = super().__new__(metacls, name, bases, attrs)
+        cls.__type = type
+        cls.__size = size
+
+        return cls
+
+    def __call__(cls, type, size):
+        name = f"{cls.__name__}[{type.__name__}]"
+        return ArrayMeta.__new__(ArrayMeta, name, (cls,), {}, type=type, size=size)
+
+    def __len__(cls):
+        return cls.__size
+
+    @property
+    def c_type(cls):
+        return cls.__type
+
+    def c_decl(cls):
+        count = f"{cls.__size}" if cls.__size else ""
+        yield f"{cls.c_type.c_typedef}[{count}]"
+
+    def c_var(cls, name):
+        count = f"{cls.__size}" if cls.__size else ""
+        yield f"{cls.c_type.c_typedef} {name}[{count}]"
+
+
+class Array(CType, tuple, metaclass=ArrayMeta):
+    def c_value(self, prefix="", suffix=""):
+        items = []
+        for item in map(self.__class__.c_type, self):
+            items.extend(item.c_value())
+        yield f"{prefix}{{{', '.join(items)}}}{suffix}"
+
+
 class Opcode(CType):
     def __init__(self, value, mask, bits):
         self.__value = value
