@@ -35,7 +35,7 @@ def indent(strings):
 class CType:
     @classmethod
     @_abc.abstractmethod
-    def c_decl(self, name):
+    def c_decl(cls, name):
         pass
 
     @_abc.abstractmethod
@@ -44,7 +44,7 @@ class CType:
 
     @classmethod
     @_abc.abstractmethod
-    def c_var(self, name):
+    def c_var(cls, name):
         pass
 
 
