@@ -195,7 +195,7 @@ class Struct(CType, metaclass=StructMeta):
         yield f"}}{suffix}"
 
 
-class Integer(CType, int):
+class Integer(CType, str):
     def c_value(self, prefix="", suffix=""):
         yield f"{prefix}{self}{suffix}"
 
