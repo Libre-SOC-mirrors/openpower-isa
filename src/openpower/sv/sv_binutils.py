@@ -123,6 +123,10 @@ class EnumMeta(_enum.EnumMeta, CTypeMeta):
 
 
 class Enum(CType, _enum.Enum, metaclass=EnumMeta):
+    @property
+    def c_name(self):
+        return f"{self.__class__.c_tag.upper()}_{self.name.upper()}"
+
     @classmethod
     def c_decl(cls):
         yield f"{cls.c_typedef} {{"
@@ -131,7 +135,7 @@ class Enum(CType, _enum.Enum, metaclass=EnumMeta):
         yield f"}};"
 
     def c_value(self, prefix="", suffix=""):
-        yield f"{prefix}{self.__class__.c_tag.upper()}_{self.name.upper()}{suffix}"
+        yield f"{prefix}{self.c_name}{suffix}"
 
 
 In1Sel = Enum("In1Sel", _In1Sel)
