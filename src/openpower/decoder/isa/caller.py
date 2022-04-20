@@ -302,8 +302,8 @@ SVP64RM_MODE_SIZE = len(SVP64RMFields().mode.br)
 
 # SVP64 Prefix fields: see https://libre-soc.org/openpower/sv/svp64/
 class SVP64PrefixFields(SelectableIntMapping):
-    def __init__(self):
-        self.insn = SelectableInt(0, 32)
+    def __init__(self, value=0):
+        self.insn = SelectableInt(value, 32)
         return super().__init__(si=self.insn, fields={
             "insn": range(32),
             # 6 bit major opcode EXT001, 2 bits "identifying" (7, 9), 24 SV ReMap
