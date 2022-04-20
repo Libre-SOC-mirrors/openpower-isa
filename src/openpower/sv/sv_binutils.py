@@ -474,6 +474,13 @@ class Codegen(_enum.Enum):
             yield from indent(num_entries.c_value(suffix=";"))
             yield ""
 
+            for mapping in (Prefix, RM):
+                name = mapping.__name__.lower()
+                yield from mapping.c_var(name=f"svp64_{name}_entries", prefix="static ", suffix="[] = \\")
+                yield from mapping().c_value(suffix=";")
+                yield ""
+            yield ""
+
         entries = Entry[...](entries)
         num_entries = Size("(sizeof (svp64_entries) / sizeof (svp64_entries[0])")
 
