@@ -1,5 +1,6 @@
 import abc as _abc
 import argparse as _argparse
+import builtins as _builtins
 import dataclasses as _dataclasses
 import enum as _enum
 
@@ -39,6 +40,10 @@ class CTypeMeta(type):
 
         return cls
 
+    def __getitem__(cls, size):
+        name = f"{cls.__name__}[{'' if size is Ellipsis else size}]"
+        return type(name, (Array,), {}, type=cls, size=size)
+
     @property
     def c_typedef(cls):
         return cls.__typedef
@@ -51,10 +56,43 @@ class CTypeMeta(type):
         yield f"{prefix}{cls.c_typedef} {name}{suffix}"
 
 
+class ArrayMeta(CTypeMeta):
+    def __new__(metacls, name, bases, attrs, type, size):
+        cls = super().__new__(metacls, name, bases, attrs)
+        cls.__type = type
+        cls.__ellipsis = (size is Ellipsis)
+        cls.__size = 0 if cls.__ellipsis else size
+
+        return cls
+
+    def __len__(cls):
+        return cls.__size
+
+    @property
+    def c_type(cls):
+        return cls.__type
+
+    def c_decl(cls):
+        size = "" if cls.__ellipsis else f"{cls.__size}"
+        yield f"{cls.c_type.c_typedef}[{size}]"
+
+    def c_var(cls, name, prefix="", suffix=""):
+        size = "" if cls.__ellipsis else f"{cls.__size}"
+        yield f"{prefix}{cls.c_type.c_typedef} {name}[{size}]{suffix}"
+
+
 class CType(metaclass=CTypeMeta):
     @_abc.abstractmethod
     def c_value(self, prefix="", suffix=""):
         yield from ()
+
+
+class Array(CType, tuple, metaclass=ArrayMeta, type=CType, size=0):
+    def c_value(self, prefix="", suffix=""):
+        yield f"{prefix}{{"
+        for (index, item) in enumerate(self):
+            yield from indent(item.c_value(prefix=f"[{index}] = ", suffix=","))
+        yield f"}}{suffix}"
 
 
 class EnumMeta(_enum.EnumMeta, CTypeMeta):
@@ -166,42 +204,6 @@ class Byte(Integer, typedef="uint8_t"):
 
 class Size(Integer, typedef="size_t"):
     pass
-
-
-class ArrayMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, type=CType, size=0):
-        cls = super().__new__(metacls, name, bases, attrs)
-        cls.__type = type
-        cls.__size = size
-
-        return cls
-
-    def __call__(cls, type, size):
-        name = f"{cls.__name__}[{type.__name__}]"
-        return ArrayMeta.__new__(ArrayMeta, name, (cls,), {}, type=type, size=size)
-
-    def __len__(cls):
-        return cls.__size
-
-    @property
-    def c_type(cls):
-        return cls.__type
-
-    def c_decl(cls):
-        count = f"{cls.__size}" if cls.__size else ""
-        yield f"{cls.c_type.c_typedef}[{count}]"
-
-    def c_var(cls, name, prefix="", suffix=""):
-        count = f"{cls.__size}" if cls.__size else ""
-        yield f"{prefix}{cls.c_type.c_typedef} {name}[{count}]{suffix}"
-
-
-class Array(CType, tuple, metaclass=ArrayMeta):
-    def c_value(self, prefix="", suffix=""):
-        items = []
-        for item in map(self.__class__.c_type, self):
-            items.extend(item.c_value())
-        yield f"{prefix}{{{', '.join(items)}}}{suffix}"
 
 
 class Name(CType, str):
