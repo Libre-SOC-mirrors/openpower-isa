@@ -155,14 +155,17 @@ class Struct(CType, metaclass=StructMeta):
         yield f"}}{suffix}"
 
 
-class IntegerMeta(CTypeMeta):
-    def c_decl(cls):
-        yield "#include <stdint.h>"
-
-
-class Integer(CType, int, metaclass=IntegerMeta):
+class Integer(CType, int):
     def c_value(self, prefix="", suffix=""):
         yield f"{prefix}{self}{suffix}"
+
+
+class Byte(Integer, typedef="uint8_t"):
+    pass
+
+
+class Size(Integer, typedef="size_t"):
+    pass
 
 
 class ArrayMeta(CTypeMeta):
