@@ -18,6 +18,8 @@ from openpower.decoder.power_enums import (
 )
 from openpower.consts import SVP64MODE as _SVP64MODE
 from openpower.decoder.power_svp64 import SVP64RM as _SVP64RM
+from openpower.decoder.isa.caller import SVP64RMFields as _SVP64RMFields
+from openpower.decoder.isa.caller import SVP64PrefixFields as _SVP64PrefixFields
 
 
 DISCLAIMER = (
@@ -264,6 +266,67 @@ class Entry(Struct):
         return self.name < other.name
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Field(Struct):
+    length: Size
+    mapping: Byte[32]
+
+
+
+class FieldsMeta(CTypeMeta):
+    def __new__(metacls, name, bases, attrs, **kwargs):
+        def flatten(mapping, parent=""):
+            for (key, value) in mapping.items():
+                key = f"{parent}_{key}" if parent else key
+                if isinstance(value, dict):
+                    yield from flatten(mapping=value, parent=key)
+                else:
+                    yield (key.upper(), value)
+
+        fields = dict(flatten(mapping=kwargs))
+        keys = ((key, index) for (index, key) in enumerate(fields))
+        enum_cls = Enum(name, entries=keys, tag=f"svp64_{name.lower()}_type")
+
+        def field(item):
+            (key, value) = item
+            length = Size(len(value.br))
+            mapping = Byte[32](map(lambda bit: Byte((value.si.bits - 1) - bit), reversed(value.br)))
+            return (key, Field(length=length, mapping=mapping))
+
+        typedef = kwargs.pop("typedef", Field.c_typedef)
+        cls = super().__new__(metacls, name, bases, attrs, typedef=typedef)
+        cls.__enum = enum_cls
+        cls.__fields = dict(map(field, zip(enum_cls, fields.values())))
+
+        return cls
+
+    def __iter__(cls):
+        for (key, value) in cls.__fields.items():
+            yield (key, value)
+
+    def c_decl(cls):
+        yield from cls.__enum.c_decl()
+
+    def c_var(cls, name, prefix="", suffix=""):
+        yield from Field.c_var(name=name, prefix=prefix, suffix=suffix)
+
+
+class Fields(metaclass=FieldsMeta):
+    def c_value(self, prefix="", suffix=""):
+        yield f"{prefix}{{"
+        for (key, value) in self.__class__:
+            yield from indent(value.c_value(prefix=f"[{key.c_name}] = ", suffix=","))
+        yield f"}}{suffix}"
+
+
+class Prefix(Fields, **_SVP64PrefixFields(0)):
+    pass
+
+
+class RM(Fields, **_SVP64RMFields(0)):
+    pass
+
+
 class Codegen(_enum.Enum):
     PPC_SVP64_H = _enum.auto()
     PPC_SVP64_OPC_C = _enum.auto()
@@ -308,16 +371,15 @@ class Codegen(_enum.Enum):
                 yield from enum.c_decl()
                 yield ""
 
-            yield from Record.c_decl()
-            yield ""
+            structs = (Field, Record, Entry, Prefix, RM)
+            for struct in structs:
+                yield from struct.c_decl()
+                yield ""
 
             for name in ("in1", "in2", "in3", "out", "out2", "cr_in", "cr_out"):
                 yield "unsigned char"
                 yield f"svp64_record_{name}_opsel(const struct svp64_record *record);"
                 yield ""
-
-            yield from Entry.c_decl()
-            yield ""
 
             yield "extern const struct svp64_entry svp64_entries[];"
             yield "extern const unsigned int svp64_num_entries;"
