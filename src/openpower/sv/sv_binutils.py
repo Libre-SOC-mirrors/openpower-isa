@@ -45,17 +45,16 @@ class CTypeMeta(type):
 
     @_abc.abstractmethod
     def c_decl(cls):
-        pass
+        yield from ()
 
-    @_abc.abstractmethod
-    def c_var(cls, name):
-        pass
+    def c_var(cls, name, prefix="", suffix=""):
+        yield f"{prefix}{cls.c_typedef} {name}{suffix}"
 
 
 class CType(metaclass=CTypeMeta):
     @_abc.abstractmethod
     def c_value(self, prefix="", suffix=""):
-        pass
+        yield from ()
 
 
 class EnumMeta(_enum.EnumMeta, CTypeMeta):
@@ -79,6 +78,9 @@ class EnumMeta(_enum.EnumMeta, CTypeMeta):
     def c_tag(cls):
         return cls.__tag
 
+    def c_var(cls, name, prefix="", suffix=""):
+        yield f"{prefix}{cls.c_typedef} {name}{suffix}"
+
 
 class Enum(CType, _enum.Enum, metaclass=EnumMeta):
     @classmethod
@@ -90,10 +92,6 @@ class Enum(CType, _enum.Enum, metaclass=EnumMeta):
 
     def c_value(self, prefix="", suffix=""):
         yield f"{prefix}{self.__class__.c_tag.upper()}_{self.name.upper()}{suffix}"
-
-    @classmethod
-    def c_var(cls, name):
-        yield f"{cls.c_typedef} {name}"
 
 
 In1Sel = Enum("In1Sel", _In1Sel)
@@ -142,11 +140,8 @@ class StructMeta(CTypeMeta):
     def c_decl(cls):
         yield f"{cls.c_typedef} {{"
         for field in _dataclasses.fields(cls):
-            yield from indent(field.type.c_var(name=f"{field.name};"))
+            yield from indent(field.type.c_var(name=f"{field.name}", suffix=";"))
         yield f"}};"
-
-    def c_var(cls, name):
-        yield f"{cls.c_typedef} {name}"
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -163,9 +158,6 @@ class Struct(CType, metaclass=StructMeta):
 class IntegerMeta(CTypeMeta):
     def c_decl(cls):
         yield "#include <stdint.h>"
-
-    def c_var(cls, name):
-        yield f"{cls.c_typedef} {name}"
 
 
 class Integer(CType, int, metaclass=IntegerMeta):
@@ -196,9 +188,9 @@ class ArrayMeta(CTypeMeta):
         count = f"{cls.__size}" if cls.__size else ""
         yield f"{cls.c_type.c_typedef}[{count}]"
 
-    def c_var(cls, name):
+    def c_var(cls, name, prefix="", suffix=""):
         count = f"{cls.__size}" if cls.__size else ""
-        yield f"{cls.c_type.c_typedef} {name}[{count}]"
+        yield f"{prefix}{cls.c_type.c_typedef} {name}[{count}]{suffix}"
 
 
 class Array(CType, tuple, metaclass=ArrayMeta):
@@ -257,8 +249,8 @@ class Opcode(CType):
         yield f"}}{suffix}"
 
     @classmethod
-    def c_var(cls, name):
-        yield f"struct svp64_opcode {name}"
+    def c_var(cls, name, prefix="", suffix=""):
+        yield f"{prefix}struct svp64_opcode {name}{suffix}"
 
 
 class IntegerOpcode(Opcode):
@@ -295,8 +287,8 @@ class Name(CType, str):
         yield f"{prefix}{self!r}{suffix}"
 
     @classmethod
-    def c_var(cls, name):
-        yield f"const char *{name}"
+    def c_var(cls, name, prefix="", suffix=""):
+        yield f"{prefix}const char *{name}{suffix}"
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
