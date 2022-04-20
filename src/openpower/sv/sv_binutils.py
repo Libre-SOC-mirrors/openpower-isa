@@ -201,83 +201,6 @@ class Array(CType, tuple, metaclass=ArrayMeta):
         yield f"{prefix}{{{', '.join(items)}}}{suffix}"
 
 
-class Opcode(CType):
-    def __init__(self, value, mask, bits):
-        self.__value = value
-        self.__mask = mask
-        self.__bits = bits
-
-        return super().__init__()
-
-    @property
-    def value(self):
-        return self.__value
-
-    @property
-    def mask(self):
-        return self.__mask
-
-    @property
-    def bits(self):
-        return self.__bits
-
-    def __repr__(self):
-        fmt = f"{{value:0{self.bits}b}}:{{mask:0{self.bits}b}}"
-        return fmt.format(value=self.value, mask=self.mask)
-
-    def __lt__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-
-        return self.__value < other.__value
-
-    @classmethod
-    def c_decl(cls):
-        yield f"struct svp64_opcode {{"
-        yield from indent([
-            "uint32_t value;",
-            "uint32_t mask;",
-        ])
-        yield f"}};"
-
-    def c_value(self, prefix="", suffix=""):
-        yield f"{prefix}{{"
-        yield from indent([
-            f".value = UINT32_C(0x{self.value:08X}),",
-            f".mask = UINT32_C(0x{self.mask:08X}),",
-        ])
-        yield f"}}{suffix}"
-
-    @classmethod
-    def c_var(cls, name, prefix="", suffix=""):
-        yield f"{prefix}struct svp64_opcode {name}{suffix}"
-
-
-class IntegerOpcode(Opcode):
-    def __init__(self, integer):
-        value = int(integer, 0)
-        bits = max(1, value.bit_length())
-        mask = int(("1" * bits), 2)
-
-        return super().__init__(value=value, mask=mask, bits=bits)
-
-
-class PatternOpcode(Opcode):
-    def __init__(self, pattern):
-        value = 0
-        mask = 0
-        bits = len(pattern)
-        for bit in pattern:
-            value |= (bit == "1")
-            mask |= (bit != "-")
-            value <<= 1
-            mask <<= 1
-        value >>= 1
-        mask >>= 1
-
-        return super().__init__(value=value, mask=mask, bits=bits)
-
-
 class Name(CType, str):
     def __repr__(self):
         escaped = self.replace("\"", "\\\"")
@@ -493,7 +416,7 @@ ISA = _SVP64RM()
 FIELDS = {field.name:field.type for field in _dataclasses.fields(Record)}
 FIELDS.update({field.name:field.type for field in _dataclasses.fields(Entry)})
 
-def parse(path, opcode_cls):
+def parse(path):
     visited = set()
 
     def name_filter(name):
@@ -530,7 +453,6 @@ def parse(path, opcode_cls):
         return (key in FIELDS)
 
     for record in ISA.get_svp64_csv(path):
-        opcode = opcode_cls(record.pop("opcode"))
         names = record.pop("comment").split("=")[-1].split("/")
         names = set(filter(name_filter, names))
         if names:
@@ -544,21 +466,21 @@ def parse(path, opcode_cls):
 
 def main(codegen):
     entries = []
-    table = {
-        "minor_19.csv": IntegerOpcode,
-        "minor_30.csv": IntegerOpcode,
-        "minor_31.csv": IntegerOpcode,
-        "minor_58.csv": IntegerOpcode,
-        "minor_62.csv": IntegerOpcode,
-        "minor_22.csv": IntegerOpcode,
-        "minor_5.csv": PatternOpcode,
-        "minor_63.csv": PatternOpcode,
-        "minor_59.csv": PatternOpcode,
-        "major.csv": IntegerOpcode,
-        "extra.csv": PatternOpcode,
-    }
-    for (path, opcode_cls) in table.items():
-        entries.extend(parse(path, opcode_cls))
+    paths = (
+        "minor_19.csv",
+        "minor_30.csv",
+        "minor_31.csv",
+        "minor_58.csv",
+        "minor_62.csv",
+        "minor_22.csv",
+        "minor_5.csv",
+        "minor_63.csv",
+        "minor_59.csv",
+        "major.csv",
+        "extra.csv",
+    )
+    for path in paths:
+        entries.extend(parse(path))
     entries = sorted(frozenset(entries))
 
     for line in codegen.generate(entries):
