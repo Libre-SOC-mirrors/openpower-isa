@@ -1,6 +1,7 @@
 import unittest
 import struct
 from copy import copy
+import functools
 from openpower.decoder.power_fields import BitRange
 from operator import (add, sub, mul, floordiv, truediv, mod, or_, and_, xor,
                       neg, inv, lshift, rshift)
@@ -438,21 +439,53 @@ class SelectableInt:
         return struct.unpack('<d', data)[0]
 
 
-class SelectableIntMapping(dict):
-    def __init__(self, si, fields=None):
+class SelectableIntMappingMeta(type):
+    def __new__(metacls, name, bases, attrs, bits=0, fields=None):
+        if fields is None:
+            fields = {}
+
         def field(item):
             (key, value) = item
             if isinstance(value, dict):
                 value = dict(map(field, value.items()))
             else:
-                value = FieldSelectableInt(si, value)
+                value = tuple(value)
             return (key, value)
 
-        return super().__init__(map(field, fields.items()))
+        cls = super().__new__(metacls, name, bases, attrs)
+        cls.__bits = bits
+        cls.__fields = dict(map(field, fields.items()))
+
+        return cls
+
+    def __iter__(cls):
+        for (key, value) in cls.__fields.items():
+            yield (key, value)
+
+    def __getattr__(cls, attr):
+        print("SelectableIntMappingMeta", attr)
+        try:
+            return cls.__fields[attr]
+        except KeyError as error:
+            raise AttributeError from error
+
+    @property
+    def bits(cls):
+        return cls.__bits
+
+
+class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta):
+    def __init__(self, value=0):
+        return super().__init__(value, self.__class__.bits)
 
     def __getattr__(self, attr):
+        def field(value):
+            if isinstance(value, dict):
+                return {key:field(value) for (key, value) in tuple(value.items())}
+            return FieldSelectableInt(si=self, br=value)
+
         try:
-            return self[attr]
+            return field(getattr(self.__class__, attr))
         except KeyError as error:
             raise AttributeError from error
 

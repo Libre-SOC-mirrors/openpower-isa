@@ -259,10 +259,7 @@ class PC:
 
 
 # SVP64 ReMap field
-class SVP64RMFields(SelectableIntMapping):
-    def __init__(self, value=0):
-        self.spr = SelectableInt(value=value, bits=24)
-        return super().__init__(si=self.spr, fields={
+class SVP64RMFields(SelectableIntMapping, bits=24, fields={
             "spr": range(24),
             # SVP64 RM fields: see https://libre-soc.org/openpower/sv/svp64/
             "mmode": (0,),
@@ -286,37 +283,42 @@ class SVP64RMFields(SelectableIntMapping):
                 range(13, 16),
                 range(16, 19),
             ])),
-        })
+        }):
+
+    def __init__(self, value=0):
+        super().__init__(value=value)
+        self.spr = self
 
 
-SVP64RM_MMODE_SIZE = len(SVP64RMFields().mmode.br)
-SVP64RM_MASK_SIZE = len(SVP64RMFields().mask.br)
-SVP64RM_ELWIDTH_SIZE = len(SVP64RMFields().elwidth.br)
-SVP64RM_EWSRC_SIZE = len(SVP64RMFields().ewsrc.br)
-SVP64RM_SUBVL_SIZE = len(SVP64RMFields().subvl.br)
-SVP64RM_EXTRA2_SPEC_SIZE = len(SVP64RMFields().extra2[0].br)
-SVP64RM_EXTRA3_SPEC_SIZE = len(SVP64RMFields().extra3[0].br)
-SVP64RM_SMASK_SIZE = len(SVP64RMFields().smask.br)
-SVP64RM_MODE_SIZE = len(SVP64RMFields().mode.br)
+SVP64RM_MMODE_SIZE = len(SVP64RMFields.mmode)
+SVP64RM_MASK_SIZE = len(SVP64RMFields.mask)
+SVP64RM_ELWIDTH_SIZE = len(SVP64RMFields.elwidth)
+SVP64RM_EWSRC_SIZE = len(SVP64RMFields.ewsrc)
+SVP64RM_SUBVL_SIZE = len(SVP64RMFields.subvl)
+SVP64RM_EXTRA2_SPEC_SIZE = len(SVP64RMFields.extra2[0])
+SVP64RM_EXTRA3_SPEC_SIZE = len(SVP64RMFields.extra3[0])
+SVP64RM_SMASK_SIZE = len(SVP64RMFields.smask)
+SVP64RM_MODE_SIZE = len(SVP64RMFields.mode)
 
 
 # SVP64 Prefix fields: see https://libre-soc.org/openpower/sv/svp64/
-class SVP64PrefixFields(SelectableIntMapping):
-    def __init__(self, value=0):
-        self.insn = SelectableInt(value, 32)
-        return super().__init__(si=self.insn, fields={
+class SVP64PrefixFields(SelectableIntMapping, bits=32, fields={
             "insn": range(32),
             # 6 bit major opcode EXT001, 2 bits "identifying" (7, 9), 24 SV ReMap
             "major": range(0, 6),
             "pid": (7, 9),
             # SVP64 24-bit RM (ReMap)
             "rm": ((6, 8) + tuple(range(10, 32))),
-        })
+        }):
+
+    def __init__(self, value=0):
+        super().__init__(value=value)
+        self.insn = self
 
 
-SV64P_MAJOR_SIZE = len(SVP64PrefixFields().major.br)
-SV64P_PID_SIZE = len(SVP64PrefixFields().pid.br)
-SV64P_RM_SIZE = len(SVP64PrefixFields().rm.br)
+SV64P_MAJOR_SIZE = len(SVP64PrefixFields.major)
+SV64P_PID_SIZE = len(SVP64PrefixFields.pid)
+SV64P_RM_SIZE = len(SVP64PrefixFields.rm)
 
 
 # CR register fields

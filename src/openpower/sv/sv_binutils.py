@@ -1,6 +1,5 @@
 import abc as _abc
 import argparse as _argparse
-import builtins as _builtins
 import dataclasses as _dataclasses
 import enum as _enum
 
@@ -20,6 +19,7 @@ from openpower.consts import SVP64MODE as _SVP64MODE
 from openpower.decoder.power_svp64 import SVP64RM as _SVP64RM
 from openpower.decoder.isa.caller import SVP64RMFields as _SVP64RMFields
 from openpower.decoder.isa.caller import SVP64PrefixFields as _SVP64PrefixFields
+from openpower.decoder.selectable_int import SelectableIntMapping
 
 
 DISCLAIMER = (
@@ -278,7 +278,7 @@ class Field(Struct):
 
 
 class FieldsMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, **kwargs):
+    def __new__(metacls, name, bases, attrs, base=SelectableIntMapping):
         def flatten(mapping, parent=""):
             for (key, value) in mapping.items():
                 key = f"{parent}_{key}" if parent else key
@@ -287,17 +287,18 @@ class FieldsMeta(CTypeMeta):
                 else:
                     yield (key.upper(), value)
 
-        fields = dict(flatten(mapping=kwargs))
+        mapping = dict(base)
+        fields = dict(flatten(mapping=mapping))
         keys = ((key, index) for (index, key) in enumerate(fields))
         enum_cls = Enum(name, entries=keys, tag=f"svp64_{name.lower()}_type")
 
         def field(item):
             (key, value) = item
-            length = Size(len(value.br))
-            mapping = Byte[32](map(lambda bit: Byte((value.si.bits - 1) - bit), reversed(value.br)))
+            length = Size(len(value))
+            mapping = Byte[32](map(lambda bit: Byte((base.bits - 1) - bit), reversed(value)))
             return (key, Field(length=length, mapping=mapping))
 
-        typedef = kwargs.pop("typedef", Field.c_typedef)
+        typedef = mapping.pop("typedef", Field.c_typedef)
         cls = super().__new__(metacls, name, bases, attrs, typedef=typedef)
         cls.__enum = enum_cls
         cls.__fields = dict(map(field, zip(enum_cls, fields.values())))
@@ -323,11 +324,11 @@ class Fields(metaclass=FieldsMeta):
         yield f"}}{suffix}"
 
 
-class Prefix(Fields, **_SVP64PrefixFields(0)):
+class Prefix(Fields, type=_SVP64PrefixFields):
     pass
 
 
-class RM(Fields, **_SVP64RMFields(0)):
+class RM(Fields, type=_SVP64RMFields):
     pass
 
 
