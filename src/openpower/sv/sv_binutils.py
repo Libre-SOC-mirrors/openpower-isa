@@ -110,6 +110,11 @@ class Bitmap(metaclass=BitmapMeta):
     pass
 
 
+class Void(CType, typedef="void"):
+    def c_var(cls, name, prefix="", suffix=""):
+        raise NotImplementedError
+
+
 class EnumMeta(_enum.EnumMeta, CTypeMeta):
     def __call__(metacls, name, entries, tag=None, **kwargs):
         if isinstance(entries, type) and issubclass(entries, _enum.Enum):
@@ -121,6 +126,7 @@ class EnumMeta(_enum.EnumMeta, CTypeMeta):
 
         cls = super().__call__(value=name, names=entries, **kwargs)
         cls.__tag = tag
+
         return cls
 
     @property
@@ -131,6 +137,12 @@ class EnumMeta(_enum.EnumMeta, CTypeMeta):
     def c_tag(cls):
         return cls.__tag
 
+    def c_decl(cls):
+        yield f"{cls.c_typedef} {{"
+        for item in cls:
+            yield from indent(item.c_value(suffix=","))
+        yield f"}};"
+
     def c_var(cls, name, prefix="", suffix=""):
         return f"{prefix}{cls.c_typedef} {name}{suffix}"
 
@@ -139,13 +151,6 @@ class Enum(CType, _enum.Enum, metaclass=EnumMeta):
     @property
     def c_name(self):
         return f"{self.__class__.c_tag.upper()}_{self.name.upper()}"
-
-    @classmethod
-    def c_decl(cls):
-        yield f"{cls.c_typedef} {{"
-        for item in cls:
-            yield from indent(item.c_value(suffix=","))
-        yield f"}};"
 
     def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{self.c_name}{suffix}"
@@ -225,6 +230,10 @@ class Size(Integer, typedef="size_t"):
     pass
 
 
+class UInt32(Integer, typedef="uint32_t"):
+    pass
+
+
 class Name(CType, str):
     def __repr__(self):
         escaped = self.replace("\"", "\\\"")
@@ -283,66 +292,131 @@ class Entry(Struct):
         return self.name < other.name
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Field(Struct):
-    length: Size
-    mapping: Byte[32]
+class FunctionMeta(CTypeMeta):
+    def __new__(metacls, name, bases, attrs, rv, args):
+        cls = super().__new__(metacls, name, bases, attrs)
+        cls.__rv = rv
+        cls.__args = args
+
+        return cls
+
+    def c_var(cls, name, prefix="", suffix=""):
+        rv = cls.__rv.c_typedef
+        args = ", ".join(arg_cls.c_var(arg_name) for (arg_name, arg_cls) in cls.__args)
+        return f"{prefix}{rv} {name}({args}){suffix}"
 
 
+class FieldsMappingMeta(EnumMeta):
+    class HelperMeta(FunctionMeta):
+        def __new__(metacls, name, bases, attrs, rv, args, enum):
+            cls = super().__new__(metacls, name, bases, attrs, rv=rv, args=args)
+            cls.__enum = enum
+            return cls
 
-class FieldsMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, base=SelectableIntMapping):
+        def __iter__(cls):
+            yield from cls.__enum
+
+    class GetterMeta(HelperMeta):
+        def __new__(metacls, name, bases, attrs, enum, struct):
+            return super().__new__(metacls, name, bases, attrs, enum=enum, rv=UInt32, args=(
+                ("storage", struct),
+                ("field", enum),
+            ))
+
+    class SetterMeta(HelperMeta):
+        def __new__(metacls, name, bases, attrs, enum, struct):
+            return super().__new__(metacls, name, bases, attrs, enum=enum, rv=Void, args=(
+                ("*storage", struct),
+                ("field", enum),
+                ("value", UInt32),
+            ))
+
+    def __call__(metacls, name, base=SelectableIntMapping, **kwargs):
         def flatten(mapping, parent=""):
             for (key, value) in mapping.items():
                 key = f"{parent}_{key}" if parent else key
                 if isinstance(value, dict):
                     yield from flatten(mapping=value, parent=key)
                 else:
-                    yield (key.upper(), value)
+                    value = map(lambda bit: bit, reversed(value))
+                    # value = map(lambda bit: ((base.bits - 1) - bit), reversed(value))
+                    yield (key.upper(), tuple(value))
 
-        mapping = dict(base)
-        fields = dict(flatten(mapping=mapping))
-        keys = ((key, index) for (index, key) in enumerate(fields))
-        enum_cls = Enum(name, entries=keys, tag=f"svp64_{name.lower()}_type")
+        tag = f"svp64_{name.lower()}"
+        fields = dict(flatten(mapping=dict(base)))
+        bitmap = type(name, (Bitmap,), {}, typedef="uint32_t", bits=base.bits)
+        struct = _dataclasses.make_dataclass(name, (("value", bitmap),),
+            bases=(Struct,), frozen=True, eq=True)
 
-        def field(item):
-            (key, value) = item
-            length = Size(len(value))
-            mapping = Byte[32](map(lambda bit: Byte((base.bits - 1) - bit), reversed(value)))
-            return (key, Field(length=length, mapping=mapping))
+        cls = super().__call__(name=name, entries=fields, tag=f"{tag}_field", **kwargs)
 
-        typedef = mapping.pop("typedef", Field.c_typedef)
-        cls = super().__new__(metacls, name, bases, attrs, typedef=typedef)
-        cls.__enum = enum_cls
-        cls.__fields = dict(map(field, zip(enum_cls, fields.values())))
+        def c_value(fields, stmt):
+            yield "switch (field) {"
+            for field in fields:
+                label = "".join(field.c_value())
+                yield from indent([f"case {label}:"])
+                yield from indent(indent(map(stmt, enumerate(field.value))))
+                yield from indent(indent(["break;"]))
+            yield "}"
+
+        class Getter(metaclass=FieldsMappingMeta.GetterMeta, enum=cls, struct=struct):
+            def c_value(self, prefix="", suffix=""):
+                yield f"{prefix}{{"
+                yield from indent([
+                    UInt32.c_var(name="result", suffix=" = UINT32_C(0);"),
+                    UInt32.c_var(name="origin", suffix=" = storage.value;"),
+                ])
+                yield ""
+                yield from indent(c_value(fields=tuple(self.__class__),
+                    stmt=lambda kv: f"result |= SVP64_FIELD_GET(origin, {kv[1]}, {kv[0]});"))
+                yield ""
+                yield from indent(["return result;"])
+                yield f"}}{suffix}"
+
+        class Setter(metaclass=FieldsMappingMeta.SetterMeta, enum=cls, struct=struct):
+            def c_value(self, prefix="", suffix=""):
+                yield f"{prefix}{{"
+                yield from indent([
+                    UInt32.c_var(name="result", suffix=" = storage->value;"),
+                ])
+                yield ""
+                yield from indent(c_value(fields=tuple(self.__class__),
+                    stmt=lambda kv: f"SVP64_FIELD_SET(&result, value, {kv[0]}, {kv[1]});"))
+                yield ""
+                yield from indent(["storage->value = result;"])
+                yield f"}}{suffix}"
+
+        cls.__tag = tag
+        cls.__struct = struct
+        cls.__getter = Getter()
+        cls.__setter = Setter()
 
         return cls
 
-    def __iter__(cls):
-        for (key, value) in cls.__fields.items():
-            yield (key, value)
+    @property
+    def c_getter(cls):
+        return cls.__getter
+
+    @property
+    def c_setter(cls):
+        return cls.__setter
 
     def c_decl(cls):
-        yield from cls.__enum.c_decl()
-
-    def c_var(cls, name, prefix="", suffix=""):
-        return Field.c_var(name=name, prefix=prefix, suffix=suffix)
-
-
-class Fields(metaclass=FieldsMeta):
-    def c_value(self, *, prefix="", suffix="", **kwargs):
-        yield f"{prefix}{{"
-        for (key, value) in self.__class__:
-            yield from indent(value.c_value(prefix=f"[{key.c_name}] = ", suffix=","))
-        yield f"}}{suffix}"
+        yield from super().c_decl()
+        yield from cls.__struct.c_decl()
+        yield cls.__getter.__class__.c_var(name=f"{cls.__tag}_get", suffix=";")
+        yield cls.__setter.__class__.c_var(name=f"{cls.__tag}_set", suffix=";")
 
 
-class Prefix(Fields, base=_SVP64PrefixFields):
-    pass
+class FieldsMapping(Enum, metaclass=FieldsMappingMeta):
+    @property
+    def c_name(self):
+        short_c_tag = self.__class__.c_tag[:-len("_field")]
+        return f"{short_c_tag.upper()}_{self.name.upper()}"
 
 
-class RM(Fields, base=_SVP64RMFields):
-    pass
+Prefix = FieldsMapping("Prefix", base=_SVP64PrefixFields)
+RM = FieldsMapping("RM", base=_SVP64RMFields)
 
 
 class Codegen(_enum.Enum):
@@ -389,9 +463,8 @@ class Codegen(_enum.Enum):
                 yield from enum.c_decl()
                 yield ""
 
-            structs = (Field, Record, Entry, Prefix, RM)
-            for struct in structs:
-                yield from struct.c_decl()
+            for cls in (Record, Entry, Prefix, RM):
+                yield from cls.c_decl()
                 yield ""
 
             for name in ("in1", "in2", "in3", "out", "out2", "cr_in", "cr_out"):
@@ -488,15 +561,40 @@ class Codegen(_enum.Enum):
             yield from indent(num_entries.c_value(suffix=";"))
             yield ""
 
-            for mapping in (Prefix, RM):
-                name = mapping.__name__.lower()
-                yield mapping.c_var(name=f"svp64_{name}_entries", prefix="static ", suffix="[] = \\")
-                yield from mapping().c_value(suffix=";")
+            bit_shl = lambda val, pos: f"({val} << UINT32_C({pos}))"
+            bit_shr = lambda val, pos: f"({val} >> UINT32_C({pos}))"
+            bit_get = lambda val, pos: f"({bit_shr(val, pos)} & UINT32_C(1))"
+            bit_or = lambda lhs, rhs: f"({lhs} | {rhs})"
+            bit_and = lambda lhs, rhs: f"({lhs} & {rhs})"
+            bit_not = lambda val: f"~({val})"
+
+            macros = {
+                "CLEAR(VALUE, BIT)":
+                    bit_and("VALUE", bit_not(bit_shl("UINT32_C(1)", "BIT"))),
+                "REMAP(VALUE, SRC, DST)":
+                    bit_shl(bit_get("VALUE", "SRC"), "DST"),
+                "GET(ORIGIN, SRC, DST)":
+                    "SVP64_FIELD_REMAP(ORIGIN, SRC, DST)",
+                "SET(RESULT, VALUE, SRC, DST)":
+                    " = ".join(["*(RESULT)", bit_or(
+                        lhs="SVP64_FIELD_CLEAR(*(RESULT), DST)",
+                        rhs="SVP64_FIELD_REMAP(VALUE, SRC, DST)",
+                    )]),
+            }
+            for (call, body) in macros.items():
+                yield f"#define SVP64_FIELD_{call} \\"
+                yield from indent([body])
                 yield ""
-            yield ""
+
+            for cls in (Prefix, RM):
+                for (mode, subcls) in {"get": cls.c_getter, "set": cls.c_setter}.items():
+                    yield subcls.__class__.c_var(name=f"svp64_{cls.__name__.lower()}_{mode}")
+                    yield from subcls.c_value()
+                    yield ""
+
 
         entries = Entry[...](entries)
-        num_entries = Size("(sizeof (svp64_entries) / sizeof (svp64_entries[0])")
+        num_entries = Size("(sizeof (svp64_entries) / sizeof (svp64_entries[0]))")
 
         return {
             Codegen.PPC_SVP64_H: ppc_svp64_h,
