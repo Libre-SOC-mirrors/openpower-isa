@@ -324,11 +324,11 @@ class Fields(metaclass=FieldsMeta):
         yield f"}}{suffix}"
 
 
-class Prefix(Fields, type=_SVP64PrefixFields):
+class Prefix(Fields, base=_SVP64PrefixFields):
     pass
 
 
-class RM(Fields, type=_SVP64RMFields):
+class RM(Fields, base=_SVP64RMFields):
     pass
 
 
