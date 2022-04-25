@@ -463,7 +463,6 @@ class SelectableIntMappingMeta(type):
             yield (key, value)
 
     def __getattr__(cls, attr):
-        print("SelectableIntMappingMeta", attr)
         try:
             return cls.__fields[attr]
         except KeyError as error:
