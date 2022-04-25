@@ -59,8 +59,8 @@ class CTypeMeta(type):
 
 
 class ArrayMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, type, size):
-        cls = super().__new__(metacls, name, bases, attrs)
+    def __new__(metacls, name, bases, attrs, type, size, **kwargs):
+        cls = super().__new__(metacls, name, bases, attrs, **kwargs)
         cls.__type = type
         cls.__ellipsis = (size is Ellipsis)
         cls.__size = 0 if cls.__ellipsis else size
@@ -70,17 +70,26 @@ class ArrayMeta(CTypeMeta):
     def __len__(cls):
         return cls.__size
 
-    @property
-    def c_type(cls):
-        return cls.__type
-
     def c_decl(cls):
         size = "" if cls.__ellipsis else f"{cls.__size}"
-        yield f"{cls.c_type.c_typedef}[{size}]"
+        yield f"{cls.__type.c_typedef}[{size}]"
 
     def c_var(cls, name, prefix="", suffix=""):
         size = "" if cls.__ellipsis else f"{cls.__size}"
-        yield f"{prefix}{cls.c_type.c_typedef} {name}[{size}]{suffix}"
+        yield f"{prefix}{cls.__type.c_typedef} {name}[{size}]{suffix}"
+
+
+class BitmapMeta(CTypeMeta):
+    def __new__(metacls, name, bases, attrs, typedef="uint64_t", bits=0, **kwargs):
+        cls = super().__new__(metacls, name, bases, attrs, typedef=typedef, **kwargs)
+        cls.__bits = bits
+        return cls
+
+    def __len__(cls):
+        return cls.__bits
+
+    def c_var(cls, name, prefix="", suffix=""):
+        yield f"{prefix}{cls.c_typedef} {name} : {cls.__bits}{suffix}"
 
 
 class CType(metaclass=CTypeMeta):
@@ -89,12 +98,16 @@ class CType(metaclass=CTypeMeta):
         yield from ()
 
 
-class Array(CType, tuple, metaclass=ArrayMeta, type=CType, size=0):
+class Array(CType, tuple, metaclass=ArrayMeta, type=CType, size=...):
     def c_value(self, prefix="", suffix=""):
         yield f"{prefix}{{"
         for (index, item) in enumerate(self):
             yield from indent(item.c_value(prefix=f"[{index}] = ", suffix=","))
         yield f"}}{suffix}"
+
+
+class Bitmap(metaclass=BitmapMeta):
+    pass
 
 
 class EnumMeta(_enum.EnumMeta, CTypeMeta):
