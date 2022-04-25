@@ -315,7 +315,9 @@ class FieldsMappingMeta(EnumMeta):
             return cls
 
         def __iter__(cls):
-            yield from cls.__enum
+            prefix = f"svp64_{cls.__enum.__name__}"
+            for (name, value) in cls.__enum.__members__.items():
+                yield (f"{prefix}_{name}".upper(), value)
 
     class GetterMeta(HelperMeta):
         def __new__(metacls, name, bases, attrs, enum, struct):
@@ -353,10 +355,9 @@ class FieldsMappingMeta(EnumMeta):
 
         def c_value(fields, stmt):
             yield "switch (field) {"
-            for field in fields:
-                label = "".join(field.c_value())
-                yield from indent([f"case {label}:"])
-                yield from indent(indent(map(stmt, enumerate(field.value))))
+            for (field_name, field_value) in fields:
+                yield from indent([f"case SVP64_FIELD_{field_name.upper()}:"])
+                yield from indent(indent(map(stmt, enumerate(field_value.value))))
                 yield from indent(indent(["break;"]))
             yield "}"
 
@@ -368,7 +369,7 @@ class FieldsMappingMeta(EnumMeta):
                     UInt32.c_var(name="origin", suffix=" = storage.value;"),
                 ])
                 yield ""
-                yield from indent(c_value(fields=tuple(self.__class__),
+                yield from indent(c_value(fields=self.__class__,
                     stmt=lambda kv: f"result |= SVP64_FIELD_GET(origin, {kv[1]}, {kv[0]});"))
                 yield ""
                 yield from indent(["return result;"])
@@ -381,7 +382,7 @@ class FieldsMappingMeta(EnumMeta):
                     UInt32.c_var(name="result", suffix=" = storage->value;"),
                 ])
                 yield ""
-                yield from indent(c_value(fields=tuple(self.__class__),
+                yield from indent(c_value(fields=self.__class__,
                     stmt=lambda kv: f"SVP64_FIELD_SET(&result, value, {kv[0]}, {kv[1]});"))
                 yield ""
                 yield from indent(["storage->value = result;"])
