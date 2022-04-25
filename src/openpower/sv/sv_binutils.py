@@ -119,6 +119,7 @@ class Void(CType, typedef="void"):
 class EnumMeta(_enum.EnumMeta, CTypeMeta):
     def __call__(metacls, name, entries, tag=None, **kwargs):
         if isinstance(entries, type) and issubclass(entries, _enum.Enum):
+            # Use __members__, not __iter__, otherwise aliases are lost.
             entries = dict(entries.__members__)
         if isinstance(entries, dict):
             entries = tuple(entries.items())
@@ -172,6 +173,7 @@ class Constant(CType, _enum.Enum, metaclass=EnumMeta):
     @classmethod
     def c_decl(cls):
         yield f"/* {cls.c_tag.upper()} constants */"
+        # Use __members__, not __iter__, otherwise aliases are lost.
         for (key, item) in cls.__members__.items():
             key = f"{cls.c_tag.upper()}_{key.upper()}"
             value = f"0x{item.value:08x}U"
@@ -316,6 +318,7 @@ class FieldsMappingMeta(EnumMeta):
 
         def __iter__(cls):
             prefix = f"svp64_{cls.__enum.__name__}"
+            # Use __members__, not __iter__, otherwise aliases are lost.
             for (name, value) in cls.__enum.__members__.items():
                 yield (f"{prefix}_{name}".upper(), value)
 
