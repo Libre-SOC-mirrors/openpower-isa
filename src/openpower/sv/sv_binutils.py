@@ -588,10 +588,10 @@ class Codegen(_enum.Enum):
                 (
                     "SVP64_FIELD_SET",
                     ("RESULT", "VALUE", "SRC", "DST"),
-                    " = ".join(["*(RESULT)", bit_or(
+                    ("do { (*RESULT) = " + bit_or(
                         lhs="SVP64_FIELD_CLEAR(*(RESULT), DST)",
                         rhs="SVP64_FIELD_REMAP(VALUE, SRC, DST)",
-                    )]),
+                    ) + "; } while (0)"),
                 ),
             )
             for (name, args, body) in macros:
