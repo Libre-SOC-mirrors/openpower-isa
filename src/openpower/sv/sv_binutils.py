@@ -55,7 +55,7 @@ class CTypeMeta(type):
         yield from ()
 
     def c_var(cls, name, prefix="", suffix=""):
-        yield f"{prefix}{cls.c_typedef} {name}{suffix}"
+        return f"{prefix}{cls.c_typedef} {name}{suffix}"
 
 
 class ArrayMeta(CTypeMeta):
@@ -76,7 +76,7 @@ class ArrayMeta(CTypeMeta):
 
     def c_var(cls, name, prefix="", suffix=""):
         size = "" if cls.__ellipsis else f"{cls.__size}"
-        yield f"{prefix}{cls.__type.c_typedef} {name}[{size}]{suffix}"
+        return f"{prefix}{cls.__type.c_typedef} {name}[{size}]{suffix}"
 
 
 class BitmapMeta(CTypeMeta):
@@ -89,7 +89,7 @@ class BitmapMeta(CTypeMeta):
         return cls.__bits
 
     def c_var(cls, name, prefix="", suffix=""):
-        yield f"{prefix}{cls.c_typedef} {name} : {cls.__bits}{suffix}"
+        return f"{prefix}{cls.c_typedef} {name} : {cls.__bits}{suffix}"
 
 
 class CType(metaclass=CTypeMeta):
@@ -132,7 +132,7 @@ class EnumMeta(_enum.EnumMeta, CTypeMeta):
         return cls.__tag
 
     def c_var(cls, name, prefix="", suffix=""):
-        yield f"{prefix}{cls.c_typedef} {name}{suffix}"
+        return f"{prefix}{cls.c_typedef} {name}{suffix}"
 
 
 class Enum(CType, _enum.Enum, metaclass=EnumMeta):
@@ -197,7 +197,7 @@ class StructMeta(CTypeMeta):
     def c_decl(cls):
         yield f"{cls.c_typedef} {{"
         for field in _dataclasses.fields(cls):
-            yield from indent(field.type.c_var(name=f"{field.name}", suffix=";"))
+            yield from indent([field.type.c_var(name=f"{field.name}", suffix=";")])
         yield f"}};"
 
 
@@ -235,7 +235,7 @@ class Name(CType, str):
 
     @classmethod
     def c_var(cls, name, prefix="", suffix=""):
-        yield f"{prefix}const char *{name}{suffix}"
+        return f"{prefix}const char *{name}{suffix}"
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -326,7 +326,7 @@ class FieldsMeta(CTypeMeta):
         yield from cls.__enum.c_decl()
 
     def c_var(cls, name, prefix="", suffix=""):
-        yield from Field.c_var(name=name, prefix=prefix, suffix=suffix)
+        return Field.c_var(name=name, prefix=prefix, suffix=suffix)
 
 
 class Fields(metaclass=FieldsMeta):
@@ -399,8 +399,8 @@ class Codegen(_enum.Enum):
                 yield f"svp64_record_{name}_opsel(const struct svp64_record *record);"
                 yield ""
 
-            yield from entries.__class__.c_var("svp64_entries", prefix="extern const ", suffix=";")
-            yield from num_entries.__class__.c_var("svp64_num_entries", prefix="extern const ", suffix=";")
+            yield entries.__class__.c_var("svp64_entries", prefix="extern const ", suffix=";")
+            yield num_entries.__class__.c_var("svp64_num_entries", prefix="extern const ", suffix=";")
             yield ""
 
             yield f"#define SVP64_NAME_MAX {max(map(lambda entry: len(entry.name), entries))}"
@@ -481,16 +481,16 @@ class Codegen(_enum.Enum):
                 CROutSel.WHOLE_REG: "FXM",
             })
 
-            yield from entries.__class__.c_var("svp64_entries", prefix="const ", suffix=" = \\")
+            yield entries.__class__.c_var("svp64_entries", prefix="const ", suffix=" = \\")
             yield from entries.c_value(prefix="", suffix=";")
             yield ""
-            yield from num_entries.__class__.c_var("svp64_num_entries", prefix="const ", suffix=" = \\")
+            yield num_entries.__class__.c_var("svp64_num_entries", prefix="const ", suffix=" = \\")
             yield from indent(num_entries.c_value(suffix=";"))
             yield ""
 
             for mapping in (Prefix, RM):
                 name = mapping.__name__.lower()
-                yield from mapping.c_var(name=f"svp64_{name}_entries", prefix="static ", suffix="[] = \\")
+                yield mapping.c_var(name=f"svp64_{name}_entries", prefix="static ", suffix="[] = \\")
                 yield from mapping().c_value(suffix=";")
                 yield ""
             yield ""
