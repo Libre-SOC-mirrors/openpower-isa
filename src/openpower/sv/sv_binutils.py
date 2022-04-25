@@ -2,6 +2,7 @@ import abc as _abc
 import argparse as _argparse
 import dataclasses as _dataclasses
 import enum as _enum
+import operator as _operator
 
 from openpower.decoder.power_enums import (
     In1Sel as _In1Sel,
@@ -568,21 +569,33 @@ class Codegen(_enum.Enum):
             bit_and = lambda lhs, rhs: f"({lhs} & {rhs})"
             bit_not = lambda val: f"~({val})"
 
-            macros = {
-                "CLEAR(VALUE, BIT)":
+            macros = (
+                (
+                    "SVP64_FIELD_CLEAR",
+                    ("VALUE", "BIT"),
                     bit_and("VALUE", bit_not(bit_shl("UINT32_C(1)", "BIT"))),
-                "REMAP(VALUE, SRC, DST)":
+                ),
+                (
+                    "SVP64_FIELD_REMAP",
+                    ("VALUE", "SRC", "DST"),
                     bit_shl(bit_get("VALUE", "SRC"), "DST"),
-                "GET(ORIGIN, SRC, DST)":
+                ),
+                (
+                    "SVP64_FIELD_GET",
+                    ("ORIGIN", "SRC", "DST"),
                     "SVP64_FIELD_REMAP(ORIGIN, SRC, DST)",
-                "SET(RESULT, VALUE, SRC, DST)":
+                ),
+                (
+                    "SVP64_FIELD_SET",
+                    ("RESULT", "VALUE", "SRC", "DST"),
                     " = ".join(["*(RESULT)", bit_or(
                         lhs="SVP64_FIELD_CLEAR(*(RESULT), DST)",
                         rhs="SVP64_FIELD_REMAP(VALUE, SRC, DST)",
                     )]),
-            }
-            for (call, body) in macros.items():
-                yield f"#define SVP64_FIELD_{call} \\"
+                ),
+            )
+            for (name, args, body) in macros:
+                yield f"#define {name}({', '.join(args)}) \\"
                 yield from indent([body])
                 yield ""
 
@@ -591,6 +604,10 @@ class Codegen(_enum.Enum):
                     yield subcls.__class__.c_var(name=f"svp64_{cls.__name__.lower()}_{mode}")
                     yield from subcls.c_value()
                     yield ""
+
+            for name in map(_operator.itemgetter(0), macros):
+                yield f"#undef {name}"
+            yield ""
 
 
         entries = Entry[...](entries)
