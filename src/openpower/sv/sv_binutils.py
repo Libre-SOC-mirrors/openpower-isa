@@ -94,12 +94,12 @@ class BitmapMeta(CTypeMeta):
 
 class CType(metaclass=CTypeMeta):
     @_abc.abstractmethod
-    def c_value(self, prefix="", suffix=""):
+    def c_value(self, *, prefix="", suffix="", **kwargs):
         yield from ()
 
 
 class Array(CType, tuple, metaclass=ArrayMeta, type=CType, size=...):
-    def c_value(self, prefix="", suffix=""):
+    def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{{"
         for (index, item) in enumerate(self):
             yield from indent(item.c_value(prefix=f"[{index}] = ", suffix=","))
@@ -147,7 +147,7 @@ class Enum(CType, _enum.Enum, metaclass=EnumMeta):
             yield from indent(item.c_value(suffix=","))
         yield f"}};"
 
-    def c_value(self, prefix="", suffix=""):
+    def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{self.c_name}{suffix}"
 
 
@@ -171,7 +171,7 @@ class Constant(CType, _enum.Enum, metaclass=EnumMeta):
             value = f"0x{item.value:08x}U"
             yield f"#define {key} {value}"
 
-    def c_value(self, prefix="", suffix=""):
+    def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{self.__class__.c_tag.upper()}_{self.name.upper()}{suffix}"
 
 
@@ -203,7 +203,7 @@ class StructMeta(CTypeMeta):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Struct(CType, metaclass=StructMeta):
-    def c_value(self, prefix="", suffix=""):
+    def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{{"
         for field in _dataclasses.fields(self):
             name = field.name
@@ -213,7 +213,7 @@ class Struct(CType, metaclass=StructMeta):
 
 
 class Integer(CType, str):
-    def c_value(self, prefix="", suffix=""):
+    def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{self}{suffix}"
 
 
@@ -230,7 +230,7 @@ class Name(CType, str):
         escaped = self.replace("\"", "\\\"")
         return f"\"{escaped}\""
 
-    def c_value(self, prefix="", suffix=""):
+    def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{self!r}{suffix}"
 
     @classmethod
@@ -330,7 +330,7 @@ class FieldsMeta(CTypeMeta):
 
 
 class Fields(metaclass=FieldsMeta):
-    def c_value(self, prefix="", suffix=""):
+    def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{{"
         for (key, value) in self.__class__:
             yield from indent(value.c_value(prefix=f"[{key.c_name}] = ", suffix=","))
