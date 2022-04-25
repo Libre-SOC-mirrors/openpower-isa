@@ -407,7 +407,11 @@ class FieldsMappingMeta(EnumMeta):
         return cls.__setter
 
     def c_decl(cls):
-        yield from super().c_decl()
+        yield f"{cls.c_typedef} {{"
+        for field_name in cls.__members__.keys():
+            short_c_tag = cls.c_tag[:-len("_field")]
+            yield from indent([f"{short_c_tag}_{field_name},".upper()])
+        yield f"}};"
         yield from cls.__struct.c_decl()
         yield cls.__getter.__class__.c_var(name=f"{cls.__tag}_get", suffix=";")
         yield cls.__setter.__class__.c_var(name=f"{cls.__tag}_set", suffix=";")
