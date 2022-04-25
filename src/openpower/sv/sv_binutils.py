@@ -317,10 +317,10 @@ class FieldsMappingMeta(EnumMeta):
             return cls
 
         def __iter__(cls):
-            prefix = f"svp64_{cls.__enum.__name__}"
+            short_c_tag = cls.__enum.c_tag[:-len("_field")]
             # Use __members__, not __iter__, otherwise aliases are lost.
             for (name, value) in cls.__enum.__members__.items():
-                yield (f"{prefix}_{name}".upper(), value)
+                yield (f"{short_c_tag}_{name}".upper(), value)
 
     class GetterMeta(HelperMeta):
         def __new__(metacls, name, bases, attrs, enum, struct):
@@ -359,7 +359,7 @@ class FieldsMappingMeta(EnumMeta):
         def c_value(fields, stmt):
             yield "switch (field) {"
             for (field_name, field_value) in fields:
-                yield from indent([f"case SVP64_FIELD_{field_name.upper()}:"])
+                yield from indent([f"case {field_name}:"])
                 yield from indent(indent(map(stmt, enumerate(field_value.value))))
                 yield from indent(indent(["break;"]))
             yield "}"
@@ -417,7 +417,7 @@ class FieldsMapping(Enum, metaclass=FieldsMappingMeta):
     @property
     def c_name(self):
         short_c_tag = self.__class__.c_tag[:-len("_field")]
-        return f"{short_c_tag.upper()}_{self.name.upper()}"
+        return f"{short_c_tag}_{self.name}".upper()
 
 
 Prefix = FieldsMapping("Prefix", base=_SVP64PrefixFields)
