@@ -18,7 +18,7 @@ Special Registers Altered:
 
     None
 
-# [DRAFT] Twin Divide Quad Unsigned
+# [DRAFT] Twin Divide/Modulo Quad Unsigned
 
 VA-Form
 
@@ -30,7 +30,7 @@ Pseudo-code:
     <!-- bit 8 of EXTRA is clear: RS.[s|v]=RT.[s|v]+VL -->
     <!-- bit 8 of EXTRA is set  : RS.[s|v]=RC.[s|v]    -->
     if ((RA) <u (RB)) & ((RB) != [0]*XLEN) then
-        dividend[0:(XLEN*2)-1] <- (RA) || (RC)
+        dividend[0:(XLEN*2)-1] <- (RC) || (RA)
         divisor[0:(XLEN*2)-1] <- [0]*XLEN || (RB)
         result <- dividend / divisor
         modulo <- dividend % divisor
