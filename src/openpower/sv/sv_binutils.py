@@ -81,8 +81,10 @@ class ArrayMeta(CTypeMeta):
 
 
 class BitmapMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, typedef="uint64_t", bits=0, **kwargs):
-        cls = super().__new__(metacls, name, bases, attrs, typedef=typedef, **kwargs)
+    def __new__(metacls, name, bases, attrs, typedef="uint64_t", bits=0, 
+                                    **kwargs):
+        cls = super().__new__(metacls, name, bases, attrs, typedef=typedef, 
+                                    **kwargs)
         cls.__bits = bits
         return cls
 
@@ -205,7 +207,8 @@ class StructMeta(CTypeMeta):
     def c_decl(cls):
         yield f"{cls.c_typedef} {{"
         for field in _dataclasses.fields(cls):
-            yield from indent([field.type.c_var(name=f"{field.name}", suffix=";")])
+            yield from indent([field.type.c_var(name=f"{field.name}", 
+                                    suffix=";")])
         yield f"}};"
 
 
@@ -305,7 +308,8 @@ class FunctionMeta(CTypeMeta):
 
     def c_var(cls, name, prefix="", suffix=""):
         rv = cls.__rv.c_typedef
-        args = ", ".join(arg_cls.c_var(arg_name) for (arg_name, arg_cls) in cls.__args)
+        args = ", ".join(arg_cls.c_var(arg_name) \
+                    for (arg_name, arg_cls) in cls.__args)
         return f"{prefix}{rv} {name}({args}){suffix}"
 
 
@@ -324,14 +328,16 @@ class FieldsMappingMeta(EnumMeta):
 
     class GetterMeta(HelperMeta):
         def __new__(metacls, name, bases, attrs, enum, struct):
-            return super().__new__(metacls, name, bases, attrs, enum=enum, rv=UInt32, args=(
+            return super().__new__(metacls, name, bases, attrs,
+                                    enum=enum, rv=UInt32, args=(
                 ("storage", struct),
                 ("field", enum),
             ))
 
     class SetterMeta(HelperMeta):
         def __new__(metacls, name, bases, attrs, enum, struct):
-            return super().__new__(metacls, name, bases, attrs, enum=enum, rv=Void, args=(
+            return super().__new__(metacls, name, bases, attrs, enum=enum,
+                                   rv=Void, args=(
                 ("*storage", struct),
                 ("field", enum),
                 ("value", UInt32),
@@ -345,7 +351,8 @@ class FieldsMappingMeta(EnumMeta):
                     yield from flatten(mapping=value, parent=key)
                 else:
                     value = map(lambda bit: bit, reversed(value))
-                    # value = map(lambda bit: ((base.bits - 1) - bit), reversed(value))
+                    # value = map(lambda bit: ((base.bits - 1) - bit),
+                    # reversed(value))
                     yield (key.upper(), tuple(value))
 
         tag = f"svp64_{name.lower()}"
@@ -354,17 +361,20 @@ class FieldsMappingMeta(EnumMeta):
         struct = _dataclasses.make_dataclass(name, (("value", bitmap),),
             bases=(Struct,), frozen=True, eq=True)
 
-        cls = super().__call__(name=name, entries=fields, tag=f"{tag}_field", **kwargs)
+        cls = super().__call__(name=name, entries=fields, tag=f"{tag}_field",
+                               **kwargs)
 
         def c_value(fields, stmt):
             yield "switch (field) {"
             for (field_name, field_value) in fields:
                 yield from indent([f"case {field_name}:"])
-                yield from indent(indent(map(stmt, enumerate(field_value.value))))
+                yield from indent(indent(map(stmt,
+                                             enumerate(field_value.value))))
                 yield from indent(indent(["break;"]))
             yield "}"
 
-        class Getter(metaclass=FieldsMappingMeta.GetterMeta, enum=cls, struct=struct):
+        class Getter(metaclass=FieldsMappingMeta.GetterMeta, enum=cls,
+                     struct=struct):
             def c_value(self, prefix="", suffix=""):
                 yield f"{prefix}{{"
                 yield from indent([
@@ -378,7 +388,8 @@ class FieldsMappingMeta(EnumMeta):
                 yield from indent(["return result;"])
                 yield f"}}{suffix}"
 
-        class Setter(metaclass=FieldsMappingMeta.SetterMeta, enum=cls, struct=struct):
+        class Setter(metaclass=FieldsMappingMeta.SetterMeta, enum=cls, 
+                                    struct=struct):
             def c_value(self, prefix="", suffix=""):
                 yield f"{prefix}{{"
                 yield from indent([
@@ -481,8 +492,10 @@ class Codegen(_enum.Enum):
                 yield f"svp64_record_{name}_opsel(const struct svp64_record *record);"
                 yield ""
 
-            yield entries.__class__.c_var("svp64_entries", prefix="extern const ", suffix=";")
-            yield num_entries.__class__.c_var("svp64_num_entries", prefix="extern const ", suffix=";")
+            yield entries.__class__.c_var("svp64_entries", 
+                        prefix="extern const ", suffix=";")
+            yield num_entries.__class__.c_var("svp64_num_entries", 
+                        prefix="extern const ", suffix=";")
             yield ""
 
             yield f"#define SVP64_NAME_MAX {max(map(lambda entry: len(entry.name), entries))}"
@@ -563,10 +576,12 @@ class Codegen(_enum.Enum):
                 CROutSel.WHOLE_REG: "FXM",
             })
 
-            yield entries.__class__.c_var("svp64_entries", prefix="const ", suffix=" = \\")
+            yield entries.__class__.c_var("svp64_entries", 
+                        prefix="const ", suffix=" = \\")
             yield from entries.c_value(prefix="", suffix=";")
             yield ""
-            yield num_entries.__class__.c_var("svp64_num_entries", prefix="const ", suffix=" = \\")
+            yield num_entries.__class__.c_var("svp64_num_entries", 
+                        prefix="const ", suffix=" = \\")
             yield from indent(num_entries.c_value(suffix=";"))
             yield ""
 
@@ -608,7 +623,8 @@ class Codegen(_enum.Enum):
                 yield ""
 
             for cls in (Prefix, RM):
-                for (mode, subcls) in {"get": cls.c_getter, "set": cls.c_setter}.items():
+                for (mode, subcls) in {"get": cls.c_getter,
+                                       "set": cls.c_setter}.items():
                     yield subcls.__class__.c_var(name=f"svp64_{cls.__name__.lower()}_{mode}")
                     yield from subcls.c_value()
                     yield ""
@@ -704,7 +720,8 @@ def main(codegen):
 
 if __name__ == "__main__":
     parser = _argparse.ArgumentParser()
-    parser.add_argument("codegen", type=Codegen, choices=Codegen, help="code generator")
+    parser.add_argument("codegen", type=Codegen, choices=Codegen, 
+                        help="code generator")
 
     args = vars(parser.parse_args())
     main(**args)
