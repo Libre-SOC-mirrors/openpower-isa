@@ -411,7 +411,8 @@ def process_csvs(format):
     # create a CSV file, per category, with SV "augmentation" info
     # XXX note: 'out2' not added here, needs to be added to CSV files
     # KEEP TRACK OF THESE https://bugs.libre-soc.org/show_bug.cgi?id=619
-    csvcols = ['insn', 'CONDITIONS', 'Ptype', 'Etype', '0', '1', '2', '3']
+    csvcols = ['insn', 'mode', 'CONDITIONS', 'Ptype', 'Etype',]
+    csvcols += ['0', '1', '2', '3']
     csvcols += ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']  # temporary
     for key in primarykeys:
         # get the decoded key containing row-analysis, and name/value
@@ -440,6 +441,7 @@ def process_csvs(format):
             insn_name = row[2]
             condition = row[3]
             insn = insns[(insn_name, condition)]
+
             # start constructing svp64 CSV row
             res = OrderedDict()
             res['insn'] = insn_name
@@ -455,6 +457,18 @@ def process_csvs(format):
             res['out2'] = 'NONE'
             if insn['upd'] == '1':  # LD/ST with update has RA as out2
                 res['out2'] = 'RA'
+
+            # set the SVP64 mode to NORMAL, LDST, BRANCH or CR
+            crops = ['mfcr', 'mfocrf', 'mtcrf', 'mtocrf',
+                    ]
+            mode = 'NORMAL'
+            if value.startswith('LDST'):
+                mode = 'LDST'
+            elif insn_name.startswith('bc'):
+                mode = 'BRANCH'
+            elif insn_name.startswith('cr') or insn_name in crops:
+                mode = 'CROP'
+            res['mode'] = mode
 
             # temporary useful info
             regs = []
@@ -732,7 +746,7 @@ def process_csvs(format):
             continue
         svp64_csv = svt.get_svp64_csv(fname)
 
-    csvcols = ['insn', 'Ptype', 'Etype']
+    csvcols = ['insn', 'mode', 'Ptype', 'Etype']
     csvcols += ['in1', 'in2', 'in3', 'out', 'out2', 'CR in', 'CR out']
 
     if format is Format.VHDL:
@@ -795,7 +809,10 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
         for entry in csv:
             insn = str(entry['insn'])
             condition = str(entry['CONDITIONS'])
+            mode = str(entry['mode'])
             sventry = svt.svp64_instrs.get(insn, None)
+            if sventry is not None:
+                sventry['mode'] = mode
             op = insns[(insn, condition)]['opcode']
             # binary-to-vhdl-binary
             if op.startswith("0b"):
