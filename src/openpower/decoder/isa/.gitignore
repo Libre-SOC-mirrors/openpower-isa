@@ -21,6 +21,7 @@
 /system.py
 /simplev.py
 /svbranch.py
+/svfixedarith.py
 /svfixedload.py
 /svfparith.py
 /svfpload.py
