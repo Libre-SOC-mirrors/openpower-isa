@@ -101,8 +101,8 @@ class ISA:
             # XXX this is braindead!  it doesn't look for the end
             # so please put ending of comments on one line:
             # <!-- line 1 comment -->
-            # <!-- line 2 comment -->
-            if l.startswith('<!--'):
+            # {some whitespace}<!-- line 2 comment -->
+            if l.strip().startswith('<!--'):
                 # print ("skipping comment", l)
                 l = lines.pop(0).rstrip()  # get first line
                 continue
