@@ -1,7 +1,9 @@
 PYTHON3 ?= "python3"
 
 .PHONY: help Makefile gitupdate svanalysis test htmlupload pypiupload \
-        pyfnwriter pywriter
+        pyfnwriter pywriter generate
+
+generate: svanalysis pyfnwriter pywriter
 
 gitupdate:
 	git submodule init
@@ -12,18 +14,18 @@ svanalysis:
 	sv_analysis
 
 # now installed as a command (/usr/local/bin/pywriter) by setup.py
-pywriter:
+pywriter: | svanalysis
 	pywriter
 
 # likewise
-pyfnwriter:
+pyfnwriter: | pywriter
 	pyfnwriter
 
 develop:
 	python3 setup.py develop # yes, develop, not install
 
 # testing (usually done at install time)
-test: develop
+test: develop setup
 	python3 setup.py test # could just run nosetest3...
 
 pypiupload:
