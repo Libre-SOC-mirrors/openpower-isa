@@ -144,6 +144,10 @@ class ISA:
             # get pseudocode
             while True:
                 l = lines.pop(0).rstrip()
+                if l.strip().startswith('<!--'):
+                    # print ("skipping comment", l)
+                    l = lines.pop(0).rstrip()  # get first line
+                    continue
                 rewrite.append(l)
                 if len(l) == 0:
                     break
@@ -171,7 +175,7 @@ class ISA:
             while lines:
                 l = lines.pop(0).rstrip()
                 rewrite.append(l)
-                if len(l) != 0 and not l.startswith('<!--'):
+                if len(l) != 0 and not l.strip().startswith('<!--'):
                     break
 
         return rewrite
@@ -198,7 +202,7 @@ class ISA:
             # so please put ending of comments on one line:
             # <!-- line 1 comment -->
             # <!-- line 2 comment -->
-            if l.startswith('<!--'):
+            if l.strip().startswith('<!--'):
                 # print ("skipping comment", l)
                 l = lines.pop(0).rstrip()  # get next line
                 continue
@@ -253,6 +257,8 @@ class ISA:
             li = []
             while True:
                 l = lines.pop(0).rstrip()
+                if l.strip().startswith('<!--'):
+                    continue
                 if len(l) == 0:
                     break
                 assert l.startswith('    '), ("4spcs not found in line %s" % l)
@@ -283,10 +289,10 @@ class ISA:
             for o in opcodes:
                 self.add_op(o, d)
 
-            # expect and drop whitespace
+            # expect and drop whitespace and comments
             while lines:
                 l = lines.pop(0).rstrip()
-                if len(l) != 0 and not l.startswith('<!--'):
+                if len(l) != 0 and not l.strip().startswith('<!--'):
                     break
 
     def add_op(self, o, d):
