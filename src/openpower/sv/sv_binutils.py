@@ -81,9 +81,9 @@ class ArrayMeta(CTypeMeta):
 
 
 class BitmapMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, typedef="uint64_t", bits=0, 
+    def __new__(metacls, name, bases, attrs, typedef="uint64_t", bits=0,
                                     **kwargs):
-        cls = super().__new__(metacls, name, bases, attrs, typedef=typedef, 
+        cls = super().__new__(metacls, name, bases, attrs, typedef=typedef,
                                     **kwargs)
         cls.__bits = bits
         return cls
@@ -207,7 +207,7 @@ class StructMeta(CTypeMeta):
     def c_decl(cls):
         yield f"{cls.c_typedef} {{"
         for field in _dataclasses.fields(cls):
-            yield from indent([field.type.c_var(name=f"{field.name}", 
+            yield from indent([field.type.c_var(name=f"{field.name}",
                                     suffix=";")])
         yield f"}};"
 
@@ -388,7 +388,7 @@ class FieldsMappingMeta(EnumMeta):
                 yield from indent(["return result;"])
                 yield f"}}{suffix}"
 
-        class Setter(metaclass=FieldsMappingMeta.SetterMeta, enum=cls, 
+        class Setter(metaclass=FieldsMappingMeta.SetterMeta, enum=cls,
                                     struct=struct):
             def c_value(self, prefix="", suffix=""):
                 yield f"{prefix}{{"
@@ -492,9 +492,9 @@ class Codegen(_enum.Enum):
                 yield f"svp64_record_{name}_opsel(const struct svp64_record *record);"
                 yield ""
 
-            yield entries.__class__.c_var("svp64_entries", 
+            yield entries.__class__.c_var("svp64_entries",
                         prefix="extern const ", suffix=";")
-            yield num_entries.__class__.c_var("svp64_num_entries", 
+            yield num_entries.__class__.c_var("svp64_num_entries",
                         prefix="extern const ", suffix=";")
             yield ""
 
@@ -576,11 +576,11 @@ class Codegen(_enum.Enum):
                 CROutSel.WHOLE_REG: "FXM",
             })
 
-            yield entries.__class__.c_var("svp64_entries", 
+            yield entries.__class__.c_var("svp64_entries",
                         prefix="const ", suffix=" = \\")
             yield from entries.c_value(prefix="", suffix=";")
             yield ""
-            yield num_entries.__class__.c_var("svp64_num_entries", 
+            yield num_entries.__class__.c_var("svp64_num_entries",
                         prefix="const ", suffix=" = \\")
             yield from indent(num_entries.c_value(suffix=";"))
             yield ""
@@ -720,7 +720,7 @@ def main(codegen):
 
 if __name__ == "__main__":
     parser = _argparse.ArgumentParser()
-    parser.add_argument("codegen", type=Codegen, choices=Codegen, 
+    parser.add_argument("codegen", type=Codegen, choices=Codegen,
                         help="code generator")
 
     args = vars(parser.parse_args())
