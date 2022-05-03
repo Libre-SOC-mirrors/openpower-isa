@@ -260,30 +260,30 @@ class PC:
 
 # SVP64 ReMap field
 class SVP64RMFields(SelectableIntMapping, bits=24, fields={
-            "spr": range(24),
-            # SVP64 RM fields: see https://libre-soc.org/openpower/sv/svp64/
-            "mmode": (0,),
-            "mask": range(1, 4),
-            "elwidth": range(4, 6),
-            "ewsrc": range(6, 8),
-            "subvl": range(8, 10),
-            "extra": range(10, 19),
-            "mode": range(19, 24),
-            # these cover the same extra field, split into parts as EXTRA2
-            "extra2": dict(enumerate([
-                range(10, 12),
-                range(12, 14),
-                range(14, 16),
-                range(16, 18),
-            ])),
-            "smask": range(16, 19),
-            # and here as well, but EXTRA3
-            "extra3": dict(enumerate([
-                range(10, 13),
-                range(13, 16),
-                range(16, 19),
-            ])),
-        }):
+    "spr": range(24),
+    # SVP64 RM fields: see https://libre-soc.org/openpower/sv/svp64/
+    "mmode": (0,),
+    "mask": range(1, 4),
+    "elwidth": range(4, 6),
+    "ewsrc": range(6, 8),
+    "subvl": range(8, 10),
+    "extra": range(10, 19),
+    "mode": range(19, 24),
+    # these cover the same extra field, split into parts as EXTRA2
+    "extra2": dict(enumerate([
+        range(10, 12),
+        range(12, 14),
+        range(14, 16),
+        range(16, 18),
+    ])),
+    "smask": range(16, 19),
+    # and here as well, but EXTRA3
+    "extra3": dict(enumerate([
+        range(10, 13),
+        range(13, 16),
+        range(16, 19),
+    ])),
+}):
 
     def __init__(self, value=0):
         super().__init__(value=value)
@@ -303,13 +303,13 @@ SVP64RM_MODE_SIZE = len(SVP64RMFields.mode)
 
 # SVP64 Prefix fields: see https://libre-soc.org/openpower/sv/svp64/
 class SVP64PrefixFields(SelectableIntMapping, bits=32, fields={
-            "insn": range(32),
-            # 6 bit major opcode EXT001, 2 bits "identifying" (7, 9), 24 SV ReMap
-            "major": range(0, 6),
-            "pid": (7, 9),
-            # SVP64 24-bit RM (ReMap)
-            "rm": ((6, 8) + tuple(range(10, 32))),
-        }):
+    "insn": range(32),
+    # 6 bit major opcode EXT001, 2 bits "identifying" (7, 9), 24 SV ReMap
+    "major": range(0, 6),
+    "pid": (7, 9),
+    # SVP64 24-bit RM (ReMap)
+    "rm": ((6, 8) + tuple(range(10, 32))),
+}):
 
     def __init__(self, value=0):
         super().__init__(value=value)
@@ -349,7 +349,7 @@ def get_predint(gpr, mask):
     r30 = gpr(30)
     log("get_predint", mask, SVP64PredInt.ALWAYS.value)
     if mask == SVP64PredInt.ALWAYS.value:
-        return 0xffff_ffff_ffff_ffff # 64 bits of 1
+        return 0xffff_ffff_ffff_ffff  # 64 bits of 1
     if mask == SVP64PredInt.R3_UNARY.value:
         return 1 << (gpr(3).value & 0b111111)
     if mask == SVP64PredInt.R3.value:
@@ -1269,7 +1269,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             ins_name = 'ffadds'
 
         if asmop == 'ternlogi' \
-            or re.fullmatch(r'grevw?i?\.?', asmop or ''):
+                or re.fullmatch(r'grevw?i?\.?', asmop or ''):
             illegal = False
             ins_name = asmop
 
