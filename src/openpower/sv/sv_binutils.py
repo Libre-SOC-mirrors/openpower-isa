@@ -81,10 +81,10 @@ class ArrayMeta(CTypeMeta):
 
 
 class BitmapMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, typedef="uint64_t", bits=0,
-                                    **kwargs):
-        cls = super().__new__(metacls, name, bases, attrs, typedef=typedef,
-                                    **kwargs)
+    def __new__(metacls, name, bases, attrs,
+            typedef="uint64_t", bits=0, **kwargs):
+        cls = super().__new__(metacls, name, bases, attrs,
+            typedef=typedef, **kwargs)
         cls.__bits = bits
         return cls
 
@@ -373,8 +373,8 @@ class FieldsMappingMeta(EnumMeta):
                 yield from indent(indent(["break;"]))
             yield "}"
 
-        class Getter(metaclass=FieldsMappingMeta.GetterMeta, enum=cls,
-                     struct=struct):
+        class Getter(metaclass=FieldsMappingMeta.GetterMeta,
+                enum=cls, struct=struct):
             def c_value(self, prefix="", suffix=""):
                 yield f"{prefix}{{"
                 yield from indent([
@@ -388,8 +388,8 @@ class FieldsMappingMeta(EnumMeta):
                 yield from indent(["return result;"])
                 yield f"}}{suffix}"
 
-        class Setter(metaclass=FieldsMappingMeta.SetterMeta, enum=cls,
-                                    struct=struct):
+        class Setter(metaclass=FieldsMappingMeta.SetterMeta,
+                enum=cls, struct=struct):
             def c_value(self, prefix="", suffix=""):
                 yield f"{prefix}{{"
                 yield from indent([
@@ -623,8 +623,11 @@ class Codegen(_enum.Enum):
                 yield ""
 
             for cls in (Prefix, RM):
-                for (mode, subcls) in {"get": cls.c_getter,
-                                       "set": cls.c_setter}.items():
+                table = {
+                    "get": cls.c_getter,
+                    "set": cls.c_setter,
+                }
+                for (mode, subcls) in table.items():
                     yield subcls.__class__.c_var(name=f"svp64_{cls.__name__.lower()}_{mode}")
                     yield from subcls.c_value()
                     yield ""
@@ -720,8 +723,9 @@ def main(codegen):
 
 if __name__ == "__main__":
     parser = _argparse.ArgumentParser()
-    parser.add_argument("codegen", type=Codegen, choices=Codegen,
-                        help="code generator")
+    parser.add_argument("codegen",
+        type=Codegen, choices=Codegen,
+        help="code generator")
 
     args = vars(parser.parse_args())
     main(**args)
