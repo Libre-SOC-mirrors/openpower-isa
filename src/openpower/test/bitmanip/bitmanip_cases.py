@@ -7,8 +7,9 @@ from nmutil.sim_util import hash_256
 
 
 class BitManipTestCase(TestAccumulatorBase):
-    def do_case_ternlogi(self, rt, ra, rb, imm):
-        lst = [f"ternlogi 3, 4, 5, {imm}"]
+    def do_case_ternlogi(self, rc, rt, ra, rb, imm):
+        rc_dot = "." if rc else ""
+        lst = [f"ternlogi{rc_dot} 3, 4, 5, {imm}"]
         initial_regs = [0] * 32
         rt %= 2 ** 64
         ra %= 2 ** 64
@@ -32,6 +33,13 @@ class BitManipTestCase(TestAccumulatorBase):
         e.intregs[3] = expected
         e.intregs[4] = ra
         e.intregs[5] = rb
+        if rc:
+            if expected & 2 ** 63:  # sign extend
+                expected -= 2 ** 64
+            eq = expected == 0
+            gt = expected > 0
+            lt = expected < 0
+            e.crregs[0] = (eq << 1) | (gt << 2) | (lt << 3)
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def do_case_grev(self, w, is_imm, ra, rb):
@@ -65,20 +73,27 @@ class BitManipTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_ternlogi_0(self):
-        self.do_case_ternlogi(0x8000_0000_FFFF_0000,
+        self.do_case_ternlogi(False,
+                              0x8000_0000_FFFF_0000,
+                              0x8000_0000_FF00_FF00,
+                              0x8000_0000_F0F0_F0F0, 0x80)
+        self.do_case_ternlogi(True,
+                              0x8000_0000_FFFF_0000,
                               0x8000_0000_FF00_FF00,
                               0x8000_0000_F0F0_F0F0, 0x80)
 
     def case_ternlogi_FF(self):
-        self.do_case_ternlogi(0, 0, 0, 0xFF)
+        self.do_case_ternlogi(False, 0, 0, 0, 0xFF)
+        self.do_case_ternlogi(True, 0, 0, 0, 0xFF)
 
     def case_ternlogi_random(self):
         for i in range(100):
+            rc = bool(hash_256(f"ternlogi rc {i}") & 1)
             imm = hash_256(f"ternlogi imm {i}") & 0xFF
             rt = hash_256(f"ternlogi rt {i}") % 2 ** 64
             ra = hash_256(f"ternlogi ra {i}") % 2 ** 64
             rb = hash_256(f"ternlogi rb {i}") % 2 ** 64
-            self.do_case_ternlogi(rt, ra, rb, imm)
+            self.do_case_ternlogi(rc, rt, ra, rb, imm)
 
     def case_grev_random(self):
         for i in range(100):

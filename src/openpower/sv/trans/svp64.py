@@ -283,20 +283,22 @@ class SVP64Asm:
 
         # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
         # however we are out of space with opcode 22
-        if opcode == 'ternlogi':
+        if opcode in ('ternlogi', 'ternlogi.'):
             po = 5
             xo = 0
             rt = int(fields[0])
             ra = int(fields[1])
             rb = int(fields[2])
             imm = int(fields[3])
+            rc = '.' in opcode
             instr = po
             instr = (instr << 5) | rt
             instr = (instr << 5) | ra
             instr = (instr << 5) | rb
             instr = (instr << 8) | imm
-            instr = (instr << 3) | xo
-            asm = f"ternlogi {rt}, {ra}, {rb}, {imm}"
+            instr = (instr << 2) | xo
+            instr = (instr << 1) | rc
+            asm = f"{opcode} {rt}, {ra}, {rb}, {imm}"
             yield f".4byte {hex(instr)} # {asm}"
             return
 

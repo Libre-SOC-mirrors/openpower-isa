@@ -1268,8 +1268,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             illegal = False
             ins_name = 'ffadds'
 
-        if asmop == 'ternlogi' \
-                or re.fullmatch(r'grevw?i?\.?', asmop or ''):
+        if re.fullmatch(r'ternlogi\.?|grevw?i?\.?', asmop or ''):
             illegal = False
             ins_name = asmop
 

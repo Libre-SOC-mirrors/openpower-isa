@@ -6,6 +6,7 @@
 TLI-Form
 
 * ternlogi RT, RA, RB, TLI
+* ternlogi. RT, RA, RB, TLI
 
 Pseudo-code:
 
@@ -17,7 +18,7 @@ Pseudo-code:
 
 Special Registers Altered:
 
-    None
+    CR0                    (if Rc=1)
 
 # Generalized Bit-Reverse
 

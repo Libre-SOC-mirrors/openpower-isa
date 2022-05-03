@@ -288,8 +288,8 @@
    | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
 
 # 1.6.34 TLI-FORM
-   |0   |6   |11   |16   |21   |29  |
-   | PO | RT |  RA |  RB | TLI | XO |
+   |0   |6   |11   |16   |21   |29  |31 |
+   | PO | RT |  RA |  RB | TLI | XO |Rc |
 
 # 1.6.28 Instruction Fields
     A (6)
@@ -684,7 +684,7 @@
         1    Set Condition Register Field 0 or Field 1 as
              described in Section 2.3.1, 'Condition Regis-
              ter' on page 30.
-        Formats: A, M, MD, MDS, X, XFL, XO, XS, Z22, Z23, SVL, XB
+        Formats: A, M, MD, MDS, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI
     RIC (12:13)
         Field used to specify what types of entries to inval-
         idate for tlbie[l].

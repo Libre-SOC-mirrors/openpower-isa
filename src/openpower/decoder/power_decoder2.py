@@ -584,7 +584,7 @@ class DecodeOE(Elaboratable):
                         MicrOp.OP_SHL, MicrOp.OP_SHR, MicrOp.OP_RLC,
                         MicrOp.OP_LOAD, MicrOp.OP_STORE,
                         MicrOp.OP_RLCL, MicrOp.OP_RLCR,
-                        MicrOp.OP_EXTSWSLI, MicrOp.OP_GREV):
+                        MicrOp.OP_EXTSWSLI, MicrOp.OP_GREV, MicrOp.OP_TERNLOG):
                 pass
 
             # all other ops decode OE field
