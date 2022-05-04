@@ -23,13 +23,29 @@ from openpower.decoder.isa.caller import SVP64PrefixFields as _SVP64PrefixFields
 from openpower.decoder.selectable_int import SelectableIntMapping
 
 
-DISCLAIMER = (
-    "/*",
-    " * this file is auto-generated, do not edit",
-    " * https://git.libre-soc.org/?p=openpower-isa.git;a=blob;f=src/openpower/sv/sv_binutils.py",
-    " * part of Libre-SOC, sponsored by NLnet",
-    " */",
-)
+DISCLAIMER = """\
+/* {path} -- {desc}
+   Copyright (C) 2022 Free Software Foundation, Inc.
+   Written by Dmitry Selyutin (ghostmansd).
+   Sponsored by NLnet and NGI POINTER under EU Grants 871528 and 957073.
+
+   This file is part of the GNU opcodes library.
+
+   This library is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3, or (at your option)
+   any later version.
+
+   It is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+   License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this file; see the file COPYING.  If not, write to the
+   Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA. */\
+"""
 
 
 def indent(strings):
@@ -458,7 +474,9 @@ class Codegen(_enum.Enum):
 
     def generate(self, entries):
         def ppc_svp64_h(entries, num_entries):
-            yield from DISCLAIMER
+            disclaimer = DISCLAIMER.format(path=str(self),
+                desc="Header file for PowerPC opcode table (SVP64 extensions)")
+            yield from disclaimer.splitlines()
             yield ""
 
             yield f"#ifndef {self.name}"
@@ -510,7 +528,9 @@ class Codegen(_enum.Enum):
             yield ""
 
         def ppc_svp64_opc_c(entries, num_entries):
-            yield from DISCLAIMER
+            disclaimer = DISCLAIMER.format(path=str(self),
+                desc="PowerPC opcode list (SVP64 extensions)")
+            yield from disclaimer.splitlines()
             yield ""
 
             yield "#include \"opcode/ppc-svp64.h\""
