@@ -121,7 +121,7 @@ class Array(CType, tuple, metaclass=ArrayMeta, type=CType, size=...):
     def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{{"
         for (index, item) in enumerate(self):
-            yield from indent(item.c_value(prefix=f"[{index}] = ", suffix=","))
+            yield from indent(item.c_value(suffix=","))
         yield f"}}{suffix}"
 
 
