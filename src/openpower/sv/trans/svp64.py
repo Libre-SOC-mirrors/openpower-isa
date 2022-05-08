@@ -186,6 +186,11 @@ class SVP64Asm:
             fields.append(macro_subst(macros, field))
         log("opcode, fields substed", ls, opcode, fields)
 
+        # this is a *32-bit-only* instruction. it controls SVSTATE.
+        # it is *not* a 64-bit-prefixed Vector instruction (no sv.setvl),
+        # it is a Vector *control* instruction.
+        # note: EXT022 is the "sandbox" major opcode so it's fine to add
+
         # sigh have to do setvl here manually for now...
         # note the subtract one from SVi.
         if opcode in ["setvl", "setvl."]:
@@ -204,6 +209,11 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
+        # this is a *32-bit-only* instruction. it updates SVSTATE.
+        # it is *not* a 64-bit-prefixed Vector instruction (no sv.svstep),
+        # it is a Vector *control* instruction.
+        # note: EXT022 is the "sandbox" major opcode so it's fine to add
+
         # sigh have to do setvl here manually for now...
         # note the subtract one from SVi.
         if opcode in ["svstep", "svstep."]:
@@ -219,6 +229,11 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
+        # this is a *32-bit-only* instruction. it updates SVSHAPE and SVSTATE.
+        # it is *not* a 64-bit-prefixed Vector instruction (no sv.svshape),
+        # it is a Vector *control* instruction.
+        # note: EXT022 is the "sandbox" major opcode so it's fine to add
+
         # and svshape.  note that the dimension fields one subtracted from each
         if opcode == 'svshape':
             insn = 22 << (31-5)          # opcode 22, bits 0-5
@@ -233,6 +248,11 @@ class SVP64Asm:
             log("svshape", bin(insn))
             yield ".long 0x%x" % insn
             return
+
+        # this is a *32-bit-only* instruction. it updates the SVSHAPE SPR
+        # it is *not* a 64-bit-prefixed Vector instruction (no sv.svremap),
+        # it is a Vector *control* instruction.
+        # note: EXT022 is the "sandbox" major opcode so it's fine to add
 
         # and svremap
         if opcode == 'svremap':
@@ -250,6 +270,12 @@ class SVP64Asm:
             log("svremap", bin(insn))
             yield ".long 0x%x" % insn
             return
+
+        # ok from here-on down these are added as 32-bit instructions
+        # and are here only because binutils (at present) doesn't have
+        # them (that's being fixed!)
+        # they can - if implementations then choose - be Vectorised
+        # (sv.fsins) because they are general-purpose scalar instructions
 
         # and fsins
         # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
