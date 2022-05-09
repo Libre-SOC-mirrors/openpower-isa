@@ -967,12 +967,12 @@ class SVP64Asm:
                 if failfirst == 'RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
                     mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
-                    assert rc_mode == False, "ffirst RC1 only possible when Rc=0"
+                    assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
                 elif failfirst == '~RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
                     mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
                     mode |= (0b1 << SVP64MODE.INV)  # ... with inversion
-                    assert rc_mode == False, "ffirst RC1 only possible when Rc=0"
+                    assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
                 else:
                     assert dst_zero == 0, "dst-zero not allowed in ffirst BO"
                     assert rc_mode, "ffirst BO only possible when Rc=1"
@@ -992,12 +992,12 @@ class SVP64Asm:
                 if predresult == 'RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
                     mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
-                    assert rc_mode == False, "pr-mode RC1 only possible when Rc=0"
+                    assert rc_mode == False, "pr-mode RC1 only ok when Rc=0"
                 elif predresult == '~RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
                     mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
                     mode |= (0b1 << SVP64MODE.INV)  # ... with inversion
-                    assert rc_mode == False, "pr-mode RC1 only possible when Rc=0"
+                    assert rc_mode == False, "pr-mode RC1 only ok when Rc=0"
                 else:
                     assert dst_zero == 0, "dst-zero not allowed in pr-mode BO"
                     assert rc_mode, "pr-mode BO only possible when Rc=1"
