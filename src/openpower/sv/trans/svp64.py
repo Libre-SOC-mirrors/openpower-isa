@@ -209,9 +209,9 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
-        # this is a *32-bit-only* instruction. it updates SVSTATE.
-        # it is *not* a 64-bit-prefixed Vector instruction (no sv.svstep),
-        # it is a Vector *control* instruction.
+        # this is a 32-bit instruction. it updates SVSTATE.
+        # it *can* be SVP64-prefixed, to indicate that its registers
+        # are Vectorised.
         # note: EXT022 is the "sandbox" major opcode so it's fine to add
 
         # sigh have to do setvl here manually for now...
