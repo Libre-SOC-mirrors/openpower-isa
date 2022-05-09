@@ -1094,7 +1094,33 @@ class SVP64Asm:
             if rc:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode
-        # argh, sv.fcoss etc. need to be done manually
+        # sigh have to do svstep here manually for now...
+        elif opcode in ["svstep", "svstep."]:
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            insn |= int(v30b_newfields[0]) << (31-10)  # RT       , bits 6-10
+            insn |= int(v30b_newfields[1]) << (31-22)  # SVi      , bits 16-22
+            insn |= int(v30b_newfields[2]) << (31-25)  # vf       , bit  25
+            insn |= 0b00011 << (31-30)  # XO       , bits 26..30
+            if opcode == 'svstep.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log("svstep", bin(insn))
+            yield ".long 0x%x" % insn
+
+        elif v30b_op in ["setvl", "setvl."]:
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            fields = list(map(int, fields))
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= fields[1] << (31-15)  # RA       , bits 11-15
+            insn |= (fields[2]-1) << (31-22)  # SVi      , bits 16-22
+            insn |= fields[3] << (31-25)  # ms       , bit  25
+            insn |= fields[4] << (31-24)  # vs       , bit  24
+            insn |= fields[5] << (31-23)  # vf       , bit  23
+            insn |= 0b00000 << (31-30)  # XO       , bits 26..30
+            if opcode == 'setvl.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log("setvl", bin(insn))
+            yield ".long 0x%x" % insn
+
         elif v30b_op in ["fcoss", "fcoss."]:
             insn = 59 << (31-5)  # opcode 59, bits 0-5
             insn |= int(v30b_newfields[0]) << (31-10)  # RT       , bits 6-10
@@ -1240,7 +1266,7 @@ if __name__ == '__main__':
         'sv.stw 5.v, 4(1.v)',
         'sv.ld 5.v, 4(1.v)',
         'setvl. 2, 3, 4, 0, 1, 1',
-        'setvl. 2, 3, 4, 0, 1, 1',
+        'sv.setvl. 2, 3, 4, 0, 1, 1',
     ]
     lst = [
         "sv.stfsu 0.v, 16(4.v)",
@@ -1278,7 +1304,6 @@ if __name__ == '__main__':
         'sv.bc/all 3,12,192',
         'sv.bclr/vsbi 3,81.v,192',
         'sv.ld 5.v, 4(1.v)',
-        'setvl. 2, 3, 4, 0, 1, 1',
     ]
     isa = SVP64Asm(lst, macros=macros)
     print("list", list(isa))
