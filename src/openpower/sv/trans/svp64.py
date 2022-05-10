@@ -264,7 +264,7 @@ class SVP64Asm:
             insn |= fields[3] << (31-16)  # mi2        , bits 15-16
             insn |= fields[4] << (31-18)  # m00        , bits 17-18
             insn |= fields[5] << (31-20)  # m01        , bits 19-20
-            insn |= fields[6] << (31-21)  # m01        , bit 21
+            insn |= fields[6] << (31-21)  # pst        , bit 21
             insn |= 0b00010 << (31-30)  # XO       , bits 26..30
             #insn &= ((1<<32)-1)
             log("svremap", bin(insn))
