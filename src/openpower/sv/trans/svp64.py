@@ -194,6 +194,9 @@ class SVP64Asm:
         # sigh have to do setvl here manually for now...
         # note the subtract one from SVi.
         if opcode in ["setvl", "setvl."]:
+            # 1.6.28 SVL-FORM - from fields.txt
+            # |0     |6    |11    |16   |23 |24 |25 |26    |31 |
+            # | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
             insn |= fields[0] << (31-10)  # RT       , bits 6-10
@@ -217,6 +220,9 @@ class SVP64Asm:
         # sigh have to do setvl here manually for now...
         # note the subtract one from SVi.
         if opcode in ["svstep", "svstep."]:
+            # 1.6.28 SVL-FORM - from fields.txt
+            # |0     |6    |11    |16   |23 |24 |25 |26    |31 |
+            # | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
             insn |= fields[0] << (31-10)  # RT       , bits 6-10
@@ -236,6 +242,9 @@ class SVP64Asm:
 
         # and svshape.  note that the dimension fields one subtracted from each
         if opcode == 'svshape':
+            # 1.6.33 SVM-FORM from fields.txt
+            # |0  |6        |11      |16    |21    |25 |26    |31  |
+            # |PO |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO |  / |
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
             insn |= (fields[0]-1) << (31-10)  # SVxd       , bits 6-10
@@ -256,6 +265,9 @@ class SVP64Asm:
 
         # and svremap
         if opcode == 'svremap':
+            # 1.6.34 SVRM-FORM from fields.txt
+            # |0  |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
+            # |PO | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
             insn |= fields[0] << (31-10)  # SVme       , bits 6-10
