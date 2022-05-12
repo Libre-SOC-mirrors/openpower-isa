@@ -7,7 +7,7 @@
 
 <!-- PLEASE NOTE THESE ARE UNAPPROVED AND DRAFT, NOT SUBMITTED TO OPF ISA WG -->
 
-# Floating Add FFT/DCT [Single]
+# [DRAFT] Floating Add FFT/DCT [Single]
 
 A-Form
 
@@ -26,7 +26,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Add FFT/DCT [Double]
+# [DRAFT] Floating Add FFT/DCT [Double]
 
 A-Form
 
@@ -45,7 +45,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Subtract FFT/DCT [Single]
+# [DRAFT] Floating Subtract FFT/DCT [Single]
 
 A-Form
 
@@ -64,7 +64,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Subtract FFT/DCT [Double]
+# [DRAFT] Floating Subtract FFT/DCT [Double]
 
 A-Form
 
@@ -83,7 +83,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Multiply FFT/DCT [Single]
+# [DRAFT] Floating Multiply FFT/DCT [Single]
 
 A-Form
 
@@ -102,7 +102,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Multiply FFT/DCT [Double]
+# [DRAFT] Floating Multiply FFT/DCT [Double]
 
 A-Form
 
@@ -121,7 +121,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Divide FFT/DCT [Single]
+# [DRAFT] Floating Divide FFT/DCT [Single]
 
 A-Form
 
@@ -140,7 +140,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Divide FFT/DCT [Double]
+# [DRAFT] Floating Divide FFT/DCT [Double]
 
 A-Form
 
@@ -159,7 +159,7 @@ Special Registers Altered:
     VXSNAN VXISI
     CR1          (if Rc=1)
 
-# Floating Twin Multiply-Add DCT [Single]
+# [DRAFT] Floating Twin Multiply-Add DCT [Single]
 
 A-Form
 
@@ -179,7 +179,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Multiply-Add FFT [Single]
+# [DRAFT] Floating Multiply-Add FFT [Single]
 
 A-Form
 
@@ -198,7 +198,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Multiply-Sub FFT [Single]
+# [DRAFT] Floating Multiply-Sub FFT [Single]
 
 A-Form
 
@@ -217,7 +217,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Negative Multiply-Add FFT [Single]
+# [DRAFT] Floating Negative Multiply-Add FFT [Single]
 
 A-Form
 
@@ -236,7 +236,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating Negative Multiply-Sub FFT [Single]
+# [DRAFT] Floating Negative Multiply-Sub FFT [Single]
 
 A-Form
 
@@ -255,7 +255,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating SIN [Single]
+# [DRAFT] Floating SIN [Single]
 
 X-Form
 
@@ -273,7 +273,7 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# Floating COS [Single]
+# [DRAFT] Floating COS [Single]
 
 X-Form
 
