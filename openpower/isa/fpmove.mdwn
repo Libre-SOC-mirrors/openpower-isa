@@ -7,7 +7,7 @@
 X-Form
 
 * fmr FRT,FRB (Rc=0)
-* fmr. FRT,FRB (Rc=0)
+* fmr. FRT,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -22,7 +22,7 @@ Special Registers Altered:
 X-Form
 
 * fabs FRT,FRB (Rc=0)
-* fabs. FRT,FRB (Rc=0)
+* fabs. FRT,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -37,7 +37,7 @@ Special Registers Altered:
 X-Form
 
 * fnabs FRT,FRB (Rc=0)
-* fnabs. FRT,FRB (Rc=0)
+* fnabs. FRT,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -52,7 +52,7 @@ Special Registers Altered:
 X-Form
 
 * fneg FRT,FRB (Rc=0)
-* fneg. FRT,FRB (Rc=0)
+* fneg. FRT,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -67,7 +67,7 @@ Special Registers Altered:
 X-Form
 
 * fcpsgn FRT,FRA,FRB (Rc=0)
-* fcpsgn. FRT,FRA,FRB (Rc=0)
+* fcpsgn. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
