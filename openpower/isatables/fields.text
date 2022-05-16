@@ -195,15 +195,15 @@
    | PO   |  RS |   RA |   RB |   me |   XO |Rc|
 
 # 1.6.21 VA-FORM
-   |0      |6     |11     |16     |21|22 |26   |31|
-   | PO    |  RT  |   RA  |   RB  |   RC |   XO   |
-   | PO    |  VRT |   VRA |   VRB |  VRC |   XO   |
-   | PO    |  VRT |   VRA |   VRB | /|SHB|   XO   |
+   |0      |6     |11     |16     |21|22 |25|26   |31|
+   | PO    |  RT  |   RA  |   RB  |   RC    |   XO   |
+   | PO    |  VRT |   VRA |   VRB |  VRC    |   XO   |
+   | PO    |  VRT |   VRA |   VRB | /|SHB   |   XO   |
+   | PO    |  VRT |   VRA |   VRB | /|BFA|/ |   XO   |
 
 # 1.6.21.1 VA2-FORM
    |0      |6     |11     |16     |21  |24|26   |31|
    | PO    |  RT  |   RA  |   RB  | RC    | XO  |Rc|
-   | PO    |  RT  |   RA  |   RB  |BFA |//| XO  |Rc|
 
 # 1.6.22 VC-FORM
    |0      |6     |11     |16     |21|22   |31|
@@ -286,11 +286,11 @@
 
 # 1.6.33 SVM-FORM
    |0     |6        |11      |16    |21    |25 |26    |31  |
-   | PO   |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO |  / |
+   | PO   |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO      |
 
 # 1.6.34 SVRM-FORM
    |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
-   | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
+   | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO        |
 
 # 1.6.34 TLI-FORM
    |0   |6   |11   |16   |21   |29  |31 |
@@ -349,10 +349,10 @@
          Field used to specify one of the CR fields or one of
          the FPSCR fields to be used as a target.
          Formats: D, X, XL, XX2, XX3, Z22
-    BFA (21:23)
-         Field used to specify one of the CR fields or one of
-         the FPSCR fields to be used as a source.
-         Formats: CA2
+    BFA (22:24)
+         Field used to specify one of the CR fields 
+         to be used as a source.
+         Formats: VA
     BFA (29:31)
          Field used to specify one of the CR fields or one of
          the FPSCR fields to be used as a source.
@@ -971,7 +971,7 @@
         Formats: A, DX, VA2, SVL
     XO (26:31)
         Extended opcode field.
-        Formats: VA
+        Formats: VA, SVM, SVRM
     XO (27:29)
         Extended opcode field.
         Formats: MD
