@@ -200,6 +200,11 @@
    | PO    |  VRT |   VRA |   VRB |  VRC |   XO   |
    | PO    |  VRT |   VRA |   VRB | /|SHB|   XO   |
 
+# 1.6.21.1 VA2-FORM
+   |0      |6     |11     |16     |21  |24|26   |31|
+   | PO    |  RT  |   RA  |   RB  | RC    | XO  |Rc|
+   | PO    |  RT  |   RA  |   RB  |BFA |//| XO  |Rc|
+
 # 1.6.22 VC-FORM
    |0      |6     |11     |16     |21|22   |31|
    | PO    |  VRT |   VRA |   VRB |Rc|   XO   |
@@ -344,6 +349,10 @@
          Field used to specify one of the CR fields or one of
          the FPSCR fields to be used as a target.
          Formats: D, X, XL, XX2, XX3, Z22
+    BFA (21:23)
+         Field used to specify one of the CR fields or one of
+         the FPSCR fields to be used as a source.
+         Formats: CA2
     BFA (29:31)
          Field used to specify one of the CR fields or one of
          the FPSCR fields to be used as a source.
@@ -667,11 +676,11 @@
     RA (11:15)
         Field used to specify a GPR to be used as a
         source or as a target.
-        Formats: A, D, DQ, DQE, DS, M, MD, MDS, TX, VA, VX, X, XO, XS, SVL, XB
+        Formats: A, D, DQ, DQE, DS, M, MD, MDS, TX, VA, VA2, VX, X, XO, XS, SVL, XB
     RB (16:20)
         Field used to specify a GPR to be used as a
         source.
-        Formats: A, M, MDS, VA, X, XO
+        Formats: A, M, MDS, VA, VA2, X, XO
     Rc (21)
         RECORD bit.
         0    Do not alter the Condition Register.
@@ -682,14 +691,14 @@
     RC (21:25)
         Field used to specify a GPR to be used as a
         source.
-        Formats: VA, SVD, SVDS
+        Formats: VA, VA2, SVD, SVDS
     Rc (31)
         RECORD bit.
         0    Do not alter the Condition Register.
         1    Set Condition Register Field 0 or Field 1 as
              described in Section 2.3.1, 'Condition Regis-
              ter' on page 30.
-        Formats: A, M, MD, MDS, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI
+        Formats: A, M, MD, MDS, VA2, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI
     RIC (12:13)
         Field used to specify what types of entries to inval-
         idate for tlbie[l].
@@ -715,7 +724,7 @@
         Formats: DS, X
     RT (6:10)
         Field used to specify a GPR to be used as a target.
-        Formats: A, D, DQE, DS, DX, VA, VX, X, XFX, XO, XX2, SVL, XB
+        Formats: A, D, DQE, DS, DX, VA, VA2, VX, X, XFX, XO, XX2, SVL, XB
     RTp (6:10)
         Field used to specify an even/odd pair of GPRs to
         be concatenated and used as a target.
@@ -959,7 +968,7 @@
         Formats: XX4
     XO (26:30)
         Extended opcode field.
-        Formats: A, DX, SVL
+        Formats: A, DX, VA2, SVL
     XO (26:31)
         Extended opcode field.
         Formats: VA
