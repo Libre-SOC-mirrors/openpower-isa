@@ -267,7 +267,7 @@ class SVP64Asm:
         if opcode == 'svremap':
             # 1.6.34 SVRM-FORM from fields.txt
             # |0  |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
-            # |PO | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
+            # |PO | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO        |
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             fields = list(map(int, fields))
             insn |= fields[0] << (31-10)  # SVme       , bits 6-10
@@ -277,7 +277,7 @@ class SVP64Asm:
             insn |= fields[4] << (31-18)  # m00        , bits 17-18
             insn |= fields[5] << (31-20)  # m01        , bits 19-20
             insn |= fields[6] << (31-21)  # pst        , bit 21
-            insn |= 0b00010 << (31-30)  # XO       , bits 26..30
+            insn |= 0b00010 << (31-31)    # XO         , bits 26..30
             #insn &= ((1<<32)-1)
             log("svremap", bin(insn))
             yield ".long 0x%x" % insn
