@@ -1,5 +1,5 @@
 opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry out,ldst len,BR,sgn ext,upd,rsrv,32b,sgn,rc,lk,sgl pipe,comment,form,CONDITIONS,unofficial,comment2
-0b00000,VL,OP_SETVL,RA_OR_ZERO,NONE,NONE,RT_OR_ZERO,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,setvl,SVL,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-0b00001,VL,OP_SVSHAPE,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,svshape,SVM,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-0b00010,VL,OP_SVREMAP,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,svremap,SVRM,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-0b00011,VL,OP_SVSTEP,NONE,NONE,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,svstep,SVL,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b000000,VL,OP_SETVL,RA_OR_ZERO,NONE,NONE,RT_OR_ZERO,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,setvl,SVL,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b000001,VL,OP_SVSHAPE,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,svshape,SVM,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b000010,VL,OP_SVREMAP,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,svremap,SVRM,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b000011,VL,OP_SVSTEP,NONE,NONE,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,svstep,SVL,,1,unofficial until submitted and approved/renumbered by the opf isa wg
