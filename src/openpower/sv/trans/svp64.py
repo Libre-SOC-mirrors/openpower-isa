@@ -205,7 +205,7 @@ class SVP64Asm:
             insn |= fields[3] << (31-25)  # vf       , bit  25
             insn |= fields[4] << (31-24)  # vs       , bit  24
             insn |= fields[5] << (31-23)  # ms       , bit  23
-            insn |= 0b00000 << (31-30)  # XO       , bits 26..30
+            insn |= 0b11011 << (31-30)    # XO       , bits 26..30
             if opcode == 'setvl.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
             log("setvl", bin(insn))
@@ -228,7 +228,7 @@ class SVP64Asm:
             insn |= fields[0] << (31-10)  # RT       , bits 6-10
             insn |= (fields[1]-1) << (31-22)  # SVi      , bits 16-22
             insn |= fields[2] << (31-25)  # vf       , bit  25
-            insn |= 0b00011 << (31-30)  # XO       , bits 26..30
+            insn |= 0b10011 << (31-30)    # XO       , bits 26..30
             if opcode == 'svstep.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
             log("svstep", bin(insn))
@@ -252,7 +252,7 @@ class SVP64Asm:
             insn |= (fields[2]-1) << (31-20)  # SVzd       , bits 16-20
             insn |= (fields[3]) << (31-24)  # SVRM       , bits 21-24
             insn |= (fields[4]) << (31-25)  # vf         , bits 25
-            insn |= 0b00001 << (31-30)  # XO       , bits 26..30
+            insn |= 0b011001 << (31-31)  # XO       , bits 26..31
             #insn &= ((1<<32)-1)
             log("svshape", bin(insn))
             yield ".long 0x%x" % insn
@@ -277,8 +277,7 @@ class SVP64Asm:
             insn |= fields[4] << (31-18)  # m00        , bits 17-18
             insn |= fields[5] << (31-20)  # m01        , bits 19-20
             insn |= fields[6] << (31-21)  # pst        , bit 21
-            insn |= 0b00010 << (31-30)  # XO       , bits 26..30
-            #insn &= ((1<<32)-1)
+            insn |= 0b111001 << (31-31)   # XO       , bits 26..31
             log("svremap", bin(insn))
             yield ".long 0x%x" % insn
             return
@@ -1112,7 +1111,7 @@ class SVP64Asm:
             insn |= int(v30b_newfields[0]) << (31-10)  # RT       , bits 6-10
             insn |= int(v30b_newfields[1]) << (31-22)  # SVi      , bits 16-22
             insn |= int(v30b_newfields[2]) << (31-25)  # vf       , bit  25
-            insn |= 0b00011 << (31-30)  # XO       , bits 26..30
+            insn |= 0b10011 << (31-30)  # XO       , bits 26..30
             if opcode == 'svstep.':
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
             log("svstep", bin(insn))
