@@ -562,6 +562,14 @@ class SVP64Asm:
             # XXX also TODO: the LD/ST modes which are different
             # https://libre-soc.org/openpower/sv/ldst/
 
+            # rright.  SVP64 register numbering is from 0 to 127
+            # for GPRs, FPRs *and* CR Fields, where for v3.0 the GPRs and RPFs
+            # are 0-31 and CR Fields are only 0-7.  the SVP64 RM "Extra"
+            # area is used to extend the numbering from the 32-bit
+            # instruction, and also to record whether the register
+            # is scalar or vector. on a per-operand basis.  this
+            # results in a slightly finnicky encoding: here we go...
+
             # encode SV-GPR and SV-FPR field into extra, v3.0field
             if rtype in ['GPR', 'FPR']:
                 sv_extra, field = get_extra_gpr(etype, regmode, field)
