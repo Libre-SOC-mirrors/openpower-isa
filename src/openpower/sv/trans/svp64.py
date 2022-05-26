@@ -152,6 +152,52 @@ def decode_imm(field):
         return None, field
 
 
+def crf_extra(etype, regmode, field, extras):
+    """takes a CR Field number (CR0-CR127), splits into EXTRA2/3 and v3.0
+    the scalar/vector mode (crNN.v or crNN.s) changes both the format
+    of the EXTRA2/3 encoding as well as what range of registers is possible.
+    this function can be used for both BF/BFA and BA/BB/BT by first removing
+    the bottom 2 bits of BA/BB/BT then re-instating them after encoding.
+    see https://libre-soc.org/openpower/sv/svp64/appendix/#cr_extra
+    for specification
+    """
+    sv_extra, field = get_extra_cr_3bit(etype, regmode, field)
+    # now sanity-check (and shrink afterwards)
+    if etype == 'EXTRA2':
+        # 3-bit CR Field (BF, BFA) EXTRA2 encoding
+        if regmode == 'scalar':
+            # range is CR0-CR15 in increments of 1
+            assert (sv_extra >> 1) == 0, \
+                "scalar CR %s cannot fit into EXTRA2 %s" % \
+                (rname, str(extras[extra_idx]))
+            # all good: encode as scalar
+            sv_extra = sv_extra & 0b01
+        else: # vector
+            # range is CR0-CR127 in increments of 16
+            assert sv_extra & 0b111 == 0, \
+                "vector CR %s cannot fit into EXTRA2 %s" % \
+                (rname, str(extras[extra_idx]))
+            # all good: encode as vector (bit 2 set)
+            sv_extra = 0b10 | (sv_extra >> 3)
+    else:
+        # 3-bit CR Field (BF, BFA) EXTRA3 encoding
+        if regmode == 'scalar':
+            # range is CR0-CR31 in increments of 1
+            assert (sv_extra >> 2) == 0, \
+                "scalar CR %s cannot fit into EXTRA3 %s" % \
+                (rname, str(extras[extra_idx]))
+            # all good: encode as scalar
+            sv_extra = sv_extra & 0b11
+        else: # vector
+            # range is CR0-CR127 in increments of 8
+            assert sv_extra & 0b11 == 0, \
+                "vector CR %s cannot fit into EXTRA3 %s" % \
+                (rname, str(extras[extra_idx]))
+            # all good: encode as vector (bit 3 set)
+            sv_extra = 0b100 | (sv_extra >> 2)
+    return sv_extra, field
+
+
 # decodes svp64 assembly listings and creates EXT001 svp64 prefixes
 class SVP64Asm:
     def __init__(self, lst, bigendian=False, macros=None):
@@ -544,40 +590,7 @@ class SVP64Asm:
             # encode SV-CR 3-bit field into extra, v3.0field.
             # 3-bit is for things like BF and BFA
             elif rtype == 'CR_3bit':
-                sv_extra, field = get_extra_cr_3bit(etype, regmode, field)
-                # now sanity-check (and shrink afterwards)
-                if etype == 'EXTRA2':
-                    # 3-bit CR Field (BF, BFA) EXTRA2 encoding
-                    if regmode == 'scalar':
-                        # range is CR0-CR15 in increments of 1
-                        assert (sv_extra >> 1) == 0, \
-                            "scalar CR %s cannot fit into EXTRA2 %s" % \
-                            (rname, str(extras[extra_idx]))
-                        # all good: encode as scalar
-                        sv_extra = sv_extra & 0b01
-                    else: # vector
-                        # range is CR0-CR127 in increments of 16
-                        assert sv_extra & 0b111 == 0, \
-                            "vector CR %s cannot fit into EXTRA2 %s" % \
-                            (rname, str(extras[extra_idx]))
-                        # all good: encode as vector (bit 2 set)
-                        sv_extra = 0b10 | (sv_extra >> 3)
-                else:
-                    # 3-bit CR Field (BF, BFA) EXTRA3 encoding
-                    if regmode == 'scalar':
-                        # range is CR0-CR31 in increments of 1
-                        assert (sv_extra >> 2) == 0, \
-                            "scalar CR %s cannot fit into EXTRA3 %s" % \
-                            (rname, str(extras[extra_idx]))
-                        # all good: encode as scalar
-                        sv_extra = sv_extra & 0b11
-                    else: # vector
-                        # range is CR0-CR127 in increments of 8
-                        assert sv_extra & 0b11 == 0, \
-                            "vector CR %s cannot fit into EXTRA3 %s" % \
-                            (rname, str(extras[extra_idx]))
-                        # all good: encode as vector (bit 3 set)
-                        sv_extra = 0b100 | (sv_extra >> 2)
+                sv_extra, field =  crf_extra(etype, regmode, field, extras)
 
             # encode SV-CR 5-bit field into extra, v3.0field
             # 5-bit is for things like BA BB BC BT etc.
@@ -586,41 +599,10 @@ class SVP64Asm:
             elif rtype == 'CR_5bit':
                 cr_subfield = field & 0b11 # record bottom 2 bits for later
                 field = field >> 2         # strip bottom 2 bits
-                sv_extra, field = get_extra_cr_3bit(etype, regmode, field)
-                # now sanity-check (and shrink afterwards)
-                if etype == 'EXTRA2':
-                    # 5-bit CR (BA, BB, BT) EXTRA2 encoding
-                    if regmode == 'scalar':
-                        # range is CR0-CR15 in increments of 1
-                        assert (sv_extra >> 1) == 0, \
-                            "scalar CR %s cannot fit into EXTRA2 %s" % \
-                            (rname, str(extras[extra_idx]))
-                        # all good: encode as scalar
-                        sv_extra = sv_extra & 0b01
-                    else: # vector
-                        # range is CR0-CR127 in increments of 16
-                        assert sv_extra & 0b111 == 0, \
-                            "vector CR %s cannot fit into EXTRA2 %s" % \
-                            (rname, str(extras[extra_idx]))
-                        # all good: encode as vector (bit 2 set)
-                        sv_extra = 0b10 | (sv_extra >> 3)
-                else:
-                    # 5-bit CR (BA, BB, BT) EXTRA3 encoding
-                    if regmode == 'scalar':
-                        # range is CR0-CR31 in increments of 1
-                        assert (sv_extra >> 2) == 0, \
-                            "scalar CR %s cannot fit into EXTRA3 %s" % \
-                            (rname, str(extras[extra_idx]))
-                        # all good: encode as scalar
-                        sv_extra = sv_extra & 0b11
-                    else: # vector
-                        # range is CR0-CR127 in increments of 8
-                        assert sv_extra & 0b11 == 0, \
-                            "vector CR %s cannot fit into EXTRA3 %s" % \
-                            (rname, str(extras[extra_idx]))
-                        # all good: encode as vector (bit 3 set)
-                        sv_extra = 0b100 | (sv_extra >> 2)
-                # reconstruct the actual 5-bit CR field
+                # use the exact same 3-bit function for the top 3 bits
+                sv_extra, field =  crf_extra(etype, regmode, field, extras)
+                # reconstruct the actual 5-bit CR field (preserving the
+                # bottom 2 bits, unaltered)
                 field = (field << 2) | cr_subfield
 
             else:
