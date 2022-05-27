@@ -176,15 +176,15 @@ class Enum(CType, _enum.Enum, metaclass=EnumMeta):
         yield f"{prefix}{self.c_name}{suffix}"
 
 
-In1Sel = Enum("In1Sel", _In1Sel)
-In2Sel = Enum("In2Sel", _In2Sel)
-In3Sel = Enum("In3Sel", _In3Sel)
-OutSel = Enum("OutSel", _OutSel)
-CRInSel = Enum("CRInSel", _CRInSel)
-CROutSel = Enum("CROutSel", _CROutSel)
-SVPType = Enum("SVPType", _SVPtype)
-SVEType = Enum("SVEType", _SVEtype)
-SVEXTRA = Enum("SVEXTRA", _SVEXTRA)
+In1Sel = Enum("In1Sel", _In1Sel, tag="svp64_in1_sel")
+In2Sel = Enum("In2Sel", _In2Sel, tag="svp64_in2_sel")
+In3Sel = Enum("In3Sel", _In3Sel, tag="svp64_in3_sel")
+OutSel = Enum("OutSel", _OutSel, tag="svp64_out_sel")
+CRInSel = Enum("CRInSel", _CRInSel, tag="svp64_cr_in_sel")
+CROutSel = Enum("CROutSel", _CROutSel, tag="svp64_cr_out_sel")
+SVPType = Enum("SVPType", _SVPtype, tag="svp64_sv_ptype")
+SVEType = Enum("SVEType", _SVEtype, tag="svp64_sv_etype")
+SVEXTRA = Enum("SVEXTRA", _SVEXTRA, tag="svp64_sv_extra")
 
 
 class Constant(CType, _enum.Enum, metaclass=EnumMeta):
