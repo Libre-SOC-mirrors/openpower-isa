@@ -49,7 +49,7 @@ DISCLAIMER = """\
 
 
 def indent(strings):
-    return map(lambda string: ("    " + string), strings)
+    return map(lambda string: ("  " + string), strings)
 
 
 class CTypeMeta(type):
