@@ -587,7 +587,7 @@ class Codegen(_enum.Enum):
             yield from opindex(CRInSel, "cr_in", {
                 CRInSel.BI: "BI",
                 CRInSel.BFA: "BFA",
-                CRInSel.BC: "CRB",
+                CRInSel.BC: "BC",
                 CRInSel.WHOLE_REG: "FXM",
             })
             yield from opindex(CROutSel, "cr_out", {
