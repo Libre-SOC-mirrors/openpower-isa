@@ -198,7 +198,7 @@ class Constant(CType, _enum.Enum, metaclass=EnumMeta):
             yield f"#define {key} {value}"
 
     def c_value(self, *, prefix="", suffix="", **kwargs):
-        yield f"{prefix}{self.__class__.c_tag.upper()}_{self.name.upper()}{suffix}"
+        yield f"{prefix}{self.__class__.c_tag.upper()}_{self.c_name.upper()}{suffix}"
 
 
 Mode = Constant("Mode", _SVP64MODE)
