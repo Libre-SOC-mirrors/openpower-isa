@@ -135,12 +135,15 @@ class Void(CType, typedef="void"):
 
 
 class EnumMeta(_enum.EnumMeta, CTypeMeta):
-    def __call__(metacls, name, entries, tag=None, **kwargs):
+    def __call__(metacls, name, entries, tag=None, exclude=None, **kwargs):
+        if exclude is None:
+            exclude = frozenset()
         if isinstance(entries, type) and issubclass(entries, _enum.Enum):
             # Use __members__, not __iter__, otherwise aliases are lost.
             entries = dict(entries.__members__)
         if isinstance(entries, dict):
             entries = tuple(entries.items())
+        entries = ((key, value) for (key, value) in entries if key not in exclude)
         if tag is None:
             tag = f"svp64_{name.lower()}"
 
