@@ -185,9 +185,9 @@ In3Sel = Enum("In3Sel", _In3Sel, tag="svp64_in3_sel")
 OutSel = Enum("OutSel", _OutSel, tag="svp64_out_sel")
 CRInSel = Enum("CRInSel", _CRInSel, tag="svp64_cr_in_sel")
 CROutSel = Enum("CROutSel", _CROutSel, tag="svp64_cr_out_sel")
-SVPType = Enum("SVPType", _SVPtype, tag="svp64_sv_ptype")
-SVEType = Enum("SVEType", _SVEtype, tag="svp64_sv_etype", exclude="NONE")
-SVExtra = Enum("SVExtra", _SVEXTRA, tag="svp64_sv_extra", exclude="Idx_1_2")
+PType = Enum("PType", _SVPtype, tag="svp64_ptype")
+EType = Enum("EType", _SVEtype, tag="svp64_etype", exclude="NONE")
+Extra = Enum("Extra", _SVEXTRA, tag="svp64_extra", exclude="Idx_1_2")
 
 
 class Constant(CType, _enum.Enum, metaclass=EnumMeta):
@@ -281,15 +281,15 @@ class Record(Struct):
     out2: OutSel
     cr_in: CRInSel
     cr_out: CROutSel
-    sv_ptype: SVPType
-    sv_etype: SVEType
-    sv_in1: SVExtra
-    sv_in2: SVExtra
-    sv_in3: SVExtra
-    sv_out: SVExtra
-    sv_out2: SVExtra
-    sv_cr_in: SVExtra
-    sv_cr_out: SVExtra
+    sv_ptype: PType
+    sv_etype: EType
+    sv_in1: Extra
+    sv_in2: Extra
+    sv_in3: Extra
+    sv_out: Extra
+    sv_out2: Extra
+    sv_cr_in: Extra
+    sv_cr_out: Extra
 
     @classmethod
     def c_decl(cls):
@@ -497,7 +497,7 @@ class Codegen(_enum.Enum):
             enums = (
                 In1Sel, In2Sel, In3Sel, OutSel,
                 CRInSel, CROutSel,
-                SVPType, SVEType, SVExtra,
+                PType, EType, Extra,
                 Mode,
             )
             for enum in enums:
@@ -709,8 +709,8 @@ def parse(path):
             if cls is None:
                 continue
 
-            if ((cls is SVEType and value == "NONE") or
-                    (cls is SVExtra and value == "Idx_1_2")):
+            if ((cls is EType and value == "NONE") or
+                    (cls is Extra and value == "Idx_1_2")):
                 record = {}
                 break
 
