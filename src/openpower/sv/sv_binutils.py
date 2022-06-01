@@ -557,7 +557,7 @@ class Codegen(_enum.Enum):
 
             yield from opindex(In1Sel, "in1", {
                 In1Sel.RA: "RA",
-                In1Sel.RA_OR_ZERO: "RA",
+                In1Sel.RA_OR_ZERO: "RA0",
                 In1Sel.SPR: "SPR",
                 In1Sel.RS: "RS",
                 In1Sel.FRA: "FRA",
