@@ -184,7 +184,7 @@ CRInSel = Enum("CRInSel", _CRInSel, tag="svp64_cr_in_sel")
 CROutSel = Enum("CROutSel", _CROutSel, tag="svp64_cr_out_sel")
 SVPType = Enum("SVPType", _SVPtype, tag="svp64_sv_ptype")
 SVEType = Enum("SVEType", _SVEtype, tag="svp64_sv_etype")
-SVEXTRA = Enum("SVEXTRA", _SVEXTRA, tag="svp64_sv_extra")
+SVExtra = Enum("SVExtra", _SVEXTRA, tag="svp64_sv_extra")
 
 
 class Constant(CType, _enum.Enum, metaclass=EnumMeta):
@@ -280,13 +280,13 @@ class Record(Struct):
     cr_out: CROutSel
     sv_ptype: SVPType
     sv_etype: SVEType
-    sv_in1: SVEXTRA
-    sv_in2: SVEXTRA
-    sv_in3: SVEXTRA
-    sv_out: SVEXTRA
-    sv_out2: SVEXTRA
-    sv_cr_in: SVEXTRA
-    sv_cr_out: SVEXTRA
+    sv_in1: SVExtra
+    sv_in2: SVExtra
+    sv_in3: SVExtra
+    sv_out: SVExtra
+    sv_out2: SVExtra
+    sv_cr_in: SVExtra
+    sv_cr_out: SVExtra
 
     @classmethod
     def c_decl(cls):
@@ -494,7 +494,7 @@ class Codegen(_enum.Enum):
             enums = (
                 In1Sel, In2Sel, In3Sel, OutSel,
                 CRInSel, CROutSel,
-                SVPType, SVEType, SVEXTRA,
+                SVPType, SVEType, SVExtra,
                 Mode,
             )
             for enum in enums:
