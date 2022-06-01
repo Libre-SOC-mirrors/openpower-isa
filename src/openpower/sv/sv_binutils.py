@@ -545,8 +545,7 @@ class Codegen(_enum.Enum):
                 yield from indent(["static const ppc_opindex_t table[] = {"])
                 for key in enum:
                     value = table.get(key, "UNUSED")
-                    c_value = f"{c_tag.upper()}_{key.name.upper()}"
-                    yield from indent(indent([f"{value:{sep}}, /* {c_value} */"]))
+                    yield from indent(indent([f"{value:{sep}}, /* {key.c_name} */"]))
                 yield from indent(["};"])
                 yield ""
                 yield from indent([f"return table[record->{name}];"])
