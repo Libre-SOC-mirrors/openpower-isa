@@ -670,7 +670,6 @@ class Codegen(_enum.Enum):
 
 ISA = _SVP64RM()
 FIELDS = {field.name:field.type for field in _dataclasses.fields(Record)}
-FIELDS.update({field.name:field.type for field in _dataclasses.fields(Entry)})
 
 def parse(path):
     visited = set()
@@ -693,31 +692,32 @@ def parse(path):
 
         return True
 
-    def item_mapper(item):
-        (key, value) = item
-        key = key.lower().replace(" ", "_")
-        cls = FIELDS.get(key, object)
-        if not isinstance(value, cls):
-            if issubclass(cls, _enum.Enum):
-                value = {item.name:item for item in cls}[value]
-            else:
-                value = cls(value)
-        return (key, value)
-
-    def item_filter(item):
-        (key, _) = item
-        return (key in FIELDS)
-
-    for record in ISA.get_svp64_csv(path):
-        names = record.pop("comment").split("=")[-1].split("/")
+    for data in ISA.get_svp64_csv(path):
+        comment = data.pop("comment")
+        names = comment.split("=")[-1].split("/")
         names = set(filter(name_filter, names))
-        if names:
-            rc = _RC[record["rc"] if record["rc"] else "NONE"]
-            if rc is _RC.RC:
-                names.update({f"{name}." for name in names})
-            record = dict(filter(item_filter, map(item_mapper, record.items())))
-            for name in map(Name, names):
-                yield Entry(name=name, record=Record(**record))
+        if not names:
+            continue
+        rc = _RC[data["rc"] if data["rc"] else "NONE"]
+        if rc is _RC.RC:
+            names.update({f"{name}." for name in names})
+
+        record = {}
+        for (key, value) in data.items():
+            key = key.lower().replace(" ", "_")
+            cls = FIELDS.get(key)
+            if cls is None:
+                continue
+            if not isinstance(value, cls):
+                if issubclass(cls, _enum.Enum):
+                    value = {item.name:item for item in cls}[value]
+                else:
+                    value = cls(value)
+            record[key] = value
+        record = Record(**record)
+
+        for name in map(Name, names):
+            yield Entry(name=name, record=record)
 
 
 def main(codegen):
