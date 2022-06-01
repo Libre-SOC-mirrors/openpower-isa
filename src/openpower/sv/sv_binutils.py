@@ -506,7 +506,7 @@ class Codegen(_enum.Enum):
                 yield ""
 
             for name in ("in1", "in2", "in3", "out", "out2", "cr_in", "cr_out"):
-                yield "unsigned char"
+                yield "ppc_opindex_t"
                 yield f"svp64_record_{name}_opindex(const struct svp64_record *record);"
                 yield ""
 
@@ -539,10 +539,10 @@ class Codegen(_enum.Enum):
             def opindex(enum, name, table):
                 sep = (max(map(len, list(table.values()) + ["UNUSED"])) + 1)
                 c_tag = f"svp64_{enum.__name__.lower()}"
-                yield "unsigned char"
+                yield "ppc_opindex_t"
                 yield f"svp64_record_{name}_opindex(const struct svp64_record *record)"
                 yield "{"
-                yield from indent(["static const unsigned char table[] = {"])
+                yield from indent(["static const ppc_opindex_t table[] = {"])
                 for key in enum:
                     value = table.get(key, "UNUSED")
                     c_value = f"{c_tag.upper()}_{key.name.upper()}"
