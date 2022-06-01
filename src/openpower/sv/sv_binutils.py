@@ -186,8 +186,8 @@ OutSel = Enum("OutSel", _OutSel, tag="svp64_out_sel")
 CRInSel = Enum("CRInSel", _CRInSel, tag="svp64_cr_in_sel")
 CROutSel = Enum("CROutSel", _CROutSel, tag="svp64_cr_out_sel")
 SVPType = Enum("SVPType", _SVPtype, tag="svp64_sv_ptype")
-SVEType = Enum("SVEType", _SVEtype, tag="svp64_sv_etype")
-SVExtra = Enum("SVExtra", _SVEXTRA, tag="svp64_sv_extra")
+SVEType = Enum("SVEType", _SVEtype, tag="svp64_sv_etype", exclude="NONE")
+SVExtra = Enum("SVExtra", _SVEXTRA, tag="svp64_sv_extra", exclude="Idx_1_2")
 
 
 class Constant(CType, _enum.Enum, metaclass=EnumMeta):
@@ -708,14 +708,23 @@ def parse(path):
             cls = FIELDS.get(key)
             if cls is None:
                 continue
+
+            if ((cls is SVEType and value == "NONE") or
+                    (cls is SVExtra and value == "Idx_1_2")):
+                record = {}
+                break
+
             if not isinstance(value, cls):
                 if issubclass(cls, _enum.Enum):
                     value = {item.name:item for item in cls}[value]
                 else:
                     value = cls(value)
             record[key] = value
-        record = Record(**record)
 
+        if not record:
+            continue
+
+        record = Record(**record)
         for name in map(Name, names):
             yield Entry(name=name, record=record)
 
