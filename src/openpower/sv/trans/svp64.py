@@ -1181,7 +1181,6 @@ def get_ws(line):
 
 
 def asm_process():
-
     # get an input file and an output file
     args = sys.argv[1:]
     if len(args) == 0:
@@ -1209,9 +1208,9 @@ def asm_process():
     macros = {}  # macros which start ".set"
     isa = SVP64Asm([])
     for line in lines:
-        ls = line.split("#")
+        (op, *comments) = map(str.strip, line.split("#"))
+        ls = [op, "#".join(comments)]
         # identify macros
-        op = ls[0].strip()
         if op.startswith("setvl") or op.startswith("svshape"):
             ws, line = get_ws(ls[0])
             lst = list(isa.translate_one(ls[0].strip(), macros))
@@ -1225,7 +1224,7 @@ def asm_process():
         if len(ls) != 2:
             outfile.write(line)
             continue
-        potential = ls[1].strip()
+        potential = ls[0].strip()
         if not potential.startswith("sv."):
             outfile.write(line)
             continue
@@ -1300,5 +1299,4 @@ if __name__ == '__main__':
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))
-    csvs = SVP64RM()
-    # asm_process()
+    asm_process()
