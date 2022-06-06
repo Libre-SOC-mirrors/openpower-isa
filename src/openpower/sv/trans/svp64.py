@@ -614,7 +614,7 @@ class SVP64Asm:
                 field = (field << 2) | cr_subfield
 
             else:
-                print("no type match", rtype)
+                raise Exception("no type match: %s" % rtype)
 
             # capture the extra field info
             log("=>", "%5s" % bin(sv_extra), field)
@@ -1134,38 +1134,38 @@ class SVP64Asm:
 
 def macro_subst(macros, txt):
     again = True
-    print("subst", txt, macros)
+    log("subst", txt, macros)
     while again:
         again = False
         for macro, value in macros.items():
             if macro == txt:
                 again = True
                 replaced = txt.replace(macro, value)
-                print("macro", txt, "replaced", replaced, macro, value)
+                log("macro", txt, "replaced", replaced, macro, value)
                 txt = replaced
                 continue
             toreplace = '%s.s' % macro
             if toreplace == txt:
                 again = True
                 replaced = txt.replace(toreplace, "%s.s" % value)
-                print("macro", txt, "replaced", replaced, toreplace, value)
+                log("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
             toreplace = '%s.v' % macro
             if toreplace == txt:
                 again = True
                 replaced = txt.replace(toreplace, "%s.v" % value)
-                print("macro", txt, "replaced", replaced, toreplace, value)
+                log("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
             toreplace = '(%s)' % macro
             if toreplace in txt:
                 again = True
                 replaced = txt.replace(toreplace, '(%s)' % value)
-                print("macro", txt, "replaced", replaced, toreplace, value)
+                log("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
-    print("    processed", txt)
+    log("    processed", txt)
     return txt
 
 
@@ -1190,7 +1190,7 @@ def asm_process():
         # read the whole lot in advance in case of in-place
         lines = list(infile.readlines())
     elif len(args) != 2:
-        print("pysvp64asm [infile | -] [outfile | -]")
+        print("pysvp64asm [infile | -] [outfile | -]", file=sys.stderr)
         exit(0)
     else:
         if args[0] == '--':
@@ -1299,6 +1299,6 @@ if __name__ == '__main__':
         'sv.svstep. 2.v, 4, 0',
     ]
     isa = SVP64Asm(lst, macros=macros)
-    print("list", list(isa))
+    log("list", list(isa))
     csvs = SVP64RM()
     # asm_process()
