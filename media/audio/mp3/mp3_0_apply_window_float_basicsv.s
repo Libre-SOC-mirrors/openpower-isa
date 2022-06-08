@@ -60,20 +60,20 @@ ff_mpadsp_apply_window_float_sv:
 	addi p, buf, 64       # p = synth_buf+16
 
 	# SUM8(MACS, sum, w, p)
-	# sv.lfs/els fv0.v, 256(win)
-	# sv.lfs/els fv1.v, 256(p)
+	sv.lfs/els fv0.v, 256(win)
+	sv.lfs/els fv1.v, 256(p)
 	# TOO ACCURATE! hilarious sv.fmadds/mr sum, fv0.v, fv1.v, sum
-	# sv.fmuls fv0.v, fv0.v, fv1.v
-	# sv.fadds/mr sum, fv0.v, sum
+	sv.fmuls fv0.v, fv0.v, fv1.v
+	sv.fadds/mr sum, fv0.v, sum
 
 	addi p, buf, 192      # p = synth_buf + 48;
 	addi win, win, 128    # w = w + 32
 	# SUM8(MLSS, sum, w + 32, p)
-	# sv.lfs/els fv0.v, 256(win)
-	# sv.lfs/els fv1.v, 256(p)
+	sv.lfs/els fv0.v, 256(win)
+	sv.lfs/els fv1.v, 256(p)
 	# TOO ACCURATE! hilarious sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
-	# sv.fmuls fv0.v, fv0.v, fv1.v
-	# sv.fsubs/mr sum, sum, fv0.v
+	sv.fmuls fv0.v, fv0.v, fv1.v
+	sv.fsubs/mr sum, sum, fv0.v
 	addi win, win, -128   # w = w - 32
 
 	stfs sum, 0(out)      # *samples = &sum
@@ -93,15 +93,15 @@ ff_mpadsp_apply_window_float_sv:
 		add p, p, i
 
 		# SUM8P2(sum, MACS, sum2, MLSS, w, w2, p)
-		# sv.lfs/els fv0.v, 256(p)
-		# sv.lfs/els fv1.v, 256(win)
-		# sv.lfs/els fv2.v, 256(win2)
+		sv.lfs/els fv0.v, 256(p)
+		sv.lfs/els fv1.v, 256(win)
+		sv.lfs/els fv2.v, 256(win2)
 		# TOO ACCURATE! hilarious sv.fmadds/mr sum, fv0.v, fv1.v, sum
 		# TOO ACCURATE! hilarious sv.fnmsubs/mr sum2, fv0.v, fv2.v, sum2
-		# sv.fmuls fv1.v, fv0.v, fv1.v
-		# sv.fadds/mr sum, sum, fv1.v
-		# sv.fmuls fv0.v, fv0.v, fv2.v
-		# sv.fsubs/mr sum2, sum2, fv0.v
+		sv.fmuls fv1.v, fv0.v, fv1.v
+		sv.fadds/mr sum, sum, fv1.v
+		sv.fmuls fv0.v, fv0.v, fv2.v
+		sv.fsubs/mr sum2, sum2, fv0.v
 
 		# p = synth_buf + 48 - j
 		addi p, buf, 192
@@ -112,15 +112,15 @@ ff_mpadsp_apply_window_float_sv:
 		addi win2, win2, 128
 
 		# SUM8P2(sum, MLSS, sum2, MLSS, w + 32, w2 + 32, p)
-		# sv.lfs/els fv0.v, 256(p)
-		# sv.lfs/els fv1.v, 256(win)
-		# sv.lfs/els fv2.v, 256(win2)
+		sv.lfs/els fv0.v, 256(p)
+		sv.lfs/els fv1.v, 256(win)
+		sv.lfs/els fv2.v, 256(win2)
 		# TOO ACCURATE! hilarious sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
 		# TOO ACCURATE! hilarious sv.fnmsubs/mr sum2, fv0.v, fv2.v, sum2
-		# sv.fmuls fv1.v, fv0.v, fv1.v
-		# sv.fsubs/mr sum, sum, fv1.v
-		# sv.fmuls fv0.v, fv0.v, fv2.v
-		# sv.fsubs/mr sum2, sum2, fv0.v
+		sv.fmuls fv1.v, fv0.v, fv1.v
+		sv.fsubs/mr sum, sum, fv1.v
+		sv.fmuls fv0.v, fv0.v, fv2.v
+		sv.fsubs/mr sum2, sum2, fv0.v
 
 		# win and win2 -= 32
 		addi win, win, -128
@@ -140,11 +140,11 @@ ff_mpadsp_apply_window_float_sv:
 	addi win, win, 128      # w += 32
 	lfiwax sum, 0, 9 # zero it
 	# SUM8(MLSS, sum, w + 32, p)
-	# sv.lfs/els fv0.v, 256(win)
-	# sv.lfs/els fv1.v, 256(p)
+	sv.lfs/els fv0.v, 256(win)
+	sv.lfs/els fv1.v, 256(p)
 	# TOO ACCURATE! hilarious sv.fnmsubs/mr sum, fv0.v, fv1.v, sum
-	# sv.fmuls fv0.v, fv0.v, fv1.v
-	# sv.fsubs/mr sum, sum, fv0.v
+	sv.fmuls fv0.v, fv0.v, fv1.v
+	sv.fsubs/mr sum, sum, fv0.v
 
 	stfs sum, 0(out)
 
