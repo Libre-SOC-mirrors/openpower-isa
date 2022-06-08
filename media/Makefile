@@ -1,6 +1,6 @@
 .PHONY: all wget tests
 
-CROSS ?= powerpc64-linux-gnu-
+CROSS ?= powerpc64le-linux-gnu-
 AS = $(CROSS)as
 LD = $(CROSS)ld
 OBJCOPY = $(CROSS)objcopy
