@@ -1208,32 +1208,22 @@ def asm_process():
     macros = {}  # macros which start ".set"
     isa = SVP64Asm([])
     for line in lines:
-        (op, *comments) = map(str.strip, line.split("#"))
-        ls = [op, "#".join(comments)]
+        op = line.split("#")[0].strip()
         # identify macros
-        if op.startswith("setvl") or op.startswith("svshape"):
-            ws, line = get_ws(ls[0])
-            lst = list(isa.translate_one(ls[0].strip(), macros))
-            lst = '; '.join(lst)
-            outfile.write("%s%s # %s\n" % (ws, lst, ls[0]))
-            continue
-        if ls[0].startswith(".set"):
-            macro = ls[0][4:].split(",")
-            macro, value = list(map(str.strip, macro))
+        if op.startswith(".set"):
+            macro = op[4:].split(",")
+            (macro, value) = map(str.strip, macro)
             macros[macro] = value
-        if len(ls) != 2:
-            outfile.write(line)
-            continue
-        potential = ls[0].strip()
-        if not potential.startswith("sv."):
+        if not (op.startswith("sv.") or
+                op.startswith("setvl") or
+                op.startswith("svshape")):
             outfile.write(line)
             continue
 
-        ws, line = get_ws(line)
-        # SV line indentified
-        lst = list(isa.translate_one(potential, macros))
+        (ws, line) = get_ws(line)
+        lst = isa.translate_one(op, macros)
         lst = '; '.join(lst)
-        outfile.write("%s%s # %s\n" % (ws, lst, potential))
+        outfile.write("%s%s # %s\n" % (ws, lst, op))
 
 
 if __name__ == '__main__':
