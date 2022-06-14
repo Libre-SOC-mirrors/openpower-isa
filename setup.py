@@ -14,11 +14,11 @@ version = '0.0.3'
 # manually.
 
 install_requires = [
-    # ok to install using pip3 as long as it is not with the rest of Libre-SOC.     # https://git.libre-soc.org/?p=nmigen.git
-    'nmigen',
+    # NOT ok to install using pip3 https://git.libre-soc.org/?p=nmigen.git
+    'nmigen>=0.1,<=0.5',
     # can be obtained with pip3, best done manually
     # https://git.libre-soc.org/?p=nmutil.git
-    'libresoc-nmutil',
+    'libresoc-nmutil>=0.0.0,<=1.0',
     # these should be fine
     'pygdbmi==0.9.0.3',  # gdb machine interface, requires older version (sigh)
     'ply',     # python lex yacc. very cool
