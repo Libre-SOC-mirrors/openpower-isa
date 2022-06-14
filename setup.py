@@ -15,7 +15,7 @@ version = '0.0.3'
 
 install_requires = [
     # NOT ok to install using pip3 https://git.libre-soc.org/?p=nmigen.git
-    'nmigen>=0.1,<=0.5',
+    'nmigen>=0.0,<=0.5',
     # can be obtained with pip3, best done manually
     # https://git.libre-soc.org/?p=nmutil.git
     'libresoc-nmutil>=0.0.0,<=1.0',
