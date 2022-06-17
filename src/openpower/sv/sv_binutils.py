@@ -519,9 +519,6 @@ class Codegen(_enum.Enum):
                         prefix="extern const ", suffix=";")
             yield ""
 
-            yield f"#define SVP64_NAME_MAX {max(map(lambda record: len(record.name), records))}"
-            yield ""
-
             yield "#ifdef __cplusplus"
             yield "}"
             yield "#endif"
