@@ -980,7 +980,7 @@ class PowerDecodeSubset(Elaboratable):
             comb += self.do_copy("fn_unit", Function.TRAP)
             comb += self.do_copy("insn_type", internal_op)
         # SPR pipe must *not* receive MMU or TRAP SPRs
-        with m.Elif(is_spr_mv & ((fn == Function.MMU) & ~is_mmu_spr) |
+        with m.Elif(is_spr_mv & ((fn == Function.MMU) & ~is_mmu_spr) &
                                 ((fn == Function.TRAP) & ~is_trap_spr)):
             comb += self.do_copy("fn_unit", Function.NONE)
             comb += self.do_copy("insn_type", MicrOp.OP_ILLEGAL)
