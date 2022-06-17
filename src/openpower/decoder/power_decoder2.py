@@ -860,6 +860,11 @@ class PowerDecodeSubset(Elaboratable):
                 # to support multiple tasks (unit column multiple entries)
                 # see https://bugs.libre-soc.org/show_bug.cgi?id=310
                 (self.fn_name == 'MMU' and row['unit'] == 'SPR' and
+                 row['internal op'] in ['OP_MTSPR', 'OP_MFSPR']) or
+                # urrr... and the KAIVB SPR, which must also be redirected
+                # (to the TRAP pipeline)
+                # see https://bugs.libre-soc.org/show_bug.cgi?id=859
+                (self.fn_name == 'TRAP' and row['unit'] == 'SPR' and
                  row['internal op'] in ['OP_MTSPR', 'OP_MFSPR'])
                 )
 
@@ -953,20 +958,30 @@ class PowerDecodeSubset(Elaboratable):
 
         # Microwatt doesn't implement the partition table
         # instead has PRTBL register (SPR) to point to process table
+        # Kestrel has a KAIVB SPR to "rebase" exceptions. rebasing is normally
+        # done with Hypervisor Mode which is not implemented (yet)
         is_spr_mv = Signal()
         is_mmu_spr = Signal()
+        is_trap_spr = Signal()
         comb += is_spr_mv.eq((internal_op == MicrOp.OP_MTSPR) |
                              (internal_op == MicrOp.OP_MFSPR))
         comb += is_mmu_spr.eq((spr == SPR.DSISR.value) |
                               (spr == SPR.DAR.value) |
                               (spr == SPR.PRTBL.value) |
                               (spr == SPR.PIDR.value))
+        comb += is_trap_spr.eq((spr == SPR.KAIVB.value)
+                              )
         # MMU must receive MMU SPRs
         with m.If(is_spr_mv & (fn == Function.SPR) & is_mmu_spr):
             comb += self.do_copy("fn_unit", Function.MMU)
             comb += self.do_copy("insn_type", internal_op)
-        # SPR pipe must *not* receive MMU SPRs
-        with m.Elif(is_spr_mv & (fn == Function.MMU) & ~is_mmu_spr):
+        # TRAP must receive TRAP SPR KAIVB
+        with m.If(is_spr_mv & (fn == Function.SPR) & is_trap_spr):
+            comb += self.do_copy("fn_unit", Function.TRAP)
+            comb += self.do_copy("insn_type", internal_op)
+        # SPR pipe must *not* receive MMU or TRAP SPRs
+        with m.Elif(is_spr_mv & ((fn == Function.MMU) & ~is_mmu_spr) |
+                                ((fn == Function.TRAP) & ~is_trap_spr)):
             comb += self.do_copy("fn_unit", Function.NONE)
             comb += self.do_copy("insn_type", MicrOp.OP_ILLEGAL)
         # all others ok
