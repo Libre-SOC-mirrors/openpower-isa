@@ -119,6 +119,7 @@ Idx,SPR,priv_mtspr,priv_mfspr,len
 816,ASDR,hypv,hypv,64
 823,PSSCR,yes,yes,64
 848,IC,hypv,yes,64
+850,KAIVB,no,no,64
 849,VTB,hypv,yes,64
 855,PSSCR_hypv,hypv,hypv,64
 896,PPR,no,no,64

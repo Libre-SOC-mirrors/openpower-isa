@@ -556,6 +556,7 @@ class CROutSel(Enum):
 # SPRs - Special-Purpose Registers.  See V3.0B Figure 18 p971 and
 # http://libre-riscv.org/openpower/isatables/sprs.csv
 # http://bugs.libre-riscv.org/show_bug.cgi?id=261
+# http://bugs.libre-riscv.org/show_bug.cgi?id=859 - KAIVB
 
 def get_spr_enum(full_file):
     """get_spr_enum - creates an Enum of SPRs, dynamically
@@ -565,7 +566,7 @@ def get_spr_enum(full_file):
     short_list = {'PIDR', 'DAR', 'PRTBL', 'DSISR', 'SVSRR0', 'SVSTATE',
                   'SVSTATE0', 'SVSTATE1', 'SVSTATE2', 'SVSTATE3',
                   'SPRG0_priv', 'SPRG1_priv', 'SPRG2_priv', 'SPRG3_priv',
-                  'SPRG0', 'SPRG1', 'SPRG2', 'SPRG3',
+                  'SPRG0', 'SPRG1', 'SPRG2', 'SPRG3', 'KAIVB',
                   # hmmm should not be including these, they are FAST regs
                   'CTR', 'LR', 'TAR', 'SRR0', 'SRR1', 'XER', 'DEC', 'TB', 'TBU',
                   'HSRR0', 'HSRR1', 'HSPRG0', 'HSPRG1',
