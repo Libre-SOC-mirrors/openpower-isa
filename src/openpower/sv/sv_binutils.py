@@ -375,17 +375,17 @@ class FieldsMappingMeta(EnumMeta):
                     yield (key.upper(), tuple(value))
 
         tag = f"svp64_{name.lower()}"
-        fields = dict(flatten(mapping=dict(base)))
+        entries = dict(flatten(mapping=dict(base)))
         bitmap = type(name, (Bitmap,), {}, typedef="uint32_t", bits=base.bits)
         struct = _dataclasses.make_dataclass(name, (("value", bitmap),),
             bases=(Struct,), frozen=True, eq=True)
 
-        cls = super().__call__(name=name, entries=fields, tag=f"{tag}_field",
-                               **kwargs)
+        cls = super().__call__(name=name,
+            entries=entries, tag=f"{tag}_field", **kwargs)
 
-        def c_value(fields, stmt):
+        def c_value(entries, stmt):
             yield "switch (field) {"
-            for (field_name, field_value) in fields:
+            for (field_name, field_value) in entries:
                 yield from indent([f"case {field_name}:"])
                 yield from indent(indent(map(stmt,
                                              enumerate(field_value.value))))
@@ -401,7 +401,7 @@ class FieldsMappingMeta(EnumMeta):
                     UInt32.c_var(name="origin", suffix=" = storage.value;"),
                 ])
                 yield ""
-                yield from indent(c_value(fields=self.__class__,
+                yield from indent(c_value(entries=self.__class__,
                     stmt=lambda kv: f"result |= SVP64_FIELD_GET(origin, {kv[1]}, {kv[0]});"))
                 yield ""
                 yield from indent(["return result;"])
@@ -415,7 +415,7 @@ class FieldsMappingMeta(EnumMeta):
                     UInt32.c_var(name="result", suffix=" = storage->value;"),
                 ])
                 yield ""
-                yield from indent(c_value(fields=self.__class__,
+                yield from indent(c_value(entries=self.__class__,
                     stmt=lambda kv: f"SVP64_FIELD_SET(&result, value, {kv[0]}, {kv[1]});"))
                 yield ""
                 yield from indent(["storage->value = result;"])
