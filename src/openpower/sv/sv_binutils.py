@@ -306,7 +306,7 @@ class Desc(Struct):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Entry(Struct):
+class Record(Struct):
     name: Name
     desc: Desc
 
@@ -475,8 +475,8 @@ class Codegen(_enum.Enum):
             Codegen.PPC_SVP64_OPC_C: "ppc-svp64-opc.c",
         }[self]
 
-    def generate(self, entries):
-        def ppc_svp64_h(entries, num_entries):
+    def generate(self, records):
+        def ppc_svp64_h(records, num_records):
             disclaimer = DISCLAIMER.format(path=str(self),
                 desc="Header file for PowerPC opcode table (SVP64 extensions)")
             yield from disclaimer.splitlines()
@@ -504,7 +504,7 @@ class Codegen(_enum.Enum):
                 yield from enum.c_decl()
                 yield ""
 
-            for cls in (Desc, Entry, Prefix, RM):
+            for cls in (Desc, Record, Prefix, RM):
                 yield from cls.c_decl()
                 yield ""
 
@@ -513,13 +513,13 @@ class Codegen(_enum.Enum):
                 yield f"svp64_desc_{name}_opindex(const struct svp64_desc *desc);"
                 yield ""
 
-            yield entries.__class__.c_var("svp64_entries",
+            yield records.__class__.c_var("svp64_records",
                         prefix="extern const ", suffix=";")
-            yield num_entries.__class__.c_var("svp64_num_entries",
+            yield num_records.__class__.c_var("svp64_num_records",
                         prefix="extern const ", suffix=";")
             yield ""
 
-            yield f"#define SVP64_NAME_MAX {max(map(lambda entry: len(entry.name), entries))}"
+            yield f"#define SVP64_NAME_MAX {max(map(lambda record: len(record.name), records))}"
             yield ""
 
             yield "#ifdef __cplusplus"
@@ -530,7 +530,7 @@ class Codegen(_enum.Enum):
             yield f"#endif /* {self.name} */"
             yield ""
 
-        def ppc_svp64_opc_c(entries, num_entries):
+        def ppc_svp64_opc_c(records, num_records):
             disclaimer = DISCLAIMER.format(path=str(self),
                 desc="PowerPC opcode list (SVP64 extensions)")
             yield from disclaimer.splitlines()
@@ -598,13 +598,13 @@ class Codegen(_enum.Enum):
                 CROutSel.WHOLE_REG: "FXM",
             })
 
-            yield entries.__class__.c_var("svp64_entries",
+            yield records.__class__.c_var("svp64_records",
                         prefix="const ", suffix=" = \\")
-            yield from entries.c_value(prefix="", suffix=";")
+            yield from records.c_value(prefix="", suffix=";")
             yield ""
-            yield num_entries.__class__.c_var("svp64_num_entries",
+            yield num_records.__class__.c_var("svp64_num_records",
                         prefix="const ", suffix=" = \\")
-            yield from indent(num_entries.c_value(suffix=";"))
+            yield from indent(num_records.c_value(suffix=";"))
             yield ""
 
             bit_shl = lambda val, pos: f"({val} << UINT32_C({pos}))"
@@ -659,13 +659,13 @@ class Codegen(_enum.Enum):
             yield ""
 
 
-        entries = Entry[...](entries)
-        num_entries = Size("(sizeof (svp64_entries) / sizeof (svp64_entries[0]))")
+        records = Record[...](records)
+        num_records = Size("(sizeof (svp64_records) / sizeof (svp64_records[0]))")
 
         return {
             Codegen.PPC_SVP64_H: ppc_svp64_h,
             Codegen.PPC_SVP64_OPC_C: ppc_svp64_opc_c,
-        }[self](entries, num_entries)
+        }[self](records, num_records)
 
 
 ISA = _SVP64RM()
@@ -726,11 +726,11 @@ def parse(path):
 
         desc = Desc(**desc)
         for name in map(Name, names):
-            yield Entry(name=name, desc=desc)
+            yield Record(name=name, desc=desc)
 
 
 def main(codegen):
-    entries = []
+    records = []
     paths = (
         "minor_19.csv",
         "minor_30.csv",
@@ -745,10 +745,10 @@ def main(codegen):
         "extra.csv",
     )
     for path in paths:
-        entries.extend(parse(path))
-    entries = sorted(frozenset(entries))
+        records.extend(parse(path))
+    records = sorted(frozenset(records))
 
-    for line in codegen.generate(entries):
+    for line in codegen.generate(records):
         print(line)
 
 
