@@ -273,7 +273,7 @@ class Name(CType, str):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Record(Struct):
+class Desc(Struct):
     in1: In1Sel
     in2: In2Sel
     in3: In3Sel
@@ -294,7 +294,7 @@ class Record(Struct):
     @classmethod
     def c_decl(cls):
         bits_all = 0
-        yield f"struct svp64_record {{"
+        yield f"struct svp64_desc {{"
         for field in _dataclasses.fields(cls):
             bits = len(field.type).bit_length()
             yield from indent([f"uint64_t {field.name} : {bits};"])
@@ -308,7 +308,7 @@ class Record(Struct):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Entry(Struct):
     name: Name
-    record: Record
+    desc: Desc
 
     def __lt__(self, other):
         if not isinstance(other, self.__class__):
@@ -504,13 +504,13 @@ class Codegen(_enum.Enum):
                 yield from enum.c_decl()
                 yield ""
 
-            for cls in (Record, Entry, Prefix, RM):
+            for cls in (Desc, Entry, Prefix, RM):
                 yield from cls.c_decl()
                 yield ""
 
             for name in ("in1", "in2", "in3", "out", "out2", "cr_in", "cr_out"):
                 yield "ppc_opindex_t"
-                yield f"svp64_record_{name}_opindex(const struct svp64_record *record);"
+                yield f"svp64_desc_{name}_opindex(const struct svp64_desc *desc);"
                 yield ""
 
             yield entries.__class__.c_var("svp64_entries",
@@ -543,7 +543,7 @@ class Codegen(_enum.Enum):
                 sep = (max(map(len, list(table.values()) + ["UNUSED"])) + 1)
                 c_tag = f"svp64_{enum.__name__.lower()}"
                 yield "ppc_opindex_t"
-                yield f"svp64_record_{name}_opindex(const struct svp64_record *record)"
+                yield f"svp64_desc_{name}_opindex(const struct svp64_desc *desc)"
                 yield "{"
                 yield from indent(["static const ppc_opindex_t table[] = {"])
                 for key in enum:
@@ -551,7 +551,7 @@ class Codegen(_enum.Enum):
                     yield from indent(indent([f"{value:{sep}}, /* {key.c_name} */"]))
                 yield from indent(["};"])
                 yield ""
-                yield from indent([f"return table[record->{name}];"])
+                yield from indent([f"return table[desc->{name}];"])
                 yield "}"
                 yield ""
 
@@ -669,7 +669,7 @@ class Codegen(_enum.Enum):
 
 
 ISA = _SVP64RM()
-FIELDS = {field.name:field.type for field in _dataclasses.fields(Record)}
+FIELDS = {field.name:field.type for field in _dataclasses.fields(Desc)}
 
 def parse(path):
     visited = set()
@@ -702,7 +702,7 @@ def parse(path):
         if rc is _RC.RC:
             names.update({f"{name}." for name in names})
 
-        record = {}
+        desc = {}
         for (key, value) in data.items():
             key = key.lower().replace(" ", "_")
             cls = FIELDS.get(key)
@@ -711,7 +711,7 @@ def parse(path):
 
             if ((cls is EType and value == "NONE") or
                     (cls is Extra and value == "Idx_1_2")):
-                record = {}
+                desc = {}
                 break
 
             if not isinstance(value, cls):
@@ -719,14 +719,14 @@ def parse(path):
                     value = {item.name:item for item in cls}[value]
                 else:
                     value = cls(value)
-            record[key] = value
+            desc[key] = value
 
-        if not record:
+        if not desc:
             continue
 
-        record = Record(**record)
+        desc = Desc(**desc)
         for name in map(Name, names):
-            yield Entry(name=name, record=record)
+            yield Entry(name=name, desc=desc)
 
 
 def main(codegen):
