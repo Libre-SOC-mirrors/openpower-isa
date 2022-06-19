@@ -70,8 +70,8 @@ Special Registers Altered:
 
 X-Form
 
-* avgadd RT,RA,RB (Rc=0)
-* avgadd.  RT,RA,RB (Rc=1)
+* avgadd  RT,RA,RB (Rc=0)
+* avgadd. RT,RA,RB (Rc=1)
 
 Pseudo-code:
 
@@ -90,13 +90,30 @@ Special Registers Altered:
 
 X-Form
 
-* absdu RT,RA,RB (Rc=0)
-* absdu.  RT,RA,RB (Rc=1)
+* absdu  RT,RA,RB (Rc=0)
+* absdu. RT,RA,RB (Rc=1)
 
 Pseudo-code:
 
     if (RA) < (RB) then RT <- ¬(RA) + (RB) + 1
     else                RT <- ¬(RB) + (RA) + 1
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
+# DRAFT Absolute Accumulate Unsigned Difference
+
+X-Form
+
+* absaddu  RT,RA,RB (Rc=0)
+* absaddu. RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    if (RA) <u (RB) then r <- ¬(RA) + (RB) + 1
+    else                 r <- ¬(RB) + (RA) + 1
+    RT <- (RT) + r
 
 Special Registers Altered:
 

@@ -260,3 +260,73 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[3] = 0x3
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def case_0_absaddu(self):
+        lst = ["absaddu 3, 1, 2",
+               "absaddu 3, 4, 5",
+        ]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x2
+        initial_regs[2] = 0x1
+        initial_regs[4] = 0x9
+        initial_regs[5] = 0x3
+        e = ExpectedState(pc=8)
+        e.intregs[1] = 0x2
+        e.intregs[2] = 0x1
+        e.intregs[3] = 0x7
+        e.intregs[4] = 0x9
+        e.intregs[5] = 0x3
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_1_absaddu(self):
+        lst = ["absaddu 3, 1, 2",
+               "absaddu 3, 4, 5",
+        ]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x1
+        initial_regs[2] = 0x2
+        initial_regs[4] = 0x9
+        initial_regs[5] = 0x3
+        e = ExpectedState(pc=8)
+        e.intregs[1] = 0x1
+        e.intregs[2] = 0x2
+        e.intregs[3] = 0x7
+        e.intregs[4] = 0x9
+        e.intregs[5] = 0x3
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_2_absaddu(self):
+        """weird case where there's a negative number
+        * -1 is greater than 2 (as an unsigned number)
+          therefore difference is (-1)-(2) which is -3
+          RT=RT+-3
+            =0-3
+            =-3
+        * 9 is greater than 3
+          therefore differences is (9)-(3) which is 6
+          RT=RT+6
+            =-3+6
+            =3
+        * answer: RT=3
+        """
+        lst = ["absaddu 3, 1, 2",
+               "absaddu 3, 4, 5",
+        ]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x2
+        initial_regs[2] = 0xffffffffffffffff
+        initial_regs[4] = 0x9
+        initial_regs[5] = 0x3
+        e = ExpectedState(pc=8)
+        e.intregs[1] = 0x2
+        e.intregs[2] = 0xffffffffffffffff
+        e.intregs[3] = 0x3 # ((-1)-(2)) + ((9)-(3))
+        e.intregs[4] = 0x9
+        e.intregs[5] = 0x3
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
