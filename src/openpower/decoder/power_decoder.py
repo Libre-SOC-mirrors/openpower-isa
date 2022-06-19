@@ -93,7 +93,7 @@ from nmigen import Module, Elaboratable, Signal, Cat, Mux, Const
 from nmigen.cli import rtlil, verilog
 from openpower.decoder.power_enums import (Function, Form, MicrOp,
                                            In1Sel, In2Sel, In3Sel, OutSel,
-                                           SVEXTRA, SVEtype, SVPtype,  # Simple-V
+                                           SVEXTRA, SVEtype, SVPtype, # Simple-V
                                            RC, LdstLen, LDSTMode, CryIn,
                                            single_bit_flags, CRInSel,
                                            CROutSel, get_signal_name,
@@ -113,7 +113,7 @@ Subdecoder = namedtuple(  # fix autoformatter
      "opcodes",    # a dictionary of minor patterns to find
      "opint",      # true => the pattern must not be in "10----11" format
      # the bits (as a range) against which "pattern" matches
-     "bitsel",
+     "bitsel",     # should be in MSB0 order but isn't! it's LSB0. um.
      "suffix",     # shift the opcode down before decoding
      "subdecoders"  # list of further subdecoders for *additional* matches,
      # *ONLY* after "pattern" has *ALSO* been matched against.
@@ -704,6 +704,8 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
     """create_pdecode - creates a cascading hierarchical POWER ISA decoder
 
     subsetting of the PowerOp decoding is possible by setting col_subset
+
+    NOTE (sigh) the bitsel patterns are in LSB0 order, they should be MSB0
     """
     log("create_pdecode", name, col_subset, row_subset, include_fp)
 
@@ -735,7 +737,7 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
         Subdecoder(pattern=62, opcodes=get_csv("minor_62.csv"),
                    opint=True, bitsel=(0, 2), suffix=None, subdecoders=[]),
         Subdecoder(pattern=22, opcodes=get_csv("minor_22.csv"),
-                   opint=False, bitsel=(0, 6), suffix=None, subdecoders=[]),
+                   opint=False, bitsel=(0, 11), suffix=None, subdecoders=[]),
         Subdecoder(pattern=5, opcodes=get_csv("minor_5.csv"),
                    opint=True, bitsel=(0, 11), suffix=None, subdecoders=[]),
     ]
