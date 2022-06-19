@@ -13,7 +13,7 @@ import unittest
 
 class AVTestCase(TestAccumulatorBase):
 
-    def cse_0_maxs(self):
+    def case_0_maxs(self):
         lst = ["maxs 3, 1, 2"]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -26,7 +26,7 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[3] = 0xe1e5b9cc9864c4a8
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def cse_1_maxs(self):
+    def case_1_maxs(self):
         lst = ["maxs 3, 1, 2"]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -39,7 +39,7 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[3] = 0xe1e5b9cc9864c4a8
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def cse_2_maxs_(self):
+    def case_2_maxs_(self):
         lst = [f"maxs. 3, 1, 2"]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -53,7 +53,7 @@ class AVTestCase(TestAccumulatorBase):
         e.crregs[0] = 0x8
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def cse_3_maxs_(self):
+    def case_3_maxs_(self):
         lst = [f"maxs. 3, 1, 2"]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -67,7 +67,7 @@ class AVTestCase(TestAccumulatorBase):
         e.crregs[0] = 0x2 # RT is zero
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def cse_4_maxs_(self):
+    def case_4_maxs_(self):
         lst = [f"maxs. 3, 1, 2"]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -95,5 +95,77 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[2] = 0x8000_0000_0000_0000
         e.intregs[3] = 1
         e.crregs[0] = 0x4 # RT is +ve
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_0_mins(self):
+        lst = ["mins 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xc523e996a8ff6215
+        initial_regs[2] = 0xe1e5b9cc9864c4a8
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xc523e996a8ff6215
+        e.intregs[2] = 0xe1e5b9cc9864c4a8
+        e.intregs[3] = 0xc523e996a8ff6215
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_2_mins_(self):
+        lst = [f"mins. 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xc523e996a8ff6215
+        initial_regs[2] = 0xe1e5b9cc9864c4a8
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xc523e996a8ff6215
+        e.intregs[2] = 0xe1e5b9cc9864c4a8
+        e.intregs[3] = 0xc523e996a8ff6215
+        e.crregs[0] = 0x8
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_5_mins_(self):
+        """min negative number compared against +ve number
+        """
+        lst = [f"mins. 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 1
+        initial_regs[2] = 0x8000_0000_0000_0000
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 1
+        e.intregs[2] = 0x8000_0000_0000_0000
+        e.intregs[3] = 0x8000_0000_0000_0000
+        e.crregs[0] = 0x8 # RT is -ve
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_0_maxu(self):
+        lst = ["maxu 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xc523e996a8ff6215
+        initial_regs[2] = 0xe1e5b9cc9864c4a8
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xc523e996a8ff6215
+        e.intregs[2] = 0xe1e5b9cc9864c4a8
+        e.intregs[3] = 0xe1e5b9cc9864c4a8
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_5_minu_(self):
+        """min +ve numbers
+        """
+        lst = [f"minu. 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 1
+        initial_regs[2] = 0x8000_0000_0000_0000
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 1
+        e.intregs[2] = 0x8000_0000_0000_0000
+        e.intregs[3] = 0x8000_0000_0000_0000
+        e.crregs[0] = 0x8 # RT is -ve
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 

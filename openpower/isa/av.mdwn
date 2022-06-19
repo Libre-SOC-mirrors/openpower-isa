@@ -9,8 +9,56 @@ X-Form
 
 Pseudo-code:
 
-    if   (RA) >= (RB) then RT <- (RA)
+    if   (RA) > (RB) then RT <- (RA)
+    else                  RT <- (RB)
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
+# Fixed Point Unsighed Max
+
+X-Form
+
+* maxu  RT,RA,RB (Rc=0)
+* maxu. RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    if   (RA) >u (RB) then RT <- (RA)
     else                   RT <- (RB)
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
+# Fixed Point Signed Min
+
+X-Form
+
+* mins  RT,RA,RB (Rc=0)
+* mins. RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    if   (RA) < (RB) then RT <- (RA)
+    else                  RT <- (RB)
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
+# Fixed Point Unsighed Min
+
+X-Form
+
+* minu  RT,RA,RB (Rc=0)
+* minu. RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    if   (RA) < (RB) then RT <- (RA)
+    else                  RT <- (RB)
 
 Special Registers Altered:
 
