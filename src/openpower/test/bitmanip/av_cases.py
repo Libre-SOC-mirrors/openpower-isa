@@ -330,3 +330,45 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[5] = 0x3
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def case_0_absadds(self):
+        lst = ["absadds 3, 1, 2",
+               "absadds 3, 4, 5",
+        ]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x2
+        initial_regs[2] = 0x1
+        initial_regs[4] = 0x9
+        initial_regs[5] = 0x3
+        e = ExpectedState(pc=8)
+        e.intregs[1] = 0x2
+        e.intregs[2] = 0x1
+        e.intregs[3] = 0x7
+        e.intregs[4] = 0x9
+        e.intregs[5] = 0x3
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_2_absadds(self):
+        """unlike the absaddu weird case, the 0xfff is treated as signed
+        so (2) < (-1) and the difference is (2--1)=3.  next instruction
+        adds 6 more.  answer: 9
+        """
+        lst = ["absadds 3, 1, 2",
+               "absadds 3, 4, 5",
+        ]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x2
+        initial_regs[2] = 0xffffffffffffffff
+        initial_regs[4] = 0x9
+        initial_regs[5] = 0x3
+        e = ExpectedState(pc=8)
+        e.intregs[1] = 0x2
+        e.intregs[2] = 0xffffffffffffffff
+        e.intregs[3] = 9
+        e.intregs[4] = 0x9
+        e.intregs[5] = 0x3
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
