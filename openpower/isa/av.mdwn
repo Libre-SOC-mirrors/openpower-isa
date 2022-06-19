@@ -86,3 +86,18 @@ Special Registers Altered:
 
     CR0                     (if Rc=1)
 
+# DRAFT Absolute Unsigned Difference
+
+X-Form
+
+* absdu RT,RA,RB (Rc=0)
+* absdu.  RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    if (RA) < (RB) then RT <- ¬(RA) + (RB) + 1
+    else                RT <- ¬(RB) + (RA) + 1
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)

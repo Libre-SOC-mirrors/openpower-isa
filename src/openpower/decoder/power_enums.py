@@ -259,8 +259,9 @@ _insns = [
     "addme", "addmeo", "addo", "addze", "addzeo",
     "addg6s",
     "and", "andc", "andi.", "andis.",
-    "attn",                                 # AV bitmanip
-    "avgadd",
+    "attn",
+    "absdu",                                  # AV bitmanip
+    "avgadd",                                 # AV bitmanip
     "b", "bc", "bcctr", "bclr", "bctar",
     "bpermd",
     "cbcdtd",
@@ -446,6 +447,7 @@ class MicrOp(Enum):
     OP_GREV = 88
     OP_MINMAX = 89
     OP_AVGADD = 90
+    OP_ABSDIFF = 91
 
 
 @unique

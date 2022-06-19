@@ -454,7 +454,24 @@ class SVP64Asm:
             insn |= XO        << (31-30)  # XO       , bits 21..30
             if opcode.endswith('.'):
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log("maxs", bin(insn))
+            log("avgadd", bin(insn))
+            yield ".long 0x%x" % insn
+            return
+
+        # and absdu
+        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+        if opcode in ['absdu', ]:
+            if opcode[:5] == 'absdu':
+                XO = 0b1011110110
+            fields = list(map(int, fields))
+            insn = 22 << (31-5)  # opcode 22, bits 0-5
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= fields[1] << (31-15)  # RA       , bits 11-15
+            insn |= fields[2] << (31-20)  # RB       , bits 16-20
+            insn |= XO        << (31-30)  # XO       , bits 21..30
+            if opcode.endswith('.'):
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log("absdu", bin(insn))
             yield ".long 0x%x" % insn
             return
 
@@ -1332,6 +1349,7 @@ if __name__ == '__main__':
         'maxs 3,12,5',
         'maxs. 3,12,5',
         'avgadd 3,12,5',
+        'absdu 3,12,5',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))
