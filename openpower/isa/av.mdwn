@@ -1,6 +1,8 @@
 <!-- DRAFT Instructions for PowerISA Version 3.0 B Book 1 -->
+<!-- https://libre-soc.org/openpower/sv/bitmanip/ -->
+<!-- https://libre-soc.org/openpower/sv/av_opcodes/ -->
 
-# Fixed Point Signed Max
+# DRAFT Fixed Point Signed Max
 
 X-Form
 
@@ -16,7 +18,7 @@ Special Registers Altered:
 
     CR0                     (if Rc=1)
 
-# Fixed Point Unsighed Max
+# DRAFT Fixed Point Unsigned Max
 
 X-Form
 
@@ -32,7 +34,7 @@ Special Registers Altered:
 
     CR0                     (if Rc=1)
 
-# Fixed Point Signed Min
+# DRAFT Fixed Point Signed Min
 
 X-Form
 
@@ -48,7 +50,7 @@ Special Registers Altered:
 
     CR0                     (if Rc=1)
 
-# Fixed Point Unsighed Min
+# DRAFT Fixed Point Unsigned Min
 
 X-Form
 
@@ -59,6 +61,26 @@ Pseudo-code:
 
     if   (RA) < (RB) then RT <- (RA)
     else                  RT <- (RB)
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
+# DRAFT Average Add
+
+X-Form
+
+* avgadd RT,RA,RB (Rc=0)
+* avgadd.  RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    a <- [0] * (XLEN+1)
+    b <- [0] * (XLEN+1)
+    a[1:XLEN] <- (RA)
+    b[1:XLEN] <- (RB)
+    r <- (a + b + 1)
+    RT <- r[0:XLEN-1]
 
 Special Registers Altered:
 

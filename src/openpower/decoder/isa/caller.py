@@ -1274,6 +1274,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             illegal = False
             ins_name = asmop
 
+        # and anything avgadd
+        if asmop.startswith('avgadd'):
+            illegal = False
+            ins_name = asmop
+
         # and anything ternlog
         if asmop.startswith('ternlog'):
             illegal = False

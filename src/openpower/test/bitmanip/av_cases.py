@@ -169,3 +169,55 @@ class AVTestCase(TestAccumulatorBase):
         e.crregs[0] = 0x8 # RT is -ve
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def case_0_avgadd(self):
+        lst = ["avgadd 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xc523e996a8ff6215
+        initial_regs[2] = 0xe1e5b9cc9864c4a8
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xc523e996a8ff6215
+        e.intregs[2] = 0xe1e5b9cc9864c4a8
+        e.intregs[3] = 0xd384d1b1a0b2135f
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_1_avgadd(self):
+        lst = ["avgadd 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xc523e996a8ff6214
+        initial_regs[2] = 0xe1e5b9cc9864c4a8
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xc523e996a8ff6214
+        e.intregs[2] = 0xe1e5b9cc9864c4a8
+        e.intregs[3] = 0xd384d1b1a0b2135e
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_2_avgadd(self):
+        lst = ["avgadd 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xc523e996a8ff6213
+        initial_regs[2] = 0xe1e5b9cc9864c4a8
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xc523e996a8ff6213
+        e.intregs[2] = 0xe1e5b9cc9864c4a8
+        e.intregs[3] = 0xd384d1b1a0b2135e
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_3_avgadd(self):
+        lst = ["avgadd 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xffffffffffffffff
+        initial_regs[2] = 0xffffffffffffffff
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xffffffffffffffff
+        e.intregs[2] = 0xffffffffffffffff
+        e.intregs[3] = 0xffffffffffffffff
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
