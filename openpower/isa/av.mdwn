@@ -1,0 +1,18 @@
+<!-- DRAFT Instructions for PowerISA Version 3.0 B Book 1 -->
+
+# Fixed Point Signed Max
+
+X-Form
+
+* maxs  RT,RA,RB (Rc=0)
+* maxs. RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    if   (RA) >= (RB) then RT <- (RA)
+    else                   RT <- (RB)
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+

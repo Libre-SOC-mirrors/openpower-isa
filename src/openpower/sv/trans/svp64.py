@@ -417,6 +417,21 @@ class SVP64Asm:
             yield f".4byte {hex(instr)} # {asm}"
             return
 
+        # and maxs
+        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+        if opcode.startswith('maxs'):
+            fields = list(map(int, fields))
+            insn = 22 << (31-5)  # opcode 22, bits 0-5
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= fields[1] << (31-15)  # RA       , bits 11-15
+            insn |= fields[2] << (31-20)  # RB       , bits 16-20
+            insn |= 0b0111001110 << (31-30)  # XO       , bits 21..30
+            if opcode == 'maxs.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log("maxs", bin(insn))
+            yield ".long 0x%x" % insn
+            return
+
         # identify if is a svp64 mnemonic
         if not opcode.startswith('sv.'):
             yield insn  # unaltered
@@ -1286,6 +1301,10 @@ if __name__ == '__main__':
         'sv.bclr/vsbi 3,81.v,192',
         'sv.ld 5.v, 4(1.v)',
         'sv.svstep. 2.v, 4, 0',
+    ]
+    lst = [
+        'maxs 3,12,5',
+        'maxs. 3,12,5',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))

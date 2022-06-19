@@ -1268,7 +1268,19 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             illegal = False
             ins_name = 'ffadds'
 
-        if re.fullmatch(r'ternlogi\.?|grevw?i?\.?', asmop or ''):
+        # and min/max/su
+        if asmop in ['mins', 'maxs', 'minu', 'maxu',
+                     'mins.', 'maxs.', 'minu.', 'maxu.']:
+            illegal = False
+            ins_name = asmop
+
+        # and anything ternlog
+        if asmop.startswith('ternlog'):
+            illegal = False
+            ins_name = asmop
+
+        # and anything grev
+        if asmop.startswith('grev'):
             illegal = False
             ins_name = asmop
 

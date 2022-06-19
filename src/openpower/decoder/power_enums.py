@@ -304,6 +304,7 @@ _insns = [
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
+    "mins", "maxs", "minu", "maxu",                     # AV bitmanip
     "modsd", "modsw", "modud", "moduw",
     "mtcrf/mtocrf", "mtmsr", "mtmsrd", "mtspr",
     "mulhd", "mulhdu", "mulhw", "mulhwu", "mulld", "mulldo",
@@ -442,6 +443,7 @@ class MicrOp(Enum):
     OP_TERNLOG = 86
     OP_FETCH_FAILED = 87
     OP_GREV = 88
+    OP_MINMAX = 89
 
 
 @unique
