@@ -165,8 +165,8 @@ class AVTestCase(TestAccumulatorBase):
         e = ExpectedState(pc=4)
         e.intregs[1] = 1
         e.intregs[2] = 0x8000_0000_0000_0000
-        e.intregs[3] = 0x8000_0000_0000_0000
-        e.crregs[0] = 0x8 # RT is -ve
+        e.intregs[3] = min(e.intregs[1], e.intregs[2])
+        e.crregs[0] = 0x4
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_0_avgadd(self):

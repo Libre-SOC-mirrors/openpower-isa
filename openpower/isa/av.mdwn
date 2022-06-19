@@ -59,8 +59,8 @@ X-Form
 
 Pseudo-code:
 
-    if   (RA) < (RB) then RT <- (RA)
-    else                  RT <- (RB)
+    if   (RA) <u (RB) then RT <- (RA)
+    else                   RT <- (RB)
 
 Special Registers Altered:
 
