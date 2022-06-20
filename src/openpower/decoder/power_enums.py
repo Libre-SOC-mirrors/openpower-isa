@@ -261,7 +261,7 @@ _insns = [
     "and", "andc", "andi.", "andis.",
     "attn",
     "absdu",                                  # AV bitmanip
-    "absaddu", "absadds",                     # AV bitmanip
+    "absdacs", "absdacu",                     # AV bitmanip
     "avgadd",                                 # AV bitmanip
     "b", "bc", "bcctr", "bclr", "bctar",
     "bpermd",

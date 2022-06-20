@@ -106,8 +106,8 @@ Special Registers Altered:
 
 X-Form
 
-* absaddu  RT,RA,RB (Rc=0)
-* absaddu. RT,RA,RB (Rc=1)
+* absdacu  RT,RA,RB (Rc=0)
+* absdacu. RT,RA,RB (Rc=1)
 
 Pseudo-code:
 
@@ -123,8 +123,8 @@ Special Registers Altered:
 
 X-Form
 
-* absadds  RT,RA,RB (Rc=0)
-* absadds. RT,RA,RB (Rc=1)
+* absdacs  RT,RA,RB (Rc=0)
+* absdacs. RT,RA,RB (Rc=1)
 
 Pseudo-code:
 

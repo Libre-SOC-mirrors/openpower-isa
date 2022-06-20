@@ -441,16 +441,16 @@ class SVP64Asm:
             yield ".long 0x%x" % insn
             return
 
-        # and avgadd, absdu, absaddu, absadds
+        # and avgadd, absdu, absdacu, absdacs
         # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        if opcode in ['avgadd', 'absdu', 'absaddu', 'absadds']:
+        if opcode in ['avgadd', 'absdu', 'absdacu', 'absdacs']:
             if opcode[:5] == 'absdu':
                 XO = 0b1011110110
             elif opcode[:6] == 'avgadd':
                 XO = 0b1101001110
-            elif opcode[:7] == 'absaddu':
+            elif opcode[:7] == 'absdacu':
                 XO = 0b1111110110
-            elif opcode[:7] == 'absadds':
+            elif opcode[:7] == 'absdacs':
                 XO = 0b0111110110
             fields = list(map(int, fields))
             insn = 22 << (31-5)  # opcode 22, bits 0-5
@@ -1339,8 +1339,8 @@ if __name__ == '__main__':
         'maxs. 3,12,5',
         'avgadd 3,12,5',
         'absdu 3,12,5',
-        'absaddu 3,12,5',
-        'absadds 3,12,5',
+        'absdacu 3,12,5',
+        'absdacs 3,12,5',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))

@@ -260,9 +260,9 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[3] = 0x3
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def case_0_absaddu(self):
-        lst = ["absaddu 3, 1, 2",
-               "absaddu 3, 4, 5",
+    def case_0_absdacu(self):
+        lst = ["absdacu 3, 1, 2",
+               "absdacu 3, 4, 5",
         ]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -279,9 +279,9 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[5] = 0x3
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def case_1_absaddu(self):
-        lst = ["absaddu 3, 1, 2",
-               "absaddu 3, 4, 5",
+    def case_1_absdacu(self):
+        lst = ["absdacu 3, 1, 2",
+               "absdacu 3, 4, 5",
         ]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -298,7 +298,7 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[5] = 0x3
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def case_2_absaddu(self):
+    def case_2_absdacu(self):
         """weird case where there's a negative number
         * -1 is greater than 2 (as an unsigned number)
           therefore difference is (-1)-(2) which is -3
@@ -312,8 +312,8 @@ class AVTestCase(TestAccumulatorBase):
             =3
         * answer: RT=3
         """
-        lst = ["absaddu 3, 1, 2",
-               "absaddu 3, 4, 5",
+        lst = ["absdacu 3, 1, 2",
+               "absdacu 3, 4, 5",
         ]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -330,9 +330,9 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[5] = 0x3
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def case_0_absadds(self):
-        lst = ["absadds 3, 1, 2",
-               "absadds 3, 4, 5",
+    def case_0_absdacs(self):
+        lst = ["absdacs 3, 1, 2",
+               "absdacs 3, 4, 5",
         ]
         lst = list(SVP64Asm(lst, bigendian))
 
@@ -349,13 +349,13 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[5] = 0x3
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def case_2_absadds(self):
-        """unlike the absaddu weird case, the 0xfff is treated as signed
+    def case_2_absdacs(self):
+        """unlike the absdacu weird case, the 0xfff is treated as signed
         so (2) < (-1) and the difference is (2--1)=3.  next instruction
         adds 6 more.  answer: 9
         """
-        lst = ["absadds 3, 1, 2",
-               "absadds 3, 4, 5",
+        lst = ["absdacs 3, 1, 2",
+               "absdacs 3, 4, 5",
         ]
         lst = list(SVP64Asm(lst, bigendian))
 
