@@ -260,7 +260,7 @@ _insns = [
     "addg6s",
     "and", "andc", "andi.", "andis.",
     "attn",
-    "absdu",                                  # AV bitmanip
+    "absdu", "absds",                         # AV bitmanip
     "absdacs", "absdacu",                     # AV bitmanip
     "avgadd",                                 # AV bitmanip
     "b", "bc", "bcctr", "bclr", "bctar",

@@ -86,6 +86,22 @@ Special Registers Altered:
 
     CR0                     (if Rc=1)
 
+# DRAFT Absolute Signed Difference
+
+X-Form
+
+* absds  RT,RA,RB (Rc=0)
+* absds. RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    if (RA) < (RB) then RT <- ¬(RA) + (RB) + 1
+    else                RT <- ¬(RB) + (RA) + 1
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
 # DRAFT Absolute Unsigned Difference
 
 X-Form
@@ -95,7 +111,7 @@ X-Form
 
 Pseudo-code:
 
-    if (RA) < (RB) then RT <- ¬(RA) + (RB) + 1
+    if (RA) <u (RB) then RT <- ¬(RA) + (RB) + 1
     else                RT <- ¬(RB) + (RA) + 1
 
 Special Registers Altered:

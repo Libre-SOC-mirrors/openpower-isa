@@ -221,6 +221,32 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[3] = 0xffffffffffffffff
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def case_0_absds(self):
+        lst = ["absds 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x1
+        initial_regs[2] = 0x2
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0x1
+        e.intregs[2] = 0x2
+        e.intregs[3] = 0x1
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_1_absds(self):
+        lst = ["absds 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0xffffffffffffffff
+        initial_regs[2] = 0x2
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xffffffffffffffff
+        e.intregs[2] = 0x2
+        e.intregs[3] = 0x3
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
     def case_0_absdu(self):
         lst = ["absdu 3, 1, 2"]
         lst = list(SVP64Asm(lst, bigendian))
@@ -244,7 +270,7 @@ class AVTestCase(TestAccumulatorBase):
         e = ExpectedState(pc=4)
         e.intregs[1] = 0xffffffffffffffff
         e.intregs[2] = 0x2
-        e.intregs[3] = 0x3
+        e.intregs[3] = 0xfffffffffffffffd
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_2_absdu(self):
@@ -257,7 +283,7 @@ class AVTestCase(TestAccumulatorBase):
         e = ExpectedState(pc=4)
         e.intregs[1] = 0x2
         e.intregs[2] = 0xffffffffffffffff
-        e.intregs[3] = 0x3
+        e.intregs[3] = 0xfffffffffffffffd
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_0_absdacu(self):

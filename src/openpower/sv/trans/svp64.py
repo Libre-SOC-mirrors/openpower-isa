@@ -443,9 +443,11 @@ class SVP64Asm:
 
         # and avgadd, absdu, absdacu, absdacs
         # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        if opcode in ['avgadd', 'absdu', 'absdacu', 'absdacs']:
+        if opcode in ['avgadd', 'absdu', 'absds', 'absdacu', 'absdacs']:
             if opcode[:5] == 'absdu':
                 XO = 0b1011110110
+            elif opcode[:5] == 'absds':
+                XO = 0b1001110110
             elif opcode[:6] == 'avgadd':
                 XO = 0b1101001110
             elif opcode[:7] == 'absdacu':
@@ -1339,6 +1341,7 @@ if __name__ == '__main__':
         'maxs. 3,12,5',
         'avgadd 3,12,5',
         'absdu 3,12,5',
+        'absds 3,12,5',
         'absdacu 3,12,5',
         'absdacs 3,12,5',
     ]
