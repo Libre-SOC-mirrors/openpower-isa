@@ -419,6 +419,9 @@ class SVP64Asm:
 
         # and min/max
         # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+        # 1.6.7 X-FORM
+        # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
+        # | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
         if opcode in ['mins', 'maxs', 'minu', 'maxu',
                      'mins.', 'maxs.', 'minu.', 'maxu.']:
             if opcode[:4] == 'maxs':
@@ -443,6 +446,9 @@ class SVP64Asm:
 
         # and avgadd, absdu, absdacu, absdacs
         # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+        # 1.6.7 X-FORM
+        # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
+        # | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
         if opcode in ['avgadd', 'absdu', 'absds', 'absdacu', 'absdacs',
                       'cprop']:
             if opcode[:5] == 'absdu':
