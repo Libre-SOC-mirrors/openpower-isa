@@ -401,6 +401,7 @@ class AVTestCase(TestAccumulatorBase):
     def case_0_cprop(self):
         lst = ["cprop 3, 1, 2" ]
         lst = list(SVP64Asm(lst, bigendian))
+        last_pc = len(lst)*4
         reg_a = 0b000001
         reg_b = 0b000111
         reg_t = 0b001111
@@ -408,7 +409,7 @@ class AVTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[1] = reg_a
         initial_regs[2] = reg_b
-        e = ExpectedState(pc=4)
+        e = ExpectedState(pc=last_pc)
         e.intregs[1] = reg_a
         e.intregs[2] = reg_b
         e.intregs[3] = reg_t
@@ -417,6 +418,7 @@ class AVTestCase(TestAccumulatorBase):
     def case_1_cprop(self):
         lst = ["cprop 3, 1, 2" ]
         lst = list(SVP64Asm(lst, bigendian))
+        last_pc = len(lst)*4
         reg_a = 0b000010
         reg_b = 0b001111
         reg_t = 0b011100
@@ -424,7 +426,7 @@ class AVTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[1] = reg_a
         initial_regs[2] = reg_b
-        e = ExpectedState(pc=4)
+        e = ExpectedState(pc=last_pc)
         e.intregs[1] = reg_a
         e.intregs[2] = reg_b
         e.intregs[3] = reg_t
@@ -433,6 +435,7 @@ class AVTestCase(TestAccumulatorBase):
     def case_2_cprop(self):
         lst = ["cprop 3, 1, 2" ]
         lst = list(SVP64Asm(lst, bigendian))
+        last_pc = len(lst)*4
         reg_a = 0b000010
         reg_b = 0b001110
         reg_t = 0b011110
@@ -440,7 +443,7 @@ class AVTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[1] = reg_a
         initial_regs[2] = reg_b
-        e = ExpectedState(pc=4)
+        e = ExpectedState(pc=last_pc)
         e.intregs[1] = reg_a
         e.intregs[2] = reg_b
         e.intregs[3] = reg_t
