@@ -408,13 +408,25 @@ class AVTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[1] = reg_a
         initial_regs[2] = reg_b
-        #initial_regs[4] = 0x9
-        #initial_regs[5] = 0x3
         e = ExpectedState(pc=4)
         e.intregs[1] = reg_a
         e.intregs[2] = reg_b
         e.intregs[3] = reg_t
-        #e.intregs[4] = 0x9
-        #e.intregs[5] = 0x3
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_1_cprop(self):
+        lst = ["cprop 3, 1, 2" ]
+        lst = list(SVP64Asm(lst, bigendian))
+        reg_a = 0b000010
+        reg_b = 0b001111
+        reg_t = 0b011100
+
+        initial_regs = [0] * 32
+        initial_regs[1] = reg_a
+        initial_regs[2] = reg_b
+        e = ExpectedState(pc=4)
+        e.intregs[1] = reg_a
+        e.intregs[2] = reg_b
+        e.intregs[3] = reg_t
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
