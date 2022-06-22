@@ -443,7 +443,8 @@ class SVP64Asm:
 
         # and avgadd, absdu, absdacu, absdacs
         # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        if opcode in ['avgadd', 'absdu', 'absds', 'absdacu', 'absdacs']:
+        if opcode in ['avgadd', 'absdu', 'absds', 'absdacu', 'absdacs',
+                      'cprop']:
             if opcode[:5] == 'absdu':
                 XO = 0b1011110110
             elif opcode[:5] == 'absds':
@@ -454,6 +455,8 @@ class SVP64Asm:
                 XO = 0b1111110110
             elif opcode[:7] == 'absdacs':
                 XO = 0b0111110110
+            elif opcode[:7] == 'cprop':
+                XO = 0b0110001110
             fields = list(map(int, fields))
             insn = 22 << (31-5)  # opcode 22, bits 0-5
             insn |= fields[0] << (31-10)  # RT       , bits 6-10
@@ -1344,6 +1347,7 @@ if __name__ == '__main__':
         'absds 3,12,5',
         'absdacu 3,12,5',
         'absdacs 3,12,5',
+        'cprop 3,12,5',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))
