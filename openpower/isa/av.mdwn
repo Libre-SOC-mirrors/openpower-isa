@@ -163,7 +163,8 @@ Pseudo-code:
 
     P <- (RA)
     G <- (RB)
-    RT <- ((P|G)+G)^P 
+    temp <- (P|G)+G
+    RT <- temp^P 
 
 Special Registers Altered:
 
