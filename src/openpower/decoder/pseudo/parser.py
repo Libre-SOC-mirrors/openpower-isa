@@ -711,6 +711,11 @@ class PowerParser:
                 p[0] = ast.Call(ast.Name("concat", ast.Load()), l, keywords)
             else:
                 p[0] = ast.BinOp(p[1], binary_ops[p[2]], p[3])
+                # HORRENDOUS hack, add brackets around the bin-op by
+                # creating a function call with a *blank* function name!
+                # XXX argh doesn't work because of analysis of
+                # identify_sint_pattern
+                #p[0] = ast.Call(ast.Name("", ast.Load()), [p[0]], [])
         elif len(p) == 3:
             if isinstance(p[2], str) and p[2] == '-':
                 p[0] = ast.UnaryOp(unary_ops[p[2]], p[1])
