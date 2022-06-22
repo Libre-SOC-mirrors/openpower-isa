@@ -151,3 +151,20 @@ Pseudo-code:
 Special Registers Altered:
 
     CR0                     (if Rc=1)
+
+# Carry Propagate
+
+X-Form
+
+* cprop RT,RA,RB (Rc=0)
+* cprop RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    P <- (RA)
+    G <- (RB)
+    RT <- ((P|G)+G)^P 
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
