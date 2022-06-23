@@ -125,6 +125,7 @@ class Form(Enum):
     SVRM = 33  # Simple-V REMAP mode - TEMPORARY TEMPORARY TEMPORARY
     TLI = 34  # ternlogi
     XB = 35
+    BM2 = 36 # bmask
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
