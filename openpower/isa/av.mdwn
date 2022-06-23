@@ -178,7 +178,8 @@ BM2-Form
 
 Pseudo-code:
 
-    if _RB = 0 then mask <- [1] * XLEN else mask = (RB)
+    if _RB = 0 then mask <- [1] * XLEN
+    else mask = (RB)
     a1 <- (RA) & mask
     if mode[1] then a1 <- ¬ra
     mode2 <- mode[2:3]
