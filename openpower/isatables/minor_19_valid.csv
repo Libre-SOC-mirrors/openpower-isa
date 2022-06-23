@@ -1,3 +1,5 @@
+# SPDX-License-Header: CC-BY-4
+# derived from microwatt decode1.vhdl, with thanks and gratitude (IBM, OPF)
 opcode,valid,comment
 -----00010,1,addpcis: 5 upper bits are part of constant
 1000010000,1,bcctr
