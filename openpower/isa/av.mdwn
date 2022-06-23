@@ -170,7 +170,7 @@ Special Registers Altered:
 
     CR0                    (if Rc=1)
 
-# DRAFT bmask (don't know full name)
+# DRAFT Bitmanip Masked
  
 BM2-Form
  
@@ -199,3 +199,8 @@ Pseudo-code:
     if L = 1 then
         result <- result | (RA & ¬mask)
     RT <- result
+
+Special Registers Altered:
+
+    None
+
