@@ -455,6 +455,7 @@ class MicrOp(Enum):
     OP_ABSDIFF = 91
     OP_ABSADD = 92
     OP_CPROP = 93
+    OP_BMASK = 94
 
 
 @unique

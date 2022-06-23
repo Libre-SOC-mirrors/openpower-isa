@@ -334,6 +334,20 @@ class SVP64Asm:
         # they can - if implementations then choose - be Vectorised
         # (sv.fsins) because they are general-purpose scalar instructions
 
+        # 1.6.2.1 BM-FORM
+        #   |0     |6    |10  |15  |22  |23    |31|
+        #   | PO   |  RS | me | sh | me |   XO |Rc|
+        if opcode == ('bmask'):
+            fields = list(map(int, fields))
+            insn = 59 << (31-5)  # opcode 59, bits 0-5
+            insn |= fields[0] << (31-10)  # RT       , bits 6-10
+            insn |= fields[1] << (31-20)  # RB       , bits 16-20
+            insn |= 0b1000001110 << (31-30)  # XO       , bits 21..30
+            log("fsins", bin(insn))
+            yield ".long 0x%x" % insn
+            return
+
+
         # and fsins
         # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
         # however we are out of space with opcode 22
