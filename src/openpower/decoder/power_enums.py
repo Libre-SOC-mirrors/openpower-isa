@@ -35,8 +35,11 @@ def find_wiki_file(name):
 
 
 def get_csv(name):
+    """gets a not-entirely-csv-file-formatted database, which allows comments
+    """
     file_path = find_wiki_file(name)
     with open(file_path, 'r') as csvfile:
+        csvfile = filter(lambda row: row[0] !='#', csvfile) # strip "#..."
         reader = csv.DictReader(csvfile)
         return list(reader)
 
