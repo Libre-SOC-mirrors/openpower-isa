@@ -274,7 +274,7 @@
 
 # 1.6.28 SVI-FORM
    |0     |6    |11    |16   |21 |23|24|25|26    31|
-   | PO   |  RS |mask  | SVd |ew |yx|mm|sk|   XO   |
+   | PO   |  RS |rmm   | SVd |ew |yx|mm|sk|   XO   |
 
 # 1.6.28 SVL-FORM
    |0     |6    |11    |16   |23 |24 |25 |26    |31 |
@@ -612,7 +612,7 @@
                instruction following the Branch instruction is
                placed into the Link Register.
          Formats: B, I, XL
-    mask (11:15)
+    rmm (11:15)
         Field used to specify a REMAP shape for SVI-Form
         Formats: SVI
     MB (21:25)
@@ -649,7 +649,7 @@
         Field used in REMAP to select the SVSHAPE for 3rd input register
         Formats: SVRM
     mm (24)
-        Field used to specify the meaning of the mask field for SVI-Form
+        Field used to specify the meaning of the rmm field for SVI-Form
         Formats: SVI
     mo0 (17:18)
         Field used in REMAP to select the SVSHAPE for 1st output register
