@@ -323,6 +323,7 @@ class SVP64Asm:
             insn |= fields[4] << (31-23)     # yx   , bit 23
             insn |= fields[5] << (31-24)     # mm   , bit 24
             insn |= fields[6] << (31-25)     # sk   , bit 25
+            insn |= 0b101001 << (31-31)  # XO       , bits 26..31
             log("svindex", bin(insn))
             yield ".long 0x%x" % insn
             return
