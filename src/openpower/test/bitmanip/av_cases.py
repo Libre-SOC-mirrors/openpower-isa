@@ -474,3 +474,41 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[3] = reg_t
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def case_1_bmask(self):
+        """
+        SBF = 0b01010 # set before first
+        SOF = 0b01001 # set only first
+        SIF = 0b10000 # set including first 10011 also works no idea why yet
+
+        bmask RT,RA,RB,mode,L
+        mode[3:4] - sets operation 0:OR 1:AND 2:XOR 3:RT=0
+        mode[2:1] - sets second operand: 0:-RA 1:RA-1 2:RA+1 3:~(RA+1)
+        mode[0] - sets the first operand: 0:~RA 1:RA
+        RB - if 0 no mask, otherwise masks RA
+        """
+ 
+        lst = ["bmask 3, 1, 2,  3, 0", # OR  : RA | (RA-1)
+               "bmask 4, 1, 2, 11, 0", # AND : RA & (RA-1)
+               "bmask 5, 1, 2, 19, 0", # XOR : RA ^ (RA-1)
+               "bmask 6, 1, 2, 27, 0", # 0   : 0
+              ]
+        lst = list(SVP64Asm(lst, bigendian))
+        last_pc = len(lst)*4
+        reg_a =  0b10010100
+        reg_b =  0b11000011
+        reg_t0 = 0b10010111
+        reg_t1 = 0b10010000
+        reg_t2 = 0b00000111
+        reg_t3 = 0b00000000
+
+        initial_regs = [0] * 32
+        initial_regs[1] = reg_a
+        initial_regs[2] = reg_b
+        e = ExpectedState(pc=last_pc)
+        e.intregs[1] = reg_a
+        e.intregs[2] = reg_b
+        e.intregs[3] = reg_t0
+        e.intregs[4] = reg_t1
+        e.intregs[5] = reg_t2
+        e.intregs[6] = reg_t3
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
