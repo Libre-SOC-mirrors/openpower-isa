@@ -279,6 +279,7 @@
 # 1.6.28 SVL-FORM
    |0     |6    |11    |16   |23 |24 |25 |26    |31 |
    | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
+   | PO   |  RT | /    | SVi |/  |/  |vf |   XO |Rc |
 
 # 1.6.29 SVC-FORM
    |0     |6    |9    |11     |
