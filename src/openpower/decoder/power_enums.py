@@ -268,6 +268,7 @@ _insns = [
     "absdacs", "absdacu",                     # AV bitmanip
     "avgadd",                                 # AV bitmanip
     "b", "bc", "bcctr", "bclr", "bctar",
+    "bmask",                                  # AV bitmanip
     "bpermd",
     "cbcdtd",
     "cdtbcd",
