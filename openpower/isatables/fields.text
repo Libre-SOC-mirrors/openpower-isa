@@ -272,6 +272,10 @@
    |0    |6   |11   |16   |26   |31
    | PO  |  RT|   d1|   d0|   XO|d2
 
+# 1.6.28 SVI-FORM
+   |0     |6    |11    |16   |21 |23|24|25|26    31|
+   | PO   |  RS |mask  | SVd |ew |yx|mm|sk|   XO   |
+
 # 1.6.28 SVL-FORM
    |0     |6    |11    |16   |23 |24 |25 |26    |31 |
    | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
@@ -484,6 +488,9 @@
         Field used to specify Inexact form of round to
         quad-precision integer.
         Formats: X
+    ew (21:22)
+        Field used to specify the element width for SVI-Form
+        Formats: SVI
     FC (16:20)
         Field used to specify the function code in Load/
         Store Atomic instructions.
@@ -604,6 +611,9 @@
                instruction following the Branch instruction is
                placed into the Link Register.
          Formats: B, I, XL
+    mask (11:15)
+        Field used to specify a REMAP shape for SVI-Form
+        Formats: SVI
     MB (21:25)
         Field used in M-form instructions to specify the first
         1-bit of a 64-bit mask, as described in
@@ -637,6 +647,9 @@
     mi2 (15:16)
         Field used in REMAP to select the SVSHAPE for 3rd input register
         Formats: SVRM
+    mm (24)
+        Field used to specify the meaning of the mask field for SVI-Form
+        Formats: SVI
     mo0 (17:18)
         Field used in REMAP to select the SVSHAPE for 1st output register
         Formats: SVRM
@@ -735,7 +748,7 @@
     RS (6:10)
         Field used to specify a GPR to be used as a
         source.
-        Formats: D, DS, M, MD, MDS, X, XFX, XS
+        Formats: D, DS, M, MD, MDS, SVI, X, XFX, XS
     RSp (6:10)
         Field used to specify an even/odd pair of GPRs to
         be concatenated and used as a source.
@@ -799,6 +812,9 @@
          Immediate field used to specify a 5-bit signed inte-
          ger.
          Formats: VX
+    sk (25)
+        Field used to specify dimensional skipping in svindex
+        Formats: SVI
     SP (11:12)
          Immediate field that specifies signed versus
          unsigned conversion.
@@ -989,7 +1005,7 @@
         Formats: A, DX, VA2, SVL
     XO (26:31)
         Extended opcode field.
-        Formats: VA, SVM, SVRM
+        Formats: VA, SVM, SVRM, SVI
     XO (27:29)
         Extended opcode field.
         Formats: MD
@@ -1008,4 +1024,6 @@
     XO (30:31)
         Extended opcode field.
         Formats: DQE, DS, SC
-
+    yx (23)
+        Field used to specify loop dimension order in svindex
+        Formats: SVI
