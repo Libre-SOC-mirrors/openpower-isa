@@ -313,11 +313,11 @@ class SVP64Asm:
         if opcode == "svindex":
             # 1.6.28 SVI-FORM
             #   |0     |6    |11    |16   |21 |23|24|25|26    31|
-            #   | PO   |  RS |mask  | SVd |ew |yx|mm|sk|   XO   |
+            #   | PO   |  RS |rmm   | SVd |ew |yx|mm|sk|   XO   |
             fields = list(map(int, fields))
             insn = 22 << (31-5)              # opcode 22, bits 0-5
             insn |= fields[0] << (31-10)     # RS   , bits 6-10
-            insn |= fields[1] << (31-15)     # mask , bits 11-15
+            insn |= fields[1] << (31-15)     # rmm  , bits 11-15
             insn |= (fields[2]-1) << (31-20) # SVd  , bits 16-20
             insn |= fields[3] << (31-22)     # ew   , bits 21-22
             insn |= fields[4] << (31-23)     # yx   , bit 23
