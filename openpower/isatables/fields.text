@@ -828,6 +828,10 @@
          Field used by the Segment Register Manipulation
          instructions (see Book III).
          Formats: X
+    SVd (16:20)
+        Immediate field used to specify the size of the REMAP dimension
+        in the svindex instruction.
+        Formats: SVI
     SVD (21:31)
         Immediate field used to specify an 11-bit signed
         two's complement integer which is sign-extended
