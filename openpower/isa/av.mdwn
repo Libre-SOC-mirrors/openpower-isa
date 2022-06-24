@@ -174,15 +174,15 @@ Special Registers Altered:
  
 BM2-Form
  
-* bmask  RT,RA,RB,mode
+* bmask  RT,RA,RB,bm
 
 Pseudo-code:
 
     if _RB = 0 then mask <- [1] * XLEN
-    else mask = (RB)
+    else mask <- (RB)
     a1 <- (RA) & mask
-    if mode[1] then a1 <- ¬ra
-    mode2 <- mode[2:3]
+    if bm[0] then a1 <- ¬ra
+    mode2 <- bm[1:2]
     if mode2 = 0 then a2 <- (¬ra)+1
     if mode2 = 1 then a2 <- ra-1
     if mode2 = 2 then a2 <- ra+1
@@ -190,7 +190,7 @@ Pseudo-code:
     a1 <- a1 & mask
     a2 <- a2 & mask
     # select operator
-    mode3 <- mode[3:4]
+    mode3 <- bm[3:4]
     if mode3 = 0 then result <- a1 | a2
     if mode3 = 1 then result <- a1 & a2
     if mode3 = 2 then result <- a1 ^ a2
