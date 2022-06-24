@@ -449,3 +449,28 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[3] = reg_t
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def case_0_bmask(self):
+        """
+        https://git.libre-soc.org/?p=libreriscv.git;a=blob;f=openpower/sv/bmask.py
+        https://git.libre-soc.org/?p=libreriscv.git;a=blob;f=openpower/sv/test_bmask.py
+        https://git.libre-soc.org/?p=openpower-isa.git;a=blob;f=openpower/isa/av.mdwn;hb=HEAD
+        SBF = 0b01010 # set before first
+        SOF = 0b01001 # set only first
+        SIF = 0b10000 # set including first 10011 also works no idea why yet
+        """
+        lst = ["bmask 3, 1, 2, 10, 0" ]
+        lst = list(SVP64Asm(lst, bigendian))
+        last_pc = len(lst)*4
+        reg_a = 0b10010100
+        reg_b = 0b11000011
+        reg_t = 0b01000011
+
+        initial_regs = [0] * 32
+        initial_regs[1] = reg_a
+        initial_regs[2] = reg_b
+        e = ExpectedState(pc=last_pc)
+        e.intregs[1] = reg_a
+        e.intregs[2] = reg_b
+        e.intregs[3] = reg_t
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
