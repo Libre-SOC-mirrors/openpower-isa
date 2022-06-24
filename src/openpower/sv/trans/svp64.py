@@ -334,16 +334,19 @@ class SVP64Asm:
         # they can - if implementations then choose - be Vectorised
         # (sv.fsins) because they are general-purpose scalar instructions
 
-        # 1.6.2.1 BM-FORM
-        #   |0     |6    |10  |15  |22  |23    |31|
-        #   | PO   |  RS | me | sh | me |   XO |Rc|
+        # 1.6.2.2 BM2-FORM
+        # |0     |6    |11    |16    |21   |26 |27    31|
+        # | PO   |  RT |   RA |   RB |bm   |L  |   XO   |
         if opcode == ('bmask'):
             fields = list(map(int, fields))
-            insn = 59 << (31-5)  # opcode 59, bits 0-5
+            insn = 22 << (31-5)  # opcode 22, bits 0-5
             insn |= fields[0] << (31-10)  # RT       , bits 6-10
-            insn |= fields[1] << (31-20)  # RB       , bits 16-20
-            insn |= 0b1000001110 << (31-30)  # XO       , bits 21..30
-            log("fsins", bin(insn))
+            insn |= fields[1] << (31-15)  # RA       , bits 11-15
+            insn |= fields[2] << (31-20)  # RB       , bits 16-20
+            insn |= fields[3] << (31-25)  # mask     , bits 21-25
+            insn |= fields[4] << (31-26)   # L       , bit 26
+            insn |=  0b010001 << (31-31)   # XO       , bits 26..31
+            log("bmask", bin(insn))
             yield ".long 0x%x" % insn
             return
 
