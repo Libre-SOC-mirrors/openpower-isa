@@ -18,6 +18,7 @@ Encoding format of LDST: https://libre-soc.org/openpower/sv/ldst/
 Bugtracker: https://bugs.libre-soc.org/show_bug.cgi?id=578
 """
 
+import functools
 import os
 import sys
 from collections import OrderedDict
@@ -37,6 +38,312 @@ from openpower.consts import SVP64MODE
 
 # for debug logging
 from openpower.util import log
+
+
+def instruction(*fields):
+    def instruction(insn, desc):
+        (value, start, end) = desc
+        bits = ((1,) * ((end + 1) - start))
+        mask = 0
+        for bit in bits:
+            mask = ((mask << 1) | bit)
+        return (insn | ((value & mask) << (31 - end)))
+
+    return functools.reduce(instruction, fields, 0)
+
+
+def setvl(fields, Rc):
+    """
+    setvl is a *32-bit-only* instruction. It controls SVSTATE.
+    It is *not* a 64-bit-prefixed Vector instruction (no sv.setvl),
+    it is a Vector *control* instruction.
+
+    1.6.28 SVL-FORM - from fields.txt
+    |0     |6    |11    |16   |23 |24 |25 |26    |31 |
+    | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
+    """
+    PO = 22
+    XO = 0b11011
+    (RT, RA, SVi, ms, vs, vf) = fields
+    SVi -= 1
+    return instruction(
+        (PO , 0 , 5),
+        (RT , 6 , 10),
+        (RA , 11, 15),
+        (SVi, 16, 22),
+        (ms , 23, 23),
+        (vs , 24, 24),
+        (vf , 25, 25),
+        (XO , 26, 30),
+        (Rc , 31, 31),
+    )
+
+
+def svstep(fields, Rc):
+    """
+    svstep is a 32-bit instruction. It updates SVSTATE.
+    It *can* be SVP64-prefixed, to indicate that its registers
+    are Vectorised.
+
+    # 1.6.28 SVL-FORM - from fields.txt
+    # |0     |6    |11    |16   |23 |24 |25 |26    |31 |
+    # | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
+    """
+    PO = 22
+    XO = 0b10011
+    (RT, RA, SVi, ms, vs, vf) = fields
+    SVi -= 1
+    return instruction(
+        (PO , 0 , 5),
+        (RT , 6 , 10),
+        (RA , 11, 15),
+        (SVi, 16, 22),
+        (ms , 23, 23),
+        (vs , 24, 24),
+        (vf , 25, 25),
+        (XO , 26, 30),
+        (Rc , 31, 31),
+    )
+
+
+def svshape(fields):
+    """
+    svshape is a *32-bit-only* instruction. It updates SVSHAPE and SVSTATE.
+    It is *not* a 64-bit-prefixed Vector instruction (no sv.svshape),
+    it is a Vector *control* instruction.
+
+    # 1.6.33 SVM-FORM from fields.txt
+    # |0  |6        |11      |16    |21    |25 |26    |31  |
+    # |PO |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO |  / |
+    """
+    PO = 22
+    XO = 0b011001
+    (SVxd, SVyd, SVzd, SVRM, vf) = fields
+    SVxd -= 1
+    SVyd -= 1
+    SVzd -= 1
+    return instruction(
+        (PO  , 0 , 5),
+        (SVxd, 6 , 10),
+        (SVyd, 11, 15),
+        (SVzd, 16, 20),
+        (SVRM, 21, 24),
+        (vf  , 25, 25),
+        (XO  , 26, 30),
+        (0   , 31, 31),
+    )
+
+
+def svindex(fields):
+    """
+    svindex is a *32-bit-only* instruction. It is a convenience
+    instruction that reduces instruction count for Indexed REMAP
+    Mode.
+    It is *not* a 64-bit-prefixed Vector instruction (no sv.svindex),
+    it is a Vector *control* instruction.
+
+    1.6.28 SVI-FORM
+      |0     |6    |11    |16   |21 |23|24|25|26    31|
+      | PO   |  RS |rmm   | SVd |ew |yx|mm|sk|   XO   |
+    """
+    # note that the dimension field one subtracted
+    PO = 22
+    XO = 0b101001
+    (RS, rmm, SVd, ew, yx, mm, sk) = fields
+    return instruction(
+        (PO , 0 , 5),
+        (RS , 6 , 10),
+        (rmm, 11 , 15),
+        (SVd, 16 , 20),
+        (ew , 21 , 22),
+        (yx , 23 , 23),
+        (mm , 24 , 24),
+        (sk , 25 , 25),
+        (XO , 26 , 31),
+    )
+
+
+def svremap(fields):
+    """
+    this is a *32-bit-only* instruction. It updates the SVSHAPE SPR
+    it is *not* a 64-bit-prefixed Vector instruction (no sv.svremap),
+    it is a Vector *control* instruction.
+
+    # 1.6.34 SVRM-FORM from fields.txt
+    # |0  |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
+    # |PO | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
+    """
+    PO = 22
+    XO = 0b111001
+    (SVme, mi0, mi1, mi2, mo0, mo1, pst) = fields
+    return instruction(
+        (PO  , 0 , 5),
+        (SVme, 6 , 10),
+        (mi0 , 11, 12),
+        (mi1 , 13, 14),
+        (mi2 , 15, 16),
+        (mo0 , 17, 18),
+        (mo1 , 19, 20),
+        (pst , 21, 21),
+        (0   , 22, 22),
+        (XO  , 26, 30),
+        (0   , 31, 31),
+    )
+
+
+# ok from here-on down these are added as 32-bit instructions
+# and are here only because binutils (at present) doesn't have
+# them (that's being fixed!)
+# they can - if implementations then choose - be Vectorised
+# because they are general-purpose scalar instructions
+def bmask(fields):
+    """
+    1.6.2.2 BM2-FORM
+    |0     |6    |11    |16    |21   |26 |27    31|
+    | PO   |  RT |   RA |   RB |bm   |L  |   XO   |
+    """
+    PO = 22
+    XO = 0b010001
+    (RT, RA, RB, bm, L) = fields
+    return instruction(
+        (PO, 0 , 5),
+        (RT, 6 , 10),
+        (RA, 11, 15),
+        (RB, 16, 20),
+        (bm, 21, 25),
+        (L , 26, 26),
+        (XO, 27, 31),
+    )
+
+
+def fsins(fields, Rc):
+    # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+    # however we are out of space with opcode 22
+    PO = 59
+    XO = 0b1000001110
+    (FRT, FRB) = fields
+    return instruction(
+        (PO , 0 , 5),
+        (FRT, 6 , 10),
+        (0  , 11, 15),
+        (FRB, 16, 20),
+        (XO , 21, 30),
+        (Rc , 31, 31),
+    )
+
+
+def fcoss(fields, Rc):
+    # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+    # however we are out of space with opcode 22
+    PO = 59
+    XO = 0b1000101110
+    (FRT, FRB) = fields
+    return instruction(
+        (PO , 0 , 5),
+        (FRT, 6 , 10),
+        (0  , 11, 15),
+        (FRB, 16, 20),
+        (XO , 21, 30),
+        (Rc , 31, 31),
+    )
+
+
+def ternlogi(fields, Rc):
+    # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+    # however we are out of space with opcode 22
+    PO = 5
+    XO = 0
+    (RT, RA, RB, TLI) = fields
+    return instruction(
+        (PO , 0 , 5),
+        (RT , 6 , 10),
+        (RA , 11, 15),
+        (RB , 16, 20),
+        (TLI, 21, 28),
+        (XO , 29, 30),
+        (Rc , 31, 31),
+    )
+
+
+def grev(fields, Rc, imm, wide):
+    # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+    # however we are out of space with opcode 22
+    PO = 5
+    # _ matches fields in table at:
+    # https://libre-soc.org/openPOwer/sv/bitmanip/
+    XO = 0b1_0010_110
+    if wide:
+        XO |= 0b100_000
+    if imm:
+        XO |= 0b1000_000
+    (RT, RA, XBI) = fields
+    insn = (insn << 5) | RT
+    insn = (insn << 5) | RA
+    if imm and not wide:
+        assert 0 <= XBI < 64
+        insn = (insn << 6) | XBI
+        insn = (insn << 9) | XO
+    else:
+        assert 0 <= XBI < 32
+        insn = (insn << 5) | XBI
+        insn = (insn << 10) | XO
+    insn = (insn << 1) | Rc
+    return insn
+
+
+def av(fields, XO, Rc):
+    PO = 22
+    (RT, RA, RB) = fields
+    return instruction(
+        (PO, 0 , 5),
+        (RT, 6 , 10),
+        (RA, 11, 15),
+        (RB, 16, 20),
+        (XO, 21, 30),
+        (Rc, 31, 31),
+    )
+
+
+CUSTOM_INSNS = {}
+for (name, hook) in (
+            ("setvl", setvl),
+            ("svstep", svstep),
+            ("fsins", fsins),
+            ("fcoss", fcoss),
+            ("ternlogi", ternlogi),
+        ):
+    CUSTOM_INSNS[name] = functools.partial(hook, Rc=False)
+    CUSTOM_INSNS[f"{name}."] = functools.partial(hook, Rc=True)
+CUSTOM_INSNS["bmask"] = svshape
+CUSTOM_INSNS["svshape"] = svshape
+CUSTOM_INSNS["svindex"] = svindex
+CUSTOM_INSNS["svremap"] = svremap
+
+for (name, imm, wide) in (
+            ("grev", False, False),
+            ("grevi", True, False),
+            ("grevw", False, True),
+            ("grevwi", True, True),
+        ):
+    CUSTOM_INSNS[name] = functools.partial(grev,
+        imm=("i" in name), wide=("w" in name), Rc=False)
+    CUSTOM_INSNS[f"{name}."] = functools.partial(grev,
+        imm=("i" in name), wide=("w" in name), Rc=True)
+
+for (name, XO) in (
+            ("maxs"   , 0b0111001110),
+            ("maxu"   , 0b0011001110),
+            ("minu"   , 0b0001001110),
+            ("mins"   , 0b0101001110),
+            ("absdu"  , 0b1011110110),
+            ("absds"  , 0b1001110110),
+            ("avgadd" , 0b1101001110),
+            ("absdacu", 0b1111110110),
+            ("absdacs", 0b0111110110),
+            ("cprop"  , 0b0110001110),
+        ):
+    CUSTOM_INSNS[name] = functools.partial(av, XO=XO, Rc=False)
+    CUSTOM_INSNS[f"{name}."] = functools.partial(av, XO=XO, Rc=True)
 
 
 # decode GPR into sv extra
@@ -232,286 +539,11 @@ class SVP64Asm:
             fields.append(macro_subst(macros, field))
         log("opcode, fields substed", ls, opcode, fields)
 
-        # this is a *32-bit-only* instruction. it controls SVSTATE.
-        # it is *not* a 64-bit-prefixed Vector instruction (no sv.setvl),
-        # it is a Vector *control* instruction.
-        # note: EXT022 is the "sandbox" major opcode so it's fine to add
-
-        # sigh have to do setvl here manually for now...
-        # note the subtract one from SVi.
-        if opcode in ["setvl", "setvl."]:
-            # 1.6.28 SVL-FORM - from fields.txt
-            # |0     |6    |11    |16   |23 |24 |25 |26    |31 |
-            # | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
-            insn = 22 << (31-5)          # opcode 22, bits 0-5
-            fields = list(map(int, fields))
-            insn |= fields[0] << (31-10)  # RT       , bits 6-10
-            insn |= fields[1] << (31-15)  # RA       , bits 11-15
-            insn |= (fields[2]-1) << (31-22)  # SVi      , bits 16-22
-            insn |= fields[3] << (31-25)  # vf       , bit  25
-            insn |= fields[4] << (31-24)  # vs       , bit  24
-            insn |= fields[5] << (31-23)  # ms       , bit  23
-            insn |= 0b11011 << (31-30)    # XO       , bits 26..30
-            if opcode == 'setvl.':
-                insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log("setvl", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-        # this is a 32-bit instruction. it updates SVSTATE.
-        # it *can* be SVP64-prefixed, to indicate that its registers
-        # are Vectorised.
-        # note: EXT022 is the "sandbox" major opcode so it's fine to add
-
-        # sigh have to do setvl here manually for now...
-        # note the subtract one from SVi.
-        if opcode in ["svstep", "svstep."]:
-            # 1.6.28 SVL-FORM - from fields.txt
-            # |0     |6    |11    |16   |23 |24 |25 |26    |31 |
-            # | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
-            insn = 22 << (31-5)          # opcode 22, bits 0-5
-            fields = list(map(int, fields))
-            insn |= fields[0] << (31-10)  # RT       , bits 6-10
-            insn |= (fields[1]-1) << (31-22)  # SVi      , bits 16-22
-            insn |= fields[2] << (31-25)  # vf       , bit  25
-            insn |= 0b10011 << (31-30)    # XO       , bits 26..30
-            if opcode == 'svstep.':
-                insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log("svstep", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-        # this is a *32-bit-only* instruction. it updates SVSHAPE and SVSTATE.
-        # it is *not* a 64-bit-prefixed Vector instruction (no sv.svshape),
-        # it is a Vector *control* instruction.
-        # note: EXT022 is the "sandbox" major opcode so it's fine to add
-
-        # and svshape.  note that the dimension fields one subtracted from each
-        if opcode == 'svshape':
-            # 1.6.33 SVM-FORM from fields.txt
-            # |0  |6        |11      |16    |21    |25 |26    |31  |
-            # |PO |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO |  / |
-            insn = 22 << (31-5)          # opcode 22, bits 0-5
-            fields = list(map(int, fields))
-            insn |= (fields[0]-1) << (31-10)  # SVxd       , bits 6-10
-            insn |= (fields[1]-1) << (31-15)  # SVyd       , bits 11-15
-            insn |= (fields[2]-1) << (31-20)  # SVzd       , bits 16-20
-            insn |= (fields[3]) << (31-24)  # SVRM       , bits 21-24
-            insn |= (fields[4]) << (31-25)  # vf         , bits 25
-            insn |= 0b011001 << (31-31)  # XO       , bits 26..31
-            #insn &= ((1<<32)-1)
-            log("svshape", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-        # this is a *32-bit-only* instruction. is a convenience instruction
-        # that reduces instruction count for Indexed REMAP Mode.
-        # it is *not* a 64-bit-prefixed Vector instruction (no sv.svindex),
-        # it is a Vector *control* instruction.
-        # note: EXT022 is the "sandbox" major opcode so it's fine to add
-        # note that the dimension field one subtracted
-        if opcode == "svindex":
-            # 1.6.28 SVI-FORM
-            #   |0     |6    |11    |16   |21 |23|24|25|26    31|
-            #   | PO   |  RS |rmm   | SVd |ew |yx|mm|sk|   XO   |
-            fields = list(map(int, fields))
-            insn = 22 << (31-5)              # opcode 22, bits 0-5
-            insn |= fields[0] << (31-10)     # RS   , bits 6-10
-            insn |= fields[1] << (31-15)     # rmm  , bits 11-15
-            insn |= (fields[2]-1) << (31-20) # SVd  , bits 16-20
-            insn |= fields[3] << (31-22)     # ew   , bits 21-22
-            insn |= fields[4] << (31-23)     # yx   , bit 23
-            insn |= fields[5] << (31-24)     # mm   , bit 24
-            insn |= fields[6] << (31-25)     # sk   , bit 25
-            insn |= 0b101001 << (31-31)      # XO   , bits 26..31
-            log("svindex", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-        # this is a *32-bit-only* instruction. it updates the SVSHAPE SPR
-        # it is *not* a 64-bit-prefixed Vector instruction (no sv.svremap),
-        # it is a Vector *control* instruction.
-        # note: EXT022 is the "sandbox" major opcode so it's fine to add
-
-        # and svremap
-        if opcode == 'svremap':
-            # 1.6.34 SVRM-FORM from fields.txt
-            # |0  |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
-            # |PO | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
-            insn = 22 << (31-5)          # opcode 22, bits 0-5
-            fields = list(map(int, fields))
-            insn |= fields[0] << (31-10)  # SVme       , bits 6-10
-            insn |= fields[1] << (31-12)  # mi0        , bits 11-12
-            insn |= fields[2] << (31-14)  # mi1        , bits 13-14
-            insn |= fields[3] << (31-16)  # mi2        , bits 15-16
-            insn |= fields[4] << (31-18)  # m00        , bits 17-18
-            insn |= fields[5] << (31-20)  # m01        , bits 19-20
-            insn |= fields[6] << (31-21)  # pst        , bit 21
-            insn |= 0b111001 << (31-31)   # XO       , bits 26..31
-            log("svremap", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-        # ok from here-on down these are added as 32-bit instructions
-        # and are here only because binutils (at present) doesn't have
-        # them (that's being fixed!)
-        # they can - if implementations then choose - be Vectorised
-        # (sv.fsins) because they are general-purpose scalar instructions
-
-        # 1.6.2.2 BM2-FORM
-        # |0     |6    |11    |16    |21   |26 |27    31|
-        # | PO   |  RT |   RA |   RB |bm   |L  |   XO   |
-        if opcode == ('bmask'):
-            fields = list(map(int, fields))
-            insn = 22 << (31-5)  # opcode 22, bits 0-5
-            insn |= fields[0] << (31-10)  # RT       , bits 6-10
-            insn |= fields[1] << (31-15)  # RA       , bits 11-15
-            insn |= fields[2] << (31-20)  # RB       , bits 16-20
-            insn |= fields[3] << (31-25)  # mask     , bits 21-25
-            insn |= fields[4] << (31-26)   # L       , bit 26
-            insn |=  0b010001 << (31-31)   # XO       , bits 26..31
-            log("bmask", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-
-        # and fsins
-        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        # however we are out of space with opcode 22
-        if opcode.startswith('fsins'):
-            fields = list(map(int, fields))
-            insn = 59 << (31-5)  # opcode 59, bits 0-5
-            insn |= fields[0] << (31-10)  # RT       , bits 6-10
-            insn |= fields[1] << (31-20)  # RB       , bits 16-20
-            insn |= 0b1000001110 << (31-30)  # XO       , bits 21..30
-            if opcode == 'fsins.':
-                insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log("fsins", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-        # and fcoss
-        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        # however we are out of space with opcode 22
-        if opcode.startswith('fcoss'):
-            fields = list(map(int, fields))
-            insn = 59 << (31-5)  # opcode 59, bits 0-5
-            insn |= fields[0] << (31-10)  # RT       , bits 6-10
-            insn |= fields[1] << (31-20)  # RB       , bits 16-20
-            insn |= 0b1000101110 << (31-30)  # XO       , bits 21..30
-            if opcode == 'fcoss.':
-                insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log("fcoss", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        # however we are out of space with opcode 22
-        if opcode in ('ternlogi', 'ternlogi.'):
-            po = 5
-            xo = 0
-            rt = int(fields[0])
-            ra = int(fields[1])
-            rb = int(fields[2])
-            imm = int(fields[3])
-            rc = '.' in opcode
-            instr = po
-            instr = (instr << 5) | rt
-            instr = (instr << 5) | ra
-            instr = (instr << 5) | rb
-            instr = (instr << 8) | imm
-            instr = (instr << 2) | xo
-            instr = (instr << 1) | rc
-            asm = f"{opcode} {rt}, {ra}, {rb}, {imm}"
-            yield f".4byte {hex(instr)} # {asm}"
-            return
-
-        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        # however we are out of space with opcode 22
-        if opcode in ('grev', 'grevi', 'grevw', 'grevwi',
-                      'grev.', 'grevi.', 'grevw.', 'grevwi.'):
-            po = 5
-            # _ matches fields in table at:
-            # https://libre-soc.org/openpower/sv/bitmanip/
-            xo = 0b1_0010_110
-            if 'w' in opcode:
-                xo |= 0b100_000
-            if 'i' in opcode:
-                xo |= 0b1000_000
-            Rc = 1 if '.' in opcode else 0
-            rt = int(fields[0])
-            ra = int(fields[1])
-            rb_imm = int(fields[2])
-            instr = po
-            instr = (instr << 5) | rt
-            instr = (instr << 5) | ra
-            if opcode == 'grevi' or opcode == 'grevi.':
-                assert 0 <= rb_imm < 64
-                instr = (instr << 6) | rb_imm
-                instr = (instr << 9) | xo
-            else:
-                assert 0 <= rb_imm < 32
-                instr = (instr << 5) | rb_imm
-                instr = (instr << 10) | xo
-            instr = (instr << 1) | Rc
-            asm = f"{opcode} {rt}, {ra}, {rb_imm}"
-            yield f".4byte {hex(instr)} # {asm}"
-            return
-
-        # and min/max
-        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        # 1.6.7 X-FORM
-        # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
-        # | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
-        if opcode in ['mins', 'maxs', 'minu', 'maxu',
-                     'mins.', 'maxs.', 'minu.', 'maxu.']:
-            if opcode[:4] == 'maxs':
-                XO = 0b0111001110
-            if opcode[:4] == 'maxu':
-                XO = 0b0011001110
-            if opcode[:4] == 'mins':
-                XO = 0b0101001110
-            if opcode[:4] == 'minu':
-                XO = 0b0001001110
-            fields = list(map(int, fields))
-            insn = 22 << (31-5)  # opcode 22, bits 0-5
-            insn |= fields[0] << (31-10)  # RT       , bits 6-10
-            insn |= fields[1] << (31-15)  # RA       , bits 11-15
-            insn |= fields[2] << (31-20)  # RB       , bits 16-20
-            insn |= XO        << (31-30)  # XO       , bits 21..30
-            if opcode.endswith('.'):
-                insn |= 1 << (31-31)     # Rc=1     , bit 31
-            log("maxs", bin(insn))
-            yield ".long 0x%x" % insn
-            return
-
-        # and avgadd, absdu, absdacu, absdacs
-        # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-        # 1.6.7 X-FORM
-        # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
-        # | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
-        if opcode in ['avgadd', 'absdu', 'absds', 'absdacu', 'absdacs',
-                      'cprop']:
-            if opcode[:5] == 'absdu':
-                XO = 0b1011110110
-            elif opcode[:5] == 'absds':
-                XO = 0b1001110110
-            elif opcode[:6] == 'avgadd':
-                XO = 0b1101001110
-            elif opcode[:7] == 'absdacu':
-                XO = 0b1111110110
-            elif opcode[:7] == 'absdacs':
-                XO = 0b0111110110
-            elif opcode[:7] == 'cprop':
-                XO = 0b0110001110
-            fields = list(map(int, fields))
-            insn = 22 << (31-5)  # opcode 22, bits 0-5
-            insn |= fields[0] << (31-10)  # RT       , bits 6-10
-            insn |= fields[1] << (31-15)  # RA       , bits 11-15
-            insn |= fields[2] << (31-20)  # RB       , bits 16-20
-            insn |= XO        << (31-30)  # XO       , bits 21..30
-            if opcode.endswith('.'):
-                insn |= 1 << (31-31)     # Rc=1     , bit 31
+        # identify if it is a special instruction
+        custom_insn_hook = CUSTOM_INSNS.get(opcode)
+        if custom_insn_hook is not None:
+            fields = tuple(map(int, fields))
+            insn = custom_insn_hook(fields)
             log(opcode, bin(insn))
             yield ".long 0x%x" % insn
             return
@@ -1303,7 +1335,7 @@ def asm_process():
         else:
             outfile = open(args[1], "w")
 
-    # read the line, look for "sv", process it
+    # read the line, look for custom insn, process it
     macros = {}  # macros which start ".set"
     isa = SVP64Asm([])
     for line in lines:
@@ -1313,9 +1345,7 @@ def asm_process():
             macro = op[4:].split(",")
             (macro, value) = map(str.strip, macro)
             macros[macro] = value
-        if not (op.startswith("sv.") or
-                op.startswith("setvl") or
-                op.startswith("svshape")):
+        if not op.startswith(tuple(CUSTOM_INSNS)):
             outfile.write(line)
             continue
 
