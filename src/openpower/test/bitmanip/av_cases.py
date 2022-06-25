@@ -514,3 +514,56 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[5] = reg_t2
         e.intregs[6] = reg_t3
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_2_bmask(self):
+        """
+        SBF = 0b01010 # set before first
+        SOF = 0b01001 # set only first
+        SIF = 0b10000 # set including first 10011 also works no idea why yet
+        """
+        #SIF
+        lst = ["bmask 3, 1, 2, 16, 0",]
+              # "bmask 6, 4, 5, 16, 0",
+              # "bmask 9, 7, 8, 16, 0",
+              # "bmask 12, 10, 11, 16, 0",
+              #]
+        lst = list(SVP64Asm(lst, bigendian))
+        last_pc = len(lst)*4
+
+        initial_regs = [0] * 32
+        e = ExpectedState(pc=last_pc)
+
+        m  = 0b11000011
+        v3 = 0b10010100 # vmsif.m v2, v3
+        v2 = 0b11000011 # v2
+        initial_regs[1] = v3
+        initial_regs[2] = m
+        e.intregs[1] = v3
+        e.intregs[2] = m
+        e.intregs[3] = v2
+
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_3_bmask(self):
+        """
+        SBF = 0b01010 # set before first
+        SOF = 0b01001 # set only first
+        SIF = 0b10000 # set including first 10011 also works no idea why yet
+        """
+        #SOF
+        lst = ["bmask 3, 1, 2, 9, 0",]
+        lst = list(SVP64Asm(lst, bigendian))
+        last_pc = len(lst)*4
+
+        initial_regs = [0] * 32
+        e = ExpectedState(pc=last_pc)
+
+        m  = 0b11000011
+        v3 = 0b10010100 # vmsof.m v2, v3
+        v2 = 0b01000000 # v2
+        initial_regs[1] = v3
+        initial_regs[2] = m
+        e.intregs[1] = v3
+        e.intregs[2] = m
+        e.intregs[3] = v2
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
