@@ -559,7 +559,7 @@ class AVTestCase(TestAccumulatorBase):
         e = ExpectedState(pc=last_pc)
 
         m  = 0b11000011
-        v3 = 0b10010100 # vmsof.m v2, v3
+        v3 = 0b11010100 # vmsof.m v2, v3
         v2 = 0b01000000 # v2
         initial_regs[1] = v3
         initial_regs[2] = m
