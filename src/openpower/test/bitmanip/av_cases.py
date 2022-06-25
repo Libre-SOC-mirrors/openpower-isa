@@ -489,18 +489,18 @@ class AVTestCase(TestAccumulatorBase):
         NOTE: the numbering above for bm[] is in *MSB0* order.
         """
  
-        lst = ["bmask 3, 1, 2,  3, 0", # OR  : RA | (RA-1)
-               "bmask 4, 1, 2, 11, 0", # AND : RA & (RA-1)
-               "bmask 5, 1, 2, 19, 0", # XOR : RA ^ (RA-1)
+        lst = ["bmask 3, 1, 2,  3, 0", # OR  : RA | (RA-1) 00 01 1
+               "bmask 4, 1, 2, 11, 0", # AND : RA & (RA-1) 01 01 1
+               "bmask 5, 1, 2, 19, 0", # XOR : RA ^ (RA-1) 10 01 1
                "bmask 6, 1, 2, 27, 0", # 0   : 0
               ]
         lst = list(SVP64Asm(lst, bigendian))
         last_pc = len(lst)*4
         reg_a =  0b10010100
         reg_b =  0b11000011
-        reg_t0 = 0b10010111
-        reg_t1 = 0b10010000
-        reg_t2 = 0b00000111
+        reg_t0 = 0b11000011
+        reg_t1 = 0b00000000
+        reg_t2 = 0b11000011
         reg_t3 = 0b00000000
 
         initial_regs = [0] * 32
