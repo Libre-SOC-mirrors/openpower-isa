@@ -480,11 +480,13 @@ class AVTestCase(TestAccumulatorBase):
         SOF = 0b01001 # set only first
         SIF = 0b10000 # set including first 10011 also works no idea why yet
 
-        bmask RT,RA,RB,mode,L
-        mode[3:4] - sets operation 0:OR 1:AND 2:XOR 3:RT=0
-        mode[2:1] - sets second operand: 0:-RA 1:RA-1 2:RA+1 3:~(RA+1)
-        mode[0] - sets the first operand: 0:~RA 1:RA
+        bmask RT,RA,RB,bm,L
+            bm[0:1] - sets operation 0:OR 1:AND 2:XOR 3:RT=UNDEFINED
+            bm[2:3] - sets second operand: 0:-RA 1:RA-1 2:RA+1 3:~(RA+1)
+            bm[4] - sets the first operand: 0:~RA 1:RA
         RB - if 0 no mask, otherwise masks RA
+
+        NOTE: the numbering above for bm[] is in *MSB0* order.
         """
  
         lst = ["bmask 3, 1, 2,  3, 0", # OR  : RA | (RA-1)
