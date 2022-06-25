@@ -195,7 +195,7 @@ Pseudo-code:
     if mode3 = 0 then result <- a1 | a2
     if mode3 = 1 then result <- a1 & a2
     if mode3 = 2 then result <- a1 ^ a2
-    if mode3 = 3 then result <- UNDEFINED
+    if mode3 = 3 then result <- undefined([0]*XLEN)
     result <- result & mask
     # optionally restore masked-out bits
     if L = 1 then
