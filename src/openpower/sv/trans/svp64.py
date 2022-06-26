@@ -55,8 +55,10 @@ def instruction(*fields):
 def setvl(fields, Rc):
     """
     setvl is a *32-bit-only* instruction. It controls SVSTATE.
-    It is *not* a 64-bit-prefixed Vector instruction (no sv.setvl),
+    It is *not* a 64-bit-prefixed Vector instruction (no sv.setvl, yet),
     it is a Vector *control* instruction.
+
+    * setvl RT,RA,SVi,vf,vs,ms
 
     1.6.28 SVL-FORM - from fields.txt
     |0     |6    |11    |16   |23 |24 |25 |26    |31 |
@@ -64,7 +66,10 @@ def setvl(fields, Rc):
     """
     PO = 22
     XO = 0b11011
-    (RT, RA, SVi, ms, vs, vf) = fields
+    # ARRRGH these are in a non-obvious order in openpower/isa/simplev.mdwn
+    # compared to the SVL-Form above. sigh
+    # setvl RT,RA,SVi,vf,vs,ms
+    (RT, RA, SVi, vf, vs, ms) = fields
     SVi -= 1
     return instruction(
         (PO , 0 , 5),
@@ -85,21 +90,25 @@ def svstep(fields, Rc):
     It *can* be SVP64-prefixed, to indicate that its registers
     are Vectorised.
 
+    * svstep RT,SVi,vf
+
     # 1.6.28 SVL-FORM - from fields.txt
     # |0     |6    |11    |16   |23 |24 |25 |26    |31 |
-    # | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
+    # | PO   |  RT | /    | SVi |/  |/  |vf |   XO |Rc |
+
     """
     PO = 22
     XO = 0b10011
-    (RT, RA, SVi, ms, vs, vf) = fields
+    #(RT, RA, SVi, ms, vs, vf) = fields
+    (RT, SVi, vf) = fields
     SVi -= 1
     return instruction(
         (PO , 0 , 5),
         (RT , 6 , 10),
-        (RA , 11, 15),
+        (0 , 11, 15),
         (SVi, 16, 22),
-        (ms , 23, 23),
-        (vs , 24, 24),
+        (0 , 23, 23),
+        (0 , 24, 24),
         (vf , 25, 25),
         (XO , 26, 30),
         (Rc , 31, 31),
@@ -109,12 +118,12 @@ def svstep(fields, Rc):
 def svshape(fields):
     """
     svshape is a *32-bit-only* instruction. It updates SVSHAPE and SVSTATE.
-    It is *not* a 64-bit-prefixed Vector instruction (no sv.svshape),
+    It is *not* a 64-bit-prefixed Vector instruction (no sv.svshape, yet),
     it is a Vector *control* instruction.
 
     # 1.6.33 SVM-FORM from fields.txt
-    # |0  |6        |11      |16    |21    |25 |26    |31  |
-    # |PO |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO |  / |
+    # |0     |6        |11      |16    |21    |25 |26    |31  |
+    # | PO   |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO      |
     """
     PO = 22
     XO = 0b011001
@@ -129,8 +138,7 @@ def svshape(fields):
         (SVzd, 16, 20),
         (SVRM, 21, 24),
         (vf  , 25, 25),
-        (XO  , 26, 30),
-        (0   , 31, 31),
+        (XO  , 26, 31),
     )
 
 
@@ -139,7 +147,7 @@ def svindex(fields):
     svindex is a *32-bit-only* instruction. It is a convenience
     instruction that reduces instruction count for Indexed REMAP
     Mode.
-    It is *not* a 64-bit-prefixed Vector instruction (no sv.svindex),
+    It is *not* a 64-bit-prefixed Vector instruction (no sv.svindex, yet),
     it is a Vector *control* instruction.
 
     1.6.28 SVI-FORM
