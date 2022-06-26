@@ -237,7 +237,7 @@ def fsins(fields, Rc):
     # however we are out of space with opcode 22
     # 1.6.7 X-FORM
     # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
-    # | PO   |   FRT         |   FRA       |   FRB       |   XO |  / |
+    # | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
     PO = 59
     XO = 0b1000001110
     (FRT, FRB) = fields
@@ -256,7 +256,7 @@ def fcoss(fields, Rc):
     # however we are out of space with opcode 22
     # 1.6.7 X-FORM
     # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
-    # | PO   |   FRT         |   FRA       |   FRB       |   XO |  / |
+    # | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
     PO = 59
     XO = 0b1000101110
     (FRT, FRB) = fields
