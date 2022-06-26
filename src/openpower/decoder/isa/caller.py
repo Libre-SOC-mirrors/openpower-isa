@@ -1769,9 +1769,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         self.allow_next_step_inc = submode.value + 1
         log("SVSTATE_NEXT mode", mode, submode, self.allow_next_step_inc)
         self.svstate_next_mode = mode
-        if self.svstate_next_mode > 0:
+        if self.svstate_next_mode > 0 and self.svstate_next_mode < 5:
             shape_idx = self.svstate_next_mode.value-1
             return SelectableInt(self.remap_idxs[shape_idx], 7)
+        if self.svstate_next_mode == 5:
+            self.svstate_next_mode = 0
+            return SelectableInt(self.svstate.srcstep, 7)
+        if self.svstate_next_mode == 6:
+            self.svstate_next_mode = 0
+            return SelectableInt(self.svstate.dststep, 7)
         return SelectableInt(0, 7)
 
     def svstate_pre_inc(self):
