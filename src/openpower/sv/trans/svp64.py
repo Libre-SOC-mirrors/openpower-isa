@@ -102,7 +102,6 @@ def svstep(fields, Rc):
     """
     PO = 22
     XO = 0b10011
-    #(RT, RA, SVi, ms, vs, vf) = fields
     (RT, SVi, vf) = fields
     SVi -= 1
     return instruction(
