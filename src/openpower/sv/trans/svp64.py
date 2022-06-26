@@ -219,6 +219,9 @@ def bmask(fields):
 def fsins(fields, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
+    # 1.6.7 X-FORM
+    # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
+    # | PO   |   FRT         |   FRA       |   FRB       |   XO |  / |
     PO = 59
     XO = 0b1000001110
     (FRT, FRB) = fields
@@ -235,6 +238,9 @@ def fsins(fields, Rc):
 def fcoss(fields, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
+    # 1.6.7 X-FORM
+    # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
+    # | PO   |   FRT         |   FRA       |   FRB       |   XO |  / |
     PO = 59
     XO = 0b1000101110
     (FRT, FRB) = fields
@@ -251,6 +257,9 @@ def fcoss(fields, Rc):
 def ternlogi(fields, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
+    # 1.6.34 TLI-FORM
+    #   |0   |6   |11   |16   |21   |29  |31 |
+    #   | PO | RT |  RA |  RB | TLI | XO |Rc |
     PO = 5
     XO = 0
     (RT, RA, RB, TLI) = fields
@@ -292,6 +301,9 @@ def grev(fields, Rc, imm, wide):
 
 
 def av(fields, XO, Rc):
+    # 1.6.7 X-FORM
+    #   |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
+    #   | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
     PO = 22
     (RT, RA, RB) = fields
     return instruction(
