@@ -163,6 +163,7 @@ def svindex(fields):
     PO = 22
     XO = 0b101001
     (RS, rmm, SVd, ew, yx, mm, sk) = fields
+    SVd -= 1
     return instruction(
         (PO , 0 , 5),
         (RS , 6 , 10),
