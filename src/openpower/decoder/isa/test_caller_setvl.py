@@ -615,6 +615,48 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 0)
             self.assertEqual(CR0[CRFields.SO], 1)
 
+    def test_svstep_iota_mask(self):
+        """tests svstep "straight", placing srcstep, dststep into vector
+        """
+        lst = SVP64Asm(["setvl 1, 0, 4, 0, 1, 1",
+                        "sv.svstep/m=r30 0.v, 5, 1", # svstep get vector srcstep
+                        "sv.svstep./m=r30 4.v, 6, 1", # svstep get vector dststep
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        #svstate.vl = 2 # VL
+        #svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0] * 32
+        initial_regs[30] = 0b1101
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            self.assertEqual(sim.svstate.vl, 4)
+            self.assertEqual(sim.svstate.maxvl, 4)
+            # svstep called four times, reset occurs, srcstep zero
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            for i in range(4):
+                self.assertEqual(sim.gpr(0+i), SelectableInt(i, 64))
+                self.assertEqual(sim.gpr(4+i), SelectableInt(i, 64))
+            self.assertEqual(sim.svstate.vfirst, 0)
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 1)
+
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None):
         if initial_regs is None:
