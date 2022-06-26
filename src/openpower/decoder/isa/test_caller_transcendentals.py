@@ -14,7 +14,12 @@ from openpower.decoder.isa.test_caller import Register, run_tst
 from copy import deepcopy
 from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.decoder.helpers import fp64toselectable
-from openpower.decoder.isafunctions.double2single import DOUBLE2SINGLE
+from openpower.decoder.isafunctions.double2single import ISACallerFnHelper
+
+# really bad hack.  need to access the DOUBLE2SINGLE function auto-generated
+# from pseudo-code.
+fph = ISACallerFnHelper(XLEN=64)
+
 
 import math
 
@@ -44,8 +49,8 @@ class FPTranscendentalsTestCase(FHDLTestCase):
                 t = math.sin(a)
                 u = math.cos(a)
                 a1 = fp64toselectable(a) # convert to Power single
-                t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
-                u = DOUBLE2SINGLE(fp64toselectable(u)) # convert to Power single
+                t = fph.DOUBLE2SINGLE(fp64toselectable(t)) # to Power single
+                u = fph.DOUBLE2SINGLE(fp64toselectable(u)) # to Power single
 
                 with self.subTest():
                     sim = self.run_tst_program(program, initial_fprs=fprs)
@@ -86,10 +91,10 @@ class FPTranscendentalsTestCase(FHDLTestCase):
             for i in range(7, 8):
                 a = math.pi * ((i+0.5) / 4.0)
                 gprs[1] = i
-                a1 = DOUBLE2SINGLE(fp64toselectable(a)) # to Power single
+                a1 = fph.DOUBLE2SINGLE(fp64toselectable(a)) # to Power single
                 a = float(a1)
                 u = math.cos(a)
-                u = DOUBLE2SINGLE(fp64toselectable(u)) # convert to Power single
+                u = fph.DOUBLE2SINGLE(fp64toselectable(u)) # to Power single
 
                 with self.subTest():
                     sim = self.run_tst_program(program, gprs, initial_fprs=fprs)
