@@ -1227,7 +1227,7 @@ class SVP64Asm:
         # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
         rc = '.' if rc_mode else ''
         yield ".long 0x%08x" % svp64_prefix.insn.value
-        log(v30b_newfields)
+        log(v30b_op, v30b_newfields)
         # argh, sv.fmadds etc. need to be done manually
         if v30b_op == 'ffmadds':
             opcode = 59 << (32-6)    # bits 0..6 (MSB0)
@@ -1261,7 +1261,7 @@ class SVP64Asm:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode
         # sigh have to do svstep here manually for now...
-        elif opcode in ["svstep", "svstep."]:
+        elif v30b_op in ["svstep", "svstep."]:
             insn = 22 << (31-5)          # opcode 22, bits 0-5
             insn |= int(v30b_newfields[0]) << (31-10)  # RT       , bits 6-10
             insn |= int(v30b_newfields[1]) << (31-22)  # SVi      , bits 16-22
@@ -1454,6 +1454,9 @@ if __name__ == '__main__':
         'absdacs 3,12,5',
         'cprop 3,12,5',
         'svindex 0,0,1,0,0,0,0',
+    ]
+    lst = [
+        'sv.svstep./m=r3 2.v, 4, 0',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))
