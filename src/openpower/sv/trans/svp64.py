@@ -27,9 +27,12 @@ from openpower.decoder.isa.caller import (SVP64PrefixFields, SV64P_MAJOR_SIZE,
                                           SV64P_PID_SIZE, SVP64RMFields,
                                           SVP64RM_EXTRA2_SPEC_SIZE,
                                           SVP64RM_EXTRA3_SPEC_SIZE,
-                                          SVP64RM_MODE_SIZE, SVP64RM_SMASK_SIZE,
-                                          SVP64RM_MMODE_SIZE, SVP64RM_MASK_SIZE,
-                                          SVP64RM_SUBVL_SIZE, SVP64RM_EWSRC_SIZE,
+                                          SVP64RM_MODE_SIZE,
+                                          SVP64RM_SMASK_SIZE,
+                                          SVP64RM_MMODE_SIZE,
+                                          SVP64RM_MASK_SIZE,
+                                          SVP64RM_SUBVL_SIZE,
+                                          SVP64RM_EWSRC_SIZE,
                                           SVP64RM_ELWIDTH_SIZE)
 from openpower.decoder.pseudo.pagereader import ISA
 from openpower.decoder.power_svp64 import SVP64RM, get_regtype, decode_extra
