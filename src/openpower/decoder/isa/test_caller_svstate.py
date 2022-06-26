@@ -86,7 +86,8 @@ class SVSTATETestCase(FHDLTestCase):
         * second addi, which has srcstep/dststep = 1, does addi 13, 1, #1
         * svstep EXPLICITLY walks srcstep/dststep to next element,
           which now equals VL.  srcstep and dststep are both set to
-          zero, and MSR[SVF] is cleared.
+          zero, and MSR[SVF] is cleared.  CR0.SO is set to 1 because
+          it is the end of the looping.
 
         the first add will write 0x5555 into r1, then the vector-addi
         will add 1 to that and store the result in r12 (0x5556)
@@ -102,7 +103,7 @@ class SVSTATETestCase(FHDLTestCase):
                         "setvl. 0, 0, 1, 1, 0, 0",  # svstep
                         'sv.add 1, 5.v, 9.v',       # again, scalar dest
                         'sv.addi 12.v, 1, 1',       # but vector dest
-                        "setvl. 0, 0, 1, 1, 0, 0"  # svstep
+                        "setvl. 0, 0, 1, 1, 0, 0"  # svstep (end: sets CR0.SO)
                         ])
         lst = list(lst)
 
@@ -142,10 +143,10 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
-            self.assertEqual(CR0[CRFields.EQ], 1)
+            self.assertEqual(CR0[CRFields.EQ], 0)
             self.assertEqual(CR0[CRFields.LT], 0)
             self.assertEqual(CR0[CRFields.GT], 0)
-            self.assertEqual(CR0[CRFields.SO], 0)
+            self.assertEqual(CR0[CRFields.SO], 1)
 
             # check registers as expected
             self._check_regs(sim, expected_regs)
