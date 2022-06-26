@@ -305,7 +305,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 8, 0, 0x404",
                         "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "svshape 3, 3, 4, 0, 0",
-                        "svremap 1, 1, 2, 0, 0, 0, 0, 1",
+                        "svremap 1, 1, 2, 0, 0, 0, 0",
                         "sv.lwz 20.v, 0(1)",
                         ]
 
@@ -331,7 +331,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 18, 0, 0xf0f",
                         "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "svshape 3, 3, 4, 0, 0",
-                        "svremap 1, 1, 2, 0, 0, 0, 0, 1",
+                        "svremap 1, 1, 2, 0, 0, 0, 0",
                         "sv.lwz 20.v, 0(1)",
                         #"sv.lwzsh 12.v, 4(1), 2", # bit-reversed
                         ])
@@ -389,7 +389,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 11, 0, 0x808",
                         "sv.stw 5.v, 0(1)",
                         "svshape 8, 1, 1, 6, 0",
-                        "svremap 31, 1, 2, 3, 0, 0, 0, 0",
+                        "svremap 31, 1, 2, 3, 0, 0, 0",
                         "sv.lwzsh 12.v, 4(1), 2"]
 
         shifted LD is computed as:
@@ -417,7 +417,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 11, 0, 0x708",
                         "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "svshape 8, 1, 1, 6, 0",
-                        "svremap 1, 0, 0, 0, 0, 0, 0, 1",
+                        "svremap 1, 0, 0, 0, 0, 0, 0",
                         #"setvl 0, 0, 8, 0, 1, 1",
                         "sv.lwzsh 12.v, 4(1), 2",  # bit-reversed
                         #"sv.lwz 12.v, 0(1)"
@@ -476,7 +476,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 11, 0, 0x808",
                         "sv.stw 5.v, 0(1)",
                         "svshape 8, 1, 1, 6, 0",
-                        "svremap 31, 1, 2, 3, 0, 0, 0, 0",
+                        "svremap 31, 1, 2, 3, 0, 0, 0",
                         "sv.lwzsh 12.v, 4(1), 2"]
 
         bitreverse LD is computed as:
@@ -504,7 +504,7 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 11, 0, 0x708",
                         "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "svshape 8, 1, 1, 14, 0",
-                        "svremap 16, 0, 0, 0, 0, 0, 0, 1",
+                        "svremap 16, 0, 0, 0, 0, 0, 0",
                         #"setvl 0, 0, 8, 0, 1, 1",
                         "sv.lwzsh 12.v, 4(1), 2",  # bit-reversed
                         #"sv.lwz 12.v, 0(1)"
