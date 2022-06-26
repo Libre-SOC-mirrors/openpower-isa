@@ -121,9 +121,12 @@ def svshape(fields):
     It is *not* a 64-bit-prefixed Vector instruction (no sv.svshape, yet),
     it is a Vector *control* instruction.
 
+    * svshape SVxd,SVyd,SVzd,SVRM,vf
+
     # 1.6.33 SVM-FORM from fields.txt
     # |0     |6        |11      |16    |21    |25 |26    |31  |
     # | PO   |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO      |
+
     """
     PO = 22
     XO = 0b011001
@@ -177,9 +180,12 @@ def svremap(fields):
     it is *not* a 64-bit-prefixed Vector instruction (no sv.svremap),
     it is a Vector *control* instruction.
 
-    # 1.6.34 SVRM-FORM from fields.txt
-    # |0  |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
-    # |PO | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO    | / |
+    * svremap SVme,mi0,mi1,mi2,mo0,mo1,pst
+
+    # 1.6.34 SVRM-FORM
+       |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
+       | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO        |
+
     """
     PO = 22
     XO = 0b111001
@@ -194,8 +200,7 @@ def svremap(fields):
         (mo1 , 19, 20),
         (pst , 21, 21),
         (0   , 22, 22),
-        (XO  , 26, 30),
-        (0   , 31, 31),
+        (XO  , 26, 31),
     )
 
 
