@@ -123,16 +123,16 @@ def svshape(fields):
     It is *not* a 64-bit-prefixed Vector instruction (no sv.svshape, yet),
     it is a Vector *control* instruction.
 
-    * svshape SVxd,SVyd,SVzd,SVRM,vf
+    * svshape SVxd,SVyd,SVzd,SVrm,vf
 
     # 1.6.33 SVM-FORM from fields.txt
     # |0     |6        |11      |16    |21    |25 |26    |31  |
-    # | PO   |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO      |
+    # | PO   |  SVxd   |   SVyd | SVzd | SVrm |vf |   XO      |
 
     """
     PO = 22
     XO = 0b011001
-    (SVxd, SVyd, SVzd, SVRM, vf) = fields
+    (SVxd, SVyd, SVzd, SVrm, vf) = fields
     SVxd -= 1
     SVyd -= 1
     SVzd -= 1
@@ -141,7 +141,7 @@ def svshape(fields):
         (SVxd, 6 , 10),
         (SVyd, 11, 15),
         (SVzd, 16, 20),
-        (SVRM, 21, 24),
+        (SVrm, 21, 24),
         (vf  , 25, 25),
         (XO  , 26, 31),
     )

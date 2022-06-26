@@ -303,7 +303,7 @@
 
 # 1.6.33 SVM-FORM
    |0     |6        |11      |16    |21    |25 |26    |31  |
-   | PO   |  SVxd   |   SVyd | SVzd | SVRM |vf |   XO      |
+   | PO   |  SVxd   |   SVyd | SVzd | SVrm |vf |   XO      |
 
 # 1.6.34 SVRM-FORM
    |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
@@ -848,7 +848,7 @@
     SVme (6:10)
          Simple-V "REMAP" map-enable bits (0-4)
          Formats: SVRM
-    SVRM (21:24)
+    SVrm (21:24)
          Simple-V "REMAP" Mode
          Formats: SVM
     SVxd (6:10)
