@@ -314,7 +314,7 @@ for (name, hook) in (
         ):
     CUSTOM_INSNS[name] = functools.partial(hook, Rc=False)
     CUSTOM_INSNS[f"{name}."] = functools.partial(hook, Rc=True)
-CUSTOM_INSNS["bmask"] = svshape
+CUSTOM_INSNS["bmask"] = bmask
 CUSTOM_INSNS["svshape"] = svshape
 CUSTOM_INSNS["svindex"] = svindex
 CUSTOM_INSNS["svremap"] = svremap
