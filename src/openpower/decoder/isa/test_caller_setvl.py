@@ -618,9 +618,9 @@ class DecoderTestCase(FHDLTestCase):
     def test_svstep_iota_mask(self):
         """tests svstep "straight", placing srcstep, dststep into vector
         """
-        lst = SVP64Asm(["setvl 1, 0, 4, 0, 1, 1",
+        lst = SVP64Asm(["setvl 0, 0, 5, 0, 1, 1",
                         "sv.svstep/m=r30 0.v, 5, 1", # svstep get vector srcstep
-                        "sv.svstep./m=r30 4.v, 6, 1", # svstep get vector dststep
+                        "sv.svstep./m=r30 8.v, 6, 1", # svstep get vector dststep
                         ])
         lst = list(lst)
 
@@ -630,32 +630,39 @@ class DecoderTestCase(FHDLTestCase):
         #svstate.maxvl = 2 # MAXVL
         print ("SVSTATE", bin(svstate.asint()))
 
+        mask = 0b10101
         initial_regs = [0] * 32
-        initial_regs[30] = 0b1101
+        initial_regs[30] = mask
 
         with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, svstate=svstate)
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_regs=initial_regs)
             print ("SVSTATE after", bin(sim.svstate.asint()))
             print ("        vl", bin(sim.svstate.vl))
             print ("        mvl", bin(sim.svstate.maxvl))
             print ("    srcstep", bin(sim.svstate.srcstep))
             print ("    dststep", bin(sim.svstate.dststep))
             print ("     vfirst", bin(sim.svstate. vfirst))
-            self.assertEqual(sim.svstate.vl, 4)
-            self.assertEqual(sim.svstate.maxvl, 4)
+            self.assertEqual(sim.svstate.vl, 5)
+            self.assertEqual(sim.svstate.maxvl, 5)
             # svstep called four times, reset occurs, srcstep zero
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
-            for i in range(4):
-                self.assertEqual(sim.gpr(0+i), SelectableInt(i, 64))
-                self.assertEqual(sim.gpr(4+i), SelectableInt(i, 64))
+            sim.gpr.dump()
+            for i in range(5):
+                if mask & (1<<i):
+                    tst = i
+                else:
+                    tst = 0
+                self.assertEqual(sim.gpr(0+i), SelectableInt(tst, 64))
+                self.assertEqual(sim.gpr(8+i), SelectableInt(tst, 64))
             self.assertEqual(sim.svstate.vfirst, 0)
-            CR0 = sim.crl[0]
-            print("      CR0", bin(CR0.get_range().value))
-            self.assertEqual(CR0[CRFields.EQ], 0)
-            self.assertEqual(CR0[CRFields.LT], 0)
-            self.assertEqual(CR0[CRFields.GT], 0)
-            self.assertEqual(CR0[CRFields.SO], 1)
+            CR4 = sim.crl[4]
+            print("      CR4", bin(CR4.get_range().value))
+            self.assertEqual(CR4[CRFields.EQ], 0)
+            self.assertEqual(CR4[CRFields.LT], 0)
+            self.assertEqual(CR4[CRFields.GT], 0)
+            self.assertEqual(CR4[CRFields.SO], 0)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None):
