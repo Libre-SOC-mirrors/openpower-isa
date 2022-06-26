@@ -1,6 +1,7 @@
 from openpower.simulator.program import Program
 from openpower.endian import bigendian
 from openpower.consts import MSR
+from openpower.test.state import ExpectedState
 
 from openpower.test.common import TestAccumulatorBase
 import random
@@ -29,9 +30,13 @@ class TrapTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[1] = 1
         initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0xb000000000001033}
+        e = ExpectedState(pc=0x700)
+        e.intregs[1] = 1
+        e.msr = 0xb000000000001033 # TODO, not actually checked
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
-                                    initial_msr=0xa000000000000003)
+                                    initial_msr=0xa000000000000003,
+                                    expected=e)
 
     def case_0_trap_eq_imm(self):
         insns = ["twi", "tdi"]
