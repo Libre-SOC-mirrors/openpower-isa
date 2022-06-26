@@ -9,6 +9,19 @@ import random
 
 class TrapTestCase(TestAccumulatorBase):
 
+    def case_1_kaivb(self):
+        lst = ["mtspr 850, 1",  # KAIVB
+               "mfspr 2, 850",
+               ]
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x129518230011feed
+        initial_sprs = {'KAIVB': 0x12345678,
+                        }
+        msr = 0xa000000000000003
+        self.add_case(Program(lst, bigendian),
+                      initial_regs, initial_sprs,
+                                    initial_msr=msr)
+
     def case_0_hrfid(self):
         lst = ["hrfid"]
         initial_regs = [0] * 32
