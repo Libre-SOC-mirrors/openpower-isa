@@ -701,7 +701,7 @@ class FFTTestCase(FHDLTestCase):
             Discrete Fourier Transform, using bit-reversed LD/ST
         """
         lst = SVP64Asm( ["svshape 8, 1, 1, 15, 0",
-                         "svremap 1, 0, 0, 0, 0, 0, 0, 0",
+                         "svremap 1, 0, 0, 0, 0, 0, 0",
                          "sv.lfssh 0.v, 4(0), 20", # shifted
                          "svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
