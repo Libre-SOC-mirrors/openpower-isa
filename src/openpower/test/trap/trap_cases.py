@@ -10,6 +10,7 @@ import random
 class TrapTestCase(TestAccumulatorBase):
 
     def case_1_kaivb(self):
+        # https://bugs.libre-soc.org/show_bug.cgi?id=859
         lst = ["mtspr 850, 1",  # KAIVB
                "mfspr 2, 850",
                ]
@@ -21,6 +22,26 @@ class TrapTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
                                     initial_msr=msr)
+
+    def case_2_kaivb_test(self):
+        # https://bugs.libre-soc.org/show_bug.cgi?id=859
+        # sets KAIVB to 1<<13 then deliberately causes exception.
+        # PC expected to jump to (1<<13)|0x700 *NOT* 0x700 as usual
+        lst = ["mtspr 850, 1",  # KAIVB
+               "tbegin.",       # deliberately use illegal instruction
+               ]
+        initial_regs = [0] * 32
+        initial_regs[1] = 1<<13
+        initial_sprs = {'KAIVB': 0x12345678,
+                        }
+        msr = 0xa000000000000003
+        e = ExpectedState(pc=0x2700)
+        e.intregs[1] = 1<<13
+        e.msr = 0xa000000000000003 # TODO, not actually checked
+        self.add_case(Program(lst, bigendian),
+                      initial_regs, initial_sprs,
+                                    initial_msr=msr,
+                                    expected=e)
 
     def case_0_hrfid(self):
         lst = ["hrfid"]

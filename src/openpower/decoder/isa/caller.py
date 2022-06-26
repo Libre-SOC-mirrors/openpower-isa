@@ -741,15 +741,18 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         hence the default arguments.  when calling from inside ISACaller
         it is best to use call_trap()
         """
-        log("TRAP:", hex(trap_addr), hex(self.namespace['MSR'].value))
+        # https://bugs.libre-soc.org/show_bug.cgi?id=859
+        kaivb = self.spr['KAIVB'].value
+        msr = self.namespace['MSR'].value
+        log("TRAP:", hex(trap_addr), hex(msr), "kaivb", hex(kaivb))
         # store CIA(+4?) in SRR0, set NIA to 0x700
         # store MSR in SRR1, set MSR to um errr something, have to check spec
         # store SVSTATE (if enabled) in SVSRR0
         self.spr['SRR0'].value = self.pc.CIA.value
-        self.spr['SRR1'].value = self.namespace['MSR'].value
+        self.spr['SRR1'].value = msr
         if self.is_svp64_mode:
             self.spr['SVSRR0'] = self.namespace['SVSTATE'].value
-        self.trap_nia = SelectableInt(trap_addr, 64)
+        self.trap_nia = SelectableInt(trap_addr | (kaivb&~0x1fff), 64)
         self.spr['SRR1'][trap_bit] = 1  # change *copy* of MSR in SRR1
 
         # set exception bits.  TODO: this should, based on the address
