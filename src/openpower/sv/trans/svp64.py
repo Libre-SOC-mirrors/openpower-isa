@@ -1373,7 +1373,7 @@ def asm_process():
             macro = op[4:].split(",")
             (macro, value) = map(str.strip, macro)
             macros[macro] = value
-        if not op.startswith(tuple(CUSTOM_INSNS)):
+        if not op.startswith('sv.') and not op.startswith(tuple(CUSTOM_INSNS)):
             outfile.write(line)
             continue
 
