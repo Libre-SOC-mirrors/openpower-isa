@@ -707,16 +707,22 @@ def process_csvs(format):
     # now write out the csv files
     for value, csv in svp64.items():
         if value == '-':
+            continue
             from time import sleep
             print ("WARNING, filename '-' should NOT exist. instrs missing")
             print ("TODO: fix this (and put in the bugreport number here)")
             sleep(2)
-            continue
         # print out svp64 tables by category
         print("## %s" % value)
         print('')
-        print('[[!table format=csv file="openpower/isatables/%s.csv"]]' %
-              value)
+        cols = csvcols + ['out2']
+        print(tformat(cols))
+        print(tformat([" - "] * (len(cols))))
+        for d in csv:
+            row = []
+            for k in cols:
+                row.append(d[k])
+            print(tformat(row))
         print('')
 
         #csvcols = ['insn', 'Ptype', 'Etype', '0', '1', '2', '3']
