@@ -141,7 +141,7 @@ def dformat(d):
 
 
 def tformat(d):
-    return ' | '.join(d) + " |"
+    return "| " + ' | '.join(d) + " |"
 
 
 def keyname(row):
@@ -252,7 +252,7 @@ def process_csvs(format):
     insns = {}  # dictionary of CSV row, by instruction
     insn_to_csv = {}
 
-    print("# OpenPOWER ISA register 'profile's")
+    print("# Draft SVP64 Power ISA register 'profile's")
     print('')
     print("this page is auto-generated, do not edit")
     print("created by http://libre-soc.org/openpower/sv_analysis.py")
@@ -263,7 +263,7 @@ def process_csvs(format):
 
     # Ignore those containing: valid test sprs
     for fname in glob(pth):
-        print("sv analysis checking", fname)
+        #print("sv analysis checking", fname)
         _, name = os.path.split(fname)
         if '-' in name:
             continue
@@ -286,7 +286,7 @@ def process_csvs(format):
         for row in csv:
             if blank_key(row):
                 continue
-            print("row", row)
+            #print("row", row)
             insn_name = row['comment']
             condition = row['CONDITIONS']
             # skip instructions that are not suitable
@@ -360,18 +360,19 @@ def process_csvs(format):
               }
     print("# map to old SV Prefix")
     print('')
-    print('[[!table  data="""')
+    print('|internal key | public name |')
+    print('|-----        | ----------  |')
     for key in primarykeys:
         name = keyname(dictkeys[key])
         value = mapsto.get(name, "-")
         print(tformat([name, value + " "]))
-    print('"""]]')
+    print('')
     print('')
 
     print("# keys")
     print('')
-    print('[[!table  data="""')
     print(tformat(tablecols) + " imms | name |")
+    print(tformat([" - "] * (len(tablecols)+2)))
 
     # print out the keys and the table from which they're derived
     for key in primarykeys:
@@ -382,7 +383,7 @@ def process_csvs(format):
         row += " %s | " % ("/".join(imms))
         row += " %s |" % name
         print(row)
-    print('"""]]')
+    print('')
     print('')
 
     # print out, by remap name, all the instructions under that category
@@ -391,13 +392,13 @@ def process_csvs(format):
         value = mapsto.get(name, "-")
         print("## %s (%s)" % (name, value))
         print('')
-        print('[[!table  data="""')
-        print(tformat(['CSV', 'opcode', 'asm', 'form']))
+        print(tformat(['CSV', 'opcode', 'asm', 'flags', 'form']))
+        print(tformat(['---', '------', '---', '-----', '----']))
         rows = bykey[key]
         rows.sort()
         for row in rows:
             print(tformat(row))
-        print('"""]]')
+        print('')
         print('')
 
     # for fname, csv in csvs.items():
@@ -437,7 +438,7 @@ def process_csvs(format):
             #    if row[idx] == 'NONE':
             #        row[idx] = ''
             # get the instruction
-            print(key, row)
+            #print(key, row)
             insn_name = row[2]
             condition = row[3]
             insn = insns[(insn_name, condition)]
@@ -485,7 +486,7 @@ def process_csvs(format):
                     else:
                         regs.append('')
 
-            print("regs", insn_name, regs)
+            #print("regs", insn_name, regs)
 
             # for LD/ST FP, use FRT/FRS not RT/RS, and use CR1 not CR0
             if insn_name.startswith("lf"):
@@ -730,7 +731,7 @@ def process_csvs(format):
 
     # Ignore those containing: valid test sprs
     for fname in glob(pth):
-        print("post-checking", fname)
+        #print("post-checking", fname)
         _, name = os.path.split(fname)
         if '-' in name:
             continue
@@ -827,7 +828,7 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
                 re = re.replace("1P", "P1")
                 re = re.replace("2P", "P2")
                 row.append(re)
-            print("sventry", sventry)
+            #print("sventry", sventry)
             for colname in sv_cols:
                 if sventry is None:
                     re = 'NONE'
@@ -841,6 +842,8 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
 
 
 def main():
+    import os
+    os.environ['SILENCELOG'] = '1'
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--format",
                         type=Format, choices=Format, default=Format.VHDL,
