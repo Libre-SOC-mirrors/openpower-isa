@@ -2,6 +2,7 @@ import abc as _abc
 import argparse as _argparse
 import dataclasses as _dataclasses
 import enum as _enum
+import functools as _functools
 import operator as _operator
 
 from openpower.decoder.power_enums import (
@@ -519,6 +520,14 @@ class Codegen(_enum.Enum):
                         prefix="extern const ", suffix=";")
             yield ""
 
+            yield "extern const struct powerpc_pd_reg svp64_regs[];"
+            yield Size.c_var("svp64_num_regs", prefix="extern const ", suffix=";")
+            yield ""
+
+            yield "extern const struct powerpc_pd_reg svp64_cr_regs[];"
+            yield Size.c_var("svp64_num_cr_regs", prefix="extern const ", suffix=";")
+            yield ""
+
             yield "#ifdef __cplusplus"
             yield "}"
             yield "#endif"
@@ -653,6 +662,48 @@ class Codegen(_enum.Enum):
 
             for name in map(_operator.itemgetter(0), macros):
                 yield f"#undef {name}"
+            yield ""
+
+            yield "const struct powerpc_pd_reg svp64_regs[] = {"
+            regs = {}
+            for (category, count, flags) in sorted((
+                        ("r", 128, "PPC_OPERAND_GPR"),
+                        ("f", 128, "PPC_OPERAND_FPR"),
+                        ("cr", 128, "PPC_OPERAND_CR_REG"),
+                    )):
+                for index in range(count):
+                    regs[f"{category}{index}"] = (index, flags)
+                    regs[f"{category}.{index}"] = (index, flags)
+            for (name, (index, flags)) in sorted(regs.items()):
+                yield from indent([f"{{\"{name}\", {index}, {flags}}},"])
+            yield "};"
+            yield ""
+
+            num_regs = Size("(sizeof (svp64_regs) / sizeof (svp64_regs[0]))")
+            yield Size.c_var("svp64_num_regs",
+                        prefix="const ", suffix=" = \\")
+            yield from indent(num_regs.c_value(suffix=";"))
+            yield ""
+
+            yield "const struct powerpc_pd_reg svp64_cr_regs[] = {"
+            regs = {
+                "eq": (2, "PPC_OPERAND_CR_BIT"),
+                "gt": (1, "PPC_OPERAND_CR_BIT"),
+                "lt": (0, "PPC_OPERAND_CR_BIT"),
+                "so": (3, "PPC_OPERAND_CR_BIT"),
+                "un": (3, "PPC_OPERAND_CR_BIT"),
+            }
+            for index in range(128):
+                regs[f"cr{index}"] = (index, "PPC_OPERAND_CR_REG")
+            for (name, (index, flags)) in sorted(regs.items()):
+                yield from indent([f"{{\"{name}\", {index}, {flags}}},"])
+            yield "};"
+            yield ""
+
+            num_regs = Size("(sizeof (svp64_cr_regs) / sizeof (svp64_cr_regs[0]))")
+            yield Size.c_var("svp64_num_cr_regs",
+                        prefix="const ", suffix=" = \\")
+            yield from indent(num_regs.c_value(suffix=";"))
             yield ""
 
 
