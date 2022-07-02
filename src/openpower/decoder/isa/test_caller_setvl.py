@@ -128,6 +128,57 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 0)
             self.assertEqual(CR0[CRFields.SO], 0)
 
+    def test_setvl_ctr_1(self):
+        """setvl CTR mode, testing if VL and MVL are over-ridden
+        """
+        lst = SVP64Asm(["setvl 1, 0, 10, 0, 1, 1",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2), want to see if these get changed
+        svstate = SVP64State()
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+        sprs = {'CTR': 5,
+               }
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_sprs=sprs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            self.assertEqual(sim.svstate.vl, 5)
+            self.assertEqual(sim.svstate.maxvl, 10)
+            print("      gpr1", sim.gpr(1))
+            self.assertEqual(sim.gpr(1), SelectableInt(5, 64))
+
+    def test_setvl_ctr_2(self):
+        """setvl CTR large, testing if VL and MVL are over-ridden
+        """
+        lst = SVP64Asm(["setvl 1, 0, 10, 0, 1, 1",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2), want to see if these get changed
+        svstate = SVP64State()
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+        sprs = {'CTR': 0x1000000000,
+               }
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_sprs=sprs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            self.assertEqual(sim.svstate.vl, 10)
+            self.assertEqual(sim.svstate.maxvl, 10)
+            print("      gpr1", sim.gpr(1))
+            self.assertEqual(sim.gpr(1), SelectableInt(10, 64))
 
     def test_setvl_1(self):
         """straight setvl, testing if VL and MVL are over-ridden
@@ -688,10 +739,12 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR4[CRFields.SO], 0)
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None):
+                              svstate=None,
+                              initial_sprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
-        simulator = run_tst(prog, initial_regs, svstate=svstate)
+        simulator = run_tst(prog, initial_regs, svstate=svstate,
+                              initial_sprs=initial_sprs)
         simulator.gpr.dump()
         return simulator
 
