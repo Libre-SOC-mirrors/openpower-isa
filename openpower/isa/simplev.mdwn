@@ -28,30 +28,32 @@ Pseudo-code:
 
     if (vf & (¬vs) & ¬(ms)) = 1 then
         step <- SVSTATE_NEXT(SVi, 0b0)
-        if _RT != 0b00000 then
+        if _RT != 0 then
            GPR(_RT) <- [0]*57 || step
     else
         VLimm <- SVi + 1
-        if vs = 1 then
-            if _RA != 0 then
-                VL <- (RA|0)[57:63]
-            else
-                VL <- VLimm[0:6]
-        else
+        if vs = 0 then
             VL <- SVSTATE[7:13]
+        else if _RA != 0 then
+            VL <- (RA)[57:63]
+        else if _RT != 0 then
+            VL <- CTR
+        else
+            VL <- VLimm[0:6]
         if ms = 1 then
             MVL <- VLimm[0:6]
         else
             MVL <- SVSTATE[0:6]
-        if VL > MVL then
-            VL = MVL
+        if VL >u MVL then
+            VL <- MVL
         SVSTATE[0:6] <- MVL
         SVSTATE[7:13] <- VL
-        if _RT != 0b00000 then
+        if _RT != 0 then
            GPR(_RT) <- [0]*57 || VL
-        # set requested Vertical-First mode, clear persist
-        SVSTATE[63] <- vf
-        SVSTATE[62] <- 0b0
+        if ((¬vs) & ¬(ms)) = 0 then
+            # set requested Vertical-First mode, clear persist
+            SVSTATE[63] <- vf
+            SVSTATE[62] <- 0b0
 
 Special Registers Altered:
 

@@ -65,7 +65,7 @@ class SVSTATETestCase(FHDLTestCase):
 
     def test_svstep_add_1(self):
         """tests svstep with an add, using scalar adds, when it reaches VL
-        lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
+        lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add 1, 5.v, 9.v',
                         'sv.addi 12.v, 1, 1',
                         "setvl. 0, 0, 1, 1, 0, 0",
@@ -77,7 +77,7 @@ class SVSTATETestCase(FHDLTestCase):
         sequence is as follows:
 
         * setvl sets VL=2 but also "Vertical First" mode.
-          this sets MSR[SVF].
+          this sets SVSTATE[SVF].
         * first add, which has srcstep/dststep = 0, does add 1,5,9
         * first addi, which has srcstep/dststep = 0, does addi 12, 1, #1
         * svstep EXPLICITLY walks srcstep/dststep to next element
@@ -86,7 +86,7 @@ class SVSTATETestCase(FHDLTestCase):
         * second addi, which has srcstep/dststep = 1, does addi 13, 1, #1
         * svstep EXPLICITLY walks srcstep/dststep to next element,
           which now equals VL.  srcstep and dststep are both set to
-          zero, and MSR[SVF] is cleared.  CR0.SO is set to 1 because
+          zero.  CR0.SO is set to 1 because
           it is the end of the looping.
 
         the first add will write 0x5555 into r1, then the vector-addi
@@ -97,7 +97,7 @@ class SVSTATETestCase(FHDLTestCase):
         store the result in r13 (0x3335).
 
         """
-        lst = SVP64Asm(["setvl 3, 0, 2, 1, 1, 1",
+        lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add 1, 5.v, 9.v',       # scalar dest (into r1)
                         'sv.addi 12.v, 1, 1',       # scalar src (from r1)
                         "setvl. 0, 0, 1, 1, 0, 0",  # svstep
@@ -125,7 +125,6 @@ class SVSTATETestCase(FHDLTestCase):
         expected_regs[1] = 0x3334   # last temporary
         expected_regs[12] = 0x5556
         expected_regs[13] = 0x3335
-        expected_regs[3] = 2       # setvl places copy of VL here
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
