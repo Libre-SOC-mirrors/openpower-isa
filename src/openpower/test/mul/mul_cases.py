@@ -1,11 +1,22 @@
 from openpower.simulator.program import Program
 from openpower.endian import bigendian
 from openpower.test.common import TestAccumulatorBase, skip_case
+from openpower.test.state import ExpectedState
 
 import random
 
 
 class MulTestCases2Arg(TestAccumulatorBase):
+
+    def case_kestrel_regression_0(self):
+        lst = ["mulhd r30,r9,r30"]
+        initial_regs = [0] * 32
+        initial_regs[30] = 0x20c49ba5e353f7cf
+        initial_regs[9] = 0x1f40
+        e = ExpectedState(initial_regs, 4)
+        e.intregs[30] = 0x400
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
     def case_0_mullw(self):
         lst = [f"mullw 3, 1, 2"]
         initial_regs = [0] * 32
