@@ -23,7 +23,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_add_scalar_reduce(self):
-        """>>> lst = ['sv.add/mr 1, 5.v, 1'
+        """>>> lst = ['sv.add/mr 1, *5, 1'
                        ]
         note: there are 2 adds (VL=2) but *three values involved*
         adds:
@@ -31,7 +31,7 @@ class DecoderTestCase(FHDLTestCase):
             * 1 = 5 + 1  => 0x101 + 0x202 => 0x303
             * 1 = 6 + 1  => 0x303 + 0x404 => 0x707
         """
-        isa = SVP64Asm(['sv.add/mr 1, 5.v, 1'
+        isa = SVP64Asm(['sv.add/mr 1, *5, 1'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -58,7 +58,7 @@ class DecoderTestCase(FHDLTestCase):
             self._check_regs(sim, expected_regs)
 
     def test_sv_add_prefix_sum(self):
-        """>>> lst = ['sv.add/mr 2.v, 2.v, 1.v'
+        """>>> lst = ['sv.add/mr *2, *2, *1'
                        ]
             adds performed - not in reverse
             * 2 = 2 + 1  => 1 + 2  =>  3
@@ -67,7 +67,7 @@ class DecoderTestCase(FHDLTestCase):
 
             pascal's triangle!
         """
-        isa = SVP64Asm(['sv.add/mr 2.v, 2.v, 1.v'
+        isa = SVP64Asm(['sv.add/mr *2, *2, *1'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -97,14 +97,14 @@ class DecoderTestCase(FHDLTestCase):
             self._check_regs(sim, expected_regs)
 
     def test_sv_add_prefix_sum_reverse(self):
-        """>>> lst = ['sv.add/mrr 2.v, 2.v, 1.v'
+        """>>> lst = ['sv.add/mrr *2, *2, *1'
                        ]
             adds performed - *in reverse order*
             * 4 = 4 + 3  => 1 + 2  =>  3
             * 3 = 3 + 2  => 3 + 2  =>  5
             * 2 = 2 + 1  => 3 + 4  =>  7
         """
-        isa = SVP64Asm(['sv.add/mrr 2.v, 2.v, 1.v'
+        isa = SVP64Asm(['sv.add/mrr *2, *2, *1'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -135,7 +135,7 @@ class DecoderTestCase(FHDLTestCase):
             self._check_regs(sim, expected_regs)
 
     def test_fp_muls_reduce(self):
-        """>>> lst = ["sv.fmuls/mr 1, 2.v, 1",
+        """>>> lst = ["sv.fmuls/mr 1, *2, 1",
                      ]
         note that VL=3 but *four values are involved*
         answer should be 7.0 * -9.8 * -9.8 * 2.0 = 1344.56
@@ -145,7 +145,7 @@ class DecoderTestCase(FHDLTestCase):
         * FPR 1 multiplied by FPR 3, -9.8
         * FPR 1 multiplied by FPR 4, 2.0
         """
-        isa = SVP64Asm(["sv.fmuls/mr 1, 2.v, 1",
+        isa = SVP64Asm(["sv.fmuls/mr 1, *2, 1",
                      ])
         lst = list(isa)
         print ("listing", lst)
@@ -173,11 +173,11 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(4), SelectableInt(0x4000000000000000, 64))
 
     def test_sv_fpmadds(self):
-        """>>> lst = ["sv.fmadds/mr 6, 2.v, 4.v, 6"
+        """>>> lst = ["sv.fmadds/mr 6, *2, *4, 6"
                         ]
                 this example uses f6 as a multiply-accumulate-sum mapreduce
         """
-        lst = SVP64Asm(["sv.fmadds/mr 6, 2.v, 4.v, 6"
+        lst = SVP64Asm(["sv.fmadds/mr 6, *2, *4, 6"
                         ])
         lst = list(lst)
 
