@@ -27,15 +27,15 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 2, 0, 0x0008",
                         "addi 5, 0, 0x1234",
                         "addi 6, 0, 0x1235",
-                        "sv.stw 5.v, 0(1.v)",
-                        "sv.lwz 9.v, 0(1.v)"]
+                        "sv.stw *5, 0(*1)",
+                        "sv.lwz *9, 0(*1)"]
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0008",
                         "addi 5, 0, 0x1234",
                         "addi 6, 0, 0x1235",
-                        "sv.stw 5.v, 0(1.v)",
-                        "sv.lwz 9.v, 0(1.v)"])
+                        "sv.stw *5, 0(*1)",
+                        "sv.lwz *9, 0(*1)"])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
@@ -57,7 +57,7 @@ class DecoderTestCase(FHDLTestCase):
                  f"addi 2, 0, {i}",  # set r2 to i
                 "cmpi cr0, 1, 1, 10",  # compare r1 with 10 and store to cr0
                 "cmpi cr1, 1, 2, 10",  # compare r2 with 10 and store to cr1
-                "sv.bc 12, 2.v, 0xc",    # beq 0xc -
+                "sv.bc 12, *2, 0xc",    # beq 0xc -
                                        # branch if r1 equals 10 to the nop below
                 "addi 3, 0, 0x1234",   # if r1 == 10 this shouldn't execute
                 "or 0, 0, 0"]          # branch target
@@ -84,7 +84,7 @@ class DecoderTestCase(FHDLTestCase):
                  f"addi 2, 0, {i}",  # set r2 to i
                 "cmpi cr0, 1, 1, 8",  # compare r1 with 10 and store to cr0
                 "cmpi cr1, 1, 2, 8",  # compare r2 with 10 and store to cr1
-                "sv.bc/all 12, 1.v, 0xc",    # bgt 0xc - branch if BOTH
+                "sv.bc/all 12, *1, 0xc",    # bgt 0xc - branch if BOTH
                                        # r1 AND r2 greater 8 to the nop below
                 "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
                 "or 0, 0, 0"]          # branch target
@@ -105,14 +105,14 @@ class DecoderTestCase(FHDLTestCase):
                     self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
 
     def tst_sv_add_cr(self):
-        """>>> lst = ['sv.add. 1.v, 5.v, 9.v'
+        """>>> lst = ['sv.add. *1, *5, *9'
                        ]
 
         adds when Rc=1:                               TODO CRs higher up
             * 1 = 5 + 9   => 0 = -1+1                 CR0=0b100
             * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111   CR1=0b010
         """
-        isa = SVP64Asm(['sv.add. 1.v, 5.v, 9.v'
+        isa = SVP64Asm(['sv.add. *1, *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
