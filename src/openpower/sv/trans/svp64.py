@@ -468,6 +468,8 @@ def decode_ffirst(encoding):
 
 def decode_reg(field):
     # decode the field number. "5.v" or "3.s" or "9"
+    # and now also "*0", and "*%0".  note: *NOT* to add "*%rNNN" etc.
+    # https://bugs.libre-soc.org/show_bug.cgi?id=884#c0
     field = field.split(".")
     regmode = 'scalar'  # default
     if len(field) == 2:
