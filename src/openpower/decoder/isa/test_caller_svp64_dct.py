@@ -253,7 +253,7 @@ class DCTTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_ffadds_dct(self):
-        """>>> lst = ["sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+        """>>> lst = ["sv.fdmadds *0, *0, *0, *8"
                         ]
             four in-place vector adds, four in-place vector mul-subs
 
@@ -264,7 +264,7 @@ class DCTTestCase(FHDLTestCase):
                 fadds FRT   , FRB, FRA
                 fsubs FRT+vl, FRA, FRB+vl
         """
-        lst = SVP64Asm(["sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+        lst = SVP64Asm(["sv.fdmadds *0, *0, *0, *8"
                         ])
         lst = list(lst)
 
@@ -316,7 +316,7 @@ class DCTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_dct_inner_4(self):
         """>>> lst = ["svshape 4, 1, 1, 2, 0",
                      "svremap 27, 1, 0, 2, 0, 1, 0",
-                        "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                        "sv.fdmadds *0, *0, *0, *8"
                      ]
             runs a full in-place 4-long O(N log2 N) inner butterfly schedule
             for DCT
@@ -330,7 +330,7 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["svshape 4, 1, 1, 2, 0",
                          "svremap 27, 1, 0, 2, 0, 1, 0",
-                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.fdmadds *0, *0, *0, *8"
                         ])
         lst = list(lst)
 
@@ -383,7 +383,7 @@ class DCTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_idct_inner_4(self):
         """>>> lst = ["svshape 4, 1, 1, 10, 0",
                       "svremap 27, 0, 1, 2, 1, 0, 0",
-                      "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                      "sv.ffmadds *0, *0, *0, *8"
                      ]
             runs a full in-place 4-long O(N log2 N) inner butterfly schedule
             for inverse-DCT
@@ -397,7 +397,7 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["svshape 4, 1, 1, 10, 0",
                          "svremap 27, 0, 1, 2, 1, 0, 0",
-                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.ffmadds *0, *0, *0, *8"
                         ])
         lst = list(lst)
 
@@ -445,7 +445,7 @@ class DCTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_idct_outer_8(self):
         """>>> lst = ["svshape 8, 1, 1, 11, 0",
                      "svremap 27, 0, 1, 2, 1, 0, 0",
-                         "sv.fadds 0.v, 0.v, 0.v"
+                         "sv.fadds *0, *0, *0"
                      ]
             runs a full in-place 8-long O(N log2 N) outer butterfly schedule
             for inverse-DCT, does the iterative overlapped ADDs
@@ -454,7 +454,7 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["svshape 8, 1, 1, 11, 0", # outer butterfly
                          "svremap 27, 0, 1, 2, 1, 0, 0",
-                         "sv.fadds 0.v, 0.v, 0.v"
+                         "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -503,7 +503,7 @@ class DCTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_dct_outer_8(self):
         """>>> lst = ["svshape 8, 1, 1, 3, 0",
                      "svremap 27, 1, 0, 2, 0, 1, 0",
-                         "sv.fadds 0.v, 0.v, 0.v"
+                         "sv.fadds *0, *0, *0"
                      ]
             runs a full in-place 8-long O(N log2 N) outer butterfly schedule
             for DCT, does the iterative overlapped ADDs
@@ -512,7 +512,7 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["svshape 8, 1, 1, 3, 0",
                          "svremap 27, 1, 0, 2, 0, 1, 0",
-                         "sv.fadds 0.v, 0.v, 0.v"
+                         "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -554,18 +554,18 @@ class DCTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_idct_8(self):
         """>>> lst = ["svremap 27, 1, 0, 2, 0, 1, 1",
                          "svshape 8, 1, 1, 11, 0",
-                         "sv.fadds 0.v, 0.v, 0.v",
+                         "sv.fadds *0, *0, *0",
                          "svshape 8, 1, 1, 10, 0",
-                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.ffmadds *0, *0, *0, *8"
                      ]
             runs a full in-place 8-long O(N log2 N) inverse-DCT, both
             inner and outer butterfly "REMAP" schedules.
         """
         lst = SVP64Asm( ["svremap 27, 0, 1, 2, 1, 0, 1",
                          "svshape 8, 1, 1, 11, 0",
-                         "sv.fadds 0.v, 0.v, 0.v",
+                         "sv.fadds *0, *0, *0",
                          "svshape 8, 1, 1, 10, 0",
-                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.ffmadds *0, *0, *0, *8"
                         ])
         lst = list(lst)
 
@@ -636,18 +636,18 @@ class DCTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_dct_8(self):
         """>>> lst = ["svremap 27, 1, 0, 2, 0, 1, 1",
                       "svshape 8, 1, 1, 2, 0",
-                      "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                      "sv.fdmadds *0, *0, *0, *8"
                       "svshape 8, 1, 1, 3, 0",
-                      "sv.fadds 0.v, 0.v, 0.v"
+                      "sv.fadds *0, *0, *0"
                      ]
             runs a full in-place 8-long O(N log2 N) DCT, both
             inner and outer butterfly "REMAP" schedules.
         """
         lst = SVP64Asm( ["svremap 27, 1, 0, 2, 0, 1, 1",
                          "svshape 8, 1, 1, 2, 0",
-                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v",
+                         "sv.fdmadds *0, *0, *0, *8",
                          "svshape 8, 1, 1, 3, 0",
-                         "sv.fadds 0.v, 0.v, 0.v"
+                         "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -714,22 +714,22 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["svshape 8, 1, 1, 2, 0",
                         "svremap 0, 0, 0, 2, 0, 1, 1",
-                        "sv.svstep 4.v, 4, 1", # svstep get vector of ci
-                        "sv.svstep 16.v, 3, 1", # svstep get vector of step
+                        "sv.svstep *4, 4, 1", # svstep get vector of ci
+                        "sv.svstep *16, 3, 1", # svstep get vector of step
                         "addi 1, 0, 0x0000",
                         "setvl 0, 0, 12, 0, 1, 1",
-                        "sv.std 4.v, 0(1)",
-                        "sv.lfd  64.v, 0(1)",
-                        "sv.fcfids 48.v, 64.v",
+                        "sv.std *4, 0(1)",
+                        "sv.lfd  *64, 0(1)",
+                        "sv.fcfids *48, *64",
                         "addi 1, 0, 0x0060",
-                        "sv.std 16.v, 0(1)",
-                        "sv.lfd  12.v, 0(1)",
-                        "sv.fcfids 24.v, 12.v",
-                        "sv.fadds 0.v, 24.v, 43", # plus 0.5
-                        "sv.fmuls 0.v, 0.v, 41", # times PI
-                        "sv.fdivs 0.v, 0.v, 48.v", # div size
-                        "sv.fcoss 80.v, 0.v",
-                        "sv.fdivs 80.v, 43, 80.v", # div 0.5 / x
+                        "sv.std *16, 0(1)",
+                        "sv.lfd  *12, 0(1)",
+                        "sv.fcfids *24, *12",
+                        "sv.fadds *0, *24, 43", # plus 0.5
+                        "sv.fmuls *0, *0, 41", # times PI
+                        "sv.fdivs *0, *0, *48", # div size
+                        "sv.fcoss *80, *0",
+                        "sv.fdivs *80, 43, *80", # div 0.5 / x
                      ])
         lst = list(lst)
 
@@ -788,22 +788,22 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["svshape 8, 1, 1, 5, 0",
                         "svremap 0, 0, 0, 2, 0, 1, 1",
-                        "sv.svstep 4.v, 3, 1", # svstep get vector of ci
-                        "sv.svstep 16.v, 2, 1", # svstep get vector of step
+                        "sv.svstep *4, 3, 1", # svstep get vector of ci
+                        "sv.svstep *16, 2, 1", # svstep get vector of step
                         "addi 1, 0, 0x0000",
                         "setvl 0, 0, 7, 0, 1, 1",
-                        "sv.std 4.v, 0(1)",
-                        "sv.lfd  64.v, 0(1)",
-                        "sv.fcfids 48.v, 64.v",
+                        "sv.std *4, 0(1)",
+                        "sv.lfd  *64, 0(1)",
+                        "sv.fcfids *48, *64",
                         "addi 1, 0, 0x0060",
-                        "sv.std 16.v, 0(1)",
-                        "sv.lfd  12.v, 0(1)",
-                        "sv.fcfids 24.v, 12.v",
-                        "sv.fadds 0.v, 24.v, 43", # plus 0.5
-                        "sv.fmuls 0.v, 0.v, 41", # times PI
-                        "sv.fdivs 0.v, 0.v, 48.v", # div size
-                        "sv.fcoss 80.v, 0.v",
-                        "sv.fdivs 80.v, 43, 80.v", # div 0.5 / x
+                        "sv.std *16, 0(1)",
+                        "sv.lfd  *12, 0(1)",
+                        "sv.fcfids *24, *12",
+                        "sv.fadds *0, *24, 43", # plus 0.5
+                        "sv.fmuls *0, *0, 41", # times PI
+                        "sv.fdivs *0, *0, *48", # div size
+                        "sv.fcoss *80, *0",
+                        "sv.fdivs *80, 43, *80", # div 0.5 / x
                      ])
         lst = list(lst)
 
@@ -855,9 +855,9 @@ class DCTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_dct_8_mode_4(self):
         """>>> lst = ["svremap 31, 1, 0, 2, 0, 1, 1",
                       "svshape 8, 1, 1, 4, 0",
-                      "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                      "sv.fdmadds *0, *0, *0, *8"
                       "svshape 8, 1, 1, 3, 0",
-                      "sv.fadds 0.v, 0.v, 0.v"
+                      "sv.fadds *0, *0, *0"
                      ]
             runs a full in-place 8-long O(N log2 N) DCT, both
             inner and outer butterfly "REMAP" schedules.
@@ -865,9 +865,9 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["svremap 31, 1, 0, 2, 0, 1, 1",
                          "svshape 8, 1, 1, 4, 0",
-                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v",
+                         "sv.fdmadds *0, *0, *0, *8",
                          "svshape 8, 1, 1, 3, 0",
-                         "sv.fadds 0.v, 0.v, 0.v"
+                         "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -925,14 +925,14 @@ class DCTTestCase(FHDLTestCase):
         """>>> lst = [# LOAD bit-reversed with half-swap
                       "svshape 8, 1, 1, 6, 0",
                       "svremap 1, 0, 0, 0, 0, 0, 0",
-                      "sv.lfssh 0.v, 4(1), 2",
+                      "sv.lfssh *0, 4(1), 2",
                       # Inner butterfly, twin +/- MUL-ADD-SUB
                       "svremap 31, 1, 0, 2, 0, 1, 1",
                       "svshape 8, 1, 1, 4, 0",
-                      "sv.fdmadds 0.v, 0.v, 0.v, 8.v"
+                      "sv.fdmadds *0, *0, *0, *8"
                       # Outer butterfly, iterative sum
                       "svshape 8, 1, 1, 3, 0",
-                      "sv.fadds 0.v, 0.v, 0.v"
+                      "sv.fadds *0, *0, *0"
                      ]
             runs a full in-place 8-long O(N log2 N) DCT, both
             inner and outer butterfly "REMAP" schedules, and using
@@ -943,12 +943,12 @@ class DCTTestCase(FHDLTestCase):
         lst = SVP64Asm( ["addi 1, 0, 0x000",
                          "svshape 8, 1, 1, 6, 0",
                          "svremap 1, 0, 0, 0, 0, 0, 0",
-                         "sv.lfssh 0.v, 4(1), 2",
+                         "sv.lfssh *0, 4(1), 2",
                          "svremap 31, 1, 0, 2, 0, 1, 1",
                          "svshape 8, 1, 1, 4, 0",
-                         "sv.fdmadds 0.v, 0.v, 0.v, 8.v",
+                         "sv.fdmadds *0, *0, *0, *8",
                          "svshape 8, 1, 1, 3, 0",
-                         "sv.fadds 0.v, 0.v, 0.v"
+                         "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -1015,14 +1015,14 @@ class DCTTestCase(FHDLTestCase):
         """>>> lst = [# LOAD bit-reversed with half-swap
                       "svshape 8, 1, 1, 14, 0",
                       "svremap 1, 0, 0, 0, 0, 0, 0",
-                      "sv.lfssh 0.v, 4(1), 2",
+                      "sv.lfssh *0, 4(1), 2",
                       # Outer butterfly, iterative sum
                       "svremap 31, 0, 1, 2, 1, 0, 1",
                       "svshape 8, 1, 1, 11, 0",
-                      "sv.fadds 0.v, 0.v, 0.v",
+                      "sv.fadds *0, *0, *0",
                       # Inner butterfly, twin +/- MUL-ADD-SUB
                       "svshape 8, 1, 1, 10, 0",
-                      "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                      "sv.ffmadds *0, *0, *0, *8"
                      ]
             runs a full in-place 8-long O(N log2 N) Inverse-DCT, both
             inner and outer butterfly "REMAP" schedules, and using
@@ -1033,12 +1033,12 @@ class DCTTestCase(FHDLTestCase):
         lst = SVP64Asm( ["addi 1, 0, 0x000",
                          "svshape 8, 1, 1, 14, 0",
                          "svremap 1, 0, 0, 0, 0, 0, 0",
-                         "sv.lfssh 0.v, 4(1), 2",
+                         "sv.lfssh *0, 4(1), 2",
                          "svremap 31, 0, 1, 2, 1, 0, 1",
                          "svshape 8, 1, 1, 11, 0",
-                         "sv.fadds 0.v, 0.v, 0.v",
+                         "sv.fadds *0, *0, *0",
                          "svshape 8, 1, 1, 12, 0",
-                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.ffmadds *0, *0, *0, *8"
                         ])
         lst = list(lst)
 
