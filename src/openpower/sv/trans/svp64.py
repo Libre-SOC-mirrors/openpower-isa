@@ -471,9 +471,9 @@ def decode_reg(field):
     # and now also "*0", and "*%0".  note: *NOT* to add "*%rNNN" etc.
     # https://bugs.libre-soc.org/show_bug.cgi?id=884#c0
     if field.startswith("*%"):
-        return "vector", int(field[2:])  # actual register number
+        return int(field[2:]), "vector"  # actual register number
     if field.startswith("*"):
-        return "vector", int(field[1:])  # actual register number
+        return int(field[1:]), "vector"  # actual register number
     # try old convention (to be retired)
     field = field.split(".")
     regmode = 'scalar'  # default
