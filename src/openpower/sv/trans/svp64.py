@@ -470,6 +470,11 @@ def decode_reg(field):
     # decode the field number. "5.v" or "3.s" or "9"
     # and now also "*0", and "*%0".  note: *NOT* to add "*%rNNN" etc.
     # https://bugs.libre-soc.org/show_bug.cgi?id=884#c0
+    if field.startswith("*%"):
+        return "vector", int(field[2:])  # actual register number
+    if field.startswith("*"):
+        return "vector", int(field[1:])  # actual register number
+    # try old convention (to be retired)
     field = field.split(".")
     regmode = 'scalar'  # default
     if len(field) == 2:
