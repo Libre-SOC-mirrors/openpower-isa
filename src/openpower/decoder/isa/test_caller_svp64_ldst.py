@@ -1,5 +1,5 @@
 from nmigen import Module, Signal
-from nmigen.back.pysim import Simulator, Delay, Settle
+from nmigen.sim import Simulator, Delay, Settle
 from nmutil.formaltest import FHDLTestCase
 import unittest
 from openpower.decoder.isa.caller import ISACaller
@@ -34,8 +34,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 2, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw/els 4.v, 16(1)",
-                        "sv.lwz/els 8.v, 16(1)"]
+                        "sv.stw/els *4, 16(1)",
+                        "sv.lwz/els *8, 16(1)"]
 
         note: element stride mode is only enabled when RA is a scalar
         and when the immediate is non-zero
@@ -48,8 +48,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 2, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw/els 4.v, 24(1)",  # scalar r1 + 16 + 24*offs
-                        "sv.lwz/els 8.v, 24(1)"]) # scalar r1 + 16 + 24*offs
+                        "sv.stw/els *4, 24(1)",  # scalar r1 + 16 + 24*offs
+                        "sv.lwz/els *8, 24(1)"]) # scalar r1 + 16 + 24*offs
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
@@ -79,8 +79,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 2, 0, 0x0008",
                         "addi 5, 0, 0x1234",
                         "addi 6, 0, 0x1235",
-                        "sv.stw 8.v, 8(1)",
-                        "sv.lwz 12.v, 8(1)"]
+                        "sv.stw *8, 8(1)",
+                        "sv.lwz *12, 8(1)"]
 
         note: unit stride mode is only enabled when RA is a scalar.
 
@@ -93,8 +93,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 2, 0, 0x0008",
                         "addi 8, 0, 0x1234",
                         "addi 9, 0, 0x1235",
-                        "sv.stw 8.v, 8(1)",  # scalar r1 + 8 + wordlen*offs
-                        "sv.lwz 12.v, 8(1)"]) # scalar r1 + 8 + wordlen*offs
+                        "sv.stw *8, 8(1)",  # scalar r1 + 8 + wordlen*offs
+                        "sv.lwz *12, 8(1)"]) # scalar r1 + 8 + wordlen*offs
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
@@ -126,8 +126,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 6, 0, 0x202",
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
-                        "sv.stw 5.v, 0(1)",
-                        "sv.lwzsh 12.v, 4(1), 2"]
+                        "sv.stw *5, 0(1)",
+                        "sv.lwzsh *12, 4(1), 2"]
 
         shifted LD is computed as:
         for i in range(VL):
@@ -139,8 +139,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 6, 0, 0x202",
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
-                        "sv.stw 5.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
-                        "sv.lwzsh 12.v, 4(1), 2"]) # bit-reversed
+                        "sv.stw *5, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "sv.lwzsh *12, 4(1), 2"]) # bit-reversed
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
@@ -185,8 +185,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 6, 0, 0x202",
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
-                        "sv.std 5.v, 0(1)",
-                        "sv.lfdbr 12.v, 4(1), 2"]
+                        "sv.std *5, 0(1)",
+                        "sv.lfdbr *12, 4(1), 2"]
 
         shifted LD is computed as:
         for i in range(VL):
@@ -198,8 +198,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 6, 0, 0x202",
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
-                        "sv.std 5.v, 0(1)", # scalar r1 + 0 + wordlen*offs
-                        "sv.lfdsh 12.v, 8(1), 2"]) # shifted
+                        "sv.std *5, 0(1)", # scalar r1 + 0 + wordlen*offs
+                        "sv.lfdsh *12, 8(1), 2"]) # shifted
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
@@ -246,8 +246,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
-                        "sv.stfs 4.v, 0(1)",
-                        "sv.lfssh 12.v, 4(1), 2"]
+                        "sv.stfs *4, 0(1)",
+                        "sv.lfssh *12, 4(1), 2"]
 
         shifted LD is computed as:
         for i in range(VL):
@@ -256,8 +256,8 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
-                        "sv.stfs 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
-                        "sv.lfssh 12.v, 4(1), 2"]) # shifted (by zero, but hey)
+                        "sv.stfs *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "sv.lfssh *12, 4(1), 2"]) # shifted (by zero, but hey)
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
@@ -303,10 +303,10 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 6, 0, 0x202",
                         "addi 7, 0, 0x303",
                         "addi 8, 0, 0x404",
-                        "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "sv.stw *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "svshape 3, 3, 4, 0, 0",
                         "svremap 1, 1, 2, 0, 0, 0, 0",
-                        "sv.lwz 20.v, 0(1)",
+                        "sv.lwz *20, 0(1)",
                         ]
 
         REMAPed a LD operation via a Matrix Multiply Schedule,
@@ -329,11 +329,11 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 16, 0, 0xd0d",
                         "addi 17, 0, 0xe0e",
                         "addi 18, 0, 0xf0f",
-                        "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "sv.stw *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "svshape 3, 3, 4, 0, 0",
                         "svremap 1, 1, 2, 0, 0, 0, 0",
-                        "sv.lwz 20.v, 0(1)",
-                        #"sv.lwzsh 12.v, 4(1), 2", # bit-reversed
+                        "sv.lwz *20, 0(1)",
+                        #"sv.lwzsh *12, 4(1), 2", # bit-reversed
                         ])
         lst = list(lst)
 
@@ -387,10 +387,10 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 9, 0, 0x606",
                         "addi 10, 0, 0x707",
                         "addi 11, 0, 0x808",
-                        "sv.stw 5.v, 0(1)",
+                        "sv.stw *5, 0(1)",
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
-                        "sv.lwzsh 12.v, 4(1), 2"]
+                        "sv.lwzsh *12, 4(1), 2"]
 
         shifted LD is computed as:
         for i in range(VL):
@@ -415,12 +415,12 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 9, 0, 0x506",
                         "addi 10, 0, 0x607",
                         "addi 11, 0, 0x708",
-                        "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "sv.stw *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 1, 0, 0, 0, 0, 0, 0",
                         #"setvl 0, 0, 8, 0, 1, 1",
-                        "sv.lwzsh 12.v, 4(1), 2",  # bit-reversed
-                        #"sv.lwz 12.v, 0(1)"
+                        "sv.lwzsh *12, 4(1), 2",  # bit-reversed
+                        #"sv.lwz *12, 0(1)"
                         ])
         lst = list(lst)
 
@@ -474,10 +474,10 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 9, 0, 0x606",
                         "addi 10, 0, 0x707",
                         "addi 11, 0, 0x808",
-                        "sv.stw 5.v, 0(1)",
+                        "sv.stw *5, 0(1)",
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
-                        "sv.lwzsh 12.v, 4(1), 2"]
+                        "sv.lwzsh *12, 4(1), 2"]
 
         bitreverse LD is computed as:
         for i in range(VL):
@@ -502,12 +502,12 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 9, 0, 0x506",
                         "addi 10, 0, 0x607",
                         "addi 11, 0, 0x708",
-                        "sv.stw 4.v, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "sv.stw *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "svshape 8, 1, 1, 14, 0",
                         "svremap 16, 0, 0, 0, 0, 0, 0",
                         #"setvl 0, 0, 8, 0, 1, 1",
-                        "sv.lwzsh 12.v, 4(1), 2",  # bit-reversed
-                        #"sv.lwz 12.v, 0(1)"
+                        "sv.lwzsh *12, 4(1), 2",  # bit-reversed
+                        #"sv.lwz *12, 0(1)"
                         ])
         lst = list(lst)
 
