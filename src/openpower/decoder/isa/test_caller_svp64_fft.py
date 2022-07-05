@@ -140,7 +140,7 @@ class FFTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_fft(self):
         """>>> lst = ["svshape 8, 1, 1, 1, 0",
                      "svremap 31, 1, 0, 2, 0, 1, 0",
-                      "sv.ffmadds 2.v, 2.v, 2.v, 10.v"
+                      "sv.ffmadds *2, *2, *2, *10"
                      ]
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform.
@@ -156,7 +156,7 @@ class FFTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
-                        "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                        "sv.ffmadds *0, *0, *0, *8"
                         ])
         lst = list(lst)
 
@@ -202,7 +202,7 @@ class FFTTestCase(FHDLTestCase):
         """>>> lst = SVP64Asm( [
                             "svshape 8, 1, 1, 1, 1",
                              "svremap 31, 1, 0, 2, 0, 1, 0",
-                            "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
+                            "sv.ffmadds *0, *0, *0, *8",
                             "setvl. 0, 0, 1, 1, 0, 0",
                             "bc 6, 3, -16"
                             ])
@@ -217,7 +217,7 @@ class FFTTestCase(FHDLTestCase):
         lst = SVP64Asm( [
                         "svshape 8, 1, 1, 1, 1",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
-                        "sv.ffmadds 0.v, 0.v, 0.v, 8.v",
+                        "sv.ffmadds *0, *0, *0, *8",
                         "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 6, 3, -16"
                         ])
@@ -286,10 +286,10 @@ class FFTTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 1, 1",
                          # RA: jh (S1) RB: n/a RC: k (S2) RT: scalar EA: n/a
                          "svremap 5, 1, 0, 2, 0, 0, 1",
-                         "sv.fmuls 24, 0.v, 8.v",
+                         "sv.fmuls 24, *0, *8",
                          # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
                          "svremap 26, 0, 0, 0, 0, 1, 1",
-                        "sv.ffadds 0.v, 24, 0.v",
+                        "sv.ffadds *0, 24, *0",
                         "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 6, 3, -28"
                             ])
@@ -325,10 +325,10 @@ class FFTTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 1, 1",
                          # RA: jh (S1) RB: n/a RC: k (S2) RT: scalar EA: n/a
                          "svremap 5, 1, 0, 2, 0, 0, 0",
-                         "sv.fmuls 24, 0.v, 8.v",
+                         "sv.fmuls 24, *0, *8",
                          # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
                          "svremap 26, 0, 0, 0, 0, 1, 0",
-                        "sv.ffadds 0.v, 24, 0.v",
+                        "sv.ffadds *0, 24, *0",
                         "setvl. 0, 0, 1, 1, 0, 0",
                         "bc 6, 3, -28"
                         ])
@@ -393,7 +393,7 @@ class FFTTestCase(FHDLTestCase):
                 self.assertTrue(err < 1e-7)
 
     def test_sv_fpmadds_fft(self):
-        """>>> lst = ["sv.ffmadds 2.v, 2.v, 2.v, 10.v"
+        """>>> lst = ["sv.ffmadds *2, *2, *2, *10"
                         ]
             four in-place vector mul-adds, four in-place vector mul-subs
 
@@ -411,7 +411,7 @@ class FFTTestCase(FHDLTestCase):
                 fnmsubs FRT+vl, FRA, FRC, FRB+vl
 
         """
-        lst = SVP64Asm(["sv.ffmadds 2.v, 2.v, 2.v, 10.v"
+        lst = SVP64Asm(["sv.ffmadds *2, *2, *2, *10"
                         ])
         lst = list(lst)
 
@@ -448,7 +448,7 @@ class FFTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+6), u)
 
     def test_sv_ffadds_fft(self):
-        """>>> lst = ["sv.ffadds 2.v, 2.v, 2.v"
+        """>>> lst = ["sv.ffadds *2, *2, *2"
                         ]
             four in-place vector adds, four in-place vector subs
 
@@ -459,7 +459,7 @@ class FFTTestCase(FHDLTestCase):
                 fadds FRT   , FRB, FRA
                 fsubs FRT+vl, FRA, FRB+vl
         """
-        lst = SVP64Asm(["sv.ffadds 2.v, 2.v, 2.v"
+        lst = SVP64Asm(["sv.ffadds *2, *2, *2"
                         ])
         lst = list(lst)
 
@@ -550,17 +550,17 @@ class FFTTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 1, 1",
                         "svremap 31, 1, 0, 2, 0, 1, 1",
                         # tpre
-                        "sv.fmuls 24, 0.v, 16.v",    # mul1_r = r*cos_r
-                        "sv.fmadds 24, 8.v, 20.v, 24", # mul2_r = i*sin_i
+                        "sv.fmuls 24, *0, *16",    # mul1_r = r*cos_r
+                        "sv.fmadds 24, *8, *20, 24", # mul2_r = i*sin_i
                                                      # tpre = mul1_r + mul2_r
                         # tpim
-                        "sv.fmuls 26, 0.v, 20.v",    # mul1_i = r*sin_i
-                        "sv.fmsubs 26, 8.v, 16.v, 26", # mul2_i = i*cos_r
+                        "sv.fmuls 26, *0, *20",    # mul1_i = r*sin_i
+                        "sv.fmsubs 26, *8, *16, 26", # mul2_i = i*cos_r
                                                      # tpim = mul2_i - mul1_i
                         # vec_r jh/jl
-                        "sv.ffadds 0.v, 24, 0.v",    # vh/vl +/- tpre
+                        "sv.ffadds *0, 24, *0",    # vh/vl +/- tpre
                         # vec_i jh/jl
-                        "sv.ffadds 8.v, 26, 8.v",    # vh/vl +- tpim
+                        "sv.ffadds *8, 26, *8",    # vh/vl +- tpim
 
                         # svstep loop
                         "setvl. 0, 0, 1, 1, 0, 0",
@@ -646,12 +646,12 @@ class FFTTestCase(FHDLTestCase):
                 self.assertTrue(err < 1e-6)
 
     def test_sv_ffadds_fft_scalar(self):
-        """>>> lst = ["sv.ffadds 2.v, 12, 13"
+        """>>> lst = ["sv.ffadds *2, 12, 13"
                         ]
             four in-place vector adds and subs, but done with a scalar
             pair (fp12, fp13)
         """
-        lst = SVP64Asm(["sv.ffadds 2.v, 12, 13"
+        lst = SVP64Asm(["sv.ffadds *2, 12, 13"
                         ])
         lst = list(lst)
 
@@ -692,20 +692,20 @@ class FFTTestCase(FHDLTestCase):
 
     def test_sv_remap_fpmadds_fft_ldst(self):
         """>>>lst = ["setvl 0, 0, 8, 0, 1, 1",
-                         "sv.lfssh 0.v, 4(0), 20", # bit-reversed
+                         "sv.lfssh *0, 4(0), 20", # bit-reversed
                          "svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
-                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.ffmadds *0, *0, *0, *8"
 
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform, using bit-reversed LD/ST
         """
         lst = SVP64Asm( ["svshape 8, 1, 1, 15, 0",
                          "svremap 1, 0, 0, 0, 0, 0, 0",
-                         "sv.lfssh 0.v, 4(0), 20", # shifted
+                         "sv.lfssh *0, 4(0), 20", # shifted
                          "svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
-                         "sv.ffmadds 0.v, 0.v, 0.v, 8.v"
+                         "sv.ffmadds *0, *0, *0, *8"
                         ])
         lst = list(lst)
 
