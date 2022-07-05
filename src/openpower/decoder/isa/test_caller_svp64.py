@@ -1,5 +1,5 @@
 from nmigen import Module, Signal
-from nmigen.back.pysim import Simulator, Delay, Settle
+from nmigen.sim import Simulator, Delay, Settle
 from nmutil.formaltest import FHDLTestCase
 import unittest
 from openpower.decoder.isa.caller import ISACaller
@@ -27,15 +27,15 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 17, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw 4.v, 0(1.v)",
-                        "sv.lwz 8.v, 0(1.v)"]
+                        "sv.stw *4, 0(*1)",
+                        "sv.lwz *8, 0(*1)"]
         """
         lst = SVP64Asm(["addi 16, 0, 0x0010",
                         "addi 17, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw 4.v, 0(16.v)",
-                        "sv.lwz 8.v, 0(16.v)"])
+                        "sv.stw *4, 0(*16)",
+                        "sv.lwz *8, 0(*16)"])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
@@ -51,13 +51,13 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(9), SelectableInt(0x1235, 64))
 
     def test_sv_add(self):
-        """>>> lst = ['sv.add 1.v, 5.v, 9.v'
+        """>>> lst = ['sv.add *1, *5, *9'
                        ]
         adds:
             * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
             * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111
         """
-        isa = SVP64Asm(['sv.add 1.v, 5.v, 9.v'
+        isa = SVP64Asm(['sv.add *1, *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -83,12 +83,12 @@ class DecoderTestCase(FHDLTestCase):
             self._check_regs(sim, expected_regs)
 
     def test_sv_add_2(self):
-        """>>> lst = ['sv.add 1, 5.v, 9.v' ]
+        """>>> lst = ['sv.add 1, *5, *9' ]
         adds:
             * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
             * r1 is scalar so ENDS EARLY
         """
-        isa = SVP64Asm(['sv.add 1, 5.v, 9.v'
+        isa = SVP64Asm(['sv.add 1, *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -113,13 +113,13 @@ class DecoderTestCase(FHDLTestCase):
             self._check_regs(sim, expected_regs)
 
     def test_sv_add_3(self):
-        """>>> lst = ['sv.add 1.v, 5, 9.v' ]
+        """>>> lst = ['sv.add *1, 5, *9' ]
 
         adds:
             * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
             * 2 = 5 + 10  => 0x5432 = 0x4321+0x1111
         """
-        isa = SVP64Asm(['sv.add 1.v, 5, 9.v'
+        isa = SVP64Asm(['sv.add *1, 5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -145,12 +145,12 @@ class DecoderTestCase(FHDLTestCase):
             self._check_regs(sim, expected_regs)
 
     def test_sv_add_vl_0(self):
-        """>>> lst = ['sv.add 1, 5.v, 9.v'
+        """>>> lst = ['sv.add 1, *5, *9'
                        ]
         adds:
             * none because VL is zero
         """
-        isa = SVP64Asm(['sv.add 1, 5.v, 9.v'
+        isa = SVP64Asm(['sv.add 1, *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -174,14 +174,14 @@ class DecoderTestCase(FHDLTestCase):
             self._check_regs(sim, expected_regs)
 
     def test_sv_add_cr(self):
-        """>>> lst = ['sv.add. 1.v, 5.v, 9.v'
+        """>>> lst = ['sv.add. *1, *5, *9'
                        ]
 
         adds when Rc=1:                               TODO CRs higher up
             * 1 = 5 + 9   => 0 = -1+1                 CR0=0b100
             * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111   CR1=0b010
         """
-        isa = SVP64Asm(['sv.add. 1.v, 5.v, 9.v'
+        isa = SVP64Asm(['sv.add. *1, *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
