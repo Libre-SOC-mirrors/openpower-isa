@@ -27,6 +27,7 @@ from openpower.decoder.isa.radixmmu import RADIX
 from openpower.util import log
 import os
 import sys
+from copy import deepcopy
 
 global staterunner_factory
 staterunner_factory = {}
@@ -242,13 +243,13 @@ class ExpectedState(State):
             int_regs = 32
         if isinstance(int_regs, int):
             int_regs = [0] * int_regs
-        self.intregs = int_regs
+        self.intregs = deepcopy(int_regs)
         self.pc = pc
         if crregs is None:
             crregs = 8
         if isinstance(crregs, int):
             crregs = [0] * crregs
-        self.crregs = crregs
+        self.crregs = deepcopy(crregs)
         self.so = so
         self.ov = ov
         self.ca = ca
