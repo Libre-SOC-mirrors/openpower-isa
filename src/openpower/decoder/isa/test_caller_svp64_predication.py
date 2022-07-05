@@ -1,5 +1,5 @@
 from nmigen import Module, Signal
-from nmigen.back.pysim import Simulator, Delay, Settle
+from nmigen.sim import Simulator, Delay, Settle
 from nmutil.formaltest import FHDLTestCase
 import unittest
 from openpower.decoder.isa.caller import ISACaller
@@ -26,8 +26,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 2, 0, 0x0008",
                         "addi 5, 0, 0x1234",
                         "addi 6, 0, 0x1235",
-                        "sv.stw 5.v, 0(1.v)",
-                        "sv.lwz 9.v, 0(1.v)"])
+                        "sv.stw *5, 0(*1)",
+                        "sv.lwz *9, 0(*1)"])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
@@ -64,7 +64,7 @@ class DecoderTestCase(FHDLTestCase):
         #                              |
         #   dest r3=0b10             N Y
 
-        isa = SVP64Asm(['sv.extsb/sm=~r3/dm=r3 5.v, 9.v'
+        isa = SVP64Asm(['sv.extsb/sm=~r3/dm=r3 *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -90,7 +90,7 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_sv_extsw_intpred_dz(self):
         # extsb, integer twin-pred mask: dest is r3 (0b01), zeroing on dest
-        isa = SVP64Asm(['sv.extsb/dm=r3/dz 5.v, 9.v'
+        isa = SVP64Asm(['sv.extsb/dm=r3/dz *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -127,7 +127,7 @@ class DecoderTestCase(FHDLTestCase):
         #                    | +-------+ add --+
         #                    | |
         #   dest r3=0b10     N Y
-        isa = SVP64Asm(['sv.add/m=r3 1.v, 5.v, 9.v'
+        isa = SVP64Asm(['sv.add/m=r3 *1, *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -158,7 +158,7 @@ class DecoderTestCase(FHDLTestCase):
         # adds, CR predicated mask CR4.eq = 1, CR5.eq = 0, invert (ne)
         #       1 = 5 + 9   => not to be touched (skipped)
         #       2 = 6 + 10  => 0x3334 = 0x2223+0x1111
-        isa = SVP64Asm(['sv.add/m=ne 1.v, 5.v, 9.v'
+        isa = SVP64Asm(['sv.add/m=ne *1, *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -197,7 +197,7 @@ class DecoderTestCase(FHDLTestCase):
         #                            | |
         #   dest always              Y Y Y
 
-        isa = SVP64Asm(['sv.extsb/sm=r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -231,7 +231,7 @@ class DecoderTestCase(FHDLTestCase):
         #                            |   |
         #   dest r3=0b101            Y N Y
 
-        isa = SVP64Asm(['sv.extsb/dm=r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/dm=r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -264,7 +264,7 @@ class DecoderTestCase(FHDLTestCase):
         #                              |
         #   dest ~r3=0b010           N Y N
 
-        isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -304,7 +304,7 @@ class DecoderTestCase(FHDLTestCase):
         #   dest ~r3=0b1010          N Y N Y
         #   dststep=2                    ^
 
-        isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -343,7 +343,7 @@ class DecoderTestCase(FHDLTestCase):
         #                              |
         #   dest r3=1: 1<<r3=0b010   N Y N
 
-        isa = SVP64Asm(['sv.extsb/dm=1<<r3/sm=r30 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/dm=1<<r3/sm=r30 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -377,7 +377,7 @@ class DecoderTestCase(FHDLTestCase):
         #                              |
         #   dest r30=0b010           N Y N
 
-        isa = SVP64Asm(['sv.extsb/sm=1<<r3/dm=r30 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=1<<r3/dm=r30 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -415,7 +415,7 @@ class DecoderTestCase(FHDLTestCase):
         #        cr7.lt=1            N Y N Y
         #   dststep=2                    ^
 
-        isa = SVP64Asm(['sv.extsb/sm=eq/dm=lt 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=eq/dm=lt *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
