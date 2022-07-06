@@ -265,3 +265,38 @@ Special Registers Altered:
 
     None
 
+# svindex
+
+SVI-Form
+
+* svindex RS,rmm,SVd,ew,yz,mr,sk
+
+Pseudo-code:
+
+    # VL in Matrix Multiply is xd*yd*zd
+    n <- (0b00 || SVxd) * (0b00 || SVyd) * (0b00 || SVzd)
+    # set up template, then copy once location identified
+    shape = [0]*32
+    shape[30:31] <- 0b00                   # mode
+    if yz = 1 then shape[18:20] = 0b110      # indexed xd/yd
+    else           shape[18:20] = 0b111      # indexed yd/xd
+    shape[0:5] <- (0b0 || SVxd)   # xdim
+    shape[6:11] <- (0b0 || SVyd)   # ydim
+    shape[12:17] <- (0b0 || SVzd || 0b0)   # SVGPR
+    shape[28:29] <- ew                     # element-width override
+    if sk = 1 then shape[28:29] <- 0b01 # skip 1st dimension
+    else           shape[28:29] <- 0b00 # no skipping
+    # select the mode for updating SVSHAPEs
+    if mm = 0 then
+        # clear out all SVSHAPEs first
+        SVSHAPE0[0:31] <- [0] * 32
+        SVSHAPE1[0:31] <- [0] * 32
+        SVSHAPE2[0:31] <- [0] * 32
+        SVSHAPE3[0:31] <- [0] * 32
+        SVSTATE[42:46] <- rmm # rmm exactly REMAP.SVme
+        SVSTATE[62] <- 0      # persistence bit cleared
+
+Special Registers Altered:
+
+    None
+
