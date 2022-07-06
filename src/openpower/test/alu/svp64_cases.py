@@ -8,13 +8,13 @@ from openpower.sv.trans.svp64 import SVP64Asm
 class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_1_sv_add(self):
-        """>>> lst = ['sv.add 1.v, 5.v, 9.v']
+        """>>> lst = ['sv.add *1, *5, *9']
 
         adds:
             * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
             * 2 = 6 + 10  => 0x3334 = 0x2223 + 0x1111
         """
-        isa = SVP64Asm(['sv.add 1.v, 5.v, 9.v'])
+        isa = SVP64Asm(['sv.add *1, *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -57,7 +57,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_3_sv_check_extra(self):
-        """>>> lst = ['sv.add 13.v, 10.v, 7.v']
+        """>>> lst = ['sv.add *13, *10, *7']
 
         adds:
             * 13 = 10 + 7   => 0x4242 = 0x1230 + 0x3012
@@ -68,7 +68,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
         The expected SVP64 register numbers are: 13, 10, 7
         Any mistake in decoding will probably give a different answer
         """
-        isa = SVP64Asm(['sv.add 13.v, 10.v, 7.v'])
+        isa = SVP64Asm(['sv.add *13, *10, *7'])
         lst = list(isa)
         print("listing", lst)
 
@@ -86,13 +86,13 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_4_sv_add_(self):
-        """>>> lst = ['sv.add. 1.v, 5.v, 9.v']
+        """>>> lst = ['sv.add. *1, *5, *9']
 
         adds when Rc=1:                               TODO CRs higher up
             * 1 = 5 + 9   => 0 = -1+1                 CR0=0b100
             * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111   CR1=0b010
         """
-        isa = SVP64Asm(['sv.add. 1.v, 5.v, 9.v'])
+        isa = SVP64Asm(['sv.add. *1, *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -114,7 +114,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_5_sv_check_vl_0(self):
         """>>> lst = [
-            'sv.add 13.v, 10.v, 7.v',  # skipped, because VL == 0
+            'sv.add *13, *10, *7',  # skipped, because VL == 0
             'add 1, 5, 9'
         ]
 
@@ -122,7 +122,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
             * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
         """
         isa = SVP64Asm([
-            'sv.add 13.v, 10.v, 7.v',  # skipped, because VL == 0
+            'sv.add *13, *10, *7',  # skipped, because VL == 0
             'add 1, 5, 9'
         ])
         lst = list(isa)
@@ -146,8 +146,8 @@ class SVP64ALUTestCase(TestAccumulatorBase):
     # checks that SRCSTEP was reset properly after an SV instruction
     def case_6_sv_add_multiple(self):
         """>>> lst = [
-            'sv.add 1.v, 5.v, 9.v',
-            'sv.add 13.v, 10.v, 7.v'
+            'sv.add *1, *5, *9',
+            'sv.add *13, *10, *7'
         ]
 
         adds:
@@ -159,8 +159,8 @@ class SVP64ALUTestCase(TestAccumulatorBase):
             * 15 = 12 + 9  => 0x1234 = 0x0000 + 0x1234
         """
         isa = SVP64Asm([
-            'sv.add 1.v, 5.v, 9.v',
-            'sv.add 13.v, 10.v, 7.v'
+            'sv.add *1, *5, *9',
+            'sv.add *13, *10, *7'
         ])
         lst = list(isa)
         print("listing", lst)
@@ -183,13 +183,13 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_7_sv_add_2(self):
-        """>>> lst = ['sv.add 1, 5.v, 9.v']
+        """>>> lst = ['sv.add 1, *5, *9']
 
         adds:
             * 1 = 5 + 9   => 0x5555 = 0x4321 + 0x1234
         """
         #       r1 is scalar so ENDS EARLY
-        isa = SVP64Asm(['sv.add 1, 5.v, 9.v'])
+        isa = SVP64Asm(['sv.add 1, *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -208,13 +208,13 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_8_sv_add_3(self):
-        """>>> lst = ['sv.add 1.v, 5, 9.v']
+        """>>> lst = ['sv.add *1, 5, *9']
 
         adds:
             * 1 = 5 + 9   => 0x5555 = 0x4321+0x1234
             * 2 = 5 + 10  => 0x5432 = 0x4321+0x1111
         """
-        isa = SVP64Asm(['sv.add 1.v, 5, 9.v'])
+        isa = SVP64Asm(['sv.add *1, 5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -234,8 +234,8 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_13_sv_predicated_add(self):
         """>>> lst = [
-            'sv.add/m=r30 1.v, 5.v, 9.v',
-            'sv.add/m=~r30 13.v, 10.v, 7.v'
+            'sv.add/m=r30 *1, *5, *9',
+            'sv.add/m=~r30 *13, *10, *7'
         ]
 
         checks integer predication using mask-invertmask.
@@ -254,8 +254,8 @@ class SVP64ALUTestCase(TestAccumulatorBase):
            * 15 = 0 (skipped)
         """
         isa = SVP64Asm([
-            'sv.add/m=r30 1.v, 5.v, 9.v',
-            'sv.add/m=~r30 13.v, 10.v, 7.v'
+            'sv.add/m=r30 *1, *5, *9',
+            'sv.add/m=~r30 *13, *10, *7'
         ])
         lst = list(isa)
         print("listing", lst)
@@ -281,8 +281,8 @@ class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_14_intpred_all_zeros_all_ones(self):
         """>>> lst = [
-            'sv.add/m=r30 1.v, 5.v, 9.v',
-            'sv.add/m=~r30 13.v, 10.v, 7.v'
+            'sv.add/m=r30 *1, *5, *9',
+            'sv.add/m=~r30 *13, *10, *7'
         ]
 
         checks an instruction with no effect (all mask bits are zeros).
@@ -301,8 +301,8 @@ class SVP64ALUTestCase(TestAccumulatorBase):
             * 15 = 12 + 9  => 0x7736 = 0x6502 + 0x1234
         """
         isa = SVP64Asm([
-            'sv.add/m=r30 1.v, 5.v, 9.v',
-            'sv.add/m=~r30 13.v, 10.v, 7.v'
+            'sv.add/m=r30 *1, *5, *9',
+            'sv.add/m=~r30 *13, *10, *7'
         ])
         lst = list(isa)
         print("listing", lst)
@@ -328,7 +328,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_18_sv_add_cr_pred(self):
-        """>>> lst = ['sv.add/m=ne 1.v, 5.v, 9.v']
+        """>>> lst = ['sv.add/m=ne *1, *5, *9']
 
         adds, CR predicated mask CR4.eq = 1, CR5.eq = 0, invert (ne)
             * 1 = 5 + 9   => not to be touched (skipped)
@@ -338,7 +338,7 @@ class SVP64ALUTestCase(TestAccumulatorBase):
             * r1 = 0xbeef skipped since CR4 is 1 and test is inverted
             * r2 = 0x3334 CR5 is 0, so this is used
         """
-        isa = SVP64Asm(['sv.add/m=ne 1.v, 5.v, 9.v'])
+        isa = SVP64Asm(['sv.add/m=ne *1, *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
