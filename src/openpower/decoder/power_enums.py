@@ -122,10 +122,11 @@ class Form(Enum):
     SVD = 30  # Simple-V for LD/ST bit-reverse, variant of D-Form
     SVDS = 31  # Simple-V for LD/ST bit-reverse, variant of DS-Form
     SVM = 32  # Simple-V SHAPE mode - TEMPORARY TEMPORARY TEMPORARY
-    SVRM = 33  # Simple-V REMAP mode - TEMPORARY TEMPORARY TEMPORARY
+    SVRM = 33  # Simple-V REMAP mode
     TLI = 34  # ternlogi
     XB = 35
     BM2 = 36 # bmask
+    SVI = 37  # Simple-V Index Mode
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
@@ -328,6 +329,7 @@ _insns = [
     "rlwimi", "rlwinm",    "rlwnm",
     "setb",
     "setvl",  # https://libre-soc.org/openpower/sv/setvl
+    "svindex",  # https://libre-soc.org/openpower/sv/remap
     "svremap",  # https://libre-soc.org/openpower/sv/remap - TEMPORARY
     "svshape",  # https://libre-soc.org/openpower/sv/remap
     "svstep",  # https://libre-soc.org/openpower/sv/setvl
@@ -458,6 +460,7 @@ class MicrOp(Enum):
     OP_ABSADD = 92
     OP_CPROP = 93
     OP_BMASK = 94
+    OP_SVINDEX = 95
 
 
 @unique
