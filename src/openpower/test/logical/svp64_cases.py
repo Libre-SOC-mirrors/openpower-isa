@@ -8,7 +8,7 @@ from openpower.sv.trans.svp64 import SVP64Asm
 class SVP64LogicalTestCase(TestAccumulatorBase):
 
     def case_9_sv_extsw_intpred(self):
-        """>>> lst = ['sv.extsb/sm=~r3/dm=r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=~r3/dm=r3 *5, *9']
 
         extsb, integer twin-pred mask: source is ~r3 (0b01), dest r3 (0b10)
         works as follows, where any zeros indicate "skip element"
@@ -37,7 +37,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
             * r5 = 0x0                   dest r3 is 0b10: skip
             * r6 = 0xffff_ffff_ffff_ff91 2nd bit of r3 is 1
         """
-        isa = SVP64Asm(['sv.extsb/sm=~r3/dm=r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=~r3/dm=r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -56,7 +56,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_10_intpred_vcompress(self):
-        """>>> lst = ['sv.extsb/sm=r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=r3 *5, *9']
 
         ascii graphic::
 
@@ -73,7 +73,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
             * r6 = 0xffff_ffff_ffff_ff92 (from r11)
             * r7 = 0x0 (VL loop runs out before we can use it)
         """
-        isa = SVP64Asm(['sv.extsb/sm=r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -93,7 +93,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_11_intpred_vexpand(self):
-        """>>> lst = ['sv.extsb/dm=r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/dm=r3 *5, *9']
 
         ascii graphic::
 
@@ -110,7 +110,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
             * r6 = 0x0                   skip
             * r7 = 0xffff_ffff_ffff_ff91 3nd bit of r3 is 1
         """
-        isa = SVP64Asm(['sv.extsb/dm=r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/dm=r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -130,7 +130,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_12_sv_twinpred(self):
-        """>>> lst = ['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=r3/dm=~r3 *5, *9']
 
         ascii graphic::
 
@@ -146,7 +146,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
             * r6 = 0xffff_ffff_ffff_ff90 2nd bit of ~r3 is 1
             * r7 = 0x0                   dest ~r3 is 0b010: skip
         """
-        isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -166,7 +166,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_15_intpred_reentrant(self):
-        """>>> lst = ['sv.extsb/sm=r3/dm=~r3 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=r3/dm=~r3 *5, *9']
 
         checks that we are able to resume in the middle of a VL loop,
         after an interrupt, or after the user has updated src/dst step
@@ -196,7 +196,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
             * r7 = 0x0  # skip
             * r8 = 0xffff_ffff_ffff_ff92  # this will be used
         """
-        isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=r3/dm=~r3 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -221,7 +221,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_16_shift_one_by_r3_dest(self):
-        """>>> lst = ['sv.extsb/dm=1<<r3/sm=r30 5.v, 9.v']
+        """>>> lst = ['sv.extsb/dm=1<<r3/sm=r30 *5, *9']
 
         one option for predicate masks is a single-bit set: 1<<r3.
         lots of opportunity for hardware optimisation, it effectively
@@ -241,7 +241,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
             * r6 = 0xffff_ffff_ffff_ff92  r3 is 1, so this is used
             * r7 = 0x0                    skipped
         """
-        isa = SVP64Asm(['sv.extsb/dm=1<<r3/sm=r30 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/dm=1<<r3/sm=r30 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -262,7 +262,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_17_shift_one_by_r3_source(self):
-        """>>> lst = ['sv.extsb/sm=1<<r3/dm=r30 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=1<<r3/dm=r30 *5, *9']
 
         ascii graphic::
 
@@ -278,7 +278,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
             * r6 = 0xffff_ffff_ffff_ff92  2nd bit of r30 is 1
             * r7 = 0x0                    skipped
         """
-        isa = SVP64Asm(['sv.extsb/sm=1<<r3/dm=r30 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=1<<r3/dm=r30 *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -299,7 +299,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate)
 
     def case_19_crpred_reentrant(self):
-        """>>> lst = ['sv.extsb/sm=eq/dm=lt 5.v, 9.v']
+        """>>> lst = ['sv.extsb/sm=eq/dm=lt *5, *9']
 
         checks reentrant CR predication.  note that the source CR-mask
         and destination CR-mask use *different bits* of the CR fields,
@@ -326,7 +326,7 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
             * r7 = 0x0  skip
             * r8 = 0xffff_ffff_ffff_ff92  this will be used
         """
-        isa = SVP64Asm(['sv.extsb/sm=eq/dm=lt 5.v, 9.v'])
+        isa = SVP64Asm(['sv.extsb/sm=eq/dm=lt *5, *9'])
         lst = list(isa)
         print("listing", lst)
 
@@ -362,13 +362,13 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
                       initial_svstate=svstate, initial_cr=cr.cr.asint())
 
     def case_sv_extsw_intpred_dz(self):
-        """>>> lst = ['sv.extsb/dm=r3/dz 5.v, 9.v']
+        """>>> lst = ['sv.extsb/dm=r3/dz *5, *9']
 
         extsb, integer twin-pred mask: dest is r3 (0b01), zeroing on dest.
         this test will put a zero into the element where its corresponding
         predicate dest mask bit is also zero.
         """
-        isa = SVP64Asm(['sv.extsb/dm=r3/dz 5.v, 9.v'
+        isa = SVP64Asm(['sv.extsb/dm=r3/dz *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
