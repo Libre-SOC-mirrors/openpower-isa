@@ -466,14 +466,21 @@ def decode_ffirst(encoding):
     return decode_bo(encoding)
 
 
-def decode_reg(field):
+def decode_reg(field, macros=None):
+    if macros is None:
+        macros = {}
     # decode the field number. "5.v" or "3.s" or "9"
     # and now also "*0", and "*%0".  note: *NOT* to add "*%rNNN" etc.
     # https://bugs.libre-soc.org/show_bug.cgi?id=884#c0
-    if field.startswith("*%"):
-        return int(field[2:]), "vector"  # actual register number
-    if field.startswith("*"):
-        return int(field[1:]), "vector"  # actual register number
+    if field.startswith(("*%", "*")):
+        if field.startswith("*%"):
+            field = field[2:]
+        else:
+            field = field[1:]
+        while field in macros:
+            field = macros[field]
+        return int(field), "vector"  # actual register number
+
     # try old convention (to be retired)
     field = field.split(".")
     regmode = 'scalar'  # default
@@ -718,7 +725,7 @@ class SVP64Asm:
             if ldst_imm:
                 immed, field = field[:-1].split("(")
 
-            field, regmode = decode_reg(field)
+            field, regmode = decode_reg(field, macros=macros)
             log("    ", extra_idx, rname, rtype,
                 regmode, iname, field, end=" ")
 
