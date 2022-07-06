@@ -1,318 +1,318 @@
 #1.6.1 I-FORM
-   |0     |6         |30|31 |
-   | PO   |      LI  |AA|LK |
+    |0     |6         |30|31 |
+    | PO   |      LI  |AA|LK |
 
 #1.6.2 B-FORM
-   |0     |6   |11     |16     |30|31 |
-   | PO   |  BO|   BI  |   BD  |AA|LK |
+    |0     |6   |11     |16     |30|31 |
+    | PO   |  BO|   BI  |   BD  |AA|LK |
 
 # 1.6.2.1 BM-FORM
-   |0     |6    |10  |15  |22  |23    |31|
-   | PO   |  RS | me | sh | me |   XO |Rc|
+    |0     |6    |10  |15  |22  |23    |31|
+    | PO   |  RS | me | sh | me |   XO |Rc|
 
 # 1.6.2.2 BM2-FORM
-   |0     |6    |11    |16    |21   |26 |27    31|
-   | PO   |  RT |   RA |   RB |bm   |L  |   XO   |
+    |0     |6    |11    |16    |21   |26 |27    31|
+    | PO   |  RT |   RA |   RB |bm   |L  |   XO   |
 
 # 1.6.2.1 CRB-FORM
-   |0     |6    |9   |12  |15  |18  |21    |29    |31 |
-   | PO   |  BF | BFA| BFB| BFC| msk| TLI  |   XO |msk|
+    |0     |6    |9   |12  |15  |18  |21    |29    |31 |
+    | PO   |  BF | BFA| BFB| BFC| msk| TLI  |   XO |msk|
 
 #1.6.3 SC-FORM
-   |0     |6    |11    |16    |20     |27  |30 |31  |
-   | PO   |  ///|   ///|   // |   LEV |  //|  1|  / |
+    |0     |6    |11    |16    |20     |27  |30 |31  |
+    | PO   |  ///|   ///|   // |   LEV |  //|  1|  / |
 
 #1.6.4 D-FORM
-   |0     |6   |9  |10 |11   |16      |31 |
-   | PO   |    RT      |   RA|   D        |
-   | PO   |    RT      |   RA|   SI       |
-   | PO   |   RS       |   RA|   D        |
-   | PO   |   RS       |   RA|   UI       |
-   | PO   | BF | / | L |   RA|   SI       |
-   | PO   | BF | / | L |   RA|   UI       |
-   | PO   |    TO      |   RA|   SI       |
-   | PO   |   FRT      |   RA|   D        |
-   | PO   |   FRS      |   RA|   D        |
+    |0     |6   |9  |10 |11   |16      |31 |
+    | PO   |    RT      |   RA|   D        |
+    | PO   |    RT      |   RA|   SI       |
+    | PO   |   RS       |   RA|   D        |
+    | PO   |   RS       |   RA|   UI       |
+    | PO   | BF | / | L |   RA|   SI       |
+    | PO   | BF | / | L |   RA|   UI       |
+    | PO   |    TO      |   RA|   SI       |
+    | PO   |   FRT      |   RA|   D        |
+    | PO   |   FRS      |   RA|   D        |
 
 #1.6.5 DS-FORM
-   |0     |6      |11    |16    |30  |31 |
-   | PO   |   RT  |   RA |   DS |  XO    |
-   | PO   |   RS  |   RA |   DS |  XO    |
-   | PO   |  RSp  |   RA |   DS |  XO    |
-   | PO   |  FRTp |   RA |   DS |  XO    |
-   | PO   |  FRSp |   RA |   DS |  XO    |
+    |0     |6      |11    |16    |30  |31 |
+    | PO   |   RT  |   RA |   DS |  XO    |
+    | PO   |   RS  |   RA |   DS |  XO    |
+    | PO   |  RSp  |   RA |   DS |  XO    |
+    | PO   |  FRTp |   RA |   DS |  XO    |
+    | PO   |  FRSp |   RA |   DS |  XO    |
 
 #1.6.6 DQ-FORM
-   |0     |6     |11    |16    |28|29 |31 |
-   | PO   |  RTp |   RA |   DQ |   PT     |
-   | PO   |  S   |   RA |   DQ |SX| XO    |
-   | PO   |  T   |   RA |   DQ |TX| XO    |
+    |0     |6     |11    |16    |28|29 |31 |
+    | PO   |  RTp |   RA |   DQ |   PT     |
+    | PO   |  S   |   RA |   DQ |SX| XO    |
+    | PO   |  T   |   RA |   DQ |TX| XO    |
 
 # 1.6.7 X-FORM
-   |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
-   | PO   |       RT      |    RA       |     ///     |   XO |  / |
-   | PO   |       RT      |    RA       |    RB       |   XO |  / |
-   | PO   |       RT      |    RA       |    RB       |   XO |EH  |
-   | PO   |       RT      |    RA       |    NB       |   XO |  / |
-   | PO   |       RT      | /|SR        |     ///     |   XO |  / |
-   | PO   |       RT      |     ///     |    RB       |   XO |  / |
-   | PO   |       RT      |     ///     |    RB       |   XO | 1  |
-   | PO   |       RT      |     ///     |     ///     |   XO |  / |
-   | PO   |       RS      |    RA       |    RB       |   XO |Rc  |
-   | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
-   | PO   |       RS      |    RA       |    RB       |   XO | 1  |
-   | PO   |       RS      |    RA       |    RB       |   XO |  / |
-   | PO   |       RS      |    RA       |    NB       |   XO |  / |
-   | PO   |       RS      |    RA       |    SH       |   XO |Rc  |
-   | PO   |       RS      |    RA       |     ///     |   XO |Rc  |
-   | PO   |       RS      |    RA       |     ///     |   XO |  / |
-   | PO   |       RS      | /|SR        |     ///     |   XO |  / |
-   | PO   |       RS      |     ///     |    RB       |   XO |  / |
-   | PO   |       RS      |     ///     |     ///     |   XO |  / |
-   | PO   |       RS      |    ///   |L1|     ///     |   XO |  / |
-   | PO   |       TH      |    RA       |    RB       |   XO |  / |
-   | PO   |  BF  |/  | L  |    RA       |    RB       |   XO |  / |
-   | PO   |  BF  |//      |   FRA       |   FRB       |   XO |  / |
-   | PO   |  BF  |//      | BFA | //    |     ///     |   XO |  / |
-   | PO   |  BF  |//      |    ///   |W |    U     |/ |   XO |Rc  |
-   | PO   |  BF  |//      |     ///     |     ///     |   XO |  / |
-   | PO   |       TH      |    RA       |    RB       |   XO |  / |
-   | PO   | /| CT         |     ///     |     ///     |   XO |  / |
-   | PO   | /| CT         |    RA       |    RB       |   XO |  / |
-   | PO   |  /// | L2     |    RA       |    RB       |   XO |  / |
-   | PO   |  /// | L2     |     ///     |    RB       |   XO |  / |
-   | PO   |  /// | L2     |     ///     |     ///     |   XO |  / |
-   | PO   |  /// | L2     | /|     E    |     ///     |   XO |  / |
-   | PO   |     TO        |    RA       |    RB       |   XO |  / |
-   | PO   |   FRT         |    RA       |    RB       |   XO |  / |
-   | PO   |   FRT         |   FRA       |   FRB       |   XO |  / |
-   | PO   |  FRTp         |    RA       |    RB       |   XO |  / |
-   | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
-   | PO   |   FRT         |     ///     |   FRBp      |   XO |Rc  |
-   | PO   |   FRT         |     ///     |     ///     |   XO |Rc  |
-   | PO   |  FRTp         |      ///    |   FRB       |   XO |Rc  |
-   | PO   |  FRTp         |      ///    |   FRBp      |   XO |Rc  |
-   | PO   |  FRTp         |   FRA       |   FRBp      |   XO |Rc  |
-   | PO   |  FRTp         |   FRAp      |   FRBp      |   XO |Rc  |
-   | PO   |  BF  |//      |   FRA       |   FRBp      |   XO |  / |
-   | PO   |  BF  |//      |   FRAp      |   FRBp      |   XO |  / |
-   | PO   |    FRT        |S |          | FRB         |   XO |Rc  |
-   | PO   |  FRTp         |S |          | FRBp        |   XO |Rc  |
-   | PO   |    FRS        |  RA         |  RB         |   XO |  / |
-   | PO   |  FRSp         |  RA         |  RB         |   XO |  / |
-   | PO   |     BT        |  ///        |  ///        |   XO |Rc  |
-   | PO   |     ///       |  RA         |  RB         |   XO |  / |
-   | PO   |     ///       |  ///        |  RB         |   XO |  / |
-   | PO   |     ///       |  ///        |  ///        |   XO |  / |
-   | PO   |     ///       |  ///        | E|///       |   XO |  / |
-   | PO   |  //|IH        |  ///        |  ///        |   XO |  / |
-   | PO   | A|//          |  ///        |  ///        |   XO | 1  |
-   | PO   | A|//     |R   |  ///        |  ///        |   XO | 1  |
-   | PO   |     ///       |  RA         |  RB         |   XO | 1  |
-   | PO   |  /// |WC      |  ///        |  ///        |   XO |  / |
-   | PO   |  /// |T       |  RA         |  RB         |   XO |  / |
-   | PO   |    VRT        |  RA         |  RB         |   XO |  / |
-   | PO   |   VRS         |  RA         |  RB         |   XO |  / |
-   | PO   |    MO         |  ///        |  ///        |   XO |  / |
-   | PO   |       RT      | /// |L3     |     ///     |   XO | /  |
+    |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
+    | PO   |       RT      |    RA       |     ///     |   XO |  / |
+    | PO   |       RT      |    RA       |    RB       |   XO |  / |
+    | PO   |       RT      |    RA       |    RB       |   XO |EH  |
+    | PO   |       RT      |    RA       |    NB       |   XO |  / |
+    | PO   |       RT      | /|SR        |     ///     |   XO |  / |
+    | PO   |       RT      |     ///     |    RB       |   XO |  / |
+    | PO   |       RT      |     ///     |    RB       |   XO | 1  |
+    | PO   |       RT      |     ///     |     ///     |   XO |  / |
+    | PO   |       RS      |    RA       |    RB       |   XO |Rc  |
+    | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
+    | PO   |       RS      |    RA       |    RB       |   XO | 1  |
+    | PO   |       RS      |    RA       |    RB       |   XO |  / |
+    | PO   |       RS      |    RA       |    NB       |   XO |  / |
+    | PO   |       RS      |    RA       |    SH       |   XO |Rc  |
+    | PO   |       RS      |    RA       |     ///     |   XO |Rc  |
+    | PO   |       RS      |    RA       |     ///     |   XO |  / |
+    | PO   |       RS      | /|SR        |     ///     |   XO |  / |
+    | PO   |       RS      |     ///     |    RB       |   XO |  / |
+    | PO   |       RS      |     ///     |     ///     |   XO |  / |
+    | PO   |       RS      |    ///   |L1|     ///     |   XO |  / |
+    | PO   |       TH      |    RA       |    RB       |   XO |  / |
+    | PO   |  BF  |/  | L  |    RA       |    RB       |   XO |  / |
+    | PO   |  BF  |//      |   FRA       |   FRB       |   XO |  / |
+    | PO   |  BF  |//      | BFA | //    |     ///     |   XO |  / |
+    | PO   |  BF  |//      |    ///   |W |    U     |/ |   XO |Rc  |
+    | PO   |  BF  |//      |     ///     |     ///     |   XO |  / |
+    | PO   |       TH      |    RA       |    RB       |   XO |  / |
+    | PO   | /| CT         |     ///     |     ///     |   XO |  / |
+    | PO   | /| CT         |    RA       |    RB       |   XO |  / |
+    | PO   |  /// | L2     |    RA       |    RB       |   XO |  / |
+    | PO   |  /// | L2     |     ///     |    RB       |   XO |  / |
+    | PO   |  /// | L2     |     ///     |     ///     |   XO |  / |
+    | PO   |  /// | L2     | /|     E    |     ///     |   XO |  / |
+    | PO   |     TO        |    RA       |    RB       |   XO |  / |
+    | PO   |   FRT         |    RA       |    RB       |   XO |  / |
+    | PO   |   FRT         |   FRA       |   FRB       |   XO |  / |
+    | PO   |  FRTp         |    RA       |    RB       |   XO |  / |
+    | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
+    | PO   |   FRT         |     ///     |   FRBp      |   XO |Rc  |
+    | PO   |   FRT         |     ///     |     ///     |   XO |Rc  |
+    | PO   |  FRTp         |      ///    |   FRB       |   XO |Rc  |
+    | PO   |  FRTp         |      ///    |   FRBp      |   XO |Rc  |
+    | PO   |  FRTp         |   FRA       |   FRBp      |   XO |Rc  |
+    | PO   |  FRTp         |   FRAp      |   FRBp      |   XO |Rc  |
+    | PO   |  BF  |//      |   FRA       |   FRBp      |   XO |  / |
+    | PO   |  BF  |//      |   FRAp      |   FRBp      |   XO |  / |
+    | PO   |    FRT        |S |          | FRB         |   XO |Rc  |
+    | PO   |  FRTp         |S |          | FRBp        |   XO |Rc  |
+    | PO   |    FRS        |  RA         |  RB         |   XO |  / |
+    | PO   |  FRSp         |  RA         |  RB         |   XO |  / |
+    | PO   |     BT        |  ///        |  ///        |   XO |Rc  |
+    | PO   |     ///       |  RA         |  RB         |   XO |  / |
+    | PO   |     ///       |  ///        |  RB         |   XO |  / |
+    | PO   |     ///       |  ///        |  ///        |   XO |  / |
+    | PO   |     ///       |  ///        | E|///       |   XO |  / |
+    | PO   |  //|IH        |  ///        |  ///        |   XO |  / |
+    | PO   | A|//          |  ///        |  ///        |   XO | 1  |
+    | PO   | A|//     |R   |  ///        |  ///        |   XO | 1  |
+    | PO   |     ///       |  RA         |  RB         |   XO | 1  |
+    | PO   |  /// |WC      |  ///        |  ///        |   XO |  / |
+    | PO   |  /// |T       |  RA         |  RB         |   XO |  / |
+    | PO   |    VRT        |  RA         |  RB         |   XO |  / |
+    | PO   |   VRS         |  RA         |  RB         |   XO |  / |
+    | PO   |    MO         |  ///        |  ///        |   XO |  / |
+    | PO   |       RT      | /// |L3     |     ///     |   XO | /  |
 
 # 1.6.8 XL-FORM
-   |0     |6    |9  |11  |14   |16    |19|20|21    |31 |
-   | PO   |   BT    |     BA   |    BB      |   XO | / |
-   | PO   |   BO    |     BI   |  /// |BH   |   XO |LK |
-   | PO   |         |    ///             |S |   XO | / |
-   | PO   |  BF |// |BFA |//   |     ///    |   XO | / |
-   | PO   |              ///                |   XO | / |
-   | PO   |             OC                  |   XO | / |
+    |0     |6    |9  |11  |14   |16    |19|20|21    |31 |
+    | PO   |   BT    |     BA   |    BB      |   XO | / |
+    | PO   |   BO    |     BI   |  /// |BH   |   XO |LK |
+    | PO   |         |    ///             |S |   XO | / |
+    | PO   |  BF |// |BFA |//   |     ///    |   XO | / |
+    | PO   |              ///                |   XO | / |
+    | PO   |             OC                  |   XO | / |
 
 # 1.6.9 XFX-FORM
-   |0     |6        |11|12             |20|21    |31 |
-   | PO   |  RT     |     spr             |   XO | / |
-   | PO   |  RT     |     tbr             |   XO | / |
-   | PO   |  RT     |0 |     ///          |   XO | / |
-   | PO   |  RT     |1 |  FXM          |/ |   XO | / |
-   | PO   |  RT     |     dcr             |   XO | / |
-   | PO   |  RT     |    pmrn             |   XO | / |
-   | PO   |  RT     |   BHRBE             |   XO | / |
-   | PO   |  DUI    |    DUIS             |   XO | / |
-   | PO   |  RS     |0 |  FXM          |/ |   XO | / |
-   | PO   |  RS     |1 |  FXM          |/ |   XO | / |
-   | PO   |  RS     |     spr             |   XO | / |
-   | PO   |  RS     |     dcr             |   XO | / |
-   | PO   |  RS     |    pmrn             |   XO | / |
+    |0     |6        |11|12             |20|21    |31 |
+    | PO   |  RT     |     spr             |   XO | / |
+    | PO   |  RT     |     tbr             |   XO | / |
+    | PO   |  RT     |0 |     ///          |   XO | / |
+    | PO   |  RT     |1 |  FXM          |/ |   XO | / |
+    | PO   |  RT     |     dcr             |   XO | / |
+    | PO   |  RT     |    pmrn             |   XO | / |
+    | PO   |  RT     |   BHRBE             |   XO | / |
+    | PO   |  DUI    |    DUIS             |   XO | / |
+    | PO   |  RS     |0 |  FXM          |/ |   XO | / |
+    | PO   |  RS     |1 |  FXM          |/ |   XO | / |
+    | PO   |  RS     |     spr             |   XO | / |
+    | PO   |  RS     |     dcr             |   XO | / |
+    | PO   |  RS     |    pmrn             |   XO | / |
 
 # 1.6.10 XFL-FORM
-   |0     |6|7             |15|16        |21    |31 |
-   | PO   |L|    FLM       |W |FRB       |   XO |Rc |
+    |0     |6|7             |15|16        |21    |31 |
+    | PO   |L|    FLM       |W |FRB       |   XO |Rc |
 
 # 1.6.11 XX1-FORM
-   |0     |6        |11       |16        |21    |31 |
-   | PO   |  T      |   RA    |   RB     |   XO |TX |
-   | PO   |  S      |   RA    |   RB     |   XO |SX |
+    |0     |6        |11       |16        |21    |31 |
+    | PO   |  T      |   RA    |   RB     |   XO |TX |
+    | PO   |  S      |   RA    |   RB     |   XO |SX |
 
 # 1.6.12 XX2-FORM
-   |0     |6    |9  |11   |14  |16        |21 |30|31 |
-   | PO   |    T    |    ///   |    B     |XO |BX|TX |
-   | PO   |    T    | /// |UIM |    B     |XO |BX|TX |
-   | PO   |  BF | //|      /// |    B     |XO |BX| / |
+    |0     |6    |9  |11   |14  |16        |21 |30|31 |
+    | PO   |    T    |    ///   |    B     |XO |BX|TX |
+    | PO   |    T    | /// |UIM |    B     |XO |BX|TX |
+    | PO   |  BF | //|      /// |    B     |XO |BX| / |
 
 # 1.6.13 XX3-FORM
-   |0     |6     |9    |11   |16   |21 |22  |24    |29|30|31 |
-   | PO   |     T      |   A |   B |         XO    |AX|BX|TX |
-   | PO   |     T      |   A |   B |Rc |       XO  |AX|BX|TX |
-   | PO   |  BF  |  // |   A |   B |         XO    |AX|BX|/  |
-   | PO   |     T      |   A |   B |XO |SHW |   XO |AX|BX|TX |
-   | PO   |     T      |   A |   B |XO |DM  |   XO |AX|BX|TX |
+    |0     |6     |9    |11   |16   |21 |22  |24    |29|30|31 |
+    | PO   |     T      |   A |   B |         XO    |AX|BX|TX |
+    | PO   |     T      |   A |   B |Rc |       XO  |AX|BX|TX |
+    | PO   |  BF  |  // |   A |   B |         XO    |AX|BX|/  |
+    | PO   |     T      |   A |   B |XO |SHW |   XO |AX|BX|TX |
+    | PO   |     T      |   A |   B |XO |DM  |   XO |AX|BX|TX |
 
 # 1.6.14 XX4-FORM
-   |0     |6   |11   |16   |21   |26  |28|29 |30|31 |
-   | PO   |  T |   A |   B |   C | XO |CX|AX |BX|TX |
+    |0     |6   |11   |16   |21   |26  |28|29 |30|31 |
+    | PO   |  T |   A |   B |   C | XO |CX|AX |BX|TX |
 
 # 1.6.15 XS-FORM
-   |0     |6    |11    |16    |21    |30|31 |
-   | PO   |  RS |   RA |   sh |   XO |sh|Rc |
+    |0     |6    |11    |16    |21    |30|31 |
+    | PO   |  RS |   RA |   sh |   XO |sh|Rc |
 
 # 1.6.15 XB-FORM
-   |0     |6    |11    |16    |22    |31 |
-   | PO   |  RT |   RA |  XBI |   XO |Rc |
+    |0     |6    |11    |16    |22    |31 |
+    | PO   |  RT |   RA |  XBI |   XO |Rc |
 
 # 1.6.16 XO-FORM
-   |0     |6   |11   |16     |21 |22    |31  |
-   | PO   |  RT|   RA|   RB  |OE |   XO |Rc  |
-   | PO   |  RT|   RA|   RB  |  /|   XO |Rc  |
-   | PO   |  RT|   RA|   RB  |  /|   XO |  / |
-   | PO   |  RT|   RA|   /// |OE |   XO |Rc  |
+    |0     |6   |11   |16     |21 |22    |31  |
+    | PO   |  RT|   RA|   RB  |OE |   XO |Rc  |
+    | PO   |  RT|   RA|   RB  |  /|   XO |Rc  |
+    | PO   |  RT|   RA|   RB  |  /|   XO |  / |
+    | PO   |  RT|   RA|   /// |OE |   XO |Rc  |
 
 # 1.6.17 A-FORM
-   |0     |6     |11      |16     |21      |26    |31 |
-   | PO   |  FRT |   FRA  | FRB   |   FRC  |   XO |Rc |
-   | PO   |  FRT |   FRA  | FRB   |    /// |   XO |Rc |
-   | PO   |  FRT |   FRA  |   /// |   FRC  |   XO |Rc |
-   | PO   |  FRT |    /// | FRB   |    /// |   XO |Rc |
-   | PO   |   RT |   RA   |   RB  |    BC  |   XO |  /|
+    |0     |6     |11      |16     |21      |26    |31 |
+    | PO   |  FRT |   FRA  | FRB   |   FRC  |   XO |Rc |
+    | PO   |  FRT |   FRA  | FRB   |    /// |   XO |Rc |
+    | PO   |  FRT |   FRA  |   /// |   FRC  |   XO |Rc |
+    | PO   |  FRT |    /// | FRB   |    /// |   XO |Rc |
+    | PO   |   RT |   RA   |   RB  |    BC  |   XO |  /|
 
 # 1.6.18 M-FORM
-   |0     |6    |11    |16    |21    |26    |31|
-   | PO   |  RS |   RA |   RB |   MB |   ME |Rc|
-   | PO   |  RS |   RA |   SH |   MB |   ME |Rc|
+    |0     |6    |11    |16    |21    |26    |31|
+    | PO   |  RS |   RA |   RB |   MB |   ME |Rc|
+    | PO   |  RS |   RA |   SH |   MB |   ME |Rc|
 
 # 1.6.19 MD-FORM
-   |0     |6    |11    |16    |21    |27|30|31|
-   | PO   |  RS |   RA |   sh |   mb |XO|sh|Rc|
-   | PO   |  RS |   RA |   sh |   me |XO|sh|Rc|
+    |0     |6    |11    |16    |21    |27|30|31|
+    | PO   |  RS |   RA |   sh |   mb |XO|sh|Rc|
+    | PO   |  RS |   RA |   sh |   me |XO|sh|Rc|
 
 # 1.6.20 MDS-FORM
-   |0     |6    |11    |16    |21    |27    |31|
-   | PO   |  RS |   RA |   RB |   mb |   XO |Rc|
-   | PO   |  RS |   RA |   RB |   me |   XO |Rc|
+    |0     |6    |11    |16    |21    |27    |31|
+    | PO   |  RS |   RA |   RB |   mb |   XO |Rc|
+    | PO   |  RS |   RA |   RB |   me |   XO |Rc|
 
 # 1.6.21 VA-FORM
-   |0      |6     |11     |16     |21|22 |25|26   |31|
-   | PO    |  RT  |   RA  |   RB  |   RC    |   XO   |
-   | PO    |  VRT |   VRA |   VRB |  VRC    |   XO   |
-   | PO    |  VRT |   VRA |   VRB | /|SHB   |   XO   |
-   | PO    |  VRT |   VRA |   VRB | /|BFA|/ |   XO   |
+    |0      |6     |11     |16     |21|22 |25|26   |31|
+    | PO    |  RT  |   RA  |   RB  |   RC    |   XO   |
+    | PO    |  VRT |   VRA |   VRB |  VRC    |   XO   |
+    | PO    |  VRT |   VRA |   VRB | /|SHB   |   XO   |
+    | PO    |  VRT |   VRA |   VRB | /|BFA|/ |   XO   |
 
 # 1.6.21.1 VA2-FORM
-   |0      |6     |11     |16     |21  |24|26   |31|
-   | PO    |  RT  |   RA  |   RB  | RC    | XO  |Rc|
+    |0      |6     |11     |16     |21  |24|26   |31|
+    | PO    |  RT  |   RA  |   RB  | RC    | XO  |Rc|
 
 # 1.6.22 VC-FORM
-   |0      |6     |11     |16     |21|22   |31|
-   | PO    |  VRT |   VRA |   VRB |Rc|   XO   |
+    |0      |6     |11     |16     |21|22   |31|
+    | PO    |  VRT |   VRA |   VRB |Rc|   XO   |
 
 # 1.6.23 VX-FORM
-   |0      |6     |11           |16    |21   |31|
-   | PO    |  VRT |     VRA     | VRB  |   XO   |
-   | PO    |  VRT |      ///    | VRB  |   XO   |
-   | PO    |  VRT |     UIM     | VRB  |   XO   |
-   | PO    |  VRT | / UIM       | VRB  |   XO   |
-   | PO    |  VRT |  // UIM     | VRB  |   XO   |
-   | PO    |  VRT |   /// UIM   | VRB  |   XO   |
-   | PO    |  VRT |     SIM     |   ///|   XO   |
-   | PO    |  VRT |          ///|      |   XO   |
-   | PO    |      |///          | VRB  |   XO   |
+    |0      |6     |11           |16    |21   |31|
+    | PO    |  VRT |     VRA     | VRB  |   XO   |
+    | PO    |  VRT |      ///    | VRB  |   XO   |
+    | PO    |  VRT |     UIM     | VRB  |   XO   |
+    | PO    |  VRT | / UIM       | VRB  |   XO   |
+    | PO    |  VRT |  // UIM     | VRB  |   XO   |
+    | PO    |  VRT |   /// UIM   | VRB  |   XO   |
+    | PO    |  VRT |     SIM     |   ///|   XO   |
+    | PO    |  VRT |          ///|      |   XO   |
+    | PO    |      |///          | VRB  |   XO   |
 
 # 1.6.24 EVX-FORM
-   |0      |6   |9 |11    |16    |21    |31|
-   | PO    |   RS  |   RA |   RB |   XO    |
-   | PO    |   RS  |   RA |   UI |   XO    |
-   | PO    |   RT  |   ///|   RB |   XO    |
-   | PO    |   RT  |   RA |   RB |   XO    |
-   | PO    |   RT  |   RA |   ///|   XO    |
-   | PO    |   RT  |   UI |   RB |   XO    |
-   | PO    |  BF|//|   RA |   RB |   XO    |
-   | PO    |   RT  |   RA |   UI |   XO    |
-   | PO    |   RT  |   SI |   ///|   XO    |
+    |0      |6   |9 |11    |16    |21    |31|
+    | PO    |   RS  |   RA |   RB |   XO    |
+    | PO    |   RS  |   RA |   UI |   XO    |
+    | PO    |   RT  |   ///|   RB |   XO    |
+    | PO    |   RT  |   RA |   RB |   XO    |
+    | PO    |   RT  |   RA |   ///|   XO    |
+    | PO    |   RT  |   UI |   RB |   XO    |
+    | PO    |  BF|//|   RA |   RB |   XO    |
+    | PO    |   RT  |   RA |   UI |   XO    |
+    | PO    |   RT  |   SI |   ///|   XO    |
 
 # 1.6.25 EVS-FORM
-   |0      |6   |11    |16    |21    |29 |31 |
-   | PO    |  RT|   RA |   RB |   XO |BFA    |
+    |0      |6   |11    |16    |21    |29 |31 |
+    | PO    |  RT|   RA |   RB |   XO |BFA    |
 
 # 1.6.26 Z22-FORM
-   |0      |6  |9 |11     |16     |22    |31 |
-   | PO    | BF|//|   FRA |   DCM |   XO | / |
-   | PO    | BF|//|  FRAp |   DCM |   XO | / |
-   | PO    | BF|//|   FRA |   DGM |   XO | / |
-   | PO    | BF|//|  FRAp |   DGM |   XO | / |
-   | PO    |  FRT |   FRA |    SH |   XO |Rc |
-   | PO    |  FRTp|  FRAp |    SH |   XO |Rc |
+    |0      |6  |9 |11     |16     |22    |31 |
+    | PO    | BF|//|   FRA |   DCM |   XO | / |
+    | PO    | BF|//|  FRAp |   DCM |   XO | / |
+    | PO    | BF|//|   FRA |   DGM |   XO | / |
+    | PO    | BF|//|  FRAp |   DGM |   XO | / |
+    | PO    |  FRT |   FRA |    SH |   XO |Rc |
+    | PO    |  FRTp|  FRAp |    SH |   XO |Rc |
 
 # 1.6.27 Z23-FORM
-   |0     |6     |11    |15 |16     |21 |23    |31 |
-   | PO   |  FRT |    TE    |   FRB |RMC|   XO |Rc |
-   | PO   |  FRTp|    TE    |  FRBp |RMC|   XO |Rc |
-   | PO   |  FRT |   FRA    |   FRB |RMC|   XO |Rc |
-   | PO   |  FRTp|   FRA    |  FRBp |RMC|   XO |Rc |
-   | PO   |  FRTp|  FRAp    |  FRBp |RMC|   XO |Rc |
-   | PO   |  FRT |  /// | R | FRB   |RMC|   XO |Rc |
-   | PO   |  FRTp|  /// | R | FRBp  |RMC|   XO |Rc |
+    |0     |6     |11    |15 |16     |21 |23    |31 |
+    | PO   |  FRT |    TE    |   FRB |RMC|   XO |Rc |
+    | PO   |  FRTp|    TE    |  FRBp |RMC|   XO |Rc |
+    | PO   |  FRT |   FRA    |   FRB |RMC|   XO |Rc |
+    | PO   |  FRTp|   FRA    |  FRBp |RMC|   XO |Rc |
+    | PO   |  FRTp|  FRAp    |  FRBp |RMC|   XO |Rc |
+    | PO   |  FRT |  /// | R | FRB   |RMC|   XO |Rc |
+    | PO   |  FRTp|  /// | R | FRBp  |RMC|   XO |Rc |
 
 # V3.0B 1.6.6 DX-FORM
-   |0    |6   |11   |16   |26   |31
-   | PO  |  RT|   d1|   d0|   XO|d2
+    |0    |6   |11   |16   |26   |31
+    | PO  |  RT|   d1|   d0|   XO|d2
 
-# 1.6.28 SVI-FORM
-   |0     |6    |11    |16   |21 |23|24|25|26    31|
-   | PO   |  RS |rmm   | SVd |ew |yx|mm|sk|   XO   |
+# 1.6.29 SVI-FORM
+    |0     |6    |11    |16   |21 |23|24|25|26    31|
+    | PO   |  RS |rmm   | SVd |ew |yx|mm|sk|   XO   |
 
-# 1.6.28 SVL-FORM
-   |0     |6    |11    |16   |23 |24 |25 |26    |31 |
-   | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
-   | PO   |  RT | /    | SVi |/  |/  |vf |   XO |Rc |
+# 1.6.30 SVL-FORM
+    |0     |6    |11    |16   |23 |24 |25 |26    |31 |
+    | PO   |  RT |   RA | SVi |ms |vs |vf |   XO |Rc |
+    | PO   |  RT | /    | SVi |/  |/  |vf |   XO |Rc |
 
-# 1.6.29 SVC-FORM
-   |0     |6    |9    |11     |
-   | PO   | SCi | SCm | SCimm |
+# 1.6.31 SVC-FORM
+    |0     |6    |9    |11     |
+    | PO   | SCi | SCm | SCimm |
 
-# 1.6.30 SVR-FORM
-   |0     |6    |9    |11    | 15     |
-   | PO   | SCi | SCm | SRbr | SRimm  |
+# 1.6.32 SVR-FORM
+    |0     |6    |9    |11    | 15     |
+    | PO   | SCi | SCm | SRbr | SRimm  |
 
-#1.6.31 SVD-FORM
-   |0     |6    |11   |16   |21      |31 |
-   | PO   | RT  |   RA| RC  |  SVD       |
-   | PO   | RS  |   RA| RC  |  SVD       |
-   | PO   | FRT |   RA| RC  |  SVD       |
-   | PO   | FRS |   RA| RC  |  SVD       |
+#1.6.33 SVD-FORM
+    |0     |6    |11   |16   |21      |31 |
+    | PO   | RT  |   RA| RC  |  SVD       |
+    | PO   | RS  |   RA| RC  |  SVD       |
+    | PO   | FRT |   RA| RC  |  SVD       |
+    | PO   | FRS |   RA| RC  |  SVD       |
 
-#1.6.32 SVDS-FORM
-   |0     |6      |11    |16   |21    |30  |31 |
-   | PO   |   RT  |   RA | RC  | SVDS |  XO    |
-   | PO   |   RS  |   RA | RC  | SVDS |  XO    |
+#1.6.34 SVDS-FORM
+    |0     |6      |11    |16   |21    |30  |31 |
+    | PO   |   RT  |   RA | RC  | SVDS |  XO    |
+    | PO   |   RS  |   RA | RC  | SVDS |  XO    |
 
-# 1.6.33 SVM-FORM
-   |0     |6        |11      |16    |21    |25 |26    |31  |
-   | PO   |  SVxd   |   SVyd | SVzd | SVrm |vf |   XO      |
+# 1.6.35 SVM-FORM
+    |0     |6        |11      |16    |21    |25 |26    |31  |
+    | PO   |  SVxd   |   SVyd | SVzd | SVrm |vf |   XO      |
 
-# 1.6.34 SVRM-FORM
-   |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
-   | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO        |
+# 1.6.36 SVRM-FORM
+    |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
+    | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO        |
 
-# 1.6.34 TLI-FORM
-   |0   |6   |11   |16   |21   |29  |31 |
-   | PO | RT |  RA |  RB | TLI | XO |Rc |
-   | PO | RT |  RA |  RB | TLI | XO |L  |
+# 1.6.37 TLI-FORM
+    |0   |6   |11   |16   |21   |29  |31 |
+    | PO | RT |  RA |  RB | TLI | XO |Rc |
+    | PO | RT |  RA |  RB | TLI | XO |L  |
 
 # 1.6.28 Instruction Fields
     A (6)
