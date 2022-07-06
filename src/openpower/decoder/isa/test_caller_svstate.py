@@ -35,7 +35,7 @@ class SVSTATETestCase(FHDLTestCase):
             because whilst the Vector instruction was moved on by srcstep,
             the Scalar one is NOT moved on.
         """
-        isa = SVP64Asm(['sv.add 1, 5.v, 9.v'
+        isa = SVP64Asm(['sv.add 1, *5, *9'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -66,11 +66,11 @@ class SVSTATETestCase(FHDLTestCase):
     def test_svstep_add_1(self):
         """tests svstep with an add, using scalar adds, when it reaches VL
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
-                        'sv.add 1, 5.v, 9.v',
-                        'sv.addi 12.v, 1, 1',
+                        'sv.add 1, *5, *9',
+                        'sv.addi *12, 1, 1',
                         "setvl. 0, 0, 1, 1, 0, 0",
-                        'sv.add 1, 5.v, 9.v',
-                        'sv.addi 12.v, 1, 1',
+                        'sv.add 1, *5, *9',
+                        'sv.addi *12, 1, 1',
                         "setvl. 0, 0, 1, 1, 0, 0"
                         ])
 
@@ -98,11 +98,11 @@ class SVSTATETestCase(FHDLTestCase):
 
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
-                        'sv.add 1, 5.v, 9.v',       # scalar dest (into r1)
-                        'sv.addi 12.v, 1, 1',       # scalar src (from r1)
+                        'sv.add 1, *5, *9',       # scalar dest (into r1)
+                        'sv.addi *12, 1, 1',       # scalar src (from r1)
                         "setvl. 0, 0, 1, 1, 0, 0",  # svstep
-                        'sv.add 1, 5.v, 9.v',       # again, scalar dest
-                        'sv.addi 12.v, 1, 1',       # but vector dest
+                        'sv.add 1, *5, *9',       # again, scalar dest
+                        'sv.addi *12, 1, 1',       # but vector dest
                         "setvl. 0, 0, 1, 1, 0, 0"  # svstep (end: sets CR0.SO)
                         ])
         lst = list(lst)
