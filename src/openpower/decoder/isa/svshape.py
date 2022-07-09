@@ -22,8 +22,9 @@ from openpower.util import log
 
 
 class SVSHAPE(SelectableInt):
-    def __init__(self, value):
+    def __init__(self, value, gpr=None):
         SelectableInt.__init__(self, value, 32)
+        self·gpr = gpr # for Indexed mode
         offs = 0
         # set up sub-fields from Record layout
         self.fsi = {}
@@ -144,9 +145,17 @@ class SVSHAPE(SelectableInt):
     def offset(self, value):
         self.fsi['offset'].eq(value)
 
+    def _indexed_iterator(self, *args):
+        idx, stop = yield from iterate_indices(*args)
+        if self.gpr is None:
+            return idx, stop
+        return self.gpr(self.svgpr+idx), stop # TODO: ekwidths
+
     def get_iterator(self):
         log ("SVSHAPE get_iterator", self.mode, self.ydimsz)
-        if self.mode == 0b00:
+        if self.mode == 0b00 and self.is_indexed():
+            iterate_fn = self._indexed_iterator
+        elif self.mode == 0b00:
             iterate_fn = iterate_indices
         elif self.mode in [0b01, 0b11]:
             # further sub-selection
