@@ -53,7 +53,7 @@ class SVSHAPE(SelectableInt):
     def order(self):
         permute = self.fsi['permute'].asint(msb0=True)
         if self.is_indexed():
-            permute -= 0b110 # xyz or yxz
+            permute = (permute-0b110)*2 # xyz or yxz
         return SVP64SHAPE.order(permute)
 
     @order.setter
@@ -166,6 +166,28 @@ class SVSHAPE(SelectableInt):
 
 if __name__ == '__main__':
     os.environ['SILENCELOG'] = "1"
+    xdim = 2
+    ydim = 3
+    zdim = 1
+    SVSHAPE0 = SVSHAPE(0)
+    SVSHAPE0.lims = [xdim, ydim, zdim]
+    SVSHAPE0.submode2 = 0b110 # yx indexed
+    SVSHAPE0.mode = 0b00
+    SVSHAPE0.skip = 0b00
+    SVSHAPE0.offset = 0       # experiment with different offset, here
+    SVSHAPE0.invxyz = [0,0,1] # inversion if desired
+
+    VL = xdim * ydim * zdim
+
+    print ("Matrix Indexed Mode", SVSHAPE0.order, SVSHAPE0.invxyz)
+    for idx, new_idx in enumerate(SVSHAPE0.get_iterator()):
+        if idx >= VL:
+            break
+        print ("%d->%s" % (idx, repr(new_idx)))
+
+    print ("")
+
+
     xdim = 3
     ydim = 2
     zdim = 1
@@ -175,7 +197,7 @@ if __name__ == '__main__':
     SVSHAPE0.mode = 0b00
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
-    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+    SVSHAPE0.invxyz = [0,1,0] # inversion if desired
 
     VL = xdim * ydim * zdim
 
@@ -183,7 +205,7 @@ if __name__ == '__main__':
     for idx, new_idx in enumerate(SVSHAPE0.get_iterator()):
         if idx >= VL:
             break
-        print ("%d->%d" % (idx, new_idx))
+        print ("%d->%s" % (idx, repr(new_idx)))
 
     print ("")
     print ("FFT Mode")
@@ -236,7 +258,7 @@ if __name__ == '__main__':
                                           iterate_indices(SVSHAPE2))):
         if idx >= VL:
             break
-        schedule.append((jl, jh, k))
+        schedule.append((jl[0], jh[0], k[0]))
 
     # ok now pretty-print the results, with some debug output
     size = 2
