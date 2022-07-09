@@ -269,7 +269,7 @@ Special Registers Altered:
 
 SVI-Form
 
-* svindex RS,rmm,SVd,ew,yz,mr,sk
+* svindex RS,rmm,SVd,ew,yx,mr,sk
 
 Pseudo-code:
 
@@ -277,24 +277,50 @@ Pseudo-code:
     n <- (0b00 || SVxd) * (0b00 || SVyd) * (0b00 || SVzd)
     # set up template, then copy once location identified
     shape = [0]*32
-    shape[30:31] <- 0b00                   # mode
-    if yz = 1 then shape[18:20] = 0b110      # indexed xd/yd
-    else           shape[18:20] = 0b111      # indexed yd/xd
-    shape[0:5] <- (0b0 || SVxd)   # xdim
-    shape[6:11] <- (0b0 || SVyd)   # ydim
+    shape[30:31] <- 0b00            # mode
+    if yx = 0 then
+        shape[18:20] = 0b110        # indexed xd/yd
+        shape[0:5] <- 0             # xdim
+        shape[6:11] <- (0b0 || SVd) # ydim
+    else
+        shape[18:20] = 0b111        # indexed yd/xd
+        shape[0:5] <- (0b0 || SVd)  # xdim
+        shape[6:11] <- 0            # ydim
     shape[12:17] <- (0b0 || SVzd || 0b0)   # SVGPR
     shape[28:29] <- ew                     # element-width override
     if sk = 1 then shape[28:29] <- 0b01 # skip 1st dimension
     else           shape[28:29] <- 0b00 # no skipping
     # select the mode for updating SVSHAPEs
+    SVSTATE[62] <- mm # set or clear persistence
     if mm = 0 then
         # clear out all SVSHAPEs first
         SVSHAPE0[0:31] <- [0] * 32
         SVSHAPE1[0:31] <- [0] * 32
         SVSHAPE2[0:31] <- [0] * 32
         SVSHAPE3[0:31] <- [0] * 32
+        SVSTATE[32:41] <- [0] * 10 # clear REMAP.mi/o
         SVSTATE[42:46] <- rmm # rmm exactly REMAP.SVme
-        SVSTATE[62] <- 0      # persistence bit cleared
+        idx <- 0
+        for bit = 0 to 4
+            if rmm[bit] then
+                # activate requested shape
+                if idx = 0 then SVSHAPE0 <- shape
+                if idx = 1 then SVSHAPE1 <- shape
+                if idx = 2 then SVSHAPE2 <- shape
+                if idx = 3 then SVSHAPE3 <- shape
+                SVSTATE[32+bit*2:33+bit*2] <- idx
+                # increment shape index, modulo 4
+                if idx = 3 then idx <- 0
+                else            idx <- idx + 1
+    else
+         # refined SVSHAPE/REMAP update mode
+         bit <- rmm[0:2]
+         idx <- rmm[3:4]
+         if idx = 0 then SVSHAPE0 <- shape
+         if idx = 1 then SVSHAPE1 <- shape
+         if idx = 2 then SVSHAPE2 <- shape
+         if idx = 3 then SVSHAPE3 <- shape
+         SVSTATE[32+bit*2:33+bit*2] <- idx
 
 Special Registers Altered:
 
