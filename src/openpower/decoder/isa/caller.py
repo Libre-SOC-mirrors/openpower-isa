@@ -651,11 +651,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         for i in range(4):
             sname = 'SVSHAPE%d' % i
             if sname not in self.spr:
-                self.spr[sname] = SVSHAPE(0)
+                val = 0
             else:
-                # make sure it's an SVSHAPE
                 val = self.spr[sname].value
-                self.spr[sname] = SVSHAPE(val)
+            # make sure it's an SVSHAPE
+            self.spr[sname] = SVSHAPE(val, self.gpr)
         self.last_op_svshape = False
 
         # "raw" memory
