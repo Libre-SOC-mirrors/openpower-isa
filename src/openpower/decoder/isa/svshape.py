@@ -1,3 +1,11 @@
+"""provides convenient field mappings for SVSHAPE in different modes
+
+the trickiest is Indexed mode which sits inside Matrix using two of
+permute options to activate.
+
+https://libre-soc.org/openpower/sv/remap
+"""
+
 from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 from openpower.decoder.isa.remapyield import iterate_indices
@@ -29,6 +37,10 @@ class SVSHAPE(SelectableInt):
             log("SVSHAPE setup field", field, offs, end)
             offs = end
 
+    def is_indexed(self):
+        "REMAP Indexed Mode"
+        return self.mode == 0b00 and self.submode2 in [0b110, 0b111]
+
     @property
     def submode2(self):
         return self.fsi['permute'].asint(msb0=True)
@@ -40,6 +52,8 @@ class SVSHAPE(SelectableInt):
     @property
     def order(self):
         permute = self.fsi['permute'].asint(msb0=True)
+        if self.is_indexed():
+            permute -= 0b110 # xyz or yxz
         return SVP64SHAPE.order(permute)
 
     @order.setter
@@ -64,8 +78,15 @@ class SVSHAPE(SelectableInt):
         self.fsi['ydimsz'].eq(value-1)
 
     @property
+    def svgpr(self):
+        return self.fsi['zdimsz'].asint(msb0=True) << 1
+
+    @property
     def zdimsz(self):
-        return self.fsi['zdimsz'].asint(msb0=True)+1
+        z = self.fsi['zdimsz'].asint(msb0=True)+1
+        if self.is_indexed():
+            z = 1 # no z dimension when indexed
+        return z
 
     @zdimsz.setter
     def zdimsz(self, value):
@@ -84,6 +105,8 @@ class SVSHAPE(SelectableInt):
     @property
     def invxyz(self):
         inv = self.fsi['invxyz'].asint(msb0=True)
+        if self.is_indexed():
+            inv &= 0b011 # no 3rd z in indexed mode
         return [(inv & 0b1), (inv & 0b10) >> 1, (inv & 0b100) >> 2]
 
     @invxyz.setter
@@ -99,7 +122,14 @@ class SVSHAPE(SelectableInt):
         self.fsi['mode'].eq(value)
 
     @property
+    def elwid(self):
+        return self.fsi['skip'].asint(msb0=True)
+
+    @property
     def skip(self):
+        if self.is_indexed():
+            inv = self.fsi['invxyz'].asint(msb0=True)
+            return (inv & 0b100) >> 2
         return self.fsi['skip'].asint(msb0=True)
 
     @skip.setter
