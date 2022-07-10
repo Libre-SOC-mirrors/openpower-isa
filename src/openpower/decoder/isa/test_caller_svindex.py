@@ -72,6 +72,11 @@ class SVSTATETestCase(FHDLTestCase):
             print ("        mi1", bin(sim.svstate.mi1))
             print ("        mi2", bin(sim.svstate.mi2))
             print ("STATE0svgpr", hex(SVSHAPE0.svgpr))
+            print ("STATE0 xdim", SVSHAPE0.xdimsz)
+            print ("STATE0 ydim", SVSHAPE0.ydimsz)
+            print ("STATE0 skip", bin(SVSHAPE0.skip))
+            print ("STATE0  inv", SVSHAPE0.invxyz)
+            print ("STATE0order", SVSHAPE0.order)
             self.assertEqual(sim.svstate.RMpst, 0) # mm=0 so persist=0
             self.assertEqual(sim.svstate.SVme, 0b01111) # same as rmm
             # rmm is 0b01111 which means mi0=0 mi1=1 mi2=2 mo0=3 mo1=0
@@ -89,7 +94,7 @@ class SVSTATETestCase(FHDLTestCase):
 
         only RA is re-mapped via Indexing, not RB or RT
         """
-        isa = SVP64Asm(['svindex 8, 1, 3, 0, 0, 0, 0',
+        isa = SVP64Asm(['svindex 8, 1, 6, 0, 0, 0, 0',
                         'sv.add *8, *0, *0',
                        ])
         lst = list(isa)
@@ -111,14 +116,14 @@ class SVSTATETestCase(FHDLTestCase):
         # copy before running
         expected_regs = deepcopy(initial_regs)
         for i in range(6):
-            RA = initial_regs[16+idxs[i]]
-            RB = initial_regs[16+i]
+            RA = initial_regs[0+idxs[i]]
+            RB = initial_regs[0+i]
             expected_regs[i+8] = RA+RB
             print ("expected", i, expected_regs[i+8])
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
-            #self._check_regs(sim, expected_regs)
+            self._check_regs(sim, expected_regs)
 
             print (sim.spr)
             SVSHAPE0 = sim.spr['SVSHAPE0']
@@ -144,9 +149,10 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.mi2, 0)
             self.assertEqual(sim.svstate.mo0, 0)
             self.assertEqual(sim.svstate.mo1, 0)
-            for i in range(4):
+            self.assertEqual(SVSHAPE0.svgpr, 16) # SVG is shifted up by 1
+            for i in range(1,4):
                 shape = sim.spr['SVSHAPE%d' % i]
-                self.assertEqual(shape.svgpr, 16) # SVG is shifted up by 1
+                self.assertEqual(shape.svgpr, 0) 
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None):

@@ -279,12 +279,14 @@ Pseudo-code:
     shape[30:31] <- 0b00            # mode
     if yx = 0 then
         shape[18:20] <- 0b110       # indexed xd/yd
-        shape[0:5] <- 0             # xdim
-        shape[6:11] <- (0b0 || SVd) # ydim
+        shape[0:5] <- (0b0 || SVd)  # xdim
+        if sk = 1 then shape[6:11] <- 0 # ydim
+        else           shape[6:11] <- 0b111111 # ydim max
     else
         shape[18:20] <- 0b111       # indexed yd/xd
-        shape[0:5] <- (0b0 || SVd)  # xdim
-        shape[6:11] <- 0            # ydim
+        if sk = 1 then shape[0:5] <- 0 # xdim
+        else           shape[0:5] <- 0b111111 # xdim max
+        shape[6:11] <- (0b0 || SVd) # ydim
     shape[12:17] <- (0b0 || SVG)        # SVGPR
     shape[28:29] <- ew                  # element-width override
     if sk = 1 then shape[28:29] <- 0b01 # skip 1st dimension

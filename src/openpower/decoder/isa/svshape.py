@@ -179,8 +179,8 @@ class SVSHAPE(SelectableInt):
 
 if __name__ == '__main__':
     os.environ['SILENCELOG'] = "1"
-    xdim = 2
-    ydim = 3
+    xdim = 3
+    ydim = 2000
     zdim = 1
     SVSHAPE0 = SVSHAPE(0)
     SVSHAPE0.lims = [xdim, ydim, zdim]
@@ -188,9 +188,9 @@ if __name__ == '__main__':
     SVSHAPE0.mode = 0b00
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
-    SVSHAPE0.invxyz = [0,0,1] # inversion if desired
+    SVSHAPE0.invxyz = [0,0,1] # xy inversion (indices 0,1) , skip if desired (2)
 
-    VL = xdim * ydim * zdim
+    VL = 6 # xdim * ydim * zdim
 
     print ("Matrix Indexed Mode", SVSHAPE0.order, SVSHAPE0.invxyz)
     for idx, new_idx in enumerate(SVSHAPE0.get_iterator()):
@@ -199,7 +199,6 @@ if __name__ == '__main__':
         print ("%d->%s" % (idx, repr(new_idx)))
 
     print ("")
-
 
     xdim = 3
     ydim = 2
