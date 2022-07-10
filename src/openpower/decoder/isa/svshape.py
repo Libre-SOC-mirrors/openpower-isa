@@ -24,7 +24,7 @@ from openpower.util import log
 class SVSHAPE(SelectableInt):
     def __init__(self, value, gpr=None):
         SelectableInt.__init__(self, value, 32)
-        self·gpr = gpr # for Indexed mode
+        self.gpr = gpr # for Indexed mode
         offs = 0
         # set up sub-fields from Record layout
         self.fsi = {}
@@ -37,6 +37,9 @@ class SVSHAPE(SelectableInt):
             self.fsi[field] = v
             log("SVSHAPE setup field", field, offs, end)
             offs = end
+
+    def copy(self):
+        return SVSHAPE(self.value, self.gpr)
 
     def is_indexed(self):
         "REMAP Indexed Mode"
@@ -145,17 +148,18 @@ class SVSHAPE(SelectableInt):
     def offset(self, value):
         self.fsi['offset'].eq(value)
 
-    def _indexed_iterator(self, *args):
-        idx, stop = yield from iterate_indices(*args)
+    def postprocess(self, idx):
+        if self.mode != 0b00 or not self.is_indexed():
+            return idx
         if self.gpr is None:
-            return idx, stop
-        return self.gpr(self.svgpr+idx), stop # TODO: ekwidths
+            return idx
+        remap = self.gpr(self.svgpr+idx).value # TODO: elwidths
+        log ("indexed_iterator", self.svgpr, idx, remap)
+        return remap
 
     def get_iterator(self):
-        log ("SVSHAPE get_iterator", self.mode, self.ydimsz)
-        if self.mode == 0b00 and self.is_indexed():
-            iterate_fn = self._indexed_iterator
-        elif self.mode == 0b00:
+        log ("SVSHAPE get_iterator", self.mode, self.ydimsz, self.is_indexed())
+        if self.mode == 0b00:
             iterate_fn = iterate_indices
         elif self.mode in [0b01, 0b11]:
             # further sub-selection
@@ -170,7 +174,7 @@ class SVSHAPE(SelectableInt):
             elif self.ydimsz in [6, 14, 15]:
                 iterate_fn = iterate_dct_inner_halfswap_loadstore
         # create a **NEW** iterator each time this is called
-        return iterate_fn(deepcopy(self))
+        return iterate_fn(self.copy())
 
 
 if __name__ == '__main__':

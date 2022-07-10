@@ -68,6 +68,8 @@ def iterate_indices(SVSHAPE):
                                ((y_end and x_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
 
+                    if hasattr(SVSHAPE, "postprocess"): # for Indexed mode
+                        result = SVSHAPE.postprocess(result)
                     yield result + SVSHAPE.offset, loopends
 
 def demo():
