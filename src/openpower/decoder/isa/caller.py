@@ -1754,10 +1754,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         else:
             # XXX only in non-SVP64 mode!
             # record state of whether the current operation was an svshape,
+            # OR svindex!
             # to be able to know if it should apply in the next instruction.
             # also (if going to use this instruction) should disable ability
             # to interrupt in between. sigh.
-            self.last_op_svshape = asmop == 'svremap'
+            self.last_op_svshape = asmop in ['svremap', 'svindex']
 
         if nia_update:
             self.update_pc_next()
