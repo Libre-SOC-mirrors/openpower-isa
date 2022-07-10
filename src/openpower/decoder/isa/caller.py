@@ -1248,6 +1248,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             illegal = False
             ins_name = 'svshape'
 
+        # and svindex
+        if asmop.startswith('svindex'):
+            illegal = False
+            ins_name = "svindex"
+
         # and fsin and fcos
         if asmop == 'fsins':
             illegal = False

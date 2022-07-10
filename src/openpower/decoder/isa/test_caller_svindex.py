@@ -1,4 +1,5 @@
-"""SVP64 unit test for doing strange things to SVSTATE, manually.
+"""SVP64 unit test for svindex
+svindex SVG,rmm,SVd,ew,yx,mr,sk
 """
 from nmigen import Module, Signal
 from nmigen.back.pysim import Simulator, Delay, Settle
@@ -27,15 +28,9 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_index(self):
-        """sets VL=2 (via SVSTATE) with a manual srcstep/dststep,
-            then does a scalar-result add.  the result should be:
-
-                add 1, 6, 10
-
-            because whilst the Vector instruction was moved on by srcstep,
-            the Scalar one is NOT moved on.
+        """sets VL=10 (via SVSTATE) then does svindex, checks SPRs after
         """
-        isa = SVP64Asm(['svindex 1, 31, 5, 0, 0, 0, 0'
+        isa = SVP64Asm(['svindex 1, 15, 5, 0, 0, 0, 0'
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -61,6 +56,8 @@ class SVSTATETestCase(FHDLTestCase):
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
             self._check_regs(sim, expected_regs)
 
+            print (sim.spr)
+            SVSHAPE0 = sim.spr['SVSHAPE0']
             print ("SVSTATE after", bin(sim.svstate.asint()))
             print ("        vl", bin(sim.svstate.vl))
             print ("        mvl", bin(sim.svstate.maxvl))
@@ -73,6 +70,18 @@ class SVSTATETestCase(FHDLTestCase):
             print ("        mi0", bin(sim.svstate.mi0))
             print ("        mi1", bin(sim.svstate.mi1))
             print ("        mi2", bin(sim.svstate.mi2))
+            print ("STATE0svgpr", hex(SVSHAPE0.svgpr))
+            self.assertEqual(sim.svstate.RMpst, 0) # mm=0 so persist=0
+            self.assertEqual(sim.svstate.SVme, 0b01111) # same as rmm
+            # rmm is 0b01111 which means mi0=0 mi1=1 mi2=2 mo0=3 mo1=0
+            self.assertEqual(sim.svstate.mi0, 0)
+            self.assertEqual(sim.svstate.mi1, 1)
+            self.assertEqual(sim.svstate.mi2, 2)
+            self.assertEqual(sim.svstate.mo0, 3)
+            self.assertEqual(sim.svstate.mo1, 0)
+            for i in range(4):
+                shape = sim.spr['SVSHAPE%d' % i]
+                self.assertEqual(shape.svgpr, 2) # SVG is shifted up by 1
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None):

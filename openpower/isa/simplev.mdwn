@@ -269,25 +269,24 @@ Special Registers Altered:
 
 SVI-Form
 
-* svindex RS,rmm,SVd,ew,yx,mr,sk
+* svindex SVG,rmm,SVd,ew,yx,mr,sk
 
 Pseudo-code:
 
     # VL in Matrix Multiply is xd*yd*zd
-    n <- (0b00 || SVxd) * (0b00 || SVyd) * (0b00 || SVzd)
     # set up template, then copy once location identified
-    shape = [0]*32
+    shape <- [0]*32
     shape[30:31] <- 0b00            # mode
     if yx = 0 then
-        shape[18:20] = 0b110        # indexed xd/yd
+        shape[18:20] <- 0b110       # indexed xd/yd
         shape[0:5] <- 0             # xdim
         shape[6:11] <- (0b0 || SVd) # ydim
     else
-        shape[18:20] = 0b111        # indexed yd/xd
+        shape[18:20] <- 0b111       # indexed yd/xd
         shape[0:5] <- (0b0 || SVd)  # xdim
         shape[6:11] <- 0            # ydim
-    shape[12:17] <- (0b0 || SVzd || 0b0)   # SVGPR
-    shape[28:29] <- ew                     # element-width override
+    shape[12:17] <- (0b0 || SVG)        # SVGPR
+    shape[28:29] <- ew                  # element-width override
     if sk = 1 then shape[28:29] <- 0b01 # skip 1st dimension
     else           shape[28:29] <- 0b00 # no skipping
     # select the mode for updating SVSHAPEs
@@ -302,7 +301,7 @@ Pseudo-code:
         SVSTATE[42:46] <- rmm # rmm exactly REMAP.SVme
         idx <- 0
         for bit = 0 to 4
-            if rmm[bit] then
+            if rmm[4-bit] then
                 # activate requested shape
                 if idx = 0 then SVSHAPE0 <- shape
                 if idx = 1 then SVSHAPE1 <- shape

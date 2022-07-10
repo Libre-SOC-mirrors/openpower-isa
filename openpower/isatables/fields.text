@@ -274,7 +274,7 @@
 
 # 1.6.29 SVI-FORM
     |0     |6    |11    |16   |21 |23|24|25|26    31|
-    | PO   |  RS |rmm   | SVd |ew |yx|mm|sk|   XO   |
+    | PO   |  SVG|rmm   | SVd |ew |yx|mm|sk|   XO   |
 
 # 1.6.30 SVL-FORM
     |0     |6    |11    |16   |23 |24 |25 |26    |31 |
@@ -749,7 +749,7 @@
     RS (6:10)
         Field used to specify a GPR to be used as a
         source.
-        Formats: D, DS, M, MD, MDS, SVI, X, XFX, XS
+        Formats: D, DS, M, MD, MDS, X, XFX, XS
     RSp (6:10)
         Field used to specify an even/odd pair of GPRs to
         be concatenated and used as a source.
@@ -842,6 +842,10 @@
         two's complement integer which is concatenated
         on the right with 0b00 and sign-extended to 64 bits.
         Formats: SVDS
+    SVG (6:10)
+        Field used to specify a GPR to be used as a
+        source for indexing.
+        Formats: SVI
     SVi (16:22)
          Simple-V immediate field for setting VL or MVL
          Formats: SVL
