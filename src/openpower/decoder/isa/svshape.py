@@ -148,11 +148,13 @@ class SVSHAPE(SelectableInt):
     def offset(self, value):
         self.fsi['offset'].eq(value)
 
-    def postprocess(self, idx):
+    def postprocess(self, idx, step):
         if self.mode != 0b00 or not self.is_indexed():
             return idx
         if self.gpr is None:
             return idx
+        if self.xdimsz == 1 and self.ydimsz == 1:
+            idx = step # no Index remapping
         remap = self.gpr(self.svgpr+idx).value # TODO: elwidths
         log ("indexed_iterator", self.svgpr, idx, remap)
         return remap

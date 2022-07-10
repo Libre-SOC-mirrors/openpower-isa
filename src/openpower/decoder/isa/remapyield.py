@@ -17,6 +17,7 @@ def iterate_indices(SVSHAPE):
     if SVSHAPE.invxyz[1]: y_r.reverse()
     if SVSHAPE.invxyz[2]: z_r.reverse()
     # start an infinite (wrapping) loop
+    step = 0 # track src/dst step
     while True:
         for z in z_r:   # loop over 1st order dimension
             z_end = z == z_r[-1]
@@ -69,9 +70,9 @@ def iterate_indices(SVSHAPE):
                                 ((y_end and x_end and z_end)<<2))
 
                     if hasattr(SVSHAPE, "postprocess"): # for Indexed mode
-                        result = SVSHAPE.postprocess(result)
+                        result = SVSHAPE.postprocess(result, step)
                     yield result + SVSHAPE.offset, loopends
-
+                    step += 1
 def demo():
     # set the dimension sizes here
     xdim = 3
