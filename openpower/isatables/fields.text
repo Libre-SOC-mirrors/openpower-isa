@@ -18,11 +18,11 @@
     |0     |6    |9   |12  |15  |18  |21    |29    |31 |
     | PO   |  BF | BFA| BFB| BFC| msk| TLI  |   XO |msk|
 
-#1.6.3 SC-FORM
+# 1.6.3 SC-FORM
     |0     |6    |11    |16    |20     |27  |30 |31  |
     | PO   |  ///|   ///|   // |   LEV |  //|  1|  / |
 
-#1.6.4 D-FORM
+# 1.6.4 D-FORM
     |0     |6   |9  |10 |11   |16      |31 |
     | PO   |    RT      |   RA|   D        |
     | PO   |    RT      |   RA|   SI       |
@@ -34,7 +34,7 @@
     | PO   |   FRT      |   RA|   D        |
     | PO   |   FRS      |   RA|   D        |
 
-#1.6.5 DS-FORM
+# 1.6.5 DS-FORM
     |0     |6      |11    |16    |30  |31 |
     | PO   |   RT  |   RA |   DS |  XO    |
     | PO   |   RS  |   RA |   DS |  XO    |
@@ -42,7 +42,7 @@
     | PO   |  FRTp |   RA |   DS |  XO    |
     | PO   |  FRSp |   RA |   DS |  XO    |
 
-#1.6.6 DQ-FORM
+# 1.6.6 DQ-FORM
     |0     |6     |11    |16    |28|29 |31 |
     | PO   |  RTp |   RA |   DQ |   PT     |
     | PO   |  S   |   RA |   DQ |SX| XO    |
