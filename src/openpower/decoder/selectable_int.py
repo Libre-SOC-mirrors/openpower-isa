@@ -253,11 +253,12 @@ class SelectableInt:
         return self
 
     def __rsub__(self, b):
+        log("rsub", b, self.value)
         if isinstance(b, int):
-            b = SelectableInt(b, self.bits)
-        b = check_extsign(self, b)
-        assert b.bits == self.bits
-        return SelectableInt(b.value - self.value, self.bits)
+            b = SelectableInt(b, 256) # max extent
+        #b = check_extsign(self, b)
+        #assert b.bits == self.bits
+        return SelectableInt(b.value - self.value, b.bits)
 
     def __radd__(self, b):
         if isinstance(b, int):
