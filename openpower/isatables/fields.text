@@ -1,8 +1,8 @@
-#1.6.1 I-FORM
+# 1.6.1 I-FORM
     |0     |6         |30|31 |
     | PO   |      LI  |AA|LK |
 
-#1.6.2 B-FORM
+# 1.6.2 B-FORM
     |0     |6   |11     |16     |30|31 |
     | PO   |  BO|   BI  |   BD  |AA|LK |
 
