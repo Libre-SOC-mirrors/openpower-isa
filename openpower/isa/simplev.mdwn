@@ -273,11 +273,11 @@ SVI-Form
 
 Pseudo-code:
 
-    # based on MAXVL compute other dimension
+    # based on nearest MAXVL compute other dimension
     MVL <- SVSTATE[0:6]
     d <- [0] * 6
     dim <- SVd+1
-    do while d*dim < ([0]*4 || MVL)
+    do while d*dim <u ([0]*4 || MVL)
        d <- d + 1
     # set up template, then copy once location identified
     shape <- [0]*32
