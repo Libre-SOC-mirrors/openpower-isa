@@ -293,7 +293,7 @@ def ternlogi(fields, Rc):
 def grev(fields, Rc, imm, wide):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
-    PO = 5
+    insn = PO = 5
     # _ matches fields in table at:
     # https://libre-soc.org/openPOwer/sv/bitmanip/
     XO = 0b1_0010_110
