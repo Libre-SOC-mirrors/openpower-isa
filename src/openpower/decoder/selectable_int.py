@@ -333,14 +333,19 @@ class SelectableInt:
             mask = 1 << key
             self.value = (self.value & ~mask) | (value & mask)
         elif isinstance(key, slice):
-            assert key.step is None or key.step == 1
-            assert key.start < key.stop
-            assert key.start >= 0
-            assert key.stop <= self.bits, \
-                   "key stop %d bits %d" % (key.stop, self.bits)
+            kstart, kstop, kstep = key.start, key.stop, key.step
+            if isinstance(kstart, SelectableInt): kstart = kstart.asint()
+            if isinstance(kstop, SelectableInt): kstop = kstop.asint()
+            if isinstance(kstep, SelectableInt): kstep = kstep.asint()
+            log ("__setitem__ slice ", kstart, kstop, kstep)
+            assert kstep is None or kstep == 1
+            assert kstart < kstop
+            assert kstart >= 0
+            assert kstop <= self.bits, \
+                   "key stop %d bits %d" % (kstop, self.bits)
 
-            stop = self.bits - key.start
-            start = self.bits - key.stop
+            stop = self.bits - kstart
+            start = self.bits - kstop
 
             bits = stop - start
             #log ("__setitem__ slice num bits", bits)
