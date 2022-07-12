@@ -385,7 +385,7 @@ class DecodeC(Elaboratable):
 class DecodeOut(Elaboratable):
     """DecodeOut from instruction
 
-    decodes output register RA, RT or SPR
+    decodes output register RA, RT, FRS, FRT, or SPR
     """
 
     def __init__(self, dec, op, regreduce_en):
@@ -412,6 +412,9 @@ class DecodeOut(Elaboratable):
 
         # select Register out field
         with m.Switch(self.sel_in):
+            with m.Case(OutSel.FRS):
+                comb += reg.data.eq(self.dec.FRS)
+                comb += reg.ok.eq(1)
             with m.Case(OutSel.FRT):
                 comb += reg.data.eq(self.dec.FRT)
                 comb += reg.ok.eq(1)
