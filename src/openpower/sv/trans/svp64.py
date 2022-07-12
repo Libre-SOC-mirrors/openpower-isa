@@ -547,6 +547,14 @@ def crf_extra(etype, regmode, field, extras):
     return sv_extra, field
 
 
+def to_number(field):
+    if field.startswith("0x"):
+        return eval(field)
+    if field.startswith("0b"):
+        return eval(field)
+    return int(field)
+
+
 # decodes svp64 assembly listings and creates EXT001 svp64 prefixes
 class SVP64Asm:
     def __init__(self, lst, bigendian=False, macros=None):
@@ -584,7 +592,7 @@ class SVP64Asm:
         # identify if it is a special instruction
         custom_insn_hook = CUSTOM_INSNS.get(opcode)
         if custom_insn_hook is not None:
-            fields = tuple(map(int, fields))
+            fields = tuple(map(to_number, fields))
             insn = custom_insn_hook(fields)
             log(opcode, bin(insn))
             yield ".long 0x%x" % insn
@@ -1471,6 +1479,7 @@ if __name__ == '__main__':
     ]
     lst = [
         'sv.svstep./m=r3 2.v, 4, 0',
+        'ternlogi 0,0,0,0x5'
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))
