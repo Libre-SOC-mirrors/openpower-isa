@@ -1228,105 +1228,23 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if ins_name not in ['mtcrf', 'mtocrf']:
             illegal = ins_name != asmop
 
-        # sigh deal with setvl not being supported by binutils (.long)
-        if asmop.startswith('setvl'):
+        # list of instructions not being supported by binutils (.long)
+        dotstrp = asmop[:-1] if asmop[-1] == '.' else asmop
+        if dotstrp in [ 'fsins', 'fcoss',
+                    'ffmadds', 'fdmadds', 'ffadds',
+                     'mins', 'maxs', 'minu', 'maxu',
+                    'setvl', 'svindex', 'svremap', 'svstep', 'svshape',
+                    'grev', 'ternlogi', 'bmask', 'cprop',
+                    'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
+                    ]:
             illegal = False
-            ins_name = 'setvl'
-
-        # and svstep not being supported by binutils (.long)
-        if asmop.startswith('svstep'):
-            illegal = False
-            ins_name = 'svstep'
-
-        # and svremap not being supported by binutils (.long)
-        if asmop.startswith('svremap'):
-            illegal = False
-            ins_name = 'svremap'
-
-        # and svshape not being supported by binutils (.long)
-        if asmop.startswith('svshape'):
-            illegal = False
-            ins_name = 'svshape'
-
-        # and svindex
-        if asmop.startswith('svindex'):
-            illegal = False
-            ins_name = "svindex"
-
-        # and fsin and fcos
-        if asmop == 'fsins':
-            illegal = False
-            ins_name = 'fsins'
-        if asmop == 'fcoss':
-            illegal = False
-            ins_name = 'fcoss'
-
-        # sigh also deal with ffmadds not being supported by binutils (.long)
-        if asmop == 'ffmadds':
-            illegal = False
-            ins_name = 'ffmadds'
-
-        # and fdmadds not being supported by binutils (.long)
-        if asmop == 'fdmadds':
-            illegal = False
-            ins_name = 'fdmadds'
-
-        # and ffadds not being supported by binutils (.long)
-        if asmop == 'ffadds':
-            illegal = False
-            ins_name = 'ffadds'
-
-        # and min/max/su
-        if asmop in ['mins', 'maxs', 'minu', 'maxu',
-                     'mins.', 'maxs.', 'minu.', 'maxu.']:
-            illegal = False
-            ins_name = asmop
-
-        # and anything avgadd
-        if asmop.startswith('avgadd'):
-            illegal = False
-            ins_name = asmop
-
-        # and anything absdu
-        if asmop.startswith('absdu'):
-            illegal = False
-            ins_name = asmop
-
-        # and anything absds
-        if asmop.startswith('absds'):
-            illegal = False
-            ins_name = asmop
-
-        # and anything absadd
-        if asmop.startswith('absdac'):
-            illegal = False
-            ins_name = asmop
-
-        # and anything cprop
-        if asmop.startswith('cprop'):
-            illegal = False
-            ins_name = asmop
-
-        # and anything bmask
-        if asmop.startswith('bmask'):
-            illegal = False
-            ins_name = asmop
-
-        # and anything ternlog
-        if asmop.startswith('ternlog'):
-            illegal = False
-            ins_name = asmop
-
-        # and anything grev
-        if asmop.startswith('grev'):
-            illegal = False
-            ins_name = asmop
+            ins_name = dotstrp
 
         # branch-conditional redirects to sv.bc
         if asmop.startswith('bc') and self.is_svp64_mode:
             ins_name = 'sv.%s' % ins_name
 
-        log("   post-processed name", ins_name, asmop)
+        log("   post-processed name", dotstrp, ins_name, asmop)
 
         # illegal instructions call TRAP at 0x700
         if illegal:
