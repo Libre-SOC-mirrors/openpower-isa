@@ -5,3 +5,5 @@ dist
 *.vcd
 *.gtkw
 *.egg-info
+/jit_test
+/jit_test.o
