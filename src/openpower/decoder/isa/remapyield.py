@@ -39,31 +39,21 @@ def iterate_indices(SVSHAPE):
                             vals[SVSHAPE.order[1]],
                             vals[SVSHAPE.order[2]]
                            ]
-                    # some of the dimensions can be "skipped".  the order
-                    # was actually selected above on all 3 dimensions,
-                    # e.g. [z][x][y] or [y][z][x].  "skip" allows one of
-                    # those to be knocked out
-                    if SVSHAPE.skip == 0b00:
-                        select = 0b111
-                    elif SVSHAPE.skip == 0b11:
-                        select = 0b011
-                    elif SVSHAPE.skip == 0b01:
-                        select = 0b110
-                    elif SVSHAPE.skip == 0b10:
-                        select = 0b101
-                    else:
-                        select = 0b111
-                    result = 0
-                    mult = 1
                     # ok now we can construct the result, using bits of
                     # "order" to say which ones get stacked on
+                    result = 0
+                    mult = 1
                     for i in range(3):
                         lim, idx, dbg = vals[i]
-                        if select & (1<<i):
-                            #print ("select %d %s" % (i, dbg))
-                            idx *= mult   # shifts up by previous dimension(s)
-                            result += idx # adds on this dimension
-                            mult *= lim   # for the next dimension
+                        # some of the dimensions can be "skipped".  the order
+                        # was actually selected above on all 3 dimensions,
+                        # e.g. [z][x][y] or [y][z][x].  "skip" allows one of
+                        # those to be knocked out
+                        if SVSHAPE.skip == i+1: continue
+                        #print ("select %d %s" % (i, dbg))
+                        idx *= mult   # shifts up by previous dimension(s)
+                        result += idx # adds on this dimension
+                        mult *= lim   # for the next dimension
 
                     loopends = (x_end |
                                ((y_end and x_end)<<1) |
