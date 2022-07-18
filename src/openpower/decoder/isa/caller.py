@@ -1331,30 +1331,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # main input registers (RT, RA ...)
         inputs = []
         for name in input_names:
-            # using PowerDecoder2, first, find the decoder index.
-            # (mapping name RA RB RC RS to in1, in2, in3)
-            regnum, is_vec = yield from get_pdecode_idx_in(self.dec2, name)
-            if regnum is None:
-                # doing this is not part of svp64, it's because output
-                # registers, to be modified, need to be in the namespace.
-                regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
-            if regnum is None:
-                regnum, is_vec = yield from get_pdecode_idx_out2(self.dec2,
-                                                                 name)
+            regval = (yield from self.get_input(name))
+            inputs.append(regval)
 
-            # in case getting the register number is needed, _RA, _RB
-            regname = "_" + name
-            self.namespace[regname] = regnum
-            if not self.is_svp64_mode or not pred_src_zero:
-                log('reading reg %s %s' % (name, str(regnum)), is_vec)
-                if name in fregs:
-                    reg_val = SelectableInt(self.fpr(regnum))
-                elif name is not None:
-                    reg_val = SelectableInt(self.gpr(regnum))
-            else:
-                log('zero input reg %s %s' % (name, str(regnum)), is_vec)
-                reg_val = 0
-            inputs.append(reg_val)
         # arrrrgh, awful hack, to get _RT into namespace
         if ins_name in ['setvl', 'svstep']:
             regname = "_RT"
@@ -1529,6 +1508,31 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                                                            asmop, ins_name))
         if nia_update:
             self.update_pc_next()
+
+    def get_input(self, name):
+        # using PowerDecoder2, first, find the decoder index.
+        # (mapping name RA RB RC RS to in1, in2, in3)
+        regnum, is_vec = yield from get_pdecode_idx_in(self.dec2, name)
+        if regnum is None:
+            # doing this is not part of svp64, it's because output
+            # registers, to be modified, need to be in the namespace.
+            regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
+        if regnum is None:
+            regnum, is_vec = yield from get_pdecode_idx_out2(self.dec2, name)
+
+        # in case getting the register number is needed, _RA, _RB
+        regname = "_" + name
+        self.namespace[regname] = regnum
+        if not self.is_svp64_mode or not self.pred_src_zero:
+            log('reading reg %s %s' % (name, str(regnum)), is_vec)
+            if name in fregs:
+                reg_val = SelectableInt(self.fpr(regnum))
+            elif name is not None:
+                reg_val = SelectableInt(self.gpr(regnum))
+        else:
+            log('zero input reg %s %s' % (name, str(regnum)), is_vec)
+            reg_val = 0
+        return reg_val
 
     def remap_debug(self, remaps):
         # just some convenient debug info
