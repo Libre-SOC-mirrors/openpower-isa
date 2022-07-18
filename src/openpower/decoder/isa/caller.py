@@ -1318,45 +1318,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if persist or self.last_op_svshape:
             remaps = self.get_remap_indices()
         if self.is_svp64_mode and (persist or self.last_op_svshape):
-            # just some convenient debug info
-            for i in range(4):
-                sname = 'SVSHAPE%d' % i
-                shape = self.spr[sname]
-                log(sname, bin(shape.value))
-                log("    lims", shape.lims)
-                log("    mode", shape.mode)
-                log("    skip", shape.skip)
-
-            # set up the list of steps to remap
-            mi0 = self.svstate.mi0
-            mi1 = self.svstate.mi1
-            mi2 = self.svstate.mi2
-            mo0 = self.svstate.mo0
-            mo1 = self.svstate.mo1
-            steps = [(self.dec2.in1_step, mi0),  # RA
-                     (self.dec2.in2_step, mi1),  # RB
-                     (self.dec2.in3_step, mi2),  # RC
-                     (self.dec2.o_step, mo0),   # RT
-                     (self.dec2.o2_step, mo1),   # EA
-                     ]
-            remap_idxs = self.remap_idxs
-            rremaps = []
-            # now cross-index the required SHAPE for each of 3-in 2-out regs
-            rnames = ['RA', 'RB', 'RC', 'RT', 'EA']
-            for i, (dstep, shape_idx) in enumerate(steps):
-                (shape, remap) = remaps[shape_idx]
-                remap_idx = remap_idxs[shape_idx]
-                # zero is "disabled"
-                if shape.value == 0x0:
-                    continue
-                # now set the actual requested step to the current index
-                yield dstep.eq(remap_idx)
-
-                # debug printout info
-                rremaps.append((shape.mode, i, rnames[i], shape_idx,
-                                remap_idx))
-            for x in rremaps:
-                log("shape remap", x)
+            yield from self.remap_debug(remaps)
         # after that, settle down (combinatorial) to let Vector reg numbers
         # work themselves out
         yield Settle()
@@ -1567,6 +1529,46 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                                                            asmop, ins_name))
         if nia_update:
             self.update_pc_next()
+
+    def remap_debug(self, remaps):
+        # just some convenient debug info
+        for i in range(4):
+            sname = 'SVSHAPE%d' % i
+            shape = self.spr[sname]
+            log(sname, bin(shape.value))
+            log("    lims", shape.lims)
+            log("    mode", shape.mode)
+            log("    skip", shape.skip)
+
+        # set up the list of steps to remap
+        mi0 = self.svstate.mi0
+        mi1 = self.svstate.mi1
+        mi2 = self.svstate.mi2
+        mo0 = self.svstate.mo0
+        mo1 = self.svstate.mo1
+        steps = [(self.dec2.in1_step, mi0),  # RA
+                 (self.dec2.in2_step, mi1),  # RB
+                 (self.dec2.in3_step, mi2),  # RC
+                 (self.dec2.o_step, mo0),   # RT
+                 (self.dec2.o2_step, mo1),   # EA
+                 ]
+        remap_idxs = self.remap_idxs
+        rremaps = []
+        # now cross-index the required SHAPE for each of 3-in 2-out regs
+        rnames = ['RA', 'RB', 'RC', 'RT', 'EA']
+        for i, (dstep, shape_idx) in enumerate(steps):
+            (shape, remap) = remaps[shape_idx]
+            remap_idx = remap_idxs[shape_idx]
+            # zero is "disabled"
+            if shape.value == 0x0:
+                continue
+            # now set the actual requested step to the current index
+            yield dstep.eq(remap_idx)
+
+            # debug printout info
+            rremaps.append((shape.mode, i, rnames[i], shape_idx, remap_idx))
+        for x in rremaps:
+            log("shape remap", x)
 
     def check_write(self, info, name, output):
         if name == 'overflow':  # ignore, done already (above)
