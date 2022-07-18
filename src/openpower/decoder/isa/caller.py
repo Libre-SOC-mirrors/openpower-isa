@@ -1347,71 +1347,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # in SVP64 mode for LD/ST work out immediate
         # XXX TODO: replace_ds for DS-Form rather than D-Form.
         # use info.form to detect
-        replace_d = False  # update / replace constant in pseudocode
         if self.is_svp64_mode:
-            ldstmode = yield self.dec2.rm_dec.ldstmode
-            # shift mode reads SVD (or SVDS - TODO)
-            # *BUT*... because this is "overloading" of LD operations,
-            # it gets *STORED* into D (or DS, TODO)
-            if ldstmode == SVP64LDSTmode.SHIFT.value:
-                imm = yield self.dec2.dec.fields.FormSVD.SVD[0:11]
-                imm = exts(imm, 11)  # sign-extend to integer
-                log("shift SVD", imm)
-                replace_d = True
-            else:
-                if info.form == 'DS':
-                    # DS-Form, multiply by 4 then knock 2 bits off after
-                    imm = yield self.dec2.dec.fields.FormDS.DS[0:14] * 4
-                else:
-                    imm = yield self.dec2.dec.fields.FormD.D[0:16]
-                imm = exts(imm, 16)  # sign-extend to integer
-            # get the right step. LD is from srcstep, ST is dststep
-            op = yield self.dec2.e.do.insn_type
-            offsmul = 0
-            if op == MicrOp.OP_LOAD.value:
-                if remap_active:
-                    offsmul = yield self.dec2.in1_step
-                    log("D-field REMAP src", imm, offsmul)
-                else:
-                    offsmul = (srcstep * (subvl+1)) + substep
-                    log("D-field src", imm, offsmul)
-            elif op == MicrOp.OP_STORE.value:
-                # XXX NOTE! no bit-reversed STORE! this should not ever be used
-                offsmul = (dststep * (subvl+1)) + substep
-                log("D-field dst", imm, offsmul)
-            # bit-reverse mode, rev already done through get_src_dst_steps()
-            if ldstmode == SVP64LDSTmode.SHIFT.value:
-                # manually look up RC, sigh
-                RC = yield self.dec2.dec.RC[0:5]
-                RC = self.gpr(RC)
-                log("LD-SHIFT:", "VL", vl,
-                    "RC", RC.value, "imm", imm,
-                    "offs", bin(offsmul),
-                    )
-                imm = SelectableInt((imm * offsmul) << RC.value, 32)
-            # Unit-Strided LD/ST adds offset*width to immediate
-            elif ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
-                ldst_len = yield self.dec2.e.do.data_len
-                imm = SelectableInt(imm + offsmul * ldst_len, 32)
-                replace_d = True
-            # Element-strided multiplies the immediate by element step
-            elif ldstmode == SVP64LDSTmode.ELSTRIDE.value:
-                imm = SelectableInt(imm * offsmul, 32)
-                replace_d = True
-            if replace_d:
-                ldst_ra_vec = yield self.dec2.rm_dec.ldst_ra_vec
-                ldst_imz_in = yield self.dec2.rm_dec.ldst_imz_in
-                log("LDSTmode", SVP64LDSTmode(ldstmode),
-                    offsmul, imm, ldst_ra_vec, ldst_imz_in)
-        # new replacement D... errr.. DS
-        if replace_d:
-            if info.form == 'DS':
-                # TODO: assert 2 LSBs are zero?
-                log("DS-Form, TODO, assert 2 LSBs zero?", bin(imm.value))
-                imm.value = imm.value >> 2
-                self.namespace['DS'] = imm
-            else:
-                self.namespace['D'] = imm
+            yield from self.check_replace_d(info, remap_active)
 
         # "special" registers
         for special in info.special_regs:
@@ -1508,6 +1445,72 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                                                            asmop, ins_name))
         if nia_update:
             self.update_pc_next()
+
+    def check_replace_d(self, info, remap_active):
+        replace_d = False  # update / replace constant in pseudocode
+        ldstmode = yield self.dec2.rm_dec.ldstmode
+        # shift mode reads SVD (or SVDS - TODO)
+        # *BUT*... because this is "overloading" of LD operations,
+        # it gets *STORED* into D (or DS, TODO)
+        if ldstmode == SVP64LDSTmode.SHIFT.value:
+            imm = yield self.dec2.dec.fields.FormSVD.SVD[0:11]
+            imm = exts(imm, 11)  # sign-extend to integer
+            log("shift SVD", imm)
+            replace_d = True
+        else:
+            if info.form == 'DS':
+                # DS-Form, multiply by 4 then knock 2 bits off after
+                imm = yield self.dec2.dec.fields.FormDS.DS[0:14] * 4
+            else:
+                imm = yield self.dec2.dec.fields.FormD.D[0:16]
+            imm = exts(imm, 16)  # sign-extend to integer
+        # get the right step. LD is from srcstep, ST is dststep
+        op = yield self.dec2.e.do.insn_type
+        offsmul = 0
+        if op == MicrOp.OP_LOAD.value:
+            if remap_active:
+                offsmul = yield self.dec2.in1_step
+                log("D-field REMAP src", imm, offsmul)
+            else:
+                offsmul = (srcstep * (subvl+1)) + substep
+                log("D-field src", imm, offsmul)
+        elif op == MicrOp.OP_STORE.value:
+            # XXX NOTE! no bit-reversed STORE! this should not ever be used
+            offsmul = (dststep * (subvl+1)) + substep
+            log("D-field dst", imm, offsmul)
+        # bit-reverse mode, rev already done through get_src_dst_steps()
+        if ldstmode == SVP64LDSTmode.SHIFT.value:
+            # manually look up RC, sigh
+            RC = yield self.dec2.dec.RC[0:5]
+            RC = self.gpr(RC)
+            log("LD-SHIFT:", "VL", vl,
+                "RC", RC.value, "imm", imm,
+                "offs", bin(offsmul),
+                )
+            imm = SelectableInt((imm * offsmul) << RC.value, 32)
+        # Unit-Strided LD/ST adds offset*width to immediate
+        elif ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
+            ldst_len = yield self.dec2.e.do.data_len
+            imm = SelectableInt(imm + offsmul * ldst_len, 32)
+            replace_d = True
+        # Element-strided multiplies the immediate by element step
+        elif ldstmode == SVP64LDSTmode.ELSTRIDE.value:
+            imm = SelectableInt(imm * offsmul, 32)
+            replace_d = True
+        if replace_d:
+            ldst_ra_vec = yield self.dec2.rm_dec.ldst_ra_vec
+            ldst_imz_in = yield self.dec2.rm_dec.ldst_imz_in
+            log("LDSTmode", SVP64LDSTmode(ldstmode),
+                offsmul, imm, ldst_ra_vec, ldst_imz_in)
+        # new replacement D... errr.. DS
+        if replace_d:
+            if info.form == 'DS':
+                # TODO: assert 2 LSBs are zero?
+                log("DS-Form, TODO, assert 2 LSBs zero?", bin(imm.value))
+                imm.value = imm.value >> 2
+                self.namespace['DS'] = imm
+            else:
+                self.namespace['D'] = imm
 
     def get_input(self, name):
         # using PowerDecoder2, first, find the decoder index.
