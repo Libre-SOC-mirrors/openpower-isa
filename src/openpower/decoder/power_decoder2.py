@@ -1306,15 +1306,24 @@ class PowerDecode2(PowerDecodeSubset):
 
             # get SVSTATE srcstep (TODO: elwidth etc.) needed below
             vl = Signal.like(self.state.svstate.vl)
+            subvl = Signal.like(self.state.svstate.subvl)
             srcstep = Signal.like(self.state.svstate.srcstep)
             dststep = Signal.like(self.state.svstate.dststep)
+            substep = Signal.like(self.state.svstate.substep)
             comb += vl.eq(self.state.svstate.vl)
+            comb += subvl.eq(self.state.svstate.subvl)
             comb += srcstep.eq(self.state.svstate.srcstep)
             comb += dststep.eq(self.state.svstate.dststep)
+            comb += substep.eq(self.state.svstate.substep)
 
             in1_step, in2_step = self.in1_step, self.in2_step
             in3_step = self.in3_step
             o_step, o2_step = self.o_step, self.o2_step
+
+            # multiply vl by subvl - note that this is only 7 bit!
+            # when elwidth overrides get involved this will have to go up
+            vmax = Signal(7)
+            comb += vmax.eq(vl*(subvl+1))
 
             # registers a, b, c and out and out2 (LD/ST EA)
             sv_etype = self.op_get("SV_Etype")
@@ -1348,12 +1357,12 @@ class PowerDecode2(PowerDecodeSubset):
                     selectstep = dststep if out else srcstep
                     step = Signal(7, name="step_%s" % rname.lower())
                     with m.If(self.remap_active[i]):
-                        comb += step.eq(remapstep)
+                        comb += step.eq((remapstep*(subvl+1))+substep)
                     with m.Else():
-                        comb += step.eq(selectstep)
+                        comb += step.eq((selectstep*(subvl+1))+substep)
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
-                        comb += to_reg.data.eq(offs+svdec.reg_out+(vl-1-step))
+                        comb += to_reg.data.eq(offs+svdec.reg_out+(vmax-1-step))
                     with m.Else():
                         comb += to_reg.data.eq(offs+step+svdec.reg_out)
                 with m.Else():
