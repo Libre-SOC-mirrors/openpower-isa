@@ -1559,68 +1559,66 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             self.handle_comparison(results, regnum)
 
         # any modified return results?
-        yield from self.check_write(info, output_names, results)
+        if info.write_regs:
+            for name, output in zip(output_names, results):
+                yield from self.check_write(info, name, output)
 
         nia_update = (yield from self.check_step_increment(results, rc_en,
                                                            asmop, ins_name))
         if nia_update:
             self.update_pc_next()
 
-    def check_write(self, info, output_names, results):
-        if info.write_regs:
-            for name, output in zip(output_names, results):
-                if name == 'overflow':  # ignore, done already (above)
-                    continue
-                if isinstance(output, int):
-                    output = SelectableInt(output, 256)
-                if name in ['CA', 'CA32']:
-                    if carry_en:
-                        log("writing %s to XER" % name, output)
-                        self.spr['XER'][XER_bits[name]] = output.value
-                    else:
-                        log("NOT writing %s to XER" % name, output)
-                elif name in info.special_regs:
-                    log('writing special %s' % name, output, special_sprs)
-                    if name in special_sprs:
-                        self.spr[name] = output
-                    else:
-                        self.namespace[name].eq(output)
-                    if name == 'MSR':
-                        log('msr written', hex(self.msr.value))
+    def check_write(self, info, name, output):
+        if name == 'overflow':  # ignore, done already (above)
+            return
+        if isinstance(output, int):
+            output = SelectableInt(output, 256)
+        if name in ['CA', 'CA32']:
+            if carry_en:
+                log("writing %s to XER" % name, output)
+                self.spr['XER'][XER_bits[name]] = output.value
+            else:
+                log("NOT writing %s to XER" % name, output)
+        elif name in info.special_regs:
+            log('writing special %s' % name, output, special_sprs)
+            if name in special_sprs:
+                self.spr[name] = output
+            else:
+                self.namespace[name].eq(output)
+            if name == 'MSR':
+                log('msr written', hex(self.msr.value))
+        else:
+            regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
+            if regnum is None:
+                regnum, is_vec = yield from get_pdecode_idx_out2(
+                    self.dec2, name)
+            if regnum is None:
+                # temporary hack for not having 2nd output
+                regnum = yield getattr(self.decoder, name)
+                is_vec = False
+            if self.is_svp64_mode and self.pred_dst_zero:
+                log('zeroing reg %d %s' % (regnum, str(output)),
+                    is_vec)
+                output = SelectableInt(0, 256)
+            else:
+                if name in fregs:
+                    ftype = 'fpr'
                 else:
-                    regnum, is_vec = yield from get_pdecode_idx_out(self.dec2,
-                                                                    name)
-                    if regnum is None:
-                        regnum, is_vec = yield from get_pdecode_idx_out2(
-                            self.dec2, name)
-                    if regnum is None:
-                        # temporary hack for not having 2nd output
-                        regnum = yield getattr(self.decoder, name)
-                        is_vec = False
-                    if self.is_svp64_mode and self.pred_dst_zero:
-                        log('zeroing reg %d %s' % (regnum, str(output)),
-                            is_vec)
-                        output = SelectableInt(0, 256)
-                    else:
-                        if name in fregs:
-                            ftype = 'fpr'
-                        else:
-                            ftype = 'gpr'
-                        log('writing %s %s %s' % (ftype, regnum, str(output)),
-                            is_vec)
-                    if output.bits > 64:
-                        output = SelectableInt(output.value, 64)
-                    if name in fregs:
-                        self.fpr[regnum] = output
-                    else:
-                        self.gpr[regnum] = output
+                    ftype = 'gpr'
+                log('writing %s %s %s' % (ftype, regnum, str(output)),
+                    is_vec)
+            if output.bits > 64:
+                output = SelectableInt(output.value, 64)
+            if name in fregs:
+                self.fpr[regnum] = output
+            else:
+                self.gpr[regnum] = output
 
     def check_step_increment(self, results, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
         pre = False
         post = False
-        nia_update = True
         if self.allow_next_step_inc:
             log("SVSTATE_NEXT: inc requested, mode",
                 self.svstate_next_mode, self.allow_next_step_inc)
@@ -1632,61 +1630,63 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 self.svp64_reset_loop()
                 self.svstate.vfirst = 0
                 self.update_nia()
-                if rc_en:
-                    results = [SelectableInt(0, 64)]
-                    self.handle_comparison(results)  # CR0
+                if not rc_en:
+                    return True
+                results = [SelectableInt(0, 64)]
+                self.handle_comparison(results)  # CR0
+                return True
+            if self.allow_next_step_inc == 2:
+                log("SVSTATE_NEXT: read")
+                nia_update = (yield from self.svstate_post_inc(ins_name))
             else:
-                if self.allow_next_step_inc == 2:
-                    log("SVSTATE_NEXT: read")
-                    nia_update = (yield from self.svstate_post_inc(ins_name))
-                else:
-                    log("SVSTATE_NEXT: post-inc")
-                # use actual src/dst-step here to check end, do NOT
-                # use bit-reversed version
-                srcstep, dststep, substep = \
-                    self.new_srcstep, self.new_dststep, self.new_substep
-                remaps = self.get_remap_indices()
-                remap_idxs = self.remap_idxs
-                vl = self.svstate.vl
-                subvl = self.svstate.subvl
-                end_sub = substep == subvl
-                end_src = srcstep == vl-1
-                end_dst = dststep == vl-1
-                if self.allow_next_step_inc != 2:
-                    self.advance_svstate_steps(end_src, end_dst)
-                self.namespace['SVSTATE'] = self.svstate.spr
-                # set CR0 (if Rc=1) based on end
-                if rc_en:
-                    endtest = 1 if (end_src or end_dst) else 0
-                    #results = [SelectableInt(endtest, 64)]
-                    # self.handle_comparison(results) # CR0
+                log("SVSTATE_NEXT: post-inc")
+            # use actual src/dst-step here to check end, do NOT
+            # use bit-reversed version
+            srcstep, dststep, substep = \
+                self.new_srcstep, self.new_dststep, self.new_substep
+            remaps = self.get_remap_indices()
+            remap_idxs = self.remap_idxs
+            vl = self.svstate.vl
+            subvl = self.svstate.subvl
+            end_sub = substep == subvl
+            end_src = srcstep == vl-1
+            end_dst = dststep == vl-1
+            if self.allow_next_step_inc != 2:
+                self.advance_svstate_steps(end_src, end_dst)
+            self.namespace['SVSTATE'] = self.svstate.spr
+            # set CR0 (if Rc=1) based on end
+            if rc_en:
+                endtest = 1 if (end_src or end_dst) else 0
+                #results = [SelectableInt(endtest, 64)]
+                # self.handle_comparison(results) # CR0
 
-                    # see if svstep was requested, if so, which SVSTATE
-                    endings = 0b111
-                    if self.svstate_next_mode > 0:
-                        shape_idx = self.svstate_next_mode.value-1
-                        endings = self.remap_loopends[shape_idx]
-                    cr_field = SelectableInt((~endings) << 1 | endtest, 4)
-                    print("svstep Rc=1, CR0", cr_field)
-                    self.crl[0].eq(cr_field)  # CR0
-                if end_src or end_dst:
-                    # reset at end of loop including exit Vertical Mode
-                    log("SVSTATE_NEXT: after increments, reset")
-                    self.svp64_reset_loop()
-                    self.svstate.vfirst = 0
+                # see if svstep was requested, if so, which SVSTATE
+                endings = 0b111
+                if self.svstate_next_mode > 0:
+                    shape_idx = self.svstate_next_mode.value-1
+                    endings = self.remap_loopends[shape_idx]
+                cr_field = SelectableInt((~endings) << 1 | endtest, 4)
+                print("svstep Rc=1, CR0", cr_field)
+                self.crl[0].eq(cr_field)  # CR0
+            if end_src or end_dst:
+                # reset at end of loop including exit Vertical Mode
+                log("SVSTATE_NEXT: after increments, reset")
+                self.svp64_reset_loop()
+                self.svstate.vfirst = 0
+            return nia_update
 
-        elif self.is_svp64_mode:
-            nia_update = (yield from self.svstate_post_inc(ins_name))
-        else:
-            # XXX only in non-SVP64 mode!
-            # record state of whether the current operation was an svshape,
-            # OR svindex!
-            # to be able to know if it should apply in the next instruction.
-            # also (if going to use this instruction) should disable ability
-            # to interrupt in between. sigh.
-            self.last_op_svshape = asmop in ['svremap', 'svindex']
+        if self.is_svp64_mode:
+            return (yield from self.svstate_post_inc(ins_name))
 
-        return nia_update
+        # XXX only in non-SVP64 mode!
+        # record state of whether the current operation was an svshape,
+        # OR svindex!
+        # to be able to know if it should apply in the next instruction.
+        # also (if going to use this instruction) should disable ability
+        # to interrupt in between. sigh.
+        self.last_op_svshape = asmop in ['svremap', 'svindex']
+
+        return True
 
     def SVSTATE_NEXT(self, mode, submode):
         """explicitly moves srcstep/dststep on to next element, for
