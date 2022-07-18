@@ -1607,6 +1607,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                     else:
                         self.gpr[regnum] = output
 
+        nia_update = (yield from self.check_step_increment(results, rc_en,
+                                                           asmop, ins_name))
+        if nia_update:
+            self.update_pc_next()
+
+    def check_step_increment(self, results, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
         pre = False
@@ -1677,8 +1683,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             # to interrupt in between. sigh.
             self.last_op_svshape = asmop in ['svremap', 'svindex']
 
-        if nia_update:
-            self.update_pc_next()
+        return nia_update
 
     def SVSTATE_NEXT(self, mode, submode):
         """explicitly moves srcstep/dststep on to next element, for
