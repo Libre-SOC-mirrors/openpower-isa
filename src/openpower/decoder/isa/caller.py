@@ -1559,6 +1559,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             self.handle_comparison(results, regnum)
 
         # any modified return results?
+        yield from self.check_write(info, output_names, results)
+
+        nia_update = (yield from self.check_step_increment(results, rc_en,
+                                                           asmop, ins_name))
+        if nia_update:
+            self.update_pc_next()
+
+    def check_write(self, info, output_names, results):
         if info.write_regs:
             for name, output in zip(output_names, results):
                 if name == 'overflow':  # ignore, done already (above)
@@ -1589,7 +1597,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                         # temporary hack for not having 2nd output
                         regnum = yield getattr(self.decoder, name)
                         is_vec = False
-                    if self.is_svp64_mode and pred_dst_zero:
+                    if self.is_svp64_mode and self.pred_dst_zero:
                         log('zeroing reg %d %s' % (regnum, str(output)),
                             is_vec)
                         output = SelectableInt(0, 256)
@@ -1606,11 +1614,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                         self.fpr[regnum] = output
                     else:
                         self.gpr[regnum] = output
-
-        nia_update = (yield from self.check_step_increment(results, rc_en,
-                                                           asmop, ins_name))
-        if nia_update:
-            self.update_pc_next()
 
     def check_step_increment(self, results, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
