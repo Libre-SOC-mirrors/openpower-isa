@@ -1644,14 +1644,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 end_src = srcstep == vl-1
                 end_dst = dststep == vl-1
                 if self.allow_next_step_inc != 2:
-                    if end_sub:
-                        if not end_src:
-                            self.svstate.srcstep += SelectableInt(1, 7)
-                        if not end_dst:
-                            self.svstate.dststep += SelectableInt(1, 7)
-                        self.svstate.substep = SelectableInt(0, 2)
-                    else:
-                        self.svstate.substep += SelectableInt(1, 2)
+                    self.advance_svstate_steps(end_src, end_dst)
                 self.namespace['SVSTATE'] = self.svstate.spr
                 # set CR0 (if Rc=1) based on end
                 if rc_en:
@@ -1872,14 +1865,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 self.update_pc_next()
                 return False
         if svp64_is_vector and srcstep != vl-1 and dststep != vl-1:
-            end_sub = substep == subvl
-            if end_sub:
-                self.svstate.srcstep += SelectableInt(1, 7)
-                self.svstate.dststep += SelectableInt(1, 7)
-                self.svstate.substep = SelectableInt(0, 2)
-            else:
-                self.svstate.substep += SelectableInt(1, 2) # advance substep
-
+            self.advance_svstate_steps()
             self.namespace['SVSTATE'] = self.svstate
             # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
             # (by default, NIA is CIA+4 if v3.0B or CIA+8 if SVP64)
@@ -1895,6 +1881,19 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         self.update_nia()
 
         return True
+
+    def advance_svstate_steps(self, end_src=False, end_dst=False):
+        subvl = self.svstate.subvl
+        substep = self.svstate.substep
+        end_sub = substep == subvl
+        if end_sub:
+            if not end_src:
+                self.svstate.srcstep += SelectableInt(1, 7)
+            if not end_dst:
+                self.svstate.dststep += SelectableInt(1, 7)
+            self.svstate.substep = SelectableInt(0, 2)
+        else:
+            self.svstate.substep += SelectableInt(1, 2) # advance substep
 
     def update_pc_next(self):
         # UPDATE program counter
