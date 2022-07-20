@@ -1298,7 +1298,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             pred_dst_zero = self.pred_dst_zero
             pred_src_zero = self.pred_src_zero
             vl = self.svstate.vl
-            subvl = self.svstate.subvl
+            subvl = yield self.dec2.rm_dec.rm_in.subvl
 
         # VL=0 in SVP64 mode means "do nothing: skip instruction"
         if self.is_svp64_mode and vl == 0:
@@ -1656,12 +1656,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             remaps = self.get_remap_indices()
             remap_idxs = self.remap_idxs
             vl = self.svstate.vl
-            subvl = self.svstate.subvl
+            subvl = yield self.dec2.rm_dec.rm_in.subvl
             end_sub = substep == subvl
             end_src = srcstep == vl-1
             end_dst = dststep == vl-1
             if self.allow_next_step_inc != 2:
-                self.advance_svstate_steps(end_src, end_dst)
+                yield from self.advance_svstate_steps(end_src, end_dst)
             self.namespace['SVSTATE'] = self.svstate.spr
             # set CR0 (if Rc=1) based on end
             if rc_en:
@@ -1725,7 +1725,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         """
         # get SVSTATE VL (oh and print out some debug stuff)
         vl = self.svstate.vl
-        subvl = self.svstate.subvl
+        subvl = yield self.dec2.rm_dec.rm_in.subvl
         srcstep = self.svstate.srcstep
         dststep = self.svstate.dststep
         substep = self.svstate.substep
@@ -1821,7 +1821,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         dststep = self.svstate.dststep
         substep = self.svstate.substep
         vl = self.svstate.vl
-        subvl = self.svstate.subvl
+        subvl = yield self.dec2.rm_dec.rm_in.subvl
         log("    srcstep", srcstep)
         log("    dststep", dststep)
         log("    substep", substep)
@@ -1844,7 +1844,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # this is our Sub-Program-Counter loop from 0 to VL-1
         # XXX twin predication TODO
         vl = self.svstate.vl
-        subvl = self.svstate.subvl
+        subvl = yield self.dec2.rm_dec.rm_in.subvl
         mvl = self.svstate.maxvl
         srcstep = self.svstate.srcstep
         dststep = self.svstate.dststep
@@ -1856,7 +1856,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         in_vec = not (yield self.dec2.no_in_vec)
         log("    svstate.vl", vl)
         log("    svstate.mvl", mvl)
-        log("    svstate.subvl", subvl)
+        log("         rm.subvl", subvl)
         log("    svstate.srcstep", srcstep)
         log("    svstate.dststep", dststep)
         log("    svstate.substep", substep)
@@ -1882,7 +1882,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 self.update_pc_next()
                 return False
         if svp64_is_vector and srcstep != vl-1 and dststep != vl-1:
-            self.advance_svstate_steps()
+            yield from self.advance_svstate_steps()
             self.namespace['SVSTATE'] = self.svstate
             # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
             # (by default, NIA is CIA+4 if v3.0B or CIA+8 if SVP64)
@@ -1900,7 +1900,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         return True
 
     def advance_svstate_steps(self, end_src=False, end_dst=False):
-        subvl = self.svstate.subvl
+        subvl = yield self.dec2.rm_dec.rm_in.subvl
         substep = self.svstate.substep
         end_sub = substep == subvl
         if end_sub:

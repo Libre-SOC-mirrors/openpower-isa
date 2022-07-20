@@ -1311,7 +1311,7 @@ class PowerDecode2(PowerDecodeSubset):
             dststep = Signal.like(self.state.svstate.dststep)
             substep = Signal.like(self.state.svstate.substep)
             comb += vl.eq(self.state.svstate.vl)
-            comb += subvl.eq(self.state.svstate.subvl)
+            comb += subvl.eq(self.rm_dec.rm_in.subvl)
             comb += srcstep.eq(self.state.svstate.srcstep)
             comb += dststep.eq(self.state.svstate.dststep)
             comb += substep.eq(self.state.svstate.substep)
@@ -1332,7 +1332,7 @@ class PowerDecode2(PowerDecodeSubset):
                 ("RB", e.read_reg2, dec_b.reg_out, in2_svdec, in2_step, False),
                 ("RC", e.read_reg3, dec_c.reg_out, in3_svdec, in3_step, False),
                 ("RT", e.write_reg, dec_o.reg_out, o_svdec, o_step, True),
-                    ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, o2_step, True))):
+                ("EA", e.write_ea, dec_o2.reg_out, o2_svdec, o2_step, True))):
                 rname, to_reg, fromreg, svdec, remapstep, out = stuff
                 comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
                 comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
