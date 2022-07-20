@@ -11,8 +11,8 @@ https://libre-soc.org/openpower/sv/sprs/
 | 7:13  |    vl    | Vector Length         |
 | 14:20 | srcstep  | for srcstep = 0..VL-1 |
 | 21:27 | dststep  | for dststep = 0..VL-1 |
-| 28:29 | subvl    | Sub-vector length     |
-| 30:31 | substep  | for substep = 0..SUBVL-1  |
+| 28:29 | dsubstep | for dsubstep = 0..SUBVL-1  |
+| 30:31 | ssubstep | for ssubstep = 0..SUBVL-1  |
 | 32:33 | mi0      | REMAP RA SVSHAPE0-3    |
 | 34:35 | mi1      | REMAP RB SVSHAPE0-3    |
 | 36:37 | mi2      | REMAP RC SVSHAPE0-3    |
@@ -39,8 +39,8 @@ class SVSTATERec(Record):
             ("mi2", 2),
             ("mi1", 2),
             ("mi0", 2),
-            ("substep", 2),
-            ("subvl", 2),
+            ("ssubstep", 2),
+            ("dsunstep", 2),
             ("dststep", 7),
             ("srcstep", 7),
             ("vl", 7),

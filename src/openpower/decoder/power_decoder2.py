@@ -1306,15 +1306,15 @@ class PowerDecode2(PowerDecodeSubset):
 
             # get SVSTATE srcstep (TODO: elwidth etc.) needed below
             vl = Signal.like(self.state.svstate.vl)
-            subvl = Signal.like(self.state.svstate.subvl)
+            subvl = Signal.like(self.rm_dec.rm_in.subvl)
             srcstep = Signal.like(self.state.svstate.srcstep)
             dststep = Signal.like(self.state.svstate.dststep)
-            substep = Signal.like(self.state.svstate.substep)
+            ssubstep = Signal.like(self.state.svstate.ssubstep)
             comb += vl.eq(self.state.svstate.vl)
             comb += subvl.eq(self.rm_dec.rm_in.subvl)
             comb += srcstep.eq(self.state.svstate.srcstep)
             comb += dststep.eq(self.state.svstate.dststep)
-            comb += substep.eq(self.state.svstate.substep)
+            comb += ssubstep.eq(self.state.svstate.ssubstep)
 
             in1_step, in2_step = self.in1_step, self.in2_step
             in3_step = self.in3_step
@@ -1357,9 +1357,9 @@ class PowerDecode2(PowerDecodeSubset):
                     selectstep = dststep if out else srcstep
                     step = Signal(7, name="step_%s" % rname.lower())
                     with m.If(self.remap_active[i]):
-                        comb += step.eq((remapstep*(subvl+1))+substep)
+                        comb += step.eq((remapstep*(subvl+1))+ssubstep)
                     with m.Else():
-                        comb += step.eq((selectstep*(subvl+1))+substep)
+                        comb += step.eq((selectstep*(subvl+1))+ssubstep)
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
                         comb += to_reg.data.eq(offs+svdec.reg_out+(vmax-1-step))

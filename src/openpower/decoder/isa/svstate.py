@@ -56,12 +56,20 @@ class SVP64State(SelectableInt):
         self.fsi['srcstep'].eq(value)
 
     @property
-    def substep(self):
-        return self.fsi['substep'].asint(msb0=True)
+    def dsubstep(self):
+        return self.fsi['dsubstep'].asint(msb0=True)
 
-    @substep.setter
-    def substep(self, value):
-        self.fsi['substep'].eq(value)
+    @dsubstep.setter
+    def dsubstep(self, value):
+        self.fsi['dsubstep'].eq(value)
+
+    @property
+    def ssubstep(self):
+        return self.fsi['ssubstep'].asint(msb0=True)
+
+    @ssubstep.setter
+    def ssubstep(self, value):
+        self.fsi['ssubstep'].eq(value)
 
     @property
     def subvl(self):
