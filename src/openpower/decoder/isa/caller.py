@@ -1722,6 +1722,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
 
     def svstate_pre_inc(self):
         """check if srcstep/dststep need to skip over masked-out predicate bits
+        note that this is not supposed to do anything to substep,
+        it is purely for skipping masked-out bits
         """
         # get SVSTATE VL (oh and print out some debug stuff)
         vl = self.svstate.vl
@@ -1756,7 +1758,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             if sv_ptype == SVPtype.P2.value:
                 srcmask = get_predcr(self.crl, srcpred, vl)
         # work out if the ssubsteps are completed
-        end_sub = ssubstep == subvl
+        substart = ssubstep == 0
         log("    pmode", pmode)
         log("    reverse", reverse_gear)
         log("    ptype", sv_ptype)
@@ -1766,25 +1768,21 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         log("    dstmask", bin(dstmask))
         log("    pred_sz", bin(pred_src_zero))
         log("    pred_dz", bin(pred_dst_zero))
-        log("    end_sub", end_sub)
+        log("    substart", substart)
 
-        if end_sub:
+        if substart:
             # okaaay, so here we simply advance srcstep (TODO dststep)
             # until the predicate mask has a "1" bit... or we run out of VL
             # let srcstep==VL be the indicator to move to next instruction
             if not pred_src_zero:
                 while (((1 << srcstep) & srcmask) == 0) and (srcstep != vl):
-                    log("      skip", bin(1 << srcstep))
+                    log("      sskip", bin(1 << srcstep))
                     srcstep += 1
             # same for dststep
             if not pred_dst_zero:
                 while (((1 << dststep) & dstmask) == 0) and (dststep != vl):
-                    log("      skip", bin(1 << dststep))
+                    log("      dskip", bin(1 << dststep))
                     dststep += 1
-            # and reset ssubstep back to zero
-            ssubstep = 0
-        else:
-            ssubstep += 1 # advance ssubstep
 
         # now work out if the relevant mask bits require zeroing
         if pred_dst_zero:
@@ -1881,7 +1879,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 self.svp64_reset_loop()
                 self.update_pc_next()
                 return False
-        if svp64_is_vector and srcstep != vl-1 and dststep != vl-1:
+        loopend = (srcstep == vl-1 or dststep == vl-1) and ssubstep == subvl
+        if svp64_is_vector and not loopend:
             yield from self.advance_svstate_steps()
             self.namespace['SVSTATE'] = self.svstate
             # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
