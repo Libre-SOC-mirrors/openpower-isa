@@ -1449,6 +1449,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
     def check_replace_d(self, info, remap_active):
         replace_d = False  # update / replace constant in pseudocode
         ldstmode = yield self.dec2.rm_dec.ldstmode
+        vl = self.svstate.vl
+        subvl = yield self.dec2.rm_dec.rm_in.subvl
+        srcstep, dststep = self.new_srcstep, self.new_dststep
+        ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
         # shift mode reads SVD (or SVDS - TODO)
         # *BUT*... because this is "overloading" of LD operations,
         # it gets *STORED* into D (or DS, TODO)
