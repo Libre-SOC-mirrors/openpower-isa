@@ -1142,7 +1142,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         in the class for later use.  this to avoid problems with yield
         """
         # go through all iterators in lock-step, advance to next remap_idx
-        srcstep, dststep, ssubstep = self.get_src_dststeps()
+        srcstep, dststep, ssubstep, dsubstep = self.get_src_dststeps()
         # get four SVSHAPEs. here we are hard-coding
         SVSHAPE0 = self.spr['SVSHAPE0']
         SVSHAPE1 = self.spr['SVSHAPE1']
@@ -1294,7 +1294,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 self.update_nia()
                 self.update_pc_next()
                 return
-            srcstep, dststep, ssubstep = self.get_src_dststeps()
+            srcstep, dststep, ssubstep, dsubstep = self.get_src_dststeps()
             pred_dst_zero = self.pred_dst_zero
             pred_src_zero = self.pred_src_zero
             vl = self.svstate.vl
@@ -1476,7 +1476,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 log("D-field src", imm, offsmul)
         elif op == MicrOp.OP_STORE.value:
             # XXX NOTE! no bit-reversed STORE! this should not ever be used
-            offsmul = (dststep * (subvl+1)) + ssubstep
+            offsmul = (dststep * (subvl+1)) + dsubstep
             log("D-field dst", imm, offsmul)
         # bit-reverse mode, rev already done through get_src_dst_steps()
         if ldstmode == SVP64LDSTmode.SHIFT.value:
@@ -1651,13 +1651,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 log("SVSTATE_NEXT: post-inc")
             # use actual src/dst-step here to check end, do NOT
             # use bit-reversed version
-            srcstep, dststep, ssubstep = \
-                self.new_srcstep, self.new_dststep, self.new_ssubstep
+            srcstep, dststep = self.new_srcstep, self.new_dststep
+            ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
             remaps = self.get_remap_indices()
             remap_idxs = self.remap_idxs
             vl = self.svstate.vl
             subvl = yield self.dec2.rm_dec.rm_in.subvl
-            end_sub = ssubstep == subvl
             end_src = srcstep == vl-1
             end_dst = dststep == vl-1
             if self.allow_next_step_inc != 2:
@@ -1731,12 +1730,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         srcstep = self.svstate.srcstep
         dststep = self.svstate.dststep
         ssubstep = self.svstate.ssubstep
+        dsubstep = self.svstate.dsubstep
         sv_a_nz = yield self.dec2.sv_a_nz
         fft_mode = yield self.dec2.use_svp64_fft
         in1 = yield self.dec2.e.read_reg1.data
-        log("SVP64: VL, subvl, srcstep, dststep, ssubstep, sv_a_nz, "
+        log("SVP64: VL, subvl, srcstep, dststep, ssubstep, dsybstep, sv_a_nz, "
             "in1 fft, svp64",
-            vl, subvl, srcstep, dststep, ssubstep, sv_a_nz, in1, fft_mode,
+            vl, subvl, srcstep, dststep, ssubstep, dsubstep,
+            sv_a_nz, in1, fft_mode,
             self.is_svp64_mode)
 
         # get predicate mask (all 64 bits)
@@ -1758,7 +1759,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             if sv_ptype == SVPtype.P2.value:
                 srcmask = get_predcr(self.crl, srcpred, vl)
         # work out if the ssubsteps are completed
-        substart = ssubstep == 0
+        ssubstart = ssubstep == 0
+        dsubstart = dsubstep == 0
         log("    pmode", pmode)
         log("    reverse", reverse_gear)
         log("    ptype", sv_ptype)
@@ -1768,16 +1770,20 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         log("    dstmask", bin(dstmask))
         log("    pred_sz", bin(pred_src_zero))
         log("    pred_dz", bin(pred_dst_zero))
-        log("    substart", substart)
+        log("    ssubstart", ssubstart)
+        log("    dsubstart", dsubstart)
 
-        if substart:
-            # okaaay, so here we simply advance srcstep (TODO dststep)
+        # okaaay, so here we simply advance srcstep (TODO dststep)
+        # this can ONLY be done at the beginning of the "for" loop
+        # (this is all actually a FSM so it's hell to keep track sigh)
+        if ssubstart:
             # until the predicate mask has a "1" bit... or we run out of VL
             # let srcstep==VL be the indicator to move to next instruction
             if not pred_src_zero:
                 while (((1 << srcstep) & srcmask) == 0) and (srcstep != vl):
                     log("      sskip", bin(1 << srcstep))
                     srcstep += 1
+        if dsubstart:
             # same for dststep
             if not pred_dst_zero:
                 while (((1 << dststep) & dstmask) == 0) and (dststep != vl):
@@ -1791,38 +1797,43 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             pred_src_zero = ((1 << srcstep) & srcmask) == 0
 
         # store new srcstep / dststep
-        self.new_srcstep, self.new_dststep, self.new_ssubstep = \
-                (srcstep, dststep, ssubstep)
-        self.pred_dst_zero, self.pred_src_zero = pred_dst_zero, pred_src_zero
+        self.new_srcstep, self.new_dststep = (srcstep, dststep)
+        self.new_ssubstep, self.new_dsubstep = (ssubstep, dsubstep)
+        self.pred_dst_zero, self.pred_src_zero = (pred_dst_zero, pred_src_zero)
         log("    new srcstep", srcstep)
         log("    new dststep", dststep)
         log("    new ssubstep", ssubstep)
+        log("    new dsubstep", dsubstep)
 
     def get_src_dststeps(self):
-        """gets srcstep, dststep, and ssubstep
+        """gets srcstep, dststep, and ssubstep, dsubstep
         """
-        return self.new_srcstep, self.new_dststep, self.new_ssubstep
+        return (self.new_srcstep, self.new_dststep,
+                self.new_ssubstep, self.new_dsubstep)
 
     def update_new_svstate_steps(self):
         # note, do not get the bit-reversed srcstep here!
-        srcstep, dststep, ssubstep = \
-            self.new_srcstep, self.new_dststep, self.new_ssubstep
+        srcstep, dststep = self.new_srcstep, self.new_dststep
+        ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
 
         # update SVSTATE with new srcstep
         self.svstate.srcstep = srcstep
         self.svstate.dststep = dststep
         self.svstate.ssubstep = ssubstep
+        self.svstate.dsubstep = dsubstep
         self.namespace['SVSTATE'] = self.svstate
         yield self.dec2.state.svstate.eq(self.svstate.value)
         yield Settle()  # let decoder update
         srcstep = self.svstate.srcstep
         dststep = self.svstate.dststep
         ssubstep = self.svstate.ssubstep
+        dsubstep = self.svstate.dsubstep
         vl = self.svstate.vl
         subvl = yield self.dec2.rm_dec.rm_in.subvl
         log("    srcstep", srcstep)
         log("    dststep", dststep)
         log("    ssubstep", ssubstep)
+        log("    dsubstep", dsubstep)
         log("         vl", vl)
         log("      subvl", subvl)
 
@@ -1847,6 +1858,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         srcstep = self.svstate.srcstep
         dststep = self.svstate.dststep
         ssubstep = self.svstate.ssubstep
+        dsubstep = self.svstate.dsubstep
         rm_mode = yield self.dec2.rm_dec.mode
         reverse_gear = yield self.dec2.rm_dec.reverse_gear
         sv_ptype = yield self.dec2.dec.op.SV_Ptype
@@ -1858,6 +1870,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         log("    svstate.srcstep", srcstep)
         log("    svstate.dststep", dststep)
         log("    svstate.ssubstep", ssubstep)
+        log("    svstate.dsubstep", dsubstep)
         log("    mode", rm_mode)
         log("    reverse", reverse_gear)
         log("    out_vec", out_vec)
@@ -1879,7 +1892,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 self.svp64_reset_loop()
                 self.update_pc_next()
                 return False
-        loopend = (srcstep == vl-1 or dststep == vl-1) and ssubstep == subvl
+        # loops end at the first "hit" (source or dest)
+        loopend = ((srcstep == vl-1 and ssubstep == subvl) or
+                   (dststep == vl-1 and dsubstep == subvl))
         if svp64_is_vector and not loopend:
             yield from self.advance_svstate_steps()
             self.namespace['SVSTATE'] = self.svstate
@@ -1899,17 +1914,28 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         return True
 
     def advance_svstate_steps(self, end_src=False, end_dst=False):
+        """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
+        TODO when Pack/Unpack is set, substep becomes the *outer* loop
+        """
         subvl = yield self.dec2.rm_dec.rm_in.subvl
+        # first source step
         ssubstep = self.svstate.ssubstep
         end_sub = ssubstep == subvl
         if end_sub:
             if not end_src:
                 self.svstate.srcstep += SelectableInt(1, 7)
-            if not end_dst:
-                self.svstate.dststep += SelectableInt(1, 7)
-            self.svstate.ssubstep = SelectableInt(0, 2)
+            self.svstate.ssubstep = SelectableInt(0, 2)  # reset
         else:
             self.svstate.ssubstep += SelectableInt(1, 2) # advance ssubstep
+        # now dest step
+        dsubstep = self.svstate.dsubstep
+        end_sub = dsubstep == subvl
+        if end_sub:
+            if not end_dst:
+                self.svstate.dststep += SelectableInt(1, 7)
+            self.svstate.dsubstep = SelectableInt(0, 2)  # reset
+        else:
+            self.svstate.dsubstep += SelectableInt(1, 2) # advance ssubstep
 
     def update_pc_next(self):
         # UPDATE program counter
@@ -1923,6 +1949,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         self.svstate.srcstep = 0
         self.svstate.dststep = 0
         self.svstate.ssubstep = 0
+        self.svstate.dsubstep = 0
         log("    svstate.srcstep loop end (PC to update)")
         self.namespace['SVSTATE'] = self.svstate
 

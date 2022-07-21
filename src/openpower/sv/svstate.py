@@ -40,7 +40,7 @@ class SVSTATERec(Record):
             ("mi1", 2),
             ("mi0", 2),
             ("ssubstep", 2),
-            ("dsunstep", 2),
+            ("dsubstep", 2),
             ("dststep", 7),
             ("srcstep", 7),
             ("vl", 7),
