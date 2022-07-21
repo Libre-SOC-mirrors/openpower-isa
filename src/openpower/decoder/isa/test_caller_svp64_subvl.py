@@ -26,12 +26,12 @@ class DecoderTestCase(FHDLTestCase):
         #       1 = 5 + 9   => not to be touched (skipped)
         #       2 = 6 + 10  => 0x3334 = 0x2223+0x1111
         #   reg num        0 1 2 3 4 5 6 7 8 9 10 11
-        #   src r3=0b10              N Y     N Y
-        #                            | |     | |
-        #                    +-------+ | add + |
-        #                    | +-------+ add --+
-        #                    | |
-        #   dest r3=0b10     N Y
+        #   src r3=0b10      | |     N N Y Y N N Y Y
+        #                    | |         | |     | |
+        #                    | | +-------+-|-add-+ |
+        #                    | | | +-------+-add---+
+        #                    | | | |
+        #   dest r3=0b10     N N Y Y
         isa = SVP64Asm(['sv.add/vec2/m=r30 *1, *5, *9'
                        ])
         lst = list(isa)
@@ -59,8 +59,8 @@ class DecoderTestCase(FHDLTestCase):
         print ("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
-        expected_regs[1] = 0xbeef
-        expected_regs[2] = 0x3334
+        expected_regs[3] = initial_regs[7]+initial_regs[11]
+        expected_regs[4] = initial_regs[8]+initial_regs[12]
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate)
