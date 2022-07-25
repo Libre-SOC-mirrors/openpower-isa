@@ -157,16 +157,16 @@ def svindex(fields):
 
     1.6.28 SVI-FORM
       |0     |6    |11    |16   |21 |23|24|25|26    31|
-      | PO   |  RS |rmm   | SVd |ew |yx|mm|sk|   XO   |
+      | PO   |  SVG|rmm   | SVd |ew |yx|mm|sk|   XO   |
     """
     # note that the dimension field one subtracted
     PO = 22
     XO = 0b101001
-    (RS, rmm, SVd, ew, yx, mm, sk) = fields
+    (SVG, rmm, SVd, ew, yx, mm, sk) = fields
     SVd -= 1
     return instruction(
         (PO , 0 , 5),
-        (RS , 6 , 10),
+        (SVG , 6 , 10),
         (rmm, 11 , 15),
         (SVd, 16 , 20),
         (ew , 21 , 22),
