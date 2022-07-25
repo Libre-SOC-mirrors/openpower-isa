@@ -75,7 +75,7 @@ def setvl(fields, Rc):
     (RT, RA, SVi, vf, vs, ms) = fields
     SVi -= 1
     return instruction(
-        (PO , 0 , 5),
+        (PO , 0 , 5 ),
         (RT , 6 , 10),
         (RA , 11, 15),
         (SVi, 16, 22),
@@ -105,12 +105,12 @@ def svstep(fields, Rc):
     (RT, SVi, vf) = fields
     SVi -= 1
     return instruction(
-        (PO , 0 , 5),
+        (PO , 0 , 5 ),
         (RT , 6 , 10),
-        (0 , 11, 15),
+        (0  , 11, 15),
         (SVi, 16, 22),
-        (0 , 23, 23),
-        (0 , 24, 24),
+        (0  , 23, 23),
+        (0  , 24, 24),
         (vf , 25, 25),
         (XO , 26, 30),
         (Rc , 31, 31),
@@ -137,7 +137,7 @@ def svshape(fields):
     SVyd -= 1
     SVzd -= 1
     return instruction(
-        (PO  , 0 , 5),
+        (PO  , 0 , 5 ),
         (SVxd, 6 , 10),
         (SVyd, 11, 15),
         (SVzd, 16, 20),
@@ -165,15 +165,15 @@ def svindex(fields):
     (SVG, rmm, SVd, ew, yx, mm, sk) = fields
     SVd -= 1
     return instruction(
-        (PO , 0 , 5),
-        (SVG , 6 , 10),
-        (rmm, 11 , 15),
-        (SVd, 16 , 20),
-        (ew , 21 , 22),
-        (yx , 23 , 23),
-        (mm , 24 , 24),
-        (sk , 25 , 25),
-        (XO , 26 , 31),
+        (PO , 0 , 5 ),
+        (SVG, 6 , 10),
+        (rmm, 11, 15),
+        (SVd, 16, 20),
+        (ew , 21, 22),
+        (yx , 23, 23),
+        (mm , 24, 24),
+        (sk , 25, 25),
+        (XO , 26, 31),
     )
 
 
@@ -194,7 +194,7 @@ def svremap(fields):
     XO = 0b111001
     (SVme, mi0, mi1, mi2, mo0, mo1, pst) = fields
     return instruction(
-        (PO  , 0 , 5),
+        (PO  , 0 , 5 ),
         (SVme, 6 , 10),
         (mi0 , 11, 12),
         (mi1 , 13, 14),
@@ -222,7 +222,7 @@ def bmask(fields):
     XO = 0b010001
     (RT, RA, RB, bm, L) = fields
     return instruction(
-        (PO, 0 , 5),
+        (PO, 0 , 5 ),
         (RT, 6 , 10),
         (RA, 11, 15),
         (RB, 16, 20),
@@ -242,7 +242,7 @@ def fsins(fields, Rc):
     XO = 0b1000001110
     (FRT, FRB) = fields
     return instruction(
-        (PO , 0 , 5),
+        (PO , 0 , 5 ),
         (FRT, 6 , 10),
         (0  , 11, 15),
         (FRB, 16, 20),
@@ -261,7 +261,7 @@ def fcoss(fields, Rc):
     XO = 0b1000101110
     (FRT, FRB) = fields
     return instruction(
-        (PO , 0 , 5),
+        (PO , 0 , 5 ),
         (FRT, 6 , 10),
         (0  , 11, 15),
         (FRB, 16, 20),
@@ -280,7 +280,7 @@ def ternlogi(fields, Rc):
     XO = 0
     (RT, RA, RB, TLI) = fields
     return instruction(
-        (PO , 0 , 5),
+        (PO , 0 , 5 ),
         (RT , 6 , 10),
         (RA , 11, 15),
         (RB , 16, 20),
@@ -323,7 +323,7 @@ def av(fields, XO, Rc):
     PO = 22
     (RT, RA, RB) = fields
     return instruction(
-        (PO, 0 , 5),
+        (PO, 0 , 5 ),
         (RT, 6 , 10),
         (RA, 11, 15),
         (RB, 16, 20),
