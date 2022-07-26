@@ -210,13 +210,13 @@ Special Registers Altered:
 
 DX-Form
 
-* fmvis FRS,SI
+* fmvis FRS,D
 
 Pseudo-code:
 
     bf16 <- d0 || d1 || d2
     fp32 <- bf16 || [0]*16
-    FRS  <- Single_to_Double(fp32)
+    FRS  <- DOUBLE(fp32)
 
 Special Registers Altered:
 
