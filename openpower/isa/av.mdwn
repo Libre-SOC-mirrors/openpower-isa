@@ -208,13 +208,15 @@ Special Registers Altered:
 
 # Load Floating-Point Immediate
 
-X-Form
+DX-Form
 
 * fmvis FRS,SI
 
 Pseudo-code:
 
-    FRS <- EXTS(SI)
+    bf16 <- d0 || d1 || d2
+    fp32 <- bf16 || [0]*16
+    FRS  <- Single_to_Double(fp32)
 
 Special Registers Altered:
 

@@ -19,8 +19,8 @@ class FMVISTestCase(TestAccumulatorBase):
                        ])
         lst = list(lst)
 
-        expected_fprs = [0] * 32
-        expected_fprs[5] = 0x40000000
-        expected_fprs[6] = 0x21220000
-        expected_fprs[7] = 0x3E800000
+        expected_fprs = [0] * 64
+        expected_fprs[5] = 0x4000000000000000
+        expected_fprs[6] = 0x2122000000000000
+        expected_fprs[7] = 0x3E80000000000000
         self.add_case(Program(lst, bigendian), expected_fprs)
