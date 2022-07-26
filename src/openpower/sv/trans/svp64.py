@@ -1502,7 +1502,8 @@ if __name__ == '__main__':
     ]
     lst = [
         'sv.svstep./m=r3 2.v, 4, 0',
-        'ternlogi 0,0,0,0x5'
+        'ternlogi 0,0,0,0x5',
+        'fmvis 5,65535',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))
