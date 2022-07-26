@@ -206,3 +206,16 @@ Special Registers Altered:
 
     None
 
+# Load Floating-Point Immediate 
+
+X-Form
+
+* fmvis FRS,FRS,SI
+
+Pseudo-code:
+
+    FRS <- EXTS(SI)
+
+Special Registers Altered:
+
+    None

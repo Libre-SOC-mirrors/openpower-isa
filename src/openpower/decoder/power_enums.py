@@ -294,6 +294,7 @@ _insns = [
     "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "fsins", "fcoss",                                   # FP SIN/COS
+    "fmvis",                                            # FP load immediate
     'grev', 'grev.', 'grevi', 'grevi.',
     'grevw', 'grevw.', 'grevwi', 'grevwi.',
     "hrfid", "icbi", "icbt", "isel", "isync",
@@ -461,6 +462,7 @@ class MicrOp(Enum):
     OP_CPROP = 93
     OP_BMASK = 94
     OP_SVINDEX = 95
+    OP_FMVIS = 96
 
 
 @unique

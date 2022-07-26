@@ -332,6 +332,24 @@ def av(fields, XO, Rc):
     )
 
 
+def fmvis(fields):
+    # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
+    # V3.0B 1.6.6 DX-FORM
+    # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |26|27    |31  |
+    # | PO   |   FRS         |     d1      |      d0     |   XO |d2  |
+    PO = 22
+    XO = 0b000011
+    (FRS, d0, d1, d2) = fields
+    return instruction(
+        (PO , 0 , 5),
+        (FRS, 6 , 10),
+        (d0 , 11, 15),
+        (d1 , 16, 26),
+        (XO , 27, 30),
+        (d2 , 31, 31),
+    )
+
+
 CUSTOM_INSNS = {}
 for (name, hook) in (
             ("setvl", setvl),
@@ -339,6 +357,7 @@ for (name, hook) in (
             ("fsins", fsins),
             ("fcoss", fcoss),
             ("ternlogi", ternlogi),
+            ("fmvis", fmvis)
         ):
     CUSTOM_INSNS[name] = functools.partial(hook, Rc=False)
     CUSTOM_INSNS[f"{name}."] = functools.partial(hook, Rc=True)
@@ -369,6 +388,7 @@ for (name, XO) in (
             ("absdacu", 0b1111110110),
             ("absdacs", 0b0111110110),
             ("cprop"  , 0b0110001110),
+            ("fmvis"  , 0b0000000011),
         ):
     CUSTOM_INSNS[name] = functools.partial(av, XO=XO, Rc=False)
     CUSTOM_INSNS[f"{name}."] = functools.partial(av, XO=XO, Rc=True)
@@ -1303,7 +1323,6 @@ class SVP64Asm:
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
             log("fcoss", bin(insn))
             yield ".long 0x%x" % insn
-
         else:
             yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
         log("new v3.0B fields", v30b_op, v30b_newfields)

@@ -1236,6 +1236,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                     'setvl', 'svindex', 'svremap', 'svstep', 'svshape',
                     'grev', 'ternlogi', 'bmask', 'cprop',
                     'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
+                    'fmvis',
                     ]:
             illegal = False
             ins_name = dotstrp
