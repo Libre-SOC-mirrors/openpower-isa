@@ -339,14 +339,14 @@ def fmvis(fields):
     # | PO   |   FRS         |     d1      |      d0     |   XO |d2  |
     PO = 22
     XO = 0b000011
-    (FRS, d0, d1, d2) = fields
+    Rc = 0
+    (FRS, imm) = fields
     return instruction(
         (PO , 0 , 5),
         (FRS, 6 , 10),
-        (d0 , 11, 15),
-        (d1 , 16, 26),
+        (imm, 11, 26),
         (XO , 27, 30),
-        (d2 , 31, 31),
+        (Rc , 31, 31),
     )
 
 
@@ -357,7 +357,6 @@ for (name, hook) in (
             ("fsins", fsins),
             ("fcoss", fcoss),
             ("ternlogi", ternlogi),
-            ("fmvis", fmvis)
         ):
     CUSTOM_INSNS[name] = functools.partial(hook, Rc=False)
     CUSTOM_INSNS[f"{name}."] = functools.partial(hook, Rc=True)
@@ -365,6 +364,7 @@ CUSTOM_INSNS["bmask"] = bmask
 CUSTOM_INSNS["svshape"] = svshape
 CUSTOM_INSNS["svindex"] = svindex
 CUSTOM_INSNS["svremap"] = svremap
+CUSTOM_INSNS["fmvis"] = fmvis
 
 for (name, imm, wide) in (
             ("grev", False, False),
@@ -388,7 +388,6 @@ for (name, XO) in (
             ("absdacu", 0b1111110110),
             ("absdacs", 0b0111110110),
             ("cprop"  , 0b0110001110),
-            ("fmvis"  , 0b0000000011),
         ):
     CUSTOM_INSNS[name] = functools.partial(av, XO=XO, Rc=False)
     CUSTOM_INSNS[f"{name}."] = functools.partial(av, XO=XO, Rc=True)

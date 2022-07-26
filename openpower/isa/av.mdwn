@@ -210,7 +210,7 @@ Special Registers Altered:
 
 X-Form
 
-* fmvis FRS,FRS,SI
+* fmvis FRS,SI
 
 Pseudo-code:
 

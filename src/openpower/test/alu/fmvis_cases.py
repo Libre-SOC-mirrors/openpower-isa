@@ -13,9 +13,9 @@ import unittest
 class FMVISTestCase(TestAccumulatorBase):
 
     def case_0_fmvis(self):
-        lst = SVP64Asm(["fmvis 5, 5, 0x4000",
-                        "fmvis 6, 6, 0x2122",
-                        "fmvis 7, 7, 0x3E80",
+        lst = SVP64Asm(["fmvis 5, 0x4000",
+                        "fmvis 6, 0x2122",
+                        "fmvis 7, 0x3E80",
                        ])
         lst = list(lst)
 
