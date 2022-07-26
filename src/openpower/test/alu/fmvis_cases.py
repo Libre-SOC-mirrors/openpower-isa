@@ -23,5 +23,5 @@ class FMVISTestCase(TestAccumulatorBase):
         expected_fprs[5] = 0x4000000000000000 # 2.0 in FP64 form
         expected_fprs[6] = 0x2122000000000000
         expected_fprs[7] = 0x3FD0000000000000 # 0.25 in FP64 form
-        e = ExpectedState(pc=4) # TODO, add FPRs
-        self.add_case(Program(lst, bigendian, e))
+        e = ExpectedState(pc=4, fp_regs=expected_fprs) # TODO, add FPRs
+        self.add_case(Program(lst, bigendian), expected=e)

@@ -73,6 +73,7 @@ class State:
     memory - stored as a dictionary {location: data}
     """
     def get_state(self):
+        yield from self.get_fpregs()
         yield from self.get_intregs()
         yield from self.get_crregs()
         yield from self.get_xregs()
@@ -80,6 +81,17 @@ class State:
         yield from self.get_mem()
 
     def compare(self, s2):
+        # Compare FP registers
+        for i, (fpreg, fpreg2) in enumerate(
+                zip(self.fpregs, s2.fpregs)):
+            log("asserting...reg", i, fpreg, fpreg2)
+            log("code, frepr(code)", self.code, repr(self.code))
+            self.dut.assertEqual(fpreg, fpreg2,
+                "fp reg %d (%s) not equal (%s) %s. "
+                " got %x  expected %x at pc %x %x\n" %
+                (i, self.state_type, s2.state_type, repr(self.code),
+                fpreg, fpreg2, self.pc, s2.pc))
+
         # Compare int registers
         for i, (intreg, intreg2) in enumerate(
                 zip(self.intregs, s2.intregs)):
@@ -175,6 +187,15 @@ class SimState(State):
     def __init__(self, sim):
         self.sim = sim
 
+    def get_fpregs(self):
+        if False:
+            yield
+        self.fpregs = []
+        for i in range(32):
+            simregval = self.sim.fpr[i].asint()
+            self.fpregs.append(simregval)
+        log("class sim fp regs", list(map(hex, self.fpregs)))
+
     def get_intregs(self):
         if False:
             yield
@@ -238,7 +259,12 @@ class ExpectedState(State):
     see openpower/test/shift_rot/shift_rot_cases2.py for examples
     """
     def __init__(self, int_regs=None, pc=0, crregs=None,
-                 so=0, ov=0, ca=0):
+                 so=0, ov=0, ca=0, fp_regs=None):
+        if fp_regs is None:
+            fp_regs = 32
+        if isinstance(fp_regs, int):
+            fp_regs = [0] * fp_regs
+        self.fpregs = deepcopy(fp_regs)
         if int_regs is None:
             int_regs = 32
         if isinstance(int_regs, int):
@@ -254,6 +280,8 @@ class ExpectedState(State):
         self.ov = ov
         self.ca = ca
 
+    def get_fpregs(self):
+        if False: yield
     def get_intregs(self):
         if False: yield
     def get_crregs(self):
