@@ -164,16 +164,16 @@ Pseudo-code:
     P <- (RA)
     G <- (RB)
     temp <- (P|G)+G
-    RT <- temp^P 
+    RT <- temp^P
 
 Special Registers Altered:
 
     CR0                    (if Rc=1)
 
 # DRAFT Bitmanip Masked
- 
+
 BM2-Form
- 
+
 * bmask  RT,RA,RB,bm
 
 Pseudo-code:
@@ -206,7 +206,7 @@ Special Registers Altered:
 
     None
 
-# Load Floating-Point Immediate 
+# Load Floating-Point Immediate
 
 X-Form
 
