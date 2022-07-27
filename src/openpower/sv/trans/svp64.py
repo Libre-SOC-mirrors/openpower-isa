@@ -344,12 +344,12 @@ def fmvis(fields):
     # first split imm into d1, d0 and d2. sigh
     d2 = (imm & 1) # LSB (0)
     d1 = (imm >> 1) & 0b11111 # bits 1-5
-    d0 = (imm >> 6) # MSBs 6-15
+    d0 = (imm >> 5) # MSBs 6-15
     return instruction(
         (PO , 0 , 5),
         (FRS, 6 , 10),
-        (d1, 11, 15),
-        (d0, 16, 26),
+        (d1,  11, 15),
+        (d0,  16, 26),
         (XO , 27, 30),
         (d2 , 31, 31),
     )
