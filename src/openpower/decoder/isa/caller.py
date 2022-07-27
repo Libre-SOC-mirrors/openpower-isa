@@ -1236,7 +1236,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                     'setvl', 'svindex', 'svremap', 'svstep', 'svshape',
                     'grev', 'ternlogi', 'bmask', 'cprop',
                     'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
-                    'fmvis',
+                    'fmvis', 'fishmv',
                     ]:
             illegal = False
             ins_name = dotstrp
@@ -1332,7 +1332,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # main input registers (RT, RA ...)
         inputs = []
         for name in input_names:
+            print("name", name)
             regval = (yield from self.get_input(name))
+            print("regval", regval)
             inputs.append(regval)
 
         # arrrrgh, awful hack, to get _RT into namespace

@@ -21,7 +21,7 @@ if __name__ == "__main__":
     sys.argv = sys.argv[:1]
 
     if not testing:
-        testing = ['fmvis']
+        testing = ['fmvis', 'fishmv']
 
     unittest.main(exit=False)
     suite = unittest.TestSuite()

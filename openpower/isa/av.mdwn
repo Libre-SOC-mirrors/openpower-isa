@@ -221,3 +221,20 @@ Pseudo-code:
 Special Registers Altered:
 
     None
+
+# Float Replace Lower-Half Single, Immediate
+
+DX-Form
+
+* fishmv FRS,D
+
+Pseudo-code:
+
+    LH   <- FRS[0:15]
+    fp32 <- LH || d0 || d1 || d2
+    n    <- DOUBLE(fp32)
+    FRS  <- LH || n[16:63]
+
+Special Registers Altered:
+
+    None
