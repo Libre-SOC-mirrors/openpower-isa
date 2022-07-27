@@ -230,10 +230,9 @@ DX-Form
 
 Pseudo-code:
 
-    LH   <- FRS[0:15]
-    fp32 <- LH || d0 || d1 || d2
-    n    <- DOUBLE(fp32)
-    FRS  <- LH || n[16:63]
+    fp32 <- SINGLE((FRS))
+    fp32[16:31] <- d0 || d1 || d2
+    FRS <- DOUBLE(fp32)
 
 Special Registers Altered:
 

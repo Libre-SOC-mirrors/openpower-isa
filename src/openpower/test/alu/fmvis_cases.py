@@ -37,6 +37,8 @@ class FMVISTestCase(TestAccumulatorBase):
                         "fishmv 4, 0x4000",  # 2nd half of 1.00195 in FP32 form
                         "fmvis  5, 0xC049",  # 1st half of -3.14159 in FP32 form
                         "fishmv 5, 0x0FD0",  # 2nd half of -3.14159 in FP32 form
+                        "fmvis  6, 0x89AB",  # 1st half of 0x89ABCDEF in FP32 form
+                        "fishmv 6, 0xCDEF",  # 2nd half of 0x89ABCDEF in FP32 form
                        ])
         lst = list(lst)
 
@@ -44,5 +46,6 @@ class FMVISTestCase(TestAccumulatorBase):
         expected_fprs[3] = 0x400921fa00000000 # 3.14159 in FP64 form
         expected_fprs[4] = 0x3ff0080000000000 # 1.00195 in FP64 form
         expected_fprs[5] = 0xC00921fa00000000 # -3.14159 in FP64 form
-        e = ExpectedState(pc=0x18, fp_regs=expected_fprs)
+        expected_fprs[6] = 0xB93579BDE0000000 # converted value in FP64 form
+        e = ExpectedState(pc=0x20, fp_regs=expected_fprs)
         self.add_case(Program(lst, bigendian), expected=e)
