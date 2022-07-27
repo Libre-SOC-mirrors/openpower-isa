@@ -336,20 +336,20 @@ def fmvis(fields):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # V3.0B 1.6.6 DX-FORM
     # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |26|27    |31  |
-    # | PO   |   FRS         |     d1      |      d0     |   XO |d2  |
+    # | PO   |   FRS         |     d1      |      d0  |      XO |d2  |
     PO = 22
     XO = 0b00011
     (FRS, imm) = fields
     # first split imm into d1, d0 and d2. sigh
     d2 = (imm & 1) # LSB (0)
     d1 = (imm >> 1) & 0b11111 # bits 1-5
-    d0 = (imm >> 5) # MSBs 6-15
+    d0 = (imm >> 6) # MSBs 6-15
     return instruction(
         (PO , 0 , 5),
         (FRS, 6 , 10),
         (d1,  11, 15),
-        (d0,  16, 26),
-        (XO , 27, 30),
+        (d0,  16, 25),
+        (XO , 26, 30),
         (d2 , 31, 31),
     )
 
@@ -357,23 +357,21 @@ def fmvis(fields):
 def fishmv(fields):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # V3.0B 1.6.6 DX-FORM
-    # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |26|27    |31  |
-    # | PO   |   FRS         |     d1      |      d0     |   XO |d2  |
+    # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |26|27   |31  |
+    # | PO   |   FRS         |     d1      |      d0  |     XO |d2  |
     PO = 22
     XO = 0b01011
     (FRS, imm) = fields
     # first split imm into d1, d0 and d2. sigh
     d2 = (imm & 1) # LSB (0)
     d1 = (imm >> 1) & 0b11111 # bits 1-5
-    d0 = (imm >> 5) # MSBs 6-15
-    print("imm", hex(imm))
-    print("d0 d1 d2", hex(d0), hex(d1), hex(d2))
+    d0 = (imm >> 6) # MSBs 6-15
     return instruction(
         (PO , 0 , 5),
         (FRS, 6 , 10),
         (d1,  11, 15),
-        (d0,  16, 26),
-        (XO , 27, 30),
+        (d0,  16, 25),
+        (XO , 26, 30),
         (d2 , 31, 31),
     )
 
