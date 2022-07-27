@@ -89,6 +89,6 @@ build:
 
         - python3 setup.py develop
 
-        - make generate
+        - make generate &> generate.log || { cat generate.log; false; }
 
         - pytest -n auto src/openpower
