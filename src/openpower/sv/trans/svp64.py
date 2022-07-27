@@ -1527,6 +1527,12 @@ if __name__ == '__main__':
         'ternlogi 0,0,0,0x5',
         'fmvis 5,65535',
         'fmvis 5,1',
+        'fmvis 5,2',
+        'fmvis 5,4',
+        'fmvis 5,8',
+        'fmvis 5,16',
+        'fmvis 5,32',
+        'fmvis 5,64',
         'fmvis 5,32768',
     ]
     isa = SVP64Asm(lst, macros=macros)
