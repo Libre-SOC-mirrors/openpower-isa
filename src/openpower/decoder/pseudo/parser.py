@@ -350,7 +350,7 @@ class PowerParser:
 
     def p_funcdef(self, p):
         "funcdef : DEF NAME parameters COLON suite"
-        p[0] = ast.FunctionDef(p[2], p[3], p[5], ())
+        p[0] = ast.FunctionDef(p[2], p[3], p[5], (), lineno=p.lineno(2))
         # reset function parameters after suite is identified
         self.fnparm_vars = set()
 
@@ -762,9 +762,9 @@ class PowerParser:
             self.write_regs.add(name)  # and add to list to write
         if name in {'XLEN'}:
             attr = ast.Name("self", ast.Load())
-            p[0] = ast.Attribute(attr, name, ast.Load())
+            p[0] = ast.Attribute(attr, name, ast.Load(), lineno=p.lineno(1))
         else:
-            p[0] = ast.Name(id=name, ctx=ast.Load())
+            p[0] = ast.Name(id=name, ctx=ast.Load(), lineno=p.lineno(1))
 
     def p_atom_number(self, p):
         """atom : BINARY
