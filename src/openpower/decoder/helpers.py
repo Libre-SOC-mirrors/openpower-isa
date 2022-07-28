@@ -471,6 +471,19 @@ class ISACallerHelper:
     def EXTSXL(self, value, bits):
         return SelectableInt(exts(value.value, bits), self.XLEN)
 
+    def DOUBLE2SINGLE(self, FRS):
+        # DOUBLE2SINGLE has been renamed to FRSP since it is the
+        # implementation of the frsp instruction.
+        # use SINGLE() or FRSP() instead, or just use struct.pack/unpack
+        FPSCR = {
+            'UE': SelectableInt(0, 1),
+            'OE': SelectableInt(0, 1),
+            'RN': SelectableInt(0, 2),  # round to nearest, ties to even
+            'XX': SelectableInt(0, 1),
+        }
+        FRT, FPSCR = self.FRSP(FRS, FPSCR)
+        return FRT
+
     def __getattr__(self, attr):
         try:
             return globals()[attr]
