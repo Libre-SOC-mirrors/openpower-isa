@@ -41,12 +41,12 @@ def Assign(autoassign, assignname, left, right, iea_mode):
     elif isinstance(left, ast.Tuple):
         # List of things - make sure they are Name nodes
         names = []
-        for child in left.getChildren():
+        for child in left.elts:
             if not isinstance(child, ast.Name):
                 raise SyntaxError("that assignment not supported")
-            names.append(child.name)
-        ass_list = [ast.AssName(name, 'OP_ASSIGN') for name in names]
-        return ast.Assign([ast.AssTuple(ass_list)], right)
+            names.append(child.id)
+        ass_list = [ast.Name(name, ast.Store()) for name in names]
+        return ast.Assign([ast.Tuple(ass_list)], right)
     elif isinstance(left, ast.Subscript):
         ls = left.slice
         # XXX changing meaning of "undefined" to a function
