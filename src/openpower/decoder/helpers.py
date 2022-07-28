@@ -472,9 +472,10 @@ class ISACallerHelper:
         return SelectableInt(exts(value.value, bits), self.XLEN)
 
     def DOUBLE2SINGLE(self, FRS):
-        # DOUBLE2SINGLE has been renamed to FRSP since it is the
-        # implementation of the frsp instruction.
-        # use SINGLE() or FRSP() instead, or just use struct.pack/unpack
+        """ DOUBLE2SINGLE has been renamed to FRSP since it is the
+            implementation of the frsp instruction.
+            use SINGLE() or FRSP() instead, or just use struct.pack/unpack
+        """
         FPSCR = {
             'UE': SelectableInt(0, 1),
             'OE': SelectableInt(0, 1),
