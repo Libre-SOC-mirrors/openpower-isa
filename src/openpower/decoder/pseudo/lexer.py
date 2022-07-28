@@ -164,6 +164,7 @@ def annoying_case_hack_filter(code):
         spc_count = count_spaces(l)
         nwhite = l[spc_count:]
         if len(nwhite) == 0:  # skip blank lines
+            res.append('')
             continue
         if nwhite.startswith("case") or nwhite.startswith("default"):
             #print ("case/default", nwhite, spc_count, prev_spc_count)
@@ -474,6 +475,7 @@ class IndentLexer(PowerLexer):
         s += "\n"
         self.lexer.paren_count = 0
         self.lexer.brack_count = 0
+        self.lexer.lineno = 1
         self.lexer.input(s)
         self.token_stream = filter(self.lexer, add_endmarker)
 

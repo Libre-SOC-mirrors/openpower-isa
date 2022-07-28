@@ -46,6 +46,7 @@ class ISAFunctions:
         # all sections are mandatory so no need for a full LALR parser.
 
         l = lines.pop(0).rstrip()  # get first line
+        prefix_lines = 0
         while lines:
             print(l)
             # look for HTML comment, if starting, skip line.
@@ -56,11 +57,13 @@ class ISAFunctions:
             if l.startswith('<!--'):
                 # print ("skipping comment", l)
                 l = lines.pop(0).rstrip()  # get next line
+                prefix_lines += 1
                 continue
 
             # Ignore blank lines before the first #
             if len(l) == 0:
                 l = lines.pop(0).rstrip()  # get next line
+                prefix_lines += 1
                 continue
 
             # expect get heading
@@ -70,6 +73,7 @@ class ISAFunctions:
             # any lines not starting with space, ignore
             while True:
                 l = lines.pop(0).rstrip()
+                prefix_lines += 1
                 print ("examining", repr(l))
                 if l.startswith("    "):
                     break
@@ -77,7 +81,11 @@ class ISAFunctions:
                     continue
 
             # get pseudocode
-            li = [l[4:]] # first line detected with 4-space
+
+            # fix parser line numbers by prepending the right number of
+            # blank lines to the parser input
+            li = [""] * prefix_lines
+            li += [l[4:]]  # first line detected with 4-space
             while lines:
                 l = lines.pop(0).rstrip()
                 print ("examining", repr(l))
@@ -85,6 +93,7 @@ class ISAFunctions:
                     li.append(l)
                     continue
                 if l.startswith('<!--'):
+                    li.append("")
                     continue
                 assert l.startswith('    '), ("4spcs not found in line %s" % l)
                 l = l[4:]  # lose 4 spaces
