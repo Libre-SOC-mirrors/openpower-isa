@@ -529,6 +529,8 @@ class Codegen(_enum.Enum):
             yield "#endif"
             yield ""
 
+            yield "#include \"ppc-svp64-ctx.h\""
+
             yield f"#endif /* {self.name} */"
             yield ""
 
