@@ -22,6 +22,7 @@ from collections import defaultdict
 from collections import OrderedDict
 from openpower.decoder.power_svp64 import SVP64RM
 from openpower.decoder.power_enums import find_wiki_file, get_csv
+from openpower.util import log
 
 
 # Write an array of dictionaries to the CSV file name:
@@ -305,7 +306,7 @@ def process_csvs(format):
             insn_to_csv[insn_name] = csvname_  # CSV file name by instruction
             dkey = create_key(row)
             key = tuple(dkey.values())
-            # print("key=", key)
+            #print("key=", key, dkey)
             dictkeys[key] = dkey
             primarykeys.add(key)
             if key not in bykey:
@@ -339,9 +340,10 @@ def process_csvs(format):
               '1R-1W': 'RM-2P-1S1D',
               '1R-1W-imm': 'RM-2P-1S1D',
               '1R-CRo': 'RM-2P-1S1D',
-              '1R-imm': 'non-SV',
+              '1R-imm': 'RM-1P-1S',
               '1W-CRo': 'RM-1P-1D',
               '1W': 'non-SV',
+              '1W-imm': 'RM-1P-1D',
               '1W-CRi': 'RM-2P-1S1D',
               'CRio': 'RM-2P-1S1D',
               'CR=2R1W': 'RM-1P-2S1D',
@@ -686,7 +688,9 @@ def process_csvs(format):
             elif value == 'RM-1P-1D':
                 res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
                 if insn_name == 'svstep':
-                    res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
+                    res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA3
+                if insn_name == 'fmvis':
+                    res['0'] = 'd:FRS'  # FRS: Rdest1_EXTRA3
 
             # add to svp64 csvs
             # for k in ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']:
