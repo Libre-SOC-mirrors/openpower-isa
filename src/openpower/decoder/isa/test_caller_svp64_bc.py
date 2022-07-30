@@ -22,20 +22,20 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def tst_sv_load_store(self):
-        """>>> lst = ["addi 1, 0, 0x0010",
-                        "addi 2, 0, 0x0008",
-                        "addi 5, 0, 0x1234",
-                        "addi 6, 0, 0x1235",
-                        "sv.stw *5, 0(*1)",
-                        "sv.lwz *9, 0(*1)"]
+    def test_sv_load_store(self):
+        """>>> lst = ["addi 2, 0, 0x0010",
+                        "addi 3, 0, 0x0008",
+                        "addi 6, 0, 0x1234",
+                        "addi 7, 0, 0x1235",
+                        "sv.stw *6, 0(*2)",
+                        "sv.lwz *8, 0(*2)"]
         """
-        lst = SVP64Asm(["addi 1, 0, 0x0010",
-                        "addi 2, 0, 0x0008",
-                        "addi 5, 0, 0x1234",
-                        "addi 6, 0, 0x1235",
-                        "sv.stw *5, 0(*1)",
-                        "sv.lwz *9, 0(*1)"])
+        lst = SVP64Asm(["addi 2, 0, 0x0010",
+                        "addi 3, 0, 0x0008",
+                        "addi 6, 0, 0x1234",
+                        "addi 7, 0, 0x1235",
+                        "sv.stw *6, 0(*2)",
+                        "sv.lwz *8, 0(*2)"])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
@@ -47,8 +47,8 @@ class DecoderTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
             print(sim.gpr(1))
-            self.assertEqual(sim.gpr(9), SelectableInt(0x1234, 64))
-            self.assertEqual(sim.gpr(10), SelectableInt(0x1235, 64))
+            self.assertEqual(sim.gpr(8), SelectableInt(0x1234, 64))
+            self.assertEqual(sim.gpr(9), SelectableInt(0x1235, 64))
 
     def test_sv_branch_cond(self):
         for i in [0, 10]: #, 10]: #[0, 10]:
