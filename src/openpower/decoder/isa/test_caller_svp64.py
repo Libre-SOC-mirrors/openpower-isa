@@ -27,8 +27,8 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 17, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw *4, 0(*1)",
-                        "sv.lwz *8, 0(*1)"]
+                        "sv.stw *4, 0(*16)",
+                        "sv.lwz *8, 0(*16)"]
         """
         lst = SVP64Asm(["addi 16, 0, 0x0010",
                         "addi 17, 0, 0x0008",

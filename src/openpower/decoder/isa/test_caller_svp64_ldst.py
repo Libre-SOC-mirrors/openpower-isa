@@ -30,12 +30,12 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_load_store_elementstride(self):
-        """>>> lst = ["addi 1, 0, 0x0010",
-                        "addi 2, 0, 0x0008",
+        """>>> lst = ["addi 2, 0, 0x0010",
+                        "addi 3, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw/els *4, 16(1)",
-                        "sv.lwz/els *8, 16(1)"]
+                        "sv.stw/els *4, 16(2)",
+                        "sv.lwz/els *8, 16(2)"]
 
         note: element stride mode is only enabled when RA is a scalar
         and when the immediate is non-zero
@@ -44,12 +44,12 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(VL):
             EA = (RA|0) + EXTS(D) * i
         """
-        lst = SVP64Asm(["addi 1, 0, 0x0010",
-                        "addi 2, 0, 0x0008",
+        lst = SVP64Asm(["addi 2, 0, 0x0010",
+                        "addi 3, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw/els *4, 24(1)",  # scalar r1 + 16 + 24*offs
-                        "sv.lwz/els *8, 24(1)"]) # scalar r1 + 16 + 24*offs
+                        "sv.stw/els *4, 24(2)",  # scalar r1 + 16 + 24*offs
+                        "sv.lwz/els *8, 24(2)"]) # scalar r1 + 16 + 24*offs
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
@@ -122,11 +122,11 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
-                        "addi 5, 0, 0x101",
-                        "addi 6, 0, 0x202",
-                        "addi 7, 0, 0x303",
-                        "addi 8, 0, 0x404",
-                        "sv.stw *5, 0(1)",
+                        "addi 4, 0, 0x101",
+                        "addi 5, 0, 0x202",
+                        "addi 6, 0, 0x303",
+                        "addi 7, 0, 0x404",
+                        "sv.stw *4, 0(1)",
                         "sv.lwzsh *12, 4(1), 2"]
 
         shifted LD is computed as:
@@ -135,11 +135,11 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
-                        "addi 5, 0, 0x101",
-                        "addi 6, 0, 0x202",
-                        "addi 7, 0, 0x303",
-                        "addi 8, 0, 0x404",
-                        "sv.stw *5, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "addi 4, 0, 0x101",
+                        "addi 5, 0, 0x202",
+                        "addi 6, 0, 0x303",
+                        "addi 7, 0, 0x404",
+                        "sv.stw *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
                         "sv.lwzsh *12, 4(1), 2"]) # bit-reversed
         lst = list(lst)
 
@@ -158,10 +158,10 @@ class DecoderTestCase(FHDLTestCase):
                                    (24, 0x040400000303)])
             print(sim.gpr(1))
             # from STs
-            self.assertEqual(sim.gpr(5), SelectableInt(0x101, 64))
-            self.assertEqual(sim.gpr(6), SelectableInt(0x202, 64))
-            self.assertEqual(sim.gpr(7), SelectableInt(0x303, 64))
-            self.assertEqual(sim.gpr(8), SelectableInt(0x404, 64))
+            self.assertEqual(sim.gpr(4), SelectableInt(0x101, 64))
+            self.assertEqual(sim.gpr(5), SelectableInt(0x202, 64))
+            self.assertEqual(sim.gpr(6), SelectableInt(0x303, 64))
+            self.assertEqual(sim.gpr(7), SelectableInt(0x404, 64))
             # r1=0x10, RC=0, offs=4: contents of memory expected at:
             #    element 0:   EA = r1 + 0b00*4 => 0x10 + 0b00*4 => 0x10
             #    element 1:   EA = r1 + 0b01*4 => 0x10 + 0b01*4 => 0x18
@@ -181,11 +181,11 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
                         "addi 3, 0, 0x0002",
-                        "addi 5, 0, 0x101",
-                        "addi 6, 0, 0x202",
-                        "addi 7, 0, 0x303",
-                        "addi 8, 0, 0x404",
-                        "sv.std *5, 0(1)",
+                        "addi 4, 0, 0x101",
+                        "addi 5, 0, 0x202",
+                        "addi 6, 0, 0x303",
+                        "addi 7, 0, 0x404",
+                        "sv.std *4, 0(1)",
                         "sv.lfdbr *12, 4(1), 2"]
 
         shifted LD is computed as:
@@ -194,11 +194,11 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
-                        "addi 5, 0, 0x101",
-                        "addi 6, 0, 0x202",
-                        "addi 7, 0, 0x303",
-                        "addi 8, 0, 0x404",
-                        "sv.std *5, 0(1)", # scalar r1 + 0 + wordlen*offs
+                        "addi 4, 0, 0x101",
+                        "addi 5, 0, 0x202",
+                        "addi 6, 0, 0x303",
+                        "addi 7, 0, 0x404",
+                        "sv.std *4, 0(1)", # scalar r1 + 0 + wordlen*offs
                         "sv.lfdsh *12, 8(1), 2"]) # shifted
         lst = list(lst)
 
@@ -223,10 +223,10 @@ class DecoderTestCase(FHDLTestCase):
                                   ])
             print(sim.gpr(1))
             # from STs
-            self.assertEqual(sim.gpr(5), SelectableInt(0x101, 64))
-            self.assertEqual(sim.gpr(6), SelectableInt(0x202, 64))
-            self.assertEqual(sim.gpr(7), SelectableInt(0x303, 64))
-            self.assertEqual(sim.gpr(8), SelectableInt(0x404, 64))
+            self.assertEqual(sim.gpr(4), SelectableInt(0x101, 64))
+            self.assertEqual(sim.gpr(5), SelectableInt(0x202, 64))
+            self.assertEqual(sim.gpr(6), SelectableInt(0x303, 64))
+            self.assertEqual(sim.gpr(7), SelectableInt(0x404, 64))
             # r1=0x10, RC=0, offs=4: contents of memory expected at:
             #    element 0:   EA = r1 + bitrev(0b00)*4 => 0x10 + 0b00*4 => 0x10
             #    element 1:   EA = r1 + bitrev(0b01)*4 => 0x10 + 0b10*4 => 0x18
