@@ -529,7 +529,12 @@ def process_csvs(format):
             # sigh now the fun begins.  this isn't the sanest way to do it
             # but the patterns are pretty regular.
 
-            if value == 'LDSTRM-2P-1S1D':
+            if value == 'LDSTRM-2P-1S1D-PU':              # pack/unpack LD
+                res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
+                res['0'] = dRT    # RT: Rdest_EXTRA2
+                res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
+
+            elif value == 'LDSTRM-2P-1S1D':
                 res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
                 res['0'] = dRT    # RT: Rdest_EXTRA3
                 res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
@@ -540,11 +545,17 @@ def process_csvs(format):
                 res['1'] = 'd:RA'  # RA: Rdest2_EXTRA2
                 res['2'] = 's:RA'  # RA: Rsrc1_EXTRA2
 
-            elif value == 'LDSTRM-2P-2S':
+            elif value == 'LDSTRM-2P-2S-PU': # pack/unpack ST
                 # stw, std, sth, stb
-                res['Etype'] = 'EXTRA3'  # RM EXTRA2 type
+                res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
                 res['0'] = sRS    # RS: Rdest1_EXTRA2
                 res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
+
+            elif value == 'LDSTRM-2P-2S':
+                # stw, std, sth, stb
+                res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
+                res['0'] = sRS    # RS: Rdest1_EXTRA3
+                res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
 
             elif value == 'LDSTRM-2P-2S1D':
                 if 'st' in insn_name and 'x' not in insn_name:  # stwu/stbu etc
