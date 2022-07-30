@@ -201,6 +201,13 @@ class EXTRA2b(_Const):
 EXTRA2_SIZE = 9
 EXTRA2 = _ConstLE("EXTRA2", names=EXTRA2b, msb=EXTRA2_SIZE-1)
 
+# sigh, make these convenience-modifications afterwards (aliases)
+# see RM-2P-1S1D-PU in https://libre-soc.org/openpower/sv/svp64
+EXTRA2b.PACK_en   = EXTRA2b.IDX2_VEC
+EXTRA2b.UNPACK_en = EXTRA2b.IDX2_MSB
+EXTRA2.PACK_en    = EXTRA2.IDX2_VEC
+EXTRA2.UNPACK_en  = EXTRA2.IDX2_MSB
+
 
 # EXTRA field, with EXTRA3 subfield encoding
 class EXTRA3:
@@ -331,3 +338,6 @@ class XERRegsEnum:
     CA=1 # CA and CA32
     OV=2 # OV and OV32
     N_REGS = 3 # maximum number of regs
+
+if __name__ == '__main__':
+    print ("EXTRA2 pack", EXTRA2.PACK_en, EXTRA2.PACK_en.value)
