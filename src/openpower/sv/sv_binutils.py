@@ -460,20 +460,20 @@ RM = FieldsMapping("RM", base=_SVP64RMFields)
 
 
 class Codegen(_enum.Enum):
-    PPC_SVP64_H = _enum.auto()
-    PPC_SVP64_OPC_C = _enum.auto()
+    PPC_SVP64_GEN_H = _enum.auto()
+    PPC_SVP64_OPC_GEN_C = _enum.auto()
 
     @classmethod
     def _missing_(cls, value):
         return {
-            "ppc-svp64.h": Codegen.PPC_SVP64_H,
-            "ppc-svp64-opc.c": Codegen.PPC_SVP64_OPC_C,
+            "ppc-svp64-gen.h": Codegen.PPC_SVP64_GEN_H,
+            "ppc-svp64-opc-gen.c": Codegen.PPC_SVP64_OPC_GEN_C,
         }.get(value)
 
     def __str__(self):
         return {
-            Codegen.PPC_SVP64_H: "ppc-svp64.h",
-            Codegen.PPC_SVP64_OPC_C: "ppc-svp64-opc.c",
+            Codegen.PPC_SVP64_GEN_H: "ppc-svp64-gen.h",
+            Codegen.PPC_SVP64_OPC_GEN_C: "ppc-svp64-opc-gen.c",
         }[self]
 
     def generate(self, records):
@@ -527,8 +527,6 @@ class Codegen(_enum.Enum):
             yield "}"
             yield "#endif"
             yield ""
-
-            yield "#include \"ppc-svp64-ctx.h\""
 
             yield f"#endif /* {self.name} */"
             yield ""
@@ -687,8 +685,8 @@ class Codegen(_enum.Enum):
         num_records = Size("(sizeof (svp64_records) / sizeof (svp64_records[0]))")
 
         return {
-            Codegen.PPC_SVP64_H: ppc_svp64_h,
-            Codegen.PPC_SVP64_OPC_C: ppc_svp64_opc_c,
+            Codegen.PPC_SVP64_GEN_H: ppc_svp64_h,
+            Codegen.PPC_SVP64_OPC_GEN_C: ppc_svp64_opc_c,
         }[self](records, num_records)
 
 
