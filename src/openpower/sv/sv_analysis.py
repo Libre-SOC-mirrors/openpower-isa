@@ -129,6 +129,15 @@ def create_key(row):
     else:
         res['imm'] = ''
 
+    # pack/unpack, start with LDST with immediate for now
+    if (res['imm'] == '1' and res['unit'] == 'LDST' and
+        ((res['in'] == '1' and res['outcnt'] == '1') or # LD-imm
+         (res['in'] == '2' and res['outcnt'] == '0'))): # ST-imm
+        #print ("PU", res, row)
+        res['PU'] = "1"
+    else:
+        res['PU'] = ''
+
     return res
 
 #
@@ -164,6 +173,9 @@ def keyname(row):
         res.append("CRo")
     elif 'imm' in row and row['imm']:
         res.append("imm")
+    if 'PU' in row and row['PU']:
+        #print("key", row)
+        res.append("PU")
     return '-'.join(res)
 
 
@@ -351,9 +363,11 @@ def process_csvs(format):
               'imm': 'non-SV',
               '': 'non-SV',
               'LDST-2R-imm': 'LDSTRM-2P-2S',
+              'LDST-2R-imm-PU': 'LDSTRM-2P-2S-PU',
               'LDST-2R-1W-imm': 'LDSTRM-2P-2S1D',
               'LDST-2R-1W': 'LDSTRM-2P-2S1D',
               'LDST-2R-2W': 'LDSTRM-2P-2S1D',
+              'LDST-1R-1W-imm-PU': 'LDSTRM-2P-1S1D-PU',
               'LDST-1R-1W-imm': 'LDSTRM-2P-1S1D',
               'LDST-1R-2W-imm': 'LDSTRM-2P-1S2D',
               'LDST-3R': 'LDSTRM-2P-3S',
@@ -417,6 +431,7 @@ def process_csvs(format):
     csvcols = ['insn', 'mode', 'CONDITIONS', 'Ptype', 'Etype',]
     csvcols += ['0', '1', '2', '3']
     csvcols += ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']  # temporary
+    csvcols += ['PU'] # pack/unpack
     for key in primarykeys:
         # get the decoded key containing row-analysis, and name/value
         dkey = dictkeys[key]
@@ -472,6 +487,13 @@ def process_csvs(format):
             elif insn_name.startswith('cr') or insn_name in crops:
                 mode = 'CROP'
             res['mode'] = mode
+
+            # Pack/Unpack
+            if value.endswith('PU'):
+                pack = '1'
+            else:
+                pack = '1'
+            res['PU'] = pack
 
             # temporary useful info
             regs = []
