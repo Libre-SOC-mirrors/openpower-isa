@@ -509,10 +509,9 @@ class Codegen(_enum.Enum):
                 yield from cls.c_decl()
                 yield ""
 
-            for name in ("in1", "in2", "in3", "out", "out2", "cr_in", "cr_out"):
-                yield "ppc_opindex_t"
-                yield f"svp64_desc_{name}_opindex(const struct svp64_desc *desc);"
-                yield ""
+            yield "enum svp64_rm_field"
+            yield "svp64_opindex_rm_field (const struct svp64_desc *desc, ppc_opindex_t opindex);"
+            yield ""
 
             yield records.__class__.c_var("svp64_records",
                         prefix="extern const ", suffix=";")
@@ -546,7 +545,7 @@ class Codegen(_enum.Enum):
             def opindex(enum, name, table):
                 sep = (max(map(len, list(table.values()) + ["UNUSED"])) + 1)
                 c_tag = f"svp64_{enum.__name__.lower()}"
-                yield "ppc_opindex_t"
+                yield "static inline ppc_opindex_t"
                 yield f"svp64_desc_{name}_opindex(const struct svp64_desc *desc)"
                 yield "{"
                 yield from indent(["static const ppc_opindex_t table[] = {"])
