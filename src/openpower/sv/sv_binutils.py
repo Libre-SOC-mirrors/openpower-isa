@@ -371,8 +371,6 @@ class FieldsMappingMeta(EnumMeta):
                     yield from flatten(mapping=value, parent=key)
                 else:
                     value = map(lambda bit: bit, reversed(value))
-                    # value = map(lambda bit: ((base.bits - 1) - bit),
-                    # reversed(value))
                     yield (key.upper(), tuple(value))
 
         tag = f"svp64_{name.lower()}"
