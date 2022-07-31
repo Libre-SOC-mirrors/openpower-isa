@@ -1635,6 +1635,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # this is our Sub-Program-Counter loop from 0 to VL-1
         pre = False
         post = False
+        nia_update = False
         if self.allow_next_step_inc:
             log("SVSTATE_NEXT: inc requested, mode",
                 self.svstate_next_mode, self.allow_next_step_inc)
