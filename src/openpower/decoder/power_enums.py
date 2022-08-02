@@ -203,6 +203,12 @@ class SVExtra(Enum):
 SVEXTRA = SVExtra
 
 
+class SVExtraRegType(Enum):
+    NONE = None
+    SRC = 's'
+    DST = 'd'
+
+
 @unique
 class SVP64PredMode(Enum):
     ALWAYS = 0
