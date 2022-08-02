@@ -178,6 +178,10 @@ class SVPtype(Enum):
     P1 = 1
     P2 = 2
 
+    @classmethod
+    def _missing_(cls, value):
+        return {"1P": SVPtype.P1, "2P": SVPtype.P2}[value]
+
 
 @unique
 class SVEtype(Enum):
