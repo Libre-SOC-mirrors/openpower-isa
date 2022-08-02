@@ -191,13 +191,16 @@ class SVEtype(Enum):
 
 
 @unique
-class SVEXTRA(Enum):
+class SVExtra(Enum):
     NONE = 0
     Idx0 = 1
     Idx1 = 2
     Idx2 = 3
     Idx3 = 4
     Idx_1_2 = 5  # due to weird BA/BB for crops
+
+# Backward compatibility
+SVEXTRA = SVExtra
 
 
 @unique
