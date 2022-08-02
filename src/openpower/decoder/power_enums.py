@@ -548,12 +548,15 @@ class OutSel(Enum):
 
 
 @unique
-class LdstLen(Enum):
+class LDSTLen(Enum):
     NONE = 0
     is1B = 1
     is2B = 2
     is4B = 4
     is8B = 8
+
+# Backward compatibility
+LdstLen = LDSTLen
 
 
 @unique
