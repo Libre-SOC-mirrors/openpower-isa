@@ -173,6 +173,13 @@ class Form(Enum):
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
 
+class SVMode(Enum):
+    NORMAL = auto()
+    LDST = auto()
+    BRANCH = auto()
+    CROP = auto()
+
+
 @unique
 class SVPtype(Enum):
     NONE = 0
