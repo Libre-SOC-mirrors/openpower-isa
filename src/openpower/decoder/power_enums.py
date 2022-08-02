@@ -15,6 +15,7 @@ get_spr_enum
 """
 
 from enum import (
+    auto,
     Enum as _Enum,
     unique,
 )
@@ -207,6 +208,35 @@ class SVExtraRegType(Enum):
     NONE = None
     SRC = 's'
     DST = 'd'
+
+
+class SVExtraReg(Enum):
+    NONE = auto()
+    RA = auto()
+    RA_OR_ZERO = RA
+    RB = auto()
+    RC = auto()
+    RS = auto()
+    RT = auto()
+    RT_OR_ZERO = RT
+    FRA = auto()
+    FRB = auto()
+    FRC = auto()
+    FRS = auto()
+    FRT = auto()
+    CR = auto()
+    CR0 = auto()
+    CR1 = auto()
+    BF = auto()
+    BFA = auto()
+    BA = auto()
+    BB = auto()
+    BC = auto()
+    BI = auto()
+    BT = auto()
+    BFT = auto()
+    WHOLE_REG = auto()
+    SPR = auto()
 
 
 @unique
