@@ -300,6 +300,34 @@ class SVP64LDSTmode(Enum):
     UNITSTRIDE = 3
 
 
+class RegType(Enum):
+    GPR = 0
+    RA = GPR
+    RB = GPR
+    RC = GPR
+    RS = GPR
+    RT = GPR
+
+    FPR = 1
+    FRA = FPR
+    FRB = FPR
+    FRC = FPR
+    FRS = FPR
+    FRT = FPR
+
+    CR_REG = 2
+    BF = CR_REG
+    BFA = CR_REG
+
+    CR_BIT = 3
+    BA = CR_BIT
+    BB = CR_BIT
+    BC = CR_BIT
+    BI = CR_BIT
+    BT = CR_BIT
+    BFT = CR_BIT
+
+
 # supported instructions: make sure to keep up-to-date with CSV files
 # just like everything else
 _insns = [
