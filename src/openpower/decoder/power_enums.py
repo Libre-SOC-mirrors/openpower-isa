@@ -22,6 +22,7 @@ import csv
 import os
 from os.path import dirname, join
 from collections import namedtuple
+import functools
 
 
 def find_wiki_dir():
@@ -108,6 +109,20 @@ class Function(Enum):
     SV = 1 << 12  # Simple-V https://libre-soc.org/openpower/sv
     VL = 1 << 13  # setvl
     FPU = 1 << 14  # FPU
+
+    @functools.lru_cache(maxsize=None)
+    def __repr__(self):
+        counter = 0
+        value = int(self.value)
+        if value != 0:
+            while value != 0:
+                counter += 1
+                value >>= 1
+            counter -= 1
+            desc = f"(1 << {counter})"
+        else:
+            desc = "0"
+        return f"<{self.__class__.__name__}.{self.name}: {desc}>"
 
 
 @unique
