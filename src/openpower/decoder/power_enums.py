@@ -14,7 +14,10 @@ regfile size in HDL.  this is SPRreduced and the supported list is in
 get_spr_enum
 """
 
-from enum import Enum, unique
+from enum import (
+    Enum as _Enum,
+    unique,
+)
 import csv
 import os
 from os.path import dirname, join
@@ -62,6 +65,26 @@ def get_signal_name(name):
     if name[0].isdigit():
         name = "is_" + name
     return name.lower().replace(' ', '_')
+
+
+class Enum(_Enum):
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            try:
+                if value == "":
+                    value = 0
+                else:
+                    value = int(value, 0)
+            except ValueError:
+                pass
+        keys = {item.name:item for item in cls}
+        values = {item.value:item for item in cls}
+        item = keys.get(value, values.get(value))
+        if item is None:
+            raise ValueError(value)
+        return item
+
 
 # this corresponds to which Function Unit (pipeline-with-Reservation-Stations)
 # is to process and guard the operation.  they are roughly divided by having
