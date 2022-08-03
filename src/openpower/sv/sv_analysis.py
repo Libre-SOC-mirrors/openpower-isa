@@ -567,7 +567,7 @@ def process_csvs(format):
                     res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
                     res['0'] = 'd:RA'  # RA: Rdest1_EXTRA2
                     # RS: Rdest2_EXTRA2, RA: Rsrc1_EXTRA2
-                    res['1'] = sRS+'s:RA'
+                    res['1'] = "%s;%s" % (sRS, 's:RA')
                     res['2'] = 's:RB'  # RB: Rsrc2_EXTRA2
                 elif 'u' in insn_name:  # ldux etc.
                     res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
@@ -583,7 +583,7 @@ def process_csvs(format):
             elif value == 'LDSTRM-2P-3S':
                 res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
                 if 'cx' in insn_name:
-                    res['0'] = sRS+dCR  # RS: Rsrc1_EXTRA2 CR0: dest
+                    res['0'] = "%s;%s" % (sRS, dCR) # RS: Rsrc1_EXTRA2 CR0: dest
                 else:
                     res['0'] = sRS  # RS: Rsrc1_EXTRA2
                 res['1'] = 's:RA'  # RA: Rsrc2_EXTRA2
