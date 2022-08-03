@@ -492,7 +492,7 @@ def process_csvs(format):
             if value.endswith('PU'):
                 pack = '1'
             else:
-                pack = '1'
+                pack = '0'
             res['PU'] = pack
 
             # temporary useful info
