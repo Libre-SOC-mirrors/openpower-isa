@@ -43,6 +43,8 @@ def glob_valid_csvs(root):
             return False
         if 'test' in fname:
             return False
+        if fname.endswith('insndb.csv'):
+            return False
         if fname.endswith('sprs.csv'):
             return False
         if fname.endswith('minor_19_valid.csv'):
