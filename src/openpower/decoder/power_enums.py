@@ -245,6 +245,16 @@ class SVExtraReg(Enum):
     WHOLE_REG = auto()
     SPR = auto()
 
+    @classmethod
+    def _missing_(cls, value):
+        selectors = (
+            In1Sel, In2Sel, In3Sel, CRInSel,
+            OutSel, CROutSel,
+        )
+        if isinstance(value, selectors):
+            return cls.__members__.get(value, cls.NONE)
+        return super()._missing_(value)
+
 
 @unique
 class SVP64PredMode(Enum):
