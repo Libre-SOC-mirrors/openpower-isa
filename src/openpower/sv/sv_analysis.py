@@ -638,8 +638,13 @@ def process_csvs(format):
                 elif insn_name.startswith('bc'):
                     res['0'] = 'd:BI'  # BI: Rdest1_EXTRA3
                     res['1'] = 's:BI'  # BI: Rsrc1_EXTRA3
+                elif insn_name == 'fishmv':
+                    # an overwrite ibstruction
+                    res['0'] = 'd:FRS'  # FRS: Rdest1_EXTRA3
+                    res['1'] = 's:FRS'  # FRS: Rsrc1_EXTRA3
                 else:
                     res['0'] = 'TODO'
+                    print("regs TODO", insn_name, regs)
 
             elif value == 'RM-1P-2S1D':
                 res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
