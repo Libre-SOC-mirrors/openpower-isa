@@ -600,10 +600,9 @@ def process_csvs(format):
                 elif name == 'CRio' and insn_name == 'mcrf':
                     res['0'] = 'd:BF'  # BFA: Rdest1_EXTRA3
                     res['1'] = 's:BFA'  # BFA: Rsrc1_EXTRA3
-                # bodged: need to define what "CR" is
-                # XXX elif 'mfcr' in insn_name or 'mfocrf' in insn_name:
-                # XXX    res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
-                # XXX    res['1'] = 's:CR'  # CR: Rsrc1_EXTRA3
+                elif 'mfcr' in insn_name or 'mfocrf' in insn_name:
+                    res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
+                    res['1'] = 's:CR'  # CR: Rsrc1_EXTRA3
                 elif insn_name == 'setb':
                     res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
                     res['1'] = 's:BFA'  # BFA: Rsrc1_EXTRA3
