@@ -8,6 +8,16 @@ NEWS = open(os.path.join(here, 'NEWS.txt')).read()
 
 version = '0.0.3'
 
+# the only reason this is added is because it's become a part of python 3.9.
+# the project standard is python 3.7 however in future that will be updated.
+# for now, cached_property is RELUCTANTLY added but a *copy* is added so
+# that the generation of HDL is not critically dependent on random crap
+# off the internet. you're spending USD 16 *MILLION* on masks, you better
+# be absolutely paranoid-level certain you know where every piece of the
+# chain creating the HDL comes from.
+cprop = "git+https://git.libre-soc.org/git/cached-property.git@1.5.2" \
+        "#egg=cached-property-1.5.2"
+
 # using pip3 for ongoing development is a royal pain.  seriously not
 # recommended.  therefore a number of these dependencies have been
 # commented out.  *they are still required* - they will need installing
@@ -23,7 +33,10 @@ install_requires = [
     'pygdbmi==0.9.0.3',  # gdb machine interface, requires older version (sigh)
     'ply',     # python lex yacc. very cool
     'astor',   # python AST manipulation
-    'cffi' # LuaJIT-style C FFI for Python
+    'cffi', # LuaJIT-style C FFI for Python
+
+    # git url needed for having `pip3 install -e .` install from libre-soc git
+    'cached-property@'+cprop,
 ]
 
 test_requires = [
