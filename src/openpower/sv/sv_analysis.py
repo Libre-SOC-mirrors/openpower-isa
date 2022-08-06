@@ -271,7 +271,7 @@ class Format(enum.Enum):
         }[self](lines)
 
 
-def process_csvs(format):
+def read_csvs():
     csvs = {}
     csvs_svp64 = {}
     bykey = {}
@@ -280,12 +280,6 @@ def process_csvs(format):
     immediates = {}
     insns = {}  # dictionary of CSV row, by instruction
     insn_to_csv = {}
-
-    print("# Draft SVP64 Power ISA register 'profile's")
-    print('')
-    print("this page is auto-generated, do not edit")
-    print("created by http://libre-soc.org/openpower/sv_analysis.py")
-    print('')
 
     # Expand that (all .csv files)
     pth = find_wiki_file("*.csv")
@@ -351,6 +345,21 @@ def process_csvs(format):
 
     primarykeys = list(primarykeys)
     primarykeys.sort()
+
+    return (csvs, csvs_svp64, primarykeys, bykey, insn_to_csv, insns,
+           dictkeys, immediates)
+
+
+def process_csvs(format):
+
+    print("# Draft SVP64 Power ISA register 'profile's")
+    print('')
+    print("this page is auto-generated, do not edit")
+    print("created by http://libre-soc.org/openpower/sv_analysis.py")
+    print('')
+
+    (csvs, csvs_svp64, primarykeys, bykey, insn_to_csv, insns,
+           dictkeys, immediates) = read_csvs()
 
     # mapping to old SVPrefix "Forms"
     mapsto = {'3R-1W-CRo': 'RM-1P-3S1D',
