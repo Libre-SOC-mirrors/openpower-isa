@@ -11,6 +11,14 @@
 # It finds .csv files in the directory isatables/
 # then goes through the categories and creates svp64 CSV augmentation
 # tables on a per-opcode basis
+#
+# NOTE: this program is effectively part of the Simple-V Specification.
+# it encapsulates the relationships of what can be SVP64-encoded and
+# holds all of the information on how to encode and decode SVP64.
+# By auto-generating tables that go into the Simple-V Specification
+# this program *is* the specification. do not be confused just because
+# it is in python: if you do not understand please ask questions and
+# help create patches with explanatory comments.
 
 import argparse
 import csv
@@ -66,6 +74,11 @@ tablecols = ['unit', 'in', 'outcnt', 'CR in', 'CR out', 'imm'
 
 
 def create_key(row):
+    """ create an equivalent of a database key by which it is possible
+    to easily categorise an instruction.  later this category is used
+    to decide what kind of EXTRA encoding is to be done because the
+    key contains the total number of input and output registers
+    """
     res = OrderedDict()
     #print ("row", row)
     for key in keycolumns:
@@ -155,6 +168,9 @@ def tformat(d):
 
 
 def keyname(row):
+    """converts a key into a readable string. anything null or zero
+    is skipped, shortening the readable string
+    """
     res = []
     if row['unit'] != 'OTHER':
         res.append(row['unit'])
