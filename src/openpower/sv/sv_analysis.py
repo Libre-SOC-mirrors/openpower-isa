@@ -349,6 +349,27 @@ def read_csvs():
     return (csvs, csvs_svp64, primarykeys, bykey, insn_to_csv, insns,
            dictkeys, immediates)
 
+
+def regs_profile(insn, res):
+    """get a more detailed register profile: 1st operand is RA,
+    2nd is RB, etc. etc
+    """
+    regs = []
+    for k in ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']:
+        if insn[k].startswith('CONST'):
+            res[k] = ''
+            regs.append('')
+        else:
+            res[k] = insn[k]
+            if insn[k] == 'RA_OR_ZERO':
+                regs.append('RA')
+            elif insn[k] != 'NONE':
+                regs.append(insn[k])
+            else:
+                regs.append('')
+    return regs
+
+
 def extra_classifier(insn_name, value, name, res, regs):
     """extra_classifier: creates the SVP64.RM EXTRA2/3 classification.
     there is very little space (9 bits) to mark register operands
@@ -772,20 +793,8 @@ def process_csvs(format):
                 pack = '0'
             res['PU'] = pack
 
-            # temporary useful info
-            regs = []
-            for k in ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']:
-                if insn[k].startswith('CONST'):
-                    res[k] = ''
-                    regs.append('')
-                else:
-                    res[k] = insn[k]
-                    if insn[k] == 'RA_OR_ZERO':
-                        regs.append('RA')
-                    elif insn[k] != 'NONE':
-                        regs.append(insn[k])
-                    else:
-                        regs.append('')
+            # create a register profile list (update res row as well)
+            regs = regs_profile(insn, res)
 
             #print("regs", insn_name, regs)
             extra_classifier(insn_name, value, name, res, regs)
