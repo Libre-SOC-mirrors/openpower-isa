@@ -127,6 +127,9 @@ class Form(Enum):
     XB = 35
     BM2 = 36 # bmask
     SVI = 37  # Simple-V Index Mode
+    VA2 = 38
+    SVC = 39
+    SVR = 40
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
