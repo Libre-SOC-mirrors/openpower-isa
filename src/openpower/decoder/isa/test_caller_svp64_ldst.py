@@ -242,6 +242,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(14), SelectableInt(0x303, 64))
             self.assertEqual(sim.fpr(15), SelectableInt(0x404, 64))
 
+    @unittest.skip("deprecated, needs Scalar LDST-shifted")
     def test_sv_load_store_shifted2(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
