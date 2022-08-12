@@ -118,6 +118,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(12), SelectableInt(0x1234, 64))
             self.assertEqual(sim.gpr(13), SelectableInt(0x1235, 64))
 
+    @unittest.skip("deprecated, needs Scalar LDST-shifted")
     def test_sv_load_store_shifted(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
@@ -177,6 +178,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(14), SelectableInt(0x303, 64))
             self.assertEqual(sim.gpr(15), SelectableInt(0x404, 64))
 
+    @unittest.skip("deprecated, needs Scalar LDST-shifted")
     def test_sv_load_store_shifted_fp(self):
         """>>> lst = ["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0004",
@@ -334,7 +336,6 @@ class DecoderTestCase(FHDLTestCase):
                         "svshape 3, 3, 4, 0, 0",
                         "svremap 1, 1, 2, 0, 0, 0, 0",
                         "sv.lwz *20, 0(1)",
-                        #"sv.lwzsh *12, 4(1), 2", # bit-reversed
                         ])
         lst = list(lst)
 
@@ -391,7 +392,7 @@ class DecoderTestCase(FHDLTestCase):
                         "sv.stw *5, 0(1)",
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
-                        "sv.lwzsh *12, 4(1), 2"]
+                        "sv.lwz/els *12, 4(1)"]
 
         shifted LD is computed as:
         for i in range(VL):
@@ -420,7 +421,7 @@ class DecoderTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 1, 0, 0, 0, 0, 0, 0",
                         #"setvl 0, 0, 8, 0, 1, 1",
-                        "sv.lwzsh *12, 4(1), 2",  # bit-reversed
+                        "sv.lwz/els *12, 4(1)",
                         #"sv.lwz *12, 0(1)"
                         ])
         lst = list(lst)
@@ -478,7 +479,7 @@ class DecoderTestCase(FHDLTestCase):
                         "sv.stw *5, 0(1)",
                         "svshape 8, 1, 1, 6, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
-                        "sv.lwzsh *12, 4(1), 2"]
+                        "sv.lwz/els *12, 4(1)"]
 
         bitreverse LD is computed as:
         for i in range(VL):
@@ -507,7 +508,7 @@ class DecoderTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 14, 0",
                         "svremap 16, 0, 0, 0, 0, 0, 0",
                         #"setvl 0, 0, 8, 0, 1, 1",
-                        "sv.lwzsh *12, 4(1), 2",  # bit-reversed
+                        "sv.lwz/els *12, 4(1)",
                         #"sv.lwz *12, 0(1)"
                         ])
         lst = list(lst)
