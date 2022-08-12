@@ -14,11 +14,12 @@ from openpower.decoder.power_enums import (
     CROutSel as _CROutSel,
     SVPtype as _SVPtype,
     SVEtype as _SVEtype,
-    SVEXTRA as _SVEXTRA,
+    SVExtra as _SVExtra,
     RC as _RC,
+    find_wiki_dir as _find_wiki_dir,
 )
 from openpower.consts import SVP64MODE as _SVP64MODE
-from openpower.decoder.power_svp64 import SVP64RM as _SVP64RM
+from openpower.decoder.power_insn import Database as _Database
 from openpower.decoder.isa.caller import SVP64RMFields as _SVP64RMFields
 from openpower.decoder.isa.caller import SVP64PrefixFields as _SVP64PrefixFields
 from openpower.decoder.selectable_int import SelectableIntMapping
@@ -54,8 +55,14 @@ def indent(strings):
 
 
 class CTypeMeta(type):
-    def __new__(metacls, name, bases, attrs, typedef=None):
+    def __new__(metacls, name, bases, attrs, typedef="void"):
         cls = super().__new__(metacls, name, bases, attrs)
+        if typedef == "void":
+            for base in bases:
+                if (hasattr(base, "c_typedef") and
+                        (base.c_typedef != "void")):
+                    typedef = base.c_typedef
+                    break
         cls.__typedef = typedef
 
         return cls
@@ -100,8 +107,8 @@ class ArrayMeta(CTypeMeta):
 class BitmapMeta(CTypeMeta):
     def __new__(metacls, name, bases, attrs,
             typedef="uint64_t", bits=0, **kwargs):
-        cls = super().__new__(metacls, name, bases, attrs,
-            typedef=typedef, **kwargs)
+        cls = super().__new__(metacls,
+            name, bases, attrs, typedef=typedef, **kwargs)
         cls.__bits = bits
         return cls
 
@@ -188,7 +195,7 @@ CRInSel = Enum("CRInSel", _CRInSel, tag="svp64_cr_in_sel")
 CROutSel = Enum("CROutSel", _CROutSel, tag="svp64_cr_out_sel")
 PType = Enum("PType", _SVPtype, tag="svp64_ptype")
 EType = Enum("EType", _SVEtype, tag="svp64_etype", exclude="NONE")
-Extra = Enum("Extra", _SVEXTRA, tag="svp64_extra", exclude="Idx_1_2")
+Extra = Enum("Extra", _SVExtra, tag="svp64_extra", exclude="Idx_1_2")
 
 
 class Constant(CType, _enum.Enum, metaclass=EnumMeta):
@@ -225,10 +232,11 @@ class StructMeta(CTypeMeta):
         return cls.__tag
 
     def c_decl(cls):
+        def transform(field):
+            return field.type.c_var(name=f"{field.name}", suffix=";")
+
         yield f"{cls.c_typedef} {{"
-        for field in _dataclasses.fields(cls):
-            yield from indent([field.type.c_var(name=f"{field.name}",
-                                    suffix=";")])
+        yield from indent(map(transform, _dataclasses.fields(cls)))
         yield f"}};"
 
 
@@ -260,7 +268,7 @@ class UInt32(Integer, typedef="uint32_t"):
     pass
 
 
-class Name(CType, str):
+class Name(CType, str, typedef="const char *"):
     def __repr__(self):
         escaped = self.replace("\"", "\\\"")
         return f"\"{escaped}\""
@@ -688,87 +696,37 @@ class Codegen(_enum.Enum):
         }[self](records, num_records)
 
 
-ISA = _SVP64RM()
-FIELDS = {field.name:field.type for field in _dataclasses.fields(Desc)}
-
-def parse(path):
-    visited = set()
-
-    def name_filter(name):
-        if name.startswith("l") and name.endswith("br"):
-            return False
-        if name in {"mcrxr", "mcrxrx", "darn"}:
-            return False
-        if name in {"bctar", "bcctr"}:
-            return False
-        if "rfid" in name:
-            return False
-        if name in {"setvl"}:
-            return False
-        if name in visited:
-            return False
-
-        visited.add(name)
-
-        return True
-
-    for data in ISA.get_svp64_csv(path):
-        comment = data.pop("comment")
-        names = comment.split("=")[-1].split("/")
-        names = set(filter(name_filter, names))
-        if not names:
-            continue
-        rc = _RC[data["rc"] if data["rc"] else "NONE"]
-        if rc is _RC.RC:
-            names.update({f"{name}." for name in names})
-
+def records(db):
+    fields = {field.name:field.type for field in _dataclasses.fields(Desc)}
+    for insn in db:
         desc = {}
-        for (key, value) in data.items():
-            key = key.lower().replace(" ", "_")
-            cls = FIELDS.get(key)
-            if cls is None:
-                continue
 
-            if ((cls is EType and value == "NONE") or
-                    (cls is Extra and value == "Idx_1_2")):
-                desc = {}
+        for (key, cls) in fields.items():
+            value = getattr(insn, key)
+
+            if (((cls is EType) and (value is _SVEtype.NONE)) or
+                    ((cls is Extra) and (value is _SVExtra.Idx_1_2))):
+                desc = None
                 break
 
-            if not isinstance(value, cls):
-                if issubclass(cls, _enum.Enum):
-                    value = {item.name:item for item in cls}[value]
-                else:
-                    value = cls(value)
+            if issubclass(cls, _enum.Enum):
+                value = cls[value.name]
+            else:
+                value = cls(value)
             desc[key] = value
 
-        if not desc:
+        if desc is None:
             continue
 
+        name = Name(insn.name)
         desc = Desc(**desc)
-        for name in map(Name, names):
-            yield Record(name=name, desc=desc)
+
+        yield Record(name=name, desc=desc)
 
 
 def main(codegen):
-    records = []
-    paths = (
-        "minor_19.csv",
-        "minor_30.csv",
-        "minor_31.csv",
-        "minor_58.csv",
-        "minor_62.csv",
-        "minor_22.csv",
-        "minor_5.csv",
-        "minor_63.csv",
-        "minor_59.csv",
-        "major.csv",
-        "extra.csv",
-    )
-    for path in paths:
-        records.extend(parse(path))
-    records = sorted(frozenset(records))
-
-    for line in codegen.generate(records):
+    db = _Database(_find_wiki_dir())
+    for line in codegen.generate(records(db)):
         print(line)
 
 
