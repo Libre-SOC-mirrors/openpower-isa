@@ -282,6 +282,24 @@ class Name(CType, str, typedef="const char *"):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
+class Opcode(Struct):
+    class Value(UInt32):
+        def __new__(cls, value):
+            if isinstance(value, int):
+                value = f"0x{value:08x}"
+            return super().__new__(cls, value)
+
+    class Mask(UInt32):
+        def __new__(cls, value):
+            if isinstance(value, int):
+                value = f"0x{value:08x}"
+            return super().__new__(cls, value)
+
+    value: Value
+    mask: Mask
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
 class Desc(Struct):
     in1: In1Sel
     in2: In2Sel
@@ -317,6 +335,7 @@ class Desc(Struct):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Record(Struct):
     name: Name
+    opcode: Opcode
     desc: Desc
 
     def __lt__(self, other):
@@ -511,7 +530,7 @@ class Codegen(_enum.Enum):
                 yield from enum.c_decl()
                 yield ""
 
-            for cls in (Desc, Record, Prefix, RM):
+            for cls in (Desc, Opcode, Record, Prefix, RM):
                 yield from cls.c_decl()
                 yield ""
 
@@ -719,9 +738,12 @@ def records(db):
             continue
 
         name = Name(insn.name)
+        value = Opcode.Value(insn.opcode.value)
+        mask = Opcode.Mask(insn.opcode.mask)
+        opcode = Opcode(value=value, mask=mask)
         desc = Desc(**desc)
 
-        yield Record(name=name, desc=desc)
+        yield Record(name=name, opcode=opcode, desc=desc)
 
 
 def main(codegen):
