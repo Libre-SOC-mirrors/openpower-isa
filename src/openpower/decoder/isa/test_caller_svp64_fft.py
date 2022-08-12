@@ -692,7 +692,7 @@ class FFTTestCase(FHDLTestCase):
 
     def test_sv_remap_fpmadds_fft_ldst(self):
         """>>>lst = ["setvl 0, 0, 8, 0, 1, 1",
-                         "sv.lfssh *0, 4(0), 20", # bit-reversed
+                         "sv.lfs/els *0, 4(0)", 
                          "svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
                          "sv.ffmadds *0, *0, *0, *8"
@@ -702,7 +702,7 @@ class FFTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm( ["svshape 8, 1, 1, 15, 0",
                          "svremap 1, 0, 0, 0, 0, 0, 0",
-                         "sv.lfssh *0, 4(0), 20", # shifted
+                         "sv.lfs/els *0, 4(0)",
                          "svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
                          "sv.ffmadds *0, *0, *0, *8"
