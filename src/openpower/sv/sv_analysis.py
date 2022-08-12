@@ -33,6 +33,27 @@ from openpower.decoder.power_enums import find_wiki_file, get_csv
 from openpower.util import log
 
 
+# Ignore those containing: valid test sprs
+def glob_valid_csvs(root):
+    def check_csv(fname):
+        _, name = os.path.split(fname)
+        if '-' in name:
+            return False
+        if 'valid' in fname:
+            return False
+        if 'test' in fname:
+            return False
+        if fname.endswith('sprs.csv'):
+            return False
+        if fname.endswith('minor_19_valid.csv'):
+            return False
+        if 'RM' in fname:
+            return False
+        return True
+
+    yield from filter(check_csv, glob(root))
+
+
 # Write an array of dictionaries to the CSV file name:
 def write_csv(name, items, headers):
     file_path = find_wiki_file(name)
@@ -273,21 +294,7 @@ def read_csvs():
     pth = find_wiki_file("*.csv")
 
     # Ignore those containing: valid test sprs
-    for fname in glob(pth):
-        #print("sv analysis checking", fname)
-        _, name = os.path.split(fname)
-        if '-' in name:
-            continue
-        if 'valid' in fname:
-            continue
-        if 'test' in fname:
-            continue
-        if fname.endswith('sprs.csv'):
-            continue
-        if fname.endswith('minor_19_valid.csv'):
-            continue
-        if 'RM' in fname:
-            continue
+    for fname in glob_valid_csvs(pth):
         csvname = os.path.split(fname)[1]
         csvname_ = csvname.split(".")[0]
         # csvname is something like: minor_59.csv, fname the whole path
@@ -814,21 +821,7 @@ def process_csvs(format):
     pth = find_wiki_file("*.csv")
 
     # Ignore those containing: valid test sprs
-    for fname in glob(pth):
-        #print("post-checking", fname)
-        _, name = os.path.split(fname)
-        if '-' in name:
-            continue
-        if 'valid' in fname:
-            continue
-        if 'test' in fname:
-            continue
-        if fname.endswith('sprs.csv'):
-            continue
-        if fname.endswith('minor_19_valid.csv'):
-            continue
-        if 'RM' in fname:
-            continue
+    for fname in glob_valid_csvs(pth):
         svp64_csv = svt.get_svp64_csv(fname)
 
     csvcols = ['insn', 'mode', 'Ptype', 'Etype']
