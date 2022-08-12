@@ -788,7 +788,6 @@ class PowerDecodeSubset(Elaboratable):
         self.regreduce_en = regreduce_en
         if svp64_en:
             self.is_svp64_mode = Signal()  # mark decoding as SVP64 Mode
-            self.use_svp64_ldst_dec = Signal()  # must use LDST decoder
             self.use_svp64_fft = Signal()      # FFT Mode
             self.sv_rm = SVP64Rec(name="dec_svp64")  # SVP64 RM field
             self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
@@ -813,7 +812,7 @@ class PowerDecodeSubset(Elaboratable):
         # alternatives.  useful for PCR (Program Compatibility Register)
         # amongst other things
         if svp64_en:
-            conditions = {'SVP64BREV': self.use_svp64_ldst_dec,
+            conditions = {
                           'SVP64FFT': self.use_svp64_fft,
                           }
         else:
@@ -876,7 +875,6 @@ class PowerDecodeSubset(Elaboratable):
         if self.svp64_en:
             ports += self.sv_rm.ports()
             ports.append(self.is_svp64_mode)
-            ports.append(self.use_svp64_ldst_dec)
             ports.append(self.use_svp64_fft)
         return ports
 
@@ -1060,10 +1058,6 @@ class PowerDecodeSubset(Elaboratable):
                 comb += rm_dec.ldst_imz_in.eq(bzero)  # B immediate is zero
 
             # main PowerDecoder2 determines if different SVP64 modes enabled
-            if not self.final:
-                # if shift mode requested
-                shiftmode = rm_dec.ldstmode == SVP64LDSTmode.SHIFT
-                comb += self.use_svp64_ldst_dec.eq(shiftmode)
             # detect if SVP64 FFT mode enabled (really bad hack),
             # exclude fcfids and others
             # XXX this is a REALLY bad hack, REALLY has to be done better.
