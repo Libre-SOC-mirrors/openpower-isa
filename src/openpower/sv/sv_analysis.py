@@ -142,11 +142,13 @@ def create_key(row):
     else:
         res['imm'] = ''
 
+    res['PU'] = '' # disabled (uses modes, now)
+    return res
+
     # pack/unpack, start with LDST with immediate for now
     if (res['imm'] == '1' and res['unit'] == 'LDST' and
         ((res['in'] == '1' and res['outcnt'] == '1') or # LD-imm
          (res['in'] == '2' and res['outcnt'] == '0'))): # ST-imm
-        #print ("PU", res, row)
         res['PU'] = "1"
     else:
         res['PU'] = ''
