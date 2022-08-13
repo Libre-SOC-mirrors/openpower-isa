@@ -95,6 +95,7 @@ class BitManipTestCase(TestAccumulatorBase):
             rb = hash_256(f"ternlogi rb {i}") % 2 ** 64
             self.do_case_ternlogi(rc, rt, ra, rb, imm)
 
+    @skip_case("invalid, replaced by grevlut")
     def case_grev_random(self):
         for i in range(100):
             w = hash_256(f"grev w {i}") & 1
@@ -103,12 +104,15 @@ class BitManipTestCase(TestAccumulatorBase):
             rb = hash_256(f"grev rb {i}") % 2 ** 64
             self.do_case_grev(w, is_imm, ra, rb)
 
+    @skip_case("invalid, replaced by grevlut")
     def case_grevi_1(self):
         self.do_case_grev(False, True, 14361919363078703450,
                           8396479064514513069)
 
+    @skip_case("invalid, replaced by grevlut")
     def case_grevi_2(self):
         self.do_case_grev(True, True, 397097147229333315, 8326716970539357702)
 
+    @skip_case("invalid, replaced by grevlut")
     def case_grevi_3(self):
         self.do_case_grev(True, True, 0xFFFF_FFFF_0000_0000, 6)
