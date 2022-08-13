@@ -713,7 +713,7 @@ class Codegen(_enum.Enum):
 
 def records(db):
     fields = {field.name:field.type for field in _dataclasses.fields(Desc)}
-    for insn in db:
+    for insn in filter(lambda insn: insn.svp64 is not None, db):
         desc = {}
 
         for (key, cls) in fields.items():
@@ -733,7 +733,7 @@ def records(db):
         if desc is None:
             continue
 
-        name = Name(insn.name)
+        name = Name(f"sv.{insn.name}")
         value = Opcode.Value(insn.opcode.value)
         mask = Opcode.Mask(insn.opcode.mask)
         opcode = Opcode(value=value, mask=mask)
