@@ -534,10 +534,6 @@ class Codegen(_enum.Enum):
                 yield from cls.c_decl()
                 yield ""
 
-            yield "enum svp64_rm_field"
-            yield "svp64_opindex_rm_field (const struct svp64_desc *desc, ppc_opindex_t opindex);"
-            yield ""
-
             yield records.__class__.c_var("svp64_records",
                         prefix="extern const ", suffix=";")
             yield num_records.__class__.c_var("svp64_num_records",
