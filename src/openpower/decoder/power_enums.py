@@ -197,7 +197,6 @@ class SVP64RMMode(Enum):
     SATURATE = 3
     PREDRES = 4
     BRANCH = 5
-    PACK = 6
 
 
 @unique
@@ -257,7 +256,6 @@ class SVP64LDSTmode(Enum):
     INDEXED = 1
     ELSTRIDE = 2
     UNITSTRIDE = 3
-    SHIFT = 4
 
 
 # supported instructions: make sure to keep up-to-date with CSV files

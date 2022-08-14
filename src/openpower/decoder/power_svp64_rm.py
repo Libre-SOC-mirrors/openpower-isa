@@ -121,6 +121,7 @@ class SVP64RMModeDecode(Elaboratable):
         self.pred_dz = Signal(1) # predicate dest zeroing
 
         # Modes n stuff
+        self.pack_unpack = Signal(1) # pack/unpack mode
         self.saturate = Signal(SVP64sat)
         self.RC1 = Signal()
         self.cr_sel = Signal(2)  # bit of CR to test (index 0-3)
@@ -163,13 +164,18 @@ class SVP64RMModeDecode(Elaboratable):
             comb += self.bc_vsb.eq(self.rm_in.ewsrc[1])
 
         with m.Else():
+            pu = self.pack_unpack
             # combined arith / ldst decoding due to similarity
             with m.Switch(mode2):
                 with m.Case(0): # needs further decoding (LDST no mapreduce)
                     with m.If(is_ldst):
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
+                        comb += pu.eq(mode[SVP64MODE.LDST_PACK]) # Pack mode
                     with m.Elif(mode[SVP64MODE.REDUCE]):
                         comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
+                        # Pack only active if SVM=1 & SUBVL>1 & Mode[4]=1
+                        with m.If(self.rm_in.subvl != Const(0, 2)): # active
+                            comb += pu.eq(mode[SVP64MODE.ARITH_PACK])
                     with m.Else():
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
                 with m.Case(1):
@@ -237,11 +243,8 @@ class SVP64RMModeDecode(Elaboratable):
                         with m.If(self.rc_in):
                             comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
 
-                # Shifted Mode
-                with m.If(mode[SVP64MODE.LDST_SHIFT]):
-                    comb += self.ldstmode.eq(SVP64LDSTmode.SHIFT)
                 # RA is vectorised
-                with m.Elif(self.ldst_ra_vec):
+                with m.If(self.ldst_ra_vec):
                     comb += self.ldstmode.eq(SVP64LDSTmode.INDEXED)
                 # not element-strided, therefore unit...
                 with m.Elif(~els):

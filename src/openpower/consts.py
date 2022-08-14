@@ -241,7 +241,9 @@ class SVP64MODEb(_Const):
     # mode bits
     MOD2_MSB = 0
     MOD2_LSB = 1
-    LDST_SHIFT = 2 # set =1 for shift mode
+    # pack detection (TODO, CR-ops needs one of these too)
+    LDST_PACK = 2 # set =1 for LD/ST-immediate Pack mode
+    ARITH_PACK = 4 # set =1 for Arithmetic Pack mode
     # when predicate not set: 0=ignore/skip 1=zero
     DZ = 3  # for destination
     SZ = 4  # for source
@@ -338,6 +340,7 @@ class XERRegsEnum:
     CA=1 # CA and CA32
     OV=2 # OV and OV32
     N_REGS = 3 # maximum number of regs
+
 
 if __name__ == '__main__':
     print ("EXTRA2 pack", EXTRA2.PACK_en, EXTRA2.PACK_en.value)
