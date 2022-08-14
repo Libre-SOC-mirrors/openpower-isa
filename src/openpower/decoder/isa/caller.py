@@ -1442,7 +1442,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # any modified return results?
         if info.write_regs:
             for name, output in zip(output_names, results):
-                yield from self.check_write(info, name, output)
+                yield from self.check_write(info, name, output, carry_en)
 
         nia_update = (yield from self.check_step_increment(results, rc_en,
                                                            asmop, ins_name))
@@ -1565,7 +1565,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         for x in rremaps:
             log("shape remap", x)
 
-    def check_write(self, info, name, output):
+    def check_write(self, info, name, output, carry_en):
         if name == 'overflow':  # ignore, done already (above)
             return
         if isinstance(output, int):
