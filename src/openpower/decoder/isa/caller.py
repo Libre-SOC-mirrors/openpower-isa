@@ -1456,21 +1456,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         subvl = yield self.dec2.rm_dec.rm_in.subvl
         srcstep, dststep = self.new_srcstep, self.new_dststep
         ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
-        # shift mode reads SVD (or SVDS - TODO)
-        # *BUT*... because this is "overloading" of LD operations,
-        # it gets *STORED* into D (or DS, TODO)
-        if ldstmode == SVP64LDSTmode.SHIFT.value:
-            imm = yield self.dec2.dec.fields.FormSVD.SVD[0:11]
-            imm = exts(imm, 11)  # sign-extend to integer
-            log("shift SVD", imm)
-            replace_d = True
+        if info.form == 'DS':
+            # DS-Form, multiply by 4 then knock 2 bits off after
+            imm = yield self.dec2.dec.fields.FormDS.DS[0:14] * 4
         else:
-            if info.form == 'DS':
-                # DS-Form, multiply by 4 then knock 2 bits off after
-                imm = yield self.dec2.dec.fields.FormDS.DS[0:14] * 4
-            else:
-                imm = yield self.dec2.dec.fields.FormD.D[0:16]
-            imm = exts(imm, 16)  # sign-extend to integer
+            imm = yield self.dec2.dec.fields.FormD.D[0:16]
+        imm = exts(imm, 16)  # sign-extend to integer
         # get the right step. LD is from srcstep, ST is dststep
         op = yield self.dec2.e.do.insn_type
         offsmul = 0
@@ -1485,18 +1476,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             # XXX NOTE! no bit-reversed STORE! this should not ever be used
             offsmul = (dststep * (subvl+1)) + dsubstep
             log("D-field dst", imm, offsmul)
-        # bit-reverse mode, rev already done through get_src_dst_steps()
-        if ldstmode == SVP64LDSTmode.SHIFT.value:
-            # manually look up RC, sigh
-            RC = yield self.dec2.dec.RC[0:5]
-            RC = self.gpr(RC)
-            log("LD-SHIFT:", "VL", vl,
-                "RC", RC.value, "imm", imm,
-                "offs", bin(offsmul),
-                )
-            imm = SelectableInt((imm * offsmul) << RC.value, 32)
         # Unit-Strided LD/ST adds offset*width to immediate
-        elif ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
+        if ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
             ldst_len = yield self.dec2.e.do.data_len
             imm = SelectableInt(imm + offsmul * ldst_len, 32)
             replace_d = True
