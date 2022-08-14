@@ -39,6 +39,11 @@ install_requires = [
     'cached-property@'+cprop,
 ]
 
+# git url needed for having `setup.py develop` install from libre-soc git
+dependency_links = [
+    cprop,
+]
+
 test_requires = [
     'nose',
     # best to install pia from Libre-SOC:
@@ -68,6 +73,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
+    dependency_links=dependency_links,
     tests_require=test_requires,
     test_suite='nose.collector',
     entry_points={
