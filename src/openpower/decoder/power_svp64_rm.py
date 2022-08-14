@@ -47,11 +47,11 @@ https://libre-soc.org/openpower/sv/ldst/
 https://libre-soc.org/openpower/sv/branches/
 
 LD/ST immed:
-00	0	dz els	normal mode (with element-stride)
-00	1	dz rsvd	bit-reversed mode
+00	0	zz els	normal mode (with element-stride option)
+00	1	zz els	Pack/unpack (with element-stride option)
 01	inv	CR-bit	Rc=1: ffirst CR sel
 01	inv	els RC1	Rc=0: ffirst z/nonz
-10	N	dz els	sat mode: N=0/1 u/s
+10	N	zz els	sat mode: N=0/1 u/s
 11	inv	CR-bit	Rc=1: pred-result CR sel
 11	inv	els RC1	Rc=0: pred-result z/nonz
 
@@ -62,17 +62,19 @@ LD/ST indexed:
 01	inv	dz RC1	Rc=0: ffirst z/nonz
 10	N	sz dz	sat mode: N=0/1 u/s
 11	inv	CR-bit	Rc=1: pred-result CR sel
-11	inv	dz RC1	Rc=0: pred-result z/nonz
+11	inv	zz RC1	Rc=0: pred-result z/nonz
 
 Arithmetic:
-00	0	sz dz	normal mode
-00	1	dz CRM	reduce mode (mapreduce), SUBVL=1
-00	1	SVM CRM	subvector reduce mode, SUBVL>1
-01	inv	CR-bit	Rc=1: ffirst CR sel
-01	inv	dz RC1	Rc=0: ffirst z/nonz
-10	N	sz dz	sat mode: N=0/1 u/s
-11	inv	CR-bit	Rc=1: pred-result CR sel
-11	inv	dz RC1	Rc=0: pred-result z/nonz
+00 	0   dz sz 	normal mode
+00 	1   0 RG 	scalar reduce mode (mapreduce), SUBVL=1
+00 	1   1 / 	parallel reduce mode (mapreduce), SUBVL=1
+00 	1   SVM 0 	subvector reduce mode, SUBVL>1
+00 	1   SVM 1 	Pack/Unpack mode, SUBVL>1
+01 	inv CR-bit 	Rc=1: ffirst CR sel
+01 	inv VLi RC1 	Rc=0: ffirst z/nonz
+10 	N   dz sz 	sat mode: N=0/1 u/s
+11 	inv CR-bit 	Rc=1: pred-result CR sel
+11 	inv zz RC1 	Rc=0: pred-result z/nonz 
 
 Branch Conditional:
 note that additional BC modes are in *other bits*, specifically
@@ -118,6 +120,7 @@ class SVP64RMModeDecode(Elaboratable):
         self.pred_sz = Signal(1) # predicate source zeroing
         self.pred_dz = Signal(1) # predicate dest zeroing
 
+        # Modes n stuff
         self.saturate = Signal(SVP64sat)
         self.RC1 = Signal()
         self.cr_sel = Signal(2)  # bit of CR to test (index 0-3)
