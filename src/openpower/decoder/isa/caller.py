@@ -1868,14 +1868,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         log("    out_vec", out_vec)
         log("    in_vec", in_vec)
         log("    sv_ptype", sv_ptype, sv_ptype == SVPtype.P2.value)
-        # check if srcstep needs incrementing by one, stop PC advancing
-        # svp64 loop can end early if the dest is scalar for single-pred
-        # but for 2-pred both src/dest have to be checked.
-        # XXX this might not be true! it may just be LD/ST
-        if sv_ptype == SVPtype.P2.value:
-            svp64_is_vector = (out_vec or in_vec)
-        else:
-            svp64_is_vector = out_vec
         # check if this was an sv.bc* and if so did it succeed
         if self.is_svp64_mode and insn_name.startswith("sv.bc"):
             end_loop = self.namespace['end_loop']
@@ -1884,6 +1876,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 self.svp64_reset_loop()
                 self.update_pc_next()
                 return False
+        # check if srcstep needs incrementing by one, stop PC advancing
+        # but for 2-pred both src/dest have to be checked.
+        # XXX this might not be true! it may just be LD/ST
+        if sv_ptype == SVPtype.P2.value:
+            svp64_is_vector = (out_vec or in_vec)
+        else:
+            svp64_is_vector = out_vec
         # loops end at the first "hit" (source or dest)
         loopend = ((srcstep == vl-1 and ssubstep == subvl) or
                    (dststep == vl-1 and dsubstep == subvl))
