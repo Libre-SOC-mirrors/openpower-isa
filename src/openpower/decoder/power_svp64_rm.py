@@ -21,6 +21,7 @@ from openpower.decoder.power_enums import (SVP64RMMode, Function, SVPtype,
                                     SVP64PredMode, SVP64sat, SVP64LDSTmode,
                                     SVP64BCPredMode, SVP64BCVLSETMode,
                                     SVP64BCGate, SVP64BCCTRMode,
+                                    SVP64width
                                     )
 from openpower.consts import EXTRA3, SVP64MODE
 from openpower.sv.svp64 import SVP64Rec
@@ -121,7 +122,10 @@ class SVP64RMModeDecode(Elaboratable):
         self.pred_dz = Signal(1) # predicate dest zeroing
 
         # Modes n stuff
-        self.pack_unpack = Signal(1) # pack/unpack mode
+        self.ew_src = Signal(SVP64width) # source elwidth
+        self.ew_dst = Signal(SVP64width) # dest elwidth
+        self.pack = Signal() # pack mode
+        self.unpack = Signal() # unpack mode
         self.saturate = Signal(SVP64sat)
         self.RC1 = Signal()
         self.cr_sel = Signal(2)  # bit of CR to test (index 0-3)
@@ -139,6 +143,7 @@ class SVP64RMModeDecode(Elaboratable):
         # decode pieces of mode
         is_ldst = Signal()
         is_bc = Signal()
+        do_pu = Signal() # whether to decode pack/unpack
         comb += is_ldst.eq(self.fn_in == Function.LDST)
         comb += is_bc.eq(self.fn_in == Function.BRANCH)
         mode2 = sel(m, mode, SVP64MODE.MOD2)
@@ -164,18 +169,17 @@ class SVP64RMModeDecode(Elaboratable):
             comb += self.bc_vsb.eq(self.rm_in.ewsrc[1])
 
         with m.Else():
-            pu = self.pack_unpack
             # combined arith / ldst decoding due to similarity
             with m.Switch(mode2):
                 with m.Case(0): # needs further decoding (LDST no mapreduce)
                     with m.If(is_ldst):
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
-                        comb += pu.eq(mode[SVP64MODE.LDST_PACK]) # Pack mode
+                        comb += do_pu.eq(mode[SVP64MODE.LDST_PACK]) # Pack mode
                     with m.Elif(mode[SVP64MODE.REDUCE]):
                         comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
                         # Pack only active if SVM=1 & SUBVL>1 & Mode[4]=1
                         with m.If(self.rm_in.subvl != Const(0, 2)): # active
-                            comb += pu.eq(mode[SVP64MODE.ARITH_PACK])
+                            comb += do_pu.eq(mode[SVP64MODE.ARITH_PACK])
                     with m.Else():
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
                 with m.Case(1):
@@ -229,6 +233,16 @@ class SVP64RMModeDecode(Elaboratable):
                         comb += self.saturate.eq(SVP64sat.SIGNED)
                 with m.Default():
                     comb += self.saturate.eq(SVP64sat.NONE)
+
+            # extract pack/unpack, actually just ELWIDTH_SRC, so
+            # do elwidth/elwidth_src at same time
+            with m.If(do_pu):
+                comb += self.pack.eq(self.rm_in.ewsrc[0])
+                comb += self.unpack.eq(self.rm_in.ewsrc[1])
+                comb += self.ew_src.eq(self.rm_in.elwidth) # make same as elwid
+            with m.Else():
+                comb += self.ew_src.eq(self.rm_in.ewsrc)
+            comb += self.ew_dst.eq(self.rm_in.elwidth)
 
             # extract els (element strided mode bit)
             # see https://libre-soc.org/openpower/sv/ldst/
