@@ -1,6 +1,9 @@
 import argparse as _argparse
 import enum as _enum
+import functools as _functools
 import sys as _sys
+
+from openpower.decoder.selectable_int import SelectableInt as _SelectableInt
 
 
 class ByteOrder(_enum.Enum):
@@ -11,40 +14,42 @@ class ByteOrder(_enum.Enum):
         return self.name.lower()
 
 
-class Instruction(int):
-    def __new__(cls, value, byteorder=ByteOrder.LITTLE):
+class Instruction(_SelectableInt):
+    def __init__(self, value, bits=32, byteorder=ByteOrder.LITTLE):
         if isinstance(value, bytes):
             value = int.from_bytes(value, byteorder=str(byteorder))
-        if not isinstance(value, int) or (value < 0):
+        if not isinstance(value, (int, _SelectableInt)) or (value < 0):
             raise ValueError(value)
-        return super().__new__(cls, value)
+        return super().__init__(value=value, bits=bits)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({str(self)})"
 
     def __str__(self):
-        return f".long 0x{self:08x}"
+        return f".long 0x{self.value:08x}"
 
     @property
     def major(self):
-        return (((self & ((1 << 32) - 1)) >> 26) & 0x3f)
+        return self[0:6]
 
 
 class PrefixedInstruction(Instruction):
-    def __new__(cls, prefix, suffix, byteorder=ByteOrder.LITTLE):
-        (prefix, suffix) = map(Instruction, (prefix, suffix))
-        return super().__new__(cls, ((prefix << 32) | suffix))
+    def __init__(self, prefix, suffix, byteorder=ByteOrder.LITTLE):
+        insn = _functools.partial(Instruction, bits=64)
+        (prefix, suffix) = map(insn, (prefix, suffix))
+        value = ((prefix.value << 32) | suffix.value)
+        return super().__init__(value=value, bits=64)
 
     def __str__(self):
-        return f".llong 0x{self:016x}"
+        return f".llong 0x{self.value:016x}"
 
     @property
     def prefix(self):
-        return Instruction((self >> 32) & ((1 << 32) - 1))
+        return self[32:64]
 
     @property
     def suffix(self):
-        return Instruction((self >> 0) & ((1 << 32) - 1))
+        return self[0:32]
 
 
 def load(ifile, byteorder, **_):
