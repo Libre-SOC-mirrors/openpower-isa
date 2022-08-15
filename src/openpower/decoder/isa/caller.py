@@ -1887,23 +1887,23 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # loops end at the first "hit" (source or dest)
         loopend = ((srcstep == vl-1 and ssubstep == subvl) or
                    (dststep == vl-1 and dsubstep == subvl))
-        if svp64_is_vector and not loopend:
-            yield from self.advance_svstate_steps()
-            self.namespace['SVSTATE'] = self.svstate
-            # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
-            # (by default, NIA is CIA+4 if v3.0B or CIA+8 if SVP64)
-            # this way we keep repeating the same instruction (with new steps)
-            self.pc.NIA.value = self.pc.CIA.value
-            self.namespace['NIA'] = self.pc.NIA
-            log("end of sub-pc call", self.namespace['CIA'],
-                self.namespace['NIA'])
-            return False  # DO NOT allow PC update whilst Sub-PC loop running
+        if not svp64_is_vector or loopend:
+            # reset loop to zero and update NIA
+            self.svp64_reset_loop()
+            self.update_nia()
 
-        # reset loop to zero and update NIA
-        self.svp64_reset_loop()
-        self.update_nia()
+            return True
 
-        return True
+        # still looping, advance and update NIA
+        yield from self.advance_svstate_steps()
+        self.namespace['SVSTATE'] = self.svstate
+        # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
+        # (by default, NIA is CIA+4 if v3.0B or CIA+8 if SVP64)
+        # this way we keep repeating the same instruction (with new steps)
+        self.pc.NIA.value = self.pc.CIA.value
+        self.namespace['NIA'] = self.pc.NIA
+        log("end of sub-pc call", self.namespace['CIA'], self.namespace['NIA'])
+        return False  # DO NOT allow PC update whilst Sub-PC loop running
 
     def advance_svstate_steps(self, end_src=False, end_dst=False):
         """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
