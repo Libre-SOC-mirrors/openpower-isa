@@ -1733,6 +1733,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         srcmask = dstmask = 0xffff_ffff_ffff_ffff
 
         pmode = yield self.dec2.rm_dec.predmode
+        pack = yield self.dec2.rm_dec.pack
+        unpack = yield self.dec2.rm_dec.unpack
         reverse_gear = yield self.dec2.rm_dec.reverse_gear
         sv_ptype = yield self.dec2.dec.op.SV_Ptype
         srcpred = yield self.dec2.rm_dec.srcpred
@@ -1751,6 +1753,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         ssubstart = ssubstep == 0
         dsubstart = dsubstep == 0
         log("    pmode", pmode)
+        log("    pack/unpack", pack, unpack)
         log("    reverse", reverse_gear)
         log("    ptype", sv_ptype)
         log("    srcpred", bin(srcpred))
