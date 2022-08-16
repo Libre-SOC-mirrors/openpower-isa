@@ -480,6 +480,17 @@ class SelectableIntMappingMeta(type):
 
 
 class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta):
+    @functools.total_ordering
+    class Field(FieldSelectableInt):
+        def __int__(self):
+            return self.asint(msb0=True)
+
+        def __lt__(self, other):
+            return (int(self) < other)
+
+        def __eq__(self, other):
+            return (int(self) == other)
+
     def __init__(self, value=0):
         return super().__init__(value, self.__class__.bits)
 
@@ -487,7 +498,7 @@ class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta):
         def field(value):
             if isinstance(value, dict):
                 return {key:field(value) for (key, value) in tuple(value.items())}
-            return FieldSelectableInt(si=self, br=value)
+            return self.__class__.Field(si=self, br=value)
 
         try:
             return field(getattr(self.__class__, attr))
