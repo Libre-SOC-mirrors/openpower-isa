@@ -192,6 +192,11 @@ class SelectableInt:
                 raise ValueError(value)
             bits = value.bits
             value = value.value
+        elif isinstance(value, FieldSelectableInt):
+            if bits is not None:
+                raise ValueError(value)
+            bits = len(value.br)
+            value = value.si.value
         else:
             if not isinstance(value, int):
                 raise ValueError(value)
