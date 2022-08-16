@@ -4,7 +4,7 @@ from copy import copy
 import functools
 from openpower.decoder.power_fields import BitRange
 from operator import (add, sub, mul, floordiv, truediv, mod, or_, and_, xor,
-                      neg, inv, lshift, rshift)
+                      neg, inv, lshift, rshift, lt, eq)
 from openpower.util import log
 
 
@@ -18,6 +18,7 @@ def check_extsign(a, b):
     return SelectableInt(b.value, a.bits)
 
 
+@functools.total_ordering
 class FieldSelectableInt:
     """FieldSelectableInt: allows bit-range selection onto another target
     """
@@ -109,6 +110,12 @@ class FieldSelectableInt:
 
     def __xor__(self, b):
         return self._op(xor, b)
+
+    def __lt__(self, b):
+        return self._op(lt, b)
+
+    def __eq__(self, b):
+        return self._op(eq, b)
 
     def get_range(self):
         vi = SelectableInt(0, len(self.br))
@@ -460,6 +467,34 @@ class SelectableInt:
 
 
 class SelectableIntMappingMeta(type):
+    @functools.total_ordering
+    class Field(FieldSelectableInt):
+        def __eq__(self, b):
+            a = self.asint(msb0=True)
+            return a.__eq__(b)
+
+        def __lt__(self, b):
+            a = self.asint(msb0=True)
+            return a.__lt__(b)
+
+    class FieldProperty:
+        def __init__(self, field):
+            self.__field = field
+
+        def __get__(self, instance, owner):
+            if instance is None:
+                return self.__field
+            return FieldSelectableInt(si=instance, br=self.__field).asint(msb0=True)
+
+    class BitsProperty:
+        def __init__(self, bits):
+            self.__bits = bits
+
+        def __get__(self, instance, owner):
+            if instance is None:
+                return self.__bits
+            return instance.bits
+
     def __new__(metacls, name, bases, attrs, bits=None, fields=None):
         if fields is None:
             fields = {}
@@ -472,61 +507,31 @@ class SelectableIntMappingMeta(type):
                 value = tuple(value)
             return (key, value)
 
-        cls = super().__new__(metacls, name, bases, attrs)
+        for (key, value) in map(field, fields.items()):
+            attrs.setdefault(key, metacls.FieldProperty(value))
+
         if bits is None:
             for base in bases:
                 bits = getattr(base, "bits", None)
                 if bits is not None:
                     break
+
         if not isinstance(bits, int):
             raise ValueError(bits)
-        cls.__bits = bits
-        cls.__fields = dict(map(field, fields.items()))
+        attrs.setdefault("bits", metacls.BitsProperty(bits))
 
-        return cls
+        return super().__new__(metacls, name, bases, attrs)
 
     def __iter__(cls):
         for (key, value) in cls.__fields.items():
             yield (key, value)
 
-    def __getattr__(cls, attr):
-        try:
-            return cls.__fields[attr]
-        except KeyError as error:
-            raise AttributeError from error
-
-    @property
-    def bits(cls):
-        return cls.__bits
-
 
 class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta, bits=0):
-    @functools.total_ordering
-    class Field(FieldSelectableInt):
-        def __int__(self):
-            return self.asint(msb0=True)
-
-        def __lt__(self, other):
-            return (int(self) < other)
-
-        def __eq__(self, other):
-            return (int(self) == other)
-
     def __init__(self, value=0, bits=None):
         if isinstance(value, int) and bits is None:
             bits = self.__class__.bits
         return super().__init__(value, bits)
-
-    def __getattr__(self, attr):
-        def field(value):
-            if isinstance(value, dict):
-                return {key:field(value) for (key, value) in tuple(value.items())}
-            return self.__class__.Field(si=self, br=value)
-
-        try:
-            return field(getattr(self.__class__, attr))
-        except KeyError as error:
-            raise AttributeError from error
 
 
 def onebit(bit):
