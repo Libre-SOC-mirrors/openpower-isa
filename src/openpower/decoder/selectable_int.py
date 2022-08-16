@@ -455,7 +455,7 @@ class SelectableInt:
 
 
 class SelectableIntMappingMeta(type):
-    def __new__(metacls, name, bases, attrs, bits=0, fields=None):
+    def __new__(metacls, name, bases, attrs, bits=None, fields=None):
         if fields is None:
             fields = {}
 
@@ -468,6 +468,13 @@ class SelectableIntMappingMeta(type):
             return (key, value)
 
         cls = super().__new__(metacls, name, bases, attrs)
+        if bits is None:
+            for base in bases:
+                bits = getattr(base, "bits", None)
+                if bits is not None:
+                    break
+        if not isinstance(bits, int):
+            raise ValueError(bits)
         cls.__bits = bits
         cls.__fields = dict(map(field, fields.items()))
 
@@ -488,7 +495,7 @@ class SelectableIntMappingMeta(type):
         return cls.__bits
 
 
-class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta):
+class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta, bits=0):
     @functools.total_ordering
     class Field(FieldSelectableInt):
         def __int__(self):
@@ -500,8 +507,10 @@ class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta):
         def __eq__(self, other):
             return (int(self) == other)
 
-    def __init__(self, value=0):
-        return super().__init__(value, self.__class__.bits)
+    def __init__(self, value=0, bits=None):
+        if isinstance(value, int) and bits is None:
+            bits = self.__class__.bits
+        return super().__init__(value, bits)
 
     def __getattr__(self, attr):
         def field(value):
