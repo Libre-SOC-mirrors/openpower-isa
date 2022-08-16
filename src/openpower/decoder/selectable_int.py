@@ -484,7 +484,8 @@ class SelectableIntMappingMeta(type):
         def __get__(self, instance, owner):
             if instance is None:
                 return self.__field
-            return FieldSelectableInt(si=instance, br=self.__field).asint(msb0=True)
+            res = FieldSelectableInt(si=instance, br=self.__field)
+            return res.asint(msb0=True)
 
     class BitsProperty:
         def __init__(self, bits):
@@ -527,7 +528,8 @@ class SelectableIntMappingMeta(type):
             yield (key, value)
 
 
-class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta, bits=0):
+class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta,
+                                          bits=0):
     def __init__(self, value=0, bits=None):
         if isinstance(value, int) and bits is None:
             bits = self.__class__.bits
