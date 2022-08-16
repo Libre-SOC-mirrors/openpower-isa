@@ -23,6 +23,8 @@ class FieldSelectableInt:
     """
 
     def __init__(self, si, br):
+        if not isinstance(si, SelectableInt):
+            raise ValueError(si)
         self.si = si  # target selectable int
         if isinstance(br, (list, tuple, range)):
             _br = BitRange()
@@ -186,8 +188,15 @@ class SelectableInt:
 
     def __init__(self, value, bits=None):
         if isinstance(value, SelectableInt):
+            if bits is not None:
+                raise ValueError(value)
             bits = value.bits
             value = value.value
+        else:
+            if not isinstance(value, int):
+                raise ValueError(value)
+            if bits is None:
+                raise ValueError(bits)
         mask = (1 << bits) - 1
         self.value = value & mask
         self.bits = bits
@@ -427,7 +436,7 @@ class SelectableInt:
         return self.value != 0
 
     def __repr__(self):
-        value = f"value=0x{self.value:x}, bits={self.bits}"
+        value = f"value={hex(self.value)}, bits={self.bits}"
         return f"{self.__class__.__name__}({value})"
 
     def __len__(self):
