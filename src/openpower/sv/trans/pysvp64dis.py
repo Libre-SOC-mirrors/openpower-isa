@@ -111,11 +111,15 @@ def main():
         type=_argparse.FileType("w"), default=_sys.stdout)
     parser.add_argument("-b", "--byteorder",
         type=ByteOrder, default=ByteOrder.LITTLE)
-    args = dict(vars(parser.parse_args()))
 
-    insns = load(**args)
-    for line in dump(insns, **args):
-        print(line)
+    args = dict(vars(parser.parse_args()))
+    ifile = args["ifile"]
+    ofile = args["ofile"]
+    byteorder = args["byteorder"]
+
+    insns = load(ifile, byteorder)
+    for line in dump(insns, byteorder):
+        print(line, file=ofile)
 
 
 if __name__ == "__main__":
