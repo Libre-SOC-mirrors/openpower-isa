@@ -59,13 +59,19 @@ class PrefixedInstruction(_SelectableInt):
 
 
 class SVP64Instruction(PrefixedInstruction):
-    @cached_property
-    def prefix(self):
-        return _SVP64PrefixFields(super().prefix)
+    class Prefix(_SVP64PrefixFields):
+        class RM(_SVP64RMFields):
+            @cached_property
+            def sv_mode(self):
+                return (self.mode & 0b11)
+
+        @property
+        def rm(self):
+            return self.__class__.RM(super().rm)
 
     @cached_property
-    def rm(self):
-        return _SVP64RMFields(self.prefix.rm)
+    def prefix(self):
+        return self.__class__.Prefix(super().prefix)
 
 
 def load(ifile, byteorder, **_):
