@@ -45,11 +45,11 @@ class PrefixedInstruction(Instruction):
 
     @property
     def prefix(self):
-        return self[32:64]
+        return self[0:32]
 
     @property
     def suffix(self):
-        return self[0:32]
+        return self[32:64]
 
 
 def load(ifile, byteorder, **_):
