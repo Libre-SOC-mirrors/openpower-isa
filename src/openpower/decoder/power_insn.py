@@ -480,6 +480,9 @@ class Instruction:
         sel = getattr(self.svp64, key)
         if sel is _CRInSel.BA_BB:
             return _SVExtra.Idx_1_2
+        reg = _SVExtraReg(sel)
+        if reg is _SVExtraReg.NONE:
+            return _SVExtra.NONE
 
         extra_map = {
             _SVExtraRegType.SRC: {},
@@ -490,7 +493,7 @@ class Instruction:
                 extra_map[entry.regtype][entry.reg] = Instruction.__EXTRA[index]
 
         for regtype in (_SVExtraRegType.SRC, _SVExtraRegType.DST):
-            extra = extra_map[regtype][sel]
+            extra = extra_map[regtype].get(reg, _SVExtra.NONE)
             if extra is not _SVExtra.NONE:
                 return extra
 
