@@ -6,8 +6,10 @@ import sys as _sys
 from openpower.decoder.power_enums import find_wiki_dir as _find_wiki_dir
 from openpower.decoder.power_insn import Database as _Database
 from openpower.decoder.selectable_int import SelectableInt as _SelectableInt
-from openpower.decoder.isa.caller import SVP64PrefixFields as _SVP64PrefixFields
-from openpower.decoder.isa.caller import SVP64RMFields as _SVP64RMFields
+from openpower.decoder.isa.caller import (
+    SVP64PrefixFields as _SVP64PrefixFields,
+    SVP64RMFields as _SVP64RMFields,
+)
 
 
 class ByteOrder(_enum.Enum):
