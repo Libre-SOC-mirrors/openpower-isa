@@ -48,6 +48,13 @@ class Instruction(_SelectableInt):
     def major(self):
         return self[0:6]
 
+    @property
+    def dbrecord(self):
+        try:
+            return DATABASE[int(self)]
+        except KeyError:
+            return None
+
 
 class PrefixedInstruction(_SelectableInt):
     def __init__(self, prefix, suffix, byteorder=ByteOrder.LITTLE):
@@ -69,6 +76,10 @@ class PrefixedInstruction(_SelectableInt):
     @cached_property
     def suffix(self):
         return Instruction(self[32:64])
+
+    @cached_property
+    def dbrecord(self):
+        return self.suffix.dbrecord
 
 
 class SVP64Instruction(PrefixedInstruction):
