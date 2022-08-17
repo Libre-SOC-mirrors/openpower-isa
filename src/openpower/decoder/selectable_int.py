@@ -24,15 +24,27 @@ class FieldSelectableInt:
     """
 
     def __init__(self, si, br):
-        if not isinstance(si, SelectableInt):
+        if not isinstance(si, (FieldSelectableInt, SelectableInt)):
             raise ValueError(si)
-        self.si = si  # target selectable int
+
         if isinstance(br, (list, tuple, range)):
             _br = BitRange()
             for i, v in enumerate(br):
                 _br[i] = v
             br = _br
-        self.br = br  # map of indices.
+
+        if isinstance(si, FieldSelectableInt):
+            fsi = si
+            if len(br) > len(fsi.br):
+                raise OverflowError(br)
+            _br = BitRange()
+            for (i, v) in br.items():
+                _br[i] = fsi.br[v]
+            br = _br
+            si = fsi.si
+
+        self.si = si  # target selectable int
+        self.br = br  # map of indices
 
     def eq(self, b):
         if isinstance(b, int):
