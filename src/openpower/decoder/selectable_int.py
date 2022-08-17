@@ -311,8 +311,7 @@ class SelectableInt:
         return SelectableInt(self.value >> b.value, self.bits)
 
     def __getitem__(self, key):
-        print ("SelectableInt.__getitem__", self, key, type(key))
-        assert type(key) != tuple # XXX error here
+        log ("SelectableInt.__getitem__", self, key, type(key))
         if isinstance(key, SelectableInt):
             key = key.value
         if isinstance(key, int):
@@ -472,24 +471,32 @@ class SelectableInt:
 class SelectableIntMappingMeta(type):
     @functools.total_ordering
     class Field(FieldSelectableInt):
-        def __eq__(self, b):
-            a = self.asint(msb0=True)
-            return a.__eq__(b)
+        def __int__(self):
+            return self.asint(msb0=True)
 
         def __lt__(self, b):
-            a = self.asint(msb0=True)
-            return a.__lt__(b)
+            return int(self).__lt__(b)
+
+        def __eq__(self, b):
+            return int(self).__eq__(b)
 
     class FieldProperty:
         def __init__(self, field):
             self.__field = field
 
+        def __repr__(self):
+            return self.__field.__repr__()
+
         def __get__(self, instance, owner):
             if instance is None:
                 return self.__field
-            res = FieldSelectableInt(si=instance, br=self.__field)
-            print ("FieldProperty", res, type(res.br))
-            return res.asint(msb0=True)
+
+            cls = SelectableIntMappingMeta.Field
+            factory = lambda br: cls(si=instance, br=br)
+            if isinstance(self.__field, dict):
+                return {k:factory(br=v) for (k, v) in self.__field.items()}
+            else:
+                return factory(br=self.__field)
 
     class BitsProperty:
         def __init__(self, bits):
@@ -499,6 +506,9 @@ class SelectableIntMappingMeta(type):
             if instance is None:
                 return self.__bits
             return instance.bits
+
+        def __repr__(self):
+            return self.__bits.__repr__()
 
     def __new__(metacls, name, bases, attrs, bits=None, fields=None):
         if fields is None:
@@ -512,7 +522,8 @@ class SelectableIntMappingMeta(type):
                 value = tuple(value)
             return (key, value)
 
-        for (key, value) in map(field, fields.items()):
+        fields = dict(map(field, fields.items()))
+        for (key, value) in fields.items():
             attrs.setdefault(key, metacls.FieldProperty(value))
 
         if bits is None:
@@ -525,7 +536,9 @@ class SelectableIntMappingMeta(type):
             raise ValueError(bits)
         attrs.setdefault("bits", metacls.BitsProperty(bits))
 
-        return super().__new__(metacls, name, bases, attrs)
+        cls = super().__new__(metacls, name, bases, attrs)
+        cls.__fields = fields
+        return cls
 
     def __iter__(cls):
         for (key, value) in cls.__fields.items():
