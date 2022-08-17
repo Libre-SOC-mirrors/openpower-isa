@@ -252,7 +252,7 @@ class SVExtraReg(Enum):
             OutSel, CROutSel,
         )
         if isinstance(value, selectors):
-            return cls.__members__.get(value, cls.NONE)
+            return cls.__members__.get(value.name, cls.NONE)
         return super()._missing_(value)
 
 
