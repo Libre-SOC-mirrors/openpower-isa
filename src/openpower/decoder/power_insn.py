@@ -400,7 +400,7 @@ class Fields:
 
 @_functools.total_ordering
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Instruction:
+class Record:
     name: str
     rc: bool
     section: Section
@@ -416,7 +416,7 @@ class Instruction:
     )
 
     def __lt__(self, other):
-        if not isinstance(other, Instruction):
+        if not isinstance(other, Record):
             return NotImplemented
         return (self.opcode < other.opcode)
 
@@ -494,7 +494,7 @@ class Instruction:
         }
         for index in range(0, 4):
             for entry in self.svp64.extra[index]:
-                extra_map[entry.regtype][entry.reg] = Instruction.__EXTRA[index]
+                extra_map[entry.regtype][entry.reg] = Record.__EXTRA[index]
 
         for regtype in (_SVExtraRegType.SRC, _SVExtraRegType.DST):
             extra = extra_map[regtype].get(reg, _SVExtra.NONE)
@@ -592,7 +592,7 @@ class Database:
                     else:
                         variants = {name:False for name in ppc.names}
                     for (name, rc) in variants.items():
-                        items.add(Instruction(name=name, rc=rc,
+                        items.add(Record(name=name, rc=rc,
                             section=section, ppc=ppc, fields=fields, svp64=svp64))
 
             items = tuple(sorted(items, key=_operator.attrgetter("opcode")))
