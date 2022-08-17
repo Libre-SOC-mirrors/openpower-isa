@@ -1,5 +1,6 @@
 import abc as _abc
 import argparse as _argparse
+import collections as _collections
 import dataclasses as _dataclasses
 import enum as _enum
 import functools as _functools
@@ -16,6 +17,7 @@ from openpower.decoder.power_enums import (
     SVEtype as _SVEtype,
     SVExtra as _SVExtra,
     RC as _RC,
+    Function as _Function,
     find_wiki_dir as _find_wiki_dir,
 )
 from openpower.consts import SVP64MODE as _SVP64MODE
@@ -196,6 +198,7 @@ CROutSel = Enum("CROutSel", _CROutSel, tag="svp64_cr_out_sel")
 PType = Enum("PType", _SVPtype, tag="svp64_ptype")
 EType = Enum("EType", _SVEtype, tag="svp64_etype", exclude="NONE")
 Extra = Enum("Extra", _SVExtra, tag="svp64_extra", exclude="Idx_1_2")
+Function = Enum("Function", _Function, tag="svp64_function")
 
 
 class Constant(CType, _enum.Enum, metaclass=EnumMeta):
@@ -301,6 +304,7 @@ class Opcode(Struct):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Desc(Struct):
+    function: Function
     in1: In1Sel
     in2: In2Sel
     in3: In3Sel
@@ -524,7 +528,7 @@ class Codegen(_enum.Enum):
                 In1Sel, In2Sel, In3Sel, OutSel,
                 CRInSel, CROutSel,
                 PType, EType, Extra,
-                Mode,
+                Mode, Function,
             )
             for enum in enums:
                 yield from enum.c_decl()
@@ -713,6 +717,7 @@ class Codegen(_enum.Enum):
 
 def records(db):
     fields = {field.name:field.type for field in _dataclasses.fields(Desc)}
+
     for insn in filter(lambda insn: insn.svp64 is not None, db):
         desc = {}
 
