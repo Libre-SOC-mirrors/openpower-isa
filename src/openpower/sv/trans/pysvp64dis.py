@@ -28,7 +28,7 @@ DATABASE = _Database(_find_wiki_dir())
 
 class Instruction(_SelectableInt):
     def __init__(self, value, byteorder=ByteOrder.LITTLE):
-        if isinstance(value, Instruction):
+        if isinstance(value, _SelectableInt):
             value = value.value
         elif isinstance(value, bytes):
             value = int.from_bytes(value, byteorder=str(byteorder))
