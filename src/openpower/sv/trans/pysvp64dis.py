@@ -3,9 +3,17 @@ import enum as _enum
 import functools as _functools
 import sys as _sys
 
-from openpower.decoder.power_enums import find_wiki_dir as _find_wiki_dir
+from openpower.decoder.power_enums import (
+    Function as _Function,
+    SVP64BCCTRMode as _SVP64BCCTRMode,
+    SVP64BCVLSETMode as _SVP64BCVLSETMode,
+    find_wiki_dir as _find_wiki_dir,
+)
 from openpower.decoder.power_insn import Database as _Database
-from openpower.decoder.selectable_int import SelectableInt as _SelectableInt
+from openpower.decoder.selectable_int import (
+    SelectableInt as _SelectableInt,
+)
+from openpower.consts import SVP64MODE as _SVP64MODE
 from openpower.decoder.isa.caller import (
     SVP64PrefixFields as _SVP64PrefixFields,
     SVP64RMFields as _SVP64RMFields,
@@ -118,6 +126,25 @@ class SVP64Instruction(PrefixedInstruction):
             yield f".llong 0x{self.value:08x}"
         else:
             yield f".llong 0x{self.value:08x} # sv.{self.dbrecord.name}"
+            rm = self.prefix.rm
+            mode = self.prefix.rm.mode
+            if self.dbrecord.function is _Function.BRANCH:
+                bc_ctrtest = _SVP64BCCTRMode.NONE
+                if mode[_SVP64MODE.BC_CTRTEST]:
+                    if rm.ewsrc[0]:
+                        bc_ctrtest = _SVP64BCCTRMode.TEST_INV
+                    else:
+                        bc_ctrtest = _SVP64BCCTRMode.TEST
+                bc_vlset = _SVP64BCVLSETMode.NONE
+                if mode[_SVP64MODE.BC_VLSET]:
+                    if mode[_SVP64MODE.BC_VLI]:
+                        bc_vlset = _SVP64BCVLSETMode.VL_INCL
+                    else:
+                        bc_vlset = _SVP64BCVLSETMode.VL_EXCL
+                bc_gate = rm.elwidth[0]
+                bc_lru = rm.elwidth[1]
+                bc_vsb = rm.ewsrc[1]
+
 
     @property
     def prefix(self):
