@@ -74,12 +74,15 @@ class FieldSelectableInt:
         log("getitem", key, self.br)
         if isinstance(key, SelectableInt):
             key = key.value
+
         if isinstance(key, int):
             key = self.br[key]  # don't do POWER 1.3.4 bit-inversion
             return self.si[key]
-        if isinstance(key, slice):
+        elif isinstance(key, slice):
             key = self.br[key]
             return selectconcat(*[self.si[x] for x in key])
+        elif isinstance(key, (tuple, list, range)):
+            return FieldSelectableInt(si=self, br=key)
 
     def __setitem__(self, key, value):
         if isinstance(key, SelectableInt):
