@@ -1029,27 +1029,7 @@ class PowerDecodeSubset(Elaboratable):
             # the alternative decoder, svdecldst. what a mess... *sigh*
             sv_ptype = self.op_get("SV_Ptype")
             fn = self.op_get("function_unit")
-            # detect major opcode for LDs: include 58 here. from CSV files.
-            # BLECH! TODO: these should be done using "mini decoders",
-            # using row and column subsets
-            is_major_ld = Signal()
-            # bits... errr... MSB0 0..5 which is 26:32 python
-            major = Signal(6)
-            comb += major.eq(self.dec.opcode_in[26:32])
-            comb += is_major_ld.eq((major == 34) | (major == 35) |
-                                   (major == 50) | (major == 51) |
-                                   (major == 48) | (major == 49) |
-                                   (major == 42) | (major == 43) |
-                                   (major == 40) | (major == 41) |
-                                   (major == 32) | (major == 33) |
-                                   (major == 58))
-            with m.If(self.is_svp64_mode & is_major_ld):
-                # straight-up: "it's a LD".  this gives enough info
-                # for SVP64 RM Mode decoding to detect LD/ST, and
-                # consequently detect the SHIFT mode. sigh
-                comb += rm_dec.fn_in.eq(Function.LDST)
-            with m.Else():
-                comb += rm_dec.fn_in.eq(fn)  # decode needs to know Fn type
+            comb += rm_dec.fn_in.eq(fn)  # decode needs to know Fn type
             comb += rm_dec.ptype_in.eq(sv_ptype)  # Single/Twin predicated
             comb += rm_dec.rc_in.eq(rc_out)  # Rc=1
             comb += rm_dec.rm_in.eq(self.sv_rm)  # SVP64 RM mode
@@ -1062,6 +1042,8 @@ class PowerDecodeSubset(Elaboratable):
             # exclude fcfids and others
             # XXX this is a REALLY bad hack, REALLY has to be done better.
             # likely with a sub-decoder.
+            major = Signal(6)
+            comb += major.eq(self.dec.opcode_in[26:32])
             xo5 = Signal(1)  # 1 bit from Minor 59 XO field == 0b0XXXX
             comb += xo5.eq(self.dec.opcode_in[5])
             xo = Signal(5)  # 5 bits from Minor 59 fcfids == 0b01110
