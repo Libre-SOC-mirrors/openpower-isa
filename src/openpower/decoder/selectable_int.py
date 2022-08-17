@@ -144,6 +144,13 @@ class FieldSelectableInt:
     def __repr__(self):
         return f"{self.__class__.__name__}(si={self.si}, br={self.br})"
 
+    def __bool__(self):
+        for key in self.br.values():
+            bit = self.si[key].value
+            if bit:
+                return True
+        return False
+
     def asint(self, msb0=False):
         res = 0
         brlen = len(self.br)
