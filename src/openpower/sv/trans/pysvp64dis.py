@@ -23,10 +23,14 @@ class ByteOrder(_enum.Enum):
 
 class Instruction(_SelectableInt):
     def __init__(self, value, byteorder=ByteOrder.LITTLE):
-        if isinstance(value, bytes):
+        if isinstance(value, Instruction):
+            value = value.value
+        elif isinstance(value, bytes):
             value = int.from_bytes(value, byteorder=str(byteorder))
+
         if not isinstance(value, int) or (value < 0) or (value > ((1 << 32) - 1)):
             raise ValueError(value)
+
         return super().__init__(value=value, bits=32)
 
     def __repr__(self):
@@ -34,6 +38,10 @@ class Instruction(_SelectableInt):
 
     def __str__(self):
         return f".long 0x{self.value:08x}"
+
+    @property
+    def major(self):
+        return self[0:6]
 
 
 class PrefixedInstruction(_SelectableInt):
@@ -49,25 +57,36 @@ class PrefixedInstruction(_SelectableInt):
     def __str__(self):
         return f".llong 0x{self.value:016x}"
 
-    @property
+    @cached_property
     def prefix(self):
-        return self[0:32]
+        return Instruction(self[0:32])
 
-    @property
+    @cached_property
     def suffix(self):
-        return self[32:64]
+        return Instruction(self[32:64])
 
 
 class SVP64Instruction(PrefixedInstruction):
-    class Prefix(_SVP64PrefixFields):
+    class PrefixError(ValueError):
+        pass
+
+    class Prefix(_SVP64PrefixFields, Instruction):
         class RM(_SVP64RMFields):
             @cached_property
             def sv_mode(self):
                 return (self.mode & 0b11)
 
-        @property
+        @cached_property
         def rm(self):
             return self.__class__.RM(super().rm)
+
+    def __init__(self, prefix, suffix, byteorder=ByteOrder.LITTLE):
+        if SVP64Instruction.Prefix(prefix).pid != 0b11:
+            raise SVP64Instruction.PrefixError(prefix)
+        return super().__init__(prefix, suffix, byteorder)
+
+    def __str__(self):
+        return (super().__str__() + " # sv")
 
     @cached_property
     def prefix(self):
@@ -82,8 +101,8 @@ def load(ifile, byteorder, **_):
             return None
         elif length < 4:
             raise IOError(prefix)
-        sv_prefix = _SVP64PrefixFields(int.from_bytes(prefix, byteorder=str(byteorder)))
-        if sv_prefix.major != 0x1:
+        prefix = Instruction(prefix, byteorder)
+        if prefix.major != 0x1:
             return Instruction(prefix, byteorder)
 
         suffix = ifile.read(4)
@@ -92,9 +111,9 @@ def load(ifile, byteorder, **_):
             return prefix
         elif length < 4:
             raise IOError(suffix)
-        if sv_prefix.pid == 0b11:
+        try:
             return SVP64Instruction(prefix, suffix, byteorder)
-        else:
+        except SVP64Instruction.PrefixError:
             return PrefixedInstruction(prefix, suffix, byteorder)
 
     while True:
