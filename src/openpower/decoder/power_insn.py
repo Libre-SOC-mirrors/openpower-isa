@@ -441,6 +441,10 @@ class Instruction:
         return FieldsOpcode(fields)
 
     @property
+    def function(self):
+        return self.ppc.unit
+
+    @property
     def in1(self):
         return self.ppc.in1
 
