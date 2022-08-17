@@ -42,7 +42,9 @@ class Instruction(_SelectableInt):
         return f"{self.__class__.__name__}({self.value:08x})"
 
     def __str__(self):
-        return f".long 0x{self.value:08x}"
+        if not self.dbrecord:
+            return f".long 0x{self.value:08x}"
+        return f".long 0x{self.value:08x} # {self.dbrecord.name}"
 
     @property
     def major(self):
@@ -67,7 +69,9 @@ class PrefixedInstruction(_SelectableInt):
         return f"{self.__class__.__name__}({self.value:016x})"
 
     def __str__(self):
-        return f".llong 0x{self.value:016x}"
+        if self.dbrecord is None:
+            return f".llong 0x{self.value:016x}"
+        return f".llong 0x{self.value:016x} # {self.dbrecord.name}"
 
     @cached_property
     def prefix(self):
@@ -105,7 +109,9 @@ class SVP64Instruction(PrefixedInstruction):
         return super().__init__(prefix, suffix, byteorder)
 
     def __str__(self):
-        return (super().__str__() + " # sv")
+        if self.dbrecord is None:
+            return f".llong 0x{self.value:016x}"
+        return f".llong 0x{self.value:016x} # sv.{self.dbrecord.name}"
 
     @cached_property
     def prefix(self):
