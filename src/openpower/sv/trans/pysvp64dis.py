@@ -22,16 +22,18 @@ DATABASE = _Database(_find_wiki_dir())
 
 
 class Instruction(_SelectableInt):
-    def __init__(self, value, byteorder=ByteOrder.LITTLE):
+    def __init__(self, value, byteorder=ByteOrder.LITTLE, bits=32):
         if isinstance(value, _SelectableInt):
             value = value.value
         elif isinstance(value, bytes):
             value = int.from_bytes(value, byteorder=str(byteorder))
 
-        if not isinstance(value, int) or (value < 0) or (value > ((1 << 32) - 1)):
+        if not isinstance(value, int):
             raise ValueError(value)
+        if not isinstance(bits, int) or (bits not in {32, 64}):
+            raise ValueError(bits)
 
-        return super().__init__(value=value, bits=32)
+        return super().__init__(value=value, bits=bits)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.value:08x})"
@@ -54,7 +56,7 @@ class Instruction(_SelectableInt):
             return None
 
 
-class PrefixedInstruction(_SelectableInt):
+class PrefixedInstruction(Instruction):
     def __init__(self, prefix, suffix, byteorder=ByteOrder.LITTLE):
         insn = _functools.partial(Instruction, byteorder=byteorder)
         (prefix, suffix) = map(insn, (prefix, suffix))
@@ -77,6 +79,10 @@ class PrefixedInstruction(_SelectableInt):
     @property
     def suffix(self):
         return Instruction(self[32:64])
+
+    @property
+    def major(self):
+        return self.suffix.major
 
     @property
     def dbrecord(self):
