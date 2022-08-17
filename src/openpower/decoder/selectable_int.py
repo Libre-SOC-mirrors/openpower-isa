@@ -459,6 +459,9 @@ class SelectableInt:
     def asint(self):
         return self.value
 
+    def __int__(self):
+        return self.asint()
+
     def __float__(self):
         """convert to double-precision float.  TODO, properly convert
         rather than a hack-job: must actually support Power IEEE754 FP
