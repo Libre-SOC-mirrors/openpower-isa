@@ -9,11 +9,6 @@ from openpower.decoder.selectable_int import SelectableInt as _SelectableInt
 from openpower.decoder.isa.caller import SVP64PrefixFields as _SVP64PrefixFields
 from openpower.decoder.isa.caller import SVP64RMFields as _SVP64RMFields
 
-try:
-    from functools import cached_property
-except ImportError:
-    from cached_property import cached_property
-
 
 class ByteOrder(_enum.Enum):
     LITTLE = "little"
@@ -41,10 +36,11 @@ class Instruction(_SelectableInt):
     def __repr__(self):
         return f"{self.__class__.__name__}({self.value:08x})"
 
-    def __str__(self):
-        if not self.dbrecord:
-            return f".long 0x{self.value:08x}"
-        return f".long 0x{self.value:08x} # {self.dbrecord.name}"
+    def disassemble(self):
+        if self.dbrecord is None:
+            yield f".long 0x{self.value:08x}"
+        else:
+            yield f".long 0x{self.value:08x} # {self.dbrecord.name}"
 
     @property
     def major(self):
@@ -68,20 +64,21 @@ class PrefixedInstruction(_SelectableInt):
     def __repr__(self):
         return f"{self.__class__.__name__}({self.value:016x})"
 
-    def __str__(self):
+    def disassemble(self):
         if self.dbrecord is None:
-            return f".llong 0x{self.value:016x}"
-        return f".llong 0x{self.value:016x} # {self.dbrecord.name}"
+            yield f".llong 0x{self.value:08x}"
+        else:
+            yield f".llong 0x{self.value:08x} # {self.dbrecord.name}"
 
-    @cached_property
+    @property
     def prefix(self):
         return Instruction(self[0:32])
 
-    @cached_property
+    @property
     def suffix(self):
         return Instruction(self[32:64])
 
-    @cached_property
+    @property
     def dbrecord(self):
         return self.suffix.dbrecord
 
@@ -92,11 +89,11 @@ class SVP64Instruction(PrefixedInstruction):
 
     class Prefix(_SVP64PrefixFields, Instruction):
         class RM(_SVP64RMFields):
-            @cached_property
+            @property
             def sv_mode(self):
                 return (self.mode & 0b11)
 
-        @cached_property
+        @property
         def rm(self):
             return self.__class__.RM(super().rm)
 
@@ -108,16 +105,17 @@ class SVP64Instruction(PrefixedInstruction):
             raise SVP64Instruction.PrefixError(prefix)
         return super().__init__(prefix, suffix, byteorder)
 
-    def __str__(self):
+    def disassemble(self):
         if self.dbrecord is None:
-            return f".llong 0x{self.value:016x}"
-        return f".llong 0x{self.value:016x} # sv.{self.dbrecord.name}"
+            yield f".llong 0x{self.value:08x}"
+        else:
+            yield f".llong 0x{self.value:08x} # sv.{self.dbrecord.name}"
 
-    @cached_property
+    @property
     def prefix(self):
         return self.__class__.Prefix(super().prefix)
 
-    @cached_property
+    @property
     def suffix(self):
         return self.__class__.Suffix(super().suffix)
 
@@ -154,7 +152,7 @@ def load(ifile, byteorder, **_):
 
 def dump(insns, ofile, **_):
     for insn in insns:
-        yield str(insn)
+        yield from insn.disassemble()
 
 
 def main():
