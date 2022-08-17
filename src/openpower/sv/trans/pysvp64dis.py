@@ -85,6 +85,9 @@ class SVP64Instruction(PrefixedInstruction):
         def rm(self):
             return self.__class__.RM(super().rm)
 
+    class Suffix(Instruction):
+        pass
+
     def __init__(self, prefix, suffix, byteorder=ByteOrder.LITTLE):
         if SVP64Instruction.Prefix(prefix).pid != 0b11:
             raise SVP64Instruction.PrefixError(prefix)
@@ -96,6 +99,10 @@ class SVP64Instruction(PrefixedInstruction):
     @cached_property
     def prefix(self):
         return self.__class__.Prefix(super().prefix)
+
+    @cached_property
+    def suffix(self):
+        return self.__class__.Suffix(super().suffix)
 
 
 def load(ifile, byteorder, **_):
