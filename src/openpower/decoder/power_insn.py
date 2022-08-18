@@ -545,7 +545,7 @@ class Instruction(_SelectableInt):
                 bits = 32
             if isinstance(value, bytes):
                 value = int.from_bytes(value, byteorder=str(byteorder))
-            if not isinstance(bits, int) or (bits not in {32, 64}):
+            if not isinstance(bits, int):
                 raise ValueError(bits)
 
         if not isinstance(value, int):
@@ -620,7 +620,7 @@ class SVP64Instruction(PrefixedInstruction):
     class PrefixError(ValueError):
         pass
 
-    class Prefix(_SVP64PrefixFields, Instruction):
+    class Prefix(Instruction, _SVP64PrefixFields):
         class RM(_SVP64RMFields):
             @property
             def sv_mode(self):

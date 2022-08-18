@@ -127,10 +127,12 @@ class FieldSelectableInt:
         return self._op(xor, b)
 
     def __lt__(self, b):
-        return self._op(lt, b)
+        vi = self.get_range()
+        return onebit(lt(vi, b))
 
     def __eq__(self, b):
-        return self._op(eq, b)
+        vi = self.get_range()
+        return onebit(eq(vi, b))
 
     def get_range(self):
         vi = SelectableInt(0, len(self.br))
@@ -494,88 +496,103 @@ class SelectableInt:
 
 
 class SelectableIntMappingMeta(type):
-    @functools.total_ordering
-    class Field(FieldSelectableInt):
-        def __int__(self):
-            return self.asint(msb0=True)
+    class Field(tuple):
+        def __call__(self, si):
+            return FieldSelectableInt(si=si, br=self)
 
-        def __lt__(self, b):
-            return int(self).__lt__(b)
+    class FieldMapping(dict):
+        def __init__(self, items):
+            if isinstance(items, dict):
+                items = items.items()
 
-        def __eq__(self, b):
-            return int(self).__eq__(b)
+            length = 0
+            mapping = {}
+            Field = SelectableIntMappingMeta.Field
+            for (key, value) in items:
+                field = Field(value)
+                mapping[key] = field
+                length = max(length, len(field))
 
-    class FieldProperty:
-        def __init__(self, field):
-            self.__field = field
+            self.__length = length
 
-        def __repr__(self):
-            return self.__field.__repr__()
+            return super().__init__(mapping)
 
-        def __get__(self, instance, owner):
-            if instance is None:
-                return self.__field
+        def __iter__(self):
+            yield from self.items()
 
-            cls = SelectableIntMappingMeta.Field
-            factory = lambda br: cls(si=instance, br=br)
-            if isinstance(self.__field, dict):
-                return {k:factory(br=v) for (k, v) in self.__field.items()}
-            else:
-                return factory(br=self.__field)
+        def __len__(self):
+            return self.__length
 
-    class BitsProperty:
-        def __init__(self, bits):
-            self.__bits = bits
+        def __call__(self, si):
+            return {key:value(si=si) for (key, value) in self}
 
-        def __get__(self, instance, owner):
-            if instance is None:
-                return self.__bits
-            return instance.bits
+    def __new__(metacls, name, bases, attrs):
+        mapping = {}
+        valid = False
+        for base in reversed(bases):
+            if issubclass(base.__class__, metacls):
+                mapping.update(base)
+            if not valid and issubclass(base, SelectableInt):
+                valid = True
+        if not valid:
+            raise ValueError(bases)
 
-        def __repr__(self):
-            return self.__bits.__repr__()
-
-    def __new__(metacls, name, bases, attrs, bits=None, fields=None):
-        if fields is None:
-            fields = {}
-
-        def field(item):
-            (key, value) = item
+        for (key, value) in tuple(attrs.items()):
+            if key.startswith("_"):
+                continue
             if isinstance(value, dict):
-                value = dict(map(field, value.items()))
+                value = metacls.FieldMapping(value)
+            elif isinstance(value, (list, tuple, range)):
+                value = metacls.Field(value)
             else:
-                value = tuple(value)
-            return (key, value)
+                continue
+            mapping[key] = value
+            attrs[key] = value
 
-        fields = dict(map(field, fields.items()))
-        for (key, value) in fields.items():
-            attrs.setdefault(key, metacls.FieldProperty(value))
-
-        if bits is None:
-            for base in bases:
-                bits = getattr(base, "bits", None)
-                if bits is not None:
-                    break
-
-        if not isinstance(bits, int):
-            raise ValueError(bits)
-        attrs.setdefault("bits", metacls.BitsProperty(bits))
+        length = 0
+        for (key, value) in mapping.items():
+            length = max(length, len(value))
 
         cls = super().__new__(metacls, name, bases, attrs)
-        cls.__fields = fields
+        cls.__length = length
+        cls.__mapping = mapping
+
         return cls
 
+    def __len__(cls):
+        return cls.__length
+
+    def __contains__(cls, key):
+        return cls.__mapping.__contains__(key)
+
+    def __getitem__(cls, key):
+        return cls.__mapping.__getitem__(key)
+
     def __iter__(cls):
-        for (key, value) in cls.__fields.items():
-            yield (key, value)
+        yield from cls.__mapping.items()
+        if type(cls) is not SelectableIntMappingMeta:
+            yield from super().__iter__()
 
 
-class SelectableIntMapping(SelectableInt,
-            metaclass=SelectableIntMappingMeta, bits=0):
+class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta):
     def __init__(self, value=0, bits=None):
-        if isinstance(value, int) and bits is None:
-            bits = self.__class__.bits
-        return super().__init__(value, bits)
+        if isinstance(value, SelectableInt):
+            value = value.value
+        if bits is None:
+            bits = len(self.__class__)
+        if bits != len(self.__class__):
+            raise ValueError(bits)
+
+        return super().__init__(value=value, bits=bits)
+
+    def __iter__(self):
+        for (name, _) in self.__class__:
+            yield (name, getattr(self, name))
+
+    def __getattribute__(self, attr):
+        if (attr != "__class__") and (attr in self.__class__):
+            return self.__class__[attr](si=self)
+        return super().__getattribute__(attr)
 
 
 def onebit(bit):

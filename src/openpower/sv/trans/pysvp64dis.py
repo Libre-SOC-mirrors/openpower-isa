@@ -56,7 +56,7 @@ def load(ifile, byteorder, **_):
         yield insn
 
 
-def dump(insns, ofile, **_):
+def dump(insns, **_):
     for insn in insns:
         yield from insn.disassemble()
 
@@ -76,7 +76,7 @@ def main():
     byteorder = args["byteorder"]
 
     insns = load(ifile, byteorder)
-    for line in dump(insns, byteorder):
+    for line in dump(insns):
         print(line, file=ofile)
 
 

@@ -1224,7 +1224,7 @@ class SVP64Asm:
 
         # nice debug printout. (and now for something completely different)
         # https://youtu.be/u0WOIwlXE9g?t=146
-        svp64_rm_value = svp64_rm.spr.value
+        svp64_rm_value = int(svp64_rm)
         log("svp64_rm", hex(svp64_rm_value), bin(svp64_rm_value))
         log("    mmode  0    :", bin(mmode))
         log("    pmask  1-3  :", bin(pmask))
@@ -1251,7 +1251,7 @@ class SVP64Asm:
         svp64_prefix = SVP64PrefixFields()
         svp64_prefix.major.eq(SelectableInt(0x1, SV64P_MAJOR_SIZE))
         svp64_prefix.pid.eq(SelectableInt(0b11, SV64P_PID_SIZE))
-        svp64_prefix.rm.eq(svp64_rm.spr)
+        svp64_prefix.rm.eq(svp64_rm)
 
         # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
         rc = '.' if rc_mode else ''

@@ -259,35 +259,29 @@ class PC:
 
 
 # SVP64 ReMap field
-class SVP64RMFields(SelectableIntMapping, bits=24, fields={
-    "spr": range(24),
-    # SVP64 RM fields: see https://libre-soc.org/openpower/sv/svp64/
-    "mmode": (0,),
-    "mask": range(1, 4),
-    "elwidth": range(4, 6),
-    "ewsrc": range(6, 8),
-    "subvl": range(8, 10),
-    "extra": range(10, 19),
-    "mode": range(19, 24),
-    # these cover the same extra field, split into parts as EXTRA2
-    "extra2": dict(enumerate([
+class SVP64RMFields(SelectableIntMapping):
+    """SVP64 RM: https://libre-soc.org/openpower/sv/svp64/"""
+    spr = range(24)
+    mmode = (0,)
+    mask = range(1, 4)
+    elwidth = range(4, 6)
+    ewsrc = range(6, 8)
+    subvl = range(8, 10)
+    extra = range(10, 19)
+    mode = range(19, 24)
+    extra2 = dict(enumerate([
         range(10, 12),
         range(12, 14),
         range(14, 16),
         range(16, 18),
-    ])),
-    "smask": range(16, 19),
-    # and here as well, but EXTRA3
-    "extra3": dict(enumerate([
+    ]))
+    smask = range(16, 19)
+    extra3 = dict(enumerate([
         range(10, 13),
         range(13, 16),
         range(16, 19),
-    ])),
-}):
+    ]))
 
-    def __init__(self, value=0):
-        super().__init__(value=value)
-        self.spr = self
 
 
 SVP64RM_MMODE_SIZE = len(SVP64RMFields.mmode)
@@ -301,20 +295,12 @@ SVP64RM_SMASK_SIZE = len(SVP64RMFields.smask)
 SVP64RM_MODE_SIZE = len(SVP64RMFields.mode)
 
 
-# SVP64 Prefix fields: see https://libre-soc.org/openpower/sv/svp64/
-class SVP64PrefixFields(SelectableIntMapping, bits=32, fields={
-    "insn": range(32),
-    # 6 bit major opcode EXT001, 2 bits "identifying" (7, 9), 24 SV ReMap
-    "major": range(0, 6),
-    "pid": (7, 9),
-    # SVP64 24-bit RM (ReMap)
-    "rm": ((6, 8) + tuple(range(10, 32))),
-}):
-
-    def __init__(self, value=0):
-        super().__init__(value=value)
-        self.insn = self
-
+class SVP64PrefixFields(SelectableIntMapping):
+    """SVP64 Prefix: https://libre-soc.org/openpower/sv/svp64/"""
+    insn = range(32)
+    major = range(0, 6)
+    pid = (7, 9)
+    rm = ((6, 8) + tuple(range(10, 32)))
 
 SV64P_MAJOR_SIZE = len(SVP64PrefixFields.major)
 SV64P_PID_SIZE = len(SVP64PrefixFields.pid)
@@ -1008,8 +994,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # SVP64.  first, check if the opcode is EXT001, and SVP64 id bits set
         yield Settle()
         opcode = yield self.dec2.dec.opcode_in
-        pfx = SVP64PrefixFields()  # TODO should probably use SVP64PrefixDecoder
-        pfx.insn.value = opcode
+        pfx = SVP64PrefixFields(opcode)
         major = pfx.major.asint(msb0=True)  # MSB0 inversion
         log("prefix test: opcode:", major, bin(major),
             pfx.insn[7] == 0b1, pfx.insn[9] == 0b1)
