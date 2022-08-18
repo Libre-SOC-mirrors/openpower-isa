@@ -4,19 +4,13 @@ import functools as _functools
 import sys as _sys
 
 from openpower.decoder.power_enums import (
-    Function as _Function,
-    SVP64BCCTRMode as _SVP64BCCTRMode,
-    SVP64BCVLSETMode as _SVP64BCVLSETMode,
     find_wiki_dir as _find_wiki_dir,
 )
-from openpower.decoder.power_insn import Database as _Database
-from openpower.decoder.selectable_int import (
-    SelectableInt as _SelectableInt,
-)
-from openpower.consts import SVP64MODE as _SVP64MODE
-from openpower.decoder.isa.caller import (
-    SVP64PrefixFields as _SVP64PrefixFields,
-    SVP64RMFields as _SVP64RMFields,
+from openpower.decoder.power_insn import (
+    Database as _Database,
+    Instruction as _Instruction,
+    PrefixedInstruction as _PrefixedInstruction,
+    SVP64Instruction as _SVP64Instruction,
 )
 
 
@@ -28,134 +22,9 @@ class ByteOrder(_enum.Enum):
         return self.name.lower()
 
 
-DATABASE = _Database(_find_wiki_dir())
-
-
-class Instruction(_SelectableInt):
-    def __init__(self, value, byteorder=ByteOrder.LITTLE, bits=32):
-        if isinstance(value, _SelectableInt):
-            value = value.value
-        elif isinstance(value, bytes):
-            value = int.from_bytes(value, byteorder=str(byteorder))
-
-        if not isinstance(value, int):
-            raise ValueError(value)
-        if not isinstance(bits, int) or (bits not in {32, 64}):
-            raise ValueError(bits)
-
-        return super().__init__(value=value, bits=bits)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.value:08x})"
-
-    def disassemble(self):
-        if self.dbrecord is None:
-            yield f".long 0x{self.value:08x}"
-        else:
-            yield f".long 0x{self.value:08x} # {self.dbrecord.name}"
-
-    @property
-    def major(self):
-        return self[0:6]
-
-    @property
-    def dbrecord(self):
-        try:
-            return DATABASE[int(self)]
-        except KeyError:
-            return None
-
-
-class PrefixedInstruction(Instruction):
-    def __init__(self, prefix, suffix, byteorder=ByteOrder.LITTLE):
-        insn = _functools.partial(Instruction, byteorder=byteorder)
-        (prefix, suffix) = map(insn, (prefix, suffix))
-        value = ((prefix.value << 32) | suffix.value)
-        return super().__init__(value=value, bits=64)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.value:016x})"
-
-    def disassemble(self):
-        if self.dbrecord is None:
-            yield f".llong 0x{self.value:08x}"
-        else:
-            yield f".llong 0x{self.value:08x} # {self.dbrecord.name}"
-
-    @property
-    def prefix(self):
-        return Instruction(self[0:32])
-
-    @property
-    def suffix(self):
-        return Instruction(self[32:64])
-
-    @property
-    def major(self):
-        return self.suffix.major
-
-    @property
-    def dbrecord(self):
-        return self.suffix.dbrecord
-
-
-class SVP64Instruction(PrefixedInstruction):
-    class PrefixError(ValueError):
-        pass
-
-    class Prefix(_SVP64PrefixFields, Instruction):
-        class RM(_SVP64RMFields):
-            @property
-            def sv_mode(self):
-                return (self.mode & 0b11)
-
-        @property
-        def rm(self):
-            return self.__class__.RM(super().rm)
-
-    class Suffix(Instruction):
-        pass
-
-    def __init__(self, prefix, suffix, byteorder=ByteOrder.LITTLE):
-        if SVP64Instruction.Prefix(prefix).pid != 0b11:
-            raise SVP64Instruction.PrefixError(prefix)
-        return super().__init__(prefix, suffix, byteorder)
-
-    def disassemble(self):
-        if self.dbrecord is None:
-            yield f".llong 0x{self.value:08x}"
-        else:
-            yield f".llong 0x{self.value:08x} # sv.{self.dbrecord.name}"
-            rm = self.prefix.rm
-            mode = self.prefix.rm.mode
-            if self.dbrecord.function is _Function.BRANCH:
-                bc_ctrtest = _SVP64BCCTRMode.NONE
-                if mode[_SVP64MODE.BC_CTRTEST]:
-                    if rm.ewsrc[0]:
-                        bc_ctrtest = _SVP64BCCTRMode.TEST_INV
-                    else:
-                        bc_ctrtest = _SVP64BCCTRMode.TEST
-                bc_vlset = _SVP64BCVLSETMode.NONE
-                if mode[_SVP64MODE.BC_VLSET]:
-                    if mode[_SVP64MODE.BC_VLI]:
-                        bc_vlset = _SVP64BCVLSETMode.VL_INCL
-                    else:
-                        bc_vlset = _SVP64BCVLSETMode.VL_EXCL
-                bc_gate = rm.elwidth[0]
-                bc_lru = rm.elwidth[1]
-                bc_vsb = rm.ewsrc[1]
-
-
-    @property
-    def prefix(self):
-        return self.__class__.Prefix(super().prefix)
-
-    @property
-    def suffix(self):
-        return self.__class__.Suffix(super().suffix)
-
-
 def load(ifile, byteorder, **_):
+    db = _Database(_find_wiki_dir())
+
     def load(ifile):
         prefix = ifile.read(4)
         length = len(prefix)
@@ -163,9 +32,9 @@ def load(ifile, byteorder, **_):
             return None
         elif length < 4:
             raise IOError(prefix)
-        prefix = Instruction(prefix, byteorder)
+        prefix = _Instruction(value=prefix, byteorder=byteorder, db=db)
         if prefix.major != 0x1:
-            return Instruction(prefix, byteorder)
+            return prefix
 
         suffix = ifile.read(4)
         length = len(suffix)
@@ -174,9 +43,11 @@ def load(ifile, byteorder, **_):
         elif length < 4:
             raise IOError(suffix)
         try:
-            return SVP64Instruction(prefix, suffix, byteorder)
-        except SVP64Instruction.PrefixError:
-            return PrefixedInstruction(prefix, suffix, byteorder)
+            return _SVP64Instruction(prefix=prefix, suffix=suffix,
+                byteorder=byteorder, db=db)
+        except _SVP64Instruction.PrefixError:
+            return _PrefixedInstruction(prefix=prefix, suffix=suffix,
+                byteorder=byteorder, db=db)
 
     while True:
         insn = load(ifile)

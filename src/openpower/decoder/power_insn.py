@@ -35,6 +35,15 @@ from openpower.decoder.power_enums import (
     SVExtraRegType as _SVExtraRegType,
     SVExtraReg as _SVExtraReg,
 )
+from openpower.decoder.selectable_int import (
+    SelectableInt as _SelectableInt,
+)
+
+# TODO: these should be present in the decoder module.
+from openpower.decoder.isa.caller import (
+    SVP64PrefixFields as _SVP64PrefixFields,
+    SVP64RMFields as _SVP64RMFields,
+)
 
 
 def dataclass(cls, record, keymap=None, typemap=None):
@@ -522,6 +531,132 @@ class Record:
         if self.svp64 is None:
             return _SVEtype.NONE
         return self.svp64.etype
+
+
+class Instruction(_SelectableInt):
+    def __init__(self, value, bits=None, byteorder="little", db=None):
+        if isinstance(value, _SelectableInt):
+            if bits is not None:
+                raise ValueError(bits)
+            bits = value.bits
+            value = value.value
+        else:
+            if bits is None:
+                bits = 32
+            if isinstance(value, bytes):
+                value = int.from_bytes(value, byteorder=str(byteorder))
+            if not isinstance(bits, int) or (bits not in {32, 64}):
+                raise ValueError(bits)
+
+        if not isinstance(value, int):
+            raise ValueError(value)
+
+        if db is not None and not isinstance(db, Database):
+            raise ValueError(db)
+
+        self.__db = db
+
+        return super().__init__(value=value, bits=bits)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.value:08x})"
+
+    def disassemble(self):
+        if self.dbrecord is None:
+            yield f".long 0x{self.value:08x}"
+        else:
+            yield f".long 0x{self.value:08x} # {self.dbrecord.name}"
+
+    @property
+    def major(self):
+        return self[0:6]
+
+    @property
+    def dbrecord(self):
+        if self.__db is None:
+            return None
+        try:
+            return self.__db[int(self)]
+        except KeyError:
+            return None
+
+
+class PrefixedInstruction(Instruction):
+    def __init__(self, prefix, suffix, byteorder="little", db=None):
+        insn = _functools.partial(Instruction, byteorder=byteorder, db=db)
+        (prefix, suffix) = map(insn, (prefix, suffix))
+        value = ((prefix.value << 32) | suffix.value)
+
+        return super().__init__(value=value, bits=64,
+            byteorder=byteorder, db=db)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.value:016x})"
+
+    def disassemble(self):
+        if self.dbrecord is None:
+            yield f".llong 0x{self.value:08x}"
+        else:
+            yield f".llong 0x{self.value:08x} # {self.dbrecord.name}"
+
+    @property
+    def prefix(self):
+        return Instruction(self[0:32])
+
+    @property
+    def suffix(self):
+        return Instruction(self[32:64])
+
+    @property
+    def major(self):
+        return self.suffix.major
+
+    @property
+    def dbrecord(self):
+        return self.suffix.dbrecord
+
+
+class SVP64Instruction(PrefixedInstruction):
+    class PrefixError(ValueError):
+        pass
+
+    class Prefix(_SVP64PrefixFields, Instruction):
+        class RM(_SVP64RMFields):
+            @property
+            def sv_mode(self):
+                return (self.mode & 0b11)
+
+        @property
+        def rm(self):
+            return self.__class__.RM(super().rm)
+
+    class Suffix(Instruction):
+        pass
+
+    def __init__(self, prefix, suffix, byteorder="little", db=None):
+        insn = _functools.partial(Instruction, byteorder=byteorder, db=db)
+        (prefix, suffix) = map(insn, (prefix, suffix))
+
+        prefix = SVP64Instruction.Prefix(value=prefix)
+        if prefix.pid != 0b11:
+            raise SVP64Instruction.PrefixError(prefix)
+
+        return super().__init__(prefix=prefix, suffix=suffix,
+            byteorder=byteorder, db=db)
+
+    def disassemble(self):
+        if self.dbrecord is None:
+            yield f".llong 0x{self.value:08x}"
+        else:
+            yield f".llong 0x{self.value:08x} # sv.{self.dbrecord.name}"
+
+    @property
+    def prefix(self):
+        return self.__class__.Prefix(super().prefix)
+
+    @property
+    def suffix(self):
+        return self.__class__.Suffix(super().suffix)
 
 
 class Database:
