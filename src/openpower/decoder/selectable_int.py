@@ -570,8 +570,8 @@ class SelectableIntMappingMeta(type):
             yield (key, value)
 
 
-class SelectableIntMapping(SelectableInt, metaclass=SelectableIntMappingMeta,
-                                          bits=0):
+class SelectableIntMapping(SelectableInt,
+            metaclass=SelectableIntMappingMeta, bits=0):
     def __init__(self, value=0, bits=None):
         if isinstance(value, int) and bits is None:
             bits = self.__class__.bits
