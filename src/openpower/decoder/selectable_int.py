@@ -221,7 +221,9 @@ class SelectableInt:
     def __init__(self, value, bits=None):
         if isinstance(value, SelectableInt):
             if bits is not None:
-                raise ValueError(value)
+                # check if the bitlength is different. TODO, allow override?
+                if bits != value.bits:
+                    raise ValueError(value)
             bits = value.bits
             value = value.value
         elif isinstance(value, FieldSelectableInt):
