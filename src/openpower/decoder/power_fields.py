@@ -1,7 +1,354 @@
 from collections import namedtuple
 
+import operator as _operator
+import functools as _functools
+
 from openpower.decoder.power_enums import find_wiki_file as _find_wiki_file
-from openpower.decoder.selectable_int import BitRange as _BitRange
+from openpower.decoder.selectable_int import (
+    SelectableInt as _SelectableInt,
+    BitRange as _BitRange,
+    selectconcat as _selectconcat,
+)
+
+
+class RemapError(ValueError):
+    pass
+
+
+class Descriptor:
+    def __init__(self, cls):
+        self.__cls = cls
+        return super().__init__()
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self.__cls
+        return self.__cls(storage=instance.storage)
+
+    def __set__(self, instance, value):
+        if instance is None:
+            raise AttributeError("read-only attribute")
+        self.__cls(storage=instance.storage).assign(value)
+
+
+@_functools.total_ordering
+class Reference:
+    def __init__(self, storage, *args, **kwargs):
+        if not isinstance(storage, _SelectableInt):
+            raise ValueError(storage)
+
+        self.storage = storage
+
+        super().__init__()
+        self.__post_init__()
+
+    def __post_init__(self, *args, **kwargs):
+        _ = (args, kwargs)
+
+    def __binary_operator(self, op, other):
+        span = self.__class__.span
+        lhs = _selectconcat(*(self.storage[bit] for bit in span))
+
+        if isinstance(other, Field):
+            bits = len(other.__class__)
+            value = int(other)
+            rhs = _SelectableInt(value=value, bits=bits)
+        elif isinstance(other, int):
+            bits = len(self.__class__)
+            if other.bit_length() > bits:
+                raise OverflowError(other)
+            rhs = _SelectableInt(value=other, bits=bits)
+        elif isinstance(other, _SelectableInt):
+            rhs = other
+        else:
+            raise ValueError(other)
+
+        return op(lhs, rhs)
+
+    def __lt__(self, other):
+        return self.__binary_operator(_operator.lt, other)
+
+    def __eq__(self, other):
+        return self.__binary_operator(_operator.eq, other)
+
+    def __int__(self):
+        span = dict.fromkeys(self.__class__.span).keys()
+        return int(_selectconcat(*(self.storage[bit] for bit in span)))
+
+    def __index__(self):
+        return int(self).__index__()
+
+    @property
+    def storage(self):
+        return self.__storage
+
+    @storage.setter
+    def storage(self, storage):
+        if not isinstance(storage, _SelectableInt):
+            raise ValueError(storage)
+
+        self.__storage = storage
+
+    def assign(self, value):
+        if isinstance(value, int):
+            bits = len(self.__class__)
+            value = _SelectableInt(value=value, bits=bits)
+        if not isinstance(value, _SelectableInt):
+            raise ValueError(value)
+
+        span = frozenset(self.__class__.span)
+        for (src_bit, dst_bit) in enumerate(span):
+            self.storage[dst_bit] = value[src_bit]
+
+
+class FieldMeta(type):
+    def __new__(metacls, clsname, bases, ns, items=()):
+        assert "__members__" not in ns
+
+        members = []
+        for item in items:
+            if not isinstance(item, int):
+                raise ValueError(item)
+            if item < 0:
+                raise ValueError(item)
+            members.append(item)
+
+        ns["__members__"] = tuple(members)
+
+        return super().__new__(metacls, clsname, bases, ns)
+
+    def __getitem__(cls, size):
+        clsname = f"{cls.__name__}[{size}]"
+        items = ((Field,) * size)
+        return ArrayMeta(clsname, (Array,), {}, items=items)
+
+    def __repr__(cls):
+        if not cls.__members__:
+            return cls.__name__
+        return f"{cls.__name__}{cls.__members__!r}"
+
+    def __iter__(cls):
+        yield from cls.__members__
+
+    def __len__(cls):
+        return len(cls.__members__)
+
+    @property
+    def span(cls):
+        return cls.__members__
+
+    def remap(cls, scheme):
+        if isinstance(scheme, type) and issubclass(scheme, Mapping):
+            scheme = range(len(scheme))
+        scheme = cls.__class__(cls.__name__, (cls,), {}, items=scheme)
+
+        if len(cls) == 0:
+            return scheme
+        elif len(cls) > len(scheme):
+            llen = f"len(scheme)"
+            rlen = f"len({cls.__name__})"
+            raise RemapError(f"{llen} != {rlen}")
+
+        items = map(lambda item: scheme.__members__[item], cls)
+
+        return cls.__class__(cls.__name__, (cls,), {}, items=items)
+
+
+class Field(Reference, metaclass=FieldMeta):
+    def __len__(self):
+        return self.__class__.__len__()
+
+    def __repr__(self):
+        return f"[{len(self.__class__)}]0x{int(self):x}"
+
+    def __iter__(self):
+        for bit in self.__class__:
+            yield self.storage[bit]
+
+
+class ArrayMeta(type):
+    def __new__(metacls, clsname, bases, ns, items=()):
+        assert "__members__" not in ns
+
+        members = []
+        for item in items:
+            if not (isinstance(item, type) and issubclass(item, Field)):
+                item = FieldMeta("Field", (Field,), {}, items=item)
+            members.append(item)
+
+        ns["__members__"] = tuple(members)
+
+        return super().__new__(metacls, clsname, bases, ns)
+
+    def __repr__(cls):
+        if not cls.__members__:
+            return cls.__name__
+        return f"{cls.__name__}{cls.__members__!r}"
+
+    def __iter__(cls):
+        yield from enumerate(cls.__members__)
+
+    def __len__(cls):
+        length = 0
+        for field in cls.__members__:
+            length += len(field)
+        return length
+
+    def remap(cls, scheme):
+        scheme_md = []
+        scheme_sd = []
+
+        for item in scheme:
+            if not isinstance(item, int):
+                scheme_md.append(item)
+            else:
+                scheme_sd.append(item)
+
+        if scheme_md and scheme_sd:
+            raise ValueError(scheme)
+
+        def remap_md(scheme):
+            scheme = cls.__class__(cls.__name__, (cls,), {}, items=scheme)
+            if len(cls) == 0:
+                if len(cls.__members__) != len(scheme.__members__):
+                    llen = f"len(scheme.__members__)"
+                    rlen = f"len({cls.__name__}.__members__)"
+                    raise RemapError(f"{llen} != {rlen}")
+                return scheme
+            elif len(scheme) != len(cls):
+                llen = f"len(scheme)"
+                rlen = f"len({cls.__name__})"
+                raise RemapError(f"{llen} != {rlen}")
+
+            items = []
+            for (idx, field) in enumerate(cls):
+                try:
+                    item = field.remap(scheme.__members__[idx])
+                except RemapError as error:
+                    raise RemapError(f"[{idx}]: {error}")
+                items.append(item)
+
+            return cls.__class__(cls.__name__, (cls,), {}, items=items)
+
+        def remap_sd(scheme):
+            items = tuple(item.remap(scheme) for item in cls.__members__)
+            return cls.__class__(cls.__name__, (cls,), {}, items=items)
+
+        if scheme_md:
+            return remap_md(scheme_md)
+        else:
+            return remap_sd(scheme_sd)
+
+    @property
+    def span(cls):
+        for field in cls.__members__:
+            yield from field.span
+
+
+class Array(Reference, metaclass=ArrayMeta):
+    def __init__(self, storage):
+        members = []
+        for (idx, cls) in self.__class__:
+            members.append(cls(storage))
+
+        self.__members = tuple(members)
+
+        return super().__init__(storage)
+
+    def __repr__(self):
+        items = tuple(f"[{idx}]={field!r}" for (idx, field) in self)
+        return f"[{', '.join(items)}]"
+
+    def __iter__(self):
+        yield from enumerate(self.__members)
+
+    def __getitem__(self, key):
+        return self.__members[key]
+
+    def __setitem__(self, key, value):
+        self.__members[key].assign(value)
+
+
+class MappingMeta(type):
+    def __new__(metacls, clsname, bases, ns):
+        members = {}
+
+        for cls in bases:
+            if isinstance(cls, metacls):
+                members.update(cls.__members__)
+
+        for (name, cls) in ns.get("__annotations__", {}).items():
+            if not (isinstance(cls, type) and
+                    issubclass(cls, (Mapping, Array, Field))):
+                raise ValueError(f"{clsname}.{name}: {cls!r}")
+
+            if name in ns:
+                try:
+                    members[name] = cls.remap(ns[name])
+                except RemapError as error:
+                    raise RemapError(f"{name}: {error}")
+            else:
+                if cls in (Array, Field):
+                    raise ValueError(f"{clsname}.{name}: " + \
+                        "base class without initializer")
+                members[name] = cls
+
+        ns["__members__"] = members
+        for (name, cls) in members.items():
+            ns[name] = Descriptor(cls)
+
+        return super().__new__(metacls, clsname, bases, ns)
+
+    def __repr__(cls):
+        return f"{cls.__name__}({cls.__members__!r})"
+
+    def __iter__(cls):
+        yield from cls.__members__.items()
+
+    def __len__(cls):
+        length = 0
+        for field in cls.__members__.values():
+            length = max(length, len(field))
+        return length
+
+    def remap(cls, scheme):
+        ns = {}
+        annotations = {}
+
+        for (name, field) in cls:
+            annotations[name] = field.remap(scheme)
+        ns["__annotations__"] = annotations
+
+        return cls.__class__(cls.__name__, (cls,), ns)
+
+    @property
+    def span(cls):
+        for field in cls.__members__.values():
+            yield from field.span
+
+
+class Mapping(Reference, metaclass=MappingMeta):
+    def __init__(self, storage, **kwargs):
+        members = {}
+        for (name, cls) in self.__class__:
+            members[name] = cls(storage)
+
+        self.__members = members
+
+        return super().__init__(storage, **kwargs)
+
+    def __repr__(self):
+        items = tuple(f"{name}={field!r}" for (name, field) in self)
+        return f"{{{', '.join(items)}}}"
+
+    def __iter__(self):
+        yield from self.__members.items()
+
+    def __getitem__(self, key):
+        if isinstance(key, (int, slice, list, tuple, range)):
+            return self.storage[key]
+
+        return self.__members[key]
 
 
 def decode_instructions(form):
@@ -99,7 +446,7 @@ def decode_form(form):
 
 class DecodeFields:
 
-    def __init__(self, bitkls=BitRange, bitargs=(), fname=None,
+    def __init__(self, bitkls=_BitRange, bitargs=(), fname=None,
                  name_on_wiki=None):
         self.bitkls = bitkls
         self.bitargs = bitargs
