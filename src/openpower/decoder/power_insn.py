@@ -1,5 +1,4 @@
 import collections as _collections
-import copy as _copy
 import csv as _csv
 import dataclasses as _dataclasses
 import enum as _enum
@@ -37,12 +36,13 @@ from openpower.decoder.power_enums import (
 )
 from openpower.decoder.selectable_int import (
     SelectableInt as _SelectableInt,
+    selectconcat as _selectconcat,
 )
 
 # TODO: these should be present in the decoder module.
-from openpower.decoder.isa.caller import (
-    SVP64PrefixFields as _SVP64PrefixFields,
-    SVP64RMFields as _SVP64RMFields,
+from openpower.decoder.power_fields import (
+    Field as _Field,
+    Mapping as _Mapping,
 )
 
 
@@ -533,130 +533,138 @@ class Record:
         return self.svp64.etype
 
 
-class Instruction(_SelectableInt):
-    def __init__(self, value, bits=None, byteorder="little", db=None):
-        if isinstance(value, _SelectableInt):
-            if bits is not None:
-                raise ValueError(bits)
-            bits = value.bits
-            value = value.value
-        else:
-            if bits is None:
-                bits = 32
-            if isinstance(value, bytes):
-                value = int.from_bytes(value, byteorder=str(byteorder))
-            if not isinstance(bits, int):
-                raise ValueError(bits)
+class Instruction(_Mapping):
+    @classmethod
+    def integer(cls, value=0, bits=None, byteorder="little"):
+        if isinstance(value, (int, bytes)) and not isinstance(bits, int):
+            raise ValueError(bits)
 
-        if not isinstance(value, int):
+        if isinstance(value, bytes):
+            if ((len(value) * 8) != bits):
+                raise ValueError(f"bit length mismatch")
+            value = int.from_bytes(value, byteorder=byteorder)
+
+        if isinstance(value, int):
+            value = _SelectableInt(value=value, bits=bits)
+        elif isinstance(value, Instruction):
+            value = value.storage
+
+        if not isinstance(value, _SelectableInt):
+            raise ValueError(value)
+        if bits is None:
+            bits = len(cls)
+        if len(value) != bits:
             raise ValueError(value)
 
-        if db is not None and not isinstance(db, Database):
-            raise ValueError(db)
+        value = _SelectableInt(value=value, bits=bits)
 
-        self.__db = db
+        return cls(storage=value)
 
-        return super().__init__(value=value, bits=bits)
+    def __hash__(self):
+        return hash(int(self))
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.value:08x})"
+    def disassemble(self, db):
+        raise NotImplementedError
 
-    def disassemble(self):
-        if self.dbrecord is None:
-            yield f".long 0x{self.value:08x}"
+
+class WordInstruction(Instruction):
+    class PO(_Mapping):
+        _: _Field = range(0, 6)
+
+    _: _Field = range(0, 32)
+    po: PO
+
+    @classmethod
+    def integer(cls, value, byteorder="little"):
+        return super().integer(bits=32, value=value, byteorder=byteorder)
+
+    def disassemble(self, db):
+        record = db[self]
+        if record is None:
+            yield f".long 0x{int(self):08x}"
         else:
-            yield f".long 0x{self.value:08x} # {self.dbrecord.name}"
-
-    @property
-    def major(self):
-        return self[0:6]
-
-    @property
-    def dbrecord(self):
-        if self.__db is None:
-            return None
-        try:
-            return self.__db[int(self)]
-        except KeyError:
-            return None
+            yield f".long 0x{int(self):08x} # {record.name}"
 
 
 class PrefixedInstruction(Instruction):
-    def __init__(self, prefix, suffix, byteorder="little", db=None):
-        insn = _functools.partial(Instruction, byteorder=byteorder, db=db)
-        (prefix, suffix) = map(insn, (prefix, suffix))
-        value = ((prefix.value << 32) | suffix.value)
+    class Prefix(WordInstruction.remap(range(0, 32))):
+        pass
 
-        return super().__init__(value=value, bits=64,
-            byteorder=byteorder, db=db)
+    class Suffix(WordInstruction.remap(range(32, 64))):
+        pass
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.value:016x})"
+    _: _Field = range(64)
+    prefix: Prefix
+    suffix: Suffix
+    po: Suffix.PO = Suffix.po
 
-    def disassemble(self):
-        if self.dbrecord is None:
-            yield f".llong 0x{self.value:08x}"
+    @classmethod
+    def integer(cls, value, byteorder="little"):
+        return super().integer(bits=64, value=value, byteorder=byteorder)
+
+    @classmethod
+    def pair(cls, prefix=0, suffix=0, byteorder="little"):
+        def transform(value):
+            return WordInstruction.integer(value=value,
+                byteorder=byteorder)[0:32]
+
+        (prefix, suffix) = map(transform, (prefix, suffix))
+        value = _selectconcat(prefix, suffix)
+
+        return super().integer(value=value)
+
+    def disassemble(self, db):
+        record = db[self.suffix]
+        if record is None:
+            yield f".long 0x{int(self.prefix):08x}"
+            yield f".long 0x{int(self.suffix):08x}"
         else:
-            yield f".llong 0x{self.value:08x} # {self.dbrecord.name}"
-
-    @property
-    def prefix(self):
-        return Instruction(self[0:32])
-
-    @property
-    def suffix(self):
-        return Instruction(self[32:64])
-
-    @property
-    def major(self):
-        return self.suffix.major
-
-    @property
-    def dbrecord(self):
-        return self.suffix.dbrecord
+            yield f".llong 0x{int(self):08x} # {record.name}"
 
 
 class SVP64Instruction(PrefixedInstruction):
-    class PrefixError(ValueError):
-        pass
+    class Prefix(PrefixedInstruction.Prefix):
+        """SVP64 Prefix: https://libre-soc.org/openpower/sv/svp64/"""
+        class RM(_Mapping):
+            """SVP64 RM: https://libre-soc.org/openpower/sv/svp64/"""
+            _: _Field = range(24)
+            mmode: _Field = (0,)
+            mask: _Field = range(1, 4)
+            elwidth: _Field = range(4, 6)
+            ewsrc: _Field = range(6, 8)
+            subvl: _Field = range(8, 10)
+            extra: _Field = range(10, 19)
+            mode: _Field = range(19, 24)
+            extra2: _Field[4] = (
+                range(10, 12),
+                range(12, 14),
+                range(14, 16),
+                range(16, 18),
+            )
+            smask: _Field = range(16, 19)
+            extra3: _Field[3] = (
+                range(10, 13),
+                range(13, 16),
+                range(16, 19),
+            )
 
-    class Prefix(Instruction, _SVP64PrefixFields):
-        class RM(_SVP64RMFields):
-            @property
-            def sv_mode(self):
-                return (self.mode & 0b11)
+            # Backward compatibility
+            spr: _Field = _
 
-        @property
-        def rm(self):
-            return self.__class__.RM(super().rm)
+        id: _Field = (7, 9)
+        rm: RM = ((6, 8) + tuple(range(10, 32)))
 
-    class Suffix(Instruction):
-        pass
+        # Backward compatibility
+        insn: PrefixedInstruction.Prefix
 
-    def __init__(self, prefix, suffix, byteorder="little", db=None):
-        insn = _functools.partial(Instruction, byteorder=byteorder, db=db)
-        (prefix, suffix) = map(insn, (prefix, suffix))
+    prefix: Prefix
 
-        prefix = SVP64Instruction.Prefix(value=prefix)
-        if prefix.pid != 0b11:
-            raise SVP64Instruction.PrefixError(prefix)
-
-        return super().__init__(prefix=prefix, suffix=suffix,
-            byteorder=byteorder, db=db)
-
-    def disassemble(self):
-        if self.dbrecord is None:
-            yield f".llong 0x{self.value:08x}"
+    def disassemble(self, db):
+        record = db[self.suffix]
+        if record is None:
+            yield f".llong 0x{int(self):08x}"
         else:
-            yield f".llong 0x{self.value:08x} # sv.{self.dbrecord.name}"
-
-    @property
-    def prefix(self):
-        return self.__class__.Prefix(super().prefix)
-
-    @property
-    def suffix(self):
-        return self.__class__.Suffix(super().suffix)
+            yield f".llong 0x{int(self):08x} # sv.{record.name}"
 
 
 class Database:
@@ -772,10 +780,11 @@ class Database:
     def __getitem__(self, key):
         if isinstance(key, Opcode):
             return self.__opcodes.__getitem__(key)
-        elif isinstance(key, int):
+        elif isinstance(key, (int, Instruction)):
+            ikey = int(key)
             for (opcode, insn) in self.__opcodes.items():
                 if ((opcode.value & opcode.mask) ==
-                        (key & opcode.mask)):
+                        (ikey & opcode.mask)):
                     return insn
             raise KeyError(key)
         elif isinstance(key, str):

@@ -9,8 +9,13 @@ from openpower.decoder.power_enums import (
 from openpower.decoder.power_insn import (
     Database as _Database,
     Instruction as _Instruction,
+    WordInstruction as _WordInstruction,
     PrefixedInstruction as _PrefixedInstruction,
     SVP64Instruction as _SVP64Instruction,
+)
+from openpower.decoder.selectable_int import (
+    SelectableInt as _SelectableInt,
+    FieldSelectableInt as _FieldSelectableInt
 )
 
 
@@ -23,42 +28,39 @@ class ByteOrder(_enum.Enum):
 
 
 def load(ifile, byteorder, **_):
-    db = _Database(_find_wiki_dir())
+    byteorder = str(byteorder)
 
-    def load(ifile):
+    while True:
         prefix = ifile.read(4)
         length = len(prefix)
         if length == 0:
-            return None
+            return
         elif length < 4:
             raise IOError(prefix)
-        prefix = _Instruction(value=prefix, byteorder=byteorder, db=db)
-        if prefix.major != 0x1:
-            return prefix
+        prefix = _WordInstruction.integer(value=prefix, byteorder=byteorder)
 
         suffix = ifile.read(4)
         length = len(suffix)
         if length == 0:
-            return prefix
+            yield prefix
         elif length < 4:
             raise IOError(suffix)
-        try:
-            return _SVP64Instruction(prefix=prefix, suffix=suffix,
-                byteorder=byteorder, db=db)
-        except _SVP64Instruction.PrefixError:
-            return _PrefixedInstruction(prefix=prefix, suffix=suffix,
-                byteorder=byteorder, db=db)
+        suffix = _WordInstruction.integer(value=suffix, byteorder=byteorder)
 
-    while True:
-        insn = load(ifile)
-        if insn is None:
-            break
-        yield insn
+        if prefix.po == 0x1:
+            insn = _SVP64Instruction.pair(prefix=prefix, suffix=suffix)
+            if insn.prefix.id != 0b11:
+                insn = _PrefixedInstruction.pair(prefix=prefix, suffix=suffix)
+            yield insn
+        else:
+            yield prefix
+            yield suffix
 
 
 def dump(insns, **_):
+    db = _Database(_find_wiki_dir())
     for insn in insns:
-        yield from insn.disassemble()
+        yield from insn.disassemble(db=db)
 
 
 def main():
