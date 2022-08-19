@@ -70,6 +70,9 @@ class FieldSelectableInt:
         vi = op(vi)
         return self.merge(vi)
 
+    def __len__(self):
+        return len(self.br)
+
     def __getitem__(self, key):
         log("getitem", key, self.br)
         if isinstance(key, SelectableInt):
