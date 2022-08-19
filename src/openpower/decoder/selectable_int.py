@@ -2,7 +2,7 @@ import unittest
 import struct
 from copy import copy
 import functools
-from openpower.decoder.power_fields import BitRange
+from collections import OrderedDict
 from operator import (add, sub, mul, floordiv, truediv, mod, or_, and_, xor,
                       neg, inv, lshift, rshift, lt, eq)
 from openpower.util import log
@@ -16,6 +16,17 @@ def check_extsign(a, b):
     if b.bits != 256:
         return b
     return SelectableInt(b.value, a.bits)
+
+
+class BitRange(OrderedDict):
+    """BitRange: remaps from straight indices (0,1,2..) to bit numbers
+    """
+
+    def __getitem__(self, subscript):
+        if isinstance(subscript, slice):
+            return list(self.values())[subscript]
+        else:
+            return OrderedDict.__getitem__(self, subscript)
 
 
 @functools.total_ordering

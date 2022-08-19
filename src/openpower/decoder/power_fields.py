@@ -1,16 +1,7 @@
-from collections import OrderedDict, namedtuple
-from openpower.decoder.power_enums import find_wiki_file
+from collections import namedtuple
 
-
-class BitRange(OrderedDict):
-    """BitRange: remaps from straight indices (0,1,2..) to bit numbers
-    """
-
-    def __getitem__(self, subscript):
-        if isinstance(subscript, slice):
-            return list(self.values())[subscript]
-        else:
-            return OrderedDict.__getitem__(self, subscript)
+from openpower.decoder.power_enums import find_wiki_file as _find_wiki_file
+from openpower.decoder.selectable_int import BitRange as _BitRange
 
 
 def decode_instructions(form):
@@ -116,7 +107,7 @@ class DecodeFields:
             assert name_on_wiki is None
             fname = "fields.txt"
             name_on_wiki = "fields.text"
-        self.fname = find_wiki_file(name_on_wiki)
+        self.fname = _find_wiki_file(name_on_wiki)
 
     @property
     def form_names(self):

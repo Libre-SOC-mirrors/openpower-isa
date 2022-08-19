@@ -1,8 +1,10 @@
 from collections import OrderedDict
-from openpower.decoder.power_fields import DecodeFields, BitRange
+from openpower.decoder.power_fields import DecodeFields
 from nmigen import Module, Elaboratable, Signal, Cat
 from nmigen.cli import rtlil
 from copy import deepcopy
+
+from openpower.decoder.selectable_int import BitRange
 
 
 class SignalBitRange(BitRange):
