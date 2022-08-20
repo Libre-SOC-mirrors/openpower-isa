@@ -111,7 +111,7 @@ class FieldSelectableInt:
                 self.si[k] = value[i]
 
     def __negate__(self):
-        return self._op1(negate)
+        return self._op1(neg)
 
     def __invert__(self):
         return self._op1(inv)
