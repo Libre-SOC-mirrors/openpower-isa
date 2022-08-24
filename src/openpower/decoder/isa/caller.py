@@ -1263,7 +1263,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
 
         # nop has to be supported, we could let the actual op calculate
         # but PowerDecoder has a pattern for nop
-        if ins_name is 'nop':
+        if ins_name == 'nop':
             self.update_pc_next()
             return
 
@@ -1332,9 +1332,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # main input registers (RT, RA ...)
         inputs = []
         for name in input_names:
-            print("name", name)
+            log("name", name)
             regval = (yield from self.get_input(name))
-            print("regval", regval)
+            log("regval", regval)
             inputs.append(regval)
 
         # arrrrgh, awful hack, to get _RT into namespace
@@ -1663,7 +1663,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                     shape_idx = self.svstate_next_mode.value-1
                     endings = self.remap_loopends[shape_idx]
                 cr_field = SelectableInt((~endings) << 1 | endtest, 4)
-                print("svstep Rc=1, CR0", cr_field)
+                log("svstep Rc=1, CR0", cr_field)
                 self.crl[0].eq(cr_field)  # CR0
             if end_src or end_dst:
                 # reset at end of loop including exit Vertical Mode
