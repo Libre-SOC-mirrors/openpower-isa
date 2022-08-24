@@ -664,7 +664,10 @@ class SVP64Asm:
         ldst_shift = v30b_op.startswith("l") and v30b_op.endswith("sh")
 
         if v30b_op not in isa.instr:
-            raise Exception("opcode %s of '%s' not supported" %
+            if rc_mode and v30b_op + '.' in isa.instr:
+                v30b_op += '.'
+            else:
+                raise Exception("opcode %s of '%s' not supported" %
                             (v30b_op, insn))
 
         if ldst_shift:
@@ -1350,7 +1353,9 @@ class SVP64Asm:
             log("fcoss", bin(insn))
             yield ".long 0x%x" % insn
         else:
-            yield "%s %s" % (v30b_op+rc, ", ".join(v30b_newfields))
+            if not v30b_op.endswith('.'):
+                v30b_op += rc
+            yield "%s %s" % (v30b_op, ", ".join(v30b_newfields))
         log("new v3.0B fields", v30b_op, v30b_newfields)
 
     def translate(self, lst):
