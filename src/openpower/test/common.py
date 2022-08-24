@@ -3,6 +3,7 @@ Bugreports:
 * https://bugs.libre-soc.org/show_bug.cgi?id=361
 """
 
+from contextlib import contextmanager
 import inspect
 import functools
 import types
@@ -84,8 +85,9 @@ def skip_case_if(condition, reason):
 
 
 class TestAccumulatorBase:
-
     def __init__(self):
+        self.__subtest_args = {}
+
         self.test_data = []
         # automatically identifies anything starting with "case_" and
         # runs it.  very similar to unittest auto-identification except
@@ -100,14 +102,26 @@ class TestAccumulatorBase:
                     # reason and ignore
                     print(f"SKIPPED({n}):", str(e))
 
+    @contextmanager
+    def subTest(self, **kwargs):
+        old_subtest_args = self.__subtest_args
+        try:
+            self.__subtest_args = old_subtest_args.copy()
+            self.__subtest_args.update(**kwargs)
+            yield
+        finally:
+            self.__subtest_args = old_subtest_args
+
     def add_case(self, prog, initial_regs=None, initial_sprs=None,
                  initial_cr=0, initial_msr=0,
                  initial_mem=None,
                  initial_svstate=0,
                  expected=None,
-                 stop_at_pc=None):
+                 stop_at_pc=None,
+                 src_loc_at=0):
 
-        test_name = inspect.stack()[1][3]  # name of caller of this function
+        # name of caller of this function
+        test_name = inspect.stack()[1 + src_loc_at][3]
         # name of file containing test case
         test_file = os.path.splitext(os.path.basename(
                                     inspect.stack()[1][1]))[0]
@@ -118,7 +132,8 @@ class TestAccumulatorBase:
                       svstate=initial_svstate,
                       expected=expected,
                       stop_at_pc=stop_at_pc,
-                      test_file=test_file)
+                      test_file=test_file,
+                      subtest_args=self.__subtest_args.copy())
 
         self.test_data.append(tc)
 
@@ -131,7 +146,8 @@ class TestCase:
                  svstate=0,
                  expected=None,
                  stop_at_pc=None,
-                 test_file=None):
+                 test_file=None,
+                 subtest_args=None):
 
         self.program = program
         self.name = name
@@ -153,6 +169,7 @@ class TestCase:
         self.expected = expected # expected results from the test
         self.stop_at_pc = stop_at_pc # hard-stop address (do not attempt to run)
         self.test_file = test_file
+        self.subtest_args = {} if subtest_args is None else dict(subtest_args)
 
 
 class ALUHelpers:

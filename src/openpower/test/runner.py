@@ -204,8 +204,7 @@ class TestRunnerBase(FHDLTestCase):
             # get each test, completely reset the core, and run it
 
             for test in self.test_data:
-
-                with self.subTest(test.name):
+                with self.subTest(test.name, **test.subtest_args):
 
                     ###### PREPARATION PHASE AT START OF TEST #######
 
