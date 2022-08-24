@@ -652,23 +652,21 @@ class SVP64Asm:
 
         # start working on decoding the svp64 op: sv.basev30Bop/vec2/mode
         opmodes = opcode.split("/")  # split at "/"
-        v30b_op = opmodes.pop(0)    # first is the v3.0B
+        v30b_op_orig = opmodes.pop(0)    # first is the v3.0B
         # check instruction ends with dot
-        rc_mode = v30b_op.endswith('.')
+        rc_mode = v30b_op_orig.endswith('.')
         if rc_mode:
-            v30b_op = v30b_op[:-1]
+            v30b_op = v30b_op_orig[:-1]
+        else:
+            v30b_op = v30b_op_orig
 
         # sigh again, have to recognised LD/ST bit-reverse instructions
         # this has to be "processed" to fit into a v3.0B without the "sh"
         # e.g. ldsh is actually ld
         ldst_shift = v30b_op.startswith("l") and v30b_op.endswith("sh")
 
-        if v30b_op not in isa.instr:
-            if rc_mode and v30b_op + '.' in isa.instr:
-                v30b_op += '.'
-            else:
-                raise Exception("opcode %s of '%s' not supported" %
-                            (v30b_op, insn))
+        if v30b_op_orig not in isa.instr:
+            raise Exception("opcode %s of '%s' not supported" %
 
         if ldst_shift:
             # okaay we need to process the fields and make this:
@@ -706,11 +704,11 @@ class SVP64Asm:
             opmodes.append("sh")
             log("rewritten", v30b_op, opmodes, fields)
 
-        if v30b_op not in svp64.instrs:
+        if v30b_op_orig not in svp64.instrs:
             raise Exception("opcode %s of '%s' not an svp64 instruction" %
                             (v30b_op, insn))
-        v30b_regs = isa.instr[v30b_op].regs[0]  # get regs info "RT, RA, RB"
-        rm = svp64.instrs[v30b_op]             # one row of the svp64 RM CSV
+        v30b_regs = isa.instr[v30b_op_orig].regs[0] # get regs info "RT, RA, RB"
+        rm = svp64.instrs[v30b_op_orig]         # one row of the svp64 RM CSV
         log("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
         log("v3.0B regs", opcode, v30b_regs)
         log("RM", rm)
@@ -1539,6 +1537,9 @@ if __name__ == '__main__':
         'fmvis 5,32',
         'fmvis 5,64',
         'fmvis 5,32768',
+    ]
+    lst = [
+        'sv.andi. *80, *80, 1',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))
