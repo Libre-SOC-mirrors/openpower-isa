@@ -667,6 +667,7 @@ class SVP64Asm:
 
         if v30b_op_orig not in isa.instr:
             raise Exception("opcode %s of '%s' not supported" %
+                            (v30b_op, insn))
 
         if ldst_shift:
             # okaay we need to process the fields and make this:
@@ -1543,4 +1544,8 @@ if __name__ == '__main__':
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list", list(isa))
-    asm_process()
+    # running svp64.py is designed to test hard-coded lists
+    # (above) - which strictly speaking should all be unit tests.
+    # if you need to actually do assembler translation at the
+    # commandline use "pysvp64asm" - see setup.py
+    # XXX NO. asm_process()
