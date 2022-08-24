@@ -660,50 +660,9 @@ class SVP64Asm:
         else:
             v30b_op = v30b_op_orig
 
-        # sigh again, have to recognised LD/ST bit-reverse instructions
-        # this has to be "processed" to fit into a v3.0B without the "sh"
-        # e.g. ldsh is actually ld
-        ldst_shift = v30b_op.startswith("l") and v30b_op.endswith("sh")
-
         if v30b_op_orig not in isa.instr:
             raise Exception("opcode %s of '%s' not supported" %
                             (v30b_op, insn))
-
-        if ldst_shift:
-            # okaay we need to process the fields and make this:
-            #     ldsh RT, SVD(RA), RC  - 11 bits for SVD, 5 for RC
-            # into this:
-            #     ld RT, D(RA)          - 16 bits
-            # likewise same for SVDS (9 bits for SVDS, 5 for RC, 14 bits for DS)
-            form = isa.instr[v30b_op].form  # get form (SVD-Form, SVDS-Form)
-
-            newfields = []
-            for field in fields:
-                # identify if this is a ld/st immediate(reg) thing
-                ldst_imm = "(" in field and field[-1] == ')'
-                if ldst_imm:
-                    newfields.append(field[:-1].split("("))
-                else:
-                    newfields.append(field)
-
-            immed, RA = newfields[1]
-            immed = int(immed)
-            RC = int(newfields.pop(2))  # better be an integer number!
-            if form == 'SVD':  # 16 bit: immed 11 bits, RC shift up 11
-                immed = (immed & 0b11111111111) | (RC << 11)
-                if immed & (1 << 15):  # should be negative
-                    immed -= 1 << 16
-            if form == 'SVDS':  # 14 bit: immed 9 bits, RC shift up 9
-                immed = (immed & 0b111111111) | (RC << 9)
-                if immed & (1 << 13):  # should be negative
-                    immed -= 1 << 14
-            newfields[1] = "%d(%s)" % (immed, RA)
-            fields = newfields
-
-            # and strip off "sh" from end, and add "sh" to opmodes, instead
-            v30b_op = v30b_op[:-2]
-            opmodes.append("sh")
-            log("rewritten", v30b_op, opmodes, fields)
 
         if v30b_op_orig not in svp64.instrs:
             raise Exception("opcode %s of '%s' not an svp64 instruction" %
@@ -968,9 +927,6 @@ class SVP64Asm:
                 smmode, smask = decode_predicate(encmode[3:])
                 mmode = smmode
                 has_smask = True
-            # shifted LD/ST
-            elif encmode.startswith("sh"):
-                ldst_shift = True
             # vec2/3/4
             elif encmode.startswith("vec"):
                 subvl = decode_subvl(encmode[3:])
@@ -1095,11 +1051,6 @@ class SVP64Asm:
             assert has_pmask or mask_m_specified, \
                 "dest zeroing requires a dest predicate"
 
-        # check LDST shifted, only available in "normal" mode
-        if is_ldst and ldst_shift:
-            assert sv_mode is None, \
-                "LD shift cannot have modes (%s) applied" % sv_mode
-
         # okaaay, so there are 4 different modes, here, which will be
         # partly-merged-in: is_ldst is merged in with "normal", but
         # is_bc is so different it's done separately.  likewise is_cr
@@ -1169,9 +1120,6 @@ class SVP64Asm:
                 if is_ldst:
                     # TODO: for now, LD/ST-indexed is ignored.
                     mode |= ldst_elstride << SVP64MODE.ELS_NORMAL  # el-strided
-                    # shifted mode
-                    if ldst_shift:
-                        mode |= 1 << SVP64MODE.LDST_SHIFT
                 else:
                     # TODO, reduce and subvector mode
                     # 00  1   dz CRM  reduce mode (mapreduce), SUBVL=1
