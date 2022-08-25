@@ -41,6 +41,7 @@ class SimRunner(StateRunner):
     """SimRunner:  Implements methods for the setup, preparation, and
     running of tests using ISACaller simulation
     """
+
     def __init__(self, dut, m, pspec):
         super().__init__("sim", SimRunner)
         self.dut = dut
@@ -114,9 +115,10 @@ class TestRunnerBase(FHDLTestCase):
     When using an Expected state to test with, the expected state
     is passed in with tst_data.
     """
+
     def __init__(self, tst_data, microwatt_mmu=False, rom=None,
-                        svp64=True, run_hdl=None, run_sim=True,
-                        allow_overlap=False, inorder=False):
+                 svp64=True, run_hdl=None, run_sim=True,
+                 allow_overlap=False, inorder=False):
         super().__init__("run_all")
         self.test_data = tst_data
         self.microwatt_mmu = microwatt_mmu
@@ -154,7 +156,7 @@ class TestRunnerBase(FHDLTestCase):
                              xics=False,
                              gpio=False,
                              regreduce=not self.allow_overlap,
-                             core_domain="sync", # no alternative domain
+                             core_domain="sync",  # no alternative domain
                              svp64=self.svp64,
                              allow_overlap=self.allow_overlap,
                              inorder=self.inorder,
@@ -257,8 +259,8 @@ class TestRunnerBase(FHDLTestCase):
 
                     if self.run_sim:
                         sim_states = yield from simrun.run_test(
-                                                          instructions, gen,
-                                                          insncode)
+                            instructions, gen,
+                            insncode)
 
                     ###### COMPARING THE TESTS #######
 
@@ -275,34 +277,34 @@ class TestRunnerBase(FHDLTestCase):
                     elif self.run_hdl:
                         last_sim = copy(hdl_states[-1])
                     else:
-                        last_sim = None # err what are you doing??
+                        last_sim = None  # err what are you doing??
 
                     if self.run_hdl:
-                        print ("hdl_states")
+                        print("hdl_states")
                         for state in hdl_states:
-                            print (state)
+                            print(state)
 
                     if self.run_sim:
-                        print ("sim_states")
+                        print("sim_states")
                         for state in sim_states:
-                            print (state)
+                            print(state)
 
                     # compare the states
                     if self.run_hdl and self.run_sim:
                         # if allow_overlap is enabled, because allow_overlap
                         # can commit out-of-order, only compare the last ones
                         if self.allow_overlap:
-                            print ("allow_overlap: truncating %d %d "
-                                    "states to last" % (len(sim_states),
-                                                        len(hdl_states)))
+                            print("allow_overlap: truncating %d %d "
+                                  "states to last" % (len(sim_states),
+                                                      len(hdl_states)))
                             sim_states = sim_states[-1:]
                             hdl_states = hdl_states[-1:]
                             sim_states[-1].dump_state_tofile()
-                            print ("allow_overlap: last hdl_state")
+                            print("allow_overlap: last hdl_state")
                             hdl_states[-1].dump_state_tofile()
                         for simstate, hdlstate in zip(sim_states, hdl_states):
                             simstate.compare(hdlstate)     # register check
-                            simstate.compare_mem(hdlstate) # memory check
+                            simstate.compare_mem(hdlstate)  # memory check
 
                     # if no expected, create /tmp/case_name.py with code
                     # setting expected state to last_sim
@@ -324,20 +326,20 @@ class TestRunnerBase(FHDLTestCase):
                         n_hdl = len(hdl_states)
                         n_sim = len(sim_states)
                         self.assertTrue(n_hdl == n_sim,
-                                    "number of instructions %d %d "
-                                    "run not the same" % (n_hdl, n_sim))
+                                        "number of instructions %d %d "
+                                        "run not the same" % (n_hdl, n_sim))
 
                 ###### END OF A TEST #######
                 # StateRunner.end_test()
 
                 for runner in state_list:
-                    yield from runner.end_test() # TODO, some arguments?
+                    yield from runner.end_test()  # TODO, some arguments?
 
             ###### END OF EVERYTHING (but none needs doing, still call fn) ####
             # StateRunner.cleanup()
 
             for runner in state_list:
-                yield from runner.cleanup() # TODO, some arguments?
+                yield from runner.cleanup()  # TODO, some arguments?
 
             # finally stop wb_get from going
             if self.rom is not None:
@@ -501,8 +503,8 @@ class TestRunnerBase(FHDLTestCase):
         # extra emulated process
         self.default_mem = {}
         if self.rom is not None:
-            print ("TestRunner with MMU ROM")
-            pprint (self.rom)
+            print("TestRunner with MMU ROM")
+            pprint(self.rom)
             dcache = hdlrun.issuer.core.fus.fus["mmu0"].alu.dcache
             icache = hdlrun.issuer.core.fus.fus["mmu0"].alu.icache
             self.default_mem = deepcopy(self.rom)
