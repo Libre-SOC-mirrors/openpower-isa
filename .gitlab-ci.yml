@@ -13,6 +13,8 @@ build:
         - >-
             apt-get -y install
             autoconf
+            binutils-powerpc64-linux-gnu
+            binutils-powerpc64le-linux-gnu
             bison
             build-essential
             ccache
