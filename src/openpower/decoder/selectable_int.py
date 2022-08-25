@@ -97,6 +97,8 @@ class FieldSelectableInt:
             return selectconcat(*[self.si[x] for x in key])
         elif isinstance(key, (tuple, list, range)):
             return FieldSelectableInt(si=self, br=key)
+        else:
+            raise ValueError(key)
 
     def __setitem__(self, key, value):
         if isinstance(key, SelectableInt):
@@ -379,6 +381,8 @@ class SelectableInt:
             value = (self.value >> start) & mask
             log("getitem", stop, start, self.bits, hex(self.value), value)
             return SelectableInt(value, bits)
+        else:
+            raise ValueError(value)
 
     def __setitem__(self, key, value):
         if isinstance(key, SelectableInt):
@@ -420,6 +424,8 @@ class SelectableInt:
             mask = ((1 << bits) - 1) << start
             value = value << start
             self.value = (self.value & ~mask) | (value & mask)
+        else:
+            raise ValueError(key)
 
     def __ge__(self, other):
         if isinstance(other, FieldSelectableInt):
