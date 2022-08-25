@@ -10,7 +10,7 @@ import sys
 
 # These tests utilize the run_hdl=False parameter to compare
 # simulator with expected states
-from soc.simple.test.test_runner import TestRunner
+from openpower.test.runner import TestRunnerBase
 from openpower.test.logical.logical_cases import LogicalTestCase
 
 
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # walk through all tests, those requested get added
     for tname, data in tests.items():
         if tname in testing:
-            suite.addTest(TestRunner(data, run_hdl=False))
+            suite.addTest(TestRunnerBase(data))
 
     runner = unittest.TextTestRunner()
     runner.run(suite)
