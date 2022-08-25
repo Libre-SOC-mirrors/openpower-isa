@@ -8,4 +8,5 @@ dist
 *.il
 /jit_test
 /jit_test.o
-/crtl
+/crtl*/
+/crtl*

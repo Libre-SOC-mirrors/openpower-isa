@@ -20,6 +20,7 @@ from cffi import FFI
 from os.path import dirname, join
 from collections import namedtuple
 
+from openpower.decoder.test.crtl_path import get_crtl_path
 
 __all__ = ["PySimEngine"]
 
@@ -316,14 +317,8 @@ class PySimEngine(BaseEngine):
 
         self._fragment = fragment
 
-        # blow away and recreate crtl subdirectory.  (hope like hell
-        # nobody is using this in their current working directory)
-        if PySimEngine._crtl_counter == 0:
-            shutil.rmtree("crtl", True)
-        try:
-            os.mkdir("crtl")
-        except FileExistsError:
-            pass
+        # create crtl directory
+        crtl = get_crtl_path()
 
         # "Processes" are the compiled modules.  Each module ends up
         # with its own run() function
@@ -353,7 +348,7 @@ class PySimEngine(BaseEngine):
             cdef += f"void run_{process.name}(void);\n"
 
         # write out the header file
-        with open("crtl/common.h", "w") as cdef_file :
+        with open(os.path.join(crtl, "common.h"), "w") as cdef_file:
             cdef_file.write(cdef)
 
         # same with c template: read template first
@@ -365,20 +360,23 @@ class PySimEngine(BaseEngine):
         src = template % (len(self._state.slots), len(self._state.slots))
 
         # write it out
-        with open("crtl/common.c", "w") as src_file:
+        with open(os.path.join(crtl, "common.c"), "w") as src_file:
             src_file.write(src)
 
         # build module named crtlNNN in crtl subdirectory
-        modulename = "crtl.crtl%d" % PySimEngine._crtl_counter
-        sources = ["crtl/common.c"]
-        sources += [f"crtl/{process.name}.c" for process in self._processes]
+        modulename = f"{crtl}.crtl{PySimEngine._crtl_counter}"
+        sources = [os.path.join(crtl, "common.c")]
+        for process in self._processes:
+            sources.append(os.path.join(crtl, f"{process.name}.c"))
         ffibuilder = FFI()
         ffibuilder.cdef(cdef)
         ffibuilder.set_source(modulename, cdef, sources=sources)
         ffibuilder.compile(verbose=True)
-        
+
         # append search path of crtl directory before attempting import
-        sys.path.append(os.path.join(os.getcwd()))
+        cwd = os.path.join(os.getcwd())
+        if cwd not in sys.path:
+            sys.path.append(cwd)
         self._state.crtl = importlib.import_module(modulename).lib
 
         # Use a counter to generate unique names for modules, because Python

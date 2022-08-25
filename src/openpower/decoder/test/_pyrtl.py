@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from nmigen.hdl.ast import SignalSet
 from nmigen.hdl.xfrm import ValueVisitor, StatementVisitor, LHSGroupFilter
 from nmigen.sim._base import BaseProcess
+from openpower.decoder.test.crtl_path import get_crtl_path
 
 __all__ = ["PyRTLProcess"]
 
@@ -462,7 +463,9 @@ class _FragmentCompiler:
             code += "#include \"common.h\"\n"
             code += emitter.flush()
 
-            file = open(f"crtl/{domain_process.name}.c", "w")
+            crtl = get_crtl_path()
+
+            file = open(os.path.join(crtl, f"{domain_process.name}.c"), "w")
             file.write(code)
             file.close()
 
