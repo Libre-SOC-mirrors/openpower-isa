@@ -1,3 +1,4 @@
+import unittest
 from pygdbmi.gdbcontroller import GdbController
 import subprocess
 import tempfile
@@ -47,7 +48,14 @@ class QemuController:
         self.qemu_popen = subprocess.Popen(args,
                                            stdout=subprocess.PIPE,
                                            stdin=subprocess.PIPE)
-        self.gdb = GdbController(gdb_path='powerpc64-linux-gnu-gdb')
+        try:
+            self.gdb = GdbController(gdb_path='powerpc64-linux-gnu-gdb')
+        except ValueError as e:
+            if len(e.args) == 1 and isinstance(e.args[0], str) and \
+                e.args[0].startswith("gdb executable could not be resolved"):
+                raise unittest.SkipTest(
+                    "powerpc64-linux-gnu-gdb not found") from e
+            raise
         self.bigendian = bigendian
         self._reg_cache = {}
 
