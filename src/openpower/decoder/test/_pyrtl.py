@@ -114,6 +114,9 @@ class _RHSValueCompiler(_ValueCompiler):
         # If not None, `inputs` gets populated with RHS signals.
         self.inputs = inputs
 
+    def on_SmtExpr(self, value):
+        raise NotImplementedError
+
     def on_Const(self, value):
         return f"{value.value}"
 
@@ -266,6 +269,9 @@ class _LHSValueCompiler(_ValueCompiler):
         self.lrhs = _RHSValueCompiler(state, emitter, mode="next", inputs=None)
         # If not None, `outputs` gets populated with signals on LHS.
         self.outputs = outputs
+
+    def on_SmtExpr(self, value):
+        raise NotImplementedError
 
     def on_Const(self, value):
         raise TypeError # :nocov:
