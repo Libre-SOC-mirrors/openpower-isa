@@ -172,6 +172,9 @@ class FieldSelectableInt:
                 return True
         return False
 
+    def __int__(self):
+        return self.asint(msb0=True)
+
     def asint(self, msb0=False):
         res = 0
         brlen = len(self.br)
