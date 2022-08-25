@@ -662,14 +662,19 @@ class SVP64Asm:
 
         if v30b_op_orig not in isa.instr:
             raise Exception("opcode %s of '%s' not supported" %
-                            (v30b_op, insn))
+                            (v30b_op_orig, insn))
+        else:
+            isa_instr = isa.instr[v30b_op_orig]
 
         if v30b_op_orig not in svp64.instrs:
-            raise Exception("opcode %s of '%s' not an svp64 instruction" %
-                            (v30b_op, insn))
-        # get regs info "RT, RA, RB"
-        v30b_regs = isa.instr[v30b_op_orig].regs[0]
-        rm = svp64.instrs[v30b_op_orig]         # one row of the svp64 RM CSV
+            if v30b_op in svp64.instrs:
+                rm = svp64.instrs[v30b_op]  # one row of the svp64 RM CSV
+            else:
+                raise Exception(f"opcode {v30b_op_orig!r} of "
+                                f"{insn!r} not an svp64 instruction")
+        else:
+            rm = svp64.instrs[v30b_op_orig]  # one row of the svp64 RM CSV
+        v30b_regs = isa_instr.regs[0]  # get regs info "RT, RA, RB"
         log("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
         log("v3.0B regs", opcode, v30b_regs)
         log("RM", rm)
