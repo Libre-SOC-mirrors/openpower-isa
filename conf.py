@@ -177,7 +177,8 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"python": ('https://docs.python.org/3', None),
-                       "nmigen": ('https://nmigen.info/nmigen', 'latest')
+                       # argh this trademarked domain name is now cyber-squatted
+                       #"nmigen": ('https://nmigen.info/nmigen', 'latest')
                       }
 
 # -- Options for todo extension ----------------------------------------------
