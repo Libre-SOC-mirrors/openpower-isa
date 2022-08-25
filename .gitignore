@@ -5,5 +5,7 @@ dist
 *.vcd
 *.gtkw
 *.egg-info
+*.il
 /jit_test
 /jit_test.o
+/crtl
