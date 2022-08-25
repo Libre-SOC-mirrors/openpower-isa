@@ -38,6 +38,7 @@ build:
             python3-pip
             python3-setuptools
             python3-wheel
+            qemu-system-ppc
             tcl-dev
         - export PATH="$HOME/.local/bin:/usr/lib/ccache:$PATH"
         - export CCACHE_BASEDIR="$PWD"
