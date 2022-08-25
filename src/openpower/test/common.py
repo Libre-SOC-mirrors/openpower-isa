@@ -85,6 +85,8 @@ def skip_case_if(condition, reason):
 
 
 class TestAccumulatorBase:
+    __test__ = False  # pytest should ignore this class
+
     def __init__(self):
         self.__subtest_args = {}
 
@@ -139,6 +141,8 @@ class TestAccumulatorBase:
 
 
 class TestCase:
+    __test__ = False  # pytest should ignore this class
+
     def __init__(self, program, name, regs=None, sprs=None, cr=0, mem=None,
                  msr=0,
                  do_sim=True,
