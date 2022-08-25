@@ -8,6 +8,7 @@ from openpower.test.runner import TestRunnerBase
 
 # writing the test_caller invocation this way makes it work with pytest
 
+
 class TestSVP64UTF8Validation(TestRunnerBase):
     def __init__(self, test):
         assert test == 'test'
