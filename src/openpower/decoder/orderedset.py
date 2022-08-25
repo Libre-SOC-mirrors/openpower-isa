@@ -1,9 +1,10 @@
 # Originally from http://code.activestate.com/recipes/576694/
 # cut down to minimum
 
-import collections
+from collections.abc import MutableSet
 
-class OrderedSet(collections.MutableSet):
+
+class OrderedSet(MutableSet):
 
     def __init__(self, iterable=None):
         self.end = end = [] 

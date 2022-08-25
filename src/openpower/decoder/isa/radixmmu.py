@@ -13,7 +13,7 @@ related bugs:
 * https://bugs.libre-soc.org/show_bug.cgi?id=604
 """
 
-#from nmigen.back.pysim import Settle
+#from nmigen.sim import Settle
 from copy import copy
 from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)

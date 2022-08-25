@@ -1,5 +1,5 @@
 from nmigen import Module, Signal
-from nmigen.back.pysim import Simulator, Delay, Settle
+from nmigen.sim import Simulator, Delay, Settle
 import sys
 import getopt
 import struct

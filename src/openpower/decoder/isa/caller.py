@@ -14,7 +14,7 @@ related bugs:
 """
 
 import re
-from nmigen.back.pysim import Settle
+from nmigen.sim import Settle
 from functools import wraps
 from copy import copy, deepcopy
 from openpower.decoder.orderedset import OrderedSet

@@ -16,7 +16,7 @@ import astor
 import ast
 
 from openpower.decoder.power_decoder import create_pdecode
-from nmigen.back.pysim import Simulator, Delay
+from nmigen.sim import Simulator, Delay
 from nmigen import Module, Signal
 
 from openpower.decoder.pseudo.parser import GardenSnakeCompiler

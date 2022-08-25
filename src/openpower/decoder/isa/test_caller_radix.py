@@ -1,5 +1,5 @@
 from nmigen import Module, Signal
-#from nmigen.back.pysim import Simulator, Delay, Settle
+#from nmigen.sim import Simulator, Delay, Settle
 from nmutil.formaltest import FHDLTestCase
 import unittest
 from openpower.decoder.isa.caller import ISACaller

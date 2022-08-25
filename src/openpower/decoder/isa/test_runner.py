@@ -1,5 +1,5 @@
 from nmigen import Module, Signal
-from nmigen.back.pysim import Simulator, Settle
+from nmigen.sim import Simulator, Settle
 from openpower.decoder.isa.caller import ISACaller
 from openpower.decoder.power_decoder import create_pdecode
 from openpower.decoder.power_decoder2 import (PowerDecode2)
