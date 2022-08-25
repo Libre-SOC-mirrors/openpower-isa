@@ -75,15 +75,15 @@ def setvl(fields, Rc):
     (RT, RA, SVi, vf, vs, ms) = fields
     SVi -= 1
     return instruction(
-        (PO , 0 , 5 ),
-        (RT , 6 , 10),
-        (RA , 11, 15),
+        (PO, 0, 5),
+        (RT, 6, 10),
+        (RA, 11, 15),
         (SVi, 16, 22),
-        (ms , 23, 23),
-        (vs , 24, 24),
-        (vf , 25, 25),
-        (XO , 26, 30),
-        (Rc , 31, 31),
+        (ms, 23, 23),
+        (vs, 24, 24),
+        (vf, 25, 25),
+        (XO, 26, 30),
+        (Rc, 31, 31),
     )
 
 
@@ -105,15 +105,15 @@ def svstep(fields, Rc):
     (RT, SVi, vf) = fields
     SVi -= 1
     return instruction(
-        (PO , 0 , 5 ),
-        (RT , 6 , 10),
-        (0  , 11, 15),
+        (PO, 0, 5),
+        (RT, 6, 10),
+        (0, 11, 15),
         (SVi, 16, 22),
-        (0  , 23, 23),
-        (0  , 24, 24),
-        (vf , 25, 25),
-        (XO , 26, 30),
-        (Rc , 31, 31),
+        (0, 23, 23),
+        (0, 24, 24),
+        (vf, 25, 25),
+        (XO, 26, 30),
+        (Rc, 31, 31),
     )
 
 
@@ -137,13 +137,13 @@ def svshape(fields):
     SVyd -= 1
     SVzd -= 1
     return instruction(
-        (PO  , 0 , 5 ),
-        (SVxd, 6 , 10),
+        (PO, 0, 5),
+        (SVxd, 6, 10),
         (SVyd, 11, 15),
         (SVzd, 16, 20),
         (SVrm, 21, 24),
-        (vf  , 25, 25),
-        (XO  , 26, 31),
+        (vf, 25, 25),
+        (XO, 26, 31),
     )
 
 
@@ -165,15 +165,15 @@ def svindex(fields):
     (SVG, rmm, SVd, ew, yx, mm, sk) = fields
     SVd -= 1
     return instruction(
-        (PO , 0 , 5 ),
-        (SVG, 6 , 10),
+        (PO, 0, 5),
+        (SVG, 6, 10),
         (rmm, 11, 15),
         (SVd, 16, 20),
-        (ew , 21, 22),
-        (yx , 23, 23),
-        (mm , 24, 24),
-        (sk , 25, 25),
-        (XO , 26, 31),
+        (ew, 21, 22),
+        (yx, 23, 23),
+        (mm, 24, 24),
+        (sk, 25, 25),
+        (XO, 26, 31),
     )
 
 
@@ -194,16 +194,16 @@ def svremap(fields):
     XO = 0b111001
     (SVme, mi0, mi1, mi2, mo0, mo1, pst) = fields
     return instruction(
-        (PO  , 0 , 5 ),
-        (SVme, 6 , 10),
-        (mi0 , 11, 12),
-        (mi1 , 13, 14),
-        (mi2 , 15, 16),
-        (mo0 , 17, 18),
-        (mo1 , 19, 20),
-        (pst , 21, 21),
-        (0   , 22, 25),
-        (XO  , 26, 31),
+        (PO, 0, 5),
+        (SVme, 6, 10),
+        (mi0, 11, 12),
+        (mi1, 13, 14),
+        (mi2, 15, 16),
+        (mo0, 17, 18),
+        (mo1, 19, 20),
+        (pst, 21, 21),
+        (0, 22, 25),
+        (XO, 26, 31),
     )
 
 
@@ -222,12 +222,12 @@ def bmask(fields):
     XO = 0b010001
     (RT, RA, RB, bm, L) = fields
     return instruction(
-        (PO, 0 , 5 ),
-        (RT, 6 , 10),
+        (PO, 0, 5),
+        (RT, 6, 10),
         (RA, 11, 15),
         (RB, 16, 20),
         (bm, 21, 25),
-        (L , 26, 26),
+        (L, 26, 26),
         (XO, 27, 31),
     )
 
@@ -242,12 +242,12 @@ def fsins(fields, Rc):
     XO = 0b1000001110
     (FRT, FRB) = fields
     return instruction(
-        (PO , 0 , 5 ),
-        (FRT, 6 , 10),
-        (0  , 11, 15),
+        (PO, 0, 5),
+        (FRT, 6, 10),
+        (0, 11, 15),
         (FRB, 16, 20),
-        (XO , 21, 30),
-        (Rc , 31, 31),
+        (XO, 21, 30),
+        (Rc, 31, 31),
     )
 
 
@@ -261,12 +261,12 @@ def fcoss(fields, Rc):
     XO = 0b1000101110
     (FRT, FRB) = fields
     return instruction(
-        (PO , 0 , 5 ),
-        (FRT, 6 , 10),
-        (0  , 11, 15),
+        (PO, 0, 5),
+        (FRT, 6, 10),
+        (0, 11, 15),
         (FRB, 16, 20),
-        (XO , 21, 30),
-        (Rc , 31, 31),
+        (XO, 21, 30),
+        (Rc, 31, 31),
     )
 
 
@@ -280,13 +280,13 @@ def ternlogi(fields, Rc):
     XO = 0
     (RT, RA, RB, TLI) = fields
     return instruction(
-        (PO , 0 , 5 ),
-        (RT , 6 , 10),
-        (RA , 11, 15),
-        (RB , 16, 20),
+        (PO, 0, 5),
+        (RT, 6, 10),
+        (RA, 11, 15),
+        (RB, 16, 20),
         (TLI, 21, 28),
-        (XO , 29, 30),
-        (Rc , 31, 31),
+        (XO, 29, 30),
+        (Rc, 31, 31),
     )
 
 
@@ -323,8 +323,8 @@ def av(fields, XO, Rc):
     PO = 22
     (RT, RA, RB) = fields
     return instruction(
-        (PO, 0 , 5 ),
-        (RT, 6 , 10),
+        (PO, 0, 5),
+        (RT, 6, 10),
         (RA, 11, 15),
         (RB, 16, 20),
         (XO, 21, 30),
@@ -341,16 +341,16 @@ def fmvis(fields):
     XO = 0b00011
     (FRS, imm) = fields
     # first split imm into d1, d0 and d2. sigh
-    d2 = (imm & 1) # LSB (0)
-    d1 = (imm >> 1) & 0b11111 # bits 1-5
-    d0 = (imm >> 6) # MSBs 6-15
+    d2 = (imm & 1)  # LSB (0)
+    d1 = (imm >> 1) & 0b11111  # bits 1-5
+    d0 = (imm >> 6)  # MSBs 6-15
     return instruction(
-        (PO , 0 , 5),
-        (FRS, 6 , 10),
+        (PO, 0, 5),
+        (FRS, 6, 10),
         (d1,  11, 15),
         (d0,  16, 25),
-        (XO , 26, 30),
-        (d2 , 31, 31),
+        (XO, 26, 30),
+        (d2, 31, 31),
     )
 
 
@@ -363,27 +363,27 @@ def fishmv(fields):
     XO = 0b01011
     (FRS, imm) = fields
     # first split imm into d1, d0 and d2. sigh
-    d2 = (imm & 1) # LSB (0)
-    d1 = (imm >> 1) & 0b11111 # bits 1-5
-    d0 = (imm >> 6) # MSBs 6-15
+    d2 = (imm & 1)  # LSB (0)
+    d1 = (imm >> 1) & 0b11111  # bits 1-5
+    d0 = (imm >> 6)  # MSBs 6-15
     return instruction(
-        (PO , 0 , 5),
-        (FRS, 6 , 10),
+        (PO, 0, 5),
+        (FRS, 6, 10),
         (d1,  11, 15),
         (d0,  16, 25),
-        (XO , 26, 30),
-        (d2 , 31, 31),
+        (XO, 26, 30),
+        (d2, 31, 31),
     )
 
 
 CUSTOM_INSNS = {}
 for (name, hook) in (
-            ("setvl", setvl),
-            ("svstep", svstep),
-            ("fsins", fsins),
-            ("fcoss", fcoss),
-            ("ternlogi", ternlogi),
-        ):
+    ("setvl", setvl),
+    ("svstep", svstep),
+    ("fsins", fsins),
+    ("fcoss", fcoss),
+    ("ternlogi", ternlogi),
+):
     CUSTOM_INSNS[name] = functools.partial(hook, Rc=False)
     CUSTOM_INSNS[f"{name}."] = functools.partial(hook, Rc=True)
 CUSTOM_INSNS["bmask"] = bmask
@@ -394,28 +394,28 @@ CUSTOM_INSNS["fmvis"] = fmvis
 CUSTOM_INSNS["fishmv"] = fishmv
 
 for (name, imm, wide) in (
-            ("grev", False, False),
-            ("grevi", True, False),
-            ("grevw", False, True),
-            ("grevwi", True, True),
-        ):
+    ("grev", False, False),
+    ("grevi", True, False),
+    ("grevw", False, True),
+    ("grevwi", True, True),
+):
     CUSTOM_INSNS[name] = functools.partial(grev,
-        imm=("i" in name), wide=("w" in name), Rc=False)
+                                           imm=("i" in name), wide=("w" in name), Rc=False)
     CUSTOM_INSNS[f"{name}."] = functools.partial(grev,
-        imm=("i" in name), wide=("w" in name), Rc=True)
+                                                 imm=("i" in name), wide=("w" in name), Rc=True)
 
 for (name, XO) in (
-            ("maxs"   , 0b0111001110),
-            ("maxu"   , 0b0011001110),
-            ("minu"   , 0b0001001110),
-            ("mins"   , 0b0101001110),
-            ("absdu"  , 0b1011110110),
-            ("absds"  , 0b1001110110),
-            ("avgadd" , 0b1101001110),
-            ("absdacu", 0b1111110110),
-            ("absdacs", 0b0111110110),
-            ("cprop"  , 0b0110001110),
-        ):
+    ("maxs", 0b0111001110),
+    ("maxu", 0b0011001110),
+    ("minu", 0b0001001110),
+    ("mins", 0b0101001110),
+    ("absdu", 0b1011110110),
+    ("absds", 0b1001110110),
+    ("avgadd", 0b1101001110),
+    ("absdacu", 0b1111110110),
+    ("absdacs", 0b0111110110),
+    ("cprop", 0b0110001110),
+):
     CUSTOM_INSNS[name] = functools.partial(av, XO=XO, Rc=False)
     CUSTOM_INSNS[f"{name}."] = functools.partial(av, XO=XO, Rc=True)
 
@@ -567,7 +567,7 @@ def crf_extra(etype, regmode, field, extras):
                 (rname, str(extras[extra_idx]))
             # all good: encode as scalar
             sv_extra = sv_extra & 0b01
-        else: # vector
+        else:  # vector
             # range is CR0-CR127 in increments of 16
             assert sv_extra & 0b111 == 0, \
                 "vector CR %s cannot fit into EXTRA2 %s" % \
@@ -583,7 +583,7 @@ def crf_extra(etype, regmode, field, extras):
                 (rname, str(extras[extra_idx]))
             # all good: encode as scalar
             sv_extra = sv_extra & 0b11
-        else: # vector
+        else:  # vector
             # range is CR0-CR127 in increments of 8
             assert sv_extra & 0b11 == 0, \
                 "vector CR %s cannot fit into EXTRA3 %s" % \
@@ -667,7 +667,8 @@ class SVP64Asm:
         if v30b_op_orig not in svp64.instrs:
             raise Exception("opcode %s of '%s' not an svp64 instruction" %
                             (v30b_op, insn))
-        v30b_regs = isa.instr[v30b_op_orig].regs[0] # get regs info "RT, RA, RB"
+        # get regs info "RT, RA, RB"
+        v30b_regs = isa.instr[v30b_op_orig].regs[0]
         rm = svp64.instrs[v30b_op_orig]         # one row of the svp64 RM CSV
         log("v3.0B op", v30b_op, "Rc=1" if rc_mode else '')
         log("v3.0B regs", opcode, v30b_regs)
@@ -786,17 +787,17 @@ class SVP64Asm:
             # encode SV-CR 3-bit field into extra, v3.0field.
             # 3-bit is for things like BF and BFA
             elif rtype == 'CR_3bit':
-                sv_extra, field =  crf_extra(etype, regmode, field, extras)
+                sv_extra, field = crf_extra(etype, regmode, field, extras)
 
             # encode SV-CR 5-bit field into extra, v3.0field
             # 5-bit is for things like BA BB BC BT etc.
             # *sigh* this is the same as 3-bit except the 2 LSBs of the
             # 5-bit field are passed through unaltered.
             elif rtype == 'CR_5bit':
-                cr_subfield = field & 0b11 # record bottom 2 bits for later
+                cr_subfield = field & 0b11  # record bottom 2 bits for later
                 field = field >> 2         # strip bottom 2 bits
                 # use the exact same 3-bit function for the top 3 bits
-                sv_extra, field =  crf_extra(etype, regmode, field, extras)
+                sv_extra, field = crf_extra(etype, regmode, field, extras)
                 # reconstruct the actual 5-bit CR field (preserving the
                 # bottom 2 bits, unaltered)
                 field = (field << 2) | cr_subfield
