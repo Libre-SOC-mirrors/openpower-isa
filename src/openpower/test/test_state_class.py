@@ -12,7 +12,6 @@ related bugs:
 import unittest
 import random
 from openpower.test.state import SimState, state_factory
-from soc.simple.test.teststate import HDLState
 
 
 class TestStates(unittest.TestCase):

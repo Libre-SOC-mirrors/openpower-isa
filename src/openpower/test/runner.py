@@ -15,6 +15,7 @@ related bugs:
  * https://bugs.libre-soc.org/show_bug.cgi?id=686#c51
 """
 
+from unittest.mock import Mock
 from nmigen import Module, ClockSignal
 from copy import copy, deepcopy
 from pprint import pprint
@@ -30,7 +31,6 @@ from openpower.endian import bigendian
 
 from openpower.decoder.power_decoder2 import PowerDecode2
 
-from soc.config.test.test_loadstore import TestMemPspec
 from nmutil.util import wrap
 from openpower.test.wb_get import wb_get
 import openpower.test.wb_get as wbget
@@ -144,24 +144,24 @@ class TestRunnerBase(FHDLTestCase):
             ldst_ifacetype = 'test_bare_wb'
             imem_ifacetype = 'test_bare_wb'
 
-        pspec = TestMemPspec(ldst_ifacetype=ldst_ifacetype,
-                             imem_ifacetype=imem_ifacetype,
-                             addr_wid=64,
-                             mask_wid=8,
-                             XLEN=64,
-                             imem_reg_wid=64,
-                             # wb_data_width=32,
-                             use_pll=False,
-                             nocore=False,
-                             xics=False,
-                             gpio=False,
-                             regreduce=not self.allow_overlap,
-                             core_domain="sync",  # no alternative domain
-                             svp64=self.svp64,
-                             allow_overlap=self.allow_overlap,
-                             inorder=self.inorder,
-                             mmu=self.microwatt_mmu,
-                             reg_wid=64)
+        pspec = Mock(ldst_ifacetype=ldst_ifacetype,
+                     imem_ifacetype=imem_ifacetype,
+                     addr_wid=64,
+                     mask_wid=8,
+                     XLEN=64,
+                     imem_reg_wid=64,
+                     # wb_data_width=32,
+                     use_pll=False,
+                     nocore=False,
+                     xics=False,
+                     gpio=False,
+                     regreduce=not self.allow_overlap,
+                     core_domain="sync",  # no alternative domain
+                     svp64=self.svp64,
+                     allow_overlap=self.allow_overlap,
+                     inorder=self.inorder,
+                     mmu=self.microwatt_mmu,
+                     reg_wid=64)
 
         ###### SETUP PHASE #######
         # Determine the simulations needed and add to state_list
