@@ -1,3 +1,5 @@
+from enum import Enum
+from fnmatch import fnmatchcase
 import os
 import random
 from openpower.consts import FastRegsEnum, StateRegsEnum
@@ -88,10 +90,55 @@ def log_rand(n, min_val=1):
     return random.randint(min_val, (1 << logrange)-1)
 
 
-def log(*args, **kwargs):
-    """verbose printing, disabled if an ENV VAR "SILENCELOG" exists.
+class LogKind(Enum):
+    Default = "default"
+    InstrInOuts = "instr_in_outs"
+    SkipCase = "skip_case"
+
+
+def parse_log_env_vars():
+    silencelog = os.environ.get("SILENCELOG", None)
+    if silencelog is None:
+        return {k: False for k in LogKind}
+    silencelog = silencelog.lower().split(",")
+    for i, v in enumerate(silencelog):
+        silencelog[i] = v.strip()
+    retval = {k: True for k in LogKind}
+    if len(silencelog) > 1 and silencelog[-1] == "":
+        # allow trailing comma
+        silencelog.pop()
+    if len(silencelog) == 1:
+        if silencelog[0] in ("0", "false"):
+            for k in LogKind:
+                retval[k] = False
+            silencelog.pop()
+        if silencelog[0] in ("1", "true", ""):
+            silencelog.pop()
+    for v in silencelog:
+        silenced = True
+        if v.startswith("!"):
+            v = v[1:]
+            silenced = False
+        matches = False
+        for k in LogKind:
+            if fnmatchcase(k.value, v):
+                matches = True
+                retval[k] = silenced
+        assert matches, (f"SILENCELOG: {v!r} did not match any known LogKind: "
+                         f"LogKinds: {' '.join(i.value for i in LogKind)}")
+    for k, v in retval.items():
+        print(repr(k), "silenced" if v else "active")
+    return retval
+
+
+LOG_KINDS_SILENCED = parse_log_env_vars()
+
+
+def log(*args, kind=LogKind.Default, **kwargs):
+    """verbose printing, can be disabled by setting env var "SILENCELOG".
     """
-    if 'SILENCELOG' in os.environ:
+    # look up in a dict rather than os.environ so we don't
+    # trigger breakpoints on raising exceptions.
+    if LOG_KINDS_SILENCED[kind]:
         return
     print(*args, **kwargs)
-
