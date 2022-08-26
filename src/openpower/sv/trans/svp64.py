@@ -640,9 +640,9 @@ class SVP64Asm:
         custom_insn_hook = CUSTOM_INSNS.get(opcode)
         if custom_insn_hook is not None:
             fields = tuple(map(to_number, fields))
-            insn = custom_insn_hook(fields)
-            log(opcode, bin(insn))
-            yield ".long 0x%x" % insn
+            insn_num = custom_insn_hook(fields)
+            log(opcode, bin(insn_num))
+            yield ".long 0x%X # %s" % (insn_num, insn)
             return
 
         # identify if is a svp64 mnemonic
