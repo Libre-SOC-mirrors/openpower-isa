@@ -18,7 +18,7 @@ related bugs:
 from unittest.mock import Mock
 from nmigen import Module, ClockSignal
 from copy import copy, deepcopy
-from pprint import pprint
+from pprint import pformat
 
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
 # Also, check out the cxxsim nmigen branch, and latest yosys from git
@@ -35,6 +35,7 @@ from nmutil.util import wrap
 from openpower.test.wb_get import wb_get
 import openpower.test.wb_get as wbget
 from openpower.test.state import TestState, StateRunner, ExpectedState
+from openpower.util import log, LogKind
 
 
 class SimRunner(StateRunner):
@@ -77,8 +78,10 @@ class SimRunner(StateRunner):
         while index < len(instructions):
             ins, code = instructions[index]
 
-            print("sim instr: 0x{:X}".format(ins & 0xffffffff))
-            print(index, code)
+            log("sim instr: 0x{:X} pc=0x{:X}".format(ins & 0xffffffff,
+                                                     sim.pc.CIA.value),
+                kind=LogKind.InstrInOuts)
+            log(index, code, kind=LogKind.InstrInOuts)
 
             # set up simulated instruction (in simdec2)
             try:
@@ -88,7 +91,7 @@ class SimRunner(StateRunner):
             yield Settle()
 
             # call simulated operation
-            print("sim", code)
+            log("sim", code, kind=LogKind.InstrInOuts)
             yield from sim.execute_one()
             yield Settle()
             index = sim.pc.CIA.value//4
@@ -96,6 +99,8 @@ class SimRunner(StateRunner):
             # get sim register and memory TestState, add to list
             state = yield from TestState("sim", sim, dut, code)
             sim_states.append(state)
+
+        log(f"final pc: 0x{sim.pc.CIA.value:X}", kind=LogKind.InstrInOuts)
 
         if self.dut.allow_overlap:
             # get last state, at end of run
@@ -223,14 +228,14 @@ class TestRunnerBase(FHDLTestCase):
                     for runner in state_list:
                         yield from runner.prepare_for_test(test)
 
-                    print(test.name)
+                    log("running test: ", test.name, kind=LogKind.InstrInOuts)
                     program = test.program
-                    print("regs", test.regs)
-                    print("sprs", test.sprs)
-                    print("cr", test.cr)
-                    print("mem", test.mem)
-                    print("msr", test.msr)
-                    print("assem", program.assembly)
+                    log("regs", test.regs, kind=LogKind.InstrInOuts)
+                    log("sprs", test.sprs, kind=LogKind.InstrInOuts)
+                    log("cr", test.cr, kind=LogKind.InstrInOuts)
+                    log("mem", test.mem, kind=LogKind.InstrInOuts)
+                    log("msr", test.msr, kind=LogKind.InstrInOuts)
+                    log("assem", program.assembly, kind=LogKind.InstrInOuts)
                     gen = list(program.generate_instructions())
                     insncode = program.assembly.splitlines()
                     instructions = list(zip(gen, insncode))
@@ -280,27 +285,28 @@ class TestRunnerBase(FHDLTestCase):
                         last_sim = None  # err what are you doing??
 
                     if self.run_hdl:
-                        print("hdl_states")
+                        log("hdl_states")
                         for state in hdl_states:
-                            print(state)
+                            log(state)
 
-                    if self.run_sim:
-                        print("sim_states")
-                        for state in sim_states:
-                            print(state)
+                    # FIXME: commented until SimState has a __repr__
+                    # if self.run_sim:
+                    #     log("sim_states")
+                    #     for state in sim_states:
+                    #         log(state)
 
                     # compare the states
                     if self.run_hdl and self.run_sim:
                         # if allow_overlap is enabled, because allow_overlap
                         # can commit out-of-order, only compare the last ones
                         if self.allow_overlap:
-                            print("allow_overlap: truncating %d %d "
-                                  "states to last" % (len(sim_states),
-                                                      len(hdl_states)))
+                            log("allow_overlap: truncating %d %d "
+                                "states to last" % (len(sim_states),
+                                                    len(hdl_states)))
                             sim_states = sim_states[-1:]
                             hdl_states = hdl_states[-1:]
                             sim_states[-1].dump_state_tofile()
-                            print("allow_overlap: last hdl_state")
+                            log("allow_overlap: last hdl_state")
                             hdl_states[-1].dump_state_tofile()
                         for simstate, hdlstate in zip(sim_states, hdl_states):
                             simstate.compare(hdlstate)     # register check
@@ -503,8 +509,8 @@ class TestRunnerBase(FHDLTestCase):
         # extra emulated process
         self.default_mem = {}
         if self.rom is not None:
-            print("TestRunner with MMU ROM")
-            pprint(self.rom)
+            log("TestRunner with MMU ROM")
+            log(pformat(self.rom))
             dcache = hdlrun.issuer.core.fus.fus["mmu0"].alu.dcache
             icache = hdlrun.issuer.core.fus.fus["mmu0"].alu.icache
             self.default_mem = deepcopy(self.rom)
