@@ -37,6 +37,9 @@ Pseudo-code:
         else           MVL <- SVSTATE[0:6]
         # set or get VL
         if vs = 0                then VL <- SVSTATE[7:13]
+        else if _RA != 0         then
+            if (RA) >u 0b1111111 then VL <- 0b1111111
+            else                      VL <- (RA)[57:63]
         else if _RA != 0         then VL <- (RA)[57:63]
         else if _RT = 0          then VL <- VLimm[0:6]
         else if CTR >u 0b1111111 then VL <- 0b1111111
