@@ -26,12 +26,12 @@ SVL-Form
 
 Pseudo-code:
 
+    overflow <- 0b0
     if (vf & (¬vs) & ¬(ms)) = 1 then
         step <- SVSTATE_NEXT(SVi, 0b0)
         if _RT != 0 then
            GPR(_RT) <- [0]*57 || step
     else
-        overflow <- 0b0
         VLimm <- SVi + 1
         # set or get MVL
         if ms = 1 then MVL <- VLimm[0:6]

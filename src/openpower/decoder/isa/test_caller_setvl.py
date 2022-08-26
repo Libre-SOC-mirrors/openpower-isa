@@ -367,6 +367,40 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 0)
             self.assertEqual(CR0[CRFields.SO], 0)
 
+    def test_setvl_ctr_1_rc1(self):
+        """setvl CTR mode, with Rc=1, testing if VL and MVL are over-ridden
+        and CR0 set correctly
+        """
+        lst = SVP64Asm(["setvl. 1, 0, 10, 0, 1, 1",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2), want to see if these get changed
+        svstate = SVP64State()
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+        sprs = {'CTR': 5,
+               }
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_sprs=sprs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            self.assertEqual(sim.svstate.vl, 5)
+            self.assertEqual(sim.svstate.maxvl, 10)
+            print("      gpr1", sim.gpr(1))
+            self.assertEqual(sim.gpr(1), SelectableInt(5, 64))
+
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
     def test_setvl_ctr_1(self):
         """setvl CTR mode, testing if VL and MVL are over-ridden
         """
@@ -392,6 +426,47 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.maxvl, 10)
             print("      gpr1", sim.gpr(1))
             self.assertEqual(sim.gpr(1), SelectableInt(5, 64))
+
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
+    def test_setvl_ctr_2_rc1(self):
+        """setvl Rc=1, CTR large, testing if VL and MVL are over-ridden,
+        check if CR0.SO gets set
+        """
+        lst = SVP64Asm(["setvl. 1, 0, 10, 0, 1, 1",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2), want to see if these get changed
+        svstate = SVP64State()
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+        sprs = {'CTR': 0x1000000000,
+               }
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_sprs=sprs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            self.assertEqual(sim.svstate.vl, 10)
+            self.assertEqual(sim.svstate.maxvl, 10)
+            print("      gpr1", sim.gpr(1))
+            self.assertEqual(sim.gpr(1), SelectableInt(10, 64))
+
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 1)
 
     def test_setvl_ctr_2(self):
         """setvl CTR large, testing if VL and MVL are over-ridden
