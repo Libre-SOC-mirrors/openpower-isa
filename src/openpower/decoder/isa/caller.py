@@ -48,7 +48,7 @@ from openpower.decoder.isa.svshape import SVSHAPE
 from openpower.decoder.isa.svstate import SVP64State
 
 
-from openpower.util import log
+from openpower.util import LogKind, log
 
 from collections import namedtuple
 import math
@@ -1305,7 +1305,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if self.is_svp64_mode and vl == 0:
             self.pc.update(self.namespace, self.is_svp64_mode)
             log("SVP64: VL=0, end of call", self.namespace['CIA'],
-                self.namespace['NIA'])
+                self.namespace['NIA'], kind=LogKind.InstrInOuts)
             return
 
         # for when SVREMAP is active, using pre-arranged schedule.
@@ -1518,8 +1518,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             log('reading reg %s %s' % (name, str(regnum)), is_vec)
             if name in fregs:
                 reg_val = SelectableInt(self.fpr(regnum))
+                log(f"read reg f{regnum}: 0x{reg_val.value:X}",
+                    kind=LogKind.InstrInOuts)
             elif name is not None:
                 reg_val = SelectableInt(self.gpr(regnum))
+                log(f"read reg r{regnum}: 0x{reg_val.value:X}",
+                    kind=LogKind.InstrInOuts)
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)
             reg_val = 0
@@ -1573,11 +1577,17 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if name in ['CA', 'CA32']:
             if carry_en:
                 log("writing %s to XER" % name, output)
+                log(f"write XER field {name}: "
+                    f"0x{output.value % (1 << 64):X}",
+                    kind=LogKind.InstrInOuts)
                 self.spr['XER'][XER_bits[name]] = output.value
             else:
                 log("NOT writing %s to XER" % name, output)
         elif name in info.special_regs:
             log('writing special %s' % name, output, special_sprs)
+            log(f"write reg {name}: "
+                f"0x{output.value % (1 << 64):X}",
+                kind=LogKind.InstrInOuts)
             if name in special_sprs:
                 self.spr[name] = output
             else:
@@ -1599,11 +1609,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 output = SelectableInt(0, 256)
             else:
                 if name in fregs:
-                    ftype = 'fpr'
+                    reg_prefix = 'f'
                 else:
-                    ftype = 'gpr'
-                log('writing %s %s %s' % (ftype, regnum, str(output)),
-                    is_vec)
+                    reg_prefix = 'r'
+                log(f"write reg {reg_prefix}{regnum}: "
+                    f"0x{output.value % (1 << 64):X}",
+                    kind=LogKind.InstrInOuts)
             if output.bits > 64:
                 output = SelectableInt(output.value, 64)
             if name in fregs:
