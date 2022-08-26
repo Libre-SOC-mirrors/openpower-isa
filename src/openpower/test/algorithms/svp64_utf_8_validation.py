@@ -148,7 +148,8 @@ def svp64_utf8_validation_asm():
     return [
         # input addr in r3, input length in r4
         f"setvl 0, 0, {prev_bytes_sz}, 0, 1, 1",  # set VL to prev_bytes_sz
-        f"sv.addi *{prev_bytes}, 0, 0",  # clear prev bytes
+        # clear what will go into prev bytes
+        f"sv.addi *{cur_bytes + vec_sz - prev_bytes_sz}, 0, 0",
         f"addis 6, 0, {FIRST_BYTE_HIGH_NIBBLE_LUT_ADDR >> 16}",
         f"ori 6, 6, {FIRST_BYTE_HIGH_NIBBLE_LUT_ADDR & 0xFFFF}",
         f"addis 7, 0, {FIRST_BYTE_LOW_NIBBLE_LUT_ADDR >> 16}",
@@ -165,15 +166,15 @@ def svp64_utf8_validation_asm():
         f"sv.addi *{cur_bytes}, 0, 0",  # clear cur bytes
         f"setvl. 5, 4, {vec_sz}, 0, 1, 1",  # set VL to min(vec_sz, r4)
         # if no bytes left to load, run final check
-        f"bc 12, 2, final_check",  # beq final_check
+        f"bc 12, 2, final_check # beq final_check",
         f"sv.lbz/els *{cur_bytes}, 0({inp_addr})",  # load bytes
         f"setvl 0, 0, {vec_sz}, 0, 1, 1",  # set VL to vec_sz
         # now we can operate on vec_sz byte chunks, branch to `fail` if they
         # don't pass validation.
 
         # get high nibbles of input shifted by 1 byte
-        # srdi *{temp_vec2}, *{cur_bytes - 1}, 4
-        f"sv.rldicl *{temp_vec2}, *{cur_bytes - 1}, {64 - 4}, 4",
+        (f"sv.rldicl *{temp_vec2}, *{cur_bytes - 1}, {64 - 4}, 4"
+         f" # sv.srdi *{temp_vec2}, *{cur_bytes - 1}, 4"),
         # look-up nibbles in table, writing to error flags
         f"sv.lbzx *{temp_vec1}, 6, *{temp_vec2}",
 
@@ -203,7 +204,7 @@ def svp64_utf8_validation_asm():
         f"addi 9, 0, {UTF8FirstTwoBytesError.AllActualErrors}",
         f"sv.and 9, {temp_vec2_end}, 9",
         f"cmpli 0, 1, 9, 0",
-        f"bc 4, 2, fail",  # bne fail
+        f"bc 4, 2, fail # bne fail",
 
         # check for the correct number of continuation bytes for 3/4-byte cases
         # set bit 0x80 (TwoContinuations) if input is >= 0xE0
@@ -221,37 +222,43 @@ def svp64_utf8_validation_asm():
         f"add 3, 3, 5",  # increment pointer
         f"sub 4, 4, 5",  # decrement count
         f"sv.andi. {temp_vec2}, {temp_vec2}, {0x80}",  # check if any errors
-        f"bc 12, 2, loop",  # beq loop  # if no errors loop, else fail
+        f"bc 12, 2, loop # beq loop",  # if no errors loop, else fail
         f"fail:",
         f"addi 3, 0, 0",
-        f"blr",
+        f"bclr 20, 0, 0 # blr",
         f"final_check:",
+
+        # need to set VL to something non-zero otherwise all our scalar
+        # instructions don't run --- I definitely don't like that ... scalar
+        # instructions should run regardless of VL.
+        f"setvl 0, 0, 1, 0, 1, 1",  # set VL to 1
+
         # check if prev input is incomplete
         # check if byte 3 bytes from end needed 4 bytes
         f"sv.cmpli 0, 1, {cur_bytes - 3}, {0xF0}",
-        f"bc 4, 0, fail",  # bge fail
+        f"bc 4, 0, fail # bge fail",
         # check if byte 2 bytes from end needed 3 bytes
         f"sv.cmpli 0, 1, {cur_bytes - 2}, {0xE0}",
-        f"bc 4, 0, fail",  # bge fail
+        f"bc 4, 0, fail # bge fail",
         # check if byte 1 bytes from end needed 2 bytes
         f"sv.cmpli 0, 1, {cur_bytes - 1}, {0xC0}",
-        f"bc 4, 0, fail",  # bge fail
+        f"bc 4, 0, fail # bge fail",
         f"addi 3, 0, 1",
-        f"blr",
+        f"bclr 20, 0, 0 # blr",
     ]
 
 
 def assemble(instructions, start_pc=0):
     pc = start_pc
-    macros = {}
+    labels = {}
     out_instructions = []
     for instr in instructions:
         m = re.fullmatch(r" *([a-zA-Z0-9_]+): *(#.*)?", instr)
         if m is not None:
             name = m.group(1)
-            if name in macros:
+            if name in labels:
                 raise ValueError(f"label {name!r} defined multiple times")
-            macros[name] = str(pc)
+            labels[name] = pc
             continue
         m = re.fullmatch(r" *sv\.[a-zA-Z0-9_].*", instr)
         if m is not None:
@@ -259,8 +266,8 @@ def assemble(instructions, start_pc=0):
         else:
             pc += 4
         out_instructions.append(instr)
-    for k, v in macros.items():
-        out_instructions.append(f".set {k}, {v}")
+    for k, v in labels.items():
+        out_instructions.append(f".set {k}, . - 0x{pc - v:X} # 0x{v:X}")
     return Program(list(SVP64Asm(out_instructions)), 0)
 
 
@@ -288,7 +295,7 @@ class SVP64UTF8ValidationTestCase(TestAccumulatorBase):
         e = ExpectedState(pc=stop_at_pc, int_regs=4, crregs=0, fp_regs=0)
         e.intregs[:3] = initial_regs[:3]
         e.intregs[3] = expected
-        with self.subTest(data=repr(data), expected=expected):
+        with self.subTest(data=data, expected=expected):
             self.add_case(self.program, initial_regs, initial_mem=initial_mem,
                         initial_sprs=initial_sprs, stop_at_pc=stop_at_pc,
                         expected=e,
@@ -307,7 +314,6 @@ class SVP64UTF8ValidationTestCase(TestAccumulatorBase):
     def case_empty(self):
         self.run_case(b"")
 
-    @skip_case
     def case_nul(self):
         self.run_cases("\u0000")  # min 1-byte
 
