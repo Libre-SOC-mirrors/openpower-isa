@@ -78,10 +78,14 @@ class SimRunner(StateRunner):
         while index < len(instructions):
             ins, code = instructions[index]
 
-            log("sim instr: 0x{:X} pc=0x{:X}".format(ins & 0xffffffff,
-                                                     sim.pc.CIA.value),
+            # extra new-line so it's easier to visually separate each
+            # instruction in output
+            log(f"\n0x{sim.pc.CIA.value:04X}: {ins % (1 << 32):08X} {code}",
                 kind=LogKind.InstrInOuts)
-            log(index, code, kind=LogKind.InstrInOuts)
+
+            log("sim instr: 0x{:X} pc=0x{:X}".format(ins & 0xffffffff,
+                                                     sim.pc.CIA.value))
+            log(index, code)
 
             # set up simulated instruction (in simdec2)
             try:
@@ -91,7 +95,7 @@ class SimRunner(StateRunner):
             yield Settle()
 
             # call simulated operation
-            log("sim", code, kind=LogKind.InstrInOuts)
+            log("sim", code)
             yield from sim.execute_one()
             yield Settle()
             index = sim.pc.CIA.value//4
@@ -228,14 +232,43 @@ class TestRunnerBase(FHDLTestCase):
                     for runner in state_list:
                         yield from runner.prepare_for_test(test)
 
-                    log("running test: ", test.name, kind=LogKind.InstrInOuts)
+                    log("running test: ", test.name, test.subtest_args,
+                        kind=LogKind.InstrInOuts)
                     program = test.program
-                    log("regs", test.regs, kind=LogKind.InstrInOuts)
+
+                    def format_regs(regs):
+                        # type: (list[int]) -> str
+                        out = []
+                        for i, v in enumerate(regs):
+                            values = ""
+                            for sz in (32, 64):
+                                for signed in ("u", "i"):
+                                    value = v % (1 << sz)
+                                    if signed == "i" and \
+                                            value & (1 << (sz - 1)) != 0:
+                                        value -= 1 << sz
+                                    values += f" {signed}{sz}:{value}"
+                            out.append(f"r{i} = 0x{v:X} {values}")
+                        return "\n".join(out)
+                    log("regs:", format_regs(test.regs),
+                        kind=LogKind.InstrInOuts)
                     log("sprs", test.sprs, kind=LogKind.InstrInOuts)
                     log("cr", test.cr, kind=LogKind.InstrInOuts)
                     log("mem", test.mem, kind=LogKind.InstrInOuts)
                     log("msr", test.msr, kind=LogKind.InstrInOuts)
-                    log("assem", program.assembly, kind=LogKind.InstrInOuts)
+
+                    def format_assembly(assembly):
+                        # type: (str) -> str
+                        pc = 0
+                        out = []
+                        for line in assembly.splitlines():
+                            out.append(f"pc=0x{pc:04X}: {line}")
+                            if not line.startswith(".set ") and \
+                                    line.partition('#')[0].strip() != "":
+                                pc += 4
+                        return "\n".join(out)
+                    log("assembly:\n" + format_assembly(program.assembly),
+                        kind=LogKind.InstrInOuts)
                     gen = list(program.generate_instructions())
                     insncode = program.assembly.splitlines()
                     instructions = list(zip(gen, insncode))
