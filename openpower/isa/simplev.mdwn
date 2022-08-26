@@ -29,7 +29,7 @@ Pseudo-code:
     if (vf & (¬vs) & ¬(ms)) = 1 then
         step <- SVSTATE_NEXT(SVi, 0b0)
         if _RT != 0 then
-           RT <- [0]*57 || step
+           GPR(_RT) <- [0]*57 || step
     else
         overflow <- 0b0
         VLimm <- SVi + 1
@@ -56,7 +56,7 @@ Pseudo-code:
         SVSTATE[0:6] <- MVL
         SVSTATE[7:13] <- VL
         if _RT != 0 then
-           RT <- [0]*57 || VL
+           GPR(_RT) <- [0]*57 || VL
         if ((¬vs) & ¬(ms)) = 0 then
             # set requested Vertical-First mode, clear persist
             SVSTATE[63] <- vf

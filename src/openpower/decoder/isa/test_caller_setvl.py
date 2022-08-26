@@ -220,6 +220,48 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 1)
             self.assertEqual(CR0[CRFields.SO], 0)
 
+    def test_5_setvl_rt0_rc1(self):
+        """odd one. Rc=1, RT=0, RA!=0, so RT does not get set, but VL does.
+        confirms that when Rc=1 and RT is unmodified that CR0 still is updated
+        """
+        lst = SVP64Asm(["setvl. 0, 4, 5, 0, 1, 1",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
+        # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
+        svstate = SVP64State()
+        svstate.maxvl = 5 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0] * 32
+        initial_regs[4] = 127 # overlimit, should set CR0.SO=1, and CR0.GT=1
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_regs=initial_regs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate.vfirst))
+            self.assertEqual(sim.svstate.vl, 5)
+            self.assertEqual(sim.svstate.maxvl, 5)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            self.assertEqual(sim.svstate.vfirst, 0)
+            print("      gpr0", sim.gpr(0))
+            self.assertEqual(sim.gpr(0), SelectableInt(0, 64)) # unmodified
+            print("      gpr4", sim.gpr(4))
+            self.assertEqual(sim.gpr(4), SelectableInt(127, 64)) # unmodified
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 1)
+
     def test_svstep_1(self):
         lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1", # actual setvl (VF mode)
                         "setvl 0, 0, 1, 1, 0, 0", # svstep

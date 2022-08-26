@@ -1440,7 +1440,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 rc_en = yield self.dec2.e.do.rc.rc
         if rc_en and ins_name not in ['svstep']:
             regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
-            self.handle_comparison(results, regnum, overflow)
+            cmps = results
+            # hang on... for `setvl` actually you want to test SVSTATE.VL
+            if ins_name == 'setvl':
+                vl = results[0].vl
+                cmps = (SelectableInt(vl, 64), overflow,)
+            self.handle_comparison(cmps, regnum, overflow)
 
         # any modified return results?
         if info.write_regs:
