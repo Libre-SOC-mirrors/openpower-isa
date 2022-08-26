@@ -622,8 +622,9 @@ class SVP64Asm:
         macros.update(self.macros)
         isa = self.isa
         svp64 = self.svp64
+        insn_no_comments = insn.partition('#')[0]
         # find first space, to get opcode
-        ls = insn.split(' ')
+        ls = insn_no_comments.split(' ')
         opcode = ls[0]
         # now find opcode fields
         fields = ''.join(ls[1:]).split(',')
