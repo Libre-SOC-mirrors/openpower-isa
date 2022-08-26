@@ -23,21 +23,13 @@ import os
 import sys
 from collections import OrderedDict
 
-from openpower.decoder.isa.caller import (SVP64PrefixFields, SV64P_MAJOR_SIZE,
-                                          SV64P_PID_SIZE, SVP64RMFields,
-                                          SVP64RM_EXTRA2_SPEC_SIZE,
-                                          SVP64RM_EXTRA3_SPEC_SIZE,
-                                          SVP64RM_MODE_SIZE,
-                                          SVP64RM_SMASK_SIZE,
-                                          SVP64RM_MMODE_SIZE,
-                                          SVP64RM_MASK_SIZE,
-                                          SVP64RM_SUBVL_SIZE,
-                                          SVP64RM_EWSRC_SIZE,
-                                          SVP64RM_ELWIDTH_SIZE)
 from openpower.decoder.pseudo.pagereader import ISA
 from openpower.decoder.power_svp64 import SVP64RM, get_regtype, decode_extra
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.consts import SVP64MODE
+from openpower.decoder.power_insn import SVP64Instruction
+from openpower.decoder.power_insn import Database
+from openpower.decoder.power_enums import find_wiki_dir
 
 # for debug logging
 from openpower.util import log
@@ -833,8 +825,11 @@ class SVP64Asm:
         log("new v3.0B fields", v30b_op, v30b_newfields)
         log("extras", extras)
 
-        # rright.  now we have all the info. start creating SVP64 RM
-        svp64_rm = SVP64RMFields()
+        # rright. now we have all the info. start creating SVP64 instruction.
+        db = Database(find_wiki_dir())
+        svp64_insn = SVP64Instruction.pair(prefix=0, suffix=0)
+        svp64_prefix = svp64_insn.prefix
+        svp64_rm = svp64_insn.prefix.rm
 
         # begin with EXTRA fields
         for idx, sv_extra in extras.items():
@@ -845,11 +840,9 @@ class SVP64Asm:
                 continue
             srcdest, idx, duplicate = idx
             if etype == 'EXTRA2':
-                svp64_rm.extra2[idx].eq(
-                    SelectableInt(sv_extra, SVP64RM_EXTRA2_SPEC_SIZE))
+                svp64_rm.extra2[idx] = sv_extra
             else:
-                svp64_rm.extra3[idx].eq(
-                    SelectableInt(sv_extra, SVP64RM_EXTRA3_SPEC_SIZE))
+                svp64_rm.extra3[idx] = sv_extra
 
         # identify if the op is a LD/ST. the "blegh" way. copied
         # from power_enums.  TODO, split the list _insns down.
@@ -1202,25 +1195,25 @@ class SVP64Asm:
         # now put into svp64_rm
         mode |= sv_mode
         # mode: bits 19-23
-        svp64_rm.mode.eq(SelectableInt(mode, SVP64RM_MODE_SIZE))
+        svp64_rm.mode = mode
 
         # put in predicate masks into svp64_rm
         if ptype == '2P':
             # source pred: bits 16-18
-            svp64_rm.smask.eq(SelectableInt(smask, SVP64RM_SMASK_SIZE))
+            svp64_rm.smask = smask
         # mask mode: bit 0
-        svp64_rm.mmode.eq(SelectableInt(mmode, SVP64RM_MMODE_SIZE))
+        svp64_rm.mmode = mmode
         # 1-pred: bits 1-3
-        svp64_rm.mask.eq(SelectableInt(pmask, SVP64RM_MASK_SIZE))
+        svp64_rm.mask = pmask
 
         # and subvl: bits 8-9
-        svp64_rm.subvl.eq(SelectableInt(subvl, SVP64RM_SUBVL_SIZE))
+        svp64_rm.subvl = subvl
 
         # put in elwidths
         # srcwid: bits 6-7
-        svp64_rm.ewsrc.eq(SelectableInt(srcwid, SVP64RM_EWSRC_SIZE))
+        svp64_rm.ewsrc = srcwid
         # destwid: bits 4-5
-        svp64_rm.elwidth.eq(SelectableInt(destwid, SVP64RM_ELWIDTH_SIZE))
+        svp64_rm.elwidth = destwid
 
         # nice debug printout. (and now for something completely different)
         # https://youtu.be/u0WOIwlXE9g?t=146
@@ -1247,11 +1240,9 @@ class SVP64Asm:
             log("    smask  16-17:", bin(smask))
         log()
 
-        # first, construct the prefix from its subfields
-        svp64_prefix = SVP64PrefixFields()
-        svp64_prefix.major.eq(SelectableInt(0x1, SV64P_MAJOR_SIZE))
-        svp64_prefix.pid.eq(SelectableInt(0b11, SV64P_PID_SIZE))
-        svp64_prefix.rm.eq(svp64_rm)
+        # update prefix PO and ID (aka PID)
+        svp64_prefix.PO = 0x1
+        svp64_prefix.id = 0b11
 
         # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
         rc = '.' if rc_mode else ''
