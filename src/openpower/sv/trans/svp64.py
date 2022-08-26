@@ -660,7 +660,7 @@ class SVP64Asm:
         else:
             v30b_op = v30b_op_orig
 
-        # look up the 32-bit op (original, with "," if it has it)
+        # look up the 32-bit op (original, with "." if it has it)
         if v30b_op_orig not in isa.instr:
             raise Exception("opcode %s of '%s' not supported" %
                             (v30b_op_orig, insn))
