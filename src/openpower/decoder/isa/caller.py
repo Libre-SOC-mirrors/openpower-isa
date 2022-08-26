@@ -1435,7 +1435,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if not self.is_svp64_mode or not pred_dst_zero:
             if hasattr(self.dec2.e.do, "rc"):
                 rc_en = yield self.dec2.e.do.rc.rc
-        if rc_en and ins_name not in ['svstep']:
+        if rc_en and ins_name not in ['svstep', 'setvl']:
             regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
             self.handle_comparison(results, regnum)
 

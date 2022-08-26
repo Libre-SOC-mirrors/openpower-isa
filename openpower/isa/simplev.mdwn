@@ -30,6 +30,10 @@ Pseudo-code:
         step <- SVSTATE_NEXT(SVi, 0b0)
         if _RT != 0 then
            GPR(_RT) <- [0]*57 || step
+        if Rc = 1 then
+            if step = 0 then c <- 0b001
+            else c <- 0b010
+            CR[32:35] <- c || XER[SO]
     else
         VLimm <- SVi + 1
         # set or get MVL
@@ -37,7 +41,9 @@ Pseudo-code:
         else           MVL <- SVSTATE[0:6]
         # set or get VL
         if vs = 0                then VL <- SVSTATE[7:13]
-        else if _RA != 0         then VL <- (RA)[57:63]
+        else if _RA != 0         then
+            if (RA) >u 0b1111111 then VL <- 0b1111111
+            else VL <- (RA)[57:63]
         else if _RT = 0          then VL <- VLimm[0:6]
         else if CTR >u 0b1111111 then VL <- 0b1111111
         else                          VL <- CTR[57:63]
@@ -52,6 +58,10 @@ Pseudo-code:
             # set requested Vertical-First mode, clear persist
             SVSTATE[63] <- vf
             SVSTATE[62] <- 0b0
+        if Rc = 1 then
+            if VL = 0 then c <- 0b001
+            else c <- 0b010
+            CR[32:35] <- c || XER[SO]
 
 Special Registers Altered:
 
