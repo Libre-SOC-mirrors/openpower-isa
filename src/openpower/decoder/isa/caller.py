@@ -935,7 +935,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         so = so | ov
         self.spr['XER'][XER_bits['SO']] = so
 
-    def handle_comparison(self, outputs, cr_idx=0):
+    def handle_comparison(self, outputs, cr_idx=0, overflow=None):
         out = outputs[0]
         assert isinstance(out, SelectableInt), \
             "out zero not a SelectableInt %s" % repr(outputs)
@@ -951,7 +951,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         positive = SelectableInt(out > 0, 1)
         negative = SelectableInt(out < 0, 1)
         SO = self.spr['XER'][XER_bits['SO']]
-        log("handle_comparison SO", SO)
+        log("handle_comparison SO overflow", SO, overflow)
+        if overflow is not None and overflow == 1:
+            SO = SelectableInt(1, 1)
         cr_field = selectconcat(negative, positive, zero, SO)
         log("handle_comparison cr_field", self.cr, cr_idx, cr_field)
         self.crl[cr_idx].eq(cr_field)
@@ -1412,14 +1414,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if carry_en:
             yield from self.handle_carry_(inputs, results, already_done)
 
+        # check if one of the regs was named "overflow"
+        overflow = None
+        if info.write_regs:
+            for name, output in zip(output_names, results):
+                if name == 'overflow':
+                    overflow = output
+
         if not self.is_svp64_mode:  # yeah just no. not in parallel processing
             # detect if overflow was in return result
-            overflow = None
-            if info.write_regs:
-                for name, output in zip(output_names, results):
-                    if name == 'overflow':
-                        overflow = output
-
             if hasattr(self.dec2.e.do, "oe"):
                 ov_en = yield self.dec2.e.do.oe.oe
                 ov_ok = yield self.dec2.e.do.oe.ok
@@ -1437,7 +1440,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 rc_en = yield self.dec2.e.do.rc.rc
         if rc_en and ins_name not in ['svstep']:
             regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
-            self.handle_comparison(results, regnum)
+            self.handle_comparison(results, regnum, overflow)
 
         # any modified return results?
         if info.write_regs:

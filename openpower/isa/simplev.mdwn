@@ -31,6 +31,7 @@ Pseudo-code:
         if _RT != 0 then
            RT <- [0]*57 || step
     else
+        overflow <- 0b0
         VLimm <- SVi + 1
         # set or get MVL
         if ms = 1 then MVL <- VLimm[0:6]
@@ -38,14 +39,19 @@ Pseudo-code:
         # set or get VL
         if vs = 0                then VL <- SVSTATE[7:13]
         else if _RA != 0         then
-            if (RA) >u 0b1111111 then VL <- 0b1111111
+            if (RA) >u 0b1111111 then
+                VL <- 0b1111111
+                overflow <- 0b1
             else                      VL <- (RA)[57:63]
         else if _RA != 0         then VL <- (RA)[57:63]
         else if _RT = 0          then VL <- VLimm[0:6]
-        else if CTR >u 0b1111111 then VL <- 0b1111111
+        else if CTR >u 0b1111111 then
+            VL <- 0b1111111
+            overflow <- 0b1
         else                          VL <- CTR[57:63]
         # limit VL to within MVL
         if VL >u MVL then
+            overflow <- 0b1
             VL <- MVL
         SVSTATE[0:6] <- MVL
         SVSTATE[7:13] <- VL

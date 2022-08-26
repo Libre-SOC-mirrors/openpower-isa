@@ -97,6 +97,129 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 1)
             self.assertEqual(CR0[CRFields.SO], 0)
 
+    def test_3_setvl_overflow_rc1(self):
+        lst = SVP64Asm(["setvl. 5, 4, 5, 0, 1, 1",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
+        # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
+        svstate = SVP64State()
+        svstate.maxvl = 5 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0] * 32
+        initial_regs[4] = 1000 # much greater than MAXVL
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_regs=initial_regs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate.vfirst))
+            self.assertEqual(sim.svstate.vl, 5)
+            self.assertEqual(sim.svstate.maxvl, 5)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            self.assertEqual(sim.svstate.vfirst, 0)
+            print("      gpr4", sim.gpr(4))
+            self.assertEqual(sim.gpr(4), SelectableInt(1000, 64)) # unmodified
+            print("      gpr5", sim.gpr(5))
+            self.assertEqual(sim.gpr(5), SelectableInt(5, 64)) # equal to MAXVL
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 1)
+
+    def test_4_setvl_max_overflow_rc1(self):
+        """this should set overflow even though VL gets set to MAXVL
+        at its limit of 127 (0b1111111)
+        """
+        lst = SVP64Asm(["setvl. 5, 4, 127, 0, 1, 1",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
+        # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
+        svstate = SVP64State()
+        svstate.maxvl = 5 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0] * 32
+        initial_regs[4] = 1000 # much greater than MAXVL
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_regs=initial_regs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate.vfirst))
+            self.assertEqual(sim.svstate.vl, 127)
+            self.assertEqual(sim.svstate.maxvl, 127)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            self.assertEqual(sim.svstate.vfirst, 0)
+            print("      gpr4", sim.gpr(4))
+            self.assertEqual(sim.gpr(4), SelectableInt(1000, 64)) # unmodified
+            print("      gpr5", sim.gpr(5))
+            self.assertEqual(sim.gpr(5), SelectableInt(127, 64)) # eq. MAXVL
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 1)
+
+    def test_5_setvl_max_rc1(self):
+        """this should not set when VL gets set to MAXVL
+        at its limit of 127 (0b1111111)
+        """
+        lst = SVP64Asm(["setvl. 5, 4, 127, 0, 1, 1",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
+        # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
+        svstate = SVP64State()
+        svstate.maxvl = 5 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0] * 32
+        initial_regs[4] = 127 # exactly equal to MAXVL
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_regs=initial_regs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate.vfirst))
+            self.assertEqual(sim.svstate.vl, 127)
+            self.assertEqual(sim.svstate.maxvl, 127)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            self.assertEqual(sim.svstate.vfirst, 0)
+            print("      gpr4", sim.gpr(4))
+            self.assertEqual(sim.gpr(4), SelectableInt(127, 64)) # unmodified
+            print("      gpr5", sim.gpr(5))
+            self.assertEqual(sim.gpr(5), SelectableInt(127, 64)) # eq. MAXVL
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 1)
+            self.assertEqual(CR0[CRFields.SO], 0)
+
     def test_svstep_1(self):
         lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1", # actual setvl (VF mode)
                         "setvl 0, 0, 1, 1, 0, 0", # svstep
