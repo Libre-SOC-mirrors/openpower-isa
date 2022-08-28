@@ -19,11 +19,11 @@ from functools import wraps
 from copy import copy, deepcopy
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.selectable_int import (
-    SelectableIntMapping,
     FieldSelectableInt,
     SelectableInt,
     selectconcat,
 )
+from openpower.decoder.power_insn import SVP64Instruction
 from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
                                            insns, MicrOp,
                                            In1Sel, In2Sel, In3Sel,
@@ -256,55 +256,6 @@ class PC:
         self.update_nia(is_svp64)
         namespace['CIA'] = self.CIA
         namespace['NIA'] = self.NIA
-
-
-# SVP64 ReMap field
-class SVP64RMFields(SelectableIntMapping):
-    """SVP64 RM: https://libre-soc.org/openpower/sv/svp64/"""
-    spr = range(24)
-    mmode = (0,)
-    mask = range(1, 4)
-    elwidth = range(4, 6)
-    ewsrc = range(6, 8)
-    subvl = range(8, 10)
-    extra = range(10, 19)
-    mode = range(19, 24)
-    extra2 = dict(enumerate([
-        range(10, 12),
-        range(12, 14),
-        range(14, 16),
-        range(16, 18),
-    ]))
-    smask = range(16, 19)
-    extra3 = dict(enumerate([
-        range(10, 13),
-        range(13, 16),
-        range(16, 19),
-    ]))
-
-
-
-SVP64RM_MMODE_SIZE = len(SVP64RMFields.mmode)
-SVP64RM_MASK_SIZE = len(SVP64RMFields.mask)
-SVP64RM_ELWIDTH_SIZE = len(SVP64RMFields.elwidth)
-SVP64RM_EWSRC_SIZE = len(SVP64RMFields.ewsrc)
-SVP64RM_SUBVL_SIZE = len(SVP64RMFields.subvl)
-SVP64RM_EXTRA2_SPEC_SIZE = len(SVP64RMFields.extra2[0])
-SVP64RM_EXTRA3_SPEC_SIZE = len(SVP64RMFields.extra3[0])
-SVP64RM_SMASK_SIZE = len(SVP64RMFields.smask)
-SVP64RM_MODE_SIZE = len(SVP64RMFields.mode)
-
-
-class SVP64PrefixFields(SelectableIntMapping):
-    """SVP64 Prefix: https://libre-soc.org/openpower/sv/svp64/"""
-    insn = range(32)
-    major = range(0, 6)
-    pid = (7, 9)
-    rm = ((6, 8) + tuple(range(10, 32)))
-
-SV64P_MAJOR_SIZE = len(SVP64PrefixFields.major)
-SV64P_PID_SIZE = len(SVP64PrefixFields.pid)
-SV64P_RM_SIZE = len(SVP64PrefixFields.rm)
 
 
 # CR register fields
@@ -994,13 +945,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # SVP64.  first, check if the opcode is EXT001, and SVP64 id bits set
         yield Settle()
         opcode = yield self.dec2.dec.opcode_in
-        pfx = SVP64PrefixFields(opcode)
-        major = pfx.major.asint(msb0=True)  # MSB0 inversion
-        log("prefix test: opcode:", major, bin(major),
-            pfx.insn[7] == 0b1, pfx.insn[9] == 0b1)
-        self.is_svp64_mode = ((major == 0b000001) and
-                              pfx.insn[7].value == 0b1 and
-                              pfx.insn[9].value == 0b1)
+        opcode = SelectableInt(value=opcode, bits=32)
+        pfx = SVP64Instruction.Prefix(opcode)
+        log("prefix test: opcode:", pfx.PO, bin(pfx.PO), pfx.id)
+        self.is_svp64_mode = bool((pfx.PO == 0b000001) and (pfx.id == 0b11))
         self.pc.update_nia(self.is_svp64_mode)
         # set SVP64 decode
         yield self.dec2.is_svp64_mode.eq(self.is_svp64_mode)
@@ -1010,14 +958,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             return
 
         # in SVP64 mode.  decode/print out svp64 prefix, get v3.0B instruction
-        log("svp64.rm", bin(pfx.rm.asint(msb0=True)))
+        log("svp64.rm", bin(pfx.rm))
         log("    svstate.vl", self.svstate.vl)
         log("    svstate.mvl", self.svstate.maxvl)
-        sv_rm = pfx.rm.asint(msb0=True)
         ins = self.imem.ld(pc+4, 4, False, True, instr_fetch=True)
         log("     svsetup: 0x%x 0x%x %s" % (pc+4, ins & 0xffffffff, bin(ins)))
         yield self.dec2.dec.raw_opcode_in.eq(ins & 0xffffffff)  # v3.0B suffix
-        yield self.dec2.sv_rm.eq(sv_rm)                        # svp64 prefix
+        yield self.dec2.sv_rm.eq(int(pfx.rm))                   # svp64 prefix
         yield Settle()
 
     def execute_one(self):
