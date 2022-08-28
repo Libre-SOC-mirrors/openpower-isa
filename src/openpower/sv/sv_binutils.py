@@ -53,96 +53,85 @@ def indent(strings):
     return map(lambda string: ("  " + string), strings)
 
 
-class CTypeMeta(type):
-    def __new__(metacls, name, bases, attrs, typedef="void"):
-        cls = super().__new__(metacls, name, bases, attrs)
-        if typedef == "void":
+class ObjectMeta(type):
+    def __new__(metacls, clsname, bases, ns,
+            c_typedef="void", **kwargs):
+        if c_typedef == "void":
             for base in bases:
                 if (hasattr(base, "c_typedef") and
                         (base.c_typedef != "void")):
-                    typedef = base.c_typedef
+                    c_typedef = base.c_typedef
                     break
-        cls.__typedef = typedef
 
-        return cls
+        ns.setdefault("c_typedef", c_typedef)
+        ns.update(kwargs)
 
-    def __getitem__(cls, size):
-        name = f"{cls.__name__}[{'' if size is Ellipsis else size}]"
-        return type(name, (Array,), {}, type=cls, size=size)
+        return super().__new__(metacls, clsname, bases, ns)
 
-    @property
-    def c_typedef(cls):
-        return cls.__typedef
 
-    @_abc.abstractmethod
+class Object(metaclass=ObjectMeta):
+    @classmethod
     def c_decl(cls):
         yield from ()
 
+    @classmethod
     def c_var(cls, name, prefix="", suffix=""):
         return f"{prefix}{cls.c_typedef} {name}{suffix}"
 
-
-class ArrayMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, type, size, **kwargs):
-        cls = super().__new__(metacls, name, bases, attrs, **kwargs)
-        cls.__type = type
-        cls.__ellipsis = (size is Ellipsis)
-        cls.__size = 0 if cls.__ellipsis else size
-
-        return cls
-
-    def __len__(cls):
-        return cls.__size
-
-    def c_decl(cls):
-        size = "" if cls.__ellipsis else f"{cls.__size}"
-        yield f"{cls.__type.c_typedef}[{size}]"
-
-    def c_var(cls, name, prefix="", suffix=""):
-        size = "" if cls.__ellipsis else f"{cls.__size}"
-        return f"{prefix}{cls.__type.c_typedef} {name}[{size}]{suffix}"
-
-
-class BitmapMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs,
-            typedef="uint64_t", bits=0, **kwargs):
-        cls = super().__new__(metacls,
-            name, bases, attrs, typedef=typedef, **kwargs)
-        cls.__bits = bits
-        return cls
-
-    def __len__(cls):
-        return cls.__bits
-
-    def c_var(cls, name, prefix="", suffix=""):
-        return f"{prefix}{cls.c_typedef} {name} : {cls.__bits}{suffix}"
-
-
-class CType(metaclass=CTypeMeta):
-    @_abc.abstractmethod
     def c_value(self, *, prefix="", suffix="", **kwargs):
         yield from ()
 
 
-class Array(CType, tuple, metaclass=ArrayMeta, type=CType, size=...):
+class ArrayMeta(ObjectMeta):
+    def __new__(metacls, clsname, bases, ns,
+            c_base, c_size, **kwargs):
+        if c_size is Ellipsis:
+            clsname = f"{clsname}[]"
+        else:
+            clsname = f"{clsname}[{c_size}]"
+
+        return super().__new__(metacls, clsname, bases, ns,
+            c_typedef=c_base.c_typedef, c_base=c_base, c_size=c_size, **kwargs)
+
+    def __getitem__(cls, key):
+        (c_base, c_size) = key
+        return cls.__class__(cls.__name__, (cls,), {},
+            c_base=c_base, c_size=c_size)
+
+
+class Array(Object, tuple, metaclass=ArrayMeta,
+        c_base=Object, c_size=...):
+    @classmethod
+    def c_decl(cls):
+        if cls.c_size is Ellipsis:
+            size = ""
+        else:
+            size = f"{len(cls)}"
+        yield f"{cls.c_base.c_typedef}[{size}]"
+
+    @classmethod
+    def c_var(cls, name, prefix="", suffix=""):
+        if cls.c_size is Ellipsis:
+            size = ""
+        else:
+            size = f"{len(cls)}"
+        return f"{prefix}{cls.c_base.c_typedef} {name}[{size}]{suffix}"
+
     def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{{"
-        for (index, item) in enumerate(self):
+        for item in self:
             yield from indent(item.c_value(suffix=","))
         yield f"}}{suffix}"
 
 
-class Bitmap(metaclass=BitmapMeta):
-    pass
-
-
-class Void(CType, typedef="void"):
+class Void(Object, c_typedef="void"):
     def c_var(cls, name, prefix="", suffix=""):
         raise NotImplementedError
 
 
-class EnumMeta(_enum.EnumMeta, CTypeMeta):
-    def __call__(metacls, name, entries, tag=None, exclude=None, **kwargs):
+class EnumMeta(_enum.EnumMeta, ObjectMeta):
+    def __call__(cls, clsname, entries,
+            c_tag=None, c_typedef=None, exclude=None):
         if exclude is None:
             exclude = frozenset()
         if isinstance(entries, type) and issubclass(entries, _enum.Enum):
@@ -151,54 +140,51 @@ class EnumMeta(_enum.EnumMeta, CTypeMeta):
         if isinstance(entries, dict):
             entries = tuple(entries.items())
         entries = ((key, value) for (key, value) in entries if key not in exclude)
-        if tag is None:
-            tag = f"svp64_{name.lower()}"
 
-        cls = super().__call__(value=name, names=entries, **kwargs)
-        cls.__tag = tag
+        if c_tag is None:
+            c_tag = f"svp64_{clsname.lower()}"
+        if c_typedef is None:
+            c_typedef = f"enum {c_tag}"
 
-        return cls
+        base = ObjectMeta(cls.__name__, (), {},
+            c_tag=c_tag, c_typedef=c_typedef)
 
+        return super().__call__(value=clsname, names=entries, type=base)
+
+
+class Enum(Object, _enum.Enum, metaclass=EnumMeta):
     @property
-    def c_typedef(cls):
-        return f"enum {cls.c_tag}"
+    def c_name(self):
+        return f"{self.c_tag.upper()}_{self.name.upper()}"
 
-    @property
-    def c_tag(cls):
-        return cls.__tag
-
+    @classmethod
     def c_decl(cls):
         yield f"{cls.c_typedef} {{"
         for item in cls:
             yield from indent(item.c_value(suffix=","))
         yield f"}};"
 
+    def c_value(self, *, prefix="", suffix="", **kwargs):
+        yield f"{prefix}{self.c_name}{suffix}"
+
+    @classmethod
     def c_var(cls, name, prefix="", suffix=""):
         return f"{prefix}{cls.c_typedef} {name}{suffix}"
 
 
-class Enum(CType, _enum.Enum, metaclass=EnumMeta):
-    @property
-    def c_name(self):
-        return f"{self.__class__.c_tag.upper()}_{self.name.upper()}"
-
-    def c_value(self, *, prefix="", suffix="", **kwargs):
-        yield f"{prefix}{self.c_name}{suffix}"
-
-
-In1Sel = Enum("In1Sel", _In1Sel, tag="svp64_in1_sel")
-In2Sel = Enum("In2Sel", _In2Sel, tag="svp64_in2_sel")
-In3Sel = Enum("In3Sel", _In3Sel, tag="svp64_in3_sel")
-OutSel = Enum("OutSel", _OutSel, tag="svp64_out_sel")
-CRInSel = Enum("CRInSel", _CRInSel, tag="svp64_cr_in_sel")
-CROutSel = Enum("CROutSel", _CROutSel, tag="svp64_cr_out_sel")
-PType = Enum("PType", _SVPtype, tag="svp64_ptype")
-EType = Enum("EType", _SVEtype, tag="svp64_etype", exclude="NONE")
-Extra = Enum("Extra", _SVExtra, tag="svp64_extra", exclude="Idx_1_2")
-Function = Enum("Function", _Function, tag="svp64_function")
+In1Sel = Enum("In1Sel", _In1Sel, c_tag="svp64_in1_sel")
+In2Sel = Enum("In2Sel", _In2Sel, c_tag="svp64_in2_sel")
+In3Sel = Enum("In3Sel", _In3Sel, c_tag="svp64_in3_sel")
+OutSel = Enum("OutSel", _OutSel, c_tag="svp64_out_sel")
+CRInSel = Enum("CRInSel", _CRInSel, c_tag="svp64_cr_in_sel")
+CROutSel = Enum("CROutSel", _CROutSel, c_tag="svp64_cr_out_sel")
+PType = Enum("PType", _SVPtype, c_tag="svp64_ptype")
+EType = Enum("EType", _SVEtype, c_tag="svp64_etype", exclude="NONE")
+Extra = Enum("Extra", _SVExtra, c_tag="svp64_extra", exclude="Idx_1_2")
+Function = Enum("Function", _Function, c_tag="svp64_function")
 
 
-class Constant(CType, _enum.Enum, metaclass=EnumMeta):
+class Constant(_enum.Enum, metaclass=EnumMeta):
     @classmethod
     def c_decl(cls):
         yield f"/* {cls.c_tag.upper()} constants */"
@@ -209,28 +195,28 @@ class Constant(CType, _enum.Enum, metaclass=EnumMeta):
             yield f"#define {key} {value}"
 
     def c_value(self, *, prefix="", suffix="", **kwargs):
-        yield f"{prefix}{self.__class__.c_tag.upper()}_{self.c_name.upper()}{suffix}"
+        yield f"{prefix}{self.c_tag.upper()}_{self.c_name.upper()}{suffix}"
 
 
 Mode = Constant("Mode", _SVP64MODE)
 
 
-class StructMeta(CTypeMeta):
-    def __new__(metacls, name, bases, attrs, tag=None, **kwargs):
-        if tag is None:
-            tag = f"svp64_{name.lower()}"
-        if "typedef" not in kwargs:
-            kwargs["typedef"] = f"struct {tag}"
+class StructMeta(ObjectMeta):
+    def __new__(metacls, clsname, bases, ns,
+            c_tag=None, c_typedef=None):
 
-        cls = super().__new__(metacls, name, bases, attrs, **kwargs)
-        cls.__tag = tag
+        if c_tag is None:
+            c_tag = f"svp64_{clsname.lower()}"
+        if c_typedef is None:
+            c_typedef = f"struct {c_tag}"
 
-        return cls
+        return super().__new__(metacls, clsname, bases, ns,
+            c_typedef=c_typedef, c_tag=c_tag)
 
-    @property
-    def c_tag(cls):
-        return cls.__tag
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Struct(Object, metaclass=StructMeta):
+    @classmethod
     def c_decl(cls):
         def transform(field):
             return field.type.c_var(name=f"{field.name}", suffix=";")
@@ -239,9 +225,6 @@ class StructMeta(CTypeMeta):
         yield from indent(map(transform, _dataclasses.fields(cls)))
         yield f"}};"
 
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Struct(CType, metaclass=StructMeta):
     def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{{"
         for field in _dataclasses.fields(self):
@@ -251,24 +234,24 @@ class Struct(CType, metaclass=StructMeta):
         yield f"}}{suffix}"
 
 
-class Integer(CType, str):
+class Integer(Object, str):
     def c_value(self, *, prefix="", suffix="", **kwargs):
         yield f"{prefix}{self}{suffix}"
 
 
-class Byte(Integer, typedef="uint8_t"):
+class Byte(Integer, c_typedef="uint8_t"):
     pass
 
 
-class Size(Integer, typedef="size_t"):
+class Size(Integer, c_typedef="size_t"):
     pass
 
 
-class UInt32(Integer, typedef="uint32_t"):
+class UInt32(Integer, c_typedef="uint32_t"):
     pass
 
 
-class Name(CType, str, typedef="const char *"):
+class Name(Object, str, c_typedef="const char *"):
     def __repr__(self):
         escaped = self.replace("\"", "\\\"")
         return f"\"{escaped}\""
@@ -347,21 +330,11 @@ class Record(Struct):
 
 
 class Codegen(_enum.Enum):
-    PPC_SVP64_GEN_H = _enum.auto()
-    PPC_SVP64_OPC_GEN_C = _enum.auto()
-
-    @classmethod
-    def _missing_(cls, value):
-        return {
-            "ppc-svp64-gen.h": Codegen.PPC_SVP64_GEN_H,
-            "ppc-svp64-opc-gen.c": Codegen.PPC_SVP64_OPC_GEN_C,
-        }.get(value)
+    PPC_SVP64_GEN_H = "include/opcode/ppc-svp64-gen.h"
+    PPC_SVP64_OPC_GEN_C = "opcodes/ppc-svp64-opc-gen.c"
 
     def __str__(self):
-        return {
-            Codegen.PPC_SVP64_GEN_H: "ppc-svp64-gen.h",
-            Codegen.PPC_SVP64_OPC_GEN_C: "ppc-svp64-opc-gen.c",
-        }[self]
+        return self.value
 
     def generate(self, records):
         def ppc_svp64_h(records, num_records):
@@ -392,13 +365,13 @@ class Codegen(_enum.Enum):
                 yield from enum.c_decl()
                 yield ""
 
-            for cls in (Desc, Opcode, Record, Instruction):
+            for cls in (Desc, Opcode, Record):
                 yield from cls.c_decl()
                 yield ""
 
-            yield records.__class__.c_var("svp64_records",
+            yield records.c_var("svp64_records",
                         prefix="extern const ", suffix=";")
-            yield num_records.__class__.c_var("svp64_num_records",
+            yield num_records.c_var("svp64_num_records",
                         prefix="extern const ", suffix=";")
             yield ""
 
@@ -412,7 +385,6 @@ class Codegen(_enum.Enum):
             yield ""
 
             yield f"#endif /* {self.name} */"
-            yield ""
 
         def ppc_svp64_opc_c(records, num_records):
             disclaimer = DISCLAIMER.format(path=str(self),
@@ -482,11 +454,11 @@ class Codegen(_enum.Enum):
                 CROutSel.WHOLE_REG: "FXM",
             })
 
-            yield records.__class__.c_var("svp64_records",
+            yield records.c_var("svp64_records",
                         prefix="const ", suffix=" = \\")
             yield from records.c_value(prefix="", suffix=";")
             yield ""
-            yield num_records.__class__.c_var("svp64_num_records",
+            yield num_records.c_var("svp64_num_records",
                         prefix="const ", suffix=" = \\")
             yield from indent(num_records.c_value(suffix=";"))
             yield ""
@@ -510,13 +482,11 @@ class Codegen(_enum.Enum):
             yield Size.c_var("svp64_num_regs",
                         prefix="const ", suffix=" = \\")
             yield from indent(num_regs.c_value(suffix=";"))
-            yield ""
 
-
-        records = Record[...](records)
+        records = Array[Record, ...](records)
         num_records = Size("(sizeof (svp64_records) / sizeof (svp64_records[0]))")
 
-        return {
+        yield from {
             Codegen.PPC_SVP64_GEN_H: ppc_svp64_h,
             Codegen.PPC_SVP64_OPC_GEN_C: ppc_svp64_opc_c,
         }[self](records, num_records)
