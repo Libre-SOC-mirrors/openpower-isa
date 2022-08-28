@@ -46,7 +46,7 @@ class Reference:
         _ = (args, kwargs)
 
     def __binary_operator(self, op, other):
-        span = self.__class__.span
+        span = dict.fromkeys(self.__class__.span).keys()
         lhs = _selectconcat(*(self.storage[bit] for bit in span))
 
         if isinstance(other, Field):
@@ -133,10 +133,6 @@ class FieldMeta(type):
     def __len__(cls):
         return len(cls.__members__)
 
-    @property
-    def span(cls):
-        return cls.__members__
-
     def remap(cls, scheme):
         if isinstance(scheme, type) and issubclass(scheme, Mapping):
             scheme = range(len(scheme))
@@ -152,6 +148,13 @@ class FieldMeta(type):
         items = map(lambda item: scheme.__members__[item], cls)
 
         return cls.__class__(cls.__name__, (cls,), {}, items=items)
+
+    @property
+    def span(cls):
+        return cls.__members__
+
+    def traverse(cls, path):
+        yield (path, cls.__members__)
 
 
 class Field(Reference, metaclass=FieldMeta):
@@ -244,6 +247,10 @@ class ArrayMeta(type):
         for field in cls.__members__:
             yield from field.span
 
+    def traverse(cls, path=""):
+        for (idx, field) in cls:
+            yield from field.traverse(path=f"{path}[{idx}]")
+
 
 class Array(Reference, metaclass=ArrayMeta):
     def __init__(self, storage):
@@ -325,6 +332,15 @@ class MappingMeta(type):
     def span(cls):
         for field in cls.__members__.values():
             yield from field.span
+
+    def traverse(cls, path=""):
+        for (name, field) in cls:
+            if name == "_":
+                yield from field.traverse(path=path)
+            elif path == "":
+                yield from field.traverse(path=name)
+            else:
+                yield from field.traverse(path=f"{path}.{name}")
 
 
 class Mapping(Reference, metaclass=MappingMeta):
