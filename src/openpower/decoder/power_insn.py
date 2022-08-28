@@ -568,11 +568,8 @@ class Instruction(_Mapping):
 
 
 class WordInstruction(Instruction):
-    class PO(_Mapping):
-        _: _Field = range(0, 6)
-
     _: _Field = range(0, 32)
-    po: PO
+    PO: _Field = range(0, 6)
 
     @classmethod
     def integer(cls, value, byteorder="little"):
@@ -596,7 +593,7 @@ class PrefixedInstruction(Instruction):
     _: _Field = range(64)
     prefix: Prefix
     suffix: Suffix
-    po: Suffix.PO = Suffix.po
+    PO: Suffix.PO
 
     @classmethod
     def integer(cls, value, byteorder="little"):
@@ -623,10 +620,9 @@ class PrefixedInstruction(Instruction):
 
 
 class SVP64Instruction(PrefixedInstruction):
+    """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
     class Prefix(PrefixedInstruction.Prefix):
-        """SVP64 Prefix: https://libre-soc.org/openpower/sv/svp64/"""
         class RM(_Mapping):
-            """SVP64 RM: https://libre-soc.org/openpower/sv/svp64/"""
             _: _Field = range(24)
             mmode: _Field = (0,)
             mask: _Field = range(1, 4)
@@ -648,14 +644,8 @@ class SVP64Instruction(PrefixedInstruction):
                 range(16, 19),
             )
 
-            # Backward compatibility
-            spr: _Field = _
-
         id: _Field = (7, 9)
         rm: RM = ((6, 8) + tuple(range(10, 32)))
-
-        # Backward compatibility
-        insn: PrefixedInstruction.Prefix
 
     prefix: Prefix
 
