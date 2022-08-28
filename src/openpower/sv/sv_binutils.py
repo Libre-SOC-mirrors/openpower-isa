@@ -5,6 +5,7 @@ import dataclasses as _dataclasses
 import enum as _enum
 import functools as _functools
 import operator as _operator
+import re as _re
 
 from openpower.decoder.power_enums import (
     In1Sel as _In1Sel,
@@ -22,6 +23,7 @@ from openpower.decoder.power_enums import (
 )
 from openpower.consts import SVP64MODE as _SVP64MODE
 from openpower.decoder.power_insn import Database as _Database
+from openpower.decoder.power_insn import SVP64Instruction as _SVP64Instruction
 
 
 DISCLAIMER = """\
@@ -251,6 +253,78 @@ class UInt32(Integer, c_typedef="uint32_t"):
     pass
 
 
+class UInt64(Integer, c_typedef="uint64_t"):
+    pass
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Instruction(Struct, c_tag="svp64_insn"):
+    value: UInt64
+
+    @classmethod
+    def c_decl(cls):
+        def mangle(path, action):
+            if path.endswith("]"):
+                path = path[:-1]
+            for symbol in (".", "[", "]"):
+                path = path.replace(symbol, "_")
+            if path != "":
+                return f"{cls.c_tag}_{action}_{path}"
+            else:
+                return f"{cls.c_tag}_{action}"
+
+        def getter(path, field):
+            yield "static inline uint64_t"
+            yield f"{mangle(path, 'get')}(const {cls.c_typedef} *insn)"
+            yield "{"
+            yield from indent(["uint64_t value = insn->value;"])
+            yield ""
+            yield from indent(["return ("])
+            actions = []
+            for (dst, src) in enumerate(reversed(field)):
+                src = (64 - (src + 1))
+                dst = f"UINT64_C({dst})"
+                src = f"UINT64_C({src})"
+                action = f"(((value >> {src}) & UINT64_C(1)) << {dst})"
+                actions.append(action)
+            for action in indent(indent(actions)):
+                yield f"{action} |"
+            yield from indent(indent(["UINT64_C(0)"]))
+            yield from indent([");"])
+            yield "}"
+            yield ""
+
+        def setter(path, field):
+            mask = ((2 ** 64) - 1)
+            for bit in field:
+                mask &= ~(1 << (64 - (bit + 1)))
+            action = mangle(path, "set")
+            yield "static inline void"
+            yield f"{mangle(path, 'set')}({cls.c_typedef} *insn, uint64_t value)"
+            yield "{"
+            yield from indent([f"insn->value &= UINT64_C(0x{mask:016x});"])
+            actions = []
+            for (src, dst) in enumerate(reversed(field)):
+                dst = (64 - (dst + 1))
+                dst = f"UINT64_C({dst})"
+                src = f"UINT64_C({src})"
+                action = f"(((value >> {src}) & UINT64_C(1)) << {dst})"
+                actions.append(action)
+            yield from indent(["insn->value |= ("])
+            for action in indent(indent(actions)):
+                yield f"{action} |"
+            yield from indent(indent(["UINT64_C(0)"]))
+            yield from indent([");"])
+            yield "}"
+            yield ""
+
+        yield from super().c_decl()
+        yield ""
+        for (path, field) in _SVP64Instruction.traverse():
+            yield from getter(path, field)
+            yield from setter(path, field)
+
+
 class Name(Object, str, c_typedef="const char *"):
     def __repr__(self):
         escaped = self.replace("\"", "\\\"")
@@ -365,7 +439,7 @@ class Codegen(_enum.Enum):
                 yield from enum.c_decl()
                 yield ""
 
-            for cls in (Desc, Opcode, Record):
+            for cls in (Instruction, Desc, Opcode, Record):
                 yield from cls.c_decl()
                 yield ""
 
