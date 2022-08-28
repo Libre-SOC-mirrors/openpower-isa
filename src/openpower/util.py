@@ -126,8 +126,8 @@ def parse_log_env_vars():
                 retval[k] = silenced
         assert matches, (f"SILENCELOG: {v!r} did not match any known LogKind: "
                          f"LogKinds: {' '.join(i.value for i in LogKind)}")
-    for k, v in retval.items():
-        print(repr(k), "silenced" if v else "active")
+    # for k, v in retval.items():
+    #    print(repr(k), "silenced" if v else "active")
     return retval
 
 
