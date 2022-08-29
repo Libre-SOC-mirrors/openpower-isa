@@ -1505,9 +1505,11 @@ if __name__ == '__main__':
     ]
     lst = [
         'sv.andi. *80, *80, 1',
+        'sv.ffmadds. 6.v, 2.v, 4.v, 6.v', # incorrectly inserted 32-bit op
+        'sv.ffmadds 6.v, 2.v, 4.v, 6.v',  # correctly converted to .long
     ]
     isa = SVP64Asm(lst, macros=macros)
-    log("list", list(isa))
+    log("list:\n", "\n\t".join(list(isa)))
     # running svp64.py is designed to test hard-coded lists
     # (above) - which strictly speaking should all be unit tests.
     # if you need to actually do assembler translation at the
