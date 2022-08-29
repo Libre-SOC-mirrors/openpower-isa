@@ -1255,7 +1255,7 @@ class SVP64Asm:
 
         # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
         rc = '.' if rc_mode else ''
-        yield ".long 0x%08x # %s" % (svp64_prefix.insn.value, insn)
+        yield ".long 0x%08x" % svp64_prefix.insn.value
         log(v30b_op, v30b_newfields)
         # argh, sv.fmadds etc. need to be done manually
         if v30b_op == 'ffmadds':
@@ -1314,6 +1314,7 @@ class SVP64Asm:
             if not v30b_op.endswith('.'):
                 v30b_op += rc
             yield "%s %s" % (v30b_op, ", ".join(v30b_newfields))
+        yield f"# {insn}"
         log("new v3.0B fields", v30b_op, v30b_newfields)
 
     def translate(self, lst):
