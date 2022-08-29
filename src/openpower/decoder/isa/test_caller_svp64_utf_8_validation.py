@@ -10,7 +10,7 @@ from functools import lru_cache
 # writing the test_caller invocation this way makes it work with pytest
 
 
-@lru_cache
+@lru_cache()
 def make_cases():
     # cache globally, so we only have to create test_data once per process
     return SVP64UTF8ValidationTestCase().test_data
