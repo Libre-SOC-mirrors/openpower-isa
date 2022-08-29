@@ -569,7 +569,7 @@ class Instruction(_Mapping):
 
 class WordInstruction(Instruction):
     _: _Field = range(0, 32)
-    PO: _Field = range(0, 6)
+    po: _Field = range(0, 6)
 
     @classmethod
     def integer(cls, value, byteorder="little"):
@@ -593,7 +593,7 @@ class PrefixedInstruction(Instruction):
     _: _Field = range(64)
     prefix: Prefix
     suffix: Suffix
-    PO: Suffix.PO
+    po: Suffix.po
 
     @classmethod
     def integer(cls, value, byteorder="little"):

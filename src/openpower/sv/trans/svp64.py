@@ -1241,7 +1241,7 @@ class SVP64Asm:
         log()
 
         # update prefix PO and ID (aka PID)
-        svp64_prefix.PO = 0x1
+        svp64_prefix.po = 0x1
         svp64_prefix.id = 0b11
 
         # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
