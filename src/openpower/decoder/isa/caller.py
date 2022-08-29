@@ -1388,6 +1388,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             if is_setvl:
                 vl = results[0].vl
                 cmps = (SelectableInt(vl, 64), overflow,)
+            else:
+                overflow = None # do not override overflow except in setvl
             self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
 
         # any modified return results?
