@@ -1246,7 +1246,7 @@ class SVP64Asm:
 
         # fiinally yield the svp64 prefix and the thingy.  v3.0b opcode
         rc = '.' if rc_mode else ''
-        yield ".long 0x%08x" % svp64_prefix.insn.value
+        yield ".long 0x%08x" % int(svp64_prefix)
         log(v30b_op, v30b_newfields)
         # argh, sv.fmadds etc. need to be done manually
         if v30b_op == 'ffmadds':
