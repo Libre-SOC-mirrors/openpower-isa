@@ -12,14 +12,10 @@ related bugs:
 * https://bugs.libre-soc.org/show_bug.cgi?id=424
 """
 
-from copy import copy
-from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
-                                        selectconcat)
-
-from openpower.decoder.helpers import exts, gtu, ltu, undefined
-from openpower.util import log
+from collections import defaultdict
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.util import log, LogKind
 import math
-import sys
 
 
 def swap_order(x, nbytes):
@@ -155,3 +151,46 @@ class Mem:
                 continue
             print ("%016x: %016x" % ((k*8) & 0xffffffffffffffff, self.mem[k]))
         return res
+
+    def log_fancy(self, *, kind=LogKind.Default, name="Memory",
+                  log2_line_size=4, log2_column_chunk_size=3):
+        line_size = 1 << log2_line_size
+        subline_mask = line_size - 1
+        column_chunk_size = 1 << log2_column_chunk_size
+
+        def make_line():
+            return bytearray(line_size)
+        mem_lines = defaultdict(make_line)
+        subword_range = range(1 << self.word_log2)
+        for k in self.mem.keys():
+            addr = k << self.word_log2
+            for _ in subword_range:
+                v = self.ld(addr, width=1)
+                mem_lines[addr >> log2_line_size][addr & subline_mask] = v
+                addr += 1
+
+        lines = []
+        last_line_index = None
+        for line_index in sorted(mem_lines.keys()):
+            line_addr = line_index << log2_line_size
+            if last_line_index is not None \
+                    and last_line_index + 1 != line_index:
+                lines.append("*")
+            last_line_index = line_index
+            line_bytes = mem_lines[line_index]
+            line_str = f"0x{line_addr:08X}:"
+            for col_chunk in range(0, line_size,
+                                   column_chunk_size):
+                line_str += " "
+                for i in range(column_chunk_size):
+                    line_str += f" {line_bytes[col_chunk + i]:02X}"
+            line_str += "  |"
+            for i in range(line_size):
+                if 0x20 <= line_bytes[i] <= 0x7E:
+                    line_str += chr(line_bytes[i])
+                else:
+                    line_str += "."
+            line_str += "|"
+            lines.append(line_str)
+        lines = "\n".join(lines)
+        log(f"\n{name}:\n{lines}\n", kind=kind)

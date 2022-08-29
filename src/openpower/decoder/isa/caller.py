@@ -660,6 +660,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
 
         # "raw" memory
         self.mem = Mem(row_bytes=8, initial_mem=initial_mem)
+        self.mem.log_fancy(kind=LogKind.InstrInOuts)
         self.imem = Mem(row_bytes=4, initial_mem=initial_insns)
         # MMU mode, redirect underlying Mem through RADIX
         if mmu:

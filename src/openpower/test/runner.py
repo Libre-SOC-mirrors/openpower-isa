@@ -254,7 +254,7 @@ class TestRunnerBase(FHDLTestCase):
                         kind=LogKind.InstrInOuts)
                     log("sprs", test.sprs, kind=LogKind.InstrInOuts)
                     log("cr", test.cr, kind=LogKind.InstrInOuts)
-                    log("mem", test.mem, kind=LogKind.InstrInOuts)
+                    log("mem", test.mem)
                     log("msr", test.msr, kind=LogKind.InstrInOuts)
 
                     def format_assembly(assembly):
