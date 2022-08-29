@@ -188,7 +188,7 @@ class PPCRecord:
     comment: str
     flags: Flags = Flags()
     comment2: str = ""
-    unit: _Function = _Function.NONE
+    function: _Function = _Function.NONE
     intop: _MicrOp = _MicrOp.OP_ILLEGAL
     in1: _In1Sel = _In1Sel.RA
     in2: _In2Sel = _In2Sel.NONE
@@ -205,6 +205,7 @@ class PPCRecord:
     unofficial: bool = False
 
     __KEYMAP = {
+        "unit": "function",
         "internal op": "intop",
         "CR in": "cr_in",
         "CR out": "cr_out",
@@ -451,7 +452,7 @@ class Record:
 
     @property
     def function(self):
-        return self.ppc.unit
+        return self.ppc.function
 
     @property
     def in1(self):
