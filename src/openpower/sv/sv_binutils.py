@@ -1,11 +1,6 @@
-import abc as _abc
 import argparse as _argparse
-import collections as _collections
 import dataclasses as _dataclasses
 import enum as _enum
-import functools as _functools
-import operator as _operator
-import re as _re
 
 from openpower.decoder.power_enums import (
     In1Sel as _In1Sel,
@@ -17,7 +12,6 @@ from openpower.decoder.power_enums import (
     SVPtype as _SVPtype,
     SVEtype as _SVEtype,
     SVExtra as _SVExtra,
-    RC as _RC,
     Function as _Function,
     find_wiki_dir as _find_wiki_dir,
 )
