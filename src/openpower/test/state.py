@@ -116,12 +116,15 @@ class State:
                 crreg, crreg2))
 
         # XER
-        self.dut.assertEqual(self.so, s2.so, "so mismatch (%s != %s) %s" %
-            (self.state_type, s2.state_type, repr(self.code)))
-        self.dut.assertEqual(self.ov, s2.ov, "ov mismatch (%s != %s) %s" %
-            (self.state_type, s2.state_type, repr(self.code)))
-        self.dut.assertEqual(self.ca, s2.ca, "ca mismatch (%s != %s) %s" %
-            (self.state_type, s2.state_type, repr(self.code)))
+        if self.so is not None and s2.so is not None:
+            self.dut.assertEqual(self.so, s2.so, "so mismatch (%s != %s) %s" %
+                (self.state_type, s2.state_type, repr(self.code)))
+        if self.ov is not None and s2.ov is not None:
+            self.dut.assertEqual(self.ov, s2.ov, "ov mismatch (%s != %s) %s" %
+                (self.state_type, s2.state_type, repr(self.code)))
+        if self.ca is not None and s2.ca is not None:
+            self.dut.assertEqual(self.ca, s2.ca, "ca mismatch (%s != %s) %s" %
+                (self.state_type, s2.state_type, repr(self.code)))
 
         # pc
         self.dut.assertEqual(self.pc, s2.pc, "pc mismatch (%s != %s) %s" %
