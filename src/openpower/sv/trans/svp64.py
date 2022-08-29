@@ -1257,6 +1257,8 @@ class SVP64Asm:
         rc = '.' if rc_mode else ''
         yield ".long 0x%08x # %s" % (svp64_prefix.insn.value, insn)
         log(v30b_op, v30b_newfields)
+        if not v30b_op.endswith('.'):
+            v30b_op += rc
         # argh, sv.fmadds etc. need to be done manually
         if v30b_op == 'ffmadds':
             opcode = 59 << (32-6)    # bits 0..6 (MSB0)
@@ -1310,9 +1312,12 @@ class SVP64Asm:
                 insn |= 1 << (31-31)     # Rc=1     , bit 31
             log("fcoss", bin(insn))
             yield ".long 0x%x" % insn
+        elif v30b_op in CUSTOM_INSNS:
+            fields = tuple(map(to_number, v30b_newfields))
+            insn_num = CUSTOM_INSNS[v30b_op](fields)
+            fields_str = ', '.join(v30b_newfields)
+            yield f".long 0x{insn_num:X} # {v30b_op} {fields_str}"
         else:
-            if not v30b_op.endswith('.'):
-                v30b_op += rc
             yield "%s %s" % (v30b_op, ", ".join(v30b_newfields))
         log("new v3.0B fields", v30b_op, v30b_newfields)
 
