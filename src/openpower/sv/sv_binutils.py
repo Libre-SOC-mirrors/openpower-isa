@@ -2,6 +2,11 @@ import argparse as _argparse
 import dataclasses as _dataclasses
 import enum as _enum
 
+import os as _os
+import sys as _sys
+
+_sys.path.append(_os.path.dirname(_os.path.realpath(__file__)) + "/../../")
+
 from openpower.decoder.power_enums import (
     In1Sel as _In1Sel,
     In2Sel as _In2Sel,
