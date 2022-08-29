@@ -930,11 +930,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             ov32 = 1 if input32_sgn[0] == input32_sgn[1] and \
                 output32_sgn != input32_sgn[0] else 0
 
+        # now update XER OV/OV32/SO
+        so = self.spr['XER'][XER_bits['SO']]
+        new_so = so | ov # sticky overflow ORs in old with new
         self.spr['XER'][XER_bits['OV']] = ov
         self.spr['XER'][XER_bits['OV32']] = ov32
-        so = self.spr['XER'][XER_bits['SO']]
-        so = so | ov
-        self.spr['XER'][XER_bits['SO']] = so
+        self.spr['XER'][XER_bits['SO']] = new_so
+        log("    set overflow", ov, ov32, so, new_so)
 
     def handle_comparison(self, outputs, cr_idx=0, overflow=None, no_so=False):
         out = outputs[0]
