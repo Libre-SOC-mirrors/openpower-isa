@@ -1305,7 +1305,6 @@ class SVP64Asm:
             if not v30b_op.endswith('.'):
                 v30b_op += rc
             yield "%s %s" % (v30b_op, ", ".join(v30b_newfields))
-        yield f"# {insn}"
         log("new v3.0B fields", v30b_op, v30b_newfields)
 
     def translate(self, lst):
