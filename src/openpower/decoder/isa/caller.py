@@ -1439,7 +1439,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             else:
                 ov_en = False
                 ov_ok = False
-            log("internal overflow", overflow, ov_en, ov_ok)
+            log("internal overflow", ins_name, overflow, "en?", ov_en, ov_ok)
             if ov_en & ov_ok:
                 yield from self.handle_overflow(inputs, results, overflow)
 

@@ -576,10 +576,18 @@ class DecodeOE(Elaboratable):
         comb = m.d.comb
         op = self.op
 
+        # default: clear OE.
+        comb += self.oe_out.data.eq(0)
+        comb += self.oe_out.ok.eq(0)
+
         with m.Switch(op.internal_op):
 
             # mulhw, mulhwu, mulhd, mulhdu - these *ignore* OE
-            # also rotate
+            # also rotate.  and setvl and all other sv* management
+            # basically the HDL below bypasses normal decode and
+            # goes directly and explicitly to bit 30 (self.dec.OE).
+            # on the list of instructions below (really this should
+            # be in the CSV files) they must be told *not* to do that.
             # XXX ARGH! ignoring OE causes incompatibility with microwatt
             # http://lists.libre-soc.org/pipermail/libre-soc-dev/2020-August/000302.html
             with m.Case(MicrOp.OP_MUL_H64, MicrOp.OP_MUL_H32,
@@ -587,6 +595,9 @@ class DecodeOE(Elaboratable):
                         MicrOp.OP_SHL, MicrOp.OP_SHR, MicrOp.OP_RLC,
                         MicrOp.OP_LOAD, MicrOp.OP_STORE,
                         MicrOp.OP_RLCL, MicrOp.OP_RLCR,
+                        MicrOp.OP_SETVL, MicrOp.OP_SVSHAPE,
+                        MicrOp.OP_SVINDEX, MicrOp.OP_SVREMAP,
+                        MicrOp.OP_SVSTEP,
                         MicrOp.OP_EXTSWSLI, MicrOp.OP_GREV, MicrOp.OP_TERNLOG):
                 pass
 
