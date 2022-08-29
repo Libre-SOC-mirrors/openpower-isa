@@ -445,6 +445,9 @@ def get_pdecode_cr_out(dec2, name):
     if name == 'CR0':
         if out_sel == CROutSel.CR0.value:
             return out, o_isvec
+    if name == 'CR1': # these are not actually calculated correctly
+        if out_sel == CROutSel.CR1.value:
+            return out, o_isvec
     log("get_pdecode_cr_out not found", name)
     return None, False
 
@@ -1381,7 +1384,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             if hasattr(self.dec2.e.do, "rc"):
                 rc_en = yield self.dec2.e.do.rc.rc
         if rc_en and ins_name not in ['svstep']:
-            regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
+            if ins_name.startswith("f"):
+                rc_reg = "CR1" # not calculated correctly yet (not FP compares)
+            else:
+                rc_reg = "CR0"
+            regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, rc_reg)
             cmps = results
             # hang on... for `setvl` actually you want to test SVSTATE.VL
             is_setvl = ins_name == 'setvl'

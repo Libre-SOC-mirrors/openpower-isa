@@ -137,6 +137,59 @@ class FFTTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
+    def test_sv_remap_fpmadds_fft_4(self):
+        """>>> lst = ["svshape 2, 1, 1, 1, 0",
+                     "svremap 31, 1, 0, 2, 0, 1, 0",
+                      "sv.ffmadds. *2, *2, *2, *10"
+                     ]
+        this is a cheap (cheating) way to run a single "ffmadds." to
+        get at least Rc=1 on sv.ffmadds to be activated. the results
+        are not actually tested because there's no checking yet on
+        FP Rc=1
+        """
+        lst = SVP64Asm( ["svshape 2, 1, 1, 1, 0",
+                         "svremap 31, 1, 0, 2, 0, 1, 0",
+                        "sv.ffmadds *0, *0, *0, *8"
+                        ])
+        lst = list(lst)
+
+        # array and coefficients to test
+        av = [7.0, -9.8 ] # array 0..1
+        coe = [3.1] # coefficients
+
+        # store in regfile
+        fprs = [0] * 32
+        for i, c in enumerate(coe):
+            fprs[i+8] = fp64toselectable(c)
+        for i, a in enumerate(av):
+            fprs[i+0] = fp64toselectable(a)
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_fprs=fprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+
+            # work out the results with the twin mul/add-sub
+            res = transform_radix2(av, coe)
+
+            for i, expected in enumerate(res):
+                print ("i", i, float(sim.fpr(i)), "expected", expected)
+            for i, expected in enumerate(res):
+                # convert to Power single
+                expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
+                expected = float(expected)
+                actual = float(sim.fpr(i))
+                # approximate error calculation, good enough test
+                # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
+                # and the rounding is different
+                err = abs(actual - expected) / expected
+                self.assertTrue(err < 1e-7)
+
     def test_sv_remap_fpmadds_fft(self):
         """>>> lst = ["svshape 8, 1, 1, 1, 0",
                      "svremap 31, 1, 0, 2, 0, 1, 0",
