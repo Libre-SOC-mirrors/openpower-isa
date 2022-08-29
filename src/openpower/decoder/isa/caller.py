@@ -936,7 +936,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         so = so | ov
         self.spr['XER'][XER_bits['SO']] = so
 
-    def handle_comparison(self, outputs, cr_idx=0, overflow=None):
+    def handle_comparison(self, outputs, cr_idx=0, overflow=None, no_so=False):
         out = outputs[0]
         assert isinstance(out, SelectableInt), \
             "out zero not a SelectableInt %s" % repr(outputs)
@@ -948,13 +948,20 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         #    print ("handle_comparison exts 32 bit", hex(o32))
         out = exts(out.value, out.bits)
         log("handle_comparison exts", hex(out))
+        # create the three main CR flags, EQ GT LT
         zero = SelectableInt(out == 0, 1)
         positive = SelectableInt(out > 0, 1)
         negative = SelectableInt(out < 0, 1)
-        SO = self.spr['XER'][XER_bits['SO']]
+        # get (or not) XER.SO.  for setvl this is important *not* to read SO
+        if no_so:
+            SO = SelectableInt(1, 0)
+        else:
+            SO = self.spr['XER'][XER_bits['SO']]
         log("handle_comparison SO overflow", SO, overflow)
+        # alternative overflow checking (setvl mainly at the moment)
         if overflow is not None and overflow == 1:
             SO = SelectableInt(1, 1)
+        # create the four CR field values and set the required CR field
         cr_field = selectconcat(negative, positive, zero, SO)
         log("handle_comparison cr_field", self.cr, cr_idx, cr_field)
         self.crl[cr_idx].eq(cr_field)
@@ -1443,10 +1450,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
             cmps = results
             # hang on... for `setvl` actually you want to test SVSTATE.VL
-            if ins_name == 'setvl':
+            is_setvl = ins_name == 'setvl'
+            if is_setvl:
                 vl = results[0].vl
                 cmps = (SelectableInt(vl, 64), overflow,)
-            self.handle_comparison(cmps, regnum, overflow)
+            self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
 
         # any modified return results?
         if info.write_regs:
