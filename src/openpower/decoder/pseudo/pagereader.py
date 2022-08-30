@@ -47,6 +47,7 @@ this translates to:
 from collections import namedtuple, OrderedDict
 from copy import copy
 import os
+import re
 
 opfields = ("desc", "form", "opcode", "regs", "pcode", "sregs", "page")
 Ops = namedtuple("Ops", opfields)
@@ -60,6 +61,26 @@ def get_isa_dir():
     fdir = os.path.split(fdir)[0]
     # print (fdir)
     return os.path.join(fdir, "openpower", "isa")
+
+
+pattern_opcode = r"[A-Za-z0-9_\.]+\.?"
+pattern_dynamic = r"[A-Za-z0-9_]+(?:\([A-Za-z0-9_]+\))*"
+pattern_static = r"[A-Za-z0-9]+\=[01]"
+regex_opcode = re.compile(f"^{pattern_opcode}$")
+regex_dynamic = re.compile(f"^{pattern_dynamic}(?:,{pattern_dynamic})*$")
+regex_static = re.compile(f"^\({pattern_static}(?:\s{pattern_static})*\)$")
+
+
+def operands(opcode, desc):
+    if desc is None:
+        return
+    desc = desc.replace("(", "")
+    desc = desc.replace(")", "")
+    desc = desc.replace(",", " ")
+    for operand in desc.split(" "):
+        operand = operand.strip()
+        if operand:
+            yield operand
 
 
 class ISA:
@@ -234,16 +255,30 @@ class ISA:
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # get list of opcodes
-            li = []
+            opcodes = []
             while True:
                 l = lines.pop(0).strip()
                 if len(l) == 0:
                     break
                 assert l.startswith('*'), ("* not found in line %s" % l)
-                l = l[1:].split(' ')  # lose star
-                l = filter(lambda x: len(x) != 0, l)  # strip blanks
-                li.append(list(l))
-            opcodes = li
+                rest = l[1:].strip()
+
+                (opcode, _, rest) = map(str.strip, rest.partition(" "))
+                if regex_opcode.match(opcode) is None:
+                    raise IOError(repr(opcode))
+                opcode = [opcode]
+
+                (dynamic, _, rest) = map(str.strip, rest.partition(" "))
+                if regex_dynamic.match(dynamic) is None and dynamic:
+                    raise IOError(f"{l!r}: {dynamic!r}")
+                opcode.append(dynamic.split(","))
+
+                static = rest
+                if regex_static.match(static) is None and static:
+                    raise IOError(f"{l!r}: {static!r}")
+                opcode.extend(static[1:-1].split(" "))
+
+                opcodes.append(opcode)
 
             # "Pseudocode" expected
             l = lines.pop(0).rstrip()
@@ -301,8 +336,6 @@ class ISA:
         opcode, regs = o[0], o[1:]
         op = copy(d)
         op['regs'] = regs
-        if len(regs) != 0:
-            regs[0] = regs[0].split(",")
         op['opcode'] = opcode
         self.instr[opcode] = Ops(**op)
 
