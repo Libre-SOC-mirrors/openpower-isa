@@ -668,7 +668,7 @@ class SVP64Asm:
             rm = svp64.instrs[v30b_op]  # one row of the svp64 RM CSV
         else:
             raise Exception(f"opcode {v30b_op_orig!r} of "
-                            f"{insn!r} not an svp64 instruction")
+                                f"{insn!r} not an svp64 instruction")
 
         # get regs info e.g. "RT,RA,RB"
         v30b_regs = isa_instr.regs[0]
@@ -1491,7 +1491,7 @@ if __name__ == '__main__':
     ]
     lst = [
         'sv.andi. *80, *80, 1',
-        'sv.ffmadds. 6.v, 2.v, 4.v, 6.v',  # incorrectly inserted 32-bit op
+        'sv.ffmadds. 6.v, 2.v, 4.v, 6.v', # incorrectly inserted 32-bit op
         'sv.ffmadds 6.v, 2.v, 4.v, 6.v',  # correctly converted to .long
     ]
     isa = SVP64Asm(lst, macros=macros)
