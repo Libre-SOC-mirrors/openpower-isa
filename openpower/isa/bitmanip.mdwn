@@ -5,8 +5,8 @@
 
 TLI-Form
 
-* ternlogi RT, RA, RB, TLI
-* ternlogi. RT, RA, RB, TLI
+* ternlogi RT,RA,RB,TLI
+* ternlogi. RT,RA,RB,TLI
 
 Pseudo-code:
 
@@ -24,8 +24,8 @@ Special Registers Altered:
 
 X-Form
 
-* grev RT, RA, RB (Rc=0)
-* grev. RT, RA, RB (Rc=1)
+* grev RT,RA,RB (Rc=0)
+* grev. RT,RA,RB (Rc=1)
 
 Pseudo-code:
 
@@ -44,8 +44,8 @@ Special Registers Altered:
 
 XB-Form
 
-* grevi RT, RA, XBI (Rc=0)
-* grevi. RT, RA, XBI (Rc=1)
+* grevi RT,RA,XBI (Rc=0)
+* grevi. RT,RA,XBI (Rc=1)
 
 Pseudo-code:
 
@@ -63,8 +63,8 @@ Special Registers Altered:
 
 X-Form
 
-* grevw RT, RA, RB (Rc=0)
-* grevw. RT, RA, RB (Rc=1)
+* grevw RT,RA,RB (Rc=0)
+* grevw. RT,RA,RB (Rc=1)
 
 Pseudo-code:
 
@@ -84,8 +84,8 @@ Special Registers Altered:
 
 X-Form
 
-* grevwi RT, RA, SH (Rc=0)
-* grevwi. RT, RA, SH (Rc=1)
+* grevwi RT,RA,SH (Rc=0)
+* grevwi. RT,RA,SH (Rc=1)
 
 Pseudo-code:
 
