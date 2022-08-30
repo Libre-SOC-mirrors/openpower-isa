@@ -38,8 +38,6 @@ from openpower.decoder.selectable_int import (
     SelectableInt as _SelectableInt,
     selectconcat as _selectconcat,
 )
-
-# TODO: these should be present in the decoder module.
 from openpower.decoder.power_fields import (
     Field as _Field,
     Mapping as _Mapping,
