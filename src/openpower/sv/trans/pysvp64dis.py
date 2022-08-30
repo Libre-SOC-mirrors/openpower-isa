@@ -1,6 +1,5 @@
 import argparse as _argparse
 import enum as _enum
-import functools as _functools
 import sys as _sys
 
 from openpower.decoder.power_enums import (
@@ -8,14 +7,9 @@ from openpower.decoder.power_enums import (
 )
 from openpower.decoder.power_insn import (
     Database as _Database,
-    Instruction as _Instruction,
     WordInstruction as _WordInstruction,
     PrefixedInstruction as _PrefixedInstruction,
     SVP64Instruction as _SVP64Instruction,
-)
-from openpower.decoder.selectable_int import (
-    SelectableInt as _SelectableInt,
-    FieldSelectableInt as _FieldSelectableInt
 )
 
 
