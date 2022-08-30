@@ -495,8 +495,9 @@ def decode_bo(encoding):
         "encoding %s for BO Mode not recognised" % encoding
     return pmap[encoding]
 
-
 # partial-decode fail-first mode
+
+
 def decode_ffirst(encoding):
     if encoding in ['RC1', '~RC1']:
         return encoding
