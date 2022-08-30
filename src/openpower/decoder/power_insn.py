@@ -396,14 +396,14 @@ class Fields:
     def __repr__(self):
         return repr(self.__mapping)
 
+    def __iter__(self):
+        yield from self.__mapping.items()
+
     def __contains__(self, key):
         return self.__mapping.__contains__(key)
 
     def __getitem__(self, key):
-        return self.__mapping.__getitem__(key)
-
-    def get(self, key, default):
-        return self.__mapping.get(key, default)
+        return self.__mapping.get(key, None)
 
 
 @_functools.total_ordering
