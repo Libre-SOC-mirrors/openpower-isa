@@ -51,7 +51,7 @@ Special Registers Altered:
 
 X-Form
 
-* cbcdtd RA, RS
+* cbcdtd RA,RS
 
 Pseudo-code:
 
