@@ -385,7 +385,13 @@ class SelectableInt:
             log("getitem", stop, start, self.bits, hex(self.value), value)
             return SelectableInt(value, bits)
         else:
-            raise ValueError(value)
+            bits = []
+            key = tuple(key)
+            for bit in key:
+                if not isinstance(bit, (int, SelectableInt)):
+                    raise ValueError(key)
+                bits.append(self[bit])
+            return selectconcat(*bits)
 
     def __setitem__(self, key, value):
         if isinstance(key, SelectableInt):
