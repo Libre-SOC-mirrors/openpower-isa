@@ -11,7 +11,7 @@
 
 X-Form
 
-* cdtbcd RA, RS
+* cdtbcd RA,RS
 
 Pseudo-code:
 
