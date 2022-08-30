@@ -1340,6 +1340,27 @@ class SVP64Asm:
             if rc:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode
+        # sigh have to do svstep here manually for now...
+        elif v30b_op in ["svstep", "svstep."]:
+            insn = 22 << (31-5)          # opcode 22, bits 0-5
+            insn |= int(v30b_newfields[0]) << (31-10)  # RT       , bits 6-10
+            insn |= int(v30b_newfields[1]) << (31-22)  # SVi      , bits 16-22
+            insn |= int(v30b_newfields[2]) << (31-25)  # vf       , bit  25
+            insn |= 0b10011 << (31-30)  # XO       , bits 26..30
+            if opcode == 'svstep.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log("svstep", bin(insn))
+            yield ".long 0x%x" % insn
+        # argh, sv.fcoss etc. need to be done manually
+        elif v30b_op in ["fcoss", "fcoss."]:
+            insn = 59 << (31-5)  # opcode 59, bits 0-5
+            insn |= int(v30b_newfields[0]) << (31-10)  # RT       , bits 6-10
+            insn |= int(v30b_newfields[1]) << (31-20)  # RB       , bits 16-20
+            insn |= 0b1000101110 << (31-30)  # XO       , bits 21..30
+            if opcode == 'fcoss.':
+                insn |= 1 << (31-31)     # Rc=1     , bit 31
+            log("fcoss", bin(insn))
+            yield ".long 0x%x" % insn
         else:
             if not v30b_op.endswith('.'):
                 v30b_op += rc
