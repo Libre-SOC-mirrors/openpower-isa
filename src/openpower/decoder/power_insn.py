@@ -612,10 +612,9 @@ class PrefixedInstruction(Instruction):
     def disassemble(self, db):
         record = db[self.suffix]
         if record is None:
-            yield f".long 0x{int(self.prefix):08x}"
-            yield f".long 0x{int(self.suffix):08x}"
+            yield f".llong 0x{int(self):016x}"
         else:
-            yield f".llong 0x{int(self):08x} # {record.name}"
+            yield f".llong 0x{int(self):016x} # {record.name}"
 
 
 class SVP64Instruction(PrefixedInstruction):
@@ -651,9 +650,9 @@ class SVP64Instruction(PrefixedInstruction):
     def disassemble(self, db):
         record = db[self.suffix]
         if record is None:
-            yield f".llong 0x{int(self):08x}"
+            yield f".llong 0x{int(self):016x}"
         else:
-            yield f".llong 0x{int(self):08x} # sv.{record.name}"
+            yield f".llong 0x{int(self):016x} # sv.{record.name}"
 
 
 class Database:
