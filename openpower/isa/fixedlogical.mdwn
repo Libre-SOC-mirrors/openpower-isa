@@ -457,7 +457,7 @@ Special Registers Altered:
 
 X-Form
 
-* bpermd RA,RS,RB]
+* bpermd RA,RS,RB
 
 Pseudo-code:
 
