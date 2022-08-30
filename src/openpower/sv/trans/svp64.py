@@ -1290,26 +1290,8 @@ class SVP64Asm:
         rc = '.' if rc_mode else ''
         yield ".long 0x%08x" % int(svp64_prefix)
         log(v30b_op, v30b_newfields)
-
-        v30b_op_rc = v30b_op
-        if not v30b_op.endswith('.'):
-            v30b_op_rc += rc
-
-        # svstep is weird
-        # FIXME(lkcl): should sv.svstep be like svstep?
-        if v30b_op_rc in ("svstep", "svstep."):
-            # compensate for `SVi -= 1` in svstep()
-            v30b_newfields[1] = str(int(v30b_newfields[1]) + 1)
-
-        custom_insn_hook = CUSTOM_INSNS.get(v30b_op_rc)
-        if custom_insn_hook is not None:
-            fields = tuple(map(to_number, v30b_newfields))
-            insn_num = custom_insn_hook(fields)
-            log(opcode, bin(insn_num))
-            yield ".long 0x%X # %s" % (insn_num, insn)
-            return
         # argh, sv.fmadds etc. need to be done manually
-        elif v30b_op == 'ffmadds':
+        if v30b_op == 'ffmadds':
             opcode = 59 << (32-6)    # bits 0..6 (MSB0)
             opcode |= int(v30b_newfields[0]) << (32-11)  # FRT
             opcode |= int(v30b_newfields[1]) << (32-16)  # FRA
