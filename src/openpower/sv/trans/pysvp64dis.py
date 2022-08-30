@@ -37,6 +37,7 @@ def load(ifile, byteorder, **_):
         length = len(suffix)
         if length == 0:
             yield prefix
+            return
         elif length < 4:
             raise IOError(suffix)
         suffix = _WordInstruction.integer(value=suffix, byteorder=byteorder)
