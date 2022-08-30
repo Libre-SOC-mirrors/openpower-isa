@@ -63,7 +63,6 @@ def get_isa_dir():
 
 
 class ISA:
-
     def __init__(self):
         self.instr = OrderedDict()
         self.forms = {}
@@ -84,6 +83,9 @@ class ISA:
             name = os.path.join("/tmp", pth)
             with open(name, "w") as f:
                 f.write('\n'.join(rewrite) + '\n')
+
+    def __iter__(self):
+        yield from self.instr.items()
 
     def read_file_for_rewrite(self, fname):
         pagename = fname.split('.')[0]
