@@ -22,7 +22,6 @@ import functools
 import os
 import sys
 from collections import OrderedDict
-import inspect
 
 from openpower.decoder.pseudo.pagereader import ISA
 from openpower.decoder.power_svp64 import SVP64RM, get_regtype, decode_extra
@@ -48,38 +47,6 @@ def instruction(*fields):
     return functools.reduce(instruction, fields, 0)
 
 
-CUSTOM_INSNS = {}
-
-
-def _insn(name, *args, **kwargs):
-    return name, args, kwargs
-
-
-def _custom_insns(*insns):
-    """ a decorator that adds the function to `CUSTOM_INSNS` """
-
-    def decorator(fn):
-        FIELDS_ARG = object()
-        if len(insns) == 0:
-            insns_ = (fn.__name__, (), {}),
-        else:
-            insns_ = insns
-        for name, args, kwargs in insns_:
-            if not isinstance(name, str):
-                raise TypeError("instruction name must be a str: {name!r}")
-            if name in CUSTOM_INSNS:
-                raise ValueError(f"duplicate instruction mnemonic: {name!r}")
-            # use getcallargs to check that arguments work:
-            inspect.getcallargs(fn, FIELDS_ARG, *args, **kwargs)
-            CUSTOM_INSNS[name] = functools.partial(fn, *args, **kwargs)
-        return fn
-    return decorator
-
-
-@_custom_insns(
-    _insn("setvl", Rc=0),
-    _insn("setvl.", Rc=1),
-)
 def setvl(fields, Rc):
     """
     setvl is a *32-bit-only* instruction. It controls SVSTATE.
@@ -112,10 +79,6 @@ def setvl(fields, Rc):
     )
 
 
-@_custom_insns(
-    _insn("svstep", Rc=0),
-    _insn("svstep.", Rc=1),
-)
 def svstep(fields, Rc):
     """
     svstep is a 32-bit instruction. It updates SVSTATE.
@@ -146,7 +109,6 @@ def svstep(fields, Rc):
     )
 
 
-@_custom_insns()
 def svshape(fields):
     """
     svshape is a *32-bit-only* instruction. It updates SVSHAPE and SVSTATE.
@@ -177,7 +139,6 @@ def svshape(fields):
     )
 
 
-@_custom_insns()
 def svindex(fields):
     """
     svindex is a *32-bit-only* instruction. It is a convenience
@@ -208,7 +169,6 @@ def svindex(fields):
     )
 
 
-@_custom_insns()
 def svremap(fields):
     """
     this is a *32-bit-only* instruction. It updates the SVSHAPE SPR
@@ -244,7 +204,6 @@ def svremap(fields):
 # them (that's being fixed!)
 # they can - if implementations then choose - be Vectorised
 # because they are general-purpose scalar instructions
-@_custom_insns()
 def bmask(fields):
     """
     1.6.2.2 BM2-FORM
@@ -265,10 +224,6 @@ def bmask(fields):
     )
 
 
-@_custom_insns(
-    _insn("fsins", Rc=0),
-    _insn("fsins.", Rc=1),
-)
 def fsins(fields, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
@@ -288,10 +243,6 @@ def fsins(fields, Rc):
     )
 
 
-@_custom_insns(
-    _insn("fcoss", Rc=0),
-    _insn("fcoss.", Rc=1),
-)
 def fcoss(fields, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
@@ -311,10 +262,6 @@ def fcoss(fields, Rc):
     )
 
 
-@_custom_insns(
-    _insn("ternlogi", Rc=0),
-    _insn("ternlogi.", Rc=1),
-)
 def ternlogi(fields, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
@@ -335,31 +282,21 @@ def ternlogi(fields, Rc):
     )
 
 
-@_custom_insns(
-    _insn("grev", Rc=0, imm=0, word=0),
-    _insn("grevw", Rc=0, imm=0, word=1),
-    _insn("grevi", Rc=0, imm=1, word=0),
-    _insn("grevwi", Rc=0, imm=1, word=1),
-    _insn("grev.", Rc=1, imm=0, word=0),
-    _insn("grevw.", Rc=1, imm=0, word=1),
-    _insn("grevi.", Rc=1, imm=1, word=0),
-    _insn("grevwi.", Rc=1, imm=1, word=1),
-)
-def grev(fields, Rc, imm, word):
+def grev(fields, Rc, imm, wide):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
     insn = PO = 5
     # _ matches fields in table at:
-    # https://libre-soc.org/openpower/sv/bitmanip/
+    # https://libre-soc.org/openPOwer/sv/bitmanip/
     XO = 0b1_0010_110
-    if word:
+    if wide:
         XO |= 0b100_000
     if imm:
         XO |= 0b1000_000
     (RT, RA, XBI) = fields
     insn = (insn << 5) | RT
     insn = (insn << 5) | RA
-    if imm and not word:
+    if imm and not wide:
         assert 0 <= XBI < 64
         insn = (insn << 6) | XBI
         insn = (insn << 9) | XO
@@ -371,28 +308,6 @@ def grev(fields, Rc, imm, word):
     return insn
 
 
-@_custom_insns(
-    _insn("maxs", XO=0b0111001110, Rc=0),
-    _insn("maxs.", XO=0b0111001110, Rc=1),
-    _insn("maxu", XO=0b0011001110, Rc=0),
-    _insn("maxu.", XO=0b0011001110, Rc=1),
-    _insn("minu", XO=0b0001001110, Rc=0),
-    _insn("minu.", XO=0b0001001110, Rc=1),
-    _insn("mins", XO=0b0101001110, Rc=0),
-    _insn("mins.", XO=0b0101001110, Rc=1),
-    _insn("absdu", XO=0b1011110110, Rc=0),
-    _insn("absdu.", XO=0b1011110110, Rc=1),
-    _insn("absds", XO=0b1001110110, Rc=0),
-    _insn("absds.", XO=0b1001110110, Rc=1),
-    _insn("avgadd", XO=0b1101001110, Rc=0),
-    _insn("avgadd.", XO=0b1101001110, Rc=1),
-    _insn("absdacu", XO=0b1111110110, Rc=0),
-    _insn("absdacu.", XO=0b1111110110, Rc=1),
-    _insn("absdacs", XO=0b0111110110, Rc=0),
-    _insn("absdacs.", XO=0b0111110110, Rc=1),
-    _insn("cprop", XO=0b0110001110, Rc=0),
-    _insn("cprop.", XO=0b0110001110, Rc=1),
-)
 def av(fields, XO, Rc):
     # 1.6.7 X-FORM
     #   |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
@@ -409,7 +324,6 @@ def av(fields, XO, Rc):
     )
 
 
-@_custom_insns()
 def fmvis(fields):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # V3.0B 1.6.6 DX-FORM
@@ -432,7 +346,6 @@ def fmvis(fields):
     )
 
 
-@_custom_insns()
 def fishmv(fields):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # V3.0B 1.6.6 DX-FORM
@@ -453,6 +366,50 @@ def fishmv(fields):
         (XO, 26, 30),
         (d2, 31, 31),
     )
+
+
+CUSTOM_INSNS = {}
+for (name, hook) in (
+    ("setvl", setvl),
+    ("svstep", svstep),
+    ("fsins", fsins),
+    ("fcoss", fcoss),
+    ("ternlogi", ternlogi),
+):
+    CUSTOM_INSNS[name] = functools.partial(hook, Rc=False)
+    CUSTOM_INSNS[f"{name}."] = functools.partial(hook, Rc=True)
+CUSTOM_INSNS["bmask"] = bmask
+CUSTOM_INSNS["svshape"] = svshape
+CUSTOM_INSNS["svindex"] = svindex
+CUSTOM_INSNS["svremap"] = svremap
+CUSTOM_INSNS["fmvis"] = fmvis
+CUSTOM_INSNS["fishmv"] = fishmv
+
+for (name, imm, wide) in (
+    ("grev", False, False),
+    ("grevi", True, False),
+    ("grevw", False, True),
+    ("grevwi", True, True),
+):
+    CUSTOM_INSNS[name] = functools.partial(grev,
+                                           imm=("i" in name), wide=("w" in name), Rc=False)
+    CUSTOM_INSNS[f"{name}."] = functools.partial(grev,
+                                                 imm=("i" in name), wide=("w" in name), Rc=True)
+
+for (name, XO) in (
+    ("maxs", 0b0111001110),
+    ("maxu", 0b0011001110),
+    ("minu", 0b0001001110),
+    ("mins", 0b0101001110),
+    ("absdu", 0b1011110110),
+    ("absds", 0b1001110110),
+    ("avgadd", 0b1101001110),
+    ("absdacu", 0b1111110110),
+    ("absdacs", 0b0111110110),
+    ("cprop", 0b0110001110),
+):
+    CUSTOM_INSNS[name] = functools.partial(av, XO=XO, Rc=False)
+    CUSTOM_INSNS[f"{name}."] = functools.partial(av, XO=XO, Rc=True)
 
 
 # decode GPR into sv extra
