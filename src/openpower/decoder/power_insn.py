@@ -616,8 +616,17 @@ class WordInstruction(Instruction):
         if record is None:
             yield f".long 0x{int(self):08x}"
         else:
-            yield f".long 0x{int(self):08x} # {record.name}"
+            operands = []
+            for operand in record.dynamic_operands:
+                operand = int(self[record.fields[operand.name]])
+                operands.append(operand)
+            if operands:
+                operands = ",".join(map(str, operands))
+                operands = f" {operands}"
+            else:
+                operands = ""
 
+            yield f"{record.name}{operands}"
 
 class PrefixedInstruction(Instruction):
     class Prefix(WordInstruction.remap(range(0, 32))):
@@ -700,9 +709,6 @@ def parse(stream, factory):
 
 
 class PPCDatabase:
-    class KeyError(KeyError):
-        pass
-
     def __init__(self, root):
         db = _collections.defaultdict(set)
         path = (root / "insndb.csv")
@@ -728,14 +734,11 @@ class PPCDatabase:
                                 key.endswith(".") and
                                 name == key[:-1])):
                         return (section, record)
-        raise self.__class__.KeyError(key)
+        return (None, None)
 
 
 class SVP64Database:
-    class KeyError(KeyError):
-        pass
-
-    def __init__(self, root, ppcdb):
+    def __init__(self, root):
         db = set()
         pattern = _re.compile(r"^(?:LDST)?RM-(1P|2P)-.*?\.csv$")
         for (prefix, _, names) in _os.walk(root):
@@ -752,7 +755,7 @@ class SVP64Database:
             record = self.__db.get(name, None)
             if record is not None:
                 return record
-        raise self.__class__.KeyError(key)
+        return None
 
 
 class FieldsDatabase:
@@ -799,25 +802,20 @@ class Database:
 
         mdwndb = MarkdownDatabase()
         fieldsdb = FieldsDatabase()
+        svp64db = SVP64Database(root)
         ppcdb = PPCDatabase(root)
-        svp64db = SVP64Database(root, ppcdb)
 
         db = set()
-        unknown_ppcdb = set()
-        unknown_svp64 = set()
         for (name, operands) in mdwndb:
-            try:
-                (section, ppc) = ppcdb[name]
-                svp64 = svp64db[ppc.names]
-                fields = fieldsdb[ppc.form]
-                record = Record(name=name,
-                    section=section, ppc=ppc, svp64=svp64,
-                    operands=operands, fields=fields)
-                db.add(record)
-            except PPCDatabase.KeyError:
-                unknown_ppcdb.add(name)
-            except SVP64Database.KeyError:
-                unknown_svp64.add(name)
+            (section, ppc) = ppcdb[name]
+            if ppc is None:
+                continue
+            svp64 = svp64db[ppc.names]
+            fields = fieldsdb[ppc.form]
+            record = Record(name=name,
+                section=section, ppc=ppc, svp64=svp64,
+                operands=operands, fields=fields)
+            db.add(record)
 
         self.__db = tuple(sorted(db))
 
