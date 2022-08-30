@@ -751,31 +751,20 @@ class Database:
 
     @_functools.lru_cache(maxsize=None)
     def __contains__(self, key):
-        if isinstance(key, int):
-            return self.__opcodes.__contains__(key)
-        elif isinstance(key, int):
-            for (opcode, insn) in self.__opcodes.items():
-                if ((opcode.value & opcode.mask) ==
-                        (key & opcode.mask)):
-                    return True
-            return False
-        elif isinstance(key, str):
-            return self.__names.__contains__(key)
-        else:
-            raise KeyError(key)
+        return self.__getitem__(key) is not None
 
     @_functools.lru_cache(maxsize=None)
     def __getitem__(self, key):
-        if isinstance(key, Opcode):
-            return self.__opcodes.__getitem__(key)
-        elif isinstance(key, (int, Instruction)):
-            ikey = int(key)
+        if isinstance(key, (int, Instruction)):
+            key = int(key)
             for (opcode, insn) in self.__opcodes.items():
                 if ((opcode.value & opcode.mask) ==
-                        (ikey & opcode.mask)):
+                        (key & opcode.mask)):
                     return insn
-            raise KeyError(key)
+            return None
+        elif isinstance(key, Opcode):
+            return self.__opcodes.get(key, None)
         elif isinstance(key, str):
-            return self.__names.__getitem__(key)
+            return self.__names.get(key, None)
         else:
-            raise KeyError(key)
+            return None
