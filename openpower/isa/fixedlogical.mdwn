@@ -306,7 +306,7 @@ Special Registers Altered:
 
 X-Form
 
-* popcntb RA, RS
+* popcntb RA,RS
 
 Pseudo-code:
 
@@ -325,7 +325,7 @@ Special Registers Altered:
 
 X-Form
 
-* popcntw RA, RS
+* popcntw RA,RS
 
 Pseudo-code:
 
@@ -399,7 +399,7 @@ Special Registers Altered:
 
 X-Form
 
-* popcntd RA, RS
+* popcntd RA,RS
 
 Pseudo-code:
 
