@@ -41,7 +41,9 @@ from openpower.decoder.selectable_int import (
 from openpower.decoder.power_fields import (
     Field as _Field,
     Mapping as _Mapping,
+    DecodeFields as _DecodeFields,
 )
+from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 
 def dataclass(cls, record, keymap=None, typemap=None):
@@ -225,10 +227,6 @@ class PPCRecord:
 
         return dataclass(cls, record, keymap=PPCRecord.__KEYMAP, typemap=typemap)
 
-    @property
-    def identifier(self):
-        return self.comment
-
     @cached_property
     def names(self):
         return frozenset(self.comment.split("=")[-1].split("/"))
@@ -273,7 +271,7 @@ class SVP64Record:
         def __repr__(self):
             return repr({index:self[index] for index in range(0, 4)})
 
-    identifier: str
+    name: str
     ptype: _SVPtype = _SVPtype.NONE
     etype: _SVEtype = _SVEtype.NONE
     in1: _In1Sel = _In1Sel.NONE
@@ -289,7 +287,7 @@ class SVP64Record:
     mode: _SVMode = _SVMode.NORMAL
 
     __KEYMAP = {
-        "insn": "identifier",
+        "insn": "name",
         "CONDITIONS": "conditions",
         "Ptype": "ptype",
         "Etype": "etype",
@@ -406,14 +404,44 @@ class Fields:
         return self.__mapping.get(key, None)
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Operand:
+    pass
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperand(Operand):
+    name: str
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class StaticOperand(Operand):
+    name: str
+    value: int = None
+
+
+class Operands(tuple):
+    def __new__(cls, iterable):
+        operands = []
+        for operand in iterable:
+            if "=" in operand:
+                (name, value) = operand.split("=")
+                value = int(value)
+                operand = StaticOperand(name=name, value=value)
+            else:
+                operand = DynamicOperand(name=operand)
+            operands.append(operand)
+        return super().__new__(cls, operands)
+
+
 @_functools.total_ordering
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Record:
     name: str
-    rc: bool
     section: Section
     ppc: PPCRecord
     fields: Fields
+    operands: Operands
     svp64: SVP64Record = None
 
     __EXTRA = (
@@ -440,11 +468,8 @@ class Record:
         else:
             fields += [(self.ppc.opcode.value, self.section.bitsel)]
 
-        # Some instructions are special regarding Rc handling.
-        # They are marked with Rc.ONE, but don't have Rc field.
-        # At least addic., andi., andis. belong to this list.
-        if self.rc and "Rc" in self.fields:
-            fields += [(1, self.fields["Rc"])]
+        for operand in self.static_operands:
+            fields += [(operand.value, self.fields[operand.name])]
 
         return FieldsOpcode(fields)
 
@@ -530,6 +555,18 @@ class Record:
         if self.svp64 is None:
             return _SVEtype.NONE
         return self.svp64.etype
+
+    @property
+    def dynamic_operands(self):
+        for operand in self.operands:
+            if isinstance(operand, DynamicOperand):
+                yield operand
+
+    @property
+    def static_operands(self):
+        for operand in self.operands:
+            if isinstance(operand, StaticOperand):
+                yield operand
 
 
 class Instruction(_Mapping):
@@ -655,99 +692,142 @@ class SVP64Instruction(PrefixedInstruction):
             yield f".llong 0x{int(self):016x} # sv.{record.name}"
 
 
+def parse(stream, factory):
+    lines = filter(lambda line: not line.strip().startswith("#"), stream)
+    entries = _csv.DictReader(lines)
+    entries = filter(lambda entry: "TODO" not in frozenset(entry.values()), entries)
+    return tuple(map(factory, entries))
+
+
+class PPCDatabase:
+    class KeyError(KeyError):
+        pass
+
+    def __init__(self, root):
+        db = _collections.defaultdict(set)
+        path = (root / "insndb.csv")
+        with open(path, "r", encoding="UTF-8") as stream:
+            for section in parse(stream, Section.CSV):
+                path = (root / section.path)
+                opcode_cls = {
+                    section.Mode.INTEGER: IntegerOpcode,
+                    section.Mode.PATTERN: PatternOpcode,
+                }[section.mode]
+                factory = _functools.partial(PPCRecord.CSV, opcode_cls=opcode_cls)
+                with open(path, "r", encoding="UTF-8") as stream:
+                    db[section].update(parse(stream, factory))
+        self.__db = db
+        return super().__init__()
+
+    def __getitem__(self, key):
+        for (section, records) in self.__db.items():
+            for record in records:
+                for name in record.names:
+                    if ((key == name) or
+                            ((record.rc is _RC.RC) and
+                                key.endswith(".") and
+                                name == key[:-1])):
+                        return (section, record)
+        raise self.__class__.KeyError(key)
+
+
+class SVP64Database:
+    class KeyError(KeyError):
+        pass
+
+    def __init__(self, root, ppcdb):
+        db = set()
+        pattern = _re.compile(r"^(?:LDST)?RM-(1P|2P)-.*?\.csv$")
+        for (prefix, _, names) in _os.walk(root):
+            prefix = _pathlib.Path(prefix)
+            for name in filter(lambda name: pattern.match(name), names):
+                path = (prefix / _pathlib.Path(name))
+                with open(path, "r", encoding="UTF-8") as stream:
+                    db.update(parse(stream, SVP64Record.CSV))
+        self.__db = {record.name:record for record in db}
+        return super().__init__()
+
+    def __getitem__(self, key):
+        for name in key:
+            record = self.__db.get(name, None)
+            if record is not None:
+                return record
+        raise self.__class__.KeyError(key)
+
+
+class FieldsDatabase:
+    def __init__(self):
+        db = {}
+        df = _DecodeFields()
+        df.create_specs()
+        for (form, fields) in df.instrs.items():
+            if form in {"DQE", "TX"}:
+                continue
+            if form == "all":
+                form = "NONE"
+            db[_Form[form]] = Fields(fields)
+        self.__db = db
+        return super().__init__()
+
+    def __getitem__(self, key):
+        return self.__db.__getitem__(key)
+
+
+class MarkdownDatabase:
+    def __init__(self):
+        db = {}
+        for (name, desc) in _ISA():
+            operands = []
+            if desc.regs:
+                (dynamic, *static) = desc.regs
+                operands.extend(dynamic)
+                operands.extend(static)
+            db[name] = Operands(operands)
+        self.__db = db
+        return super().__init__()
+
+    def __iter__(self):
+        yield from self.__db.items()
+
+    def __getitem__(self, key):
+        return self.__db.__getitem__(key)
+
+
 class Database:
     def __init__(self, root):
         root = _pathlib.Path(root)
 
-        def parse(stream, factory):
-            lines = filter(lambda line: not line.strip().startswith("#"), stream)
-            entries = _csv.DictReader(lines)
-            entries = filter(lambda entry: "TODO" not in frozenset(entry.values()), entries)
-            return tuple(map(factory, entries))
+        mdwndb = MarkdownDatabase()
+        fieldsdb = FieldsDatabase()
+        ppcdb = PPCDatabase(root)
+        svp64db = SVP64Database(root, ppcdb)
 
-        def database_ppc(root):
-            db = _collections.defaultdict(set)
-            path = (root / "insndb.csv")
-            with open(path, "r", encoding="UTF-8") as stream:
-                for section in parse(stream, Section.CSV):
-                    path = (root / section.path)
-                    opcode_cls = {
-                        section.Mode.INTEGER: IntegerOpcode,
-                        section.Mode.PATTERN: PatternOpcode,
-                    }[section.mode]
-                    factory = _functools.partial(PPCRecord.CSV, opcode_cls=opcode_cls)
-                    with open(path, "r", encoding="UTF-8") as stream:
-                        db[section].update(parse(stream, factory))
-            for (section, records) in db.items():
-                db[section] = {record.identifier:record for record in records}
-            return db
+        db = set()
+        unknown_ppcdb = set()
+        unknown_svp64 = set()
+        for (name, operands) in mdwndb:
+            try:
+                (section, ppc) = ppcdb[name]
+                svp64 = svp64db[ppc.names]
+                fields = fieldsdb[ppc.form]
+                record = Record(name=name,
+                    section=section, ppc=ppc, svp64=svp64,
+                    operands=operands, fields=fields)
+                db.add(record)
+            except PPCDatabase.KeyError:
+                unknown_ppcdb.add(name)
+            except SVP64Database.KeyError:
+                unknown_svp64.add(name)
 
-        def database_svp64(root):
-            db = set()
-            pattern = _re.compile(r"^(?:LDST)?RM-(1P|2P)-.*?\.csv$")
-            for (prefix, _, names) in _os.walk(root):
-                prefix = _pathlib.Path(prefix)
-                for name in filter(lambda name: pattern.match(name), names):
-                    path = (prefix / _pathlib.Path(name))
-                    with open(path, "r", encoding="UTF-8") as stream:
-                        db.update(parse(stream, SVP64Record.CSV))
-            db = {record.identifier:record for record in db}
-            return db
-
-        def database_forms(root):
-            # This is hack. The whole code there should be moved here.
-            # The fields.text parser should take care of the validation.
-            from openpower.decoder.power_fields import DecodeFields as _DecodeFields
-            db = {}
-            df = _DecodeFields()
-            df.create_specs()
-            for (form, fields) in df.instrs.items():
-                if form in {"DQE", "TX"}:
-                    continue
-                if form == "all":
-                    form = "NONE"
-                db[_Form[form]] = Fields(fields)
-            return db
-
-        def database(ppcdb, svp64db, formsdb):
-            items = set()
-            for section in ppcdb:
-                for (identifier, ppc) in ppcdb[section].items():
-                    fields = formsdb[ppc.form]
-                    svp64 = svp64db.get(identifier)
-                    if ppc.rc is _RCOE.ONE:
-                        variants = {name:True for name in ppc.names}
-                    elif ppc.rc in [_RCOE.RC, _RCOE.RC_ONLY]:
-                        variants = {name:False for name in ppc.names}
-                        variants.update({f"{name}.":True for name in ppc.names})
-                    else:
-                        variants = {name:False for name in ppc.names}
-                    for (name, rc) in variants.items():
-                        items.add(Record(name=name, rc=rc,
-                            section=section, ppc=ppc, fields=fields, svp64=svp64))
-
-            items = tuple(sorted(items, key=_operator.attrgetter("opcode")))
-            opcodes = {item.opcode:item for item in items}
-            names = {item.name:item for item in sorted(items, key=_operator.attrgetter("name"))}
-
-            return (items, opcodes, names)
-
-        ppcdb = database_ppc(root)
-        svp64db = database_svp64(root)
-        formsdb = database_forms(root)
-
-        (items, opcodes, names) = database(ppcdb, svp64db, formsdb)
-        self.__items = items
-        self.__opcodes = opcodes
-        self.__names = names
+        self.__db = tuple(sorted(db))
 
         return super().__init__()
 
     def __repr__(self):
-        return repr(self.__items)
+        return repr(self.__db)
 
     def __iter__(self):
-        yield from self.__items
+        yield from self.__db
 
     @_functools.lru_cache(maxsize=None)
     def __contains__(self, key):
@@ -757,14 +837,18 @@ class Database:
     def __getitem__(self, key):
         if isinstance(key, (int, Instruction)):
             key = int(key)
-            for (opcode, insn) in self.__opcodes.items():
+            for record in self:
+                opcode = record.opcode
                 if ((opcode.value & opcode.mask) ==
                         (key & opcode.mask)):
-                    return insn
+                    return record
             return None
         elif isinstance(key, Opcode):
-            return self.__opcodes.get(key, None)
+            for record in self:
+                if record.opcode == key:
+                    return record
         elif isinstance(key, str):
-            return self.__names.get(key, None)
-        else:
-            return None
+            for record in self:
+                if record.name == key:
+                    return record
+        return None
