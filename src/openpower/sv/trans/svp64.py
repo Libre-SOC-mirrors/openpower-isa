@@ -1295,12 +1295,6 @@ class SVP64Asm:
         if not v30b_op.endswith('.'):
             v30b_op_rc += rc
 
-        # svstep is weird
-        # FIXME(lkcl): should sv.svstep be like svstep?
-        if v30b_op_rc in ("svstep", "svstep."):
-            # compensate for `SVi -= 1` in svstep()
-            v30b_newfields[1] = str(int(v30b_newfields[1]) + 1)
-
         custom_insn_hook = CUSTOM_INSNS.get(v30b_op_rc)
         if custom_insn_hook is not None:
             fields = tuple(map(to_number, v30b_newfields))
