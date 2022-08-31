@@ -4,7 +4,6 @@ import dataclasses as _dataclasses
 import enum as _enum
 import functools as _functools
 import os as _os
-import operator as _operator
 import pathlib as _pathlib
 import re as _re
 
@@ -409,17 +408,6 @@ class Operand:
     pass
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperand(Operand):
-    name: str
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class StaticOperand(Operand):
-    name: str
-    value: int = None
-
-
 class Operands(tuple):
     def __new__(cls, iterable):
         operands = []
@@ -432,6 +420,20 @@ class Operands(tuple):
                 operand = DynamicOperand(name=operand)
             operands.append(operand)
         return super().__new__(cls, operands)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperand(Operand):
+    name: str
+
+    def disassemble(self, value, record):
+        return str(int(value[record.fields[self.name]]))
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class StaticOperand(Operand):
+    name: str
+    value: int = None
 
 
 @_functools.total_ordering
@@ -618,10 +620,10 @@ class WordInstruction(Instruction):
         else:
             operands = []
             for operand in record.dynamic_operands:
-                operand = int(self[record.fields[operand.name]])
+                operand = operand.disassemble(self, record)
                 operands.append(operand)
             if operands:
-                operands = ",".join(map(str, operands))
+                operands = ",".join(operands)
                 operands = f" {operands}"
             else:
                 operands = ""
