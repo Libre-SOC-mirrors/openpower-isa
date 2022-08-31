@@ -24,10 +24,10 @@
 
 I-Form
 
-* b target_addr (AA=0 LK=0)
-* ba target_addr (AA=1 LK=0)
-* bl target_addr (AA=0 LK=1)
-* bla target_addr (AA=1 LK=1)
+* b LI (AA=0 LK=0)
+* ba LI (AA=1 LK=0)
+* bl LI (AA=0 LK=1)
+* bla LI (AA=1 LK=1)
 
 Pseudo-code:
 
@@ -43,10 +43,10 @@ Special Registers Altered:
 
 B-Form
 
-* bc BO,BI,target_addr (AA=0 LK=0)
-* bca BO,BI,target_addr (AA=1 LK=0)
-* bcl BO,BI,target_addr (AA=0 LK=1)
-* bcla BO,BI,target_addr (AA=1 LK=1)
+* bc BO,BI,BD (AA=0 LK=0)
+* bca BO,BI,BD (AA=1 LK=0)
+* bcl BO,BI,BD (AA=0 LK=1)
+* bcla BO,BI,BD (AA=1 LK=1)
 
 Pseudo-code:
 
