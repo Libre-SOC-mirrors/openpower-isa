@@ -421,17 +421,44 @@ class Operands(tuple):
         name: str
         value: int = None
 
-    def __new__(cls, iterable):
-        dynamic_cls = cls.DynamicOperand
-        static_cls = cls.StaticOperand
+    @_dataclasses.dataclass(eq=True, frozen=True)
+    class DynamicOperandTargetAddrIForm(DynamicOperand):
+        def disassemble(self, value, record):
+            return hex(int(_selectconcat(
+                value[record.fields["LI"]],
+                _SelectableInt(value=0b00, bits=2))))
+
+    class DynamicOperandTargetAddrBForm(DynamicOperand):
+        def disassemble(self, value, record):
+            return hex(int(_selectconcat(
+                value[record.fields["BD"]],
+                _SelectableInt(value=0b00, bits=2))))
+
+    def __new__(cls, insn, iterable):
+        branches = {
+            "b": {"target_addr": cls.DynamicOperandTargetAddrIForm},
+            "ba": {"target_addr": cls.DynamicOperandTargetAddrIForm},
+            "bl": {"target_addr": cls.DynamicOperandTargetAddrIForm},
+            "bla": {"target_addr": cls.DynamicOperandTargetAddrIForm},
+            "bc": {"target_addr": cls.DynamicOperandTargetAddrBForm},
+            "bca": {"target_addr": cls.DynamicOperandTargetAddrBForm},
+            "bcl": {"target_addr": cls.DynamicOperandTargetAddrBForm},
+            "bcla": {"target_addr": cls.DynamicOperandTargetAddrBForm},
+        }
 
         operands = []
         for operand in iterable:
+            dynamic_cls = cls.DynamicOperand
+            static_cls = cls.StaticOperand
+
             if "=" in operand:
                 (name, value) = operand.split("=")
                 operand = static_cls(name=name, value=int(value))
             else:
+                if insn in branches and operand in branches[insn]:
+                    dynamic_cls = branches[insn][operand]
                 operand = dynamic_cls(name=operand)
+
             operands.append(operand)
 
         return super().__new__(cls, operands)
@@ -788,7 +815,7 @@ class MarkdownDatabase:
                 (dynamic, *static) = desc.regs
                 operands.extend(dynamic)
                 operands.extend(static)
-            db[name] = Operands(iterable=operands)
+            db[name] = Operands(insn=name, iterable=operands)
         self.__db = db
         return super().__init__()
 
