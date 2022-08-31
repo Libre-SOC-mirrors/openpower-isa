@@ -347,7 +347,7 @@ class SVP64UTF8ValidationTestCase(TestAccumulatorBase):
         # type: (bytes | str) -> None
         if isinstance(data, str):
             data = data.encode("utf-8")
-        data = b' ' * 8 + data + b' ' * 8
+        data = data.center(8, b' ')
         for i in range(len(data)):
             self.run_case(data[i:], src_loc_at=1)
             self.run_case(data[:i], src_loc_at=1)
