@@ -94,4 +94,4 @@ build:
 
         - make generate &> generate.log || { cat generate.log; false; }
 
-        - pytest -n auto src/openpower --maxfail=5
+        - SILENCELOG='!*,default' pytest -n auto -v src/openpower --maxfail=5
