@@ -409,31 +409,32 @@ class Operand:
 
 
 class Operands(tuple):
+    @_dataclasses.dataclass(eq=True, frozen=True)
+    class DynamicOperand(Operand):
+        name: str
+
+        def disassemble(self, value, record):
+            return str(int(value[record.fields[self.name]]))
+
+    @_dataclasses.dataclass(eq=True, frozen=True)
+    class StaticOperand(Operand):
+        name: str
+        value: int = None
+
     def __new__(cls, iterable):
+        dynamic_cls = cls.DynamicOperand
+        static_cls = cls.StaticOperand
+
         operands = []
         for operand in iterable:
             if "=" in operand:
                 (name, value) = operand.split("=")
-                value = int(value)
-                operand = StaticOperand(name=name, value=value)
+                operand = static_cls(name=name, value=int(value))
             else:
-                operand = DynamicOperand(name=operand)
+                operand = dynamic_cls(name=operand)
             operands.append(operand)
+
         return super().__new__(cls, operands)
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperand(Operand):
-    name: str
-
-    def disassemble(self, value, record):
-        return str(int(value[record.fields[self.name]]))
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class StaticOperand(Operand):
-    name: str
-    value: int = None
 
 
 @_functools.total_ordering
@@ -561,13 +562,13 @@ class Record:
     @property
     def dynamic_operands(self):
         for operand in self.operands:
-            if isinstance(operand, DynamicOperand):
+            if isinstance(operand, Operands.DynamicOperand):
                 yield operand
 
     @property
     def static_operands(self):
         for operand in self.operands:
-            if isinstance(operand, StaticOperand):
+            if isinstance(operand, Operands.StaticOperand):
                 yield operand
 
 
@@ -787,7 +788,7 @@ class MarkdownDatabase:
                 (dynamic, *static) = desc.regs
                 operands.extend(dynamic)
                 operands.extend(static)
-            db[name] = Operands(operands)
+            db[name] = Operands(iterable=operands)
         self.__db = db
         return super().__init__()
 
