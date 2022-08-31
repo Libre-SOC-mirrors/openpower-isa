@@ -30,6 +30,7 @@ from openpower.decoder.power_enums import (
     SVMode as _SVMode,
     SVPtype as _SVPtype,
     SVExtra as _SVExtra,
+    RegType as _RegType,
     SVExtraRegType as _SVExtraRegType,
     SVExtraReg as _SVExtraReg,
 )
@@ -434,6 +435,16 @@ class Operands(tuple):
                 value[record.fields["BD"]],
                 _SelectableInt(value=0b00, bits=2))))
 
+    @_dataclasses.dataclass(eq=True, frozen=True)
+    class DynamicOperandGPR(DynamicOperand):
+        def disassemble(self, value, record):
+            return f"r{super().disassemble(value=value, record=record)}"
+
+    @_dataclasses.dataclass(eq=True, frozen=True)
+    class DynamicOperandFPR(DynamicOperand):
+        def disassemble(self, value, record):
+            return f"f{super().disassemble(value=value, record=record)}"
+
     def __new__(cls, insn, iterable):
         branches = {
             "b": {"target_addr": cls.DynamicOperandTargetAddrIForm},
@@ -457,6 +468,14 @@ class Operands(tuple):
             else:
                 if insn in branches and operand in branches[insn]:
                     dynamic_cls = branches[insn][operand]
+
+                if operand in _RegType.__members__:
+                    regtype = _RegType[operand]
+                    if regtype is _RegType.GPR:
+                        dynamic_cls = cls.DynamicOperandGPR
+                    elif regtype is _RegType.FPR:
+                        dynamic_cls = cls.DynamicOperandFPR
+
                 operand = dynamic_cls(name=operand)
 
             operands.append(operand)
