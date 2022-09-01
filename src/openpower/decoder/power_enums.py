@@ -674,7 +674,8 @@ class LDSTMode(Enum):
 class RC(Enum):
     NONE = 0
     ONE = 1
-    RC = 2
+    RC_OE = 2    # includes OE
+    RC_ONLY = 3  # does not include OE
 
 
 @unique
