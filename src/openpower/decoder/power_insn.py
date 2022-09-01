@@ -648,7 +648,7 @@ class Instruction(_Mapping):
     def __hash__(self):
         return hash(int(self))
 
-    def disassemble(self, db):
+    def disassemble(self, db, byteorder="little"):
         raise NotImplementedError
 
 
@@ -660,10 +660,14 @@ class WordInstruction(Instruction):
     def integer(cls, value, byteorder="little"):
         return super().integer(bits=32, value=value, byteorder=byteorder)
 
-    def disassemble(self, db):
+    def disassemble(self, db, byteorder="little"):
+        integer = int(self)
+        blob = integer.to_bytes(length=4, byteorder=byteorder)
+        blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
+
         record = db[self]
         if record is None:
-            yield f".long 0x{int(self):08x}"
+            yield f"{blob}    .long 0x{integer:08x}"
         else:
             operands = []
             for operand in record.dynamic_operands:
@@ -674,8 +678,7 @@ class WordInstruction(Instruction):
                 operands = f" {operands}"
             else:
                 operands = ""
-
-            yield f"{record.name}{operands}"
+            yield f"{blob}    {record.name}{operands}"
 
 class PrefixedInstruction(Instruction):
     class Prefix(WordInstruction.remap(range(0, 32))):
@@ -735,12 +738,22 @@ class SVP64Instruction(PrefixedInstruction):
 
     prefix: Prefix
 
-    def disassemble(self, db):
+    def disassemble(self, db, byteorder="little"):
+        integer_prefix = int(self.prefix)
+        blob_prefix = integer_prefix.to_bytes(length=4, byteorder=byteorder)
+        blob_prefix = " ".join(map(lambda byte: f"{byte:02x}", blob_prefix))
+
+        integer_suffix = int(self.suffix)
+        blob_suffix = integer_suffix.to_bytes(length=4, byteorder=byteorder)
+        blob_suffix = " ".join(map(lambda byte: f"{byte:02x}", blob_suffix))
+
         record = db[self.suffix]
-        if record is None:
-            yield f".llong 0x{int(self):016x}"
+        if record is None or record.svp64 is None:
+            yield f"{blob_prefix}    .long 0x{int(self.prefix):08x}"
+            yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
         else:
-            yield f".llong 0x{int(self):016x} # sv.{record.name}"
+            yield f"{blob_prefix}    sv.{record.name}"
+            yield f"{blob_suffix}"
 
 
 def parse(stream, factory):
