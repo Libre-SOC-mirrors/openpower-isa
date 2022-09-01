@@ -404,22 +404,21 @@ class Fields:
         return self.__mapping.get(key, None)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Operand:
-    pass
-
-
-class Operands(tuple):
+class Operands:
     @_dataclasses.dataclass(eq=True, frozen=True)
-    class DynamicOperand(Operand):
+    class Operand:
         name: str
 
+        def disassemble(self, value, record):
+            raise NotImplementedError
+
+    @_dataclasses.dataclass(eq=True, frozen=True)
+    class DynamicOperand(Operand):
         def disassemble(self, value, record):
             return str(int(value[record.fields[self.name]]))
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class StaticOperand(Operand):
-        name: str
         value: int = None
 
     @_dataclasses.dataclass(eq=True, frozen=True)
@@ -445,22 +444,22 @@ class Operands(tuple):
         def disassemble(self, value, record):
             return f"f{super().disassemble(value=value, record=record)}"
 
-    def __new__(cls, insn, iterable):
+    def __init__(self, insn, iterable):
         branches = {
-            "b": {"LI": cls.DynamicOperandIFormLI},
-            "ba": {"LI": cls.DynamicOperandIFormLI},
-            "bl": {"LI": cls.DynamicOperandIFormLI},
-            "bla": {"LI": cls.DynamicOperandIFormLI},
-            "bc": {"BD": cls.DynamicOperandBFormBD},
-            "bca": {"BD": cls.DynamicOperandBFormBD},
-            "bcl": {"BD": cls.DynamicOperandBFormBD},
-            "bcla": {"BD": cls.DynamicOperandBFormBD},
+            "b": {"LI": self.__class__.DynamicOperandIFormLI},
+            "ba": {"LI": self.__class__.DynamicOperandIFormLI},
+            "bl": {"LI": self.__class__.DynamicOperandIFormLI},
+            "bla": {"LI": self.__class__.DynamicOperandIFormLI},
+            "bc": {"BD": self.__class__.DynamicOperandBFormBD},
+            "bca": {"BD": self.__class__.DynamicOperandBFormBD},
+            "bcl": {"BD": self.__class__.DynamicOperandBFormBD},
+            "bcla": {"BD": self.__class__.DynamicOperandBFormBD},
         }
 
         operands = []
         for operand in iterable:
-            dynamic_cls = cls.DynamicOperand
-            static_cls = cls.StaticOperand
+            dynamic_cls = self.__class__.DynamicOperand
+            static_cls = self.__class__.StaticOperand
 
             if "=" in operand:
                 (name, value) = operand.split("=")
@@ -472,15 +471,42 @@ class Operands(tuple):
                 if operand in _RegType.__members__:
                     regtype = _RegType[operand]
                     if regtype is _RegType.GPR:
-                        dynamic_cls = cls.DynamicOperandGPR
+                        dynamic_cls = self.__class__.DynamicOperandGPR
                     elif regtype is _RegType.FPR:
-                        dynamic_cls = cls.DynamicOperandFPR
+                        dynamic_cls = self.__class__.DynamicOperandFPR
 
                 operand = dynamic_cls(name=operand)
 
             operands.append(operand)
 
-        return super().__new__(cls, operands)
+        self.__operands = operands
+
+        return super().__init__()
+
+    def __repr__(self):
+        return self.__operands.__repr__()
+
+    def __iter__(self):
+        yield from self.__operands
+
+    def __getitem__(self, key):
+        for operand in self.__operands:
+            if operand.name == key:
+                return operand
+
+        return None
+
+    @property
+    def dynamic(self):
+        for operand in self:
+            if isinstance(operand, self.__class__.DynamicOperand):
+                yield operand
+
+    @property
+    def static(self):
+        for operand in self:
+            if isinstance(operand, self.__class__.StaticOperand):
+                yield operand
 
 
 @_functools.total_ordering
@@ -517,7 +543,7 @@ class Record:
         else:
             fields += [(self.ppc.opcode.value, self.section.bitsel)]
 
-        for operand in self.static_operands:
+        for operand in self.operands.static:
             fields += [(operand.value, self.fields[operand.name])]
 
         return FieldsOpcode(fields)
@@ -605,18 +631,6 @@ class Record:
             return _SVEtype.NONE
         return self.svp64.etype
 
-    @property
-    def dynamic_operands(self):
-        for operand in self.operands:
-            if isinstance(operand, Operands.DynamicOperand):
-                yield operand
-
-    @property
-    def static_operands(self):
-        for operand in self.operands:
-            if isinstance(operand, Operands.StaticOperand):
-                yield operand
-
 
 class Instruction(_Mapping):
     @classmethod
@@ -670,7 +684,7 @@ class WordInstruction(Instruction):
             yield f"{blob}    .long 0x{integer:08x}"
         else:
             operands = []
-            for operand in record.dynamic_operands:
+            for operand in record.operands.dynamic:
                 operand = operand.disassemble(self, record)
                 operands.append(operand)
             if operands:
