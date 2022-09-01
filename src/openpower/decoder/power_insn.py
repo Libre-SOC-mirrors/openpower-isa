@@ -24,7 +24,7 @@ from openpower.decoder.power_enums import (
     CROutSel as _CROutSel,
     LDSTLen as _LDSTLen,
     LDSTMode as _LDSTMode,
-    RC as _RC,
+    RCOE as _RCOE,
     CryIn as _CryIn,
     Form as _Form,
     SVEtype as _SVEtype,
@@ -197,7 +197,7 @@ class PPCRecord:
     cry_in: _CryIn = _CryIn.ZERO
     ldst_len: _LDSTLen = _LDSTLen.NONE
     upd: _LDSTMode = _LDSTMode.NONE
-    rc: _RC = _RC.NONE
+    rc: _RCOE = _RCOE.NONE
     form: _Form = _Form.NONE
     conditions: str = ""
     unofficial: bool = False
@@ -715,9 +715,9 @@ class Database:
                 for (identifier, ppc) in ppcdb[section].items():
                     fields = formsdb[ppc.form]
                     svp64 = svp64db.get(identifier)
-                    if ppc.rc is _RC.ONE:
+                    if ppc.rc is _RCOE.ONE:
                         variants = {name:True for name in ppc.names}
-                    elif ppc.rc is _RC.RC:
+                    elif ppc.rc is _RCOE.RC:
                         variants = {name:False for name in ppc.names}
                         variants.update({f"{name}.":True for name in ppc.names})
                     else:
