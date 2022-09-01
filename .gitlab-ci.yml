@@ -11,7 +11,7 @@ build:
         - apt-get update
         # one package per line to simplify sorting, git diff, etc.
         - >-
-            apt-get -y install
+            apt-get -y install --no-install-recommends
             autoconf
             binutils-powerpc64-linux-gnu
             binutils-powerpc64le-linux-gnu
