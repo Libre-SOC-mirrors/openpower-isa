@@ -17,6 +17,7 @@
 /fpload.py
 /fpmove.py
 /fpstore.py
+/fptrans.py
 /sprset.py
 /stringldst.py
 /system.py
