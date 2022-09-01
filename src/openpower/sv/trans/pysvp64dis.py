@@ -25,31 +25,28 @@ def load(ifile, byteorder, **_):
     byteorder = str(byteorder)
 
     while True:
-        prefix = ifile.read(4)
-        length = len(prefix)
+        insn = ifile.read(4)
+        length = len(insn)
         if length == 0:
             return
         elif length < 4:
-            raise IOError(prefix)
-        prefix = _WordInstruction.integer(value=prefix, byteorder=byteorder)
+            raise IOError(insn)
+        insn = _WordInstruction.integer(value=insn, byteorder=byteorder)
+        if insn.po == 0x1:
+            suffix = ifile.read(4)
+            length = len(suffix)
+            if length == 0:
+                yield insn
+                return
+            elif length < 4:
+                raise IOError(suffix)
 
-        suffix = ifile.read(4)
-        length = len(suffix)
-        if length == 0:
-            yield prefix
-            return
-        elif length < 4:
-            raise IOError(suffix)
-        suffix = _WordInstruction.integer(value=suffix, byteorder=byteorder)
-
-        if prefix.po == 0x1:
+            prefix = insn
+            suffix = _WordInstruction.integer(value=suffix, byteorder=byteorder)
             insn = _SVP64Instruction.pair(prefix=prefix, suffix=suffix)
             if insn.prefix.id != 0b11:
                 insn = _PrefixedInstruction.pair(prefix=prefix, suffix=suffix)
-            yield insn
-        else:
-            yield prefix
-            yield suffix
+        yield insn
 
 
 def dump(insns, **_):
