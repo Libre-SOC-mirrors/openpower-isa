@@ -704,13 +704,6 @@ class PrefixedInstruction(Instruction):
 
         return super().integer(value=value)
 
-    def disassemble(self, db):
-        record = db[self.suffix]
-        if record is None:
-            yield f".llong 0x{int(self):016x}"
-        else:
-            yield f".llong 0x{int(self):016x} # {record.name}"
-
 
 class SVP64Instruction(PrefixedInstruction):
     """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
