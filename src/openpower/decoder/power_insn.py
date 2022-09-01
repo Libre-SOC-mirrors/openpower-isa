@@ -777,74 +777,6 @@ def parse(stream, factory):
     return tuple(map(factory, entries))
 
 
-class PPCDatabase:
-    def __init__(self, root):
-        db = _collections.defaultdict(set)
-        path = (root / "insndb.csv")
-        with open(path, "r", encoding="UTF-8") as stream:
-            for section in parse(stream, Section.CSV):
-                path = (root / section.path)
-                opcode_cls = {
-                    section.Mode.INTEGER: IntegerOpcode,
-                    section.Mode.PATTERN: PatternOpcode,
-                }[section.mode]
-                factory = _functools.partial(PPCRecord.CSV, opcode_cls=opcode_cls)
-                with open(path, "r", encoding="UTF-8") as stream:
-                    db[section].update(parse(stream, factory))
-        self.__db = db
-        return super().__init__()
-
-    def __getitem__(self, key):
-        for (section, records) in self.__db.items():
-            for record in records:
-                for name in record.names:
-                    if ((key == name) or
-                            ((record.rc is _RC.RC) and
-                                key.endswith(".") and
-                                name == key[:-1])):
-                        return (section, record)
-        return (None, None)
-
-
-class SVP64Database:
-    def __init__(self, root):
-        db = set()
-        pattern = _re.compile(r"^(?:LDST)?RM-(1P|2P)-.*?\.csv$")
-        for (prefix, _, names) in _os.walk(root):
-            prefix = _pathlib.Path(prefix)
-            for name in filter(lambda name: pattern.match(name), names):
-                path = (prefix / _pathlib.Path(name))
-                with open(path, "r", encoding="UTF-8") as stream:
-                    db.update(parse(stream, SVP64Record.CSV))
-        self.__db = {record.name:record for record in db}
-        return super().__init__()
-
-    def __getitem__(self, key):
-        for name in key:
-            record = self.__db.get(name, None)
-            if record is not None:
-                return record
-        return None
-
-
-class FieldsDatabase:
-    def __init__(self):
-        db = {}
-        df = _DecodeFields()
-        df.create_specs()
-        for (form, fields) in df.instrs.items():
-            if form in {"DQE", "TX"}:
-                continue
-            if form == "all":
-                form = "NONE"
-            db[_Form[form]] = Fields(fields)
-        self.__db = db
-        return super().__init__()
-
-    def __getitem__(self, key):
-        return self.__db.__getitem__(key)
-
-
 class MarkdownDatabase:
     def __init__(self):
         db = {}
@@ -865,21 +797,104 @@ class MarkdownDatabase:
         return self.__db.__getitem__(key)
 
 
+class FieldsDatabase:
+    def __init__(self):
+        db = {}
+        df = _DecodeFields()
+        df.create_specs()
+        for (form, fields) in df.instrs.items():
+            if form in {"DQE", "TX"}:
+                continue
+            if form == "all":
+                form = "NONE"
+            db[_Form[form]] = Fields(fields)
+
+        self.__db = db
+
+        return super().__init__()
+
+    def __getitem__(self, key):
+        return self.__db.__getitem__(key)
+
+
+class PPCDatabase:
+    def __init__(self, root, mdwndb, fieldsdb):
+        db = _collections.defaultdict(set)
+        path = (root / "insndb.csv")
+        with open(path, "r", encoding="UTF-8") as stream:
+            for section in parse(stream, Section.CSV):
+                path = (root / section.path)
+                opcode_cls = {
+                    section.Mode.INTEGER: IntegerOpcode,
+                    section.Mode.PATTERN: PatternOpcode,
+                }[section.mode]
+                factory = _functools.partial(PPCRecord.CSV, opcode_cls=opcode_cls)
+                with open(path, "r", encoding="UTF-8") as stream:
+                    db[section].update(parse(stream, factory))
+
+        self.__db = db
+        self.__mdwndb = mdwndb
+        self.__fieldsdb = fieldsdb
+
+        return super().__init__()
+
+    def __getitem__(self, key):
+        for (section, records) in self.__db.items():
+            for record in records:
+                for name in record.names:
+                    if ((key == name) or
+                            ((record.rc is _RC.RC) and
+                                key.endswith(".") and
+                                name == key[:-1])):
+                        return (section, record)
+
+        return (None, None)
+
+
+class SVP64Database:
+    def __init__(self, root, ppcdb):
+        db = set()
+        pattern = _re.compile(r"^(?:LDST)?RM-(1P|2P)-.*?\.csv$")
+        for (prefix, _, names) in _os.walk(root):
+            prefix = _pathlib.Path(prefix)
+            for name in filter(lambda name: pattern.match(name), names):
+                path = (prefix / _pathlib.Path(name))
+                with open(path, "r", encoding="UTF-8") as stream:
+                    db.update(parse(stream, SVP64Record.CSV))
+
+        self.__db = {record.name:record for record in db}
+        self.__ppcdb = ppcdb
+
+        return super().__init__()
+
+    def __getitem__(self, key):
+        (_, record) = self.__ppcdb[key]
+        if record is None:
+            return None
+
+        for name in record.names:
+            record = self.__db.get(name, None)
+            if record is not None:
+                return record
+
+        return None
+
+
 class Database:
     def __init__(self, root):
         root = _pathlib.Path(root)
 
         mdwndb = MarkdownDatabase()
         fieldsdb = FieldsDatabase()
-        svp64db = SVP64Database(root)
-        ppcdb = PPCDatabase(root)
+        ppcdb = PPCDatabase(root=root, mdwndb=mdwndb, fieldsdb=fieldsdb)
+        svp64db = SVP64Database(root=root, ppcdb=ppcdb)
 
         db = set()
         for (name, operands) in mdwndb:
             (section, ppc) = ppcdb[name]
             if ppc is None:
                 continue
-            svp64 = svp64db[ppc.names]
+            svp64 = svp64db[name]
             fields = fieldsdb[ppc.form]
             record = Record(name=name,
                 section=section, ppc=ppc, svp64=svp64,
