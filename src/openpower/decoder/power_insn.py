@@ -855,10 +855,20 @@ class PPCDatabase:
 
             return exact_match(key[:-1], record)
 
+        def LK_match(key, record):
+            if not key.endswith("l"):
+                return False
+
+            if "lk" not in record.flags:
+                return False
+
+            return exact_match(key[:-1], record)
+
         for (section, records) in self.__db.items():
             for record in records:
                 if (exact_match(key, record) or
-                        Rc_match(key, record)):
+                        Rc_match(key, record) or
+                        LK_match(key, record)):
                     return (section, record)
 
         return (None, None)
