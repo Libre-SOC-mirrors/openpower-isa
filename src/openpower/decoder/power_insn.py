@@ -839,14 +839,27 @@ class PPCDatabase:
         return super().__init__()
 
     def __getitem__(self, key):
+        def exact_match(key, record):
+            for name in record.names:
+                if name == key:
+                    return True
+
+            return False
+
+        def Rc_match(key, record):
+            if not key.endswith("."):
+                return False
+
+            if not record.rc is _RCOE.RC:
+                return False
+
+            return exact_match(key[:-1], record)
+
         for (section, records) in self.__db.items():
             for record in records:
-                for name in record.names:
-                    if ((key == name) or
-                            ((record.rc is _RC.RC) and
-                                key.endswith(".") and
-                                name == key[:-1])):
-                        return (section, record)
+                if (exact_match(key, record) or
+                        Rc_match(key, record)):
+                    return (section, record)
 
         return (None, None)
 
