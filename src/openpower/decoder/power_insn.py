@@ -819,7 +819,11 @@ class FieldsDatabase:
 
 class PPCDatabase:
     def __init__(self, root, mdwndb, fieldsdb):
-        db = _collections.defaultdict(set)
+        # The code below groups the instructions by section:identifier.
+        # We use the comment as an identifier, there's nothing better.
+        # The point is to capture different opcodes for the same instruction.
+        dd = _collections.defaultdict
+        records = dd(lambda: dd(set))
         path = (root / "insndb.csv")
         with open(path, "r", encoding="UTF-8") as stream:
             for section in parse(stream, Section.CSV):
@@ -830,7 +834,41 @@ class PPCDatabase:
                 }[section.mode]
                 factory = _functools.partial(PPCRecord.CSV, opcode_cls=opcode_cls)
                 with open(path, "r", encoding="UTF-8") as stream:
-                    db[section].update(parse(stream, factory))
+                    for insn in parse(stream, factory):
+                        records[section][insn.comment].add(insn)
+
+        # Once we collected all instructions with the same identifier,
+        # it's time to merge the different opcodes into the single pattern.
+        # At this point, we only consider masks; the algorithm as follows:
+        # 1. If any of two masks ignores the bit, it's ignored entirely.
+        # 2. If the bit is not equal between masks, it's ignored.
+        # 3. Otherwise the bits are equal and considered.
+        def merge(lhs, rhs):
+            value = 0
+            mask = 0
+            lvalue = lhs.opcode.value
+            rvalue = rhs.opcode.value
+            lmask = lhs.opcode.mask
+            rmask = rhs.opcode.mask
+            bits = max(lmask.bit_length(), rmask.bit_length())
+            for bit in range(bits):
+                lvstate = ((lvalue & (1 << bit)) != 0)
+                rvstate = ((rvalue & (1 << bit)) != 0)
+                lmstate = ((lmask & (1 << bit)) != 0)
+                rmstate = ((rmask & (1 << bit)) != 0)
+                vstate = lvstate
+                mstate = True
+                if (not lmstate or not rmstate) or (lvstate != rvstate):
+                    vstate = 0
+                    mstate = 0
+                value |= (vstate << bit)
+                mask |= (mstate << bit)
+            return _dataclasses.replace(lhs, opcode=Opcode(value=value, mask=mask))
+
+        db = dd(set)
+        for (section, group) in records.items():
+            for records in group.values():
+                db[section].add(_functools.reduce(merge, records))
 
         self.__db = db
         self.__mdwndb = mdwndb
