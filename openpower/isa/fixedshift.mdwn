@@ -68,8 +68,8 @@ Special Registers Altered:
 
 MD-Form
 
-* rldicl RA,RS,SH,MB (Rc=0)
-* rldicl.  RA,RS,SH,MB (Rc=1)
+* rldicl RA,RS,sh,mb (Rc=0)
+* rldicl.  RA,RS,sh,mb (Rc=1)
 
 Pseudo-code:
 
@@ -87,8 +87,8 @@ Special Registers Altered:
 
 MD-Form
 
-* rldicr RA,RS,SH,ME (Rc=0)
-* rldicr.  RA,RS,SH,ME (Rc=1)
+* rldicr RA,RS,sh,me (Rc=0)
+* rldicr.  RA,RS,sh,me (Rc=1)
 
 Pseudo-code:
 
@@ -106,8 +106,8 @@ Special Registers Altered:
 
 MD-Form
 
-* rldic RA,RS,SH,MB (Rc=0)
-* rldic.  RA,RS,SH,MB (Rc=1)
+* rldic RA,RS,sh,mb (Rc=0)
+* rldic.  RA,RS,sh,mb (Rc=1)
 
 Pseudo-code:
 
@@ -125,8 +125,8 @@ Special Registers Altered:
 
 MDS-Form
 
-* rldcl RA,RS,RB,MB (Rc=0)
-* rldcl.  RA,RS,RB,MB (Rc=1)
+* rldcl RA,RS,RB,mb (Rc=0)
+* rldcl.  RA,RS,RB,mb (Rc=1)
 
 Pseudo-code:
 
@@ -144,8 +144,8 @@ Special Registers Altered:
 
 MDS-Form
 
-* rldcr RA,RS,RB,ME (Rc=0)
-* rldcr.  RA,RS,RB,ME (Rc=1)
+* rldcr RA,RS,RB,me (Rc=0)
+* rldcr.  RA,RS,RB,me (Rc=1)
 
 Pseudo-code:
 
@@ -163,8 +163,8 @@ Special Registers Altered:
 
 MD-Form
 
-* rldimi RA,RS,SH,MB (Rc=0)
-* rldimi.  RA,RS,SH,MB (Rc=1)
+* rldimi RA,RS,sh,mb (Rc=0)
+* rldimi.  RA,RS,sh,mb (Rc=1)
 
 Pseudo-code:
 
@@ -313,8 +313,8 @@ Special Registers Altered:
 
 XS-Form
 
-* sradi RA,RS,SH (Rc=0)
-* sradi.  RA,RS,SH (Rc=1)
+* sradi RA,RS,sh (Rc=0)
+* sradi.  RA,RS,sh (Rc=1)
 
 Pseudo-code:
 
@@ -361,8 +361,8 @@ Special Registers Altered:
 
 XS-Form
 
-* extswsli RA,RS,SH (Rc=0)
-* extswsli.  RA,RS,SH (Rc=1)
+* extswsli RA,RS,sh (Rc=0)
+* extswsli.  RA,RS,sh (Rc=1)
 
 Pseudo-code:
 
