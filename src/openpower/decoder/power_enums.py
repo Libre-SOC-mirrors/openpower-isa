@@ -671,7 +671,7 @@ class LDSTMode(Enum):
 
 
 @unique
-class FLAGS(Enum):
+class RCOE(Enum):
     NONE = 0
     ONE = 1
     RC_OE = 2    # includes OE
