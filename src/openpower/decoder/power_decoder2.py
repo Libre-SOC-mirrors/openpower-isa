@@ -555,13 +555,9 @@ class DecodeRC(Elaboratable):
 class DecodeOE(Elaboratable):
     """DecodeOE from instruction
 
-    decodes OE field: uses RC decode detection which might not be good
-
-    -- For now, use "rc" in the decode table to decide whether oe exists.
-    -- This is not entirely correct architecturally: For mulhd and
-    -- mulhdu, the OE field is reserved. It remains to be seen what an
-    -- actual POWER9 does if we set it on those instructions, for now we
-    -- test that further down when assigning to the multiplier oe input.
+    decodes OE field: uses RC decode detection which has now been
+    updated to separate out RC_ONLY.  all cases RC_ONLY are *NOT*
+    listening to the OE field, here.
     """
 
     def __init__(self, dec, op):
@@ -574,40 +570,15 @@ class DecodeOE(Elaboratable):
     def elaborate(self, platform):
         m = Module()
         comb = m.d.comb
-        op = self.op
 
-        # default: clear OE.
-        comb += self.oe_out.data.eq(0)
-        comb += self.oe_out.ok.eq(0)
-
-        with m.Switch(op.internal_op):
-
-            # mulhw, mulhwu, mulhd, mulhdu - these *ignore* OE
-            # also rotate.  and setvl and all other sv* management
-            # basically the HDL below bypasses normal decode and
-            # goes directly and explicitly to bit 30 (self.dec.OE).
-            # on the list of instructions below (really this should
-            # be in the CSV files) they must be told *not* to do that.
-            # XXX ARGH! ignoring OE causes incompatibility with microwatt
-            # http://lists.libre-soc.org/pipermail/libre-soc-dev/2020-August/000302.html
-            with m.Case(MicrOp.OP_MUL_H64, MicrOp.OP_MUL_H32,
-                        MicrOp.OP_EXTS, MicrOp.OP_CNTZ,
-                        MicrOp.OP_SHL, MicrOp.OP_SHR, MicrOp.OP_RLC,
-                        MicrOp.OP_LOAD, MicrOp.OP_STORE,
-                        MicrOp.OP_RLCL, MicrOp.OP_RLCR,
-                        MicrOp.OP_SETVL, MicrOp.OP_SVSHAPE,
-                        MicrOp.OP_SVINDEX, MicrOp.OP_SVREMAP,
-                        MicrOp.OP_SVSTEP,
-                        MicrOp.OP_EXTSWSLI, MicrOp.OP_GREV, MicrOp.OP_TERNLOG):
-                pass
-
-            # all other ops decode OE field
+        with m.Switch(self.sel_in):
+            with m.Case(RCOE.RC):
+                comb += self.oe_out.data.eq(self.dec.OE)
+                comb += self.oe_out.ok.eq(1)
             with m.Default():
-                # select OE bit out field
-                with m.Switch(self.sel_in):
-                    with m.Case(RCOE.RC):
-                        comb += self.oe_out.data.eq(self.dec.OE)
-                        comb += self.oe_out.ok.eq(1)
+                # default: clear OE.
+                comb += self.oe_out.data.eq(0)
+                comb += self.oe_out.ok.eq(0)
 
         return m
 
