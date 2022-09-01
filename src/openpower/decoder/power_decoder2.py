@@ -31,7 +31,7 @@ from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                            CRInSel, CROutSel,
                                            LdstLen, In1Sel, In2Sel, In3Sel,
                                            OutSel, SPRfull, SPRreduced,
-                                           RC, SVP64LDSTmode, LDSTMode,
+                                           FLAGS, SVP64LDSTmode, LDSTMode,
                                            SVEXTRA, SVEtype, SVPtype)
 from openpower.decoder.decode2execute1 import (Decode2ToExecute1Type, Data,
                                                Decode2ToOperand)
@@ -529,7 +529,7 @@ class DecodeRC(Elaboratable):
 
     def __init__(self, dec):
         self.dec = dec
-        self.sel_in = Signal(RC, reset_less=True)
+        self.sel_in = Signal(FLAGS, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.rc_out = Data(1, "rc")
 
@@ -539,13 +539,13 @@ class DecodeRC(Elaboratable):
 
         # select Record bit out field
         with m.Switch(self.sel_in):
-            with m.Case(RC.RC):
+            with m.Case(FLAGS.RC_OE, FLAGS.RC_ONLY):
                 comb += self.rc_out.data.eq(self.dec.Rc)
                 comb += self.rc_out.ok.eq(1)
-            with m.Case(RC.ONE):
+            with m.Case(FLAGS.ONE):
                 comb += self.rc_out.data.eq(1)
                 comb += self.rc_out.ok.eq(1)
-            with m.Case(RC.NONE):
+            with m.Case(FLAGS.NONE):
                 comb += self.rc_out.data.eq(0)
                 comb += self.rc_out.ok.eq(1)
 
@@ -567,7 +567,7 @@ class DecodeOE(Elaboratable):
     def __init__(self, dec, op):
         self.dec = dec
         self.op = op
-        self.sel_in = Signal(RC, reset_less=True)
+        self.sel_in = Signal(FLAGS, reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.oe_out = Data(1, "oe")
 
@@ -605,7 +605,7 @@ class DecodeOE(Elaboratable):
             with m.Default():
                 # select OE bit out field
                 with m.Switch(self.sel_in):
-                    with m.Case(RC.RC):
+                    with m.Case(FLAGS.RC_OE):
                         comb += self.oe_out.data.eq(self.dec.OE)
                         comb += self.oe_out.ok.eq(1)
 
