@@ -1,24 +1,24 @@
 # SPDX-License-Header: CC-BY-4
 # derived from microwatt decode1.vhdl, with thanks and gratitude (IBM, OPF)
 opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry out,ldst len,BR,sgn ext,upd,rsrv,32b,sgn,rc,lk,sgl pipe,comment,form,CONDITIONS,unofficial,comment2
-1101001110,FPU,OP_FPOP_I,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fcfids,X,,,
-1111001110,FPU,OP_FPOP_I,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fcfidus,X,,,
------10010,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fdivs,A,,,
------10100,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fsubs,A,,,
------10101,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fadds,A,,,
------10110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fsqrts,A,,,
------11000,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fres,A,,,
------11001,FPU,OP_FPOP,FRA,NONE,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fmuls,A,,,
------11010,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,frsqrtes,A,,,
------11100,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fmsubs,A,,,
------11101,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fmadds,A,,,
------11110,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fnmsubs,A,,,
------11111,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fnmadds,A,,,
------00100,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,ffmsubs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
------00101,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,ffmadds,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
------00110,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,ffnmsubs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
------00111,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,ffnmadds,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
------01101,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,ffadds,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
------01111,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fdmadds,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-1000001110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fsins,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-1000101110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC,0,0,fcoss,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1101001110,FPU,OP_FPOP_I,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcfids,X,,,
+1111001110,FPU,OP_FPOP_I,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcfidus,X,,,
+-----10010,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fdivs,A,,,
+-----10100,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fsubs,A,,,
+-----10101,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fadds,A,,,
+-----10110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fsqrts,A,,,
+-----11000,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fres,A,,,
+-----11001,FPU,OP_FPOP,FRA,NONE,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fmuls,A,,,
+-----11010,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,frsqrtes,A,,,
+-----11100,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fmsubs,A,,,
+-----11101,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fmadds,A,,,
+-----11110,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fnmsubs,A,,,
+-----11111,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fnmadds,A,,,
+-----00100,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffmsubs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+-----00101,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffmadds,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+-----00110,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffnmsubs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+-----00111,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffnmadds,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+-----01101,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffadds,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+-----01111,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fdmadds,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000001110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fsins,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000101110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcoss,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
