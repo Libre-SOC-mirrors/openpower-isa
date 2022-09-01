@@ -271,12 +271,14 @@ class ISA:
                 (dynamic, _, rest) = map(str.strip, rest.partition(" "))
                 if regex_dynamic.match(dynamic) is None and dynamic:
                     raise IOError(f"{l!r}: {dynamic!r}")
-                opcode.append(dynamic.split(","))
+                if dynamic:
+                    opcode.append(dynamic.split(","))
 
                 static = rest
                 if regex_static.match(static) is None and static:
                     raise IOError(f"{l!r}: {static!r}")
-                opcode.extend(static[1:-1].split(" "))
+                if static:
+                    opcode.extend(static[1:-1].split(" "))
 
                 opcodes.append(opcode)
 
