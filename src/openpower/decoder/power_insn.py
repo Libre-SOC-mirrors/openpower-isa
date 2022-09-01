@@ -423,13 +423,13 @@ class Operands(tuple):
         value: int = None
 
     @_dataclasses.dataclass(eq=True, frozen=True)
-    class DynamicOperandTargetAddrIForm(DynamicOperand):
+    class DynamicOperandIFormLI(DynamicOperand):
         def disassemble(self, value, record):
             return hex(int(_selectconcat(
                 value[record.fields["LI"]],
                 _SelectableInt(value=0b00, bits=2))))
 
-    class DynamicOperandTargetAddrBForm(DynamicOperand):
+    class DynamicOperandBFormBD(DynamicOperand):
         def disassemble(self, value, record):
             return hex(int(_selectconcat(
                 value[record.fields["BD"]],
@@ -447,14 +447,14 @@ class Operands(tuple):
 
     def __new__(cls, insn, iterable):
         branches = {
-            "b": {"target_addr": cls.DynamicOperandTargetAddrIForm},
-            "ba": {"target_addr": cls.DynamicOperandTargetAddrIForm},
-            "bl": {"target_addr": cls.DynamicOperandTargetAddrIForm},
-            "bla": {"target_addr": cls.DynamicOperandTargetAddrIForm},
-            "bc": {"target_addr": cls.DynamicOperandTargetAddrBForm},
-            "bca": {"target_addr": cls.DynamicOperandTargetAddrBForm},
-            "bcl": {"target_addr": cls.DynamicOperandTargetAddrBForm},
-            "bcla": {"target_addr": cls.DynamicOperandTargetAddrBForm},
+            "b": {"LI": cls.DynamicOperandIFormLI},
+            "ba": {"LI": cls.DynamicOperandIFormLI},
+            "bl": {"LI": cls.DynamicOperandIFormLI},
+            "bla": {"LI": cls.DynamicOperandIFormLI},
+            "bc": {"BD": cls.DynamicOperandBFormBD},
+            "bca": {"BD": cls.DynamicOperandBFormBD},
+            "bcl": {"BD": cls.DynamicOperandBFormBD},
+            "bcla": {"BD": cls.DynamicOperandBFormBD},
         }
 
         operands = []
