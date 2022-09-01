@@ -51,8 +51,8 @@ def instruction(*fields):
 CUSTOM_INSNS = {}
 
 
-def _insn(name, *args, **kwargs):
-    return name, args, kwargs
+def _insn(name, **kwargs):
+    return name, kwargs
 
 
 def _custom_insns(*insns):
@@ -61,17 +61,17 @@ def _custom_insns(*insns):
     def decorator(fn):
         FIELDS_ARG = object()
         if len(insns) == 0:
-            insns_ = (fn.__name__, (), {}),
+            insns_ = (fn.__name__, {}),
         else:
             insns_ = insns
-        for name, args, kwargs in insns_:
+        for name, kwargs in insns_:
             if not isinstance(name, str):
                 raise TypeError("instruction name must be a str: {name!r}")
             if name in CUSTOM_INSNS:
                 raise ValueError(f"duplicate instruction mnemonic: {name!r}")
             # use getcallargs to check that arguments work:
-            inspect.getcallargs(fn, FIELDS_ARG, *args, **kwargs)
-            CUSTOM_INSNS[name] = functools.partial(fn, *args, **kwargs)
+            inspect.getcallargs(fn, FIELDS_ARG, **kwargs)
+            CUSTOM_INSNS[name] = functools.partial(fn, **kwargs)
         return fn
     return decorator
 
