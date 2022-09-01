@@ -864,11 +864,25 @@ class PPCDatabase:
 
             return exact_match(key[:-1], record)
 
+        def AA_match(key, record):
+            if not key.endswith("a"):
+                return False
+
+            if record.intop not in {_MicrOp.OP_B, _MicrOp.OP_BC}:
+                return False
+
+            if self.__mdwndb[key]["AA"] is None:
+                return False
+
+            return (exact_match(key[:-1], record) or
+                LK_match(key[:-1], record))
+
         for (section, records) in self.__db.items():
             for record in records:
                 if (exact_match(key, record) or
                         Rc_match(key, record) or
-                        LK_match(key, record)):
+                        LK_match(key, record) or
+                        AA_match(key, record)):
                     return (section, record)
 
         return (None, None)
