@@ -717,7 +717,7 @@ class Database:
                     svp64 = svp64db.get(identifier)
                     if ppc.rc is _RCOE.ONE:
                         variants = {name:True for name in ppc.names}
-                    elif ppc.rc in [_RCOE.RC_OE, _RCOE.RC_ONLY]:
+                    elif ppc.rc in [_RCOE.RC, _RCOE.RC_ONLY]:
                         variants = {name:False for name in ppc.names}
                         variants.update({f"{name}.":True for name in ppc.names})
                     else:

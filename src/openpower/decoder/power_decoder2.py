@@ -539,7 +539,7 @@ class DecodeRC(Elaboratable):
 
         # select Record bit out field
         with m.Switch(self.sel_in):
-            with m.Case(RCOE.RC_OE, RCOE.RC_ONLY):
+            with m.Case(RCOE.RC, RCOE.RC_ONLY):
                 comb += self.rc_out.data.eq(self.dec.Rc)
                 comb += self.rc_out.ok.eq(1)
             with m.Case(RCOE.ONE):
@@ -605,7 +605,7 @@ class DecodeOE(Elaboratable):
             with m.Default():
                 # select OE bit out field
                 with m.Switch(self.sel_in):
-                    with m.Case(RCOE.RC_OE):
+                    with m.Case(RCOE.RC):
                         comb += self.oe_out.data.eq(self.dec.OE)
                         comb += self.oe_out.ok.eq(1)
 
