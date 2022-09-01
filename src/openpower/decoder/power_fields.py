@@ -49,10 +49,9 @@ class Reference:
         span = dict.fromkeys(self.__class__.span).keys()
         lhs = _selectconcat(*(self.storage[bit] for bit in span))
 
-        if isinstance(other, Field):
-            bits = len(other.__class__)
-            value = int(other)
-            rhs = _SelectableInt(value=value, bits=bits)
+        if isinstance(other, Reference):
+            span = dict.fromkeys(other.__class__.span).keys()
+            rhs = _selectconcat(*(other.storage[bit] for bit in span))
         elif isinstance(other, int):
             bits = len(self.__class__)
             if other.bit_length() > bits:
