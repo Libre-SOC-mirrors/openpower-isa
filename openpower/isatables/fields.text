@@ -308,7 +308,7 @@
 
 # 1.6.35.1 SVM2-FORM
     |0     |6     |10|11      |16    |21 |24|25 |26    |31  |
-    | PO   | offs |yx|   rmm  | SVd  |XO |mm|vf |   XO      |
+    | PO   | offs |yx|   rmm  | SVd  |XO |mm|sk |   XO      |
 
 # 1.6.36 SVRM-FORM
     |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
@@ -827,7 +827,7 @@
          Formats: VX
     sk (25)
         Field used to specify dimensional skipping in svindex
-        Formats: SVI
+        Formats: SVI, SVM2
     SP (11:12)
          Immediate field that specifies signed versus
          unsigned conversion.
@@ -964,7 +964,7 @@
         Formats: DS, VA, VC, VX, X
     vf (25)
         Field used in Simple-V to specify whether "Vertical" Mode is set
-        Formats: SVL, SVM, SVM2
+        Formats: SVL, SVM
     vs (24)
         Field used in Simple-V to specify whether VL is to be set
         Formats: SVL
