@@ -4,13 +4,14 @@ from nmutil.formaltest import FHDLTestCase
 
 from openpower.decoder.power_decoder import create_pdecode, PowerOp
 from openpower.decoder.power_enums import (In1Sel, In2Sel, In3Sel,
-                                     OutSel, RC, Form, Function,
-                                     LdstLen, CryIn,
-                                     MicrOp, get_csv)
+                                           OutSel, RC, Form, Function,
+                                           LdstLen, CryIn,
+                                           MicrOp, get_csv)
 from openpower.decoder.power_decoder2 import (PowerDecode2,
-                                        Decode2ToExecute1Type)
+                                              Decode2ToExecute1Type)
 import unittest
 import pdb
+
 
 class Driver(Elaboratable):
     def __init__(self):
@@ -29,7 +30,7 @@ class Driver(Elaboratable):
 
         self.m.submodules.pdecode2 = pdecode2 = PowerDecode2(pdecode)
         dec1 = pdecode2.dec
-        self.comb += pdecode2.dec.bigendian.eq(1) # TODO: bigendian=0
+        self.comb += pdecode2.dec.bigendian.eq(1)  # TODO: bigendian=0
         self.comb += pdecode2.dec.raw_opcode_in.eq(self.instruction)
 
         # ignore special decoding of nop
@@ -61,7 +62,6 @@ class Driver(Elaboratable):
                 with self.m.Default():
                     self.comb += Assert(dec.op.internal_op ==
                                         MicrOp.OP_ILLEGAL)
-                                        
 
     def handle_subdecoders(self, dec1, decoders):
         for dec in decoders.subdecoders:
@@ -119,10 +119,12 @@ class Driver(Elaboratable):
             end = start
         return self.instruction[::-1][start:end+1]
 
+
 class DecoderTestCase(FHDLTestCase):
     def test_decoder(self):
         module = Driver()
         self.assertFormal(module, mode="bmc", depth=4)
+
 
 if __name__ == '__main__':
     unittest.main()
