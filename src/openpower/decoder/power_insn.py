@@ -531,9 +531,6 @@ class Record:
             return NotImplemented
         return (self.opcode < other.opcode)
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}(name={self.name!r}, opcode={self.opcode})"
-
     @cached_property
     def opcode(self):
         fields = []
