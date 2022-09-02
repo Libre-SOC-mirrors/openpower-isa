@@ -171,15 +171,21 @@ class Driver(Elaboratable):
         sel = pdecode2.dec.op.rc_sel
         dec = pdecode2.dec
         comb += Assert(pdecode2.e.rc.ok == 1)
+        # no RC: rc.data must be zero
         with m.If(sel == RCOE.NONE):
             comb += Assert(pdecode2.e.rc.data == 0)
+        # RC permanently set: rc.data must be hard-coded to 1
         with m.If(sel == RCOE.ONE):
             comb += Assert(pdecode2.e.rc.data == 1)
+        # RCOE.RC covers both RC and OE
         with m.If(sel == RCOE.RC):
             comb += Assert(pdecode2.e.rc.data == dec.Rc)
             comb += Assert(pdecode2.e.oe.ok == 1)
             comb += Assert(pdecode2.e.oe.data == dec.OE)
-        # FIXME(lkcl): handle other RCOE cases
+        # RCOE.RC_ONLY covers just RC: OE remains zero.
+        with m.If(sel == RCOE.RC_ONLY):
+            comb += Assert(pdecode2.e.rc.data == dec.Rc)
+            comb += Assert(pdecode2.e.oe.ok == 0)
 
     def test_single_bits(self):
         m = self.m
