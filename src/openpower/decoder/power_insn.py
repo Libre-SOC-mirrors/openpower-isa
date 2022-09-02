@@ -40,6 +40,7 @@ from openpower.decoder.selectable_int import (
 )
 from openpower.decoder.power_fields import (
     Field as _Field,
+    Array as _Array,
     Mapping as _Mapping,
     DecodeFields as _DecodeFields,
 )
@@ -731,14 +732,14 @@ class SVP64Instruction(PrefixedInstruction):
             subvl: _Field = range(8, 10)
             extra: _Field = range(10, 19)
             mode: _Field = range(19, 24)
-            extra2: _Field[4] = (
+            extra2: _Array[4] = (
                 range(10, 12),
                 range(12, 14),
                 range(14, 16),
                 range(16, 18),
             )
             smask: _Field = range(16, 19)
-            extra3: _Field[3] = (
+            extra3: _Array[3] = (
                 range(10, 13),
                 range(13, 16),
                 range(16, 19),

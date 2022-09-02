@@ -116,11 +116,6 @@ class FieldMeta(type):
 
         return super().__new__(metacls, clsname, bases, ns)
 
-    def __getitem__(cls, size):
-        clsname = f"{cls.__name__}[{size}]"
-        items = ((Field,) * size)
-        return ArrayMeta(clsname, (Array,), {}, items=items)
-
     def __repr__(cls):
         if not cls.__members__:
             return cls.__name__
@@ -195,6 +190,11 @@ class ArrayMeta(type):
         for field in cls.__members__:
             length += len(field)
         return length
+
+    def __getitem__(cls, size):
+        clsname = f"{cls.__name__}[{size}]"
+        items = ((Field,) * size)
+        return ArrayMeta(clsname, (Array,), {}, items=items)
 
     def remap(cls, scheme):
         scheme_md = []
