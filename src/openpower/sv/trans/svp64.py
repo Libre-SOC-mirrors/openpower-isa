@@ -153,6 +153,8 @@ def svshape(fields):
     It is *not* a 64-bit-prefixed Vector instruction (no sv.svshape, yet),
     it is a Vector *control* instruction.
 
+    https://libre-soc.org/openpower/sv/remap/#svshape
+
     * svshape SVxd,SVyd,SVzd,SVrm,vf
 
     # 1.6.33 SVM-FORM from fields.txt
@@ -171,7 +173,7 @@ def svshape(fields):
     SVzd -= 1
 
     # check SVrm for reserved (and svshape2) values
-    assert SVrm not in [0b0111, 0b1000, 0b1001],
+    assert SVrm not in [0b0111, 0b1000, 0b1001], \
             "svshape reserved SVrm value %s" % bin(SVrm)
 
     return instruction(
@@ -181,6 +183,45 @@ def svshape(fields):
         (SVzd, 16, 20),
         (SVrm, 21, 24),
         (vf, 25, 25),
+        (XO, 26, 31),
+    )
+
+
+@_custom_insns()
+def svshape2(fields):
+    """
+    svshape2 is a *32-bit-only* instruction. It updates SVSHAPE and SVSTATE.
+    It is *not* a 64-bit-prefixed Vector instruction (no sv.svshape2, yet),
+    it is a Vector *control* instruction, and is a sort-of hybrid of
+    svshape and svindex, with the key important feature being the "offset".
+
+    https://libre-soc.org/openpower/sv/remap/discussion
+
+    * svshape2 offs,yx,rmm,SVd,sk,mm
+
+    # 1.6.35.1 SVM2-FORM from fields.txt
+    # |0     |6     |10|11      |16    |21 |24|25 |26    |31  |
+    # | PO   | offs |yx|   rmm  | SVd  |XO |mm|sk |   XO      |
+
+    note that this fits into the space of svshape and that XO is
+    split across 2 areas.
+
+    """
+    PO = 22
+    XO = 0b011001
+    XO2 = 0b100 # not really XO2 but hey
+    (offs, yx, rmm, SVd, sk, mm) = fields
+    SVd -= 1 # offset by one
+
+    return instruction(
+        (PO, 0, 5),
+        (offs, 6, 10), # offset (the whole point of adding svshape2)
+        (yx, 10, 10),  # like svindex
+        (rmm, 11, 15), # ditto svindex
+        (SVd, 16, 20), # ditto svindex
+        (XO2, 21, 23), # actually XO split across 2 places...
+        (mm, 24, 24),  # ditto svindex
+        (sk, 25, 25),  # ditto svindex
         (XO, 26, 31),
     )
 
@@ -1540,6 +1581,7 @@ if __name__ == '__main__':
         'sv.andi. *80, *80, 1',
         'sv.ffmadds. 6.v, 2.v, 4.v, 6.v',  # incorrectly inserted 32-bit op
         'sv.ffmadds 6.v, 2.v, 4.v, 6.v',  # correctly converted to .long
+        'svshape2 8, 1, 31, 7, 1, 1',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))
