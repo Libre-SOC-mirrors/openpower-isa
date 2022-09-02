@@ -127,6 +127,19 @@ class FieldMeta(type):
     def __len__(cls):
         return len(cls.__members__)
 
+    def __getitem__(cls, selector):
+        if isinstance(selector, int):
+            selector = (selector,)
+
+        items = []
+        for idx in selector:
+            if not isinstance(idx, int):
+                raise ValueError(selector)
+            item = cls.__members__[idx]
+            items.append(item)
+
+        return cls.__class__(cls.__name__, (Field,), {}, items=items)
+
     def remap(cls, scheme):
         if isinstance(scheme, type) and issubclass(scheme, Mapping):
             scheme = range(len(scheme))
