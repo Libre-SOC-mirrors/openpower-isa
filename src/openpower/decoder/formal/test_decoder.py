@@ -99,7 +99,7 @@ class Driver(Elaboratable):
                     In3Sel.RS, In3Sel.NONE))
                 self.comb += Assert(dec.op.out_sel.matches(
                     OutSel.NONE, OutSel.RT))
-                # The table has fields for XO and Rc, but idk what they correspond to
+                # The table has fields for XO and Rc, what do they match to?
             with self.m.Case(Form.B):
                 pass
             with self.m.Case(Form.D):
@@ -109,7 +109,8 @@ class Driver(Elaboratable):
                     In2Sel.CONST_UI, In2Sel.CONST_SI, In2Sel.CONST_UI_HI,
                     In2Sel.CONST_SI_HI))
                 self.comb += Assert(dec.op.out_sel.matches(
-                    OutSel.NONE, OutSel.RT, OutSel.RA))
+                    OutSel.NONE, OutSel.RT, OutSel.RA, OutSel.SPR,
+                    OutSel.RT_OR_ZERO, OutSel.FRT, OutSel.FRS))
             with self.m.Case(Form.I):
                 self.comb += Assert(dec.op.in2_sel.matches(
                     In2Sel.CONST_LI))
@@ -122,8 +123,11 @@ class Driver(Elaboratable):
 
 class DecoderTestCase(FHDLTestCase):
     @unittest.expectedFailure  # FIXME: proof failed:
-    # self.comb += Assert(dec.op.out_sel.matches(
-    #     OutSel.NONE, OutSel.RT, OutSel.RA))
+    # needs to have all the enum entries added, TODO there
+    # has to be an automated way to do that
+    # self.comb += Assert(dec.op.in2_sel.matches(
+    #    In2Sel.CONST_UI, In2Sel.CONST_SI, In2Sel.CONST_UI_HI,
+    #    In2Sel.CONST_SI_HI))
     def test_decoder(self):
         module = Driver()
         self.assertFormal(module, mode="bmc", depth=4)
