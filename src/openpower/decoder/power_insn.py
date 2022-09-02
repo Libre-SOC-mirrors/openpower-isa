@@ -728,48 +728,47 @@ class LDSTMode(Mode):
     class imm(Mode):
         class normal(Mode):
             """normal mode"""
-            zz: _Field = (3,)
-            els: _Field = (4,)
-            dz: _Field = (3,)
-            sz: _Field = (3,)
+            zz: Mode[3]
+            els: Mode[4]
+            dz: Mode[3]
+            sz: Mode[3]
 
         class spu(Mode):
             """Structured Pack/Unpack"""
-            zz: _Field = (3,)
-            els: _Field = (4,)
-            dz: _Field = (3,)
-            sz: _Field = (3,)
+            zz: Mode[3]
+            els: Mode[4]
+            dz: Mode[3]
+            sz: Mode[3]
 
         class ffrc1(Mode):
             """Rc=1: ffirst CR sel"""
-            inv: _Field = (2,)
-            CRbit: _Field = (3, 4)
+            inv: Mode[2]
+            CRbit: Mode[3, 4]
 
         class ffrc0(Mode):
             """Rc=0: ffirst z/nonz"""
-            inv: _Field = (2,)
-            els: _Field = (3,)
-            RC1: _Field = (4,)
+            inv: Mode[2]
+            els: Mode[3]
+            RC1: Mode[4]
 
         class sat(Mode):
             """sat mode: N=0/1 u/s"""
-            N: _Field = (2,)
-            zz: _Field = (3,)
-            els: _Field = (4,)
-            dz: _Field = (3,)
-            sz: _Field = (3,)
-
+            N: Mode[2]
+            zz: Mode[3]
+            els: Mode[4]
+            dz: Mode[3]
+            sz: Mode[3]
 
         class prrc1(Mode):
             """Rc=1: pred-result CR sel"""
-            inv: _Field = (2,)
-            CRbit: _Field = (3, 4)
+            inv: Mode[2]
+            CRbit: Mode[3, 4]
 
         class prrc0(Mode):
             """Rc=0: pred-result z/nonz"""
-            inv: _Field = (2,)
-            els: _Field = (3,)
-            RC1: _Field = (4,)
+            inv: Mode[2]
+            els: Mode[3]
+            RC1: Mode[4]
 
         normal: normal
         spu: spu
