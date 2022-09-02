@@ -215,7 +215,7 @@ def svshape2(fields):
 
     return instruction(
         (PO, 0, 5),
-        (offs, 6, 10), # offset (the whole point of adding svshape2)
+        (offs, 6, 9),  # offset (the whole point of adding svshape2)
         (yx, 10, 10),  # like svindex
         (rmm, 11, 15), # ditto svindex
         (SVd, 16, 20), # ditto svindex

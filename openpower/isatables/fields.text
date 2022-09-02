@@ -674,7 +674,7 @@
         Field used to specify the number of bytes to move
         in an immediate Move Assist instruction.
         Formats: X
-    offs (6:10)
+    offs (6:9)
         Field used by the svshape2 instruction as an offset
         Formats: SVM2
     OC (6:20)
@@ -1051,3 +1051,6 @@
     yx (23)
         Field used to specify loop dimension order in svindex
         Formats: SVI
+    yx (10)
+        Field used to specify loop dimension order in svshape2
+        Formats: SVM2
