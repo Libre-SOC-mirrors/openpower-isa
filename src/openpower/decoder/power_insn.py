@@ -722,6 +722,7 @@ class PrefixedInstruction(Instruction):
 
 class Mode(_Mapping):
     _: _Field = range(0, 5)
+    sel: _Field = range(0, 2)
 
 
 class NormalMode(Mode):
