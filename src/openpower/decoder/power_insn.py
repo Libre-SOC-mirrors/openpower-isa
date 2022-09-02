@@ -720,36 +720,36 @@ class PrefixedInstruction(Instruction):
         return super().integer(value=value)
 
 
+class RM(_Mapping):
+    _: _Field = range(24)
+    mmode: _Field = (0,)
+    mask: _Field = range(1, 4)
+    elwidth: _Field = range(4, 6)
+    ewsrc: _Field = range(6, 8)
+    subvl: _Field = range(8, 10)
+    extra: _Field = range(10, 19)
+    mode: _Field = range(19, 24)
+    extra2: _Array[4] = (
+        range(10, 12),
+        range(12, 14),
+        range(14, 16),
+        range(16, 18),
+    )
+    smask: _Field = range(16, 19)
+    extra3: _Array[3] = (
+        range(10, 13),
+        range(13, 16),
+        range(16, 19),
+    )
+
+
 class SVP64Instruction(PrefixedInstruction):
     """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
     class Prefix(PrefixedInstruction.Prefix):
-        class RM(_Mapping):
-            _: _Field = range(24)
-            mmode: _Field = (0,)
-            mask: _Field = range(1, 4)
-            elwidth: _Field = range(4, 6)
-            ewsrc: _Field = range(6, 8)
-            subvl: _Field = range(8, 10)
-            extra: _Field = range(10, 19)
-            mode: _Field = range(19, 24)
-            extra2: _Array[4] = (
-                range(10, 12),
-                range(12, 14),
-                range(14, 16),
-                range(16, 18),
-            )
-            smask: _Field = range(16, 19)
-            extra3: _Array[3] = (
-                range(10, 13),
-                range(13, 16),
-                range(16, 19),
-            )
-
-        class RM(RM.remap((6, 8) + tuple(range(10, 32)))):
-            pass
+        SCHEME = ((6, 8) + tuple(range(10, 32)))
 
         id: _Field = (7, 9)
-        rm: RM
+        rm: RM.remap(SCHEME)
 
     prefix: Prefix
 
