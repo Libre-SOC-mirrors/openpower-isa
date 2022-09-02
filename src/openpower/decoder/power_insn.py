@@ -720,7 +720,78 @@ class PrefixedInstruction(Instruction):
         return super().integer(value=value)
 
 
+class Mode(_Mapping):
+    _: _Field = range(0, 5)
+
+
 class RM(_Mapping):
+    class Mode(Mode):
+        class ldst(Mode):
+            class imm(Mode):
+                class normal(Mode):
+                    """normal mode"""
+                    _: _Field = range(0, 5)
+                    zz: _Field = (3,)
+                    els: _Field = (4,)
+                    dz: _Field = (3,)
+                    sz: _Field = (3,)
+
+                class spu(Mode):
+                    """Structured Pack/Unpack"""
+                    _: _Field = range(0, 5)
+                    zz: _Field = (3,)
+                    els: _Field = (4,)
+                    dz: _Field = (3,)
+                    sz: _Field = (3,)
+
+                class ffrc1(Mode):
+                    """Rc=1: ffirst CR sel"""
+                    _: _Field = range(0, 5)
+                    inv: _Field = (2,)
+                    CRbit: _Field = (3, 4)
+
+                class ffrc0(Mode):
+                    """Rc=0: ffirst z/nonz"""
+                    _: _Field = range(0, 5)
+                    inv: _Field = (2,)
+                    els: _Field = (3,)
+                    RC1: _Field = (4,)
+
+                class sat(Mode):
+                    """sat mode: N=0/1 u/s"""
+                    _: _Field = range(0, 5)
+                    N: _Field = (2,)
+                    zz: _Field = (3,)
+                    els: _Field = (4,)
+                    dz: _Field = (3,)
+                    sz: _Field = (3,)
+
+
+                class prrc1(Mode):
+                    """Rc=1: pred-result CR sel"""
+                    _: _Field = range(0, 5)
+                    inv: _Field = (2,)
+                    CRbit: _Field = (3, 4)
+
+                class prrc0(Mode):
+                    """Rc=0: pred-result z/nonz"""
+                    _: _Field = range(0, 5)
+                    inv: _Field = (2,)
+                    els: _Field = (3,)
+                    RC1: _Field = (4,)
+
+                normal: normal
+                spu: spu
+                ffrc1: ffrc1
+                ffrc0: ffrc0
+                sat: sat
+                prrc1: prrc1
+                prrc0: prrc0
+
+            imm: imm
+
+        ldst: ldst
+
     _: _Field = range(24)
     mmode: _Field = (0,)
     mask: _Field = range(1, 4)
@@ -728,7 +799,7 @@ class RM(_Mapping):
     ewsrc: _Field = range(6, 8)
     subvl: _Field = range(8, 10)
     extra: _Field = range(10, 19)
-    mode: _Field = range(19, 24)
+    mode: Mode.remap(range(19, 24))
     extra2: _Array[4] = (
         range(10, 12),
         range(12, 14),
@@ -746,10 +817,8 @@ class RM(_Mapping):
 class SVP64Instruction(PrefixedInstruction):
     """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
     class Prefix(PrefixedInstruction.Prefix):
-        SCHEME = ((6, 8) + tuple(range(10, 32)))
-
         id: _Field = (7, 9)
-        rm: RM.remap(SCHEME)
+        rm: RM.remap((6, 8) + tuple(range(10, 32)))
 
     prefix: Prefix
 
