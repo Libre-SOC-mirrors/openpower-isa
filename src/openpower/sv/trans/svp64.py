@@ -159,6 +159,9 @@ def svshape(fields):
     # |0     |6        |11      |16    |21    |25 |26    |31  |
     # | PO   |  SVxd   |   SVyd | SVzd | SVrm |vf |   XO      |
 
+    note that SVrm is not permitted to be 0b0111, 0b1000 or 0b1001.
+    0b0111 is reserved and 0b100- is for svshape2
+
     """
     PO = 22
     XO = 0b011001
@@ -166,6 +169,11 @@ def svshape(fields):
     SVxd -= 1
     SVyd -= 1
     SVzd -= 1
+
+    # check SVrm for reserved (and svshape2) values
+    assert SVrm not in [0b0111, 0b1000, 0b1001],
+            "svshape reserved SVrm value %s" % bin(SVrm)
+
     return instruction(
         (PO, 0, 5),
         (SVxd, 6, 10),
