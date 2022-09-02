@@ -15,7 +15,7 @@ from openpower.decoder.power_decoder2 import PowerDecode2
 from openpower.decoder.power_enums import (Function, MicrOp,
                                      In1Sel, In2Sel, In3Sel,
                                      CRInSel, CROutSel,
-                                     OutSel, RC, LdstLen, CryIn,
+                                     OutSel, LdstLen, CryIn,
                                      single_bit_flags,
                                      get_signal_name, get_csv)
 from openpower.decoder.decode2execute1 import IssuerDecode2ToOperand

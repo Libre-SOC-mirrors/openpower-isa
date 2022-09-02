@@ -15,7 +15,7 @@ from openpower.decoder.power_decoder import (create_pdecode)
 from openpower.decoder.power_enums import (Function, MicrOp,
                                      In1Sel, In2Sel, In3Sel,
                                      CRInSel, CROutSel,
-                                     OutSel, RC, LdstLen, CryIn,
+                                     OutSel, RCOE, LdstLen, CryIn,
                                      single_bit_flags,
                                      get_signal_name, get_csv)
 
@@ -34,7 +34,7 @@ class DecoderTestCase(FHDLTestCase):
         out_sel = Signal(OutSel)
         cr_in = Signal(CRInSel)
         cr_out = Signal(CROutSel)
-        rc_sel = Signal(RC)
+        rc_sel = Signal(RCOE)
         ldst_len = Signal(LdstLen)
         cry_in = Signal(CryIn)
         bigendian = Signal()
@@ -102,7 +102,7 @@ class DecoderTestCase(FHDLTestCase):
                                (out_sel, OutSel, 'out'),
                                (cr_in, CRInSel, 'CR in'),
                                (cr_out, CROutSel, 'CR out'),
-                               (rc_sel, RC, 'rc'),
+                               (rc_sel, RCOE, 'rc'),
                                (cry_in, CryIn, 'cry in'),
                                (ldst_len, LdstLen, 'ldst len')]
                     for sig, enm, name in signals:
