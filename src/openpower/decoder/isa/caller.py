@@ -1180,7 +1180,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if dotstrp in [ 'fsins', 'fcoss',
                     'ffmadds', 'fdmadds', 'ffadds',
                      'mins', 'maxs', 'minu', 'maxu',
-                    'setvl', 'svindex', 'svremap', 'svstep', 'svshape',
+                    'setvl', 'svindex', 'svremap', 'svstep',
+                    'svshape', 'svshape2',
                     'grev', 'ternlogi', 'bmask', 'cprop',
                     'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
                     'fmvis', 'fishmv',
@@ -1652,7 +1653,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # to be able to know if it should apply in the next instruction.
         # also (if going to use this instruction) should disable ability
         # to interrupt in between. sigh.
-        self.last_op_svshape = asmop in ['svremap', 'svindex']
+        self.last_op_svshape = asmop in ['svremap', 'svindex', 'svshape2']
 
         return True
 
