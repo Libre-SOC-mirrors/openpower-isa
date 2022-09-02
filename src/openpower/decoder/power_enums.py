@@ -160,15 +160,15 @@ class Form(Enum):
     SVL = 29  # Simple-V for setvl instruction
     SVD = 30  # Simple-V for LD/ST bit-reverse, variant of D-Form
     SVDS = 31  # Simple-V for LD/ST bit-reverse, variant of DS-Form
-    SVM = 32  # Simple-V SHAPE mode - TEMPORARY TEMPORARY TEMPORARY
-    SVRM = 33  # Simple-V REMAP mode
-    TLI = 34  # ternlogi
-    XB = 35
-    BM2 = 36 # bmask
-    SVI = 37  # Simple-V Index Mode
-    VA2 = 38
-    SVC = 39
-    SVR = 40
+    SVM = 32  # Simple-V SHAPE mode
+    SVRM = 34  # Simple-V REMAP mode
+    TLI = 35  # ternlogi
+    XB = 36
+    BM2 = 37 # bmask
+    SVI = 38  # Simple-V Index Mode
+    VA2 = 39
+    SVC = 40
+    SVR = 41
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
