@@ -277,7 +277,6 @@ class Instruction(Struct, c_tag="svp64_insn"):
             yield f"{mangle(path, 'get')}(const {cls.c_typedef} *insn)"
             yield "{"
             yield from indent(["uint64_t value = insn->value;"])
-            yield ""
             yield from indent(["return ("])
             actions = []
             for (dst, src) in enumerate(reversed(field)):
@@ -286,9 +285,9 @@ class Instruction(Struct, c_tag="svp64_insn"):
                 src = f"UINT64_C({src})"
                 action = f"(((value >> {src}) & UINT64_C(1)) << {dst})"
                 actions.append(action)
-            for action in indent(indent(actions)):
+            for action in indent(indent(actions[:-1])):
                 yield f"{action} |"
-            yield from indent(indent(["UINT64_C(0)"]))
+            yield from indent(indent([f"{actions[-1]}"]))
             yield from indent([");"])
             yield "}"
             yield ""
@@ -310,9 +309,9 @@ class Instruction(Struct, c_tag="svp64_insn"):
                 action = f"(((value >> {src}) & UINT64_C(1)) << {dst})"
                 actions.append(action)
             yield from indent(["insn->value |= ("])
-            for action in indent(indent(actions)):
+            for action in indent(indent(actions[:-1])):
                 yield f"{action} |"
-            yield from indent(indent(["UINT64_C(0)"]))
+            yield from indent(indent([f"{actions[-1]}"]))
             yield from indent([");"])
             yield "}"
             yield ""
