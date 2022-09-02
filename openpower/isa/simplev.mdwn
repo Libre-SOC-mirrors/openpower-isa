@@ -342,3 +342,21 @@ Special Registers Altered:
 
     None
 
+# svshape2
+
+SVM2-Form
+
+* svshape2 offs,yx,rmm,SVd,sk,mm
+
+Pseudo-code:
+
+    # TODO. (placeholder: clear out all SVSHAPEs)
+    SVSHAPE0[0:31] <- [0] * 32
+    SVSHAPE1[0:31] <- [0] * 32
+    SVSHAPE2[0:31] <- [0] * 32
+    SVSHAPE3[0:31] <- [0] * 32
+
+Special Registers Altered:
+
+    None
+

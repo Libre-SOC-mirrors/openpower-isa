@@ -161,6 +161,7 @@ class Form(Enum):
     SVD = 30  # Simple-V for LD/ST bit-reverse, variant of D-Form
     SVDS = 31  # Simple-V for LD/ST bit-reverse, variant of DS-Form
     SVM = 32  # Simple-V SHAPE mode
+    SVM2 = 33  # Simple-V SHAPE2 mode - fits into SVM
     SVRM = 34  # Simple-V REMAP mode
     TLI = 35  # ternlogi
     XB = 36

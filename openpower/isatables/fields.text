@@ -306,6 +306,10 @@
     |0     |6        |11      |16    |21    |25 |26    |31  |
     | PO   |  SVxd   |   SVyd | SVzd | SVrm |vf |   XO      |
 
+# 1.6.35.1 SVM2-FORM
+    |0     |6     |10|11      |16    |21 |24|25 |26    |31  |
+    | PO   | offs |yx|   rmm  | SVd  |XO |mm|vf |   XO      |
+
 # 1.6.36 SVRM-FORM
     |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
     | PO   | SVme |mi0 | mi1 | mi2 | mo0 | mo1 |pst |///  | XO        |
@@ -651,7 +655,8 @@
         Formats: SVRM
     mm (24)
         Field used to specify the meaning of the rmm field for SVI-Form
-        Formats: SVI
+        and SVM2-Form
+        Formats: SVI, SVM2
     mo0 (17:18)
         Field used in REMAP to select the SVSHAPE for 1st output register
         Formats: SVRM
@@ -669,6 +674,9 @@
         Field used to specify the number of bytes to move
         in an immediate Move Assist instruction.
         Formats: X
+    offs (6:10)
+        Field used by the svshape2 instruction as an offset
+        Formats: SVM2
     OC (6:20)
         Field used by the Embedded Hypervisor Privilege
         instruction.
@@ -744,6 +752,9 @@
         Immediate field used for DFP rounding mode con-
         trol.
         Formats: Z23
+    rmm (11:15)
+        REMAP Mode field for SVI-Form and SVM2-Form
+        Formats: SVI, SVM2
     RO (31)
         Round to Odd override
         Formats: X
@@ -831,8 +842,8 @@
          Formats: X
     SVd (16:20)
         Immediate field used to specify the size of the REMAP dimension
-        in the svindex instruction.
-        Formats: SVI
+        in the svindex and svshape2 instructions
+        Formats: SVI, SVM2
     SVD (21:31)
         Immediate field used to specify an 11-bit signed
         two's complement integer which is sign-extended
@@ -953,7 +964,7 @@
         Formats: DS, VA, VC, VX, X
     vf (25)
         Field used in Simple-V to specify whether "Vertical" Mode is set
-        Formats: SVL, SVM
+        Formats: SVL, SVM, SVM2
     vs (24)
         Field used in Simple-V to specify whether VL is to be set
         Formats: SVL
@@ -974,6 +985,9 @@
         Field used to specify a 6-bit unsigned immediate for bit manipulation
         instructions, such as grevi.
         Formats: XB
+    XO (21:23,26:31)
+        Extended opcode field.
+        Formats: SVM2
     XO (21,23:31)
         Extended opcode field.
         Formats: VX

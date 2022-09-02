@@ -21,6 +21,8 @@ opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry ou
 1101-011001,VL,OP_SVSHAPE,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,svshape,SVM,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1110-011001,VL,OP_SVSHAPE,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,svshape,SVM,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1111-011001,VL,OP_SVSHAPE,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,svshape,SVM,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+# svshape2: {-100,mm,011001}
+-100-011001,VL,OP_SVSHAPE,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,svshape2,SVM,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 # A/V bitmanip
 0111001110-,ALU,OP_MINMAX,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,maxs,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 0011001110-,ALU,OP_MINMAX,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,maxu,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
