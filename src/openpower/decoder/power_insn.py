@@ -745,8 +745,11 @@ class SVP64Instruction(PrefixedInstruction):
                 range(16, 19),
             )
 
+        class RM(RM.remap((6, 8) + tuple(range(10, 32)))):
+            pass
+
         id: _Field = (7, 9)
-        rm: RM = ((6, 8) + tuple(range(10, 32)))
+        rm: RM
 
     prefix: Prefix
 
