@@ -724,73 +724,67 @@ class Mode(_Mapping):
     _: _Field = range(0, 5)
 
 
+class LDSTMode(Mode):
+    class imm(Mode):
+        class normal(Mode):
+            """normal mode"""
+            zz: _Field = (3,)
+            els: _Field = (4,)
+            dz: _Field = (3,)
+            sz: _Field = (3,)
+
+        class spu(Mode):
+            """Structured Pack/Unpack"""
+            zz: _Field = (3,)
+            els: _Field = (4,)
+            dz: _Field = (3,)
+            sz: _Field = (3,)
+
+        class ffrc1(Mode):
+            """Rc=1: ffirst CR sel"""
+            inv: _Field = (2,)
+            CRbit: _Field = (3, 4)
+
+        class ffrc0(Mode):
+            """Rc=0: ffirst z/nonz"""
+            inv: _Field = (2,)
+            els: _Field = (3,)
+            RC1: _Field = (4,)
+
+        class sat(Mode):
+            """sat mode: N=0/1 u/s"""
+            N: _Field = (2,)
+            zz: _Field = (3,)
+            els: _Field = (4,)
+            dz: _Field = (3,)
+            sz: _Field = (3,)
+
+
+        class prrc1(Mode):
+            """Rc=1: pred-result CR sel"""
+            inv: _Field = (2,)
+            CRbit: _Field = (3, 4)
+
+        class prrc0(Mode):
+            """Rc=0: pred-result z/nonz"""
+            inv: _Field = (2,)
+            els: _Field = (3,)
+            RC1: _Field = (4,)
+
+        normal: normal
+        spu: spu
+        ffrc1: ffrc1
+        ffrc0: ffrc0
+        sat: sat
+        prrc1: prrc1
+        prrc0: prrc0
+
+    imm: imm
+
+
 class RM(_Mapping):
     class Mode(Mode):
-        class ldst(Mode):
-            class imm(Mode):
-                class normal(Mode):
-                    """normal mode"""
-                    _: _Field = range(0, 5)
-                    zz: _Field = (3,)
-                    els: _Field = (4,)
-                    dz: _Field = (3,)
-                    sz: _Field = (3,)
-
-                class spu(Mode):
-                    """Structured Pack/Unpack"""
-                    _: _Field = range(0, 5)
-                    zz: _Field = (3,)
-                    els: _Field = (4,)
-                    dz: _Field = (3,)
-                    sz: _Field = (3,)
-
-                class ffrc1(Mode):
-                    """Rc=1: ffirst CR sel"""
-                    _: _Field = range(0, 5)
-                    inv: _Field = (2,)
-                    CRbit: _Field = (3, 4)
-
-                class ffrc0(Mode):
-                    """Rc=0: ffirst z/nonz"""
-                    _: _Field = range(0, 5)
-                    inv: _Field = (2,)
-                    els: _Field = (3,)
-                    RC1: _Field = (4,)
-
-                class sat(Mode):
-                    """sat mode: N=0/1 u/s"""
-                    _: _Field = range(0, 5)
-                    N: _Field = (2,)
-                    zz: _Field = (3,)
-                    els: _Field = (4,)
-                    dz: _Field = (3,)
-                    sz: _Field = (3,)
-
-
-                class prrc1(Mode):
-                    """Rc=1: pred-result CR sel"""
-                    _: _Field = range(0, 5)
-                    inv: _Field = (2,)
-                    CRbit: _Field = (3, 4)
-
-                class prrc0(Mode):
-                    """Rc=0: pred-result z/nonz"""
-                    _: _Field = range(0, 5)
-                    inv: _Field = (2,)
-                    els: _Field = (3,)
-                    RC1: _Field = (4,)
-
-                normal: normal
-                spu: spu
-                ffrc1: ffrc1
-                ffrc0: ffrc0
-                sat: sat
-                prrc1: prrc1
-                prrc0: prrc0
-
-            imm: imm
-
-        ldst: ldst
+        ldst: LDSTMode
 
     _: _Field = range(24)
     mmode: _Field = (0,)
