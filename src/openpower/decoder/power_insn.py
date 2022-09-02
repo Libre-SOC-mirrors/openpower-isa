@@ -778,7 +778,46 @@ class LDSTMode(Mode):
         prrc1: prrc1
         prrc0: prrc0
 
+    class idx(Mode):
+        class normal(Mode):
+            """normal mode"""
+            SEA: Mode[2]
+            sz: Mode[3]
+            dz: Mode[3]
+
+        class stride(Mode):
+            """strided (scalar only source)"""
+            SEA: Mode[2]
+            dz: Mode[3]
+            sz: Mode[4]
+
+        class sat(Mode):
+            """sat mode: N=0/1 u/s"""
+            N: Mode[2]
+            dz: Mode[3]
+            sz: Mode[4]
+
+        class prrc1(Mode):
+            """Rc=1: pred-result CR sel"""
+            inv: Mode[2]
+            CRbit: Mode[3, 4]
+
+        class prrc0(Mode):
+            """Rc=0: pred-result z/nonz"""
+            inv: Mode[2]
+            zz: Mode[3]
+            RC1: Mode[4]
+            dz: Mode[3]
+            sz: Mode[3]
+
+        normal: normal
+        stride: stride
+        sat: sat
+        prrc1: prrc1
+        prrc0: prrc0
+
     imm: imm
+    idx: idx
 
 
 class RM(_Mapping):
