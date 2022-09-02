@@ -724,6 +724,86 @@ class Mode(_Mapping):
     _: _Field = range(0, 5)
 
 
+class NormalMode(Mode):
+    class normal(Mode):
+        """normal mode"""
+        dz: Mode[3]
+        sz: Mode[4]
+
+    class smr(Mode):
+        """scalar reduce mode (mapreduce), SUBVL=1"""
+        RG: Mode[4]
+
+    class pmr(Mode):
+        """parallel reduce mode (mapreduce), SUBVL=1"""
+        pass
+
+    class svmr(Mode):
+        """subvector reduce mode, SUBVL>1"""
+        SVM: Mode[3]
+
+    class pu(Mode):
+        """Pack/Unpack mode, SUBVL>1"""
+        SVM: Mode[3]
+
+    class ffrc1(Mode):
+        """Rc=1: ffirst CR sel"""
+        inv: Mode[2]
+        CRbit: Mode[3, 4]
+
+    class ffrc0(Mode):
+        """Rc=0: ffirst z/nonz"""
+        inv: Mode[2]
+        VLi: Mode[3]
+        RC1: Mode[4]
+
+    class sat(Mode):
+        """sat mode: N=0/1 u/s, SUBVL=1"""
+        N: Mode[2]
+        dz: Mode[3]
+        sz: Mode[4]
+
+    class satx(Mode):
+        """sat mode: N=0/1 u/s, SUBVL>1"""
+        N: Mode[2]
+        zz: Mode[3]
+        dz: Mode[3]
+        sz: Mode[3]
+
+    class satpu(Mode):
+        """Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1"""
+        N: Mode[2]
+        zz: Mode[3]
+        dz: Mode[3]
+        sz: Mode[3]
+
+    class prrc1(Mode):
+        """Rc=1: pred-result CR sel"""
+        inv: Mode[2]
+        CRbit: Mode[3, 4]
+
+    class prrc0(Mode):
+        """Rc=0: pred-result z/nonz"""
+        inv: Mode[2]
+        zz: Mode[3]
+        RC1: Mode[4]
+        dz: Mode[3]
+        sz: Mode[3]
+
+    normal: normal
+    smr: smr
+    pmr: pmr
+    svmr: svmr
+    pu: pu
+    ffrc1: ffrc1
+    ffrc0: ffrc0
+    sat: sat
+    satx: satx
+    satpu: satpu
+    prrc1: prrc1
+    prrc0: prrc0
+
+
 class LDSTMode(Mode):
     class imm(Mode):
         class normal(Mode):
@@ -822,6 +902,7 @@ class LDSTMode(Mode):
 
 class RM(_Mapping):
     class Mode(Mode):
+        normal: NormalMode
         ldst: LDSTMode
 
     _: _Field = range(24)
