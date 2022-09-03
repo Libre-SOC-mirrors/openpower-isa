@@ -284,7 +284,6 @@ class SVP64Record:
     cr_in: _CRInSel = _CRInSel.NONE
     cr_out: _CROutSel = _CROutSel.NONE
     extra: ExtraMap = ExtraMap()
-    pu: bool = False
     conditions: str = ""
     mode: _SVMode = _SVMode.NORMAL
 
@@ -295,7 +294,6 @@ class SVP64Record:
         "Etype": "etype",
         "CR in": "cr_in",
         "CR out": "cr_out",
-        "PU": "pu",
     }
 
     @classmethod
