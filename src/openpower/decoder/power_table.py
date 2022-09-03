@@ -31,17 +31,16 @@ def do_table(insns, section):
     print ("start-end", start, end)
     bitlen = end-start+1
     half = bitlen // 2
-    xomask = ((1<<bitlen)-1) << (31-start)
     lowermask = (1<<half)-1
     uppermask = (1<<(bitlen-half))-1
     table_entries = {}
     # debug-print all opcodes first
     for insn in insns:
-        opcode = insn.opcode
+        opcode = insn.section.opcode
         if not isinstance(opcode, list):
             opcode = [opcode]
         for op in opcode:
-            print ("op", insn.name, opcode)
+            print ("op", insn.name, op)
 
     for i in range(1<<bitlen):
         # calculate row, column
@@ -52,7 +51,7 @@ def do_table(insns, section):
             table_entries[lower] = {}
         table_entries[lower][upper] = i
         # create an XO
-        key = i << (31-start)
+        key = i << (31-end) # MSB0-order shift up by *end*
         print ("search", i, hex(key))
         # start hunting
         for insn in insns:
@@ -60,7 +59,7 @@ def do_table(insns, section):
             if not isinstance(opcode, list):
                 opcode = [opcode]
             for op in opcode:
-                if ((op.value & op.mask & xomask) == (key & op.mask & xomask)):
+                if ((op.value & op.mask) == (key & op.mask)):
                     print ("match", i, hex(key), insn.name)
 
 do_table(insns['minor_30.csv'], sections['minor_30.csv'])
