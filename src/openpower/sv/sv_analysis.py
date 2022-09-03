@@ -762,7 +762,10 @@ def process_csvs(format):
                     ]
             mode = 'NORMAL'
             if value.startswith('LDST'):
-                mode = 'LDST'
+                if 'x' in insn_name: # Indexed detection
+                    mode = 'LDST_IDX'
+                else:
+                    mode = 'LDST_IMM'
             elif insn_name.startswith('bc'):
                 mode = 'BRANCH'
             elif insn_name.startswith('cr') or insn_name in crops:

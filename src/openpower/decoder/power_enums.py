@@ -176,7 +176,8 @@ class Form(Enum):
 
 class SVMode(Enum):
     NORMAL = auto()
-    LDST = auto()
+    LDST_IDX = auto()
+    LDST_IMM = auto()
     BRANCH = auto()
     CROP = auto()
 
