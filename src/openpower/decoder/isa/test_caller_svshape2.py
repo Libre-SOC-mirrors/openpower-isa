@@ -31,7 +31,7 @@ class SVSTATETestCase(FHDLTestCase):
     def test_0_sv_shape2(self):
         """sets VL=10 (via SVSTATE) then does svshape mm=0, checks SPRs after
         """
-        isa = SVP64Asm(['svshape2 6, 1, 1, 15, 5, 0, 0'
+        isa = SVP64Asm(['svshape2 12, 1, 15, 5, 0, 0'
                         ])
         lst = list(isa)
         print("listing", lst)
@@ -81,9 +81,9 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(SVSHAPE0.xdimsz, 5)  # set
             self.assertEqual(SVSHAPE0.ydimsz, 2)  # calculated from MVL/xdimsz
             self.assertEqual(SVSHAPE0.skip, 0)   # no skip
-            # invert y rather than x because yx=1
-            self.assertEqual(SVSHAPE0.invxyz, [0, 1, 0])
-            self.assertEqual(SVSHAPE0.offset, 6)
+            # (no inversion possible)
+            self.assertEqual(SVSHAPE0.invxyz, [0, 0, 0])
+            self.assertEqual(SVSHAPE0.offset, 12)
             self.assertEqual(SVSHAPE0.order, (1, 0, 2))  # y,x(,z)
             self.assertEqual(sim.svstate.RMpst, 0)  # mm=0 so persist=0
             self.assertEqual(sim.svstate.SVme, 0b01111)  # same as rmm
