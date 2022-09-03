@@ -953,6 +953,84 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
             return
 
+        Rc = False
+        if record.operands["Rc"] is not None:
+            Rc = bool(self[record.fields["Rc"]])
+
+        subvl = self.prefix.rm.subvl
+        mode = self.prefix.rm.mode
+        sel = mode.sel
+
+        if record.svp64.mode is _SVMode.NORMAL:
+            mode = mode.normal
+            if sel == 0b00:
+                if mode[2] == 0b0:
+                    mode = mode.simple
+                else:
+                    if subvl == 0b00:
+                        if mode[3] == 0b0:
+                            mode = mode.smr
+                        else:
+                            mode = mode.pmr
+                    else:
+                        if mode[4] == 0b0:
+                            mode = mode.svmr
+                        else:
+                            mode = mode.pu
+            elif sel == 0b01:
+                if Rc:
+                    mode = mode.ffrc1
+                else:
+                    mode = mode.ffrc0
+            elif sel == 0b10:
+                if subvl == 0b00:
+                    mode = mode.sat
+                else:
+                    if mode[4]:
+                        mode = mode.satx
+                    else:
+                        mode = mode.satpu
+            elif sel == 0b11:
+                if Rc:
+                    mode = mode.prrc1
+                else:
+                    mode = mode.prrc0
+        elif record.svp64.mode is _SVMode.LDST_IMM:
+            mode = mode.ldst_imm
+            if sel == 0b00:
+                if mode[2] == 0b0:
+                    mode = mode.simple
+                else:
+                    mode = mode.spu
+            elif sel == 0b01:
+                if Rc:
+                    mode = mode.ffrc1
+                else:
+                    mode = mode.ffrc0
+            elif sel == 0b10:
+                mode = mode.sat
+            elif sel == 0b11:
+                if Rc:
+                    mode = mode.prrc1
+                else:
+                    mode = mode.prrc0
+        elif record.svp64.mode is _SVMode.LDST_IMM:
+            mode = mode.ldst_idx
+            if mode.sel == 0b00:
+                mode = mode.simple
+            elif mode.sel == 0b01:
+                mode = mode.stride
+            elif mode.sel == 0b10:
+                mode = mode.sat
+            elif mode.sel == 0b11:
+                if Rc:
+                    mode = mode.prrc1
+                else:
+                    mode = mode.prrc0
+
+        if type(mode) is Mode:
+            raise NotImplementedError
+
         yield f"{blob_prefix}    sv.{record.name}"
         yield f"{blob_suffix}"
 
