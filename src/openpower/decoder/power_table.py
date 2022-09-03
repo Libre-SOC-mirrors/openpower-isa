@@ -47,9 +47,10 @@ def do_table(fname, insns, section, divpoint):
     # debug-print all opcodes first
     opcode_per_insn = {}
     for insn in insns:
-        fields = []
-        fields += [(insn.ppc.opcode.value, insn.section.bitsel)]
-        opcode = FieldsOpcode(fields)
+        #fields = []
+        #fields += [(insn.ppc.opcode.value, insn.ppc.bitsel)]
+        #opcode = FieldsOpcode(fields)
+        opcode = insn.ppc.opcode
         if not isinstance(opcode, list):
             opcode = [opcode]
         for op in opcode:
@@ -66,7 +67,7 @@ def do_table(fname, insns, section, divpoint):
             table_entries[upper] = {}
         table_entries[upper][lower] = None
         # create an XO
-        key = i << (31-end) # MSB0-order shift up by *end*
+        key = i
         print ("search", i, hex(key))
         # start hunting
         for insn in insns:
