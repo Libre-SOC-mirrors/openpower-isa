@@ -491,6 +491,9 @@ class Operands:
     def __iter__(self):
         yield from self.__operands
 
+    def __contains__(self, key):
+        return self.__getitem__(key) is not None
+
     def __getitem__(self, key):
         for operand in self.__operands:
             if operand.name == key:
