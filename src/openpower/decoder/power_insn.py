@@ -385,7 +385,7 @@ class Fields:
 
         def transform(item):
             (name, bitrange) = item
-            return (name, tuple(bitrange.values()))
+            return (name, list(bitrange.values()))
 
         self.__mapping = dict(map(transform, items))
 
@@ -409,40 +409,69 @@ class Operands:
     class Operand:
         name: str
 
-        def disassemble(self, value, record):
+        def disassemble(self, value, record, verbose=False):
             raise NotImplementedError
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class DynamicOperand(Operand):
-        def disassemble(self, value, record):
-            return str(int(value[record.fields[self.name]]))
+        def disassemble(self, value, record, verbose=False):
+            span = record.fields[self.name]
+            value = value[span]
+            if verbose:
+                return f"{int(value):0{value.bits}b} {span}"
+            else:
+                return str(int(value))
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class StaticOperand(Operand):
-        value: int = None
+        value: int
+
+        def disassemble(self, value, record, verbose=False):
+            span = record.fields[self.name]
+            value = value[span]
+            if verbose:
+                return f"{int(value):0{value.bits}b} {span}"
+            else:
+                return str(int(value))
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class DynamicOperandIFormLI(DynamicOperand):
-        def disassemble(self, value, record):
-            return hex(int(_selectconcat(
-                value[record.fields["LI"]],
-                _SelectableInt(value=0b00, bits=2))))
+        def disassemble(self, value, record, verbose=False):
+            span = record.fields["LI"]
+            value = value[span]
+            if verbose:
+                return f"{int(value):0{value.bits}b}{{00}} {span}"
+            else:
+                return hex(int(_selectconcat(value,
+                    _SelectableInt(value=0b00, bits=2))))
 
     class DynamicOperandBFormBD(DynamicOperand):
-        def disassemble(self, value, record):
-            return hex(int(_selectconcat(
-                value[record.fields["BD"]],
-                _SelectableInt(value=0b00, bits=2))))
+        def disassemble(self, value, record, verbose=False):
+            span = record.fields["BD"]
+            value = value[span]
+            if verbose:
+                return f"{int(value):0{value.bits}b}{{00}} {span}"
+            else:
+                return hex(int(_selectconcat(value,
+                    _SelectableInt(value=0b00, bits=2))))
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class DynamicOperandGPR(DynamicOperand):
-        def disassemble(self, value, record):
-            return f"r{super().disassemble(value=value, record=record)}"
+        def disassemble(self, value, record, verbose=False):
+            result = super().disassemble(value=value,
+                record=record, verbose=verbose)
+            if not verbose:
+                result = f"r{result}"
+            return result
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class DynamicOperandFPR(DynamicOperand):
-        def disassemble(self, value, record):
-            return f"f{super().disassemble(value=value, record=record)}"
+        def disassemble(self, value, record, verbose=False):
+            result = super().disassemble(value=value,
+                record=record, verbose=verbose)
+            if not verbose:
+                result = f"f{result}"
+            return result
 
     def __init__(self, insn, iterable):
         branches = {
@@ -662,7 +691,7 @@ class Instruction(_Mapping):
     def __hash__(self):
         return hash(int(self))
 
-    def disassemble(self, db, byteorder="little"):
+    def disassemble(self, db, byteorder="little", verbose=False):
         raise NotImplementedError
 
 
@@ -674,7 +703,27 @@ class WordInstruction(Instruction):
     def integer(cls, value, byteorder="little"):
         return super().integer(bits=32, value=value, byteorder=byteorder)
 
-    def disassemble(self, db, byteorder="little"):
+    def spec(self, record):
+        dynamic_operands = []
+        for operand in record.operands.dynamic:
+            dynamic_operands.append(operand.name)
+        static_operands = []
+        for operand in record.operands.static:
+            static_operands.append(f"{operand.name}={operand.value}")
+        operands = ""
+        if dynamic_operands:
+            operands += f" {','.join(dynamic_operands)}"
+        if static_operands:
+            operands += f" ({' '.join(static_operands)})"
+        return f"{record.name}{operands}"
+
+    def opcode(self, record):
+        return f"0x{record.opcode.value:08x}"
+
+    def mask(self, record):
+        return f"0x{record.opcode.mask:08x}"
+
+    def disassemble(self, db, byteorder="little", verbose=False):
         integer = int(self)
         blob = integer.to_bytes(length=4, byteorder=byteorder)
         blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
@@ -686,7 +735,8 @@ class WordInstruction(Instruction):
 
         operands = []
         for operand in record.operands.dynamic:
-            operand = operand.disassemble(self, record)
+            operand = operand.disassemble(value=self,
+                record=record, verbose=False)
             operands.append(operand)
         if operands:
             operands = ",".join(operands)
@@ -695,6 +745,21 @@ class WordInstruction(Instruction):
             operands = ""
 
         yield f"{blob}    {record.name}{operands}"
+
+        if verbose:
+            indent = (" " * 4)
+            spec = self.spec(record=record)
+            opcode = self.opcode(record=record)
+            mask = self.mask(record=record)
+            yield f"{indent}{'spec':11}{spec}"
+            yield f"{indent}{'opcode':11}{opcode}"
+            yield f"{indent}{'mask':11}{mask}"
+            for operand in record.operands:
+                name = operand.name
+                value = operand.disassemble(value=self,
+                    record=record, verbose=True)
+                yield f"{indent}{name:11}{value}"
+
 
 class PrefixedInstruction(Instruction):
     class Prefix(WordInstruction.remap(range(0, 32))):
@@ -938,7 +1003,7 @@ class SVP64Instruction(PrefixedInstruction):
 
     prefix: Prefix
 
-    def disassemble(self, db, byteorder="little"):
+    def disassemble(self, db, byteorder="little", verbose=False):
         integer_prefix = int(self.prefix)
         blob_prefix = integer_prefix.to_bytes(length=4, byteorder=byteorder)
         blob_prefix = " ".join(map(lambda byte: f"{byte:02x}", blob_prefix))
