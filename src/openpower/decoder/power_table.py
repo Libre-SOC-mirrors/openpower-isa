@@ -34,13 +34,13 @@ def binmaxed(num, v):
     return format(v, "0%db" % num)
 
 # create one table
-def do_table(fname, insns, section):
+def do_table(fname, insns, section, divpoint):
     insns = insns[fname]
     section = sections[fname]
     start, end = section.bitsel.start, section.bitsel.end
     print ("start-end", start, end)
     bitlen = end-start+1
-    half = bitlen // 2
+    half = divpoint
     lowermask = (1<<half)-1
     uppermask = (1<<(bitlen-half))-1
     table_entries = {}
@@ -62,9 +62,9 @@ def do_table(fname, insns, section):
         lower = i & lowermask
         upper = (i>>half) & uppermask
         print (i, bin(lower), bin(upper))
-        if lower not in table_entries:
-            table_entries[lower] = {}
-        table_entries[lower][upper] = None
+        if upper not in table_entries:
+            table_entries[upper] = {}
+        table_entries[upper][lower] = None
         # create an XO
         key = i << (31-end) # MSB0-order shift up by *end*
         print ("search", i, hex(key))
@@ -76,12 +76,12 @@ def do_table(fname, insns, section):
                 #                       hex(op.value), hex(op.mask))
                 if ((op.value & op.mask) == (key & op.mask)):
                     print ("    match", i, hex(key), insn.name)
-                    assert (table_entries[lower][upper] is None,
+                    assert (table_entries[upper][lower] is None,
                             "entry %d %d should be empty "
                             "contains %s conflicting %s" % \
-                            (lower, upper, str(table_entries[lower][upper]),
+                            (lower, upper, str(table_entries[upper][lower]),
                              insn.name))
-                    table_entries[lower][upper] = insn.name
+                    table_entries[upper][lower] = insn.name
                     maxnamelen = max(maxnamelen, len(insn.name))
                     continue
 
@@ -108,5 +108,5 @@ def do_table(fname, insns, section):
 
     print ("\n".join(table))
 
-do_table('minor_30.csv', insns, sections)
+do_table('minor_30.csv', insns, sections, divpoint=3)
 
