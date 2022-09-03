@@ -682,17 +682,19 @@ class WordInstruction(Instruction):
         record = db[self]
         if record is None:
             yield f"{blob}    .long 0x{integer:08x}"
+            return
+
+        operands = []
+        for operand in record.operands.dynamic:
+            operand = operand.disassemble(self, record)
+            operands.append(operand)
+        if operands:
+            operands = ",".join(operands)
+            operands = f" {operands}"
         else:
-            operands = []
-            for operand in record.operands.dynamic:
-                operand = operand.disassemble(self, record)
-                operands.append(operand)
-            if operands:
-                operands = ",".join(operands)
-                operands = f" {operands}"
-            else:
-                operands = ""
-            yield f"{blob}    {record.name}{operands}"
+            operands = ""
+
+        yield f"{blob}    {record.name}{operands}"
 
 class PrefixedInstruction(Instruction):
     class Prefix(WordInstruction.remap(range(0, 32))):
@@ -949,9 +951,10 @@ class SVP64Instruction(PrefixedInstruction):
         if record is None or record.svp64 is None:
             yield f"{blob_prefix}    .long 0x{int(self.prefix):08x}"
             yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
-        else:
-            yield f"{blob_prefix}    sv.{record.name}"
-            yield f"{blob_suffix}"
+            return
+
+        yield f"{blob_prefix}    sv.{record.name}"
+        yield f"{blob_suffix}"
 
 
 def parse(stream, factory):
