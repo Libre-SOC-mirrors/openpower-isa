@@ -55,7 +55,9 @@ def do_table(fname, insns, section, divpoint):
             opcode = [opcode]
         for op in opcode:
             print ("op", insn.name, op)
-        opcode_per_insn[insn.name] = opcode
+        if insn.name not in opcode_per_insn:
+            opcode_per_insn[insn.name] = []
+        opcode_per_insn[insn.name] += opcode
 
     maxnamelen = 0
     for i in range(1<<bitlen):
