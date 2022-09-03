@@ -49,10 +49,10 @@ def load(ifile, byteorder, **_):
         yield insn
 
 
-def dump(insns, **_):
+def dump(insns, verbose, **_):
     db = _Database(_find_wiki_dir())
     for insn in insns:
-        yield from insn.disassemble(db=db)
+        yield from insn.disassemble(db=db, verbose=verbose)
 
 
 def main():
@@ -63,15 +63,13 @@ def main():
         type=_argparse.FileType("w"), default=_sys.stdout)
     parser.add_argument("-b", "--byteorder",
         type=ByteOrder, default=ByteOrder.LITTLE)
+    parser.add_argument("-v", "--verbose",
+        action="store_true", default=False)
 
     args = dict(vars(parser.parse_args()))
-    ifile = args["ifile"]
-    ofile = args["ofile"]
-    byteorder = args["byteorder"]
-
-    insns = load(ifile, byteorder)
-    for line in dump(insns):
-        print(line, file=ofile)
+    insns = load(**args)
+    for line in dump(insns, **args):
+        print(line, file=args["ofile"])
 
 
 if __name__ == "__main__":
