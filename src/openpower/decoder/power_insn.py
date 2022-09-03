@@ -730,8 +730,8 @@ class Mode(_Mapping):
 
 
 class NormalMode(Mode):
-    class normal(Mode):
-        """normal mode"""
+    class simple(Mode):
+        """simple mode"""
         dz: Mode[3]
         sz: Mode[4]
 
@@ -795,7 +795,7 @@ class NormalMode(Mode):
         dz: Mode[3]
         sz: Mode[3]
 
-    normal: normal
+    simple: simple
     smr: smr
     pmr: pmr
     svmr: svmr
@@ -810,8 +810,8 @@ class NormalMode(Mode):
 
 
 class LDSTImmMode(Mode):
-    class normal(Mode):
-        """normal mode"""
+    class simple(Mode):
+        """simple mode"""
         zz: Mode[3]
         els: Mode[4]
         dz: Mode[3]
@@ -854,7 +854,7 @@ class LDSTImmMode(Mode):
         els: Mode[3]
         RC1: Mode[4]
 
-    normal: normal
+    simple: simple
     spu: spu
     ffrc1: ffrc1
     ffrc0: ffrc0
@@ -864,8 +864,8 @@ class LDSTImmMode(Mode):
 
 
 class LDSTIdxMode(Mode):
-    class normal(Mode):
-        """normal mode"""
+    class simple(Mode):
+        """simple mode"""
         SEA: Mode[2]
         sz: Mode[3]
         dz: Mode[3]
@@ -895,7 +895,7 @@ class LDSTIdxMode(Mode):
         dz: Mode[3]
         sz: Mode[3]
 
-    normal: normal
+    simple: simple
     stride: stride
     sat: sat
     prrc1: prrc1
