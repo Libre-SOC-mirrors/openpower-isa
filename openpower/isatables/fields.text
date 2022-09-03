@@ -307,8 +307,8 @@
     | PO   |  SVxd   |   SVyd | SVzd | SVrm |vf |   XO      |
 
 # 1.6.35.1 SVM2-FORM
-    |0     |6     |10|11      |16    |21 |24|25 |26    |31  |
-    | PO   | offs |yx|   rmm  | SVd  |XO |mm|sk |   XO      |
+    |0     |6   |9  |10|11      |16    |21 |24|25 |26    |31  |
+    | PO   |offs|inv|yx|   rmm  | SVd  |XO |mm|sk |   XO      |
 
 # 1.6.36 SVRM-FORM
     |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
@@ -559,6 +559,9 @@
     IMM8 (13:20)
          Immediate field used to specify an 8-bit integer.
          Formats: X
+    inv (9)
+        Field used by the svshape2 instruction for inversion of one dimension
+        Formats: SVM2
     IS (6:10)
          Immediate field used to specify a 5-bit signed inte-
          ger.
@@ -674,7 +677,7 @@
         Field used to specify the number of bytes to move
         in an immediate Move Assist instruction.
         Formats: X
-    offs (6:9)
+    offs (6:8)
         Field used by the svshape2 instruction as an offset
         Formats: SVM2
     OC (6:20)

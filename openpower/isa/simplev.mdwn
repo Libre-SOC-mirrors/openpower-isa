@@ -346,7 +346,7 @@ Special Registers Altered:
 
 SVM2-Form
 
-* svshape2 offs,yx,rmm,SVd,sk,mm
+* svshape2 offs,inv,yx,rmm,SVd,sk,mm
 
 Pseudo-code:
 
@@ -364,12 +364,14 @@ Pseudo-code:
         shape[18:20] <- 0b000       # ordering xd/yd(/zd)
         if sk = 0 then shape[6:11] <- 0 # ydim
         else           shape[6:11] <- 0b111111 # ydim max
+        shape[21:23] <- (0b00 || inv) # "inverse" on xdim
     else
         shape[18:20] <- 0b010       # ordering yd/xd(/zd)
         if sk = 1 then shape[6:11] <- 0 # ydim
         else           shape[6:11] <- d-1 # ydim max
+        shape[21:23] <- (0b0 || inv || 0b0) # "inverse" ydim
     # offset (the prime purpose of this instruction)
-    shape[24:27] <- offs        # offset
+    shape[24:27] <- (0b0 || offs) # offset extended 1-bit
     if sk = 1 then shape[28:29] <- 0b01 # skip 1st dimension
     else           shape[28:29] <- 0b00 # no skipping
     # select the mode for updating SVSHAPEs
