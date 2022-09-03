@@ -450,9 +450,10 @@ class Operands:
             span = record.fields[self.name]
             value = value[span]
             if verbose:
-                return f"{int(value):0{value.bits}b} {span}"
+                yield f"{int(value):0{value.bits}b}"
+                yield repr(span)
             else:
-                return str(int(value))
+                yield str(int(value))
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class StaticOperand(Operand):
@@ -462,9 +463,10 @@ class Operands:
             span = record.fields[self.name]
             value = value[span]
             if verbose:
-                return f"{int(value):0{value.bits}b} {span}"
+                yield f"{int(value):0{value.bits}b}"
+                yield repr(span)
             else:
-                return str(int(value))
+                yield str(int(value))
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class DynamicOperandIFormLI(DynamicOperand):
@@ -480,10 +482,11 @@ class Operands:
             span = record.fields["LI"]
             value = value[span]
             if verbose:
-                hints = "(target_addr=EXTS(LI || 0b00)))"
-                return f"{int(value):0{value.bits}b} {span} {hints}"
+                yield f"{int(value):0{value.bits}b}"
+                yield repr(span)
+                yield "target_addr = EXTS(LI || 0b00))"
             else:
-                return hex(int(_selectconcat(value,
+                yield hex(int(_selectconcat(value,
                     _SelectableInt(value=0b00, bits=2))))
 
     class DynamicOperandBFormBD(DynamicOperand):
@@ -499,29 +502,34 @@ class Operands:
             span = record.fields["BD"]
             value = value[span]
             if verbose:
-                hints = "(target_addr=EXTS(BD || 0b00))"
-                return f"{int(value):0{value.bits}b} {span} {hints}"
+                yield f"{int(value):0{value.bits}b}"
+                yield repr(span)
+                yield "target_addr = EXTS(BD || 0b00))"
             else:
-                return hex(int(_selectconcat(value,
+                yield hex(int(_selectconcat(value,
                     _SelectableInt(value=0b00, bits=2))))
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class DynamicOperandGPR(DynamicOperand):
         def disassemble(self, value, record, verbose=False):
-            result = super().disassemble(value=value,
-                record=record, verbose=verbose)
-            if not verbose:
-                result = f"r{result}"
-            return result
+            span = record.fields[self.name]
+            value = value[span]
+            if verbose:
+                yield f"{int(value):0{value.bits}b}"
+                yield repr(span)
+            else:
+                yield f"r{str(int(value))}"
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class DynamicOperandFPR(DynamicOperand):
         def disassemble(self, value, record, verbose=False):
-            result = super().disassemble(value=value,
-                record=record, verbose=verbose)
-            if not verbose:
-                result = f"f{result}"
-            return result
+            span = record.fields[self.name]
+            value = value[span]
+            if verbose:
+                yield f"{int(value):0{value.bits}b}"
+                yield repr(span)
+            else:
+                yield f"f{str(int(value))}"
 
     def __init__(self, insn, iterable):
         branches = {
@@ -793,8 +801,8 @@ class WordInstruction(Instruction):
 
         operands = []
         for operand in record.operands.dynamic:
-            operand = operand.disassemble(value=self,
-                record=record, verbose=False)
+            operand = " ".join(operand.disassemble(value=self,
+                record=record, verbose=False))
             operands.append(operand)
         if operands:
             operands = ",".join(operands)
@@ -805,24 +813,30 @@ class WordInstruction(Instruction):
         yield f"{blob}    {record.name}{operands}"
 
         if verbose:
-            lindent = (" " * 4)
-            rindent = (len(blob) - len(lindent))
+            indent = (" " * 4)
             binary = self.binary
             spec = self.spec(record=record)
             opcode = self.opcode(record=record)
             mask = self.mask(record=record)
-            yield f"{lindent}{'spec':{rindent}}{spec}"
-            yield f"{lindent}{'binary':{rindent}}{binary[0:8]} [0:8]"
-            yield f"{lindent}{'      ':{rindent}}{binary[8:16]} [8:16]"
-            yield f"{lindent}{'      ':{rindent}}{binary[16:24]} [16:24]"
-            yield f"{lindent}{'      ':{rindent}}{binary[24:32]} [24:32]"
-            yield f"{lindent}{'opcode':{rindent}}{opcode}"
-            yield f"{lindent}{'mask':{rindent}}{mask}"
+            yield f"{indent}spec"
+            yield f"{indent}{indent}{spec}"
+            yield f"{indent}binary"
+            yield f"{indent}{indent}[0:8]   {binary[0:8]}"
+            yield f"{indent}{indent}[8:16]  {binary[8:16]}"
+            yield f"{indent}{indent}[16:24] {binary[16:24]}"
+            yield f"{indent}{indent}[24:32] {binary[24:32]}"
+            yield f"{indent}opcode"
+            yield f"{indent}{indent}{opcode}"
+            yield f"{indent}mask"
+            yield f"{indent}{indent}{mask}"
             for operand in record.operands:
                 name = operand.name
-                value = operand.disassemble(value=self,
+                yield f"{indent}{name}"
+                parts = operand.disassemble(value=self,
                     record=record, verbose=True)
-                yield f"{lindent}{name:{rindent}}{value}"
+                for part in parts:
+                    yield f"{indent}{indent}{part}"
+            yield ""
 
 
 class PrefixedInstruction(Instruction):
