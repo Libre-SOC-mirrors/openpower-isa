@@ -27,6 +27,12 @@ for insn in db:
     insns[str(insn.section.path)].append(insn)
     print (insn)
 
+def maxme(num, s):
+    return s.ljust(num)
+
+def binmaxed(num, v):
+    return format(v, "0%db" % num)
+
 # create one table
 def do_table(fname, insns, section):
     insns = insns[fname]
@@ -50,6 +56,7 @@ def do_table(fname, insns, section):
             print ("op", insn.name, op)
         opcode_per_insn[insn.name] = opcode
 
+    maxnamelen = 0
     for i in range(1<<bitlen):
         # calculate row, column
         lower = i & lowermask
@@ -75,7 +82,31 @@ def do_table(fname, insns, section):
                             (lower, upper, str(table_entries[lower][upper]),
                              insn.name))
                     table_entries[lower][upper] = insn.name
+                    maxnamelen = max(maxnamelen, len(insn.name))
                     continue
+
+    print (table_entries)
+    # now got the table: print it out
+
+    table = []
+    line = [" "*half]
+    for j in range(1<<(half)):
+        hdr = binmaxed(half, j)
+        line.append(maxme(maxnamelen, hdr))
+    line.append(" "*half)
+    table.append("|" + "|".join(line) + "|")
+    line = ["-"*half] + ["-"*maxnamelen] * (1<<(bitlen-half)) + ["-"*half]
+    table.append("|" + "|".join(line) + "|")
+
+    for i in range(1<<(bitlen-half)):
+        hdr = binmaxed(half, i)
+        line = [hdr]
+        for j in range(1<<(half)):
+            line.append(maxme(maxnamelen, table_entries[i][j] or " "))
+        line.append(hdr)
+        table.append("|" + "|".join(line) + "|")
+
+    print ("\n".join(table))
 
 do_table('minor_30.csv', insns, sections)
 
