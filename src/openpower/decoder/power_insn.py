@@ -436,21 +436,39 @@ class Operands:
 
     @_dataclasses.dataclass(eq=True, frozen=True)
     class DynamicOperandIFormLI(DynamicOperand):
+        @property
+        def name(self):
+            return "LI"
+
+        @name.setter
+        def name(self, _):
+            pass
+
         def disassemble(self, value, record, verbose=False):
             span = record.fields["LI"]
             value = value[span]
             if verbose:
-                return f"{int(value):0{value.bits}b}{{00}} {span}"
+                hints = "(target_addr=EXTS(LI || 0b00)))"
+                return f"{int(value):0{value.bits}b} {span} {hints}"
             else:
                 return hex(int(_selectconcat(value,
                     _SelectableInt(value=0b00, bits=2))))
 
     class DynamicOperandBFormBD(DynamicOperand):
+        @property
+        def name(self):
+            return "BD"
+
+        @name.setter
+        def name(self, _):
+            pass
+
         def disassemble(self, value, record, verbose=False):
             span = record.fields["BD"]
             value = value[span]
             if verbose:
-                return f"{int(value):0{value.bits}b}{{00}} {span}"
+                hints = "(target_addr=EXTS(BD || 0b00))"
+                return f"{int(value):0{value.bits}b} {span} {hints}"
             else:
                 return hex(int(_selectconcat(value,
                     _SelectableInt(value=0b00, bits=2))))
@@ -747,18 +765,19 @@ class WordInstruction(Instruction):
         yield f"{blob}    {record.name}{operands}"
 
         if verbose:
-            indent = (" " * 4)
+            lindent = (" " * 4)
+            rindent = (len(blob) - len(lindent))
             spec = self.spec(record=record)
             opcode = self.opcode(record=record)
             mask = self.mask(record=record)
-            yield f"{indent}{'spec':11}{spec}"
-            yield f"{indent}{'opcode':11}{opcode}"
-            yield f"{indent}{'mask':11}{mask}"
+            yield f"{lindent}{'spec':{rindent}}{spec}"
+            yield f"{lindent}{'opcode':{rindent}}{opcode}"
+            yield f"{lindent}{'mask':{rindent}}{mask}"
             for operand in record.operands:
                 name = operand.name
                 value = operand.disassemble(value=self,
                     record=record, verbose=True)
-                yield f"{indent}{name:11}{value}"
+                yield f"{lindent}{name:{rindent}}{value}"
 
 
 class PrefixedInstruction(Instruction):
