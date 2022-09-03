@@ -96,7 +96,7 @@ def do_table(fname, insns, section, divpoint):
         line.append(maxme(maxnamelen, hdr))
     line.append(" "*half)
     table.append("|" + "|".join(line) + "|")
-    line = ["-"*half] + ["-"*maxnamelen] * (1<<(bitlen-half)) + ["-"*half]
+    line = ["-"*half] + ["-"*maxnamelen] * (1<<(half)) + ["-"*half]
     table.append("|" + "|".join(line) + "|")
 
     for i in range(1<<(bitlen-half)):
