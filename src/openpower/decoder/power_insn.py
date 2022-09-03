@@ -1081,6 +1081,23 @@ class SVP64Instruction(PrefixedInstruction):
 
     prefix: Prefix
 
+    @property
+    def binary(self):
+        bits = []
+        for idx in range(64):
+            bit = int(self[idx])
+            bits.append(bit)
+        return "".join(map(str, bits))
+
+    def spec(self, record):
+        return f"sv.{self.suffix.spec(record=record)}"
+
+    def opcode(self, record):
+        return self.suffix.opcode(record=record)
+
+    def mask(self, record):
+        return self.suffix.mask(record=record)
+
     def disassemble(self, db, byteorder="little", verbose=False):
         integer_prefix = int(self.prefix)
         blob_prefix = integer_prefix.to_bytes(length=4, byteorder=byteorder)
@@ -1176,6 +1193,36 @@ class SVP64Instruction(PrefixedInstruction):
 
         yield f"{blob_prefix}    sv.{record.name}"
         yield f"{blob_suffix}"
+
+        if verbose:
+            indent = (" " * 4)
+            binary = self.binary
+            spec = self.spec(record=record)
+            opcode = self.opcode(record=record)
+            mask = self.mask(record=record)
+            yield f"{indent}spec"
+            yield f"{indent}{indent}{spec}"
+            yield f"{indent}binary"
+            yield f"{indent}{indent}[0:8]   {binary[0:8]}"
+            yield f"{indent}{indent}[8:16]  {binary[8:16]}"
+            yield f"{indent}{indent}[16:24] {binary[16:24]}"
+            yield f"{indent}{indent}[24:32] {binary[24:32]}"
+            yield f"{indent}{indent}[32:40] {binary[32:40]}"
+            yield f"{indent}{indent}[40:48] {binary[40:48]}"
+            yield f"{indent}{indent}[48:56] {binary[48:56]}"
+            yield f"{indent}{indent}[56:64] {binary[56:64]}"
+            yield f"{indent}opcode"
+            yield f"{indent}{indent}{opcode}"
+            yield f"{indent}mask"
+            yield f"{indent}{indent}{mask}"
+            for operand in record.operands:
+                name = operand.name
+                yield f"{indent}{name}"
+                parts = operand.disassemble(value=self,
+                    record=record, verbose=True)
+                for part in parts:
+                    yield f"{indent}{indent}{part}"
+            yield ""
 
 
 def parse(stream, factory):
