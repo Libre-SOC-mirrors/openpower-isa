@@ -108,5 +108,5 @@ def do_table(fname, insns, section, divpoint):
 
     print ("\n".join(table))
 
-do_table('minor_30.csv', insns, sections, divpoint=3)
+do_table('minor_30.csv', insns, sections, divpoint=2)
 
