@@ -753,6 +753,14 @@ class WordInstruction(Instruction):
     def integer(cls, value, byteorder="little"):
         return super().integer(bits=32, value=value, byteorder=byteorder)
 
+    @property
+    def binary(self):
+        bits = []
+        for idx in range(32):
+            bit = int(self[idx])
+            bits.append(bit)
+        return "".join(map(str, bits))
+
     def spec(self, record):
         dynamic_operands = []
         for operand in record.operands.dynamic:
@@ -799,10 +807,15 @@ class WordInstruction(Instruction):
         if verbose:
             lindent = (" " * 4)
             rindent = (len(blob) - len(lindent))
+            binary = self.binary
             spec = self.spec(record=record)
             opcode = self.opcode(record=record)
             mask = self.mask(record=record)
             yield f"{lindent}{'spec':{rindent}}{spec}"
+            yield f"{lindent}{'binary':{rindent}}{binary[0:8]} [0:8]"
+            yield f"{lindent}{'      ':{rindent}}{binary[8:16]} [8:16]"
+            yield f"{lindent}{'      ':{rindent}}{binary[16:24]} [16:24]"
+            yield f"{lindent}{'      ':{rindent}}{binary[24:32]} [24:32]"
             yield f"{lindent}{'opcode':{rindent}}{opcode}"
             yield f"{lindent}{'mask':{rindent}}{mask}"
             for operand in record.operands:
