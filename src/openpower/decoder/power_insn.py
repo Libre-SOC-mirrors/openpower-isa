@@ -809,106 +809,104 @@ class NormalMode(Mode):
     prrc0: prrc0
 
 
-class LDSTMode(Mode):
-    class imm(Mode):
-        class normal(Mode):
-            """normal mode"""
-            zz: Mode[3]
-            els: Mode[4]
-            dz: Mode[3]
-            sz: Mode[3]
+class LDSTImmMode(Mode):
+    class normal(Mode):
+        """normal mode"""
+        zz: Mode[3]
+        els: Mode[4]
+        dz: Mode[3]
+        sz: Mode[3]
 
-        class spu(Mode):
-            """Structured Pack/Unpack"""
-            zz: Mode[3]
-            els: Mode[4]
-            dz: Mode[3]
-            sz: Mode[3]
+    class spu(Mode):
+        """Structured Pack/Unpack"""
+        zz: Mode[3]
+        els: Mode[4]
+        dz: Mode[3]
+        sz: Mode[3]
 
-        class ffrc1(Mode):
-            """Rc=1: ffirst CR sel"""
-            inv: Mode[2]
-            CRbit: Mode[3, 4]
+    class ffrc1(Mode):
+        """Rc=1: ffirst CR sel"""
+        inv: Mode[2]
+        CRbit: Mode[3, 4]
 
-        class ffrc0(Mode):
-            """Rc=0: ffirst z/nonz"""
-            inv: Mode[2]
-            els: Mode[3]
-            RC1: Mode[4]
+    class ffrc0(Mode):
+        """Rc=0: ffirst z/nonz"""
+        inv: Mode[2]
+        els: Mode[3]
+        RC1: Mode[4]
 
-        class sat(Mode):
-            """sat mode: N=0/1 u/s"""
-            N: Mode[2]
-            zz: Mode[3]
-            els: Mode[4]
-            dz: Mode[3]
-            sz: Mode[3]
+    class sat(Mode):
+        """sat mode: N=0/1 u/s"""
+        N: Mode[2]
+        zz: Mode[3]
+        els: Mode[4]
+        dz: Mode[3]
+        sz: Mode[3]
 
-        class prrc1(Mode):
-            """Rc=1: pred-result CR sel"""
-            inv: Mode[2]
-            CRbit: Mode[3, 4]
+    class prrc1(Mode):
+        """Rc=1: pred-result CR sel"""
+        inv: Mode[2]
+        CRbit: Mode[3, 4]
 
-        class prrc0(Mode):
-            """Rc=0: pred-result z/nonz"""
-            inv: Mode[2]
-            els: Mode[3]
-            RC1: Mode[4]
+    class prrc0(Mode):
+        """Rc=0: pred-result z/nonz"""
+        inv: Mode[2]
+        els: Mode[3]
+        RC1: Mode[4]
 
-        normal: normal
-        spu: spu
-        ffrc1: ffrc1
-        ffrc0: ffrc0
-        sat: sat
-        prrc1: prrc1
-        prrc0: prrc0
+    normal: normal
+    spu: spu
+    ffrc1: ffrc1
+    ffrc0: ffrc0
+    sat: sat
+    prrc1: prrc1
+    prrc0: prrc0
 
-    class idx(Mode):
-        class normal(Mode):
-            """normal mode"""
-            SEA: Mode[2]
-            sz: Mode[3]
-            dz: Mode[3]
 
-        class stride(Mode):
-            """strided (scalar only source)"""
-            SEA: Mode[2]
-            dz: Mode[3]
-            sz: Mode[4]
+class LDSTIdxMode(Mode):
+    class normal(Mode):
+        """normal mode"""
+        SEA: Mode[2]
+        sz: Mode[3]
+        dz: Mode[3]
 
-        class sat(Mode):
-            """sat mode: N=0/1 u/s"""
-            N: Mode[2]
-            dz: Mode[3]
-            sz: Mode[4]
+    class stride(Mode):
+        """strided (scalar only source)"""
+        SEA: Mode[2]
+        dz: Mode[3]
+        sz: Mode[4]
 
-        class prrc1(Mode):
-            """Rc=1: pred-result CR sel"""
-            inv: Mode[2]
-            CRbit: Mode[3, 4]
+    class sat(Mode):
+        """sat mode: N=0/1 u/s"""
+        N: Mode[2]
+        dz: Mode[3]
+        sz: Mode[4]
 
-        class prrc0(Mode):
-            """Rc=0: pred-result z/nonz"""
-            inv: Mode[2]
-            zz: Mode[3]
-            RC1: Mode[4]
-            dz: Mode[3]
-            sz: Mode[3]
+    class prrc1(Mode):
+        """Rc=1: pred-result CR sel"""
+        inv: Mode[2]
+        CRbit: Mode[3, 4]
 
-        normal: normal
-        stride: stride
-        sat: sat
-        prrc1: prrc1
-        prrc0: prrc0
+    class prrc0(Mode):
+        """Rc=0: pred-result z/nonz"""
+        inv: Mode[2]
+        zz: Mode[3]
+        RC1: Mode[4]
+        dz: Mode[3]
+        sz: Mode[3]
 
-    imm: imm
-    idx: idx
+    normal: normal
+    stride: stride
+    sat: sat
+    prrc1: prrc1
+    prrc0: prrc0
 
 
 class RM(_Mapping):
     class Mode(Mode):
         normal: NormalMode
-        ldst: LDSTMode
+        ldst_imm: LDSTImmMode
+        ldst_idx: LDSTIdxMode
 
     _: _Field = range(24)
     mmode: _Field = (0,)
