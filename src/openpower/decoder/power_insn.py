@@ -200,7 +200,7 @@ class PPCRecord:
     cry_in: _CryIn = _CryIn.ZERO
     ldst_len: _LDSTLen = _LDSTLen.NONE
     upd: _LDSTMode = _LDSTMode.NONE
-    rc: _RCOE = _RCOE.NONE
+    Rc: _RCOE = _RCOE.NONE
     form: _Form = _Form.NONE
     conditions: str = ""
     unofficial: bool = False
@@ -212,6 +212,7 @@ class PPCRecord:
         "CR out": "cr_out",
         "cry in": "cry_in",
         "ldst len": "ldst_len",
+        "rc": "Rc",
         "CONDITIONS": "conditions",
     }
 
@@ -1072,7 +1073,7 @@ class PPCDatabase:
             if not key.endswith("."):
                 return False
 
-            if not record.rc is _RCOE.RC:
+            if not record.Rc is _RCOE.RC:
                 return False
 
             return exact_match(key[:-1], record)
