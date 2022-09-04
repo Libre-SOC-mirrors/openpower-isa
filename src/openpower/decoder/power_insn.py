@@ -1219,10 +1219,37 @@ class SVP64Instruction(PrefixedInstruction):
                 else:
                     mode = mode.prrc0
 
-        if type(mode) is Mode:
-            raise NotImplementedError
+        modes = {
+            NormalMode.simple: "normal: simple",
+            NormalMode.smr: "normal: smr",
+            NormalMode.pmr: "normal: pmr",
+            NormalMode.svmr: "normal: svmr",
+            NormalMode.pu: "normal: pu",
+            NormalMode.ffrc1: "normal: ffrc1",
+            NormalMode.ffrc0: "normal: ffrc0",
+            NormalMode.sat: "normal: sat",
+            NormalMode.satx: "normal: satx",
+            NormalMode.satpu: "normal: satpu",
+            NormalMode.prrc1: "normal: prrc1",
+            NormalMode.prrc0: "normal: prrc0",
+            LDSTImmMode.simple: "ld/st imm: simple",
+            LDSTImmMode.spu: "ld/st imm: spu",
+            LDSTImmMode.ffrc1: "ld/st imm: ffrc1",
+            LDSTImmMode.ffrc0: "ld/st imm: ffrc0",
+            LDSTImmMode.sat: "ld/st imm: sat",
+            LDSTImmMode.prrc1: "ld/st imm: prrc1",
+            LDSTImmMode.prrc0: "ld/st imm: prrc0",
+            LDSTIdxMode.simple: "ld/st idx simple",
+            LDSTIdxMode.stride: "ld/st idx stride",
+            LDSTIdxMode.sat: "ld/st idx sat",
+            LDSTIdxMode.prrc1: "ld/st idx prrc1",
+            LDSTIdxMode.prrc0: "ld/st idx prrc0",
+        }
+        for (cls, desc) in modes.items():
+            if isinstance(mode, cls):
+                return (mode, desc)
 
-        return mode
+        raise NotImplementedError
 
     def disassemble(self, db, byteorder="little", verbose=False):
         integer_prefix = int(self.prefix)
@@ -1241,6 +1268,8 @@ class SVP64Instruction(PrefixedInstruction):
 
         yield f"{blob_prefix}    sv.{record.name}"
         yield f"{blob_suffix}"
+
+        (mode, mode_desc) = self.mode(db=db)
 
         if verbose:
             indent = (" " * 4)
@@ -1270,6 +1299,9 @@ class SVP64Instruction(PrefixedInstruction):
                     record=record, verbose=True)
                 for part in parts:
                     yield f"{indent}{indent}{part}"
+
+            yield f"{indent}mode"
+            yield f"{indent}{indent}{mode_desc}"
             yield ""
 
 
