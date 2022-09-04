@@ -1272,6 +1272,7 @@ class PowerDecode2(PowerDecodeSubset):
 
             # get SVSTATE srcstep (TODO: elwidth etc.) needed below
             vl = Signal.like(self.state.svstate.vl)
+            maxvl = Signal.like(self.state.svstate.maxvl)
             subvl = Signal.like(self.rm_dec.rm_in.subvl)
             srcstep = Signal.like(self.state.svstate.srcstep)
             dststep = Signal.like(self.state.svstate.dststep)
@@ -1318,7 +1319,7 @@ class PowerDecode2(PowerDecodeSubset):
                     with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
                         with m.If(~self.remap_active[i]):
                             with m.If(svdec.isvec):
-                                comb += offs.eq(vl)  # VL for Vectors
+                                comb += offs.eq(maxvl)  # MAXVL for Vectors
                 # detect if Vectorised: add srcstep/dststep if yes.
                 # to_reg is 7-bits, outs get dststep added, ins get srcstep
                 with m.If(svdec.isvec):
