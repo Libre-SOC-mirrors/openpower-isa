@@ -227,7 +227,8 @@ class PPCRecord:
                 flags.add(flag)
         record["flags"] = PPCRecord.Flags(flags)
 
-        return dataclass(cls, record, keymap=PPCRecord.__KEYMAP, typemap=typemap)
+        return dataclass(cls, record, keymap=PPCRecord.__KEYMAP,
+                         typemap=typemap)
 
     @cached_property
     def names(self):
@@ -258,7 +259,8 @@ class PPCMultiRecord(tuple):
                 value |= (vstate << bit)
                 mask |= (mstate << bit)
 
-            return _dataclasses.replace(lhs, opcode=Opcode(value=value, mask=mask))
+            return _dataclasses.replace(lhs,
+                                        opcode=Opcode(value=value, mask=mask))
 
         return _functools.reduce(merge, self)
 
@@ -335,7 +337,8 @@ class SVP64Record:
             if value == "0":
                 record[key] = "NONE"
 
-        record["extra"] = cls.ExtraMap(record.pop(f"{index}") for index in range(0, 4))
+        record["extra"] = cls.ExtraMap(record.pop(f"{index}") \
+                          for index in range(0, 4))
 
         return dataclass(cls, record, keymap=cls.__KEYMAP)
 
@@ -1252,7 +1255,8 @@ class SVP64Instruction(PrefixedInstruction):
 def parse(stream, factory):
     lines = filter(lambda line: not line.strip().startswith("#"), stream)
     entries = _csv.DictReader(lines)
-    entries = filter(lambda entry: "TODO" not in frozenset(entry.values()), entries)
+    entries = filter(lambda entry: "TODO" \
+                     not in frozenset(entry.values()), entries)
     return tuple(map(factory, entries))
 
 
@@ -1311,7 +1315,8 @@ class PPCDatabase:
                     section.Mode.INTEGER: IntegerOpcode,
                     section.Mode.PATTERN: PatternOpcode,
                 }[section.mode]
-                factory = _functools.partial(PPCRecord.CSV, opcode_cls=opcode_cls)
+                factory = _functools.partial(PPCRecord.CSV,
+                                             opcode_cls=opcode_cls)
                 with open(path, "r", encoding="UTF-8") as stream:
                     for insn in parse(stream, factory):
                         records[section][insn.comment].add(insn)
