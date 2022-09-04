@@ -552,20 +552,27 @@ class Operands:
             if "=" in operand:
                 (name, value) = operand.split("=")
                 operand = static_cls(name=name, value=int(value))
+                operands.append(operand)
             else:
-                if insn in branches and operand in branches[insn]:
-                    dynamic_cls = branches[insn][operand]
+                if operand.endswith(")"):
+                    operand = operand.replace("(", " ").replace(")", "")
+                    all_operands = operand.split(" ")
+                else:
+                    all_operands = [operand]
 
-                if operand in _RegType.__members__:
-                    regtype = _RegType[operand]
-                    if regtype is _RegType.GPR:
-                        dynamic_cls = DynamicOperandGPR
-                    elif regtype is _RegType.FPR:
-                        dynamic_cls = DynamicOperandFPR
+                for operand in all_operands:
+                    if insn in branches and operand in branches[insn]:
+                        dynamic_cls = branches[insn][operand]
 
-                operand = dynamic_cls(name=operand)
+                    if operand in _RegType.__members__:
+                        regtype = _RegType[operand]
+                        if regtype is _RegType.GPR:
+                            dynamic_cls = DynamicOperandGPR
+                        elif regtype is _RegType.FPR:
+                            dynamic_cls = DynamicOperandFPR
 
-            operands.append(operand)
+                    operand = dynamic_cls(name=operand)
+                    operands.append(operand)
 
         self.__operands = operands
 
