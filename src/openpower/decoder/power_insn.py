@@ -436,117 +436,118 @@ class Fields:
         return self.__mapping.get(key, None)
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Operand:
+    name: str
+
+    def disassemble(self, value, record, verbose=False):
+        raise NotImplementedError
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperand(Operand):
+    def disassemble(self, value, record, verbose=False):
+        span = record.fields[self.name]
+        value = value[span]
+        if verbose:
+            yield f"{int(value):0{value.bits}b}"
+            yield repr(span)
+        else:
+            yield str(int(value))
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class StaticOperand(Operand):
+    value: int
+
+    def disassemble(self, value, record, verbose=False):
+        span = record.fields[self.name]
+        value = value[span]
+        if verbose:
+            yield f"{int(value):0{value.bits}b}"
+            yield repr(span)
+        else:
+            yield str(int(value))
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperandTargetAddrLI(DynamicOperand):
+    @property
+    def name(self):
+        return "LI"
+
+    @name.setter
+    def name(self, _):
+        pass
+
+    def disassemble(self, value, record, verbose=False):
+        span = record.fields["LI"]
+        value = value[span]
+        if verbose:
+            yield f"{int(value):0{value.bits}b}"
+            yield repr(span)
+            yield "target_addr = EXTS(LI || 0b00))"
+        else:
+            yield hex(int(_selectconcat(value,
+                _SelectableInt(value=0b00, bits=2))))
+
+class DynamicOperandTargetAddrBD(DynamicOperand):
+    @property
+    def name(self):
+        return "BD"
+
+    @name.setter
+    def name(self, _):
+        pass
+
+    def disassemble(self, value, record, verbose=False):
+        span = record.fields["BD"]
+        value = value[span]
+        if verbose:
+            yield f"{int(value):0{value.bits}b}"
+            yield repr(span)
+            yield "target_addr = EXTS(BD || 0b00))"
+        else:
+            yield hex(int(_selectconcat(value,
+                _SelectableInt(value=0b00, bits=2))))
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperandGPR(DynamicOperand):
+    def disassemble(self, value, record, verbose=False):
+        span = record.fields[self.name]
+        value = value[span]
+        if verbose:
+            yield f"{int(value):0{value.bits}b}"
+            yield repr(span)
+        else:
+            yield f"r{str(int(value))}"
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperandFPR(DynamicOperand):
+    def disassemble(self, value, record, verbose=False):
+        span = record.fields[self.name]
+        value = value[span]
+        if verbose:
+            yield f"{int(value):0{value.bits}b}"
+            yield repr(span)
+        else:
+            yield f"f{str(int(value))}"
+
+
 class Operands:
-    @_dataclasses.dataclass(eq=True, frozen=True)
-    class Operand:
-        name: str
-
-        def disassemble(self, value, record, verbose=False):
-            raise NotImplementedError
-
-    @_dataclasses.dataclass(eq=True, frozen=True)
-    class DynamicOperand(Operand):
-        def disassemble(self, value, record, verbose=False):
-            span = record.fields[self.name]
-            value = value[span]
-            if verbose:
-                yield f"{int(value):0{value.bits}b}"
-                yield repr(span)
-            else:
-                yield str(int(value))
-
-    @_dataclasses.dataclass(eq=True, frozen=True)
-    class StaticOperand(Operand):
-        value: int
-
-        def disassemble(self, value, record, verbose=False):
-            span = record.fields[self.name]
-            value = value[span]
-            if verbose:
-                yield f"{int(value):0{value.bits}b}"
-                yield repr(span)
-            else:
-                yield str(int(value))
-
-    @_dataclasses.dataclass(eq=True, frozen=True)
-    class DynamicOperandTargetAddrLI(DynamicOperand):
-        @property
-        def name(self):
-            return "LI"
-
-        @name.setter
-        def name(self, _):
-            pass
-
-        def disassemble(self, value, record, verbose=False):
-            span = record.fields["LI"]
-            value = value[span]
-            if verbose:
-                yield f"{int(value):0{value.bits}b}"
-                yield repr(span)
-                yield "target_addr = EXTS(LI || 0b00))"
-            else:
-                yield hex(int(_selectconcat(value,
-                    _SelectableInt(value=0b00, bits=2))))
-
-    class DynamicOperandTargetAddrBD(DynamicOperand):
-        @property
-        def name(self):
-            return "BD"
-
-        @name.setter
-        def name(self, _):
-            pass
-
-        def disassemble(self, value, record, verbose=False):
-            span = record.fields["BD"]
-            value = value[span]
-            if verbose:
-                yield f"{int(value):0{value.bits}b}"
-                yield repr(span)
-                yield "target_addr = EXTS(BD || 0b00))"
-            else:
-                yield hex(int(_selectconcat(value,
-                    _SelectableInt(value=0b00, bits=2))))
-
-    @_dataclasses.dataclass(eq=True, frozen=True)
-    class DynamicOperandGPR(DynamicOperand):
-        def disassemble(self, value, record, verbose=False):
-            span = record.fields[self.name]
-            value = value[span]
-            if verbose:
-                yield f"{int(value):0{value.bits}b}"
-                yield repr(span)
-            else:
-                yield f"r{str(int(value))}"
-
-    @_dataclasses.dataclass(eq=True, frozen=True)
-    class DynamicOperandFPR(DynamicOperand):
-        def disassemble(self, value, record, verbose=False):
-            span = record.fields[self.name]
-            value = value[span]
-            if verbose:
-                yield f"{int(value):0{value.bits}b}"
-                yield repr(span)
-            else:
-                yield f"f{str(int(value))}"
-
     def __init__(self, insn, iterable):
         branches = {
-            "b": {"target_addr": self.__class__.DynamicOperandTargetAddrLI},
-            "ba": {"target_addr": self.__class__.DynamicOperandTargetAddrLI},
-            "bl": {"target_addr": self.__class__.DynamicOperandTargetAddrLI},
-            "bla": {"target_addr": self.__class__.DynamicOperandTargetAddrLI},
-            "bc": {"target_addr": self.__class__.DynamicOperandTargetAddrBD},
-            "bca": {"target_addr": self.__class__.DynamicOperandTargetAddrBD},
-            "bcl": {"target_addr": self.__class__.DynamicOperandTargetAddrBD},
-            "bcla": {"target_addr": self.__class__.DynamicOperandTargetAddrBD},
+            "b": {"target_addr": DynamicOperandTargetAddrLI},
+            "ba": {"target_addr": DynamicOperandTargetAddrLI},
+            "bl": {"target_addr": DynamicOperandTargetAddrLI},
+            "bla": {"target_addr": DynamicOperandTargetAddrLI},
+            "bc": {"target_addr": DynamicOperandTargetAddrBD},
+            "bca": {"target_addr": DynamicOperandTargetAddrBD},
+            "bcl": {"target_addr": DynamicOperandTargetAddrBD},
+            "bcla": {"target_addr": DynamicOperandTargetAddrBD},
         }
 
         operands = []
         for operand in iterable:
-            dynamic_cls = self.__class__.DynamicOperand
-            static_cls = self.__class__.StaticOperand
+            dynamic_cls = DynamicOperand
+            static_cls = StaticOperand
 
             if "=" in operand:
                 (name, value) = operand.split("=")
@@ -558,9 +559,9 @@ class Operands:
                 if operand in _RegType.__members__:
                     regtype = _RegType[operand]
                     if regtype is _RegType.GPR:
-                        dynamic_cls = self.__class__.DynamicOperandGPR
+                        dynamic_cls = DynamicOperandGPR
                     elif regtype is _RegType.FPR:
-                        dynamic_cls = self.__class__.DynamicOperandFPR
+                        dynamic_cls = DynamicOperandFPR
 
                 operand = dynamic_cls(name=operand)
 
@@ -589,13 +590,13 @@ class Operands:
     @property
     def dynamic(self):
         for operand in self:
-            if isinstance(operand, self.__class__.DynamicOperand):
+            if isinstance(operand, DynamicOperand):
                 yield operand
 
     @property
     def static(self):
         for operand in self:
-            if isinstance(operand, self.__class__.StaticOperand):
+            if isinstance(operand, StaticOperand):
                 yield operand
 
 
