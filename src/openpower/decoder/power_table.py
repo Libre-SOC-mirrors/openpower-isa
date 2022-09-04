@@ -56,26 +56,30 @@ def do_table(fname, insns, section, divpoint):
             opcode_per_insn[insn.name] = []
         opcode_per_insn[insn.name] += opcodes
 
+    # along the way work out the maximum length of the instruction name
+    # that goes into the table.
     maxnamelen = 0
-    for i in range(1<<bitlen):
+
+    # for every possible XO value, work out the row and column as lower and
+    # upper halves, and if there is a opcode match put the instruction
+    # name into that XO table_entry
+
+    for XO in range(1<<bitlen):
         # calculate row, column
-        lower = i & lowermask
-        upper = (i>>half) & uppermask
-        print (i, bin(lower), bin(upper))
-        if upper not in table_entries:
+        lower = XO & lowermask
+        upper = (XO>>half) & uppermask
+        print ("search", XO, bin(XO), bin(lower), bin(upper))
+        if upper not in table_entries: # really should use defaultdict here
             table_entries[upper] = {}
         table_entries[upper][lower] = None
-        # create an XO
-        key = i
-        print ("search", i, hex(key))
-        # start hunting
+        # hunt through all instructions, check XO against value/mask
         for insn in insns:
             opcode = opcode_per_insn[insn.name]
             for op in opcode:
-                #print ("    search", i, hex(key), insn.name,
+                #print ("    search", XO, hex(key), insn.name,
                 #                       hex(op.value), hex(op.mask))
-                if ((op.value & op.mask) == (key & op.mask)):
-                    print ("    match", i, hex(key), insn.name)
+                if ((op.value & op.mask) == (XO & op.mask)):
+                    print ("    match", bin(XO), insn.name)
                     assert table_entries[upper][lower] is None, \
                             "entry %d %d should be empty "  \
                             "contains %s conflicting %s" % \
