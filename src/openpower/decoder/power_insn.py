@@ -770,6 +770,12 @@ class Instruction(_Mapping):
     def __hash__(self):
         return hash(int(self))
 
+    def record(self, db):
+        record = db[self]
+        if record is None:
+            raise KeyError(self)
+        return record
+
     def disassemble(self, db, byteorder="little", verbose=False):
         raise NotImplementedError
 
@@ -790,7 +796,9 @@ class WordInstruction(Instruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
-    def spec(self, record):
+    def spec(self, db):
+        record = self.record(db=db)
+
         immediate = ""
         dynamic_operands = []
         for operand in record.operands.dynamic:
@@ -815,10 +823,12 @@ class WordInstruction(Instruction):
 
         return f"{record.name}{operands}"
 
-    def opcode(self, record):
+    def opcode(self, db):
+        record = self.record(db=db)
         return f"0x{record.opcode.value:08x}"
 
-    def mask(self, record):
+    def mask(self, db):
+        record = self.record(db=db)
         return f"0x{record.opcode.mask:08x}"
 
     def disassemble(self, db, byteorder="little", verbose=False):
@@ -826,7 +836,7 @@ class WordInstruction(Instruction):
         blob = integer.to_bytes(length=4, byteorder=byteorder)
         blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
 
-        record = db[self]
+        record = self.record(db=db)
         if record is None:
             yield f"{blob}    .long 0x{integer:08x}"
             return
@@ -847,9 +857,9 @@ class WordInstruction(Instruction):
         if verbose:
             indent = (" " * 4)
             binary = self.binary
-            spec = self.spec(record=record)
-            opcode = self.opcode(record=record)
-            mask = self.mask(record=record)
+            spec = self.spec(db=db)
+            opcode = self.opcode(db=db)
+            mask = self.mask(db=db)
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
             yield f"{indent}binary"
@@ -1121,14 +1131,14 @@ class SVP64Instruction(PrefixedInstruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
-    def spec(self, record):
-        return f"sv.{self.suffix.spec(record=record)}"
+    def spec(self, db):
+        return f"sv.{self.suffix.spec(db=db)}"
 
-    def opcode(self, record):
-        return self.suffix.opcode(record=record)
+    def opcode(self, db):
+        return self.suffix.opcode(db=db)
 
-    def mask(self, record):
-        return self.suffix.mask(record=record)
+    def mask(self, db):
+        return self.suffix.mask(db=db)
 
     def disassemble(self, db, byteorder="little", verbose=False):
         integer_prefix = int(self.prefix)
@@ -1139,7 +1149,7 @@ class SVP64Instruction(PrefixedInstruction):
         blob_suffix = integer_suffix.to_bytes(length=4, byteorder=byteorder)
         blob_suffix = " ".join(map(lambda byte: f"{byte:02x}", blob_suffix))
 
-        record = db[self.suffix]
+        record = self.record(db=db)
         if record is None or record.svp64 is None:
             yield f"{blob_prefix}    .long 0x{int(self.prefix):08x}"
             yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
@@ -1229,9 +1239,9 @@ class SVP64Instruction(PrefixedInstruction):
         if verbose:
             indent = (" " * 4)
             binary = self.binary
-            spec = self.spec(record=record)
-            opcode = self.opcode(record=record)
-            mask = self.mask(record=record)
+            spec = self.spec(db=db)
+            opcode = self.opcode(db=db)
+            mask = self.mask(db=db)
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
             yield f"{indent}binary"
