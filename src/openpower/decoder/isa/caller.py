@@ -14,7 +14,7 @@ related bugs:
 """
 
 import re
-from nmigen.sim import Settle
+from nmigen.sim import Settle, Delay
 from functools import wraps
 from copy import copy, deepcopy
 from openpower.decoder.orderedset import OrderedSet
@@ -1686,6 +1686,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         it is purely for skipping masked-out bits
         """
         # get SVSTATE VL (oh and print out some debug stuff)
+        # yield Delay(1e-10)  # make changes visible
         vl = self.svstate.vl
         subvl = yield self.dec2.rm_dec.rm_in.subvl
         srcstep = self.svstate.srcstep

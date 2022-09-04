@@ -1026,12 +1026,16 @@ class PowerDecodeSubset(Elaboratable):
             # likely with a sub-decoder.
             major = Signal(6)
             comb += major.eq(self.dec.opcode_in[26:32])
-            xo5 = Signal(1)  # 1 bit from Minor 59 XO field == 0b0XXXX
-            comb += xo5.eq(self.dec.opcode_in[5])
-            xo = Signal(5)  # 5 bits from Minor 59 fcfids == 0b01110
-            comb += xo.eq(self.dec.opcode_in[1:6])
-            comb += self.use_svp64_fft.eq((major == 59) & (xo5 == 0b0) &
-                                          (xo != 0b01110))
+            xo = Signal(10)
+            comb += xo.eq(self.dec.opcode_in[1:11])
+            comb += self.use_svp64_fft.eq((major == 59) & xo.matches(
+                '-----00100',  # ffmsubs
+                '-----00101',  # ffmadds
+                '-----00110',  # ffnmsubs
+                '-----00111',  # ffnmadds
+                '1000001100',  # ffadds
+                '-----11011',  # fdmadds
+            ))
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
