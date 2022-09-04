@@ -1380,8 +1380,11 @@ class PPCDatabase:
 
         for (section, records) in self.__db.items():
             for record in records:
-                if (exact_match(key, record) or
-                        Rc_match(key, record) or
+                if exact_match(key, record):
+                    return (section, record)
+
+            for record in records:
+                if (Rc_match(key, record) or
                         LK_match(key, record) or
                         AA_match(key, record)):
                     return (section, record)
