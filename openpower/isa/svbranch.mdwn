@@ -24,10 +24,10 @@
 
 B-Form
 
-* sv.bc BO,BI,BD (AA=0 LK=0)
-* sv.bca BO,BI,BD (AA=1 LK=0)
-* sv.bcl BO,BI,BD (AA=0 LK=1)
-* sv.bcla BO,BI,BD (AA=1 LK=1)
+* sv.bc BO,BI,target_addr (AA=0 LK=0)
+* sv.bca BO,BI,target_addr (AA=1 LK=0)
+* sv.bcl BO,BI,target_addr (AA=0 LK=1)
+* sv.bcla BO,BI,target_addr (AA=1 LK=1)
 
 Pseudo-code:
 
