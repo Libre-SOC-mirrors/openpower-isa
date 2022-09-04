@@ -81,9 +81,10 @@ def do_table(fname, insns, section, divpoint):
                 if ((op.value & op.mask) == (XO & op.mask)):
                     print ("    match", bin(XO), insn.name)
                     assert table_entries[upper][lower] is None, \
-                            "entry %d %d should be empty "  \
+                            "entry %d %d (XO %s) should be empty "  \
                             "contains %s conflicting %s" % \
-                            (lower, upper, str(table_entries[upper][lower]),
+                            (lower, upper, bin(XO),
+                             str(table_entries[upper][lower]),
                              insn.name)
                     table_entries[upper][lower] = insn.name
                     maxnamelen = max(maxnamelen, len(insn.name))
