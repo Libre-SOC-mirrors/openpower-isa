@@ -1426,7 +1426,7 @@ class Database:
 
         mdwndb = MarkdownDatabase()
         fieldsdb = FieldsDatabase()
-        ppcdb = PPCDatabase(root=root, mdwndb=mdwndb, fieldsdb=fieldsdb)
+        ppcdb = PPCDatabase(root=root, mdwndb=mdwndb)
         svp64db = SVP64Database(root=root, ppcdb=ppcdb)
 
         db = set()
