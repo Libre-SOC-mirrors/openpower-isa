@@ -1,6 +1,7 @@
 import collections
 from openpower.decoder.power_enums import find_wiki_dir 
 from openpower.decoder.power_insn import Database
+from openpower.util import log
 
 sections = {}
 insns = collections.defaultdict(list)
@@ -23,7 +24,7 @@ def do_table(fname, insns, section, divpoint):
     insns = insns[fname]
     section = sections[fname]
     start, end = section.bitsel.start, section.bitsel.end
-    print ("start-end", start, end)
+    log("start-end", start, end)
     bitlen = end-start+1
     half = divpoint
     lowermask = (1<<half)-1
@@ -36,7 +37,7 @@ def do_table(fname, insns, section, divpoint):
         for op in insn.ppc: # insn.ppc is a MultiPPCRecord which is a tuple
             opcodes.append(op.opcode)
         for op in opcodes:
-            print ("op", insn.name, op)
+            log("op", insn.name, op)
         if insn.name not in opcode_per_insn:
             opcode_per_insn[insn.name] = []
         opcode_per_insn[insn.name] += opcodes
@@ -53,7 +54,7 @@ def do_table(fname, insns, section, divpoint):
         # calculate row, column
         lower = XO & lowermask
         upper = (XO>>half) & uppermask
-        print ("search", XO, bin(XO), bin(lower), bin(upper))
+        log("search", XO, bin(XO), bin(lower), bin(upper))
         if upper not in table_entries: # really should use defaultdict here
             table_entries[upper] = {}
         table_entries[upper][lower] = None
@@ -61,10 +62,10 @@ def do_table(fname, insns, section, divpoint):
         for insn in insns:
             opcode = opcode_per_insn[insn.name]
             for op in opcode:
-                #print ("    search", XO, hex(key), insn.name,
+                #log("    search", XO, hex(key), insn.name,
                 #                       hex(op.value), hex(op.mask))
                 if ((op.value & op.mask) == (XO & op.mask)):
-                    print ("    match", bin(XO), insn.name)
+                    log("    match", bin(XO), insn.name)
                     assert table_entries[upper][lower] is None, \
                             "entry %d %d (XO %s) should be empty "  \
                             "contains %s conflicting %s" % \
@@ -75,7 +76,7 @@ def do_table(fname, insns, section, divpoint):
                     maxnamelen = max(maxnamelen, len(insn.name))
                     continue
 
-    print (table_entries)
+    log(table_entries)
     # now got the table: print it out
 
     # create the markdown header. first line: |   |00|01|10|11|   |
@@ -99,8 +100,7 @@ def do_table(fname, insns, section, divpoint):
         line.append(hdr)
         table.append("|" + "|".join(line) + "|")
 
-    print ("\n".join(table))
+    print("\n".join(table))
 
 do_table('minor_30.csv', insns, sections, divpoint=2)
 #do_table('minor_22.csv', insns, sections, divpoint=5)
-
