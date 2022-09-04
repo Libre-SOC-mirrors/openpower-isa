@@ -236,7 +236,7 @@ class PPCRecord:
         return frozenset(self.comment.split("=")[-1].split("/"))
 
 
-class PPCMultiRecord(tuple):
+class PPCMultiRecord(frozenset):
     @cached_property
     def unified(self):
         def merge(lhs, rhs):
