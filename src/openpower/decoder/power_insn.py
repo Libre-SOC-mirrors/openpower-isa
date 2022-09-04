@@ -469,7 +469,7 @@ class Operands:
                 yield str(int(value))
 
     @_dataclasses.dataclass(eq=True, frozen=True)
-    class DynamicOperandIFormLI(DynamicOperand):
+    class DynamicOperandTargetAddrLI(DynamicOperand):
         @property
         def name(self):
             return "LI"
@@ -489,7 +489,7 @@ class Operands:
                 yield hex(int(_selectconcat(value,
                     _SelectableInt(value=0b00, bits=2))))
 
-    class DynamicOperandBFormBD(DynamicOperand):
+    class DynamicOperandTargetAddrBD(DynamicOperand):
         @property
         def name(self):
             return "BD"
@@ -533,14 +533,14 @@ class Operands:
 
     def __init__(self, insn, iterable):
         branches = {
-            "b": {"LI": self.__class__.DynamicOperandIFormLI},
-            "ba": {"LI": self.__class__.DynamicOperandIFormLI},
-            "bl": {"LI": self.__class__.DynamicOperandIFormLI},
-            "bla": {"LI": self.__class__.DynamicOperandIFormLI},
-            "bc": {"BD": self.__class__.DynamicOperandBFormBD},
-            "bca": {"BD": self.__class__.DynamicOperandBFormBD},
-            "bcl": {"BD": self.__class__.DynamicOperandBFormBD},
-            "bcla": {"BD": self.__class__.DynamicOperandBFormBD},
+            "b": {"target_addr": self.__class__.DynamicOperandTargetAddrLI},
+            "ba": {"target_addr": self.__class__.DynamicOperandTargetAddrLI},
+            "bl": {"target_addr": self.__class__.DynamicOperandTargetAddrLI},
+            "bla": {"target_addr": self.__class__.DynamicOperandTargetAddrLI},
+            "bc": {"target_addr": self.__class__.DynamicOperandTargetAddrBD},
+            "bca": {"target_addr": self.__class__.DynamicOperandTargetAddrBD},
+            "bcl": {"target_addr": self.__class__.DynamicOperandTargetAddrBD},
+            "bcla": {"target_addr": self.__class__.DynamicOperandTargetAddrBD},
         }
 
         operands = []
