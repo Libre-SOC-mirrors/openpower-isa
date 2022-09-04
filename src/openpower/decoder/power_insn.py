@@ -1145,6 +1145,9 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
             return
 
+        yield f"{blob_prefix}    sv.{record.name}"
+        yield f"{blob_suffix}"
+
         Rc = False
         if record.operands["Rc"] is not None:
             Rc = bool(self[record.fields["Rc"]])
@@ -1222,9 +1225,6 @@ class SVP64Instruction(PrefixedInstruction):
 
         if type(mode) is Mode:
             raise NotImplementedError
-
-        yield f"{blob_prefix}    sv.{record.name}"
-        yield f"{blob_suffix}"
 
         if verbose:
             indent = (" " * 4)
