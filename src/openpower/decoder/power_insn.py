@@ -457,6 +457,11 @@ class DynamicOperand(Operand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
+class ImmediateOperand(DynamicOperand):
+    pass
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
 class StaticOperand(Operand):
     value: int
 
@@ -562,23 +567,25 @@ class Operands(tuple):
             else:
                 if operand.endswith(")"):
                     operand = operand.replace("(", " ").replace(")", "")
-                    all_operands = operand.split(" ")
+                    (immediate, _, operand) = operand.partition(" ")
                 else:
-                    all_operands = [operand]
+                    immediate = None
 
-                for operand in all_operands:
-                    if insn in branches and operand in branches[insn]:
-                        dynamic_cls = branches[insn][operand]
+                if immediate is not None:
+                    operands.append(ImmediateOperand(name=immediate))
 
-                    if operand in _RegType.__members__:
-                        regtype = _RegType[operand]
-                        if regtype is _RegType.GPR:
-                            dynamic_cls = DynamicOperandGPR
-                        elif regtype is _RegType.FPR:
-                            dynamic_cls = DynamicOperandFPR
+                if insn in branches and operand in branches[insn]:
+                    dynamic_cls = branches[insn][operand]
 
-                    operand = dynamic_cls(name=operand)
-                    operands.append(operand)
+                if operand in _RegType.__members__:
+                    regtype = _RegType[operand]
+                    if regtype is _RegType.GPR:
+                        dynamic_cls = DynamicOperandGPR
+                    elif regtype is _RegType.FPR:
+                        dynamic_cls = DynamicOperandFPR
+
+                operand = dynamic_cls(name=operand)
+                operands.append(operand)
 
         return super().__new__(cls, operands)
 
@@ -776,17 +783,28 @@ class WordInstruction(Instruction):
         return "".join(map(str, bits))
 
     def spec(self, record):
+        immediate = ""
         dynamic_operands = []
         for operand in record.operands.dynamic:
-            dynamic_operands.append(operand.name)
+            name = operand.name
+            if immediate:
+                name = f"{immediate}({name})"
+                immediate = ""
+            if isinstance(operand, ImmediateOperand):
+                immediate = operand.name
+            if not immediate:
+                dynamic_operands.append(name)
+
         static_operands = []
         for operand in record.operands.static:
             static_operands.append(f"{operand.name}={operand.value}")
+
         operands = ""
         if dynamic_operands:
             operands += f" {','.join(dynamic_operands)}"
         if static_operands:
             operands += f" ({' '.join(static_operands)})"
+
         return f"{record.name}{operands}"
 
     def opcode(self, record):
