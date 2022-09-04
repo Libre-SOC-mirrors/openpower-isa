@@ -92,6 +92,7 @@ def do_table(fname, insns, section, divpoint):
     print (table_entries)
     # now got the table: print it out
 
+    # create the markdown header. first line: |   |00|01|10|11|   |
     table = []
     line = [" "*6]
     for j in range(1<<(half)):
@@ -99,9 +100,11 @@ def do_table(fname, insns, section, divpoint):
         line.append(maxme(maxnamelen, hdr))
     line.append(" "*6)
     table.append("|" + "|".join(line) + "|")
+    # second line: |--|--|--|--|--|--|
     line = ["-"*6] + ["-"*maxnamelen] * (1<<(half)) + ["-"*6]
     table.append("|" + "|".join(line) + "|")
 
+    # now the rows, the row number goes into first and last column
     for i in range(1<<(bitlen-half)):
         hdr = binmaxed(6, i)
         line = [hdr]
