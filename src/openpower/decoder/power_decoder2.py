@@ -1279,6 +1279,7 @@ class PowerDecode2(PowerDecodeSubset):
             ssubstep = Signal.like(self.state.svstate.ssubstep)
             dsubstep = Signal.like(self.state.svstate.ssubstep)
             comb += vl.eq(self.state.svstate.vl)
+            comb += maxvl.eq(self.state.svstate.maxvl)
             comb += subvl.eq(self.rm_dec.rm_in.subvl)
             comb += srcstep.eq(self.state.svstate.srcstep)
             comb += dststep.eq(self.state.svstate.dststep)
