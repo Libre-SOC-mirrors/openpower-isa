@@ -795,7 +795,7 @@ class PowerDecodeSubset(Elaboratable):
         # amongst other things
         if svp64_en:
             conditions = {
-                          'SVP64FFT': self.use_svp64_fft,
+                          # XXX NO 'SVP64FFT': self.use_svp64_fft,
                           }
         else:
             conditions = None
@@ -1024,6 +1024,10 @@ class PowerDecodeSubset(Elaboratable):
             # exclude fcfids and others
             # XXX this is a REALLY bad hack, REALLY has to be done better.
             # likely with a sub-decoder.
+            # what this ultimately does is enable the 2nd implicit register
+            # (FRS) for SVP64-decoding.  all of these instructions are
+            # 3-in 2-out but there is not enough room either in the
+            # opcode *or* EXTRA2/3 to specify a 5th operand.
             major = Signal(6)
             comb += major.eq(self.dec.opcode_in[26:32])
             xo = Signal(10)
