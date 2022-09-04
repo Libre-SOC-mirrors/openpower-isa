@@ -25,7 +25,8 @@ for (name, section) in sections.items():
 db = Database(root)
 for insn in db:
     insns[str(insn.section.path)].append(insn)
-    print (insn)
+    if insn.name == 'rldimi':
+        print (insn)
 
 def maxme(num, s):
     return s.ljust(num)
@@ -47,17 +48,14 @@ def do_table(fname, insns, section, divpoint):
     # debug-print all opcodes first
     opcode_per_insn = {}
     for insn in insns:
-        #fields = []
-        #fields += [(insn.ppc.opcode.value, insn.ppc.bitsel)]
-        #opcode = FieldsOpcode(fields)
-        opcode = insn.ppc.opcode
-        if not isinstance(opcode, list):
-            opcode = [opcode]
-        for op in opcode:
+        opcodes = []
+        for op in insn.ppc: # insn.ppc is a MultiPPCRecord which is a tuple
+            opcodes.append(op.opcode)
+        for op in opcodes:
             print ("op", insn.name, op)
         if insn.name not in opcode_per_insn:
             opcode_per_insn[insn.name] = []
-        opcode_per_insn[insn.name] += opcode
+        opcode_per_insn[insn.name] += opcodes
 
     maxnamelen = 0
     for i in range(1<<bitlen):
