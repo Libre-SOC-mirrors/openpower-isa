@@ -25,8 +25,7 @@ for (name, section) in sections.items():
 db = Database(root)
 for insn in db:
     insns[str(insn.section.path)].append(insn)
-    if insn.name == 'rldimi':
-        print (insn)
+    print (insn)
 
 def maxme(num, s):
     return s.ljust(num)
@@ -77,11 +76,11 @@ def do_table(fname, insns, section, divpoint):
                 #                       hex(op.value), hex(op.mask))
                 if ((op.value & op.mask) == (key & op.mask)):
                     print ("    match", i, hex(key), insn.name)
-                    assert (table_entries[upper][lower] is None,
-                            "entry %d %d should be empty "
+                    assert table_entries[upper][lower] is None, \
+                            "entry %d %d should be empty "  \
                             "contains %s conflicting %s" % \
                             (lower, upper, str(table_entries[upper][lower]),
-                             insn.name))
+                             insn.name)
                     table_entries[upper][lower] = insn.name
                     maxnamelen = max(maxnamelen, len(insn.name))
                     continue
@@ -90,17 +89,17 @@ def do_table(fname, insns, section, divpoint):
     # now got the table: print it out
 
     table = []
-    line = [" "*half]
+    line = [" "*6]
     for j in range(1<<(half)):
         hdr = binmaxed(half, j)
         line.append(maxme(maxnamelen, hdr))
-    line.append(" "*half)
+    line.append(" "*6)
     table.append("|" + "|".join(line) + "|")
-    line = ["-"*half] + ["-"*maxnamelen] * (1<<(half)) + ["-"*half]
+    line = ["-"*6] + ["-"*maxnamelen] * (1<<(half)) + ["-"*6]
     table.append("|" + "|".join(line) + "|")
 
     for i in range(1<<(bitlen-half)):
-        hdr = binmaxed(half, i)
+        hdr = binmaxed(6, i)
         line = [hdr]
         for j in range(1<<(half)):
             line.append(maxme(maxnamelen, table_entries[i][j] or " "))
@@ -110,4 +109,5 @@ def do_table(fname, insns, section, divpoint):
     print ("\n".join(table))
 
 do_table('minor_30.csv', insns, sections, divpoint=2)
+#do_table('minor_22.csv', insns, sections, divpoint=5)
 
