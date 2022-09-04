@@ -443,6 +443,7 @@ class Operand:
     def disassemble(self, value, record, verbose=False):
         raise NotImplementedError
 
+
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
     def disassemble(self, value, record, verbose=False):
@@ -453,6 +454,7 @@ class DynamicOperand(Operand):
             yield repr(span)
         else:
             yield str(int(value))
+
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class StaticOperand(Operand):
@@ -466,6 +468,7 @@ class StaticOperand(Operand):
             yield repr(span)
         else:
             yield str(int(value))
+
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandTargetAddrLI(DynamicOperand):
@@ -488,6 +491,7 @@ class DynamicOperandTargetAddrLI(DynamicOperand):
             yield hex(int(_selectconcat(value,
                 _SelectableInt(value=0b00, bits=2))))
 
+
 class DynamicOperandTargetAddrBD(DynamicOperand):
     @property
     def name(self):
@@ -508,6 +512,7 @@ class DynamicOperandTargetAddrBD(DynamicOperand):
             yield hex(int(_selectconcat(value,
                 _SelectableInt(value=0b00, bits=2))))
 
+
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandGPR(DynamicOperand):
     def disassemble(self, value, record, verbose=False):
@@ -518,6 +523,7 @@ class DynamicOperandGPR(DynamicOperand):
             yield repr(span)
         else:
             yield f"r{str(int(value))}"
+
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandFPR(DynamicOperand):
@@ -531,8 +537,8 @@ class DynamicOperandFPR(DynamicOperand):
             yield f"f{str(int(value))}"
 
 
-class Operands:
-    def __init__(self, insn, iterable):
+class Operands(tuple):
+    def __new__(cls, insn, iterable):
         branches = {
             "b": {"target_addr": DynamicOperandTargetAddrLI},
             "ba": {"target_addr": DynamicOperandTargetAddrLI},
@@ -574,21 +580,13 @@ class Operands:
                     operand = dynamic_cls(name=operand)
                     operands.append(operand)
 
-        self.__operands = operands
-
-        return super().__init__()
-
-    def __repr__(self):
-        return self.__operands.__repr__()
-
-    def __iter__(self):
-        yield from self.__operands
+        return super().__new__(cls, operands)
 
     def __contains__(self, key):
         return self.__getitem__(key) is not None
 
     def __getitem__(self, key):
-        for operand in self.__operands:
+        for operand in self:
             if operand.name == key:
                 return operand
 
