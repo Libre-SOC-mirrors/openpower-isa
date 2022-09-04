@@ -982,6 +982,7 @@ class SVP64Asm:
         dst_zero = 0
         sv_mode = None
 
+        parallel = False
         mapreduce = False
         reverse_gear = False
         mapreduce_crm = False
@@ -1068,6 +1069,11 @@ class SVP64Asm:
                 assert sv_mode is None
                 sv_mode = 0b00
                 mapreduce = True
+            # parallel prefix mode
+            elif encmode == 'pp':
+                assert sv_mode is None
+                sv_mode = 0b00
+                parallel = True
             elif encmode == 'crm':  # CR on map-reduce
                 assert sv_mode is None
                 sv_mode = 0b00
@@ -1155,15 +1161,18 @@ class SVP64Asm:
         """
             | 0-1 |  2  |  3   4  |  description              |
             | --- | --- |---------|-------------------------- |
-            | 00  |   0 |  dz  sz | normal mode                      |
+            | 00  |   0 |  dz  sz | simple mode                      |
             | 00  |   1 | 0  RG   | scalar reduce mode (mapreduce), SUBVL=1 |
             | 00  |   1 | 1  /    | parallel reduce mode (mapreduce), SUBVL=1 |
-            | 00  |   1 | SVM RG  | subvector reduce mode, SUBVL>1   |
+            | 00  |   1 | SVM 0   | subvector reduce mode, SUBVL>1   |
+            | 00  |   1 | SVM 1   | Pack/Unpack mode, SUBVL>1   |
             | 01  | inv | CR-bit  | Rc=1: ffirst CR sel              |
             | 01  | inv | VLi RC1 |  Rc=0: ffirst z/nonz |
-            | 10  |   N | dz   sz |  sat mode: N=0/1 u/s |
+            | 10  |   N | dz   sz |  sat mode: N=0/1 u/s, SUBVL=1 |
+            | 10  |   N | zz   0  |  sat mode: N=0/1 u/s, SUBVL>1 |
+            | 10  |   N | zz   1  |  Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1 |
             | 11  | inv | CR-bit  |  Rc=1: pred-result CR sel |
-            | 11  | inv | dz  RC1 |  Rc=0: pred-result z/nonz |
+            | 11  | inv | zz  RC1 |  Rc=0: pred-result z/nonz |
         """
 
         # https://libre-soc.org/openpower/sv/ldst/
@@ -1225,7 +1234,11 @@ class SVP64Asm:
             ######################################
             # "mapreduce" modes
             elif sv_mode == 0b00:
-                mode |= (0b1 << SVP64MODE.REDUCE)  # sets mapreduce
+                if parallel:
+                    mode |= (0b1 << SVP64MODE.PARALLEL)  # sets parallel reduce
+                    assert subvl == 0, "TODO sub-vector parallel reduce"
+                else:
+                    mode |= (0b1 << SVP64MODE.REDUCE)  # sets mapreduce
                 assert dst_zero == 0, "dest-zero not allowed in mapreduce mode"
                 if reverse_gear:
                     mode |= (0b1 << SVP64MODE.RG)  # sets Reverse-gear mode
@@ -1582,6 +1595,9 @@ if __name__ == '__main__':
         'sv.ffmadds. 6.v, 2.v, 4.v, 6.v',  # incorrectly inserted 32-bit op
         'sv.ffmadds 6.v, 2.v, 4.v, 6.v',  # correctly converted to .long
         'svshape2 8, 1, 31, 7, 1, 1',
+    ]
+    lst = [
+        'sv.add./pp 5.v, 2.v, 1.v',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))
