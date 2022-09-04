@@ -1140,28 +1140,14 @@ class SVP64Instruction(PrefixedInstruction):
     def mask(self, db):
         return self.suffix.mask(db=db)
 
-    def disassemble(self, db, byteorder="little", verbose=False):
-        integer_prefix = int(self.prefix)
-        blob_prefix = integer_prefix.to_bytes(length=4, byteorder=byteorder)
-        blob_prefix = " ".join(map(lambda byte: f"{byte:02x}", blob_prefix))
-
-        integer_suffix = int(self.suffix)
-        blob_suffix = integer_suffix.to_bytes(length=4, byteorder=byteorder)
-        blob_suffix = " ".join(map(lambda byte: f"{byte:02x}", blob_suffix))
-
+    def mode(self, db):
         record = self.record(db=db)
-        if record is None or record.svp64 is None:
-            yield f"{blob_prefix}    .long 0x{int(self.prefix):08x}"
-            yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
-            return
-
-        yield f"{blob_prefix}    sv.{record.name}"
-        yield f"{blob_suffix}"
 
         Rc = False
         if record.operands["Rc"] is not None:
             Rc = bool(self[record.fields["Rc"]])
 
+        record = self.record(db=db)
         subvl = self.prefix.rm.subvl
         mode = self.prefix.rm.mode
         sel = mode.sel
@@ -1235,6 +1221,26 @@ class SVP64Instruction(PrefixedInstruction):
 
         if type(mode) is Mode:
             raise NotImplementedError
+
+        return mode
+
+    def disassemble(self, db, byteorder="little", verbose=False):
+        integer_prefix = int(self.prefix)
+        blob_prefix = integer_prefix.to_bytes(length=4, byteorder=byteorder)
+        blob_prefix = " ".join(map(lambda byte: f"{byte:02x}", blob_prefix))
+
+        integer_suffix = int(self.suffix)
+        blob_suffix = integer_suffix.to_bytes(length=4, byteorder=byteorder)
+        blob_suffix = " ".join(map(lambda byte: f"{byte:02x}", blob_suffix))
+
+        record = self.record(db=db)
+        if record is None or record.svp64 is None:
+            yield f"{blob_prefix}    .long 0x{int(self.prefix):08x}"
+            yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
+            return
+
+        yield f"{blob_prefix}    sv.{record.name}"
+        yield f"{blob_suffix}"
 
         if verbose:
             indent = (" " * 4)
