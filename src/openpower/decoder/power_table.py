@@ -1,31 +1,16 @@
-import pathlib
+import collections
 from openpower.decoder.power_enums import find_wiki_dir 
-from openpower.decoder.power_insn import (Database, MarkdownDatabase,
-                                          FieldsDatabase, PPCDatabase,
-                                          IntegerOpcode, PatternOpcode,
-                                          parse, Section, BitSel,
-                                          FieldsOpcode)
-root = find_wiki_dir()
-root = pathlib.Path(root)
-mdwndb = MarkdownDatabase()
-fieldsdb = FieldsDatabase()
+from openpower.decoder.power_insn import Database
+
+sections = {}
+insns = collections.defaultdict(list)
 
 # create by-sections first. these will be the markdown tables
-sections = {}
-insns = {}
-path = (root / "insndb.csv")
-with open(path, "r", encoding="UTF-8") as stream:
-    for section in parse(stream, Section.CSV):
-        sections[str(section.path)] = section
-        insns[str(section.path)] = []
-for (name, section) in sections.items():
-        print (name, section)
-
-# enumerate all instructions and drop them into sections
-db = Database(root)
-for insn in db:
-    insns[str(insn.section.path)].append(insn)
-    print (insn)
+# then enumerate all instructions and drop them into sections
+for insn in Database(find_wiki_dir()):
+    key = insn.section.path.name
+    sections[key] = insn.section
+    insns[key].append(insn)
 
 def maxme(num, s):
     return s.ljust(num)

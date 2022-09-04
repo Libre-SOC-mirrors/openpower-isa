@@ -1308,7 +1308,7 @@ class FieldsDatabase:
 
 
 class PPCDatabase:
-    def __init__(self, root, mdwndb, fieldsdb):
+    def __init__(self, root, mdwndb):
         # The code below groups the instructions by section:identifier.
         # We use the comment as an identifier, there's nothing better.
         # The point is to capture different opcodes for the same instruction.
@@ -1335,7 +1335,6 @@ class PPCDatabase:
 
         self.__db = db
         self.__mdwndb = mdwndb
-        self.__fieldsdb = fieldsdb
 
         return super().__init__()
 
