@@ -347,6 +347,51 @@ class SVP64Record:
 
         return dataclass(cls, record, keymap=cls.__KEYMAP)
 
+    @_functools.lru_cache(maxsize=None)
+    def extra_idx(self, key):
+        extra_idx = (
+            _SVExtra.Idx0,
+            _SVExtra.Idx1,
+            _SVExtra.Idx2,
+            _SVExtra.Idx3,
+        )
+
+        if key not in frozenset({
+                    "in1", "in2", "in3", "cr_in",
+                    "out", "out2", "cr_out",
+                }):
+            raise KeyError(key)
+
+        sel = getattr(self, key)
+        if sel is _CRInSel.BA_BB:
+            return _SVExtra.Idx_1_2
+        reg = _SVExtraReg(sel)
+        if reg is _SVExtraReg.NONE:
+            return _SVExtra.NONE
+
+        extra_map = {
+            _SVExtraRegType.SRC: {},
+            _SVExtraRegType.DST: {},
+        }
+        for index in range(0, 4):
+            for entry in self.extra[index]:
+                extra_map[entry.regtype][entry.reg] = extra_idx[index]
+
+        for regtype in (_SVExtraRegType.SRC, _SVExtraRegType.DST):
+            extra = extra_map[regtype].get(reg, _SVExtra.NONE)
+            if extra is not _SVExtra.NONE:
+                return extra
+
+        return _SVExtra.NONE
+
+    extra_idx_in1 = property(_functools.partial(extra_idx, key="in1"))
+    extra_idx_in2 = property(_functools.partial(extra_idx, key="in2"))
+    extra_idx_in3 = property(_functools.partial(extra_idx, key="in3"))
+    extra_idx_out = property(_functools.partial(extra_idx, key="out"))
+    extra_idx_out2 = property(_functools.partial(extra_idx, key="out2"))
+    extra_idx_cr_in = property(_functools.partial(extra_idx, key="cr_in"))
+    extra_idx_cr_out = property(_functools.partial(extra_idx, key="cr_out"))
+
 
 class BitSel:
     def __init__(self, value=(0, 32)):
@@ -630,13 +675,6 @@ class Record:
     operands: Operands
     svp64: SVP64Record = None
 
-    __EXTRA = (
-        _SVExtra.Idx0,
-        _SVExtra.Idx1,
-        _SVExtra.Idx2,
-        _SVExtra.Idx3,
-    )
-
     def __lt__(self, other):
         if not isinstance(other, Record):
             return NotImplemented
@@ -690,54 +728,18 @@ class Record:
     def cr_out(self):
         return self.ppc.cr_out
 
-    def sv_extra(self, key):
-        if key not in frozenset({
-                    "in1", "in2", "in3", "cr_in",
-                    "out", "out2", "cr_out",
-                }):
-            raise KeyError(key)
+    def extra_idx(self, key):
+        return self.svp64.extra_idx(key)
 
-        sel = getattr(self.svp64, key)
-        if sel is _CRInSel.BA_BB:
-            return _SVExtra.Idx_1_2
-        reg = _SVExtraReg(sel)
-        if reg is _SVExtraReg.NONE:
-            return _SVExtra.NONE
-
-        extra_map = {
-            _SVExtraRegType.SRC: {},
-            _SVExtraRegType.DST: {},
-        }
-        for index in range(0, 4):
-            for entry in self.svp64.extra[index]:
-                extra_map[entry.regtype][entry.reg] = Record.__EXTRA[index]
-
-        for regtype in (_SVExtraRegType.SRC, _SVExtraRegType.DST):
-            extra = extra_map[regtype].get(reg, _SVExtra.NONE)
-            if extra is not _SVExtra.NONE:
-                return extra
-
-        return _SVExtra.NONE
-
-    sv_in1 = property(_functools.partial(sv_extra, key="in1"))
-    sv_in2 = property(_functools.partial(sv_extra, key="in2"))
-    sv_in3 = property(_functools.partial(sv_extra, key="in3"))
-    sv_out = property(_functools.partial(sv_extra, key="out"))
-    sv_out2 = property(_functools.partial(sv_extra, key="out2"))
-    sv_cr_in = property(_functools.partial(sv_extra, key="cr_in"))
-    sv_cr_out = property(_functools.partial(sv_extra, key="cr_out"))
-
-    @property
-    def sv_ptype(self):
-        if self.svp64 is None:
-            return _SVPtype.NONE
-        return self.svp64.ptype
-
-    @property
-    def sv_etype(self):
-        if self.svp64 is None:
-            return _SVEtype.NONE
-        return self.svp64.etype
+    ptype = property(lambda self: self.svp64.ptype)
+    etype = property(lambda self: self.svp64.etype)
+    extra_in1 = property(lambda self: self.svp64.extra_in1)
+    extra_in2 = property(lambda self: self.svp64.extra_in2)
+    extra_in3 = property(lambda self: self.svp64.extra_in3)
+    extra_out = property(lambda self: self.svp64.extra_out)
+    extra_out2 = property(lambda self: self.svp64.extra_out2)
+    extra_cr_in = property(lambda self: self.svp64.extra_cr_in)
+    extra_cr_out = property(lambda self: self.svp64.extra_cr_out)
 
 
 class Instruction(_Mapping):

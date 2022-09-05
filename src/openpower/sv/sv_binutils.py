@@ -364,15 +364,15 @@ class Desc(Struct):
     out2: OutSel
     cr_in: CRInSel
     cr_out: CROutSel
-    sv_ptype: PType
-    sv_etype: EType
-    sv_in1: Extra
-    sv_in2: Extra
-    sv_in3: Extra
-    sv_out: Extra
-    sv_out2: Extra
-    sv_cr_in: Extra
-    sv_cr_out: Extra
+    ptype: PType
+    etype: EType
+    extra_idx_in1: Extra
+    extra_idx_in2: Extra
+    extra_idx_in3: Extra
+    extra_idx_out: Extra
+    extra_idx_out2: Extra
+    extra_idx_cr_in: Extra
+    extra_idx_cr_out: Extra
 
     @classmethod
     def c_decl(cls):
