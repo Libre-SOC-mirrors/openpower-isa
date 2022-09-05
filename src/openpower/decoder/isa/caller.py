@@ -1567,9 +1567,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                     reg_prefix = 'f'
                 else:
                     reg_prefix = 'r'
-                log(f"write reg {reg_prefix}{regnum}: "
-                    f"0x{output.value % (1 << 64):X}",
-                    kind=LogKind.InstrInOuts)
+                log("write reg %s%d %0xx" % (reg_prefix, regnum, output.value))
             if output.bits > 64:
                 output = SelectableInt(output.value, 64)
             if name in fregs:
