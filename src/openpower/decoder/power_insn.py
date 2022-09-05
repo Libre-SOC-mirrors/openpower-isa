@@ -392,6 +392,18 @@ class SVP64Record:
     extra_idx_cr_in = property(_functools.partial(extra_idx, key="cr_in"))
     extra_idx_cr_out = property(_functools.partial(extra_idx, key="cr_out"))
 
+    @_functools.lru_cache(maxsize=None)
+    def extra_reg(self, key):
+        return _SVExtraReg(getattr(self, key))
+
+    extra_reg_in1 = property(_functools.partial(extra_reg, key="in1"))
+    extra_reg_in2 = property(_functools.partial(extra_reg, key="in2"))
+    extra_reg_in3 = property(_functools.partial(extra_reg, key="in3"))
+    extra_reg_out = property(_functools.partial(extra_reg, key="out"))
+    extra_reg_out2 = property(_functools.partial(extra_reg, key="out2"))
+    extra_reg_cr_in = property(_functools.partial(extra_reg, key="cr_in"))
+    extra_reg_cr_out = property(_functools.partial(extra_reg, key="cr_out"))
+
 
 class BitSel:
     def __init__(self, value=(0, 32)):
@@ -510,6 +522,23 @@ class DynamicOperand(Operand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperandReg(DynamicOperand):
+    @property
+    def extra_reg(self):
+        return _SVExtraReg(self.name)
+
+    def extra_idx(self, record):
+        for key in frozenset({
+                    "in1", "in2", "in3", "cr_in",
+                    "out", "out2", "cr_out",
+                }):
+            if self.extra_reg == record.svp64.extra_reg(key):
+                return record.extra_idx(key)
+
+        return _SVExtra.NONE
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
 class ImmediateOperand(DynamicOperand):
     pass
 
@@ -529,7 +558,7 @@ class StaticOperand(Operand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperandTargetAddrLI(DynamicOperand):
+class DynamicOperandTargetAddrLI(DynamicOperandReg):
     @property
     def name(self):
         return "LI"
@@ -572,7 +601,7 @@ class DynamicOperandTargetAddrBD(DynamicOperand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperandGPR(DynamicOperand):
+class DynamicOperandGPR(DynamicOperandReg):
     def disassemble(self, value, record, verbose=False):
         span = record.fields[self.name]
         value = value[span]
@@ -584,7 +613,7 @@ class DynamicOperandGPR(DynamicOperand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperandFPR(DynamicOperand):
+class DynamicOperandFPR(DynamicOperandReg):
     def disassemble(self, value, record, verbose=False):
         span = record.fields[self.name]
         value = value[span]
