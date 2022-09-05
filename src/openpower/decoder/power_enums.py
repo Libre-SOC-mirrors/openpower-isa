@@ -209,6 +209,16 @@ class SVExtra(Enum):
     Idx3 = 4
     Idx_1_2 = 5  # due to weird BA/BB for crops
 
+    def __repr__(self):
+        return {
+            SVExtra.NONE: "NONE",
+            SVExtra.Idx0: "[0]",
+            SVExtra.Idx1: "[1]",
+            SVExtra.Idx2: "[2]",
+            SVExtra.Idx3: "[3]",
+            SVExtra.Idx_1_2: "[1:2]",
+        }[self]
+
 # Backward compatibility
 SVEXTRA = SVExtra
 
