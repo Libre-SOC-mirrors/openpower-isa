@@ -1,6 +1,7 @@
 import argparse as _argparse
 import enum as _enum
 import sys as _sys
+import os
 
 from openpower.decoder.power_enums import (
     find_wiki_dir as _find_wiki_dir,
@@ -55,6 +56,7 @@ def dump(insns, verbose, **_):
         yield from insn.disassemble(db=db, verbose=verbose)
 
 
+# this is the entry-point for the console-script pysvp64dis
 def main():
     parser = _argparse.ArgumentParser()
     parser.add_argument("ifile", nargs="?",
@@ -65,12 +67,22 @@ def main():
         type=ByteOrder, default=ByteOrder.LITTLE)
     parser.add_argument("-v", "--verbose",
         action="store_true", default=False)
+    parser.add_argument("-l", "--log",
+        action="store_true", default=False)
 
     args = dict(vars(parser.parse_args()))
+
+    # if logging requested do not disable it.
+    if not args['log']:
+        os.environ['SILENCELOG'] = '1'
+
+    # load instructions and dump them
     insns = load(**args)
     for line in dump(insns, **args):
         print(line, file=args["ofile"])
 
 
+# still here but use "python3 setup.py develop" then run the
+# command "pysvp64dis" instead of "python3 src/openpower/sv/trans/pysvp64dis.py"
 if __name__ == "__main__":
     main()
