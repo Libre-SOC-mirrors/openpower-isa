@@ -603,11 +603,14 @@ class DynamicOperandTargetAddrBD(DynamicOperand):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandGPR(DynamicOperandReg):
     def disassemble(self, value, record, verbose=False):
+        svp64 = isinstance(value, SVP64Instruction)
         span = record.fields[self.name]
         value = value[span]
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
+            if svp64:
+                yield repr(self.extra_idx(record))
         else:
             yield f"r{str(int(value))}"
 
@@ -615,11 +618,14 @@ class DynamicOperandGPR(DynamicOperandReg):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandFPR(DynamicOperandReg):
     def disassemble(self, value, record, verbose=False):
+        svp64 = isinstance(value, SVP64Instruction)
         span = record.fields[self.name]
         value = value[span]
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
+            if svp64:
+                yield repr(self.extra_idx(record))
         else:
             yield f"f{str(int(value))}"
 
