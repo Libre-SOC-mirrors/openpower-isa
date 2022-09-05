@@ -1479,12 +1479,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             log('reading reg %s %s' % (name, str(regnum)), is_vec)
             if name in fregs:
                 reg_val = SelectableInt(self.fpr(regnum))
-                log(f"read reg f{regnum}: 0x{reg_val.value:X}",
-                    kind=LogKind.InstrInOuts)
+                log("read reg %d: 0x%x" % (regnum, reg_val.value))
             elif name is not None:
                 reg_val = SelectableInt(self.gpr(regnum))
-                log(f"read reg r{regnum}: 0x{reg_val.value:X}",
-                    kind=LogKind.InstrInOuts)
+                log("read reg %d: 0x%x" % (regnum, reg_val.value))
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)
             reg_val = 0
