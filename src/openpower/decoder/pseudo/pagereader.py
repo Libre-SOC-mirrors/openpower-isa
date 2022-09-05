@@ -44,6 +44,7 @@ this translates to:
     blank(s) (optional for convenience at end-of-page)
 """
 
+from openpower.util import log
 from collections import namedtuple, OrderedDict
 from copy import copy
 import os
@@ -95,7 +96,7 @@ class ISA:
             if "swp" in pth:
                 continue
             if not pth.endswith(".mdwn"):
-                print ("warning, file not .mdwn, skipping", pth)
+                log ("warning, file not .mdwn, skipping", pth)
                 continue
             self.read_file(pth)
             continue
