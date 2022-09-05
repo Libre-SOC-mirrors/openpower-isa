@@ -1267,7 +1267,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if persist or self.last_op_svshape:
             remaps = self.get_remap_indices()
         if self.is_svp64_mode and (persist or self.last_op_svshape):
-            yield from self.remap_debug(remaps)
+            yield from self.remap_set_steps(remaps)
         # after that, settle down (combinatorial) to let Vector reg numbers
         # work themselves out
         yield Settle()
@@ -1488,7 +1488,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             reg_val = 0
         return reg_val
 
-    def remap_debug(self, remaps):
+    def remap_set_steps(self, remaps):
+        """remap_set_steps sets up the in1/2/3 and out1/2 steps.
+        they work in concert with PowerDecoder2 at the moment,
+        there is no HDL implementation of REMAP.  therefore this
+        function, because ISACaller still uses PowerDecoder2,
+        will *explicitly* write the dec2.XX_step values. this has
+        to get sorted out.
+        """
         # just some convenient debug info
         for i in range(4):
             sname = 'SVSHAPE%d' % i
