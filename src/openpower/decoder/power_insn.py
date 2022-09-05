@@ -610,7 +610,12 @@ class DynamicOperandGPR(DynamicOperandReg):
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
             if svp64:
-                yield repr(self.extra_idx(record))
+                extra_idx = self.extra_idx(record)
+                if record.etype is _SVEtype.NONE:
+                    yield f"extra[none]"
+                else:
+                    etype = repr(record.etype).lower()
+                    yield f"{etype}{extra_idx!r}"
         else:
             yield f"r{str(int(value))}"
 
@@ -625,7 +630,12 @@ class DynamicOperandFPR(DynamicOperandReg):
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
             if svp64:
-                yield repr(self.extra_idx(record))
+                extra_idx = self.extra_idx(record)
+                if record.etype is _SVEtype.NONE:
+                    yield f"extra[none]"
+                else:
+                    etype = repr(record.etype).lower()
+                    yield f"{etype}{extra_idx!r}"
         else:
             yield f"f{str(int(value))}"
 
