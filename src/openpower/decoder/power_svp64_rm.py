@@ -180,8 +180,8 @@ class SVP64RMModeDecode(Elaboratable):
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
                         comb += do_pu.eq(mode[SVP64MODE.LDST_PACK]) # Pack mode
                     with m.Elif(mode[SVP64MODE.REDUCE]):
-                        with m.If(mode[SVP64MODE.PARALLEL]):
-                            comb += self.mode.eq(SVP64RMMode.PARALLEL)
+                        with m.If(mode[SVP64MODE.PTREDUCE]):
+                            comb += self.mode.eq(SVP64RMMode.PTREDUCE)
                         with m.Else():
                             comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
                             # Pack only active if SVM=1 & SUBVL>1 & Mode[4]=1
@@ -200,7 +200,7 @@ class SVP64RMModeDecode(Elaboratable):
             with m.If((~is_ldst) &                     # not for LD/ST
                         (mode2 == 0) &                 # first 2 bits == 0
                         mode[SVP64MODE.REDUCE] &       # bit 2 == 1
-                       (~mode[SVP64MODE.PARALLEL])):   # not parallel mapreduce
+                       (~mode[SVP64MODE.PTREDUCE])):   # not parallel mapreduce
                 comb += self.reverse_gear.eq(mode[SVP64MODE.RG]) # finally whew
 
             # extract zeroing

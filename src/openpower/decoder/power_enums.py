@@ -297,7 +297,7 @@ class SVP64RMMode(Enum):
     SATURATE = 3
     PREDRES = 4
     BRANCH = 5
-    PARALLEL = 6 # Parallel Reduction
+    PTREDUCE = 6 # Parallel Reduction
 
 
 @unique

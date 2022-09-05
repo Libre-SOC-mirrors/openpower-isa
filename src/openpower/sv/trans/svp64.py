@@ -1235,7 +1235,7 @@ class SVP64Asm:
             # "mapreduce" modes
             elif sv_mode == 0b00:
                 if parallel:
-                    mode |= (0b1 << SVP64MODE.PARALLEL)  # sets parallel reduce
+                    mode |= (0b1 << SVP64MODE.PTREDUCE)  # sets parallel reduce
                     assert subvl == 0, "TODO sub-vector parallel reduce"
                 else:
                     mode |= (0b1 << SVP64MODE.REDUCE)  # sets mapreduce
