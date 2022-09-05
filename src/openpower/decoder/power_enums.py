@@ -192,6 +192,13 @@ class SVPtype(Enum):
     def _missing_(cls, value):
         return {"1P": SVPtype.P1, "2P": SVPtype.P2}[value]
 
+    def __repr__(self):
+        return {
+            SVPtype.NONE: "NONE",
+            SVPtype.P1: "1P",
+            SVPtype.P2: "2P",
+        }[self]
+
 
 @unique
 class SVEtype(Enum):
