@@ -241,6 +241,7 @@ class SVP64MODEb(_Const):
     # mode bits
     MOD2_MSB = 0
     MOD2_LSB = 1
+    MOD3 = 3
     # pack detection (TODO, CR-ops needs one of these too)
     LDST_PACK = 2 # set =1 for LD/ST-immediate Pack mode
     ARITH_PACK = 4 # set =1 for Arithmetic Pack mode
@@ -254,7 +255,6 @@ class SVP64MODEb(_Const):
     BC_CTRTEST = 0 # CTR-test mode
     # reduce mode
     REDUCE = 2  # 0=normal predication 1=reduce mode
-    PTREDUCE = 3 # 1=parallel reduce, 0=scalar reduce
     SVM = 3  # subvector reduce mode 0=independent 1=horizontal
     CRM = 4  # CR mode on reduce (Rc=1) 0=some 1=all
     RG = 4   # Reverse-gear on reduce

@@ -70,7 +70,6 @@ Arithmetic:
 | --- | --- |---------|-------------------------- |
 | 00  |   0 |  dz  sz | simple mode                      |
 | 00  |   1 | 0  RG   | scalar reduce mode (mapreduce), SUBVL=1 |
-| 00  |   1 | 1  /    | parallel reduce mode (mapreduce), SUBVL=1 |
 | 00  |   1 | SVM 0   | subvector reduce mode, SUBVL>1   |
 | 00  |   1 | SVM 1   | Pack/Unpack mode, SUBVL>1   |
 | 01  | inv | CR-bit  | Rc=1: ffirst CR sel              |
@@ -180,13 +179,10 @@ class SVP64RMModeDecode(Elaboratable):
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
                         comb += do_pu.eq(mode[SVP64MODE.LDST_PACK]) # Pack mode
                     with m.Elif(mode[SVP64MODE.REDUCE]):
-                        with m.If(mode[SVP64MODE.PTREDUCE]):
-                            comb += self.mode.eq(SVP64RMMode.PTREDUCE)
-                        with m.Else():
-                            comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
-                            # Pack only active if SVM=1 & SUBVL>1 & Mode[4]=1
-                            with m.If(self.rm_in.subvl != Const(0, 2)): # active
-                                comb += do_pu.eq(mode[SVP64MODE.ARITH_PACK])
+                        comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
+                        # Pack only active if SVM=1 & SUBVL>1 & Mode[4]=1
+                        with m.If(self.rm_in.subvl != Const(0, 2)): # active
+                            comb += do_pu.eq(mode[SVP64MODE.ARITH_PACK])
                     with m.Else():
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
                 with m.Case(1):
@@ -200,7 +196,7 @@ class SVP64RMModeDecode(Elaboratable):
             with m.If((~is_ldst) &                     # not for LD/ST
                         (mode2 == 0) &                 # first 2 bits == 0
                         mode[SVP64MODE.REDUCE] &       # bit 2 == 1
-                       (~mode[SVP64MODE.PTREDUCE])):   # not parallel mapreduce
+                       (~mode[SVP64MODE.MOD3])):       # bit 3 == 0
                 comb += self.reverse_gear.eq(mode[SVP64MODE.RG]) # finally whew
 
             # extract zeroing
