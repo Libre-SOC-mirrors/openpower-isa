@@ -199,6 +199,9 @@ class SVEtype(Enum):
     EXTRA2 = 1
     EXTRA3 = 2
 
+    def __repr__(self):
+        return self.name
+
 
 @unique
 class SVExtra(Enum):
