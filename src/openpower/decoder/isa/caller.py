@@ -1536,17 +1536,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         if name in ['CA', 'CA32']:
             if carry_en:
                 log("writing %s to XER" % name, output)
-                log(f"write XER field {name}: "
-                    f"0x{output.value % (1 << 64):X}",
-                    kind=LogKind.InstrInOuts)
+                log("write XER %s 0x%x" % (name, output.value))
                 self.spr['XER'][XER_bits[name]] = output.value
             else:
                 log("NOT writing %s to XER" % name, output)
         elif name in info.special_regs:
             log('writing special %s' % name, output, special_sprs)
-            log(f"write reg {name}: "
-                f"0x{output.value % (1 << 64):X}",
-                kind=LogKind.InstrInOuts)
+            log("write reg %s 0x%x" % (name, output.value))
             if name in special_sprs:
                 self.spr[name] = output
             else:
