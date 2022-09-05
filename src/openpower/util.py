@@ -131,7 +131,6 @@ def parse_log_env_vars():
     return retval
 
 
-LOG_KINDS_SILENCED = parse_log_env_vars()
 
 
 def log(*args, kind=LogKind.Default, **kwargs):
@@ -139,6 +138,9 @@ def log(*args, kind=LogKind.Default, **kwargs):
     """
     # look up in a dict rather than os.environ so we don't
     # trigger breakpoints on raising exceptions.
+    # read os.environ so that modifications to os.environ at runtime
+    # are picked up
+    LOG_KINDS_SILENCED = parse_log_env_vars()
     if LOG_KINDS_SILENCED[kind]:
         return
     print(*args, **kwargs)
