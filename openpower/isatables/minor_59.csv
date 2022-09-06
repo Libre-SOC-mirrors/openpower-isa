@@ -18,7 +18,7 @@ opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry ou
 -----00101,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffmadds,A,,1,3-in 2-out: implicit FRS. unofficial until submitted and approved/renumbered by the opf isa wg
 -----00110,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffnmsubs,A,,1,3-in 2-out: implicit FRS. unofficial until submitted and approved/renumbered by the opf isa wg
 -----00111,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffnmadds,A,,1,3-in 2-out: implicit FRS. unofficial until submitted and approved/renumbered by the opf isa wg
-1000001100,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffadds,X,,1,3-in 2-out: implicit FRS. unofficial until submitted and approved/renumbered by the opf isa wg
+1000001100,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ffadds,X,,1,2-in 2-out: implicit FRS. unofficial until submitted and approved/renumbered by the opf isa wg
 -----11011,FPU,OP_FP_MADD,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fdmadds,A,,1,3-in 2-out: implicit FRS. unofficial until submitted and approved/renumbered by the opf isa wg
 1001001110,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fatan2s,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1000001110,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fatan2pis,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
