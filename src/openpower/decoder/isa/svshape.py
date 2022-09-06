@@ -9,6 +9,8 @@ https://libre-soc.org/openpower/sv/remap
 from openpower.decoder.selectable_int import (FieldSelectableInt, SelectableInt,
                                         selectconcat)
 from openpower.decoder.isa.remapyield import iterate_indices
+from openpower.decoder.isa.remap_preduce_yield import (iterate_indices as
+                                                iterate_preduce_indices)
 from openpower.decoder.isa.remap_fft_yield import iterate_butterfly_indices
 from openpower.decoder.isa.remap_dct_yield import (
                                 iterate_dct_inner_butterfly_indices,
@@ -163,6 +165,8 @@ class SVSHAPE(SelectableInt):
         log ("SVSHAPE get_iterator", self.mode, self.ydimsz, self.is_indexed())
         if self.mode == 0b00:
             iterate_fn = iterate_indices
+        elif self.mode == 0b10:
+            iterate_fn = iterate_preduce_indices
         elif self.mode in [0b01, 0b11]:
             # further sub-selection
             if self.ydimsz == 1:
