@@ -470,14 +470,6 @@
         two's complement integer which is concatenated
         on the right with 0b00 and sign-extended to 64 bits.
         Formats: DS
-    E (16)
-        Field used by the Write MSR External Enable
-        instruction (see Book III-E).
-        Formats: X
-    E (12:15)
-        Field used to specify the access types ordered by
-        an Elemental Memory Barrier type of sync instruc-
-        tion.
     EH (31)
         Field used to specify a hint in the Load and
         Reserve instructions. The meaning is described in
