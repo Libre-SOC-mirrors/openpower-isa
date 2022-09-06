@@ -21,10 +21,9 @@ def iterate_indices(SVSHAPE, pred=None):
     if SVSHAPE.invxyz[1]: steps.reverse()
     for step in steps:
         stepend = (step == steps[-1]) # note end of steps
-        idxs = list(range(0, xd, step)):
+        idxs = list(range(0, xd, step))
+        results = []
         for i in idxs:
-            idxend = (i == idxs[-1]) # note end of inner loop
-            loopends = (stepend<<1) | idxend # notify end of loops
             other = i + step // 2
             ci = ix[i]
             oi = ix[other] if other < xd else None
@@ -34,57 +33,54 @@ def iterate_indices(SVSHAPE, pred=None):
                     result = ci
                 elif SVSHAPE.skip == 0b01: # submode 01
                     result = oi
-                yield result + SVSHAPE.offset, loopends
+                results.append([result + SVSHAPE.offset, 0])
             elif other_pred:
                 ix[i] = oi
+        if results:
+            results[-1][1] = (stepend<<1) | 1  # notify end of loops
+        yield from results
 
 def demo():
     # set the dimension sizes here
-    xdim = 3
-    ydim = 2
-    zdim = 4
-
-    # set total (can repeat, e.g. VL=x*y*z*4)
-    VL = xdim * ydim * zdim
+    xdim = 9
 
     # set up an SVSHAPE
     class SVSHAPE:
         pass
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, ydim, zdim]
-    SVSHAPE0.order = [1,0,2]  # experiment with different permutations, here
-    SVSHAPE0.mode = 0b00
+    SVSHAPE0.lims = [xdim, 0, 0]
+    SVSHAPE0.order = [0,1,2]
+    SVSHAPE0.mode = 0b10
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
     SVSHAPE0.invxyz = [0,0,0] # inversion if desired
 
+    SVSHAPE1 = SVSHAPE()
+    SVSHAPE1.lims = [xdim, 0, 0]
+    SVSHAPE1.order = [0,1,2]
+    SVSHAPE1.mode = 0b10
+    SVSHAPE1.skip = 0b01
+    SVSHAPE1.offset = 0       # experiment with different offset, here
+    SVSHAPE1.invxyz = [0,0,0] # inversion if desired
+
     # enumerate over the iterator function, getting new indices
-    for idx, (new_idx, end) in enumerate(iterate_indices(SVSHAPE0)):
-        if idx >= VL:
-            break
-        print ("%d->%d" % (idx, new_idx), "end", bin(end)[2:])
+    shapes = list(iterate_indices(SVSHAPE0)), \
+              list(iterate_indices(SVSHAPE1))
+    for idx in range(len(shapes[0])):
+        l = shapes[0][idx]
+        r = shapes[1][idx]
+        (l_idx, lend) = l
+        (r_idx, rend) = r
+        print ("%d->%d:%d" % (idx, l_idx, r_idx),
+               "end", bin(lend)[2:], bin(rend)[2:])
+
+
+def preduce_y(vl, vec, pred):
+   for i, other in preduce_yield(vl, vec, pred):
+       vec[i] += vec[other]
+
 
 # run the demo
 if __name__ == '__main__':
     demo()
 
-
-
-def preduce_yield(vl, vec, pred):
-    step = 1
-    ix = list(range(vl))
-    while step < vl:
-        step *= 2
-        for i in range(0, vl, step):
-            other = i + step // 2
-            ci = ix[i]
-            oi = ix[other] if other < vl else None
-            other_pred = other < vl and pred[oi]
-            if pred[ci] and other_pred:
-                yield ci, oi
-            elif other_pred:
-                ix[i] = oi
-
-def preduce_y(vl, vec, pred):
-   for i, other in preduce_yield(vl, vec, pred):
-       vec[i] += vec[other]
