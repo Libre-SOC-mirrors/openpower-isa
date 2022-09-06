@@ -482,7 +482,7 @@ class Fields:
 
         def transform(item):
             (name, bitrange) = item
-            return (name, list(bitrange.values()))
+            return (name, tuple(bitrange.values()))
 
         self.__mapping = dict(map(transform, items))
 
