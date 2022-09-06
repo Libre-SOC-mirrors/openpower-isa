@@ -684,6 +684,9 @@ def to_number(field):
     return int(field)
 
 
+db = Database(find_wiki_dir())
+
+
 # decodes svp64 assembly listings and creates EXT001 svp64 prefixes
 class SVP64Asm:
     def __init__(self, lst, bigendian=False, macros=None):
@@ -917,7 +920,6 @@ class SVP64Asm:
         log("extras", extras)
 
         # rright. now we have all the info. start creating SVP64 instruction.
-        db = Database(find_wiki_dir())
         svp64_insn = SVP64Instruction.pair(prefix=0, suffix=0)
         svp64_prefix = svp64_insn.prefix
         svp64_rm = svp64_insn.prefix.rm
