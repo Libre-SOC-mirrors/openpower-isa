@@ -505,15 +505,15 @@ class Fields:
 class Operand:
     name: str
 
-    def disassemble(self, value, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False):
         raise NotImplementedError
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
-    def disassemble(self, value, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False):
         span = record.fields[self.name]
-        value = value[span]
+        value = insn[span]
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
@@ -547,9 +547,9 @@ class ImmediateOperand(DynamicOperand):
 class StaticOperand(Operand):
     value: int
 
-    def disassemble(self, value, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False):
         span = record.fields[self.name]
-        value = value[span]
+        value = insn[span]
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
@@ -567,9 +567,9 @@ class DynamicOperandTargetAddrLI(DynamicOperandReg):
     def name(self, _):
         pass
 
-    def disassemble(self, value, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False):
         span = record.fields["LI"]
-        value = value[span]
+        value = insn[span]
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
@@ -588,9 +588,9 @@ class DynamicOperandTargetAddrBD(DynamicOperand):
     def name(self, _):
         pass
 
-    def disassemble(self, value, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False):
         span = record.fields["BD"]
-        value = value[span]
+        value = insn[span]
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
@@ -602,14 +602,13 @@ class DynamicOperandTargetAddrBD(DynamicOperand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandGPR(DynamicOperandReg):
-    def disassemble(self, value, record, verbose=False):
-        svp64 = isinstance(value, SVP64Instruction)
+    def disassemble(self, insn, record, verbose=False):
         span = record.fields[self.name]
-        value = value[span]
+        value = insn[span]
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
-            if svp64:
+            if isinstance(insn, SVP64Instruction):
                 extra_idx = self.extra_idx(record)
                 if record.etype is _SVEtype.NONE:
                     yield f"extra[none]"
@@ -622,14 +621,13 @@ class DynamicOperandGPR(DynamicOperandReg):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandFPR(DynamicOperandReg):
-    def disassemble(self, value, record, verbose=False):
-        svp64 = isinstance(value, SVP64Instruction)
+    def disassemble(self, insn, record, verbose=False):
         span = record.fields[self.name]
-        value = value[span]
+        value = insn[span]
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
-            if svp64:
+            if isinstance(insn, SVP64Instruction):
                 extra_idx = self.extra_idx(record)
                 if record.etype is _SVEtype.NONE:
                     yield f"extra[none]"
@@ -890,7 +888,7 @@ class WordInstruction(Instruction):
 
         operands = []
         for operand in record.operands.dynamic:
-            operand = " ".join(operand.disassemble(value=self,
+            operand = " ".join(operand.disassemble(insn=self,
                 record=record, verbose=False))
             operands.append(operand)
         if operands:
@@ -921,7 +919,7 @@ class WordInstruction(Instruction):
             for operand in record.operands:
                 name = operand.name
                 yield f"{indent}{name}"
-                parts = operand.disassemble(value=self,
+                parts = operand.disassemble(insn=self,
                     record=record, verbose=True)
                 for part in parts:
                     yield f"{indent}{indent}{part}"
@@ -1345,7 +1343,7 @@ class SVP64Instruction(PrefixedInstruction):
             for operand in record.operands:
                 name = operand.name
                 yield f"{indent}{name}"
-                parts = operand.disassemble(value=self,
+                parts = operand.disassemble(insn=self,
                     record=record, verbose=True)
                 for part in parts:
                     yield f"{indent}{indent}{part}"
