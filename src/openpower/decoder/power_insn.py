@@ -532,7 +532,7 @@ class DynamicOperandReg(DynamicOperand):
                     "in1", "in2", "in3", "cr_in",
                     "out", "out2", "cr_out",
                 }):
-            if self.extra_reg == record.svp64.extra_reg(key):
+            if self.extra_reg is record.svp64.extra_reg(key):
                 return record.extra_idx(key)
 
         return _SVExtra.NONE
