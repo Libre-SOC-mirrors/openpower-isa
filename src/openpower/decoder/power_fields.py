@@ -175,6 +175,13 @@ class Field(Reference, metaclass=FieldMeta):
         for bit in self.__class__:
             yield self.storage[bit]
 
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            bit = self.storage[self.__class__.__members__[key]]
+            return _SelectableInt(value=bit, bits=1)
+
+        return _selectconcat(*(self[bit] for bit in tuple(key)))
+
 
 class ArrayMeta(type):
     def __new__(metacls, clsname, bases, ns, items=()):
