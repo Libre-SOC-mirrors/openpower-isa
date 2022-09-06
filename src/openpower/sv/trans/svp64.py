@@ -173,7 +173,7 @@ def svshape(fields):
     SVzd -= 1
 
     # check SVrm for reserved (and svshape2) values
-    assert SVrm not in [0b0111, 0b1000, 0b1001], \
+    assert SVrm not in [0b1000, 0b1001], \
             "svshape reserved SVrm value %s" % bin(SVrm)
 
     return instruction(
