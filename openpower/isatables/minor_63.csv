@@ -45,3 +45,43 @@ opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry ou
 -----11101,FPU,OP_FPOP,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,fmadd,A,,,
 -----11110,FPU,OP_FPOP,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,fnmsub,A,,,
 -----11111,FPU,OP_FPOP,FRA,FRB,FRC,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,fnmadd,A,,,
+1001001110,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fatan2,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000001110,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fatan2pi,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1111101101,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fpow,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1101101100,FPU,OP_FPOP,FRA,RB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fpown,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1111101100,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fpowr,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1101101101,FPU,OP_FPOP,FRA,RB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,frootn,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1010001110,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fhypot,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1001001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,frsqrt,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1011001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcbrt,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1010001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,frecip,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1100001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fexp2m1,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1100001101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,flog2p1,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1110001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fexp2,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1110001101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,flog2,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1100101100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fexpm1,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1100101101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,flogp1,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1110101100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fexp,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1110101101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,flog,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1101001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fexp10m1,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1101001101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,flog10p1,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1111001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fexp10,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1111001101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,flog10,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1001001101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fsin,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1001101100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcos,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1001101101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ftan,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1001001111,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fasin,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1001101110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,facos,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1001101111,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fatan,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000001101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fsinpi,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000101100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcospi,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000101101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ftanpi,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000001111,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fasinpi,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000101110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,facospi,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000101111,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fatanpi,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1010001101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fsinh,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1010101100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcosh,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1010101101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,ftanh,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1010001111,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fasinh,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1010101110,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,facosh,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1010101111,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fatanh,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg

@@ -325,7 +325,7 @@ def fsins(fields, Rc):
     # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
     # | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
     PO = 59
-    XO = 0b1000001110
+    XO = 0b1001001101
     (FRT, FRB) = fields
     return instruction(
         (PO, 0, 5),
@@ -348,7 +348,7 @@ def fcoss(fields, Rc):
     # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
     # | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
     PO = 59
-    XO = 0b1000101110
+    XO = 0b1001101100
     (FRT, FRB) = fields
     return instruction(
         (PO, 0, 5),
