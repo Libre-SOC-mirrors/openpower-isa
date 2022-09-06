@@ -40,7 +40,6 @@ from openpower.decoder.selectable_int import (
 )
 from openpower.decoder.power_fields import (
     Field as _Field,
-    Array as _Array,
     Mapping as _Mapping,
     DecodeFields as _DecodeFields,
 )
@@ -513,7 +512,10 @@ class Operand:
 class DynamicOperand(Operand):
     def disassemble(self, insn, record, verbose=False):
         span = record.fields[self.name]
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
+
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
@@ -523,6 +525,45 @@ class DynamicOperand(Operand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandReg(DynamicOperand):
+    def spec(self, insn, record):
+        vector = False
+        span = record.fields[self.name]
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
+        value = insn[span]
+
+        if isinstance(insn, SVP64Instruction):
+            extra_idx = self.extra_idx(record=record)
+
+            if record.etype is _SVEtype.EXTRA3:
+                extra = insn.prefix.rm.extra3[extra_idx]
+            elif record.etype is _SVEtype.EXTRA2:
+                extra = insn.prefix.rm.extra2[extra_idx]
+            else:
+                raise ValueError(record.etype)
+
+            if extra != 0:
+                vector = bool(extra[0])
+                span = (span + tuple(extra.__class__))
+                if record.etype is _SVEtype.EXTRA3:
+                    extra = int(extra[1, 2])
+                elif record.etype is _SVEtype.EXTRA2:
+                    extra = (int(extra[1]) << 1)
+                else:
+                    raise ValueError(record.etype)
+
+                base = int(value)
+                if vector:
+                    value = ((base << 2) | extra)
+                else:
+                    value = ((extra << 5) | base)
+                value = _SelectableInt(value=value, bits=len(span))
+
+        else:
+            value = insn[span]
+
+        return (vector, value, span)
+
     @property
     def extra_reg(self):
         return _SVExtraReg(self.name)
@@ -532,10 +573,27 @@ class DynamicOperandReg(DynamicOperand):
                     "in1", "in2", "in3", "cr_in",
                     "out", "out2", "cr_out",
                 }):
-            if self.extra_reg is record.svp64.extra_reg(key):
-                return record.extra_idx(key)
+            extra_reg = record.svp64.extra_reg(key=key)
+            if extra_reg is self.extra_reg:
+                return record.extra_idx(key=key)
 
         return _SVExtra.NONE
+
+    def disassemble(self, insn, record, verbose=False, prefix=""):
+        (vector, value, span) = self.spec(insn=insn, record=record)
+        if verbose:
+            yield f"{int(value):0{value.bits}b}"
+            yield repr(span)
+            if isinstance(insn, SVP64Instruction):
+                extra_idx = self.extra_idx(record)
+                if record.etype is _SVEtype.NONE:
+                    yield f"extra[none]"
+                else:
+                    etype = repr(record.etype).lower()
+                    yield f"{etype}{extra_idx!r}"
+        else:
+            vector = "*" if vector else ""
+            yield f"{vector}{prefix}{int(value)}"
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -549,7 +607,10 @@ class StaticOperand(Operand):
 
     def disassemble(self, insn, record, verbose=False):
         span = record.fields[self.name]
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
+
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
@@ -569,7 +630,10 @@ class DynamicOperandTargetAddrLI(DynamicOperandReg):
 
     def disassemble(self, insn, record, verbose=False):
         span = record.fields["LI"]
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
+
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
@@ -590,7 +654,10 @@ class DynamicOperandTargetAddrBD(DynamicOperand):
 
     def disassemble(self, insn, record, verbose=False):
         span = record.fields["BD"]
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
+
         if verbose:
             yield f"{int(value):0{value.bits}b}"
             yield repr(span)
@@ -603,39 +670,15 @@ class DynamicOperandTargetAddrBD(DynamicOperand):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandGPR(DynamicOperandReg):
     def disassemble(self, insn, record, verbose=False):
-        span = record.fields[self.name]
-        value = insn[span]
-        if verbose:
-            yield f"{int(value):0{value.bits}b}"
-            yield repr(span)
-            if isinstance(insn, SVP64Instruction):
-                extra_idx = self.extra_idx(record)
-                if record.etype is _SVEtype.NONE:
-                    yield f"extra[none]"
-                else:
-                    etype = repr(record.etype).lower()
-                    yield f"{etype}{extra_idx!r}"
-        else:
-            yield f"r{str(int(value))}"
+        yield from super().disassemble(prefix="r",
+            insn=insn, record=record, verbose=verbose)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandFPR(DynamicOperandReg):
     def disassemble(self, insn, record, verbose=False):
-        span = record.fields[self.name]
-        value = insn[span]
-        if verbose:
-            yield f"{int(value):0{value.bits}b}"
-            yield repr(span)
-            if isinstance(insn, SVP64Instruction):
-                extra_idx = self.extra_idx(record)
-                if record.etype is _SVEtype.NONE:
-                    yield f"extra[none]"
-                else:
-                    etype = repr(record.etype).lower()
-                    yield f"{etype}{extra_idx!r}"
-        else:
-            yield f"f{str(int(value))}"
+        yield from super().disassemble(prefix="f",
+            insn=insn, record=record, verbose=verbose)
 
 
 class Operands(tuple):
@@ -1133,6 +1176,51 @@ class LDSTIdxMode(Mode):
     prrc0: prrc0
 
 
+class ExtraSpec(_Mapping):
+    _: _Field = range(0, 9)
+
+
+class Extra2Spec(ExtraSpec):
+    idx0: _Field = range(0, 2)
+    idx1: _Field = range(2, 4)
+    idx2: _Field = range(4, 6)
+    idx3: _Field = range(6, 8)
+
+    def __getitem__(self, key):
+        return {
+            0: self.idx0,
+            1: self.idx1,
+            2: self.idx2,
+            3: self.idx3,
+            _SVExtra.Idx0: self.idx0,
+            _SVExtra.Idx1: self.idx1,
+            _SVExtra.Idx2: self.idx2,
+            _SVExtra.Idx3: self.idx3,
+        }[key]
+
+    def __setitem__(self, key, value):
+        self[key].assign(value)
+
+
+class Extra3Spec(ExtraSpec):
+    idx0: _Field = range(0, 3)
+    idx1: _Field = range(3, 6)
+    idx2: _Field = range(6, 9)
+
+    def __getitem__(self, key):
+        return {
+            0: self.idx0,
+            1: self.idx1,
+            2: self.idx2,
+            _SVExtra.Idx0: self.idx0,
+            _SVExtra.Idx1: self.idx1,
+            _SVExtra.Idx2: self.idx2,
+        }[key]
+
+    def __setitem__(self, key, value):
+        self[key].assign(value)
+
+
 class RM(_Mapping):
     class Mode(Mode):
         normal: NormalMode
@@ -1145,20 +1233,12 @@ class RM(_Mapping):
     elwidth: _Field = range(4, 6)
     ewsrc: _Field = range(6, 8)
     subvl: _Field = range(8, 10)
-    extra: _Field = range(10, 19)
     mode: Mode.remap(range(19, 24))
-    extra2: _Array[4] = (
-        range(10, 12),
-        range(12, 14),
-        range(14, 16),
-        range(16, 18),
-    )
     smask: _Field = range(16, 19)
-    extra3: _Array[3] = (
-        range(10, 13),
-        range(13, 16),
-        range(16, 19),
-    )
+
+    extra: ExtraSpec.remap(range(10, 19))
+    extra2: Extra2Spec.remap(range(10, 19))
+    extra3: Extra3Spec.remap(range(10, 19))
 
 
 class SVP64Instruction(PrefixedInstruction):
@@ -1315,7 +1395,18 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
             return
 
-        yield f"{blob_prefix}    sv.{record.name}"
+        operands = []
+        for operand in record.operands.dynamic:
+            operand = " ".join(operand.disassemble(insn=self,
+                record=record, verbose=False))
+            operands.append(operand)
+        if operands:
+            operands = ",".join(operands)
+            operands = f" {operands}"
+        else:
+            operands = ""
+
+        yield f"{blob_prefix}    sv.{record.name}{operands}"
         yield f"{blob_suffix}"
 
         (mode, mode_desc) = self.mode(db=db)
