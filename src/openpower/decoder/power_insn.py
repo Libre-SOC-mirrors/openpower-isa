@@ -1296,7 +1296,10 @@ class SVP64Instruction(PrefixedInstruction):
             if isinstance(mode, cls):
                 return (mode, desc)
 
-        raise NotImplementedError
+        if record.svp64.mode is _SVMode.BRANCH:
+            return (self.prefix.rm.mode, "branch")
+
+        raise ValueError(self)
 
     def disassemble(self, db, byteorder="little", verbose=False):
         integer_prefix = int(self.prefix)
