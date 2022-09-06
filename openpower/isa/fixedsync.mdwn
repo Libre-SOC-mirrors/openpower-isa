@@ -1,0 +1,139 @@
+<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.6 Fixed-point Synchronisation instructions. Pages 865 - 877 -->
+
+# Instruction Synchronise
+
+XL-Form
+
+* isync
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    None
+
+# Load Byte And Reserve Indexed
+
+X-Form
+
+* lbarx RT,RA,RB,EH
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    None
+
+# Load Halfword And Reserve Indexed
+
+X-Form
+
+* lharx RT,RA,RB,EH
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    None
+
+# Load Word And Reserve Indexed
+
+X-Form
+
+* lwarx RT,RA,RB,EH
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    None
+
+# Load Doubleword And Reserve Indexed
+
+X-Form
+
+* ldarx RT,RA,RB,EH
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    None
+
+# Store Byte Conditional Indexed
+
+X-Form
+
+* stbcx. RS,RA,RB
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    CR0
+
+# Store Halfword Conditional Indexed
+
+X-Form
+
+* sthcx. RS,RA,RB
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    CR0
+
+# Store word Conditional Indexed
+
+X-Form
+
+* stwcx. RS,RA,RB
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    CR0
+
+# Store Doubleword Conditional Indexed
+
+X-Form
+
+* stdcx. RS,RA,RB
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    CR0
+
