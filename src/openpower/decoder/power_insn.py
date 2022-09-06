@@ -771,18 +771,19 @@ class Record:
     def cr_out(self):
         return self.ppc.cr_out
 
+    ptype = property(lambda self: self.svp64.ptype)
+    etype = property(lambda self: self.svp64.etype)
+
     def extra_idx(self, key):
         return self.svp64.extra_idx(key)
 
-    ptype = property(lambda self: self.svp64.ptype)
-    etype = property(lambda self: self.svp64.etype)
-    extra_in1 = property(lambda self: self.svp64.extra_in1)
-    extra_in2 = property(lambda self: self.svp64.extra_in2)
-    extra_in3 = property(lambda self: self.svp64.extra_in3)
-    extra_out = property(lambda self: self.svp64.extra_out)
-    extra_out2 = property(lambda self: self.svp64.extra_out2)
-    extra_cr_in = property(lambda self: self.svp64.extra_cr_in)
-    extra_cr_out = property(lambda self: self.svp64.extra_cr_out)
+    extra_idx_in1 = property(lambda self: self.svp64.extra_idx_in1)
+    extra_idx_in2 = property(lambda self: self.svp64.extra_idx_in2)
+    extra_idx_in3 = property(lambda self: self.svp64.extra_idx_in3)
+    extra_idx_out = property(lambda self: self.svp64.extra_idx_out)
+    extra_idx_out2 = property(lambda self: self.svp64.extra_idx_out2)
+    extra_idx_cr_in = property(lambda self: self.svp64.extra_idx_cr_in)
+    extra_idx_cr_out = property(lambda self: self.svp64.extra_idx_cr_out)
 
 
 class Instruction(_Mapping):
