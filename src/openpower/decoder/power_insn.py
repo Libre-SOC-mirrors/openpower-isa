@@ -611,6 +611,8 @@ class DynamicOperandReg(DynamicOperand):
                 else:
                     etype = repr(record.etype).lower()
                     yield f"{indent}{indent}{etype}{extra_idx!r}"
+                yield f"{indent}type"
+                yield f"{indent}{indent}{'vector' if vector else 'scalar'}"
         else:
             vector = "*" if vector else ""
             yield f"{vector}{prefix}{int(value)}"
