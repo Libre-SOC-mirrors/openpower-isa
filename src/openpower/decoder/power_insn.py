@@ -4,6 +4,7 @@ import dataclasses as _dataclasses
 import enum as _enum
 import functools as _functools
 import os as _os
+import operator as _operator
 import pathlib as _pathlib
 import re as _re
 
@@ -869,6 +870,50 @@ class Instruction(_Mapping):
             raise KeyError(self)
         return record
 
+    def spec(self, db, prefix):
+        record = self.record(db=db)
+
+        dynamic_operands = tuple(map(_operator.itemgetter(0),
+            self.dynamic_operands(db=db)))
+
+        static_operands = []
+        for (name, value) in self.static_operands(db=db):
+            static_operands.append(f"{name}={value}")
+
+        operands = ""
+        if dynamic_operands:
+            operands += f" {','.join(dynamic_operands)}"
+        if static_operands:
+            operands += f" ({' '.join(static_operands)})"
+
+        return f"{prefix}{record.name}{operands}"
+
+    def dynamic_operands(self, db):
+        record = self.record(db=db)
+
+        imm = False
+        imm_name = ""
+        imm_value = ""
+        for operand in record.operands.dynamic:
+            name = operand.name
+            value = " ".join(operand.disassemble(insn=self,
+                record=record, verbose=False))
+            if imm:
+                name = f"{imm_name}({name})"
+                value = f"{imm_value}({value})"
+                imm = False
+            if isinstance(operand, ImmediateOperand):
+                imm_name = name
+                imm_value = value
+                imm = True
+            if not imm:
+                yield (name, value)
+
+    def static_operands(self, db):
+        record = self.record(db=db)
+        for operand in record.operands.static:
+            yield (operand.name, operand.value)
+
     def disassemble(self, db, byteorder="little", verbose=False):
         raise NotImplementedError
 
@@ -889,33 +934,6 @@ class WordInstruction(Instruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
-    def spec(self, db):
-        record = self.record(db=db)
-
-        immediate = ""
-        dynamic_operands = []
-        for operand in record.operands.dynamic:
-            name = operand.name
-            if immediate:
-                name = f"{immediate}({name})"
-                immediate = ""
-            if isinstance(operand, ImmediateOperand):
-                immediate = operand.name
-            if not immediate:
-                dynamic_operands.append(name)
-
-        static_operands = []
-        for operand in record.operands.static:
-            static_operands.append(f"{operand.name}={operand.value}")
-
-        operands = ""
-        if dynamic_operands:
-            operands += f" {','.join(dynamic_operands)}"
-        if static_operands:
-            operands += f" ({' '.join(static_operands)})"
-
-        return f"{record.name}{operands}"
-
     def opcode(self, db):
         record = self.record(db=db)
         return f"0x{record.opcode.value:08x}"
@@ -934,23 +952,17 @@ class WordInstruction(Instruction):
             yield f"{blob}    .long 0x{integer:08x}"
             return
 
-        operands = []
-        for operand in record.operands.dynamic:
-            operand = " ".join(operand.disassemble(insn=self,
-                record=record, verbose=False))
-            operands.append(operand)
+        operands = tuple(map(_operator.itemgetter(1),
+            self.dynamic_operands(db=db)))
         if operands:
-            operands = ",".join(operands)
-            operands = f" {operands}"
+            yield f"{blob}    {record.name} {','.join(operands)}"
         else:
-            operands = ""
-
-        yield f"{blob}    {record.name}{operands}"
+            yield f"{blob}    {record.name}"
 
         if verbose:
             indent = (" " * 4)
             binary = self.binary
-            spec = self.spec(db=db)
+            spec = self.spec(db=db, prefix="")
             opcode = self.opcode(db=db)
             mask = self.mask(db=db)
             yield f"{indent}spec"
@@ -1257,9 +1269,6 @@ class SVP64Instruction(PrefixedInstruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
-    def spec(self, db):
-        return f"sv.{self.suffix.spec(db=db)}"
-
     def opcode(self, db):
         return self.suffix.opcode(db=db)
 
@@ -1395,18 +1404,12 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
             return
 
-        operands = []
-        for operand in record.operands.dynamic:
-            operand = " ".join(operand.disassemble(insn=self,
-                record=record, verbose=False))
-            operands.append(operand)
+        operands = tuple(map(_operator.itemgetter(1),
+            self.dynamic_operands(db=db)))
         if operands:
-            operands = ",".join(operands)
-            operands = f" {operands}"
+            yield f"{blob_prefix}    sv.{record.name} {','.join(operands)}"
         else:
-            operands = ""
-
-        yield f"{blob_prefix}    sv.{record.name}{operands}"
+            yield f"{blob_prefix}    {record.name}"
         yield f"{blob_suffix}"
 
         (mode, mode_desc) = self.mode(db=db)
@@ -1414,7 +1417,7 @@ class SVP64Instruction(PrefixedInstruction):
         if verbose:
             indent = (" " * 4)
             binary = self.binary
-            spec = self.spec(db=db)
+            spec = self.spec(db=db, prefix="sv.")
             opcode = self.opcode(db=db)
             mask = self.mask(db=db)
             yield f"{indent}spec"
