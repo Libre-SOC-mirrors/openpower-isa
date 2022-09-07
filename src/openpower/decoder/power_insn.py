@@ -504,21 +504,23 @@ class Fields:
 class Operand:
     name: str
 
-    def disassemble(self, insn, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False, indent=""):
         raise NotImplementedError
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
-    def disassemble(self, insn, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False, indent=""):
         span = record.fields[self.name]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbose:
-            yield f"{int(value):0{value.bits}b}"
-            yield repr(span)
+            span = map(str, span)
+            yield f"{indent}{self.name}"
+            yield f"{indent}{indent}{int(value):0{value.bits}b}"
+            yield f"{indent}{indent}{', '.join(span)}"
         else:
             yield str(int(value))
 
@@ -544,23 +546,38 @@ class DynamicOperandReg(DynamicOperand):
 
             if extra != 0:
                 vector = bool(extra[0])
-                span = (span + tuple(extra.__class__))
+                span = tuple(map(str, span))
+                extra_span = extra.__class__
                 if record.etype is _SVEtype.EXTRA3:
-                    extra = int(extra[1, 2])
+                    extra_span = tuple(map(str, extra_span[1, 2]))
+                    extra = extra[1, 2]
                 elif record.etype is _SVEtype.EXTRA2:
-                    extra = (int(extra[1]) << 1)
+                    extra_span = tuple(map(str, extra_span[1,]))
+                    extra = _SelectableInt(value=extra[1].value, bits=2)
+                    if vector:
+                        extra <<= 1
+                        extra_span = (extra_span + ("{0}",))
+                    else:
+                        extra_span = (("{0}",) + extra_span)
                 else:
                     raise ValueError(record.etype)
 
-                base = int(value)
+                bits = (len(span) + len(extra_span))
+                value = _SelectableInt(value=value.value, bits=bits)
+                extra = _SelectableInt(value=extra.value, bits=bits)
                 if vector:
-                    value = ((base << 2) | extra)
+                    value = ((value << 2) | extra)
+                    span = (span + extra_span)
                 else:
-                    value = ((extra << 5) | base)
-                value = _SelectableInt(value=value, bits=len(span))
+                    value = ((extra << 5) | value)
+                    span = (extra_span + span)
+
+                value = _SelectableInt(value=value, bits=bits)
 
         else:
             value = insn[span]
+
+        span = tuple(map(str, span))
 
         return (vector, value, span)
 
@@ -579,18 +596,20 @@ class DynamicOperandReg(DynamicOperand):
 
         return _SVExtra.NONE
 
-    def disassemble(self, insn, record, verbose=False, prefix=""):
+    def disassemble(self, insn, record, verbose=False, prefix="", indent=""):
         (vector, value, span) = self.spec(insn=insn, record=record)
+
         if verbose:
-            yield f"{int(value):0{value.bits}b}"
-            yield repr(span)
+            yield f"{indent}{self.name}"
+            yield f"{indent}{indent}{int(value):0{value.bits}b}"
+            yield f"{indent}{indent}{', '.join(span)}"
             if isinstance(insn, SVP64Instruction):
                 extra_idx = self.extra_idx(record)
                 if record.etype is _SVEtype.NONE:
-                    yield f"extra[none]"
+                    yield f"{indent}{indent}extra[none]"
                 else:
                     etype = repr(record.etype).lower()
-                    yield f"{etype}{extra_idx!r}"
+                    yield f"{indent}{indent}{etype}{extra_idx!r}"
         else:
             vector = "*" if vector else ""
             yield f"{vector}{prefix}{int(value)}"
@@ -605,80 +624,65 @@ class ImmediateOperand(DynamicOperand):
 class StaticOperand(Operand):
     value: int
 
-    def disassemble(self, insn, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False, indent=""):
         span = record.fields[self.name]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbose:
-            yield f"{int(value):0{value.bits}b}"
-            yield repr(span)
+            span = map(str, span)
+            yield f"{indent}{self.name}"
+            yield f"{indent}{indent}{int(value):0{value.bits}b}"
+            yield f"{indent}{indent}{', '.join(span)}"
         else:
             yield str(int(value))
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperandTargetAddrLI(DynamicOperandReg):
-    @property
-    def name(self):
-        return "LI"
-
-    @name.setter
-    def name(self, _):
-        pass
-
-    def disassemble(self, insn, record, verbose=False):
-        span = record.fields["LI"]
+class DynamicOperandTargetAddr(DynamicOperandReg):
+    def disassemble(self, insn, record, field, verbose=False, indent=""):
+        span = record.fields[field]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbose:
-            yield f"{int(value):0{value.bits}b}"
-            yield repr(span)
-            yield "target_addr = EXTS(LI || 0b00))"
+            span = tuple(map(str, span))
+            yield f"{indent}{self.name}"
+            yield f"{indent}{indent}{int(value):0{value.bits}b}00"
+            yield f"{indent}{indent}{', '.join(span + ('{0}', '{0}'))}"
+            yield f"{indent}{indent}target_addr = EXTS({field} || 0b00))"
         else:
             yield hex(int(_selectconcat(value,
                 _SelectableInt(value=0b00, bits=2))))
 
 
-class DynamicOperandTargetAddrBD(DynamicOperand):
-    @property
-    def name(self):
-        return "BD"
+@_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperandTargetAddrLI(DynamicOperandTargetAddr):
+    def disassemble(self, insn, record, verbose=False, indent=""):
+        return super().disassemble(field="LI",
+            insn=insn, record=record, verbose=verbose, indent=indent)
 
-    @name.setter
-    def name(self, _):
-        pass
 
-    def disassemble(self, insn, record, verbose=False):
-        span = record.fields["BD"]
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
-        value = insn[span]
-
-        if verbose:
-            yield f"{int(value):0{value.bits}b}"
-            yield repr(span)
-            yield "target_addr = EXTS(BD || 0b00))"
-        else:
-            yield hex(int(_selectconcat(value,
-                _SelectableInt(value=0b00, bits=2))))
+class DynamicOperandTargetAddrBD(DynamicOperandTargetAddr):
+    def disassemble(self, insn, record, verbose=False, indent=""):
+        return super().disassemble(field="BD",
+            insn=insn, record=record, verbose=verbose, indent=indent)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandGPR(DynamicOperandReg):
-    def disassemble(self, insn, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False, indent=""):
         yield from super().disassemble(prefix="r",
-            insn=insn, record=record, verbose=verbose)
+            insn=insn, record=record, verbose=verbose, indent=indent)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandFPR(DynamicOperandReg):
-    def disassemble(self, insn, record, verbose=False):
+    def disassemble(self, insn, record, verbose=False, indent=""):
         yield from super().disassemble(prefix="f",
-            insn=insn, record=record, verbose=verbose)
+            insn=insn, record=record, verbose=verbose, indent=indent)
 
 
 class Operands(tuple):
@@ -961,12 +965,8 @@ class WordInstruction(Instruction):
             yield f"{indent}mask"
             yield f"{indent}{indent}{mask}"
             for operand in record.operands:
-                name = operand.name
-                yield f"{indent}{name}"
-                parts = operand.disassemble(insn=self,
-                    record=record, verbose=True)
-                for part in parts:
-                    yield f"{indent}{indent}{part}"
+                yield from operand.disassemble(insn=self,
+                        record=record, verbose=True, indent=indent)
             yield ""
 
 
@@ -1433,12 +1433,8 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{indent}mask"
             yield f"{indent}{indent}{mask}"
             for operand in record.operands:
-                name = operand.name
-                yield f"{indent}{name}"
-                parts = operand.disassemble(insn=self,
-                    record=record, verbose=True)
-                for part in parts:
-                    yield f"{indent}{indent}{part}"
+                yield from operand.disassemble(insn=self,
+                        record=record, verbose=True, indent=indent)
 
             yield f"{indent}mode"
             yield f"{indent}{indent}{mode_desc}"
