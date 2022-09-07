@@ -78,6 +78,7 @@ class SVP64RM:
         for fname in os.listdir(pth):
             if fname.startswith("RM") or fname.startswith("LDSTRM"):
                 for entry in get_csv(fname):
+                    entry['insn'] = entry['insn'].split("=")[-1]
                     if microwatt_format:
                         # move RS from position 1 to position 3, to match
                         # microwatt decode1.vhdl format
@@ -93,6 +94,8 @@ class SVP64RM:
 
         # now add the RM fields (for each instruction)
         for entry in v30b:
+            # FP entries have a format NN/NN=insn
+            entry['comment'] = entry['comment'].split("=")[-1]
             # *sigh* create extra field "out2" based on LD/ST update
             # KEEP TRACK HERE https://bugs.libre-soc.org/show_bug.cgi?id=619
             entry['out2'] = 'NONE'
