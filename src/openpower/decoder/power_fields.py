@@ -183,118 +183,6 @@ class Field(Reference, metaclass=FieldMeta):
         return _selectconcat(*(self[bit] for bit in tuple(key)))
 
 
-class ArrayMeta(type):
-    def __new__(metacls, clsname, bases, ns, items=()):
-        assert "__members__" not in ns
-
-        members = []
-        for item in items:
-            if not (isinstance(item, type) and issubclass(item, Field)):
-                item = FieldMeta("Field", (Field,), {}, items=item)
-            members.append(item)
-
-        ns["__members__"] = tuple(members)
-
-        return super().__new__(metacls, clsname, bases, ns)
-
-    def __repr__(cls):
-        if not cls.__members__:
-            return cls.__name__
-        return f"{cls.__name__}{cls.__members__!r}"
-
-    def __iter__(cls):
-        yield from enumerate(cls.__members__)
-
-    def __len__(cls):
-        length = 0
-        for field in cls.__members__:
-            length += len(field)
-        return length
-
-    def __getitem__(cls, size):
-        clsname = f"{cls.__name__}[{size}]"
-        items = ((Field,) * size)
-        return ArrayMeta(clsname, (Array,), {}, items=items)
-
-    def remap(cls, scheme):
-        scheme_md = []
-        scheme_sd = []
-
-        for item in scheme:
-            if not isinstance(item, int):
-                scheme_md.append(item)
-            else:
-                scheme_sd.append(item)
-
-        if scheme_md and scheme_sd:
-            raise ValueError(scheme)
-
-        def remap_md(scheme):
-            scheme = cls.__class__(cls.__name__, (cls,), {}, items=scheme)
-            if len(cls) == 0:
-                if len(cls.__members__) != len(scheme.__members__):
-                    llen = f"len(scheme.__members__)"
-                    rlen = f"len({cls.__name__}.__members__)"
-                    raise RemapError(f"{llen} != {rlen}")
-                return scheme
-            elif len(scheme) != len(cls):
-                llen = f"len(scheme)"
-                rlen = f"len({cls.__name__})"
-                raise RemapError(f"{llen} != {rlen}")
-
-            items = []
-            for (idx, field) in enumerate(cls):
-                try:
-                    item = field.remap(scheme.__members__[idx])
-                except RemapError as error:
-                    raise RemapError(f"[{idx}]: {error}")
-                items.append(item)
-
-            return cls.__class__(cls.__name__, (cls,), {}, items=items)
-
-        def remap_sd(scheme):
-            items = tuple(item.remap(scheme) for item in cls.__members__)
-            return cls.__class__(cls.__name__, (cls,), {}, items=items)
-
-        if scheme_md:
-            return remap_md(scheme_md)
-        else:
-            return remap_sd(scheme_sd)
-
-    @property
-    def span(cls):
-        for field in cls.__members__:
-            yield from field.span
-
-    def traverse(cls, path=""):
-        for (idx, field) in cls:
-            yield from field.traverse(path=f"{path}[{idx}]")
-
-
-class Array(Reference, metaclass=ArrayMeta):
-    def __init__(self, storage):
-        members = []
-        for (idx, cls) in self.__class__:
-            members.append(cls(storage))
-
-        self.__members = tuple(members)
-
-        return super().__init__(storage)
-
-    def __repr__(self):
-        items = tuple(f"[{idx}]={field!r}" for (idx, field) in self)
-        return f"[{', '.join(items)}]"
-
-    def __iter__(self):
-        yield from enumerate(self.__members)
-
-    def __getitem__(self, key):
-        return self.__members[key]
-
-    def __setitem__(self, key, value):
-        self.__members[key].assign(value)
-
-
 class MappingMeta(type):
     def __new__(metacls, clsname, bases, ns):
         members = {}
@@ -305,7 +193,7 @@ class MappingMeta(type):
 
         for (name, cls) in ns.get("__annotations__", {}).items():
             if not (isinstance(cls, type) and
-                    issubclass(cls, (Mapping, Array, Field))):
+                    issubclass(cls, (Mapping, Field))):
                 raise ValueError(f"{clsname}.{name}: {cls!r}")
 
             if name in ns:
@@ -314,9 +202,8 @@ class MappingMeta(type):
                 except RemapError as error:
                     raise RemapError(f"{name}: {error}")
             else:
-                if cls in (Array, Field):
-                    raise ValueError(f"{clsname}.{name}: " + \
-                        "base class without initializer")
+                if cls is Field:
+                    raise ValueError(f"{clsname}.{name}: missing initializer")
                 members[name] = cls
 
         ns["__members__"] = members
