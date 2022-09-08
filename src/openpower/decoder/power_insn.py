@@ -541,6 +541,31 @@ class DynamicOperand(Operand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
+class ImmediateOperand(DynamicOperand):
+    pass
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class StaticOperand(Operand):
+    value: int
+
+    def disassemble(self, insn, record,
+            verbosity=Verbosity.NORMAL, indent=""):
+        span = record.fields[self.name]
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
+        value = insn[span]
+
+        if verbosity >= Verbosity.VERBOSE:
+            span = map(str, span)
+            yield f"{indent}{self.name}"
+            yield f"{indent}{indent}{int(value):0{value.bits}b}"
+            yield f"{indent}{indent}{', '.join(span)}"
+        else:
+            yield str(int(value))
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandReg(DynamicOperand):
     def spec(self, insn, record):
         vector = False
@@ -589,9 +614,6 @@ class DynamicOperandReg(DynamicOperand):
 
                 value = _SelectableInt(value=value, bits=bits)
 
-        else:
-            value = insn[span]
-
         span = tuple(map(str, span))
 
         return (vector, value, span)
@@ -633,29 +655,23 @@ class DynamicOperandReg(DynamicOperand):
             yield f"{vector}{prefix}{int(value)}"
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class ImmediateOperand(DynamicOperand):
-    pass
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class StaticOperand(Operand):
-    value: int
-
+class DynamicOperandGPR(DynamicOperandReg):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = record.fields[self.name]
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
-        value = insn[span]
+        prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
+        yield from super().disassemble(prefix=prefix,
+            insn=insn, record=record,
+            verbosity=verbosity, indent=indent)
 
-        if verbosity >= Verbosity.VERBOSE:
-            span = map(str, span)
-            yield f"{indent}{self.name}"
-            yield f"{indent}{indent}{int(value):0{value.bits}b}"
-            yield f"{indent}{indent}{', '.join(span)}"
-        else:
-            yield str(int(value))
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class DynamicOperandFPR(DynamicOperandReg):
+    def disassemble(self, insn, record,
+            verbosity=Verbosity.NORMAL, indent=""):
+        prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
+        yield from super().disassemble(prefix=prefix,
+            insn=insn, record=record,
+            verbosity=verbosity, indent=indent)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -691,26 +707,6 @@ class DynamicOperandTargetAddrBD(DynamicOperandTargetAddr):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         return super().disassemble(field="BD",
-            insn=insn, record=record,
-            verbosity=verbosity, indent=indent)
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperandGPR(DynamicOperandReg):
-    def disassemble(self, insn, record,
-            verbosity=Verbosity.NORMAL, indent=""):
-        prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
-        yield from super().disassemble(prefix=prefix,
-            insn=insn, record=record,
-            verbosity=verbosity, indent=indent)
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperandFPR(DynamicOperandReg):
-    def disassemble(self, insn, record,
-            verbosity=Verbosity.NORMAL, indent=""):
-        prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
-        yield from super().disassemble(prefix=prefix,
             insn=insn, record=record,
             verbosity=verbosity, indent=indent)
 
