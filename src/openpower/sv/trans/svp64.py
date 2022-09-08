@@ -197,11 +197,11 @@ def svshape2(fields):
 
     https://libre-soc.org/openpower/sv/remap/discussion
 
-    * svshape2 offs,yx,rmm,SVd,sk,mm
+    * svshape2 SVo,SVM2yx,rmm,SVd,sk,mm
 
     # 1.6.35.1 SVM2-FORM from fields.txt
-    # |0     |6     |10|11      |16    |21 |24|25 |26    |31  |
-    # | PO   | offs |yx|   rmm  | SVd  |XO |mm|sk |   XO      |
+    # |0     |6     |10   |11      |16    |21 |24|25 |26    |31  |
+    # | PO   | SVo  |SVMyx|   rmm  | SVd  |XO |mm|sk |   XO      |
 
     note that this fits into the space of svshape and that XO is
     split across 2 areas.

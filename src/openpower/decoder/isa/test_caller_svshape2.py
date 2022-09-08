@@ -1,5 +1,5 @@
 """SVP64 unit test for svshape2
-svshape2 offs,yx,rmm,SVd,sk,mm
+svshape2 SVo,yx,rmm,SVd,sk,mm
 """
 from nmigen import Module, Signal
 from nmigen.sim import Simulator, Delay, Settle

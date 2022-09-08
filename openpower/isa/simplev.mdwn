@@ -369,7 +369,7 @@ Special Registers Altered:
 
 SVM2-Form
 
-* svshape2 offs,yx,rmm,SVd,sk,mm
+* svshape2 SVo,SVM2yx,rmm,SVd,sk,mm
 
 Pseudo-code:
 

@@ -307,8 +307,8 @@
     | PO   |  SVxd   |   SVyd | SVzd | SVrm |vf |   XO      |
 
 # 1.6.35.1 SVM2-FORM
-    |0     |6     |10|11      |16    |21 |24|25 |26    |31  |
-    | PO   | offs |yx|   rmm  | SVd  |XO |mm|sk |   XO      |
+    |0     |6     |10   |11      |16    |21 |24|25 |26    |31  |
+    | PO   | SVo  |SVMyx|   rmm  | SVd  |XO |mm|sk |   XO      |
 
 # 1.6.36 SVRM-FORM
     |0     |6     |11  |13   |15   |17   |19   |21  |22   |26     |31 |
@@ -1043,6 +1043,6 @@
     yx (23)
         Field used to specify loop dimension order in svindex
         Formats: SVI
-    yx (10)
+    SVMyx (10)
         Field used to specify loop dimension order in svshape2
         Formats: SVM2
