@@ -658,8 +658,6 @@ class DynamicOperandGPRFPR(DynamicOperandReg):
                 value = ((spec << 5) | value)
                 span = (spec_span + span)
 
-            value = _SelectableInt(value=value, bits=bits)
-
             return (value, span)
 
         return super().spec(insn=insn, record=record, merge=merge)
