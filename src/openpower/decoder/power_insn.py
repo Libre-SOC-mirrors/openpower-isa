@@ -1226,11 +1226,11 @@ class LDSTIdxMode(Mode):
     prrc0: prrc0
 
 
-class ExtraSpec(_Mapping):
+class Extra(_Mapping):
     _: _Field = range(0, 9)
 
 
-class Extra2Spec(ExtraSpec):
+class Extra2(Extra):
     idx0: _Field = range(0, 2)
     idx1: _Field = range(2, 4)
     idx2: _Field = range(4, 6)
@@ -1252,7 +1252,7 @@ class Extra2Spec(ExtraSpec):
         self[key].assign(value)
 
 
-class Extra3Spec(ExtraSpec):
+class Extra3(Extra):
     idx0: _Field = range(0, 3)
     idx1: _Field = range(3, 6)
     idx2: _Field = range(6, 9)
@@ -1286,9 +1286,9 @@ class RM(_Mapping):
     mode: Mode.remap(range(19, 24))
     smask: _Field = range(16, 19)
 
-    extra: ExtraSpec.remap(range(10, 19))
-    extra2: Extra2Spec.remap(range(10, 19))
-    extra3: Extra3Spec.remap(range(10, 19))
+    extra: Extra.remap(range(10, 19))
+    extra2: Extra2.remap(range(10, 19))
+    extra3: Extra3.remap(range(10, 19))
 
 
 class SVP64Instruction(PrefixedInstruction):
