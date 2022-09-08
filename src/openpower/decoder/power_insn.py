@@ -567,7 +567,7 @@ class StaticOperand(Operand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandReg(DynamicOperand):
-    def spec(self, insn, record):
+    def spec(self, insn, record, merge):
         vector = False
         span = record.fields[self.name]
         if isinstance(insn, SVP64Instruction):
@@ -602,17 +602,7 @@ class DynamicOperandReg(DynamicOperand):
                 else:
                     raise ValueError(record.etype)
 
-                bits = (len(span) + len(spec_span))
-                value = _SelectableInt(value=value.value, bits=bits)
-                spec = _SelectableInt(value=spec.value, bits=bits)
-                if vector:
-                    value = ((value << 2) | spec)
-                    span = (span + spec_span)
-                else:
-                    value = ((spec << 5) | value)
-                    span = (spec_span + span)
-
-                value = _SelectableInt(value=value, bits=bits)
+                (value, span) = merge(vector, value, span, spec, spec_span)
 
         span = tuple(map(str, span))
 
@@ -655,7 +645,27 @@ class DynamicOperandReg(DynamicOperand):
             yield f"{vector}{prefix}{int(value)}"
 
 
-class DynamicOperandGPR(DynamicOperandReg):
+class DynamicOperandGPRFPR(DynamicOperandReg):
+    def spec(self, insn, record):
+        def merge(vector, value, span, spec, spec_span):
+            bits = (len(span) + len(spec_span))
+            value = _SelectableInt(value=value.value, bits=bits)
+            spec = _SelectableInt(value=spec.value, bits=bits)
+            if vector:
+                value = ((value << 2) | spec)
+                span = (span + spec_span)
+            else:
+                value = ((spec << 5) | value)
+                span = (spec_span + span)
+
+            value = _SelectableInt(value=value, bits=bits)
+
+            return (value, span)
+
+        return super().spec(insn=insn, record=record, merge=merge)
+
+
+class DynamicOperandGPR(DynamicOperandGPRFPR):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
@@ -665,7 +675,7 @@ class DynamicOperandGPR(DynamicOperandReg):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperandFPR(DynamicOperandReg):
+class DynamicOperandFPR(DynamicOperandGPRFPR):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
