@@ -301,7 +301,7 @@ Special Registers Altered:
 
 SVI-Form
 
-* svindex SVG,rmm,SVd,ew,yx,mm,sk
+* svindex SVG,rmm,SVd,ew,SVyx,mm,sk
 
 Pseudo-code:
 
@@ -314,7 +314,7 @@ Pseudo-code:
     # set up template, then copy once location identified
     shape <- [0]*32
     shape[30:31] <- 0b00            # mode
-    if yx = 0 then
+    if SVyx = 0 then
         shape[18:20] <- 0b110       # indexed xd/yd
         shape[0:5] <- (0b0 || SVd)  # xdim
         if sk = 0 then shape[6:11] <- 0 # ydim
@@ -369,7 +369,7 @@ Special Registers Altered:
 
 SVM2-Form
 
-* svshape2 SVo,SVM2yx,rmm,SVd,sk,mm
+* svshape2 SVo,SVyx,rmm,SVd,sk,mm
 
 Pseudo-code:
 
@@ -383,7 +383,7 @@ Pseudo-code:
     shape <- [0]*32
     shape[30:31] <- 0b00            # mode
     shape[0:5] <- (0b0 || SVd)      # x/ydim
-    if yx = 0 then
+    if SVyx = 0 then
         shape[18:20] <- 0b000       # ordering xd/yd(/zd)
         if sk = 0 then shape[6:11] <- 0 # ydim
         else           shape[6:11] <- 0b111111 # ydim max
@@ -392,7 +392,7 @@ Pseudo-code:
         if sk = 1 then shape[6:11] <- 0 # ydim
         else           shape[6:11] <- d-1 # ydim max
     # offset (the prime purpose of this instruction)
-    shape[24:27] <- offs        # offset
+    shape[24:27] <- SVo         # offset
     if sk = 1 then shape[28:29] <- 0b01 # skip 1st dimension
     else           shape[28:29] <- 0b00 # no skipping
     # select the mode for updating SVSHAPEs
