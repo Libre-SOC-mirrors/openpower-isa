@@ -883,8 +883,8 @@ class SVP64Asm:
             # encode SV-CR 3-bit field into extra, v3.0field.
             # 3-bit is for things like BF and BFA
             elif rtype == 'CR_3bit':
-                sv_extra, field = crf_extra(etype,
-                    rname, extra_idx, regmode, field, extras)
+                sv_extra, field = crf_extra(etype, rname, extra_idx,
+                                            regmode, field, extras)
 
             # encode SV-CR 5-bit field into extra, v3.0field
             # 5-bit is for things like BA BB BC BT etc.
@@ -894,8 +894,8 @@ class SVP64Asm:
                 cr_subfield = field & 0b11  # record bottom 2 bits for later
                 field = field >> 2         # strip bottom 2 bits
                 # use the exact same 3-bit function for the top 3 bits
-                sv_extra, field = crf_extra(etype,
-                    rname, extra_idx, regmode, field, extras)
+                sv_extra, field = crf_extra(etype, rname, extra_idx,
+                                            regmode, field, extras)
                 # reconstruct the actual 5-bit CR field (preserving the
                 # bottom 2 bits, unaltered)
                 field = (field << 2) | cr_subfield
