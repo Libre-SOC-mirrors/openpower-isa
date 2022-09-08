@@ -630,7 +630,7 @@ def decode_imm(field):
         return None, field
 
 
-def crf_extra(etype, regmode, field, extras):
+def crf_extra(etype, rname, extra_idx, regmode, field, extras):
     """takes a CR Field number (CR0-CR127), splits into EXTRA2/3 and v3.0
     the scalar/vector mode (crNN.v or crNN.s) changes both the format
     of the EXTRA2/3 encoding as well as what range of registers is possible.
@@ -883,7 +883,8 @@ class SVP64Asm:
             # encode SV-CR 3-bit field into extra, v3.0field.
             # 3-bit is for things like BF and BFA
             elif rtype == 'CR_3bit':
-                sv_extra, field = crf_extra(etype, regmode, field, extras)
+                sv_extra, field = crf_extra(etype,
+                    rname, extra_idx, regmode, field, extras)
 
             # encode SV-CR 5-bit field into extra, v3.0field
             # 5-bit is for things like BA BB BC BT etc.
@@ -893,7 +894,8 @@ class SVP64Asm:
                 cr_subfield = field & 0b11  # record bottom 2 bits for later
                 field = field >> 2         # strip bottom 2 bits
                 # use the exact same 3-bit function for the top 3 bits
-                sv_extra, field = crf_extra(etype, regmode, field, extras)
+                sv_extra, field = crf_extra(etype,
+                    rname, extra_idx, regmode, field, extras)
                 # reconstruct the actual 5-bit CR field (preserving the
                 # bottom 2 bits, unaltered)
                 field = (field << 2) | cr_subfield
