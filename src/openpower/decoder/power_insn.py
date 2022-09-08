@@ -578,39 +578,39 @@ class DynamicOperandReg(DynamicOperand):
             extra_idx = self.extra_idx(record=record)
 
             if record.etype is _SVEtype.EXTRA3:
-                extra = insn.prefix.rm.extra3[extra_idx]
+                spec = insn.prefix.rm.extra3[extra_idx]
             elif record.etype is _SVEtype.EXTRA2:
-                extra = insn.prefix.rm.extra2[extra_idx]
+                spec = insn.prefix.rm.extra2[extra_idx]
             else:
                 raise ValueError(record.etype)
 
-            if extra != 0:
-                vector = bool(extra[0])
+            if spec != 0:
+                vector = bool(spec[0])
                 span = tuple(map(str, span))
-                extra_span = extra.__class__
+                spec_span = spec.__class__
                 if record.etype is _SVEtype.EXTRA3:
-                    extra_span = tuple(map(str, extra_span[1, 2]))
-                    extra = extra[1, 2]
+                    spec_span = tuple(map(str, spec_span[1, 2]))
+                    spec = spec[1, 2]
                 elif record.etype is _SVEtype.EXTRA2:
-                    extra_span = tuple(map(str, extra_span[1,]))
-                    extra = _SelectableInt(value=extra[1].value, bits=2)
+                    spec_span = tuple(map(str, spec_span[1,]))
+                    spec = _SelectableInt(value=spec[1].value, bits=2)
                     if vector:
-                        extra <<= 1
-                        extra_span = (extra_span + ("{0}",))
+                        spec <<= 1
+                        spec_span = (spec_span + ("{0}",))
                     else:
-                        extra_span = (("{0}",) + extra_span)
+                        spec_span = (("{0}",) + spec_span)
                 else:
                     raise ValueError(record.etype)
 
-                bits = (len(span) + len(extra_span))
+                bits = (len(span) + len(spec_span))
                 value = _SelectableInt(value=value.value, bits=bits)
-                extra = _SelectableInt(value=extra.value, bits=bits)
+                spec = _SelectableInt(value=spec.value, bits=bits)
                 if vector:
-                    value = ((value << 2) | extra)
-                    span = (span + extra_span)
+                    value = ((value << 2) | spec)
+                    span = (span + spec_span)
                 else:
-                    value = ((extra << 5) | value)
-                    span = (extra_span + span)
+                    value = ((spec << 5) | value)
+                    span = (spec_span + span)
 
                 value = _SelectableInt(value=value, bits=bits)
 
