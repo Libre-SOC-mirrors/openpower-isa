@@ -685,6 +685,48 @@ class FPROperand(GPRFPROperand):
             verbosity=verbosity, indent=indent)
 
 
+class DynamicOperandCR(RegisterOperand):
+    def spec(self, insn, record):
+        def merge(vector, value, span, spec, spec_span):
+            bits = (len(span) + len(spec_span))
+            value = _SelectableInt(value=value.value, bits=bits)
+            spec = _SelectableInt(value=spec.value, bits=bits)
+            if vector:
+                dst_value = []
+                dst_span = []
+                table = (
+                    (value, span, (0, 1, 2)),
+                    (spec, spec_span, (0, 1)),
+                    (value, span, (3, 4)),
+                )
+            else:
+                dst_value = [
+                    _SelectableInt(value=0, bits=1),
+                    _SelectableInt(value=0, bits=1),
+                ]
+                dst_span = ["{0}", "{0}"]
+                table = (
+                    (spec, spec_span, (0, 1)),
+                    (value, span, (0, 1, 2, 3, 4)),
+                )
+
+            for (src_value, src_span, sel) in table:
+                for idx in sel:
+                    dst_value.append(src_value[idx])
+                    dst_span.append(src_span[idx])
+
+            value = _selectconcat(dst_value)
+            span = tuple(dst_span)
+
+            return (value, span)
+
+        return super().spec(insn=insn, record=record, merge=merge)
+
+    def disassemble(self, insn, record, verbose=False, indent=""):
+        yield from super().disassemble(prefix="cr",
+            insn=insn, record=record, verbose=verbose, indent=indent)
+
+
 class TargetAddrOperand(RegisterOperand):
     def disassemble(self, insn, record, field,
             verbosity=Verbosity.NORMAL, indent=""):
