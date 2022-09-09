@@ -3,6 +3,7 @@ import csv as _csv
 import dataclasses as _dataclasses
 import enum as _enum
 import functools as _functools
+import itertools as _itertools
 import os as _os
 import operator as _operator
 import pathlib as _pathlib
@@ -728,9 +729,43 @@ class DynamicOperandTargetAddrBD(DynamicOperandTargetAddr):
             verbosity=verbosity, indent=indent)
 
 
+class DynamicOperandDDX(DynamicOperand):
+    def span(self, record):
+        operands = map(DynamicOperand, ("d0", "d1", "d2"))
+        spans = map(lambda operand: operand.span(record=record), operands)
+        return _itertools.accumulate(spans)
+
+    def disassemble(self, insn, record,
+            verbosity=Verbosity.NORMAL, indent=""):
+        span = self.span(record=record)
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
+        value = insn[span]
+
+        if verbosity >= Verbosity.VERBOSE:
+            yield f"{indent}D"
+            mapping = {
+                "d0": "[0:9]",
+                "d1": "[10:15]",
+                "d2": "[16]",
+            }
+            for (subname, subspan) in mapping.items():
+                operand = DynamicOperand(name=subname)
+                span = operand.span(record=record)
+                if isinstance(insn, SVP64Instruction):
+                    span = tuple(map(lambda bit: (bit + 32), span))
+                value = insn[span]
+                span = map(str, span)
+                yield f"{indent}{indent}{operand.name} = D{subspan}"
+                yield f"{indent}{indent}{indent}{int(value):0{value.bits}b}"
+                yield f"{indent}{indent}{indent}{', '.join(span)}"
+        else:
+            yield str(int(value))
+
+
 class Operands(tuple):
     def __new__(cls, insn, iterable):
-        branches = {
+        custom = {
             "b": {"target_addr": DynamicOperandTargetAddrLI},
             "ba": {"target_addr": DynamicOperandTargetAddrLI},
             "bl": {"target_addr": DynamicOperandTargetAddrLI},
@@ -739,6 +774,9 @@ class Operands(tuple):
             "bca": {"target_addr": DynamicOperandTargetAddrBD},
             "bcl": {"target_addr": DynamicOperandTargetAddrBD},
             "bcla": {"target_addr": DynamicOperandTargetAddrBD},
+            "addpcis": {"D": DynamicOperandDDX},
+            "fishmv": {"D": DynamicOperandDDX},
+            "fmvis": {"D": DynamicOperandDDX},
         }
 
         operands = []
@@ -760,8 +798,8 @@ class Operands(tuple):
                 if immediate is not None:
                     operands.append(ImmediateOperand(name=immediate))
 
-                if insn in branches and operand in branches[insn]:
-                    dynamic_cls = branches[insn][operand]
+                if insn in custom and operand in custom[insn]:
+                    dynamic_cls = custom[insn][operand]
 
                 if operand in _RegType.__members__:
                     regtype = _RegType[operand]
