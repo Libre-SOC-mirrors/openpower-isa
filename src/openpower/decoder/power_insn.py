@@ -916,7 +916,7 @@ class Instruction(_Mapping):
         for operand in record.operands.static:
             yield (operand.name, operand.value)
 
-    def disassemble(self, db, byteorder="little", verbose=False):
+    def disassemble(self, db, byteorder="little", verbose=False, short=False):
         raise NotImplementedError
 
 
@@ -944,22 +944,26 @@ class WordInstruction(Instruction):
         record = self.record(db=db)
         return f"0x{record.opcode.mask:08x}"
 
-    def disassemble(self, db, byteorder="little", verbose=False):
+    def disassemble(self, db, byteorder="little", verbose=False, short=False):
         integer = int(self)
-        blob = integer.to_bytes(length=4, byteorder=byteorder)
-        blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
+        if short:
+            blob = ""
+        else:
+            blob = integer.to_bytes(length=4, byteorder=byteorder)
+            blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
+            blob += "    "
 
         record = self.record(db=db)
         if record is None:
-            yield f"{blob}    .long 0x{integer:08x}"
+            yield f"{blob}.long 0x{integer:08x}"
             return
 
         operands = tuple(map(_operator.itemgetter(1),
             self.dynamic_operands(db=db)))
         if operands:
-            yield f"{blob}    {record.name} {','.join(operands)}"
+            yield f"{blob}{record.name} {','.join(operands)}"
         else:
-            yield f"{blob}    {record.name}"
+            yield f"{blob}{record.name}"
 
         if verbose:
             indent = (" " * 4)
