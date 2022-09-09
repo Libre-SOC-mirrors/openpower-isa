@@ -24,6 +24,7 @@ class ByteOrder(_enum.Enum):
 
 def load(ifile, byteorder=ByteOrder.LITTLE, **_):
     byteorder = str(byteorder)
+    curpos = ifile.tell() # get file position
 
     while True:
         insn = ifile.read(4)
@@ -48,6 +49,8 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
             if insn.prefix.id != 0b11:
                 insn = _PrefixedInstruction.pair(prefix=prefix, suffix=suffix)
         yield insn
+
+    ifile.seek(curpos) # restore position so that generator can be reused
 
 
 def dump(insns, verbose, short=False, **_):
