@@ -156,23 +156,6 @@ class PatternOpcode(Opcode):
         return super().__init__(value=value, mask=mask)
 
 
-class FieldsOpcode(Opcode):
-    def __init__(self, fields):
-        def field(opcode, field):
-            (value, mask) = opcode
-            (field, bits) = field
-            shifts = map(lambda bit: (31 - bit), reversed(tuple(bits)))
-            for (index, shift) in enumerate(shifts):
-                bit = ((field & (1 << index)) != 0)
-                value |= (bit << shift)
-                mask |= (1 << shift)
-            return (value, mask)
-
-        (value, mask) = _functools.reduce(field, fields, (0, 0))
-
-        return super().__init__(value=value, mask=mask)
-
-
 @_dataclasses.dataclass(eq=True, frozen=True)
 class PPCRecord:
     class FlagsMeta(type):
@@ -437,6 +420,9 @@ class BitSel:
 
     def __iter__(self):
         yield from range(self.start, (self.end + 1))
+
+    def __reversed__(self):
+        return tuple(reversed(tuple(self)))
 
     @property
     def start(self):
@@ -733,7 +719,7 @@ class DynamicOperandDDX(DynamicOperand):
     def span(self, record):
         operands = map(DynamicOperand, ("d0", "d1", "d2"))
         spans = map(lambda operand: operand.span(record=record), operands)
-        return _itertools.accumulate(spans)
+        return sum(spans, tuple())
 
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
@@ -853,17 +839,38 @@ class Record:
 
     @cached_property
     def opcode(self):
-        fields = []
+        value = ([0] * 32)
+        mask = ([0] * 32)
+
         if self.section.opcode:
-            fields += [(self.section.opcode.value, BitSel((0, 5)))]
-            fields += [(self.ppc.opcode.value, self.section.bitsel)]
-        else:
-            fields += [(self.ppc.opcode.value, self.section.bitsel)]
+            for (src, dst) in enumerate(reversed(BitSel((0, 5)))):
+                value[dst] = ((self.section.opcode.value & (1 << src)) != 0)
+                mask[dst] = ((self.section.opcode.mask & (1 << src)) != 0)
+
+        for (src, dst) in enumerate(reversed(self.section.bitsel)):
+            value[dst] = ((self.ppc.opcode.value & (1 << src)) != 0)
+            mask[dst] = ((self.ppc.opcode.mask & (1 << src)) != 0)
 
         for operand in self.operands.static:
-            fields += [(operand.value, self.fields[operand.name])]
+            for (src, dst) in enumerate(reversed(operand.span(record=self))):
+                value[dst] = ((operand.value & (1 << src)) != 0)
+                mask[dst] = True
 
-        return FieldsOpcode(fields)
+        for operand in self.operands.dynamic:
+            for dst in operand.span(record=self):
+                value[dst] = False
+                mask[dst] = False
+
+        def onebit(bit):
+            return _SelectableInt(value=int(bit), bits=1)
+
+        value = _selectconcat(*map(onebit, value))
+        mask = _selectconcat(*map(onebit, mask))
+
+        value = int(value)
+        mask = int(mask)
+
+        return Opcode(value=value, mask=mask)
 
     @property
     def function(self):
@@ -1739,11 +1746,14 @@ class Database:
     def __getitem__(self, key):
         if isinstance(key, (int, Instruction)):
             key = int(key)
+            matches = []
             for record in self:
                 opcode = record.opcode
                 if ((opcode.value & opcode.mask) ==
                         (key & opcode.mask)):
-                    return record
+                    matches.append(record)
+            if matches:
+                return matches[-1]
             return None
         elif isinstance(key, Opcode):
             for record in self:
