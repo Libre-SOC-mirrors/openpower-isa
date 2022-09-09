@@ -553,7 +553,7 @@ class ImmediateOperand(DynamicOperand):
     pass
 
 
-class DynamicOperandReg(DynamicOperand):
+class RegisterOperand(DynamicOperand):
     def spec(self, insn, record, merge):
         vector = False
         span = self.span(record=record)
@@ -632,7 +632,7 @@ class DynamicOperandReg(DynamicOperand):
             yield f"{vector}{prefix}{int(value)}"
 
 
-class DynamicOperandGPRFPR(DynamicOperandReg):
+class GPRFPROperand(RegisterOperand):
     def spec(self, insn, record):
         def merge(vector, value, span, spec, spec_span):
             bits = (len(span) + len(spec_span))
@@ -650,7 +650,7 @@ class DynamicOperandGPRFPR(DynamicOperandReg):
         return super().spec(insn=insn, record=record, merge=merge)
 
 
-class DynamicOperandGPR(DynamicOperandGPRFPR):
+class GPROperand(GPRFPROperand):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
@@ -659,7 +659,7 @@ class DynamicOperandGPR(DynamicOperandGPRFPR):
             verbosity=verbosity, indent=indent)
 
 
-class DynamicOperandFPR(DynamicOperandGPRFPR):
+class FPROperand(GPRFPROperand):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
@@ -668,7 +668,7 @@ class DynamicOperandFPR(DynamicOperandGPRFPR):
             verbosity=verbosity, indent=indent)
 
 
-class DynamicOperandTargetAddr(DynamicOperandReg):
+class TargetAddrOperand(RegisterOperand):
     def disassemble(self, insn, record, field,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span(record=record)
@@ -687,7 +687,7 @@ class DynamicOperandTargetAddr(DynamicOperandReg):
                 _SelectableInt(value=0b00, bits=2))))
 
 
-class DynamicOperandTargetAddrLI(DynamicOperandTargetAddr):
+class TargetAddrOperandLI(TargetAddrOperand):
     def span(self, record):
         return record.fields["LI"]
 
@@ -698,7 +698,7 @@ class DynamicOperandTargetAddrLI(DynamicOperandTargetAddr):
             verbosity=verbosity, indent=indent)
 
 
-class DynamicOperandTargetAddrBD(DynamicOperandTargetAddr):
+class TargetAddrOperandBD(TargetAddrOperand):
     def span(self, record):
         return record.fields["BD"]
 
@@ -709,7 +709,7 @@ class DynamicOperandTargetAddrBD(DynamicOperandTargetAddr):
             verbosity=verbosity, indent=indent)
 
 
-class DynamicOperandDDX(DynamicOperand):
+class DOperandDX(DynamicOperand):
     def span(self, record):
         operands = map(DynamicOperand, ("d0", "d1", "d2"))
         spans = map(lambda operand: operand.span(record=record), operands)
@@ -746,17 +746,17 @@ class DynamicOperandDDX(DynamicOperand):
 class Operands(tuple):
     def __new__(cls, insn, iterable):
         custom = {
-            "b": {"target_addr": DynamicOperandTargetAddrLI},
-            "ba": {"target_addr": DynamicOperandTargetAddrLI},
-            "bl": {"target_addr": DynamicOperandTargetAddrLI},
-            "bla": {"target_addr": DynamicOperandTargetAddrLI},
-            "bc": {"target_addr": DynamicOperandTargetAddrBD},
-            "bca": {"target_addr": DynamicOperandTargetAddrBD},
-            "bcl": {"target_addr": DynamicOperandTargetAddrBD},
-            "bcla": {"target_addr": DynamicOperandTargetAddrBD},
-            "addpcis": {"D": DynamicOperandDDX},
-            "fishmv": {"D": DynamicOperandDDX},
-            "fmvis": {"D": DynamicOperandDDX},
+            "b": {"target_addr": TargetAddrOperandLI},
+            "ba": {"target_addr": TargetAddrOperandLI},
+            "bl": {"target_addr": TargetAddrOperandLI},
+            "bla": {"target_addr": TargetAddrOperandLI},
+            "bc": {"target_addr": TargetAddrOperandBD},
+            "bca": {"target_addr": TargetAddrOperandBD},
+            "bcl": {"target_addr": TargetAddrOperandBD},
+            "bcla": {"target_addr": TargetAddrOperandBD},
+            "addpcis": {"D": DOperandDX},
+            "fishmv": {"D": DOperandDX},
+            "fmvis": {"D": DOperandDX},
         }
 
         operands = []
@@ -784,9 +784,9 @@ class Operands(tuple):
                 if operand in _RegType.__members__:
                     regtype = _RegType[operand]
                     if regtype is _RegType.GPR:
-                        dynamic_cls = DynamicOperandGPR
+                        dynamic_cls = GPROperand
                     elif regtype is _RegType.FPR:
-                        dynamic_cls = DynamicOperandFPR
+                        dynamic_cls = FPROperand
 
                 operand = dynamic_cls(name=operand)
                 operands.append(operand)
