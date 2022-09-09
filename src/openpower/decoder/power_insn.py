@@ -512,7 +512,6 @@ class Operand:
         raise NotImplementedError
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
@@ -528,11 +527,6 @@ class DynamicOperand(Operand):
             yield f"{indent}{indent}{', '.join(span)}"
         else:
             yield str(int(value))
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class ImmediateOperand(DynamicOperand):
-    pass
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -555,7 +549,10 @@ class StaticOperand(Operand):
             yield str(int(value))
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
+class ImmediateOperand(DynamicOperand):
+    pass
+
+
 class DynamicOperandReg(DynamicOperand):
     def spec(self, insn, record, merge):
         vector = False
@@ -662,7 +659,6 @@ class DynamicOperandGPR(DynamicOperandGPRFPR):
             verbosity=verbosity, indent=indent)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandFPR(DynamicOperandGPRFPR):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
@@ -672,7 +668,6 @@ class DynamicOperandFPR(DynamicOperandGPRFPR):
             verbosity=verbosity, indent=indent)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandTargetAddr(DynamicOperandReg):
     def disassemble(self, insn, record, field,
             verbosity=Verbosity.NORMAL, indent=""):
@@ -692,7 +687,6 @@ class DynamicOperandTargetAddr(DynamicOperandReg):
                 _SelectableInt(value=0b00, bits=2))))
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandTargetAddrLI(DynamicOperandTargetAddr):
     def span(self, record):
         return record.fields["LI"]
