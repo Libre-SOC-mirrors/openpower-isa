@@ -22,7 +22,7 @@ class ByteOrder(_enum.Enum):
         return self.name.lower()
 
 
-def load(ifile, byteorder, **_):
+def load(ifile, byteorder=ByteOrder.LITTLE, **_):
     byteorder = str(byteorder)
 
     while True:
