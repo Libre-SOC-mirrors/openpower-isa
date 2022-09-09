@@ -553,6 +553,23 @@ class ImmediateOperand(DynamicOperand):
     pass
 
 
+class NonZeroOperand(DynamicOperand):
+    def disassemble(self, insn, record,
+            verbosity=Verbosity.NORMAL, indent=""):
+        span = self.span(record=record)
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
+        value = insn[span]
+
+        if verbosity >= Verbosity.VERBOSE:
+            span = map(str, span)
+            yield f"{indent}{self.name}"
+            yield f"{indent}{indent}{int(value):0{value.bits}b}"
+            yield f"{indent}{indent}{', '.join(span)}"
+        else:
+            yield str(int(value) + 1)
+
+
 class RegisterOperand(DynamicOperand):
     def spec(self, insn, record, merge):
         vector = False
@@ -745,7 +762,7 @@ class DOperandDX(DynamicOperand):
 
 class Operands(tuple):
     def __new__(cls, insn, iterable):
-        custom = {
+        custom_insns = {
             "b": {"target_addr": TargetAddrOperandLI},
             "ba": {"target_addr": TargetAddrOperandLI},
             "bl": {"target_addr": TargetAddrOperandLI},
@@ -757,6 +774,13 @@ class Operands(tuple):
             "addpcis": {"D": DOperandDX},
             "fishmv": {"D": DOperandDX},
             "fmvis": {"D": DOperandDX},
+        }
+        custom_fields = {
+            "SVi": NonZeroOperand,
+            "SVd": NonZeroOperand,
+            "SVxd": NonZeroOperand,
+            "SVyd": NonZeroOperand,
+            "SVzd": NonZeroOperand,
         }
 
         operands = []
@@ -778,8 +802,10 @@ class Operands(tuple):
                 if immediate is not None:
                     operands.append(ImmediateOperand(name=immediate))
 
-                if insn in custom and operand in custom[insn]:
-                    dynamic_cls = custom[insn][operand]
+                if insn in custom_insns and operand in custom_insns[insn]:
+                    dynamic_cls = custom_insns[insn][operand]
+                if operand in custom_fields:
+                    dynamic_cls = custom_fields[operand]
 
                 if operand in _RegType.__members__:
                     regtype = _RegType[operand]
