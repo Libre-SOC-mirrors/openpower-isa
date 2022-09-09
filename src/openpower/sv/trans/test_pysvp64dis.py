@@ -1,6 +1,7 @@
 from openpower.simulator.program import Program
 from openpower.sv.trans.pysvp64dis import load, dump
 from openpower.sv.trans.svp64 import SVP64Asm
+from openpower.decoder.power_insn import Verbosity
 import unittest
 import sys
 
@@ -39,7 +40,7 @@ class SVSTATETestCase(unittest.TestCase):
                 #print ("insn", insn)
             insns = list(insns)
             print ("insns", insns)
-            for i, line in enumerate(dump(insns, verbose=False, short=True)):
+            for i, line in enumerate(dump(insns, verbosity=Verbosity.SHORT)):
                 print("instruction", repr(line), repr(expected[i]))
                 self.assertEqual(expected[i], line,
                                  "instruction %i do not match "
