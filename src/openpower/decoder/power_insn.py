@@ -1510,7 +1510,8 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{blob_prefix}sv.{record.name} {','.join(operands)}"
         else:
             yield f"{blob_prefix}{record.name}"
-        yield f"{blob_suffix}"
+        if blob_suffix:
+            yield f"{blob_suffix}"
 
         (mode, mode_desc) = self.mode(db=db)
 
