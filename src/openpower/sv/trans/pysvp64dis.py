@@ -50,10 +50,10 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
         yield insn
 
 
-def dump(insns, verbose, **_):
+def dump(insns, verbose, short=False, **_):
     db = _Database(_find_wiki_dir())
     for insn in insns:
-        yield from insn.disassemble(db=db, verbose=verbose)
+        yield from insn.disassemble(db=db, verbose=verbose, short=short)
 
 
 # this is the entry-point for the console-script pysvp64dis
@@ -66,6 +66,8 @@ def main():
     parser.add_argument("-b", "--byteorder",
         type=ByteOrder, default=ByteOrder.LITTLE)
     parser.add_argument("-v", "--verbose",
+        action="store_true", default=False)
+    parser.add_argument("-s", "--short",
         action="store_true", default=False)
     parser.add_argument("-l", "--log",
         action="store_true", default=False)
