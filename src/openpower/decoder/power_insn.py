@@ -1043,7 +1043,7 @@ class WordInstruction(Instruction):
             blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
             blob += "    "
 
-        record = self.record(db=db)
+        record = db[self]
         if record is None:
             yield f"{blob}.long 0x{integer:08x}"
             return
@@ -1498,7 +1498,7 @@ class SVP64Instruction(PrefixedInstruction):
 
         blob_prefix = blob(int(self.prefix))
         blob_suffix = blob(int(self.suffix))
-        record = self.record(db=db)
+        record = db[self]
         if record is None or record.svp64 is None:
             yield f"{blob_prefix}.long 0x{int(self.prefix):08x}"
             yield f"{blob_suffix}.long 0x{int(self.suffix):08x}"
