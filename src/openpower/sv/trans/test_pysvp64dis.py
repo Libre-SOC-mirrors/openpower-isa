@@ -20,11 +20,13 @@ class SVSTATETestCase(unittest.TestCase):
                 #print ("insn", insn)
             insns = list(insns)
             print ("insns", insns)
-            for i, line in enumerate(dump(insns, verbose=False, short=True)):
-                print("instruction", repr(line), repr(expected[i]))
-                self.assertEqual(expected[i], line,
-                                 "instruction %i do not match "
-                                 "'%s' expected '%s'" % (i, line, expected[i]))
+            for i, line in enumerate(dump(insns, verbosity=Verbosity.SHORT)):
+                name = expected[i].split(" ")[0]
+                with self.subTest(name):
+                    print("instruction", repr(line), repr(expected[i]))
+                    self.assertEqual(expected[i], line,
+                                     "instruction does not match "
+                                     "'%s' expected '%s'" % (line, expected[i]))
 
     def test_1_svshape2(self):
         expected = [
@@ -41,10 +43,12 @@ class SVSTATETestCase(unittest.TestCase):
             insns = list(insns)
             print ("insns", insns)
             for i, line in enumerate(dump(insns, verbosity=Verbosity.SHORT)):
-                print("instruction", repr(line), repr(expected[i]))
-                self.assertEqual(expected[i], line,
-                                 "instruction %i do not match "
-                                 "'%s' expected '%s'" % (i, line, expected[i]))
+                name = expected[i].split(" ")[0]
+                with self.subTest(name):
+                    print("instruction", repr(line), repr(expected[i]))
+                    self.assertEqual(expected[i], line,
+                                     "instruction does not match "
+                                     "'%s' expected '%s'" % (line, expected[i]))
 
 if __name__ == "__main__":
     unittest.main()
