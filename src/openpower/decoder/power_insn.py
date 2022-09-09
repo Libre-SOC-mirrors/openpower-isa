@@ -517,6 +517,9 @@ class Fields:
 class Operand:
     name: str
 
+    def span(self, record):
+        return record.fields[self.name]
+
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         raise NotImplementedError
@@ -526,7 +529,7 @@ class Operand:
 class DynamicOperand(Operand):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = record.fields[self.name]
+        span = self.span(record=record)
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -551,7 +554,7 @@ class StaticOperand(Operand):
 
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = record.fields[self.name]
+        span = self.span(record=record)
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -569,7 +572,7 @@ class StaticOperand(Operand):
 class DynamicOperandReg(DynamicOperand):
     def spec(self, insn, record, merge):
         vector = False
-        span = record.fields[self.name]
+        span = self.span(record=record)
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -686,7 +689,7 @@ class DynamicOperandFPR(DynamicOperandGPRFPR):
 class DynamicOperandTargetAddr(DynamicOperandReg):
     def disassemble(self, insn, record, field,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = record.fields[field]
+        span = self.span(record=record)
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -704,6 +707,9 @@ class DynamicOperandTargetAddr(DynamicOperandReg):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandTargetAddrLI(DynamicOperandTargetAddr):
+    def span(self, record):
+        return record.fields["LI"]
+
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         return super().disassemble(field="LI",
@@ -712,6 +718,9 @@ class DynamicOperandTargetAddrLI(DynamicOperandTargetAddr):
 
 
 class DynamicOperandTargetAddrBD(DynamicOperandTargetAddr):
+    def span(self, record):
+        return record.fields["BD"]
+
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         return super().disassemble(field="BD",
