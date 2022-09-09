@@ -505,13 +505,13 @@ class Fields:
 class Operand:
     name: str
 
-    def disassemble(self, insn, record, verbose=False, indent=""):
+    def disassemble(self, insn, record, verbose=False, indent="", short=False):
         raise NotImplementedError
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
-    def disassemble(self, insn, record, verbose=False, indent=""):
+    def disassemble(self, insn, record, verbose=False, indent="", short=False):
         span = record.fields[self.name]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
@@ -597,7 +597,8 @@ class DynamicOperandReg(DynamicOperand):
 
         return _SVExtra.NONE
 
-    def disassemble(self, insn, record, verbose=False, prefix="", indent=""):
+    def disassemble(self, insn, record, verbose=False, prefix="", indent="",
+                                        short=False):
         (vector, value, span) = self.spec(insn=insn, record=record)
 
         if verbose:
@@ -627,7 +628,7 @@ class ImmediateOperand(DynamicOperand):
 class StaticOperand(Operand):
     value: int
 
-    def disassemble(self, insn, record, verbose=False, indent=""):
+    def disassemble(self, insn, record, verbose=False, indent="", short=False):
         span = record.fields[self.name]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
@@ -644,7 +645,8 @@ class StaticOperand(Operand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandTargetAddr(DynamicOperandReg):
-    def disassemble(self, insn, record, field, verbose=False, indent=""):
+    def disassemble(self, insn, record, field, verbose=False, indent="",
+                                               short=False):
         span = record.fields[field]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
@@ -663,29 +665,35 @@ class DynamicOperandTargetAddr(DynamicOperandReg):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandTargetAddrLI(DynamicOperandTargetAddr):
-    def disassemble(self, insn, record, verbose=False, indent=""):
+    def disassemble(self, insn, record, verbose=False, indent="", short=False):
         return super().disassemble(field="LI",
-            insn=insn, record=record, verbose=verbose, indent=indent)
+            insn=insn, record=record, verbose=verbose, indent=indent,
+            short=short)
 
 
 class DynamicOperandTargetAddrBD(DynamicOperandTargetAddr):
-    def disassemble(self, insn, record, verbose=False, indent=""):
+    def disassemble(self, insn, record, verbose=False, indent="", short=False):
         return super().disassemble(field="BD",
-            insn=insn, record=record, verbose=verbose, indent=indent)
+            insn=insn, record=record, verbose=verbose, indent=indent,
+            short=short)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandGPR(DynamicOperandReg):
-    def disassemble(self, insn, record, verbose=False, indent=""):
-        yield from super().disassemble(prefix="r",
-            insn=insn, record=record, verbose=verbose, indent=indent)
+    def disassemble(self, insn, record, verbose=False, indent="", short=False):
+        prefix = "" if short else "r"
+        yield from super().disassemble(prefix=prefix,
+            insn=insn, record=record, verbose=verbose, indent=indent,
+            short=short)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandFPR(DynamicOperandReg):
-    def disassemble(self, insn, record, verbose=False, indent=""):
-        yield from super().disassemble(prefix="f",
-            insn=insn, record=record, verbose=verbose, indent=indent)
+    def disassemble(self, insn, record, verbose=False, indent="", short=False):
+        prefix = "" if short else "f"
+        yield from super().disassemble(prefix=prefix,
+            insn=insn, record=record, verbose=verbose, indent=indent,
+            short=short)
 
 
 class Operands(tuple):
@@ -890,7 +898,7 @@ class Instruction(_Mapping):
 
         return f"{prefix}{record.name}{operands}"
 
-    def dynamic_operands(self, db):
+    def dynamic_operands(self, db, short=False):
         record = self.record(db=db)
 
         imm = False
@@ -899,7 +907,7 @@ class Instruction(_Mapping):
         for operand in record.operands.dynamic:
             name = operand.name
             value = " ".join(operand.disassemble(insn=self,
-                record=record, verbose=False))
+                record=record, verbose=False, short=short))
             if imm:
                 name = f"{imm_name}({name})"
                 value = f"{imm_value}({value})"
@@ -959,7 +967,7 @@ class WordInstruction(Instruction):
             return
 
         operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db)))
+            self.dynamic_operands(db=db, short=short)))
         if operands:
             yield f"{blob}{record.name} {','.join(operands)}"
         else:
@@ -984,7 +992,7 @@ class WordInstruction(Instruction):
             yield f"{indent}{indent}{mask}"
             for operand in record.operands:
                 yield from operand.disassemble(insn=self,
-                        record=record, verbose=True, indent=indent)
+                        record=record, verbose=True, indent=indent, short=short)
             yield ""
 
 
@@ -1395,7 +1403,7 @@ class SVP64Instruction(PrefixedInstruction):
 
         raise ValueError(self)
 
-    def disassemble(self, db, byteorder="little", verbose=False):
+    def disassemble(self, db, byteorder="little", verbose=False, short=False):
         integer_prefix = int(self.prefix)
         blob_prefix = integer_prefix.to_bytes(length=4, byteorder=byteorder)
         blob_prefix = " ".join(map(lambda byte: f"{byte:02x}", blob_prefix))
@@ -1411,7 +1419,7 @@ class SVP64Instruction(PrefixedInstruction):
             return
 
         operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db)))
+            self.dynamic_operands(db=db, short=short)))
         if operands:
             yield f"{blob_prefix}    sv.{record.name} {','.join(operands)}"
         else:
@@ -1443,7 +1451,7 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{indent}{indent}{mask}"
             for operand in record.operands:
                 yield from operand.disassemble(insn=self,
-                        record=record, verbose=True, indent=indent)
+                        record=record, verbose=True, indent=indent, short=short)
 
             yield f"{indent}mode"
             yield f"{indent}{indent}{mode_desc}"
