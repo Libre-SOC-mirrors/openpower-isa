@@ -47,6 +47,18 @@ from openpower.decoder.power_fields import (
 from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 
+@_functools.total_ordering
+class Verbosity(_enum.Enum):
+    SHORT = _enum.auto()
+    NORMAL = _enum.auto()
+    VERBOSE = _enum.auto()
+
+    def __lt__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        return (self.value < other.value)
+
+
 def dataclass(cls, record, keymap=None, typemap=None):
     if keymap is None:
         keymap = {}
@@ -506,20 +518,20 @@ class Operand:
     name: str
 
     def disassemble(self, insn, record,
-            short=False, verbose=False, indent=""):
+            verbosity=Verbosity.NORMAL, indent=""):
         raise NotImplementedError
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
     def disassemble(self, insn, record,
-            short=False, verbose=False, indent=""):
+            verbosity=Verbosity.NORMAL, indent=""):
         span = record.fields[self.name]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
-        if verbose:
+        if verbosity >= Verbosity.VERBOSE:
             span = map(str, span)
             yield f"{indent}{self.name}"
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
@@ -600,10 +612,10 @@ class DynamicOperandReg(DynamicOperand):
         return _SVExtra.NONE
 
     def disassemble(self, insn, record,
-            short=False, verbose=False, prefix="", indent=""):
+            verbosity=Verbosity.NORMAL, prefix="", indent=""):
         (vector, value, span) = self.spec(insn=insn, record=record)
 
-        if verbose:
+        if verbosity >= Verbosity.VERBOSE:
             yield f"{indent}{self.name}"
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
             yield f"{indent}{indent}{', '.join(span)}"
@@ -631,13 +643,13 @@ class StaticOperand(Operand):
     value: int
 
     def disassemble(self, insn, record,
-            short=False, verbose=False, indent=""):
+            verbosity=Verbosity.NORMAL, indent=""):
         span = record.fields[self.name]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
-        if verbose:
+        if verbosity >= Verbosity.VERBOSE:
             span = map(str, span)
             yield f"{indent}{self.name}"
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
@@ -649,13 +661,13 @@ class StaticOperand(Operand):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandTargetAddr(DynamicOperandReg):
     def disassemble(self, insn, record, field,
-            short=False, verbose=False, indent=""):
+            verbosity=Verbosity.NORMAL, indent=""):
         span = record.fields[field]
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
-        if verbose:
+        if verbosity >= Verbosity.VERBOSE:
             span = tuple(map(str, span))
             yield f"{indent}{self.name}"
             yield f"{indent}{indent}{int(value):0{value.bits}b}00"
@@ -669,38 +681,38 @@ class DynamicOperandTargetAddr(DynamicOperandReg):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandTargetAddrLI(DynamicOperandTargetAddr):
     def disassemble(self, insn, record,
-            short=False, verbose=False, indent=""):
+            verbosity=Verbosity.NORMAL, indent=""):
         return super().disassemble(field="LI",
             insn=insn, record=record,
-            short=short, verbose=verbose, indent=indent)
+            verbosity=verbosity, indent=indent)
 
 
 class DynamicOperandTargetAddrBD(DynamicOperandTargetAddr):
     def disassemble(self, insn, record,
-            short=False, verbose=False, indent=""):
+            verbosity=Verbosity.NORMAL, indent=""):
         return super().disassemble(field="BD",
             insn=insn, record=record,
-            short=short, verbose=verbose, indent=indent)
+            verbosity=verbosity, indent=indent)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandGPR(DynamicOperandReg):
     def disassemble(self, insn, record,
-            short=False, verbose=False, indent=""):
-        prefix = "" if short else "r"
+            verbosity=Verbosity.NORMAL, indent=""):
+        prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
         yield from super().disassemble(prefix=prefix,
             insn=insn, record=record,
-            short=short, verbose=verbose, indent=indent)
+            verbosity=verbosity, indent=indent)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperandFPR(DynamicOperandReg):
     def disassemble(self, insn, record,
-            short=False, verbose=False, indent=""):
-        prefix = "" if short else "f"
+            verbosity=Verbosity.NORMAL, indent=""):
+        prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
         yield from super().disassemble(prefix=prefix,
             insn=insn, record=record,
-            short=short, verbose=verbose, indent=indent)
+            verbosity=verbosity, indent=indent)
 
 
 class Operands(tuple):
@@ -905,7 +917,7 @@ class Instruction(_Mapping):
 
         return f"{prefix}{record.name}{operands}"
 
-    def dynamic_operands(self, db, short=False):
+    def dynamic_operands(self, db, verbosity=Verbosity.NORMAL):
         record = self.record(db=db)
 
         imm = False
@@ -914,7 +926,7 @@ class Instruction(_Mapping):
         for operand in record.operands.dynamic:
             name = operand.name
             dis = operand.disassemble(insn=self, record=record,
-                short=short, verbose=False)
+                verbosity=min(verbosity, Verbosity.NORMAL))
             value = " ".join(dis)
             if imm:
                 name = f"{imm_name}({name})"
@@ -932,8 +944,9 @@ class Instruction(_Mapping):
         for operand in record.operands.static:
             yield (operand.name, operand.value)
 
-    def disassemble(self, db, byteorder="little",
-            short=False, verbose=False):
+    def disassemble(self, db,
+            byteorder="little",
+            verbosity=Verbosity.NORMAL):
         raise NotImplementedError
 
 
@@ -961,10 +974,11 @@ class WordInstruction(Instruction):
         record = self.record(db=db)
         return f"0x{record.opcode.mask:08x}"
 
-    def disassemble(self, db, byteorder="little",
-            verbose=False, short=False):
+    def disassemble(self, db,
+            byteorder="little",
+            verbosity=Verbosity.NORMAL):
         integer = int(self)
-        if short:
+        if verbosity <= Verbosity.SHORT:
             blob = ""
         else:
             blob = integer.to_bytes(length=4, byteorder=byteorder)
@@ -977,13 +991,13 @@ class WordInstruction(Instruction):
             return
 
         operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db, short=short)))
+            self.dynamic_operands(db=db, verbosity=verbosity)))
         if operands:
             yield f"{blob}{record.name} {','.join(operands)}"
         else:
             yield f"{blob}{record.name}"
 
-        if verbose:
+        if verbosity >= Verbosity.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
             spec = self.spec(db=db, prefix="")
@@ -1002,7 +1016,7 @@ class WordInstruction(Instruction):
             yield f"{indent}{indent}{mask}"
             for operand in record.operands:
                 yield from operand.disassemble(insn=self, record=record,
-                    short=short, verbose=True, indent=indent)
+                    verbosity=verbosity, indent=indent)
             yield ""
 
 
@@ -1413,33 +1427,36 @@ class SVP64Instruction(PrefixedInstruction):
 
         raise ValueError(self)
 
-    def disassemble(self, db, byteorder="little",
-            short=False, verbose=False):
-        integer_prefix = int(self.prefix)
-        blob_prefix = integer_prefix.to_bytes(length=4, byteorder=byteorder)
-        blob_prefix = " ".join(map(lambda byte: f"{byte:02x}", blob_prefix))
+    def disassemble(self, db,
+            byteorder="little",
+            verbosity=Verbosity.NORMAL):
+        def blob(integer):
+            if verbosity <= Verbosity.SHORT:
+                return ""
+            else:
+                blob = integer.to_bytes(length=4, byteorder=byteorder)
+                blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
+                return f"{blob}    "
 
-        integer_suffix = int(self.suffix)
-        blob_suffix = integer_suffix.to_bytes(length=4, byteorder=byteorder)
-        blob_suffix = " ".join(map(lambda byte: f"{byte:02x}", blob_suffix))
-
+        blob_prefix = blob(int(self.prefix))
+        blob_suffix = blob(int(self.suffix))
         record = self.record(db=db)
         if record is None or record.svp64 is None:
-            yield f"{blob_prefix}    .long 0x{int(self.prefix):08x}"
-            yield f"{blob_suffix}    .long 0x{int(self.suffix):08x}"
+            yield f"{blob_prefix}.long 0x{int(self.prefix):08x}"
+            yield f"{blob_suffix}.long 0x{int(self.suffix):08x}"
             return
 
         operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db, short=short)))
+            self.dynamic_operands(db=db, verbosity=verbosity)))
         if operands:
-            yield f"{blob_prefix}    sv.{record.name} {','.join(operands)}"
+            yield f"{blob_prefix}sv.{record.name} {','.join(operands)}"
         else:
-            yield f"{blob_prefix}    {record.name}"
+            yield f"{blob_prefix}{record.name}"
         yield f"{blob_suffix}"
 
         (mode, mode_desc) = self.mode(db=db)
 
-        if verbose:
+        if verbosity >= Verbosity.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
             spec = self.spec(db=db, prefix="sv.")
@@ -1462,7 +1479,7 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{indent}{indent}{mask}"
             for operand in record.operands:
                 yield from operand.disassemble(insn=self, record=record,
-                    short=short, verbose=True, indent=indent)
+                    verbosity=verbosity, indent=indent)
 
             yield f"{indent}mode"
             yield f"{indent}{indent}{mode_desc}"
