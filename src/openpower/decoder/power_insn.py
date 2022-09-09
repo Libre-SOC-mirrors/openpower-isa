@@ -573,9 +573,12 @@ class DynamicOperandReg(DynamicOperand):
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
+        span = tuple(map(str, span))
 
         if isinstance(insn, SVP64Instruction):
             extra_idx = self.extra_idx(record=record)
+            if extra_idx is _SVExtra.NONE:
+                return (vector, value, span)
 
             if record.etype is _SVEtype.EXTRA3:
                 spec = insn.prefix.rm.extra3[extra_idx]
@@ -586,7 +589,6 @@ class DynamicOperandReg(DynamicOperand):
 
             if spec != 0:
                 vector = bool(spec[0])
-                span = tuple(map(str, span))
                 spec_span = spec.__class__
                 if record.etype is _SVEtype.EXTRA3:
                     spec_span = tuple(map(str, spec_span[1, 2]))
@@ -603,8 +605,6 @@ class DynamicOperandReg(DynamicOperand):
                     raise ValueError(record.etype)
 
                 (value, span) = merge(vector, value, span, spec, spec_span)
-
-        span = tuple(map(str, span))
 
         return (vector, value, span)
 
