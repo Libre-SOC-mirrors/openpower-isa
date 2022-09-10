@@ -40,9 +40,9 @@ class SVSTATETestCase(unittest.TestCase):
 
     def test_2_d_custom_op(self):
         expected = [
-                    'addpcis 12,5',
                     'fishmv 12,2',
                     'fmvis 12,97',
+                    'addpcis 12,5',
                         ]
         self._do_tst(expected)
 
