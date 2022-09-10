@@ -737,10 +737,10 @@ class TargetAddrOperand(RegisterOperand):
 
         if verbosity >= Verbosity.VERBOSE:
             span = tuple(map(str, span))
-            yield f"{indent}{self.name}"
-            yield f"{indent}{indent}{int(value):0{value.bits}b}00"
-            yield f"{indent}{indent}{', '.join(span + ('{0}', '{0}'))}"
-            yield f"{indent}{indent}target_addr = EXTS({field} || 0b00))"
+            yield f"{indent}{self.name} = EXTS({field} || 0b00))"
+            yield f"{indent}{indent}{field}"
+            yield f"{indent}{indent}{indent}{int(value):0{value.bits}b}00"
+            yield f"{indent}{indent}{indent}{', '.join(span + ('{0}', '{0}'))}"
         else:
             yield hex(int(_selectconcat(value,
                 _SelectableInt(value=0b00, bits=2))))
