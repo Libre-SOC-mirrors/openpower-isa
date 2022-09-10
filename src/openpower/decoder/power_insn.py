@@ -1783,11 +1783,7 @@ class PPCDatabase:
 
     def __getitem__(self, key):
         def exact_match(key, record):
-            for name in record.names:
-                if name == key:
-                    return True
-
-            return False
+            return (key in record.names)
 
         def Rc_match(key, record):
             if not key.endswith("."):
