@@ -884,6 +884,24 @@ class Operands(tuple):
                 yield operand
 
 
+class PCode:
+    def __init__(self, iterable):
+        self.__pcode = tuple(iterable)
+        return super().__init__()
+
+    def __iter__(self):
+        yield from self.__pcode
+
+    def __repr__(self):
+        return self.__pcode.__repr__()
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class MarkdownRecord:
+    pcode: PCode
+    operands: Operands
+
+
 @_functools.total_ordering
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Record:
@@ -891,7 +909,7 @@ class Record:
     section: Section
     ppc: PPCRecord
     fields: Fields
-    operands: Operands
+    mdwn: MarkdownRecord
     svp64: SVP64Record = None
 
     def __lt__(self, other):
@@ -913,12 +931,12 @@ class Record:
             value[dst] = ((self.ppc.opcode.value & (1 << src)) != 0)
             mask[dst] = ((self.ppc.opcode.mask & (1 << src)) != 0)
 
-        for operand in self.operands.static:
+        for operand in self.mdwn.operands.static:
             for (src, dst) in enumerate(reversed(operand.span(record=self))):
                 value[dst] = ((operand.value & (1 << src)) != 0)
                 mask[dst] = True
 
-        for operand in self.operands.dynamic:
+        for operand in self.mdwn.operands.dynamic:
             for dst in operand.span(record=self):
                 value[dst] = False
                 mask[dst] = False
@@ -1043,7 +1061,7 @@ class Instruction(_Mapping):
         imm = False
         imm_name = ""
         imm_value = ""
-        for operand in record.operands.dynamic:
+        for operand in record.mdwn.operands.dynamic:
             name = operand.name
             dis = operand.disassemble(insn=self, record=record,
                 verbosity=min(verbosity, Verbosity.NORMAL))
@@ -1061,7 +1079,7 @@ class Instruction(_Mapping):
 
     def static_operands(self, db):
         record = self.record(db=db)
-        for operand in record.operands.static:
+        for operand in record.mdwn.operands.static:
             yield (operand.name, operand.value)
 
     def disassemble(self, db,
@@ -1125,6 +1143,9 @@ class WordInstruction(Instruction):
             mask = self.mask(db=db)
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
+            yield f"{indent}pcode"
+            for stmt in record.mdwn.pcode:
+                yield f"{indent}{indent}{stmt}"
             yield f"{indent}binary"
             yield f"{indent}{indent}[0:8]   {binary[0:8]}"
             yield f"{indent}{indent}[8:16]  {binary[8:16]}"
@@ -1134,7 +1155,7 @@ class WordInstruction(Instruction):
             yield f"{indent}{indent}{opcode}"
             yield f"{indent}mask"
             yield f"{indent}{indent}{mask}"
-            for operand in record.operands:
+            for operand in record.mdwn.operands:
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
             yield ""
@@ -1437,7 +1458,7 @@ class SVP64Instruction(PrefixedInstruction):
         record = self.record(db=db)
 
         Rc = False
-        if record.operands["Rc"] is not None:
+        if record.mdwn.operands["Rc"] is not None:
             Rc = bool(self[record.fields["Rc"]])
 
         record = self.record(db=db)
@@ -1585,6 +1606,9 @@ class SVP64Instruction(PrefixedInstruction):
             mask = self.mask(db=db)
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
+            yield f"{indent}pcode"
+            for stmt in record.mdwn.pcode:
+                yield f"{indent}{indent}{stmt}"
             yield f"{indent}binary"
             yield f"{indent}{indent}[0:8]   {binary[0:8]}"
             yield f"{indent}{indent}[8:16]  {binary[8:16]}"
@@ -1598,7 +1622,7 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{indent}{indent}{opcode}"
             yield f"{indent}mask"
             yield f"{indent}{indent}{mask}"
-            for operand in record.operands:
+            for operand in record.mdwn.operands:
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
 
@@ -1626,8 +1650,12 @@ class MarkdownDatabase:
                 (dynamic, *static) = desc.regs
                 operands.extend(dynamic)
                 operands.extend(static)
-            db[name] = Operands(insn=name, iterable=operands)
+            pcode = PCode(iterable=desc.pcode)
+            operands = Operands(insn=name, iterable=operands)
+            db[name] = MarkdownRecord(pcode=pcode, operands=operands)
+
         self.__db = db
+
         return super().__init__()
 
     def __iter__(self):
@@ -1721,7 +1749,7 @@ class PPCDatabase:
             if record.intop not in {_MicrOp.OP_B, _MicrOp.OP_BC}:
                 return False
 
-            if self.__mdwndb[key]["AA"] is None:
+            if self.__mdwndb[key].operands["AA"] is None:
                 return False
 
             return (exact_match(key[:-1], record) or
@@ -1780,7 +1808,7 @@ class Database:
         svp64db = SVP64Database(root=root, ppcdb=ppcdb)
 
         db = set()
-        for (name, operands) in mdwndb:
+        for (name, mdwn) in mdwndb:
             (section, ppc) = ppcdb[name]
             if ppc is None:
                 continue
@@ -1788,7 +1816,7 @@ class Database:
             fields = fieldsdb[ppc.form]
             record = Record(name=name,
                 section=section, ppc=ppc, svp64=svp64,
-                operands=operands, fields=fields)
+                mdwn=mdwn, fields=fields)
             db.add(record)
 
         self.__db = tuple(sorted(db))
