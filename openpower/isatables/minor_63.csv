@@ -53,7 +53,7 @@ opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry ou
 1101101101,FPU,OP_FPOP,FRA,RB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,frootn,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1010001110,FPU,OP_FPOP,FRA,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fhypot,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1001001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,frsqrt,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-1011001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcbrt,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+1000001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fcbrt,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1010001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,frecip,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1100001100,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,fexp2m1,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1100001101,FPU,OP_FPOP,NONE,FRB,NONE,FRT,NONE,CR1,0,0,ZERO,0,NONE,0,0,0,0,1,0,RC_ONLY,0,0,flog2p1,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
