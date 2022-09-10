@@ -1391,7 +1391,7 @@ class SVP64Asm:
             opcode |= int(v30b_newfields[0]) << (32-11)  # FRT
             opcode |= int(v30b_newfields[1]) << (32-16)  # FRA
             opcode |= int(v30b_newfields[2]) << (32-21)  # FRB
-            opcode |= 0b1000001100 << (32-31)   # bits 21-30
+            opcode |= 0b1111100000 << (32-31)   # bits 21-30
             if rc:
                 opcode |= 1  # Rc, bit 31.
             yield ".long 0x%x" % opcode

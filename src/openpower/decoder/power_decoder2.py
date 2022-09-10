@@ -1037,7 +1037,7 @@ class PowerDecodeSubset(Elaboratable):
                 '-----00101',  # ffmadds
                 '-----00110',  # ffnmsubs
                 '-----00111',  # ffnmadds
-                '1000001100',  # ffadds
+                '1111100000',  # ffadds
                 '-----11011',  # fdmadds
             ))
 
