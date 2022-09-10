@@ -923,47 +923,44 @@ class Record:
     def __lt__(self, other):
         if not isinstance(other, Record):
             return NotImplemented
-        return (self.opcode < other.opcode)
+        return (min(self.opcodes) < min(other.opcodes))
 
-    @cached_property
-    def opcode(self):
-        value = ([0] * 32)
-        mask = ([0] * 32)
+    @property
+    def opcodes(self):
+        def opcode(ppc):
+            value = ([0] * 32)
+            mask = ([0] * 32)
 
-        if self.section.opcode:
-            for (src, dst) in enumerate(reversed(BitSel((0, 5)))):
-                value[dst] = ((self.section.opcode.value & (1 << src)) != 0)
-                mask[dst] = ((self.section.opcode.mask & (1 << src)) != 0)
+            PO = self.section.opcode
+            if PO is not None:
+                for (src, dst) in enumerate(reversed(BitSel((0, 5)))):
+                    value[dst] = int((PO.value & (1 << src)) != 0)
+                    mask[dst] = int((PO.mask & (1 << src)) != 0)
 
-        for (src, dst) in enumerate(reversed(self.section.bitsel)):
-            value[dst] = ((self.ppc.opcode.value & (1 << src)) != 0)
-            mask[dst] = ((self.ppc.opcode.mask & (1 << src)) != 0)
+            XO = ppc.opcode
+            for (src, dst) in enumerate(reversed(self.section.bitsel)):
+                value[dst] = int((XO.value & (1 << src)) != 0)
+                mask[dst] = int((XO.mask & (1 << src)) != 0)
 
-        for operand in self.mdwn.operands.static:
-            for (src, dst) in enumerate(reversed(operand.span(record=self))):
-                value[dst] = ((operand.value & (1 << src)) != 0)
-                mask[dst] = True
+            for operand in self.mdwn.operands.static:
+                for (src, dst) in enumerate(reversed(operand.span(record=self))):
+                    value[dst] = int((operand.value & (1 << src)) != 0)
+                    mask[dst] = 1
 
-        for operand in self.mdwn.operands.dynamic:
-            for dst in operand.span(record=self):
-                value[dst] = False
-                mask[dst] = False
+            value = int(("".join(map(str, value))), 2)
+            mask = int(("".join(map(str, mask))), 2)
 
-        def onebit(bit):
-            return _SelectableInt(value=int(bit), bits=1)
+            return Opcode(value=value, mask=mask)
 
-        value = _selectconcat(*map(onebit, value))
-        mask = _selectconcat(*map(onebit, mask))
+        for ppc in self.ppc:
+            yield opcode(ppc)
 
-        value = int(value)
-        mask = int(mask)
-
-        return Opcode(value=value, mask=mask)
-
-    def match(self, opcode):
-        value = self.opcode.value
-        mask = self.opcode.mask
-        return ((value & mask) == (opcode & mask))
+    def match(self, key):
+        for opcode in self.opcodes:
+            if ((opcode.value & opcode.mask) ==
+                    (key & opcode.mask)):
+                return True
+        return False
 
     @property
     def function(self):
@@ -1117,14 +1114,6 @@ class WordInstruction(Instruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
-    def opcode(self, db):
-        record = self.record(db=db)
-        return f"0x{record.opcode.value:08x}"
-
-    def mask(self, db):
-        record = self.record(db=db)
-        return f"0x{record.opcode.mask:08x}"
-
     def disassemble(self, db,
             byteorder="little",
             verbosity=Verbosity.NORMAL):
@@ -1152,8 +1141,6 @@ class WordInstruction(Instruction):
             indent = (" " * 4)
             binary = self.binary
             spec = self.spec(db=db, prefix="")
-            opcode = self.opcode(db=db)
-            mask = self.mask(db=db)
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
             yield f"{indent}pcode"
@@ -1164,10 +1151,9 @@ class WordInstruction(Instruction):
             yield f"{indent}{indent}[8:16]  {binary[8:16]}"
             yield f"{indent}{indent}[16:24] {binary[16:24]}"
             yield f"{indent}{indent}[24:32] {binary[24:32]}"
-            yield f"{indent}opcode"
-            yield f"{indent}{indent}{opcode}"
-            yield f"{indent}mask"
-            yield f"{indent}{indent}{mask}"
+            yield f"{indent}opcodes"
+            for opcode in record.opcodes:
+                yield f"{indent}{indent}{opcode.value!r}:{opcode.mask!r}"
             for operand in record.mdwn.operands:
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
@@ -1453,6 +1439,12 @@ class SVP64Instruction(PrefixedInstruction):
 
     prefix: Prefix
 
+    def record(self, db):
+        record = db[self.suffix]
+        if record is None:
+            raise KeyError(self)
+        return record
+
     @property
     def binary(self):
         bits = []
@@ -1460,12 +1452,6 @@ class SVP64Instruction(PrefixedInstruction):
             bit = int(self[idx])
             bits.append(bit)
         return "".join(map(str, bits))
-
-    def opcode(self, db):
-        return self.suffix.opcode(db=db)
-
-    def mask(self, db):
-        return self.suffix.mask(db=db)
 
     def mode(self, db):
         record = self.record(db=db)
@@ -1615,8 +1601,6 @@ class SVP64Instruction(PrefixedInstruction):
             indent = (" " * 4)
             binary = self.binary
             spec = self.spec(db=db, prefix="sv.")
-            opcode = self.opcode(db=db)
-            mask = self.mask(db=db)
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
             yield f"{indent}pcode"
@@ -1631,10 +1615,9 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{indent}{indent}[40:48] {binary[40:48]}"
             yield f"{indent}{indent}[48:56] {binary[48:56]}"
             yield f"{indent}{indent}[56:64] {binary[56:64]}"
-            yield f"{indent}opcode"
-            yield f"{indent}{indent}{opcode}"
-            yield f"{indent}mask"
-            yield f"{indent}{indent}{mask}"
+            yield f"{indent}opcodes"
+            for opcode in record.opcodes:
+                yield f"{indent}{indent}{opcode.value!r}:{opcode.mask!r}"
             for operand in record.mdwn.operands:
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
@@ -1851,17 +1834,17 @@ class Database:
         if isinstance(key, (int, Instruction)):
             key = int(key)
             for record in self:
-                opcode = record.opcode
-                if record.match(opcode=key):
+                if record.match(key=key):
                    return record
-            return None
 
         elif isinstance(key, Opcode):
             for record in self:
                 if record.opcode == key:
                     return record
+
         elif isinstance(key, str):
             for record in self:
                 if record.name == key:
                     return record
+
         return None
