@@ -1866,13 +1866,15 @@ class SVP64Database:
 class Database:
     def __init__(self, root):
         root = _pathlib.Path(root)
-
         mdwndb = MarkdownDatabase()
         fieldsdb = FieldsDatabase()
         ppcdb = PPCDatabase(root=root, mdwndb=mdwndb)
         svp64db = SVP64Database(root=root, ppcdb=ppcdb)
 
         db = set()
+        names = {}
+        opcodes = _collections.defaultdict(set)
+
         for (name, mdwn) in mdwndb:
             (section, ppc) = ppcdb[name]
             if ppc is None:
@@ -1883,8 +1885,15 @@ class Database:
                 section=section, ppc=ppc, svp64=svp64,
                 mdwn=mdwn, fields=fields)
             db.add(record)
+            names[record.name] = record
+            PO = section.opcode
+            if PO is None:
+                PO = ppc[0].opcode
+            opcodes[PO.value].add(record)
 
-        self.__db = tuple(sorted(db))
+        self.__db = db
+        self.__names = names
+        self.__opcodes = opcodes
 
         return super().__init__()
 
@@ -1902,18 +1911,12 @@ class Database:
     def __getitem__(self, key):
         if isinstance(key, (int, Instruction)):
             key = int(key)
-            for record in self:
+            XO = int(_SelectableInt(value=int(key), bits=32)[0:6])
+            for record in self.__opcodes[XO]:
                 if record.match(key=key):
                    return record
 
-        elif isinstance(key, Opcode):
-            for record in self:
-                if record.opcode == key:
-                    return record
-
         elif isinstance(key, str):
-            for record in self:
-                if record.name == key:
-                    return record
+            return record.__names[key]
 
         return None
