@@ -8,5 +8,5 @@ minor_22.csv,22,21:31,NONE,pattern
 minor_5.csv,5,21:31,NONE,pattern
 minor_63.csv,63,21:30,NONE,pattern
 minor_59.csv,59,21:30,NONE,pattern
-major.csv,0,0:5,NONE,integer
-extra.csv,0,0:31,NONE,pattern
+major.csv,NONE,0:5,NONE,integer
+extra.csv,NONE,0:31,NONE,pattern

@@ -95,6 +95,9 @@ class Opcode:
                 return f"0x{self:016x}"
 
     class Mask(int):
+        def bit_count(self):
+            return bin(self).count("1")
+
         def __repr__(self):
             if self.bit_length() <= 32:
                 return f"0x{self:08x}"
@@ -102,7 +105,7 @@ class Opcode:
                 return f"0x{self:016x}"
 
     value: Value
-    mask: Mask = None
+    mask: Mask
 
     def __lt__(self, other):
         if not isinstance(other, Opcode):
@@ -123,8 +126,6 @@ class Opcode:
 
         if not isinstance(value, int):
             raise ValueError(value)
-        if mask is None:
-            mask = value
         if not isinstance(mask, int):
             raise ValueError(mask)
 
@@ -134,9 +135,13 @@ class Opcode:
 
 class IntegerOpcode(Opcode):
     def __init__(self, value):
-        if isinstance(value, str):
-            value = int(value, 0)
-        return super().__init__(value=value, mask=None)
+        if value.startswith("0b"):
+           mask = int(("1" * len(value[2:])), 2)
+        else:
+            mask = 0b111111
+        value = int(value, 0)
+
+        return super().__init__(value=value, mask=mask)
 
 
 class PatternOpcode(Opcode):
@@ -213,7 +218,7 @@ class PPCRecord:
     }
 
     @classmethod
-    def CSV(cls, record, opcode_cls=Opcode):
+    def CSV(cls, record, opcode_cls):
         typemap = {field.name:field.type for field in _dataclasses.fields(cls)}
         typemap["opcode"] = opcode_cls
 
@@ -256,7 +261,7 @@ class PPCMultiRecord(frozenset):
                 value |= (vstate << bit)
                 mask |= (mstate << bit)
 
-            opcode = opcode=Opcode(value=value, mask=mask)
+            opcode = Opcode(value=value, mask=mask)
 
             return _dataclasses.replace(lhs, opcode=opcode)
 
@@ -464,14 +469,18 @@ class Section:
             return (bin(self) if self else "None")
 
     path: _pathlib.Path
-    opcode: Opcode
     bitsel: BitSel
     suffix: Suffix
     mode: Mode
+    opcode: IntegerOpcode = None
 
     @classmethod
     def CSV(cls, record):
-        return dataclass(cls, record)
+        typemap = {field.name:field.type for field in _dataclasses.fields(cls)}
+        if record["opcode"] == "NONE":
+            typemap["opcode"] = lambda _: None
+
+        return dataclass(cls, record, typemap=typemap)
 
 
 class Fields:
@@ -950,6 +959,11 @@ class Record:
         mask = int(mask)
 
         return Opcode(value=value, mask=mask)
+
+    def match(self, opcode):
+        value = self.opcode.value
+        mask = self.opcode.mask
+        return ((value & mask) == (opcode & mask))
 
     @property
     def function(self):
@@ -1836,15 +1850,12 @@ class Database:
     def __getitem__(self, key):
         if isinstance(key, (int, Instruction)):
             key = int(key)
-            matches = []
             for record in self:
                 opcode = record.opcode
-                if ((opcode.value & opcode.mask) ==
-                        (key & opcode.mask)):
-                    matches.append(record)
-            if matches:
-                return matches[-1]
+                if record.match(opcode=key):
+                   return record
             return None
+
         elif isinstance(key, Opcode):
             for record in self:
                 if record.opcode == key:
