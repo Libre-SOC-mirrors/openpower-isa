@@ -87,22 +87,34 @@ def dataclass(cls, record, keymap=None, typemap=None):
 @_functools.total_ordering
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Opcode:
-    class Value(int):
-        def __repr__(self):
-            if self.bit_length() <= 32:
-                return f"0x{self:08x}"
-            else:
-                return f"0x{self:016x}"
+    class Integer(int):
+        def __new__(cls, value):
+            if isinstance(value, str):
+                value = int(value, 0)
+            if not isinstance(value, int):
+                raise ValueError(value)
 
-    class Mask(int):
-        def bit_count(self):
-            return bin(self).count("1")
+            if value.bit_length() > 64:
+                raise ValueError(value)
+
+            return super().__new__(cls, value)
+
+        def __str__(self):
+            return super().__repr__()
 
         def __repr__(self):
-            if self.bit_length() <= 32:
-                return f"0x{self:08x}"
-            else:
-                return f"0x{self:016x}"
+            return f"{self:0{self.bit_length()}b}"
+
+        def bit_length(self):
+            if super().bit_length() > 32:
+                return 64
+            return 32
+
+    class Value(Integer):
+        pass
+
+    class Mask(Integer):
+        pass
 
     value: Value
     mask: Mask
@@ -113,24 +125,20 @@ class Opcode:
         return ((self.value, self.mask) < (other.value, other.mask))
 
     def __post_init__(self):
-        (value, mask) = (self.value, self.mask)
+        if self.value.bit_length() != self.mask.bit_length():
+            raise ValueError("bit length mismatch")
 
-        if isinstance(value, Opcode):
-            if mask is not None:
-                raise ValueError(mask)
-            (value, mask) = (value.value, value.mask)
-        elif isinstance(value, str):
-            if mask is not None:
-                raise ValueError(mask)
-            value = int(value, 0)
+    def __repr__(self):
+        def pattern(value, mask, bit_length):
+            for bit in range(bit_length):
+                if ((mask & (1 << (bit_length - bit - 1))) == 0):
+                    yield "-"
+                elif (value & (1 << (bit_length - bit - 1))):
+                    yield "1"
+                else:
+                    yield "0"
 
-        if not isinstance(value, int):
-            raise ValueError(value)
-        if not isinstance(mask, int):
-            raise ValueError(mask)
-
-        object.__setattr__(self, "value", self.__class__.Value(value))
-        object.__setattr__(self, "mask", self.__class__.Mask(mask))
+        return "".join(pattern(self.value, self.mask, self.value.bit_length()))
 
 
 class IntegerOpcode(Opcode):
@@ -139,15 +147,19 @@ class IntegerOpcode(Opcode):
            mask = int(("1" * len(value[2:])), 2)
         else:
             mask = 0b111111
-        value = int(value, 0)
+
+        value = Opcode.Value(value)
+        mask = Opcode.Mask(mask)
 
         return super().__init__(value=value, mask=mask)
 
 
 class PatternOpcode(Opcode):
-    def __init__(self, value):
-        (pattern, value, mask) = (value, 0, 0)
+    def __init__(self, pattern):
+        if not isinstance(pattern, str):
+            raise ValueError(pattern)
 
+        (value, mask) = (0, 0)
         for symbol in pattern:
             if symbol not in {"0", "1", "-"}:
                 raise ValueError(pattern)
@@ -157,6 +169,9 @@ class PatternOpcode(Opcode):
             mask <<= 1
         value >>= 1
         mask >>= 1
+
+        value = Opcode.Value(value)
+        mask = Opcode.Mask(mask)
 
         return super().__init__(value=value, mask=mask)
 
@@ -237,38 +252,11 @@ class PPCRecord:
         return frozenset(self.comment.split("=")[-1].split("/"))
 
 
-class PPCMultiRecord(frozenset):
-    @cached_property
-    def unified(self):
-        def merge(lhs, rhs):
-            value = 0
-            mask = 0
-            lvalue = lhs.opcode.value
-            rvalue = rhs.opcode.value
-            lmask = lhs.opcode.mask
-            rmask = rhs.opcode.mask
-            bits = max(lmask.bit_length(), rmask.bit_length())
-            for bit in range(bits):
-                lvstate = ((lvalue & (1 << bit)) != 0)
-                rvstate = ((rvalue & (1 << bit)) != 0)
-                lmstate = ((lmask & (1 << bit)) != 0)
-                rmstate = ((rmask & (1 << bit)) != 0)
-                vstate = lvstate
-                mstate = True
-                if (not lmstate or not rmstate) or (lvstate != rvstate):
-                    vstate = 0
-                    mstate = 0
-                value |= (vstate << bit)
-                mask |= (mstate << bit)
-
-            opcode = Opcode(value=value, mask=mask)
-
-            return _dataclasses.replace(lhs, opcode=opcode)
-
-        return _functools.reduce(merge, self)
-
+class PPCMultiRecord(tuple):
     def __getattr__(self, attr):
-        return getattr(self.unified, attr)
+        if attr == "opcode":
+            raise AttributeError(attr)
+        return getattr(self[0], attr)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -947,13 +935,12 @@ class Record:
                     value[dst] = int((operand.value & (1 << src)) != 0)
                     mask[dst] = 1
 
-            value = int(("".join(map(str, value))), 2)
-            mask = int(("".join(map(str, mask))), 2)
+            value = Opcode.Value(int(("".join(map(str, value))), 2))
+            mask = Opcode.Mask(int(("".join(map(str, mask))), 2))
 
             return Opcode(value=value, mask=mask)
 
-        for ppc in self.ppc:
-            yield opcode(ppc)
+        return tuple(sorted(map(opcode, self.ppc)))
 
     def match(self, key):
         for opcode in self.opcodes:
@@ -1153,7 +1140,7 @@ class WordInstruction(Instruction):
             yield f"{indent}{indent}[24:32] {binary[24:32]}"
             yield f"{indent}opcodes"
             for opcode in record.opcodes:
-                yield f"{indent}{indent}{opcode.value!r}:{opcode.mask!r}"
+                yield f"{indent}{indent}{opcode!r}"
             for operand in record.mdwn.operands:
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
@@ -1617,7 +1604,7 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{indent}{indent}[56:64] {binary[56:64]}"
             yield f"{indent}opcodes"
             for opcode in record.opcodes:
-                yield f"{indent}{indent}{opcode.value!r}:{opcode.mask!r}"
+                yield f"{indent}{indent}{opcode!r}"
             for operand in record.mdwn.operands:
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
