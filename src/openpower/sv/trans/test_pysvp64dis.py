@@ -46,6 +46,15 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_3_sv_isel(self):
+        expected = [
+                    'sv.isel 12,2,3,33',
+                    'sv.isel 12,2,3,*33',
+                    'sv.isel 12,2,3,*483',
+                    'sv.isel 12,2,3,63',
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
