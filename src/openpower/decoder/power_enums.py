@@ -720,6 +720,12 @@ class CRInSel(Enum):
     BC = 5
     WHOLE_REG = 6
     CR1 = 7
+    BA = 8
+
+@unique
+class CRIn2Sel(Enum):
+    NONE = 0
+    BB = 1
 
 
 @unique
