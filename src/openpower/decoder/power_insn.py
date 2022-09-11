@@ -1817,6 +1817,6 @@ class Database:
                    return record
 
         elif isinstance(key, str):
-            return record.__names[key]
+            return self.__names[key]
 
         return None
