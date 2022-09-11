@@ -52,6 +52,7 @@ class SVSTATETestCase(unittest.TestCase):
                     'sv.isel 12,2,3,*33',
                     'sv.isel 12,2,3,*483',
                     'sv.isel 12,2,3,63',
+                    'sv.isel 12,2,3,*99',
                         ]
         self._do_tst(expected)
 
