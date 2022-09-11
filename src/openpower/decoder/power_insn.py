@@ -568,7 +568,13 @@ class NonZeroOperand(DynamicOperand):
 
 
 class RegisterOperand(DynamicOperand):
-    def spec(self, insn, record, merge):
+    def sv_spec_enter(self, value, span):
+        return (value, span)
+
+    def sv_spec_leave(self, value, span, origin_value, origin_span):
+        return (value, span)
+
+    def spec(self, insn, record):
         vector = False
         span = self.span(record=record)
         if isinstance(insn, SVP64Instruction):
@@ -577,6 +583,9 @@ class RegisterOperand(DynamicOperand):
         span = tuple(map(str, span))
 
         if isinstance(insn, SVP64Instruction):
+            (origin_value, origin_span) = (value, span)
+            (value, span) = self.sv_spec_enter(value=value, span=span)
+
             extra_idx = self.extra_idx(record=record)
             if extra_idx is _SVExtra.NONE:
                 return (vector, value, span)
@@ -605,7 +614,22 @@ class RegisterOperand(DynamicOperand):
                 else:
                     raise ValueError(record.etype)
 
-                (value, span) = merge(vector, value, span, spec, spec_span)
+                vector_shift = (2 + (5 - value.bits))
+                scalar_shift = value.bits
+                spec_shift = (5 - value.bits)
+
+                bits = (len(span) + len(spec_span))
+                value = _SelectableInt(value=value.value, bits=bits)
+                spec = _SelectableInt(value=spec.value, bits=bits)
+                if vector:
+                    value = ((value << vector_shift) | (spec << spec_shift))
+                    span = (span + spec_span + ((spec_shift * ('{0}',))))
+                else:
+                    value = ((spec << scalar_shift) | value)
+                    span = ((spec_shift * ('{0}',)) + spec_span + span)
+
+                (value, span) = self.sv_spec_leave(value=value, span=span,
+                    origin_value=origin_value, origin_span=origin_span)
 
         return (vector, value, span)
 
@@ -645,30 +669,7 @@ class RegisterOperand(DynamicOperand):
             yield f"{vector}{prefix}{int(value)}"
 
 
-class GPRFPROperand(RegisterOperand):
-    def spec(self, insn, record):
-        def merge(vector, value, span, spec, spec_span):
-            bits = (len(span) + len(spec_span))
-            value = _SelectableInt(value=value.value, bits=bits)
-            spec = _SelectableInt(value=spec.value, bits=bits)
-            # this is silly these should be in a general base class,
-            # settable by constructor
-            vshift = 2
-            sshift = 5
-            spshft = 0
-            if vector:
-                value = ((value << vshift) | (spec<<spshft))
-                span = (span + spec_span)
-            else:
-                value = ((spec << sshift) | value)
-                span = (spec_span + span)
-
-            return (value, span)
-
-        return super().spec(insn=insn, record=record, merge=merge)
-
-
-class GPROperand(GPRFPROperand):
+class GPROperand(RegisterOperand):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
@@ -677,7 +678,7 @@ class GPROperand(GPRFPROperand):
             verbosity=verbosity, indent=indent)
 
 
-class FPROperand(GPRFPROperand):
+class FPROperand(RegisterOperand):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
@@ -687,118 +688,18 @@ class FPROperand(GPRFPROperand):
 
 
 class CR3Operand(RegisterOperand):
-    def spec(self, insn, record):
-        def merge(vector, value, span, spec, spec_span):
-            bits = (len(span) + len(spec_span))
-            #print ("value", bin(value.value), value.bits)
-            value = _SelectableInt(value=value.value, bits=bits)
-            spec = _SelectableInt(value=spec.value, bits=bits)
-            #print ("spec", bin(spec.value), spec.bits)
-            #print ("value", bin(value.value), value.bits)
-            #print ("lsbs", bin(lsbs.value), lsbs.bits)
-            # this is silly these should be in a general base class,
-            # settable by constructor
-            vshift = 4
-            sshift = 3
-            spshft = 2
-            lsbshf = 0
-            if vector:
-                value = ((value << vshift) | (spec<<spshft))
-                span = (span[0:3] + spec_span + ('{0}', '{0}') + span[3:5])
-            else:
-                value = ((spec << sshift) | value)
-                span = (('{0}', '{0}') + spec_span + span)
-
-            # add the 2 LSBs back in
-            #print ("after", bin(value.value), value.bits)
-            return (value, span)
-
-        return super().spec(insn=insn, record=record, merge=merge)
+    pass
 
 
-# exactly the same as CR3Operand, should be exactly the same base class
-# which should also be exactly the same base class as GPR and FPR operand
-# which sohuld be taking a constructor with prefix "r" and "f" as options
-# as well as vshift, sshift and spsft as parameters, and whether
-# to skip 2 LSBs and put them back on afterwards.
-# it's all the exact same scheme, so why on earth duplicate code?
 class CR5Operand(RegisterOperand):
-    def spec(self, insn, record):
-        def merge(vector, value, span, spec, spec_span):
-            # this is silly these should be in a general base class,
-            # settable by constructor
-            sshift = 3 # len(value) aka value.bits
-            vshift = 4 # 7-sshift
-            spshft = 2 # 5-sshift
-            lsbshf = 2 # has to be set as a parameter
-            lsbmsk = (1<<lsbshf)-1
-            # record the 2 lsbs first
-            lsbs = _SelectableInt(value=value.value&(lsbmsk), bits=lsbshf)
-            bits = (len(span) + len(spec_span))
-            #print ("value", bin(value.value), value.bits)
-            value = _SelectableInt(value=value.value>>lsbshf, bits=bits)
-            spec = _SelectableInt(value=spec.value, bits=bits)
-            #print ("spec", bin(spec.value), spec.bits)
-            #print ("value", bin(value.value), value.bits)
-            #print ("lsbs", bin(lsbs.value), lsbs.bits)
-            if vector:
-                value = ((value << vshift) | (spec<<spshft))
-                span = (span[0:3] + spec_span + spshft*('{0}',) + span[3:5])
-            else:
-                value = ((spec << sshift) | value)
-                span = (spshft*('{0}',) + spec_span + span)
+    def sv_spec_enter(self, value, span):
+        value = _SelectableInt(value=(value.value >> 2), bits=3)
+        return (value, span)
 
-            # add the 2 LSBs back in
-            v = (value.value<<lsbshf)+lsbs.value
-            res = _SelectableInt(value=v, bits=bits+lsbshf)
-            #print ("after", bin(value.value), value.bits)
-            #print ("res", bin(res.value), res.bits)
-            return (res, span)
-
-        return super().spec(insn=insn, record=record, merge=merge)
-
-
-# this is silly, all of these should be the same base class
-class DynamicOperandCR(RegisterOperand):
-    def spec(self, insn, record):
-        def merge(vector, value, span, spec, spec_span):
-            bits = (len(span) + len(spec_span))
-            value = _SelectableInt(value=value.value, bits=bits)
-            spec = _SelectableInt(value=spec.value, bits=bits)
-            if vector:
-                dst_value = []
-                dst_span = []
-                table = (
-                    (value, span, (0, 1, 2)),
-                    (spec, spec_span, (0, 1)),
-                    (value, span, (3, 4)),
-                )
-            else:
-                dst_value = [
-                    _SelectableInt(value=0, bits=1),
-                    _SelectableInt(value=0, bits=1),
-                ]
-                dst_span = ["{0}", "{0}"]
-                table = (
-                    (spec, spec_span, (0, 1)),
-                    (value, span, (0, 1, 2, 3, 4)),
-                )
-
-            for (src_value, src_span, sel) in table:
-                for idx in sel:
-                    dst_value.append(src_value[idx])
-                    dst_span.append(src_span[idx])
-
-            value = _selectconcat(dst_value)
-            span = tuple(dst_span)
-
-            return (value, span)
-
-        return super().spec(insn=insn, record=record, merge=merge)
-
-    def disassemble(self, insn, record, verbose=False, indent=""):
-        yield from super().disassemble(prefix="cr",
-            insn=insn, record=record, verbose=verbose, indent=indent)
+    def sv_spec_leave(self, value, span, origin_value, origin_span):
+        value = _selectconcat(value, origin_value[3:5])
+        span += origin_span
+        return (value, span)
 
 
 class TargetAddrOperand(RegisterOperand):
