@@ -627,6 +627,7 @@ class In1Sel(Enum):
     RS = 4  # for some ALU/Logical operations
     FRA = 5
     FRS = 6
+    CIA = 7 # for addpcis
 
 
 @unique
@@ -649,6 +650,7 @@ class In2Sel(Enum):
     CONST_SVD = 15  # for SVD-Form
     CONST_SVDS = 16  # for SVDS-Form
     CONST_XBI = 17
+    CONST_DXHI4 = 18 # for addpcis
 
 
 @unique
