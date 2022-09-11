@@ -1,5 +1,5 @@
 path,opcode,bitsel,suffix,mode
-minor_19.csv,19,21:30,NONE,integer
+minor_19.csv,19,21:30,NONE,pattern
 minor_30.csv,30,27:30,NONE,pattern
 minor_31.csv,31,21:30,0b101,integer
 minor_58.csv,58,30:31,NONE,integer

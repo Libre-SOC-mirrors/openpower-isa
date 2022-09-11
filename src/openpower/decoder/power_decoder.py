@@ -717,7 +717,7 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
     # minor 19 has extra patterns
     m19 = []
     m19.append(Subdecoder(pattern=19, opcodes=get_csv("minor_19.csv"),
-                          opint=True, bitsel=(1, 11), suffix=None,
+                          opint=False, bitsel=(1, 11), suffix=None,
                           subdecoders=[]))
     # XXX problem with sub-decoders (can only handle one),
     # sort this another time
