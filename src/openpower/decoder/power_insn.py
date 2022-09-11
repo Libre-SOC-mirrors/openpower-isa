@@ -724,29 +724,31 @@ class CR3Operand(RegisterOperand):
 class CR5Operand(RegisterOperand):
     def spec(self, insn, record):
         def merge(vector, value, span, spec, spec_span):
+            # this is silly these should be in a general base class,
+            # settable by constructor
+            sshift = 3 # len(value) aka value.bits
+            vshift = 4 # 7-sshift
+            spshft = 2 # 5-sshift
+            spmask = (1<<spshft)-1
             # record the 2 lsbs first
-            lsbs = _SelectableInt(value=value.value&3, bits=2)
+            lsbs = _SelectableInt(value=value.value&(spmask), bits=spshft)
             bits = (len(span) + len(spec_span))
             #print ("value", bin(value.value), value.bits)
-            value = _SelectableInt(value=value.value>>2, bits=bits)
+            value = _SelectableInt(value=value.value>>spshft, bits=bits)
             spec = _SelectableInt(value=spec.value, bits=bits)
             #print ("spec", bin(spec.value), spec.bits)
             #print ("value", bin(value.value), value.bits)
             #print ("lsbs", bin(lsbs.value), lsbs.bits)
-            # this is silly these should be in a general base class,
-            # settable by constructor
-            vshift = 4
-            sshift = 3
-            spshft = 2
             if vector:
                 value = ((value << vshift) | (spec<<spshft))
-                span = (span[0:3] + spec_span + ('{0}', '{0}') + span[3:5])
+                span = (span[0:3] + spec_span + spshft*('{0}',) + span[3:5])
             else:
                 value = ((spec << sshift) | value)
-                span = (('{0}', '{0}') + spec_span + span)
+                span = (spshft*('{0}',) + spec_span + span)
 
             # add the 2 LSBs back in
-            res = _SelectableInt(value=(value.value<<2)+lsbs.value, bits=bits+2)
+            v = (value.value<<spshft)+lsbs.value
+            res = _SelectableInt(value=v, bits=bits+spshft)
             #print ("after", bin(value.value), value.bits)
             #print ("res", bin(res.value), res.bits)
             return (res, span)
