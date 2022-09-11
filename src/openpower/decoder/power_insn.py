@@ -730,7 +730,7 @@ class CR5Operand(RegisterOperand):
             sshift = 3 # len(value) aka value.bits
             vshift = 4 # 7-sshift
             spshft = 2 # 5-sshift
-            lsbshf = 0 # has to be set as a parameter
+            lsbshf = 2 # has to be set as a parameter
             lsbmsk = (1<<lsbshf)-1
             # record the 2 lsbs first
             lsbs = _SelectableInt(value=value.value&(lsbmsk), bits=lsbshf)
