@@ -393,11 +393,11 @@ class RegType(Enum):
     FRS = FPR
     FRT = FPR
 
-    CR_REG = 2
+    CR_REG = 2  # actually CR Field. the CR register is 32-bit.
     BF = CR_REG
     BFA = CR_REG
 
-    CR_BIT = 3
+    CR_BIT = 3 # refers to one bit of the 32-bit CR register
     BA = CR_BIT
     BB = CR_BIT
     BC = CR_BIT

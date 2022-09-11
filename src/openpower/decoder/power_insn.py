@@ -651,11 +651,16 @@ class GPRFPROperand(RegisterOperand):
             bits = (len(span) + len(spec_span))
             value = _SelectableInt(value=value.value, bits=bits)
             spec = _SelectableInt(value=spec.value, bits=bits)
+            # this is silly these should be in a general base class,
+            # settable by constructor
+            vshift = 2
+            sshift = 5
+            spshft = 0
             if vector:
-                value = ((value << 2) | spec)
+                value = ((value << vshift) | (spec<<spshft))
                 span = (span + spec_span)
             else:
-                value = ((spec << 5) | value)
+                value = ((spec << sshift) | value)
                 span = (spec_span + span)
 
             return (value, span)
@@ -681,6 +686,75 @@ class FPROperand(GPRFPROperand):
             verbosity=verbosity, indent=indent)
 
 
+class CR3Operand(RegisterOperand):
+    def spec(self, insn, record):
+        def merge(vector, value, span, spec, spec_span):
+            bits = (len(span) + len(spec_span))
+            #print ("value", bin(value.value), value.bits)
+            value = _SelectableInt(value=value.value, bits=bits)
+            spec = _SelectableInt(value=spec.value, bits=bits)
+            #print ("spec", bin(spec.value), spec.bits)
+            #print ("value", bin(value.value), value.bits)
+            #print ("lsbs", bin(lsbs.value), lsbs.bits)
+            # this is silly these should be in a general base class,
+            # settable by constructor
+            vshift = 4
+            sshift = 3
+            spshft = 2
+            if vector:
+                value = ((value << vshift) | (spec<<spshft))
+                span = (span[0:3] + spec_span + ('{0}', '{0}') + span[3:5])
+            else:
+                value = ((spec << sshift) | value)
+                span = (('{0}', '{0}') + spec_span + span)
+
+            # add the 2 LSBs back in
+            #print ("after", bin(value.value), value.bits)
+            return (value, span)
+
+        return super().spec(insn=insn, record=record, merge=merge)
+
+
+# exactly the same as CR3Operand, should be exactly the same base class
+# which should also be exactly the same base class as GPR and FPR operand
+# which sohuld be taking a constructor with prefix "r" and "f" as options
+# as well as vshift, sshift and spsft as parameters, and whether
+# to skip 2 LSBs and put them back on afterwards.
+# it's all the exact same scheme, so why on earth duplicate code?
+class CR5Operand(RegisterOperand):
+    def spec(self, insn, record):
+        def merge(vector, value, span, spec, spec_span):
+            # record the 2 lsbs first
+            lsbs = _SelectableInt(value=value.value&3, bits=2)
+            bits = (len(span) + len(spec_span))
+            #print ("value", bin(value.value), value.bits)
+            value = _SelectableInt(value=value.value>>2, bits=bits)
+            spec = _SelectableInt(value=spec.value, bits=bits)
+            #print ("spec", bin(spec.value), spec.bits)
+            #print ("value", bin(value.value), value.bits)
+            #print ("lsbs", bin(lsbs.value), lsbs.bits)
+            # this is silly these should be in a general base class,
+            # settable by constructor
+            vshift = 4
+            sshift = 3
+            spshft = 2
+            if vector:
+                value = ((value << vshift) | (spec<<spshft))
+                span = (span[0:3] + spec_span + ('{0}', '{0}') + span[3:5])
+            else:
+                value = ((spec << sshift) | value)
+                span = (('{0}', '{0}') + spec_span + span)
+
+            # add the 2 LSBs back in
+            res = _SelectableInt(value=(value.value<<2)+lsbs.value, bits=bits+2)
+            #print ("after", bin(value.value), value.bits)
+            #print ("res", bin(res.value), res.bits)
+            return (res, span)
+
+        return super().spec(insn=insn, record=record, merge=merge)
+
+
+# this is silly, all of these should be the same base class
 class DynamicOperandCR(RegisterOperand):
     def spec(self, insn, record):
         def merge(vector, value, span, spec, spec_span):
@@ -851,6 +925,10 @@ class Operands(tuple):
                         dynamic_cls = GPROperand
                     elif regtype is _RegType.FPR:
                         dynamic_cls = FPROperand
+                    if regtype is _RegType.CR_BIT: # 5-bit
+                        dynamic_cls = CR5Operand
+                    if regtype is _RegType.CR_REG: # actually CR Field, 3-bit
+                        dynamic_cls = CR3Operand
 
                 operand = dynamic_cls(name=operand)
                 operands.append(operand)
