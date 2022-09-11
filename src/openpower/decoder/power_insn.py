@@ -22,6 +22,7 @@ from openpower.decoder.power_enums import (
     In3Sel as _In3Sel,
     OutSel as _OutSel,
     CRInSel as _CRInSel,
+    CRIn2Sel as _CRIn2Sel,
     CROutSel as _CROutSel,
     LDSTLen as _LDSTLen,
     LDSTMode as _LDSTMode,
@@ -212,6 +213,7 @@ class PPCRecord:
     in3: _In3Sel = _In3Sel.NONE
     out: _OutSel = _OutSel.NONE
     cr_in: _CRInSel = _CRInSel.NONE
+    cr_in2: _CRIn2Sel = _CRIn2Sel.NONE
     cr_out: _CROutSel = _CROutSel.NONE
     cry_in: _CryIn = _CryIn.ZERO
     ldst_len: _LDSTLen = _LDSTLen.NONE
@@ -236,6 +238,11 @@ class PPCRecord:
     def CSV(cls, record, opcode_cls):
         typemap = {field.name:field.type for field in _dataclasses.fields(cls)}
         typemap["opcode"] = opcode_cls
+
+        if record["CR in"] == "BA_BB":
+            record["cr_in"] = "BA"
+            record["cr_in2"] = "BB"
+            del record["CR in"]
 
         flags = set()
         for flag in frozenset(PPCRecord.Flags):
@@ -307,6 +314,7 @@ class SVP64Record:
     out: _OutSel = _OutSel.NONE
     out2: _OutSel = _OutSel.NONE
     cr_in: _CRInSel = _CRInSel.NONE
+    cr_in2: _CRIn2Sel = _CRIn2Sel.NONE
     cr_out: _CROutSel = _CROutSel.NONE
     extra: ExtraMap = ExtraMap()
     conditions: str = ""
@@ -323,10 +331,18 @@ class SVP64Record:
 
     @classmethod
     def CSV(cls, record):
-        for key in ("in1", "in2", "in3", "out", "out2", "CR in", "CR out"):
+        for key in frozenset({
+                    "in1", "in2", "in3", "CR in",
+                    "out", "out2", "CR out",
+                }):
             value = record[key]
             if value == "0":
                 record[key] = "NONE"
+
+        if record["CR in"] == "BA_BB":
+            record["cr_in"] = "BA"
+            record["cr_in2"] = "BB"
+            del record["CR in"]
 
         extra = []
         for idx in range(0, 4):
@@ -346,7 +362,7 @@ class SVP64Record:
         )
 
         if key not in frozenset({
-                    "in1", "in2", "in3", "cr_in",
+                    "in1", "in2", "in3", "cr_in", "cr_in2",
                     "out", "out2", "cr_out",
                 }):
             raise KeyError(key)
@@ -639,7 +655,7 @@ class RegisterOperand(DynamicOperand):
 
     def extra_idx(self, record):
         for key in frozenset({
-                    "in1", "in2", "in3", "cr_in",
+                    "in1", "in2", "in3", "cr_in", "cr_in2",
                     "out", "out2", "cr_out",
                 }):
             extra_reg = record.svp64.extra_reg(key=key)
@@ -961,6 +977,10 @@ class Record:
     @property
     def cr_in(self):
         return self.ppc.cr_in
+
+    @property
+    def cr_in2(self):
+        return self.ppc.cr_in2
 
     @property
     def cr_out(self):

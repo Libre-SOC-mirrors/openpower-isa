@@ -363,6 +363,7 @@ class Desc(Struct):
     out: OutSel
     out2: OutSel
     cr_in: CRInSel
+    cr_in2: CRInSel
     cr_out: CROutSel
     ptype: PType
     etype: EType

@@ -722,6 +722,7 @@ class CRInSel(Enum):
     CR1 = 7
     BA = 8
 
+
 @unique
 class CRIn2Sel(Enum):
     NONE = 0
