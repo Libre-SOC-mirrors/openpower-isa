@@ -701,6 +701,7 @@ class CR3Operand(RegisterOperand):
             vshift = 4
             sshift = 3
             spshft = 2
+            lsbshf = 0
             if vector:
                 value = ((value << vshift) | (spec<<spshft))
                 span = (span[0:3] + spec_span + ('{0}', '{0}') + span[3:5])
@@ -729,12 +730,13 @@ class CR5Operand(RegisterOperand):
             sshift = 3 # len(value) aka value.bits
             vshift = 4 # 7-sshift
             spshft = 2 # 5-sshift
-            spmask = (1<<spshft)-1
+            lsbshf = 0 # has to be set as a parameter
+            lsbmsk = (1<<lsbshf)-1
             # record the 2 lsbs first
-            lsbs = _SelectableInt(value=value.value&(spmask), bits=spshft)
+            lsbs = _SelectableInt(value=value.value&(lsbmsk), bits=lsbshf)
             bits = (len(span) + len(spec_span))
             #print ("value", bin(value.value), value.bits)
-            value = _SelectableInt(value=value.value>>spshft, bits=bits)
+            value = _SelectableInt(value=value.value>>lsbshf, bits=bits)
             spec = _SelectableInt(value=spec.value, bits=bits)
             #print ("spec", bin(spec.value), spec.bits)
             #print ("value", bin(value.value), value.bits)
@@ -747,8 +749,8 @@ class CR5Operand(RegisterOperand):
                 span = (spshft*('{0}',) + spec_span + span)
 
             # add the 2 LSBs back in
-            v = (value.value<<spshft)+lsbs.value
-            res = _SelectableInt(value=v, bits=bits+spshft)
+            v = (value.value<<lsbshf)+lsbs.value
+            res = _SelectableInt(value=v, bits=bits+lsbshf)
             #print ("after", bin(value.value), value.bits)
             #print ("res", bin(res.value), res.bits)
             return (res, span)
