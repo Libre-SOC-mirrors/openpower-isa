@@ -1435,7 +1435,13 @@ class SVP64Instruction(PrefixedInstruction):
         mode = self.prefix.rm.mode
         sel = mode.sel
 
-        if record.svp64.mode is _SVMode.NORMAL:
+        if record.svp64.mode is _SVMode.BRANCH:
+            return (self.prefix.rm.mode, "branch")
+
+        elif record.svp64.mode is _SVMode.CROP:
+            return (self.prefix.rm.mode, "crop")
+
+        elif record.svp64.mode is _SVMode.NORMAL:
             mode = mode.normal
             if sel == 0b00:
                 if mode[2] == 0b0:
@@ -1531,9 +1537,6 @@ class SVP64Instruction(PrefixedInstruction):
         for (cls, desc) in modes.items():
             if isinstance(mode, cls):
                 return (mode, desc)
-
-        if record.svp64.mode is _SVMode.BRANCH:
-            return (self.prefix.rm.mode, "branch")
 
         raise ValueError(self)
 
