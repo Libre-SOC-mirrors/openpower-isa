@@ -403,7 +403,6 @@ class RegType(Enum):
     BC = CR_BIT
     BI = CR_BIT
     BT = CR_BIT
-    BFT = CR_BIT
 
 
 # supported instructions: make sure to keep up-to-date with CSV files
