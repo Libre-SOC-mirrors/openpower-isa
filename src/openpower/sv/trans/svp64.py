@@ -1162,12 +1162,10 @@ class SVP64Asm:
             | 00  |   0 |  dz  sz | simple mode                      |
             | 00  |   1 | 0  RG   | scalar reduce mode (mapreduce), SUBVL=1 |
             | 00  |   1 | SVM 0   | subvector reduce mode, SUBVL>1   |
-            | 00  |   1 | SVM 1   | Pack/Unpack mode, SUBVL>1   |
+            | 00  |   1 | /   1   | reserved |
             | 01  | inv | CR-bit  | Rc=1: ffirst CR sel              |
             | 01  | inv | VLi RC1 |  Rc=0: ffirst z/nonz |
-            | 10  |   N | dz   sz |  sat mode: N=0/1 u/s, SUBVL=1 |
-            | 10  |   N | zz   0  |  sat mode: N=0/1 u/s, SUBVL>1 |
-            | 10  |   N | zz   1  |  Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1 |
+            | 10  |   N | dz   sz |  sat mode: N=0/1 u/s |
             | 11  | inv | CR-bit  |  Rc=1: pred-result CR sel |
             | 11  | inv | zz  RC1 |  Rc=0: pred-result z/nonz |
         """
