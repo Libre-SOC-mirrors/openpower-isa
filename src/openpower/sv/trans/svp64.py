@@ -314,23 +314,54 @@ def bmask(fields):
     )
 
 
+def _fptrans_insn(name, XO):
+    return [
+        _insn(name, PO=63, Rc=0, XO=XO),
+        _insn(name + ".", PO=63, Rc=1, XO=XO),
+        _insn(name + "s", PO=59, Rc=0, XO=XO),
+        _insn(name + "s.", PO=59, Rc=1, XO=XO),
+    ]
+
+
 @_custom_insns(
-    _insn("fsins", Rc=0),
-    _insn("fsins.", Rc=1),
+    *_fptrans_insn("fatan2", XO=0b1001001110),
+    *_fptrans_insn("fatan2pi", XO=0b1000001110),
+    *_fptrans_insn("fpow", XO=0b1111101101),
+    *_fptrans_insn("fpown", XO=0b1101101100),
+    *_fptrans_insn("fpowr", XO=0b1111101100),
+    *_fptrans_insn("frootn", XO=0b1101101101),
+    *_fptrans_insn("fhypot", XO=0b1010001110),
+    *_fptrans_insn("fminnum08", XO=0b1011001100),
+    *_fptrans_insn("fmaxnum08", XO=0b1011101100),
+    *_fptrans_insn("fmin19", XO=0b1011001101),
+    *_fptrans_insn("fmax19", XO=0b1011101101),
+    *_fptrans_insn("fminnum19", XO=0b1011001110),
+    *_fptrans_insn("fmaxnum19", XO=0b1011101110),
+    *_fptrans_insn("fminc", XO=0b1011001111),
+    *_fptrans_insn("fmaxc", XO=0b1011101111),
+    *_fptrans_insn("fminmagnum08", XO=0b1100001110),
+    *_fptrans_insn("fmaxmagnum08", XO=0b1100001111),
+    *_fptrans_insn("fminmag19", XO=0b1101101110),
+    *_fptrans_insn("fmaxmag19", XO=0b1101101111),
+    *_fptrans_insn("fminmagnum19", XO=0b1110001110),
+    *_fptrans_insn("fmaxmagnum19", XO=0b1110001111),
+    *_fptrans_insn("fminmagc", XO=0b1111101110),
+    *_fptrans_insn("fmaxmagc", XO=0b1111101111),
+    *_fptrans_insn("fmod", XO=0b1101001111),
+    *_fptrans_insn("fremainder", XO=0b1111001111),
 )
-def fsins(fields, Rc):
+def fptrans_binary(fields, PO, Rc, XO):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
     # 1.6.7 X-FORM
-    # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
-    # | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
-    PO = 59
-    XO = 0b1001001101
-    (FRT, FRB) = fields
+    # |0   |6    |11   |16   |21  |31 |
+    # | PO | FRT | FRA | FRB | XO |Rc |
+    # | PO | FRT | FRA | RB  | XO |Rc |
+    (FRT, FRA, FRB) = fields
     return instruction(
         (PO, 0, 5),
         (FRT, 6, 10),
-        (0, 11, 15),
+        (FRA, 11, 15),
         (FRB, 16, 20),
         (XO, 21, 30),
         (Rc, 31, 31),
@@ -338,17 +369,46 @@ def fsins(fields, Rc):
 
 
 @_custom_insns(
-    _insn("fcoss", Rc=0),
-    _insn("fcoss.", Rc=1),
+    *_fptrans_insn("frsqrt", XO=0b1001001100),
+    *_fptrans_insn("fcbrt", XO=0b1000001100),
+    *_fptrans_insn("frecip", XO=0b1010001100),
+    *_fptrans_insn("fexp2m1", XO=0b1100001100),
+    *_fptrans_insn("flog2p1", XO=0b1100001101),
+    *_fptrans_insn("fexp2", XO=0b1110001100),
+    *_fptrans_insn("flog2", XO=0b1110001101),
+    *_fptrans_insn("fexpm1", XO=0b1100101100),
+    *_fptrans_insn("flogp1", XO=0b1100101101),
+    *_fptrans_insn("fexp", XO=0b1110101100),
+    *_fptrans_insn("flog", XO=0b1110101101),
+    *_fptrans_insn("fexp10m1", XO=0b1101001100),
+    *_fptrans_insn("flog10p1", XO=0b1101001101),
+    *_fptrans_insn("fexp10", XO=0b1111001100),
+    *_fptrans_insn("flog10", XO=0b1111001101),
+    *_fptrans_insn("fsin", XO=0b1001001101),
+    *_fptrans_insn("fcos", XO=0b1001101100),
+    *_fptrans_insn("ftan", XO=0b1001101101),
+    *_fptrans_insn("fasin", XO=0b1001001111),
+    *_fptrans_insn("facos", XO=0b1001101110),
+    *_fptrans_insn("fatan", XO=0b1001101111),
+    *_fptrans_insn("fsinpi", XO=0b1000001101),
+    *_fptrans_insn("fcospi", XO=0b1000101100),
+    *_fptrans_insn("ftanpi", XO=0b1000101101),
+    *_fptrans_insn("fasinpi", XO=0b1000001111),
+    *_fptrans_insn("facospi", XO=0b1000101110),
+    *_fptrans_insn("fatanpi", XO=0b1000101111),
+    *_fptrans_insn("fsinh", XO=0b1010001101),
+    *_fptrans_insn("fcosh", XO=0b1010101100),
+    *_fptrans_insn("ftanh", XO=0b1010101101),
+    *_fptrans_insn("fasinh", XO=0b1010001111),
+    *_fptrans_insn("facosh", XO=0b1010101110),
+    *_fptrans_insn("fatanh", XO=0b1010101111),
 )
-def fcoss(fields, Rc):
+def fptrans_unary(fields, PO, Rc, XO):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # however we are out of space with opcode 22
     # 1.6.7 X-FORM
-    # |0     |6 |7|8|9  |10  |11|12|13  |15|16|17     |20|21    |31  |
-    # | PO   |   FRT         |     ///     |   FRB       |   XO |Rc  |
-    PO = 59
-    XO = 0b1001101100
+    # |0   |6    |11   |16   |21  |31 |
+    # | PO | FRT | /// | FRB | XO |Rc |
     (FRT, FRB) = fields
     return instruction(
         (PO, 0, 5),
