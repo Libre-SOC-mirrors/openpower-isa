@@ -1180,180 +1180,6 @@ class PrefixedInstruction(Instruction):
 
 class Mode(_Mapping):
     _: _Field = range(0, 5)
-    sel: _Field = range(0, 2)
-
-
-class NormalMode(Mode):
-    class simple(Mode):
-        """simple mode"""
-        dz: Mode[3]
-        sz: Mode[4]
-
-    class smr(Mode):
-        """scalar reduce mode (mapreduce), SUBVL=1"""
-        RG: Mode[4]
-
-    class pmr(Mode):
-        """parallel reduce mode (mapreduce), SUBVL=1"""
-        pass
-
-    class svmr(Mode):
-        """subvector reduce mode, SUBVL>1"""
-        SVM: Mode[3]
-
-    class pu(Mode):
-        """Pack/Unpack mode, SUBVL>1"""
-        SVM: Mode[3]
-
-    class ffrc1(Mode):
-        """Rc=1: ffirst CR sel"""
-        inv: Mode[2]
-        CRbit: Mode[3, 4]
-
-    class ffrc0(Mode):
-        """Rc=0: ffirst z/nonz"""
-        inv: Mode[2]
-        VLi: Mode[3]
-        RC1: Mode[4]
-
-    class sat(Mode):
-        """sat mode: N=0/1 u/s, SUBVL=1"""
-        N: Mode[2]
-        dz: Mode[3]
-        sz: Mode[4]
-
-    class satx(Mode):
-        """sat mode: N=0/1 u/s, SUBVL>1"""
-        N: Mode[2]
-        zz: Mode[3]
-        dz: Mode[3]
-        sz: Mode[3]
-
-    class satpu(Mode):
-        """Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1"""
-        N: Mode[2]
-        zz: Mode[3]
-        dz: Mode[3]
-        sz: Mode[3]
-
-    class prrc1(Mode):
-        """Rc=1: pred-result CR sel"""
-        inv: Mode[2]
-        CRbit: Mode[3, 4]
-
-    class prrc0(Mode):
-        """Rc=0: pred-result z/nonz"""
-        inv: Mode[2]
-        zz: Mode[3]
-        RC1: Mode[4]
-        dz: Mode[3]
-        sz: Mode[3]
-
-    simple: simple
-    smr: smr
-    pmr: pmr
-    svmr: svmr
-    pu: pu
-    ffrc1: ffrc1
-    ffrc0: ffrc0
-    sat: sat
-    satx: satx
-    satpu: satpu
-    prrc1: prrc1
-    prrc0: prrc0
-
-
-class LDSTImmMode(Mode):
-    class simple(Mode):
-        """simple mode"""
-        zz: Mode[3]
-        els: Mode[4]
-        dz: Mode[3]
-        sz: Mode[3]
-
-    class spu(Mode):
-        """Structured Pack/Unpack"""
-        zz: Mode[3]
-        els: Mode[4]
-        dz: Mode[3]
-        sz: Mode[3]
-
-    class ffrc1(Mode):
-        """Rc=1: ffirst CR sel"""
-        inv: Mode[2]
-        CRbit: Mode[3, 4]
-
-    class ffrc0(Mode):
-        """Rc=0: ffirst z/nonz"""
-        inv: Mode[2]
-        els: Mode[3]
-        RC1: Mode[4]
-
-    class sat(Mode):
-        """sat mode: N=0/1 u/s"""
-        N: Mode[2]
-        zz: Mode[3]
-        els: Mode[4]
-        dz: Mode[3]
-        sz: Mode[3]
-
-    class prrc1(Mode):
-        """Rc=1: pred-result CR sel"""
-        inv: Mode[2]
-        CRbit: Mode[3, 4]
-
-    class prrc0(Mode):
-        """Rc=0: pred-result z/nonz"""
-        inv: Mode[2]
-        els: Mode[3]
-        RC1: Mode[4]
-
-    simple: simple
-    spu: spu
-    ffrc1: ffrc1
-    ffrc0: ffrc0
-    sat: sat
-    prrc1: prrc1
-    prrc0: prrc0
-
-
-class LDSTIdxMode(Mode):
-    class simple(Mode):
-        """simple mode"""
-        SEA: Mode[2]
-        sz: Mode[3]
-        dz: Mode[3]
-
-    class stride(Mode):
-        """strided (scalar only source)"""
-        SEA: Mode[2]
-        dz: Mode[3]
-        sz: Mode[4]
-
-    class sat(Mode):
-        """sat mode: N=0/1 u/s"""
-        N: Mode[2]
-        dz: Mode[3]
-        sz: Mode[4]
-
-    class prrc1(Mode):
-        """Rc=1: pred-result CR sel"""
-        inv: Mode[2]
-        CRbit: Mode[3, 4]
-
-    class prrc0(Mode):
-        """Rc=0: pred-result z/nonz"""
-        inv: Mode[2]
-        zz: Mode[3]
-        RC1: Mode[4]
-        dz: Mode[3]
-        sz: Mode[3]
-
-    simple: simple
-    stride: stride
-    sat: sat
-    prrc1: prrc1
-    prrc0: prrc0
 
 
 class Extra(_Mapping):
@@ -1401,7 +1227,7 @@ class Extra3(Extra):
         self[key].assign(value)
 
 
-class RMBase(_Mapping):
+class BaseRM(_Mapping):
     _: _Field = range(24)
     mmode: _Field = (0,)
     mask: _Field = range(1, 4)
@@ -1416,22 +1242,183 @@ class RMBase(_Mapping):
     extra3: Extra3.remap(range(10, 19))
 
 
-class RMNormal(RMBase):
-    mode: NormalMode
+class NormalRM(BaseRM):
+    class simple(BaseRM):
+        """simple mode"""
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[4]
+
+    class smr(Mode):
+        """scalar reduce mode (mapreduce), SUBVL=1"""
+        RG: BaseRM.mode[4]
+
+    class pmr(Mode):
+        """parallel reduce mode (mapreduce), SUBVL=1"""
+        pass
+
+    class svmr(Mode):
+        """subvector reduce mode, SUBVL>1"""
+        SVM: BaseRM.mode[3]
+
+    class pu(Mode):
+        """Pack/Unpack mode, SUBVL>1"""
+        SVM: BaseRM.mode[3]
+
+    class ffrc1(Mode):
+        """Rc=1: ffirst CR sel"""
+        inv: BaseRM.mode[2]
+        CR: BaseRM.mode[3, 4]
+
+    class ffrc0(Mode):
+        """Rc=0: ffirst z/nonz"""
+        inv: BaseRM.mode[2]
+        VLi: BaseRM.mode[3]
+        RC1: BaseRM.mode[4]
+
+    class sat(Mode):
+        """sat mode: N=0/1 u/s, SUBVL=1"""
+        N: BaseRM.mode[2]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[4]
+
+    class satx(Mode):
+        """sat mode: N=0/1 u/s, SUBVL>1"""
+        N: BaseRM.mode[2]
+        zz: BaseRM.mode[3]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+    class satpu(Mode):
+        """Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1"""
+        N: BaseRM.mode[2]
+        zz: BaseRM.mode[3]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+    class prrc1(Mode):
+        """Rc=1: pred-result CR sel"""
+        inv: BaseRM.mode[2]
+        CR: BaseRM.mode[3, 4]
+
+    class prrc0(Mode):
+        """Rc=0: pred-result z/nonz"""
+        inv: BaseRM.mode[2]
+        zz: BaseRM.mode[3]
+        RC1: BaseRM.mode[4]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+    simple: simple
+    smr: smr
+    pmr: pmr
+    svmr: svmr
+    pu: pu
+    ffrc1: ffrc1
+    ffrc0: ffrc0
+    sat: sat
+    satx: satx
+    satpu: satpu
+    prrc1: prrc1
+    prrc0: prrc0
 
 
-class RMLDSTImm(RMBase):
-    mode: LDSTImmMode
+class LDSTImmRM(BaseRM):
+    class simple(Mode):
+        """simple mode"""
+        zz: BaseRM.mode[3]
+        els: BaseRM.mode[4]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+    class spu(Mode):
+        """Structured Pack/Unpack"""
+        zz: BaseRM.mode[3]
+        els: BaseRM.mode[4]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+    class ffrc1(Mode):
+        """Rc=1: ffirst CR sel"""
+        inv: BaseRM.mode[2]
+        CR: BaseRM.mode[3, 4]
+
+    class ffrc0(Mode):
+        """Rc=0: ffirst z/nonz"""
+        inv: BaseRM.mode[2]
+        els: BaseRM.mode[3]
+        RC1: BaseRM.mode[4]
+
+    class sat(Mode):
+        """sat mode: N=0/1 u/s"""
+        N: BaseRM.mode[2]
+        zz: BaseRM.mode[3]
+        els: BaseRM.mode[4]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+    class prrc1(Mode):
+        """Rc=1: pred-result CR sel"""
+        inv: BaseRM.mode[2]
+        CR: BaseRM.mode[3, 4]
+
+    class prrc0(Mode):
+        """Rc=0: pred-result z/nonz"""
+        inv: BaseRM.mode[2]
+        els: BaseRM.mode[3]
+        RC1: BaseRM.mode[4]
+
+    simple: simple
+    spu: spu
+    ffrc1: ffrc1
+    ffrc0: ffrc0
+    sat: sat
+    prrc1: prrc1
+    prrc0: prrc0
 
 
-class RMLDSTIdx(RMBase):
-    mode: LDSTIdxMode
+class LDSTIdxRM(BaseRM):
+    class simple(Mode):
+        """simple mode"""
+        SEA: BaseRM.mode[2]
+        sz: BaseRM.mode[3]
+        dz: BaseRM.mode[3]
+
+    class stride(Mode):
+        """strided (scalar only source)"""
+        SEA: BaseRM.mode[2]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[4]
+
+    class sat(Mode):
+        """sat mode: N=0/1 u/s"""
+        N: BaseRM.mode[2]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[4]
+
+    class prrc1(Mode):
+        """Rc=1: pred-result CR sel"""
+        inv: BaseRM.mode[2]
+        CR: BaseRM.mode[3, 4]
+
+    class prrc0(Mode):
+        """Rc=0: pred-result z/nonz"""
+        inv: BaseRM.mode[2]
+        zz: BaseRM.mode[3]
+        RC1: BaseRM.mode[4]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+    simple: simple
+    stride: stride
+    sat: sat
+    prrc1: prrc1
+    prrc0: prrc0
 
 
-class RM(RMBase):
-    normal: RMNormal
-    ldst_imm: RMLDSTImm
-    ldst_idx: RMLDSTIdx
+class RM(BaseRM):
+    normal: NormalRM
+    ldst_imm: LDSTImmRM
+    ldst_idx: LDSTIdxRM
 
 
 class SVP64Instruction(PrefixedInstruction):
@@ -1456,7 +1443,7 @@ class SVP64Instruction(PrefixedInstruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
-    def mode(self, db):
+    def rm(self, db):
         record = self.record(db=db)
 
         Rc = False
@@ -1465,111 +1452,110 @@ class SVP64Instruction(PrefixedInstruction):
 
         record = self.record(db=db)
         subvl = self.prefix.rm.subvl
-        mode = self.prefix.rm.mode
-        sel = mode.sel
+        rm = self.prefix.rm
 
         if record.svp64.mode is _SVMode.BRANCH:
-            return (self.prefix.rm.mode, "branch")
+            return (rm, "branch")
 
         elif record.svp64.mode is _SVMode.CROP:
-            return (self.prefix.rm.mode, "crop")
+            return (rm, "crop")
 
         elif record.svp64.mode is _SVMode.NORMAL:
-            mode = self.prefix.rm.normal.mode
-            if sel == 0b00:
-                if mode[2] == 0b0:
-                    mode = mode.simple
+            rm = rm.normal
+            if rm.mode[0:2] == 0b00:
+                if rm.mode[2] == 0b0:
+                    rm = rm.simple
                 else:
                     if subvl == 0b00:
-                        if mode[3] == 0b0:
-                            mode = mode.smr
+                        if rm.mode[3] == 0b0:
+                            rm = rm.smr
                         else:
-                            mode = mode.pmr
+                            rm = rm.pmr
                     else:
-                        if mode[4] == 0b0:
-                            mode = mode.svmr
+                        if rm.mode[4] == 0b0:
+                            rm = rm.svmr
                         else:
-                            mode = mode.pu
-            elif sel == 0b01:
+                            rm = rm.pu
+            elif rm.mode[0:2] == 0b01:
                 if Rc:
-                    mode = mode.ffrc1
+                    rm = rm.ffrc1
                 else:
-                    mode = mode.ffrc0
-            elif sel == 0b10:
+                    rm = rm.ffrc0
+            elif rm.mode[0:2] == 0b10:
                 if subvl == 0b00:
-                    mode = mode.sat
+                    rm = rm.sat
                 else:
-                    if mode[4]:
-                        mode = mode.satx
+                    if rm.mode[4]:
+                        rm = rm.satx
                     else:
-                        mode = mode.satpu
-            elif sel == 0b11:
+                        rm = rm.satpu
+            elif rm.mode[0:2] == 0b11:
                 if Rc:
-                    mode = mode.prrc1
+                    rm = rm.prrc1
                 else:
-                    mode = mode.prrc0
+                    rm = rm.prrc0
         elif record.svp64.mode is _SVMode.LDST_IMM:
-            mode = self.prefix.rm.ldst_imm.mode
-            if sel == 0b00:
-                if mode[2] == 0b0:
-                    mode = mode.simple
+            rm = rm.ldst_imm
+            if rm.mode[0:2] == 0b00:
+                if rm.mode[2] == 0b0:
+                    rm = rm.simple
                 else:
-                    mode = mode.spu
-            elif sel == 0b01:
+                    rm = rm.spu
+            elif rm.mode[0:2] == 0b01:
                 if Rc:
-                    mode = mode.ffrc1
+                    rm = rm.ffrc1
                 else:
-                    mode = mode.ffrc0
-            elif sel == 0b10:
-                mode = mode.sat
-            elif sel == 0b11:
+                    rm = rm.ffrc0
+            elif rm.mode[0:2] == 0b10:
+                rm = rm.sat
+            elif rm.mode[0:2] == 0b11:
                 if Rc:
-                    mode = mode.prrc1
+                    rm = rm.prrc1
                 else:
-                    mode = mode.prrc0
+                    rm = rm.prrc0
         elif record.svp64.mode is _SVMode.LDST_IMM:
-            mode = self.prefix.rm.ldst_idx.mode
-            if mode.sel == 0b00:
-                mode = mode.simple
-            elif mode.sel == 0b01:
-                mode = mode.stride
-            elif mode.sel == 0b10:
-                mode = mode.sat
-            elif mode.sel == 0b11:
+            rm = rm.ldst_idx
+            if rm.mode[0:2] == 0b00:
+                rm = rm.simple
+            elif rm.mode[0:2] == 0b01:
+                rm = rm.stride
+            elif rm.mode[0:2] == 0b10:
+                rm = rm.sat
+            elif rm.mode[0:2] == 0b11:
                 if Rc:
-                    mode = mode.prrc1
+                    rm = rm.prrc1
                 else:
-                    mode = mode.prrc0
+                    rm = rm.prrc0
 
-        modes = {
-            NormalMode.simple: "normal: simple",
-            NormalMode.smr: "normal: smr",
-            NormalMode.pmr: "normal: pmr",
-            NormalMode.svmr: "normal: svmr",
-            NormalMode.pu: "normal: pu",
-            NormalMode.ffrc1: "normal: ffrc1",
-            NormalMode.ffrc0: "normal: ffrc0",
-            NormalMode.sat: "normal: sat",
-            NormalMode.satx: "normal: satx",
-            NormalMode.satpu: "normal: satpu",
-            NormalMode.prrc1: "normal: prrc1",
-            NormalMode.prrc0: "normal: prrc0",
-            LDSTImmMode.simple: "ld/st imm: simple",
-            LDSTImmMode.spu: "ld/st imm: spu",
-            LDSTImmMode.ffrc1: "ld/st imm: ffrc1",
-            LDSTImmMode.ffrc0: "ld/st imm: ffrc0",
-            LDSTImmMode.sat: "ld/st imm: sat",
-            LDSTImmMode.prrc1: "ld/st imm: prrc1",
-            LDSTImmMode.prrc0: "ld/st imm: prrc0",
-            LDSTIdxMode.simple: "ld/st idx simple",
-            LDSTIdxMode.stride: "ld/st idx stride",
-            LDSTIdxMode.sat: "ld/st idx sat",
-            LDSTIdxMode.prrc1: "ld/st idx prrc1",
-            LDSTIdxMode.prrc0: "ld/st idx prrc0",
+        table = {
+            NormalRM.simple: "normal: simple",
+            NormalRM.smr: "normal: smr",
+            NormalRM.pmr: "normal: pmr",
+            NormalRM.svmr: "normal: svmr",
+            NormalRM.pu: "normal: pu",
+            NormalRM.ffrc1: "normal: ffrc1",
+            NormalRM.ffrc0: "normal: ffrc0",
+            NormalRM.sat: "normal: sat",
+            NormalRM.satx: "normal: satx",
+            NormalRM.satpu: "normal: satpu",
+            NormalRM.prrc1: "normal: prrc1",
+            NormalRM.prrc0: "normal: prrc0",
+            LDSTImmRM.simple: "ld/st imm: simple",
+            LDSTImmRM.spu: "ld/st imm: spu",
+            LDSTImmRM.ffrc1: "ld/st imm: ffrc1",
+            LDSTImmRM.ffrc0: "ld/st imm: ffrc0",
+            LDSTImmRM.sat: "ld/st imm: sat",
+            LDSTImmRM.prrc1: "ld/st imm: prrc1",
+            LDSTImmRM.prrc0: "ld/st imm: prrc0",
+            LDSTIdxRM.simple: "ld/st idx: simple",
+            LDSTIdxRM.stride: "ld/st idx: stride",
+            LDSTIdxRM.sat: "ld/st idx: sat",
+            LDSTIdxRM.prrc1: "ld/st idx: prrc1",
+            LDSTIdxRM.prrc0: "ld/st idx: prrc0",
         }
-        for (cls, desc) in modes.items():
-            if isinstance(mode, cls):
-                return (mode, desc)
+        for (cls, desc) in table.items():
+            if isinstance(rm, cls):
+                return (rm, desc)
 
         raise ValueError(self)
 
@@ -1601,7 +1587,7 @@ class SVP64Instruction(PrefixedInstruction):
         if blob_suffix:
             yield f"{blob_suffix}"
 
-        (mode, mode_desc) = self.mode(db=db)
+        (rm, rm_desc) = self.rm(db=db)
 
         if verbosity >= Verbosity.VERBOSE:
             indent = (" " * 4)
@@ -1628,8 +1614,8 @@ class SVP64Instruction(PrefixedInstruction):
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
 
-            yield f"{indent}mode"
-            yield f"{indent}{indent}{mode_desc}"
+            yield f"{indent}RM"
+            yield f"{indent}{indent}{rm_desc}"
             yield ""
 
 
