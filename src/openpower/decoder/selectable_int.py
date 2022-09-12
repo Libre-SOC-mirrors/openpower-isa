@@ -521,6 +521,9 @@ class SelectableInt:
         """convert to double-precision float.  TODO, properly convert
         rather than a hack-job: must actually support Power IEEE754 FP
         """
+        if self.bits == 32:
+            data = self.value.to_bytes(4, byteorder='little')
+            return struct.unpack('<f', data)[0]
         assert self.bits == 64 # must be 64-bit
         data = self.value.to_bytes(8, byteorder='little')
         return struct.unpack('<d', data)[0]

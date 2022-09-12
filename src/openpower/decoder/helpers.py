@@ -226,31 +226,504 @@ def signinv(res, sign):
         return -res
 
 
-def fp64toselectable(frt):
+def fp32toselectable(flt):
+    """convert FP number to 32 bit SelectableInt
+    """
+    b = struct.pack("<f", flt)
+    val = int.from_bytes(b, byteorder='little', signed=False)
+    return SelectableInt(val, 32)
+
+
+def fp64toselectable(flt):
     """convert FP number to 64 bit SelectableInt
     """
-    b = struct.pack(">d", frt)
-    val = int.from_bytes(b, byteorder='big', signed=False)
+    b = struct.pack("<d", flt)
+    val = int.from_bytes(b, byteorder='little', signed=False)
     return SelectableInt(val, 64)
 
 
+def _minmag(a, b):
+    if abs(a) < abs(b):
+        return a
+    if abs(a) > abs(b):
+        return b
+    return min(a, b)
+
+
+def _maxmag(a, b):
+    if abs(a) < abs(b):
+        return b
+    if abs(a) > abs(b):
+        return a
+    return max(a, b)
+
+
 class ISAFPHelpers:
+    # bfp32/64_OP naming mirrors that in the Power ISA spec.
 
-    def FPSIN32(self, FRB):
-        #FRB = DOUBLE(SINGLE(FRB))
-        result = math.sin(float(FRB))
-        cvt = fp64toselectable(result)
-        cvt = self.DOUBLE2SINGLE(cvt)
-        log("FPSIN32", FRB, float(FRB), "=", result, cvt)
-        return cvt
+    def bfp64_ATAN2PI(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.atan2(float(a), float(b)) / math.pi)
 
-    def FPCOS32(self, FRB):
-        #FRB = DOUBLE(SINGLE(FRB))
-        result = math.cos(float(FRB))
-        cvt = fp64toselectable(result)
-        cvt = self.DOUBLE2SINGLE(cvt)
-        log("FPCOS32", FRB, float(FRB), "=", result, cvt)
-        return cvt
+    def bfp32_ATAN2PI(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.atan2(float(a), float(b)) / math.pi)
+
+    def bfp64_ATAN2(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.atan2(float(a), float(b)))
+
+    def bfp32_ATAN2(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.atan2(float(a), float(b)))
+
+    def bfp64_HYPOT(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.hypot(float(a), float(b)))
+
+    def bfp32_HYPOT(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.hypot(float(a), float(b)))
+
+    def bfp64_MINNUM08(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(min(float(a), float(b)))
+
+    def bfp32_MINNUM08(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(min(float(a), float(b)))
+
+    def bfp64_MIN19(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(min(float(a), float(b)))
+
+    def bfp32_MIN19(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(min(float(a), float(b)))
+
+    def bfp64_MINNUM19(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(min(float(a), float(b)))
+
+    def bfp32_MINNUM19(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(min(float(a), float(b)))
+
+    def bfp64_MINC(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(min(float(a), float(b)))
+
+    def bfp32_MINC(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(min(float(a), float(b)))
+
+    def bfp64_MAXNUM08(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(max(float(a), float(b)))
+
+    def bfp32_MAXNUM08(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(max(float(a), float(b)))
+
+    def bfp64_MAX19(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(max(float(a), float(b)))
+
+    def bfp32_MAX19(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(max(float(a), float(b)))
+
+    def bfp64_MAXNUM19(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(max(float(a), float(b)))
+
+    def bfp32_MAXNUM19(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(max(float(a), float(b)))
+
+    def bfp64_MAXC(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(max(float(a), float(b)))
+
+    def bfp32_MAXC(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(max(float(a), float(b)))
+
+    def bfp64_MINMAGNUM08(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(_minmag(float(a), float(b)))
+
+    def bfp32_MINMAGNUM08(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(_minmag(float(a), float(b)))
+
+    def bfp64_MAXMAGNUM08(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(_maxmag(float(a), float(b)))
+
+    def bfp32_MAXMAGNUM08(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(_maxmag(float(a), float(b)))
+
+    def bfp64_MOD(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.fmod(float(a), float(b)))
+
+    def bfp32_MOD(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.fmod(float(a), float(b)))
+
+    def bfp64_MINMAG19(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(_minmag(float(a), float(b)))
+
+    def bfp32_MINMAG19(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(_minmag(float(a), float(b)))
+
+    def bfp64_MAXMAG19(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(_maxmag(float(a), float(b)))
+
+    def bfp32_MAXMAG19(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(_maxmag(float(a), float(b)))
+
+    def bfp64_MINMAGNUM19(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(_minmag(float(a), float(b)))
+
+    def bfp32_MINMAGNUM19(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(_minmag(float(a), float(b)))
+
+    def bfp64_MAXMAGNUM19(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(_maxmag(float(a), float(b)))
+
+    def bfp32_MAXMAGNUM19(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(_maxmag(float(a), float(b)))
+
+    def bfp64_REMAINDER(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.remainder(float(a), float(b)))
+
+    def bfp32_REMAINDER(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.remainder(float(a), float(b)))
+
+    def bfp64_POWR(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(float(a), float(b)))
+
+    def bfp32_POWR(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(float(a), float(b)))
+
+    def bfp64_POW(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(float(a), float(b)))
+
+    def bfp32_POW(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(float(a), float(b)))
+
+    def bfp64_MINMAGC(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(_minmag(float(a), float(b)))
+
+    def bfp32_MINMAGC(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(_minmag(float(a), float(b)))
+
+    def bfp64_MAXMAGC(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(_maxmag(float(a), float(b)))
+
+    def bfp32_MAXMAGC(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(_maxmag(float(a), float(b)))
+
+    def bfp64_POWN(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(float(a), int(b)))
+
+    def bfp32_POWN(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(float(a), int(b)))
+
+    def bfp64_ROOTN(self, a, b):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(float(a), 1 / int(b)))
+
+    def bfp32_ROOTN(self, a, b):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(float(a), 1 / int(b)))
+
+    def bfp64_CBRT(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(float(v), 1 / 3))
+
+    def bfp32_CBRT(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(float(v), 1 / 3))
+
+    def bfp64_SINPI(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.sin(float(v) * math.pi))
+
+    def bfp32_SINPI(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.sin(float(v) * math.pi))
+
+    def bfp64_ASINPI(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.asin(float(v)) / math.pi)
+
+    def bfp32_ASINPI(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.asin(float(v)) / math.pi)
+
+    def bfp64_COSPI(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.cos(float(v) * math.pi))
+
+    def bfp32_COSPI(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.cos(float(v) * math.pi))
+
+    def bfp64_TANPI(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.tan(float(v) * math.pi))
+
+    def bfp32_TANPI(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.tan(float(v) * math.pi))
+
+    def bfp64_ACOSPI(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.acos(float(v)) / math.pi)
+
+    def bfp32_ACOSPI(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.acos(float(v)) / math.pi)
+
+    def bfp64_ATANPI(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.atan(float(v)) / math.pi)
+
+    def bfp32_ATANPI(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.atan(float(v)) / math.pi)
+
+    def bfp64_RSQRT(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(1 / math.sqrt(float(v)))
+
+    def bfp32_RSQRT(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(1 / math.sqrt(float(v)))
+
+    def bfp64_SIN(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.sin(float(v)))
+
+    def bfp32_SIN(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.sin(float(v)))
+
+    def bfp64_ASIN(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.asin(float(v)))
+
+    def bfp32_ASIN(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.asin(float(v)))
+
+    def bfp64_COS(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.cos(float(v)))
+
+    def bfp32_COS(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.cos(float(v)))
+
+    def bfp64_TAN(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.tan(float(v)))
+
+    def bfp32_TAN(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.tan(float(v)))
+
+    def bfp64_ACOS(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.acos(float(v)))
+
+    def bfp32_ACOS(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.acos(float(v)))
+
+    def bfp64_ATAN(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.atan(float(v)))
+
+    def bfp32_ATAN(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.atan(float(v)))
+
+    def bfp64_RECIP(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(1 / float(v))
+
+    def bfp32_RECIP(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(1 / float(v))
+
+    def bfp64_SINH(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.sinh(float(v)))
+
+    def bfp32_SINH(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.sinh(float(v)))
+
+    def bfp64_ASINH(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.asinh(float(v)))
+
+    def bfp32_ASINH(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.asinh(float(v)))
+
+    def bfp64_COSH(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.cosh(float(v)))
+
+    def bfp32_COSH(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.cosh(float(v)))
+
+    def bfp64_TANH(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.tanh(float(v)))
+
+    def bfp32_TANH(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.tanh(float(v)))
+
+    def bfp64_ACOSH(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.acosh(float(v)))
+
+    def bfp32_ACOSH(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.acosh(float(v)))
+
+    def bfp64_ATANH(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.atanh(float(v)))
+
+    def bfp32_ATANH(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.atanh(float(v)))
+
+    def bfp64_EXP2M1(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(2, float(v)) - 1)
+
+    def bfp32_EXP2M1(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(2, float(v)) - 1)
+
+    def bfp64_LOG2P1(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.log2(float(v) + 1))
+
+    def bfp32_LOG2P1(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.log2(float(v) + 1))
+
+    def bfp64_EXPM1(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.expm1(float(v)))
+
+    def bfp32_EXPM1(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.expm1(float(v)))
+
+    def bfp64_LOGP1(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.log1p(float(v)))
+
+    def bfp32_LOGP1(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.log1p(float(v)))
+
+    def bfp64_EXP10M1(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(10, float(v)) - 1)
+
+    def bfp32_EXP10M1(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(10, float(v)) - 1)
+
+    def bfp64_LOG10P1(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.log10(float(v) + 1))
+
+    def bfp32_LOG10P1(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.log10(float(v) + 1))
+
+    def bfp64_EXP2(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(2, float(v)))
+
+    def bfp32_EXP2(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(2, float(v)))
+
+    def bfp64_LOG2(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.log2(float(v)))
+
+    def bfp32_LOG2(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.log2(float(v)))
+
+    def bfp64_EXP(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.exp(float(v)))
+
+    def bfp32_EXP(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.exp(float(v)))
+
+    def bfp64_LOG(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.log(float(v)))
+
+    def bfp32_LOG(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.log(float(v)))
+
+    def bfp64_EXP10(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(pow(10, float(v)))
+
+    def bfp32_EXP10(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(pow(10, float(v)))
+
+    def bfp64_LOG10(self, v):
+        # FIXME: use proper implementation
+        return fp64toselectable(math.log10(float(v)))
+
+    def bfp32_LOG10(self, v):
+        # FIXME: use proper implementation
+        return fp32toselectable(math.log10(float(v)))
 
     def FPADD32(self, FRA, FRB):
         # return FPADD64(FRA, FRB)

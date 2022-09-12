@@ -11,7 +11,7 @@ X-Form
 
 Pseudo-code:
 
-    FRT <- FPSIN32(FRB)
+    FRT <- DOUBLE(bfp32_SIN(SINGLE(FRB)))
 
 Special Registers Altered:
 
@@ -29,7 +29,7 @@ X-Form
 
 Pseudo-code:
 
-    FRT <- FPCOS32(FRB)
+    FRT <- DOUBLE(bfp32_COS(SINGLE(FRB)))
 
 Special Registers Altered:
 
