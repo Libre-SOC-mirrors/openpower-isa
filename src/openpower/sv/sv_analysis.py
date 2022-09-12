@@ -320,8 +320,6 @@ def read_csvs():
                 continue
             if 'addpcis' in insn_name: # skip for now
                 continue
-            if insn_name in ['setvl', ]:  # SVP64 opcodes
-                continue
 
             insns[(insn_name, condition)] = row  # accumulate csv data
             insn_to_csv[insn_name] = csvname_  # CSV file name by instruction
@@ -518,9 +516,12 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['0'] = 'd:BI'  # BI: Rdest1_EXTRA3
             res['1'] = 's:BI'  # BI: Rsrc1_EXTRA3
         elif insn_name == 'fishmv':
-            # an overwrite ibstruction
+            # an overwrite instruction
             res['0'] = 'd:FRS'  # FRS: Rdest1_EXTRA3
             res['1'] = 's:FRS'  # FRS: Rsrc1_EXTRA3
+        elif insn_name == 'setvl':
+            res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
+            res['1'] = 's:RA'  # RS: Rsrc1_EXTRA3
         else:
             res['0'] = 'TODO'
             print("regs TODO", insn_name, regs)
