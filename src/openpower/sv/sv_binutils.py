@@ -13,6 +13,7 @@ from openpower.decoder.power_enums import (
     In3Sel as _In3Sel,
     OutSel as _OutSel,
     CRInSel as _CRInSel,
+    CRIn2Sel as _CRIn2Sel,
     CROutSel as _CROutSel,
     SVPtype as _SVPtype,
     SVEtype as _SVEtype,
@@ -178,6 +179,7 @@ In2Sel = Enum("In2Sel", _In2Sel, c_tag="svp64_in2_sel")
 In3Sel = Enum("In3Sel", _In3Sel, c_tag="svp64_in3_sel")
 OutSel = Enum("OutSel", _OutSel, c_tag="svp64_out_sel")
 CRInSel = Enum("CRInSel", _CRInSel, c_tag="svp64_cr_in_sel")
+CRIn2Sel = Enum("CRIn2Sel", _CRIn2Sel, c_tag="svp64_cr_in2_sel")
 CROutSel = Enum("CROutSel", _CROutSel, c_tag="svp64_cr_out_sel")
 PType = Enum("PType", _SVPtype, c_tag="svp64_ptype")
 EType = Enum("EType", _SVEtype, c_tag="svp64_etype", exclude="NONE")
@@ -337,24 +339,6 @@ class Name(Object, str, c_typedef="const char *"):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Opcode(Struct):
-    class Value(UInt32):
-        def __new__(cls, value):
-            if isinstance(value, int):
-                value = f"0x{value:08x}"
-            return super().__new__(cls, value)
-
-    class Mask(UInt32):
-        def __new__(cls, value):
-            if isinstance(value, int):
-                value = f"0x{value:08x}"
-            return super().__new__(cls, value)
-
-    value: Value
-    mask: Mask
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
 class Desc(Struct):
     function: Function
     in1: In1Sel
@@ -363,7 +347,7 @@ class Desc(Struct):
     out: OutSel
     out2: OutSel
     cr_in: CRInSel
-    cr_in2: CRInSel
+    cr_in2: CRIn2Sel
     cr_out: CROutSel
     ptype: PType
     etype: EType
@@ -390,10 +374,42 @@ class Desc(Struct):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
+class Opcode(Struct):
+    class Value(UInt32):
+        def __new__(cls, value):
+            if isinstance(value, int):
+                value = f"0x{value:08x}"
+            return super().__new__(cls, value)
+
+    class Mask(UInt32):
+        def __new__(cls, value):
+            if isinstance(value, int):
+                value = f"0x{value:08x}"
+            return super().__new__(cls, value)
+
+    value: Value
+    mask: Mask
+
+
+class Opcodes(Object, c_typedef="const uint64_t *"):
+    def __init__(self, offset):
+        self.__offset = offset
+        return super().__init__()
+
+    @classmethod
+    def c_decl(cls):
+        yield "const struct svp64_opcode *opcodes;"
+
+    def c_value(self, *, prefix="", suffix="", **kwargs):
+        yield f"{prefix}&svp64_opcodes[{self.__offset}]{suffix}"
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
 class Record(Struct):
     name: Name
-    opcode: Opcode
     desc: Desc
+    opcodes: Opcodes
+    nr_opcodes: Size
 
     def __lt__(self, other):
         if not isinstance(other, self.__class__):
@@ -409,8 +425,8 @@ class Codegen(_enum.Enum):
     def __str__(self):
         return self.value
 
-    def generate(self, records):
-        def ppc_svp64_h(records, num_records):
+    def generate(self, opcodes, records):
+        def ppc_svp64_h(opcodes, nr_opcodes, records, nr_records):
             disclaimer = DISCLAIMER.format(path=str(self),
                 desc="Header file for PowerPC opcode table (SVP64 extensions)")
             yield from disclaimer.splitlines()
@@ -442,9 +458,15 @@ class Codegen(_enum.Enum):
                 yield from cls.c_decl()
                 yield ""
 
+            yield opcodes.c_var("svp64_opcodes",
+                        prefix="extern const ", suffix=";")
+            yield nr_opcodes.c_var("svp64_nr_opcodes",
+                        prefix="extern const ", suffix=";")
+            yield ""
+
             yield records.c_var("svp64_records",
                         prefix="extern const ", suffix=";")
-            yield num_records.c_var("svp64_num_records",
+            yield nr_records.c_var("svp64_nr_records",
                         prefix="extern const ", suffix=";")
             yield ""
 
@@ -459,7 +481,7 @@ class Codegen(_enum.Enum):
 
             yield f"#endif /* {self.name} */"
 
-        def ppc_svp64_opc_c(records, num_records):
+        def ppc_svp64_opc_c(opcodes, nr_opcodes, records, nr_records):
             disclaimer = DISCLAIMER.format(path=str(self),
                 desc="PowerPC opcode list (SVP64 extensions)")
             yield from disclaimer.splitlines()
@@ -527,13 +549,22 @@ class Codegen(_enum.Enum):
                 CROutSel.WHOLE_REG: "FXM",
             })
 
+            yield opcodes.c_var("svp64_opcodes",
+                        prefix="const ", suffix=" = \\")
+            yield from opcodes.c_value(prefix="", suffix=";")
+            yield ""
+            yield nr_opcodes.c_var("svp64_nr_opcodes",
+                        prefix="const ", suffix=" = \\")
+            yield from indent(nr_opcodes.c_value(suffix=";"))
+            yield ""
+
             yield records.c_var("svp64_records",
                         prefix="const ", suffix=" = \\")
             yield from records.c_value(prefix="", suffix=";")
             yield ""
-            yield num_records.c_var("svp64_num_records",
+            yield nr_records.c_var("svp64_nr_records",
                         prefix="const ", suffix=" = \\")
-            yield from indent(num_records.c_value(suffix=";"))
+            yield from indent(nr_records.c_value(suffix=";"))
             yield ""
 
             yield "const struct powerpc_pd_reg svp64_regs[] = {"
@@ -556,16 +587,21 @@ class Codegen(_enum.Enum):
                         prefix="const ", suffix=" = \\")
             yield from indent(num_regs.c_value(suffix=";"))
 
+        opcodes = Array[Opcode, ...](opcodes)
+        nr_opcodes = Size("(sizeof (svp64_opcodes) / sizeof (svp64_opcodes[0]))")
+
         records = Array[Record, ...](records)
-        num_records = Size("(sizeof (svp64_records) / sizeof (svp64_records[0]))")
+        nr_records = Size("(sizeof (svp64_records) / sizeof (svp64_records[0]))")
 
         yield from {
             Codegen.PPC_SVP64_GEN_H: ppc_svp64_h,
             Codegen.PPC_SVP64_OPC_GEN_C: ppc_svp64_opc_c,
-        }[self](records, num_records)
+        }[self](opcodes, nr_opcodes, records, nr_records)
 
 
-def records(db):
+def collect(db):
+    opcodes = []
+    records = []
     fields = {field.name:field.type for field in _dataclasses.fields(Desc)}
 
     for insn in filter(lambda insn: insn.svp64 is not None, db):
@@ -589,17 +625,25 @@ def records(db):
             continue
 
         name = Name(f"sv.{insn.name}")
-        value = Opcode.Value(insn.opcode.value)
-        mask = Opcode.Mask(insn.opcode.mask)
-        opcode = Opcode(value=value, mask=mask)
+        offset = len(opcodes)
+        for opcode in insn.opcodes:
+            value = Opcode.Value(opcode.value)
+            mask = Opcode.Mask(opcode.mask)
+            opcode = Opcode(value=value, mask=mask)
+            opcodes.append(opcode)
         desc = Desc(**desc)
 
-        yield Record(name=name, opcode=opcode, desc=desc)
+        record = Record(name=name, desc=desc,
+            opcodes=Opcodes(offset), nr_opcodes=Size(len(insn.opcodes)))
+        records.append(record)
+
+    return (opcodes, records)
 
 
 def main(codegen):
     db = _Database(_find_wiki_dir())
-    for line in codegen.generate(records(db)):
+    (opcodes, records) = collect(db)
+    for line in codegen.generate(opcodes, records):
         print(line)
 
 
