@@ -363,7 +363,7 @@ def get_pdecode_idx_in(dec2, name):
     log("get_pdecode_idx_in FRC in3", name, in3_sel, In3Sel.FRC.value,
         in3, in3_isvec)
     # identify which regnames map to in1/2/3
-    if name == 'RA':
+    if name == 'RA' or name == 'RA_OR_ZERO':
         if (in1_sel == In1Sel.RA.value or
                 (in1_sel == In1Sel.RA_OR_ZERO.value and in1 != 0)):
             return in1, in1_isvec
@@ -469,6 +469,8 @@ def get_pdecode_idx_out(dec2, name):
             OutSel.RT_OR_ZERO.value, out, o_isvec,
             dec2.dec.RT)
         if out_sel == OutSel.RT.value:
+            return out, o_isvec
+        if out_sel == OutSel.RT_OR_ZERO.value and out != 0:
             return out, o_isvec
     elif name == 'RT_OR_ZERO':
         log("get_pdecode_idx_out", out_sel, OutSel.RT.value,

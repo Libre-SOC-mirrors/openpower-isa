@@ -262,6 +262,43 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 1)
             self.assertEqual(CR0[CRFields.SO], 1)
 
+    def test_sv_sv_setvl(self):
+        """test sv.setvl instruction works.  WARNING, going beyond
+        RT=0..31 does not work, bug in PowerDecoder2 / ISACaller,
+        related to RT_OR_ZERO and to simplev.mdwn pseudocode having
+        _RT not be EXTRA-extended properly
+        """
+        lst = SVP64Asm(["sv.setvl 8, 31, 10, 0, 1, 1", # setvl into RT=8
+                        ])
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=4) which is going to get erased by setvl
+        svstate = SVP64State()
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0] * 64
+        initial_regs[31] = 200
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=initial_regs,
+                                                svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate.vfirst))
+            self.assertEqual(sim.svstate.vl, 10)
+            self.assertEqual(sim.svstate.maxvl, 10)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            self.assertEqual(sim.svstate.vfirst, 0)
+            print("      gpr31", sim.gpr(31))
+            print("      gpr8", sim.gpr(8))
+            self.assertEqual(sim.gpr(8), SelectableInt(10, 64))
+
     def test_svstep_1(self):
         lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1", # actual setvl (VF mode)
                         "setvl 0, 0, 1, 1, 0, 0", # svstep
