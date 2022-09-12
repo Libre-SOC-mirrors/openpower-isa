@@ -1713,7 +1713,7 @@ class PPCDatabase:
             if not key.endswith("."):
                 return False
 
-            if not record.Rc is _RCOE.RC:
+            if record.Rc is _RCOE.NONE:
                 return False
 
             return exact_match(key[:-1], record)
