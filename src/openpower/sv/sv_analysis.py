@@ -318,6 +318,8 @@ def read_csvs():
                 continue
             if 'rfid' in insn_name:
                 continue
+            if 'addpcis' in insn_name: # skip for now
+                continue
             if insn_name in ['setvl', ]:  # SVP64 opcodes
                 continue
 
