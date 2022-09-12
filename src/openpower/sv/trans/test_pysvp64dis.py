@@ -27,8 +27,12 @@ class SVSTATETestCase(unittest.TestCase):
                                      "'%s' expected '%s'" % (line, expected[i]))
 
 
-    def test_0_addi(self):
+    def test_0_add(self):
         expected = ['addi 1,5,2',
+                    'add 1,5,2',
+                    'add. 1,5,2',
+                    'addo 1,5,2',
+                    'addo. 1,5,2',
                         ]
         self._do_tst(expected)
 
