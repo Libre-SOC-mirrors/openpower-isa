@@ -1094,6 +1094,13 @@ class SVP64Asm:
                 destwid = decode_elwidth(encmode[3:])
             elif encmode.startswith("sw="):
                 srcwid = decode_elwidth(encmode[3:])
+            # HACK! using destwid for pack/unpack TODO, separate setvl RM
+            elif encmode == 'pk':
+                destwid = 0b10
+            elif encmode == 'up':
+                destwid = 0b01
+            elif encmode == 'pu':
+                destwid = 0b11
             # element-strided LD/ST
             elif encmode == 'els':
                 ldst_elstride = 1
@@ -1646,6 +1653,12 @@ if __name__ == '__main__':
         'sv.ffmadds. 6.v, 2.v, 4.v, 6.v',  # incorrectly inserted 32-bit op
         'sv.ffmadds 6.v, 2.v, 4.v, 6.v',  # correctly converted to .long
         'svshape2 8, 1, 31, 7, 1, 1',
+    ]
+    lst = [
+        'sv.setvl 2, 3, 4, 0, 1, 1',
+        'sv.setvl/pk 2, 3, 4, 0, 1, 1',
+        'sv.setvl/up 2, 3, 4, 0, 1, 1',
+        'sv.setvl/pu 2, 3, 4, 0, 1, 1',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))
