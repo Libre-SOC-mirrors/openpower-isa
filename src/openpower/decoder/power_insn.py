@@ -1401,12 +1401,7 @@ class Extra3(Extra):
         self[key].assign(value)
 
 
-class RM(_Mapping):
-    class Mode(Mode):
-        normal: NormalMode
-        ldst_imm: LDSTImmMode
-        ldst_idx: LDSTIdxMode
-
+class RMBase(_Mapping):
     _: _Field = range(24)
     mmode: _Field = (0,)
     mask: _Field = range(1, 4)
@@ -1419,6 +1414,24 @@ class RM(_Mapping):
     extra: Extra.remap(range(10, 19))
     extra2: Extra2.remap(range(10, 19))
     extra3: Extra3.remap(range(10, 19))
+
+
+class RMNormal(RMBase):
+    mode: NormalMode
+
+
+class RMLDSTImm(RMBase):
+    mode: LDSTImmMode
+
+
+class RMLDSTIdx(RMBase):
+    mode: LDSTIdxMode
+
+
+class RM(RMBase):
+    normal: RMNormal
+    ldst_imm: RMLDSTImm
+    ldst_idx: RMLDSTIdx
 
 
 class SVP64Instruction(PrefixedInstruction):
@@ -1462,7 +1475,7 @@ class SVP64Instruction(PrefixedInstruction):
             return (self.prefix.rm.mode, "crop")
 
         elif record.svp64.mode is _SVMode.NORMAL:
-            mode = mode.normal
+            mode = self.prefix.rm.normal.mode
             if sel == 0b00:
                 if mode[2] == 0b0:
                     mode = mode.simple
@@ -1496,7 +1509,7 @@ class SVP64Instruction(PrefixedInstruction):
                 else:
                     mode = mode.prrc0
         elif record.svp64.mode is _SVMode.LDST_IMM:
-            mode = mode.ldst_imm
+            mode = self.prefix.rm.ldst_imm.mode
             if sel == 0b00:
                 if mode[2] == 0b0:
                     mode = mode.simple
@@ -1515,7 +1528,7 @@ class SVP64Instruction(PrefixedInstruction):
                 else:
                     mode = mode.prrc0
         elif record.svp64.mode is _SVMode.LDST_IMM:
-            mode = mode.ldst_idx
+            mode = self.prefix.rm.ldst_idx.mode
             if mode.sel == 0b00:
                 mode = mode.simple
             elif mode.sel == 0b01:
