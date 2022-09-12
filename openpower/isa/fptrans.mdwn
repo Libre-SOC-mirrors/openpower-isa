@@ -2,7 +2,799 @@
 
 <!-- PLEASE NOTE THESE ARE UNAPPROVED AND DRAFT, NOT SUBMITTED TO OPF ISA WG -->
 
-# [DRAFT] Floating SIN [Single]
+# [DRAFT] Floating ATAN2 Single
+
+X-Form
+
+* fatan2s FRT,FRA,FRB (Rc=0)
+* fatan2s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ATAN2(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATAN2
+
+X-Form
+
+* fatan2 FRT,FRA,FRB (Rc=0)
+* fatan2. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ATAN2(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATAN2PI Single
+
+X-Form
+
+* fatan2pis FRT,FRA,FRB (Rc=0)
+* fatan2pis. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ATAN2PI(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATAN2PI
+
+X-Form
+
+* fatan2pi FRT,FRA,FRB (Rc=0)
+* fatan2pi. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ATAN2PI(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating POW Single
+
+X-Form
+
+* fpows FRT,FRA,FRB (Rc=0)
+* fpows. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_POW(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating POW
+
+X-Form
+
+* fpow FRT,FRA,FRB (Rc=0)
+* fpow. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_POW(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating POWN Single
+
+X-Form
+
+* fpowns FRT,FRA,RB (Rc=0)
+* fpowns. FRT,FRA,RB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_POWN(SINGLE(FRA), RB))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating POWN
+
+X-Form
+
+* fpown FRT,FRA,RB (Rc=0)
+* fpown. FRT,FRA,RB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_POWN(FRA, RB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating POWR Single
+
+X-Form
+
+* fpowrs FRT,FRA,FRB (Rc=0)
+* fpowrs. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_POWR(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating POWR
+
+X-Form
+
+* fpowr FRT,FRA,FRB (Rc=0)
+* fpowr. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_POWR(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ROOTN Single
+
+X-Form
+
+* frootns FRT,FRA,RB (Rc=0)
+* frootns. FRT,FRA,RB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ROOTN(SINGLE(FRA), RB))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ROOTN
+
+X-Form
+
+* frootn FRT,FRA,RB (Rc=0)
+* frootn. FRT,FRA,RB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ROOTN(FRA, RB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating HYPOT Single
+
+X-Form
+
+* fhypots FRT,FRA,FRB (Rc=0)
+* fhypots. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_HYPOT(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating HYPOT
+
+X-Form
+
+* fhypot FRT,FRA,FRB (Rc=0)
+* fhypot. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_HYPOT(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating RSQRT Single
+
+X-Form
+
+* frsqrts FRT,FRB (Rc=0)
+* frsqrts. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_RSQRT(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating RSQRT
+
+X-Form
+
+* frsqrt FRT,FRB (Rc=0)
+* frsqrt. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_RSQRT(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating CBRT Single
+
+X-Form
+
+* fcbrts FRT,FRB (Rc=0)
+* fcbrts. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_CBRT(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating CBRT
+
+X-Form
+
+* fcbrt FRT,FRB (Rc=0)
+* fcbrt. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_CBRT(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating RECIP Single
+
+X-Form
+
+* frecips FRT,FRB (Rc=0)
+* frecips. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_RECIP(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating RECIP
+
+X-Form
+
+* frecip FRT,FRB (Rc=0)
+* frecip. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_RECIP(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP2M1 Single
+
+X-Form
+
+* fexp2m1s FRT,FRB (Rc=0)
+* fexp2m1s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_EXP2M1(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP2M1
+
+X-Form
+
+* fexp2m1 FRT,FRB (Rc=0)
+* fexp2m1. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_EXP2M1(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG2P1 Single
+
+X-Form
+
+* flog2p1s FRT,FRB (Rc=0)
+* flog2p1s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_LOG2P1(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG2P1
+
+X-Form
+
+* flog2p1 FRT,FRB (Rc=0)
+* flog2p1. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_LOG2P1(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP2 Single
+
+X-Form
+
+* fexp2s FRT,FRB (Rc=0)
+* fexp2s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_EXP2(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP2
+
+X-Form
+
+* fexp2 FRT,FRB (Rc=0)
+* fexp2. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_EXP2(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG2 Single
+
+X-Form
+
+* flog2s FRT,FRB (Rc=0)
+* flog2s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_LOG2(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG2
+
+X-Form
+
+* flog2 FRT,FRB (Rc=0)
+* flog2. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_LOG2(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXPM1 Single
+
+X-Form
+
+* fexpm1s FRT,FRB (Rc=0)
+* fexpm1s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_EXPM1(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXPM1
+
+X-Form
+
+* fexpm1 FRT,FRB (Rc=0)
+* fexpm1. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_EXPM1(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOGP1 Single
+
+X-Form
+
+* flogp1s FRT,FRB (Rc=0)
+* flogp1s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_LOGP1(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOGP1
+
+X-Form
+
+* flogp1 FRT,FRB (Rc=0)
+* flogp1. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_LOGP1(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP Single
+
+X-Form
+
+* fexps FRT,FRB (Rc=0)
+* fexps. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_EXP(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP
+
+X-Form
+
+* fexp FRT,FRB (Rc=0)
+* fexp. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_EXP(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG Single
+
+X-Form
+
+* flogs FRT,FRB (Rc=0)
+* flogs. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_LOG(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG
+
+X-Form
+
+* flog FRT,FRB (Rc=0)
+* flog. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_LOG(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP10M1 Single
+
+X-Form
+
+* fexp10m1s FRT,FRB (Rc=0)
+* fexp10m1s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_EXP10M1(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP10M1
+
+X-Form
+
+* fexp10m1 FRT,FRB (Rc=0)
+* fexp10m1. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_EXP10M1(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG10P1 Single
+
+X-Form
+
+* flog10p1s FRT,FRB (Rc=0)
+* flog10p1s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_LOG10P1(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG10P1
+
+X-Form
+
+* flog10p1 FRT,FRB (Rc=0)
+* flog10p1. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_LOG10P1(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP10 Single
+
+X-Form
+
+* fexp10s FRT,FRB (Rc=0)
+* fexp10s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_EXP10(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating EXP10
+
+X-Form
+
+* fexp10 FRT,FRB (Rc=0)
+* fexp10. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_EXP10(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG10 Single
+
+X-Form
+
+* flog10s FRT,FRB (Rc=0)
+* flog10s. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_LOG10(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating LOG10
+
+X-Form
+
+* flog10 FRT,FRB (Rc=0)
+* flog10. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_LOG10(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating SIN Single
 
 X-Form
 
@@ -20,7 +812,25 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# [DRAFT] Floating COS [Single]
+# [DRAFT] Floating SIN
+
+X-Form
+
+* fsin FRT,FRB (Rc=0)
+* fsin. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_SIN(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating COS Single
 
 X-Form
 
@@ -30,6 +840,1248 @@ X-Form
 Pseudo-code:
 
     FRT <- DOUBLE(bfp32_COS(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating COS
+
+X-Form
+
+* fcos FRT,FRB (Rc=0)
+* fcos. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_COS(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating TAN Single
+
+X-Form
+
+* ftans FRT,FRB (Rc=0)
+* ftans. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_TAN(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating TAN
+
+X-Form
+
+* ftan FRT,FRB (Rc=0)
+* ftan. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_TAN(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ASIN Single
+
+X-Form
+
+* fasins FRT,FRB (Rc=0)
+* fasins. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ASIN(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ASIN
+
+X-Form
+
+* fasin FRT,FRB (Rc=0)
+* fasin. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ASIN(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ACOS Single
+
+X-Form
+
+* facoss FRT,FRB (Rc=0)
+* facoss. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ACOS(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ACOS
+
+X-Form
+
+* facos FRT,FRB (Rc=0)
+* facos. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ACOS(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATAN Single
+
+X-Form
+
+* fatans FRT,FRB (Rc=0)
+* fatans. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ATAN(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATAN
+
+X-Form
+
+* fatan FRT,FRB (Rc=0)
+* fatan. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ATAN(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating SINPI Single
+
+X-Form
+
+* fsinpis FRT,FRB (Rc=0)
+* fsinpis. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_SINPI(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating SINPI
+
+X-Form
+
+* fsinpi FRT,FRB (Rc=0)
+* fsinpi. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_SINPI(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating COSPI Single
+
+X-Form
+
+* fcospis FRT,FRB (Rc=0)
+* fcospis. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_COSPI(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating COSPI
+
+X-Form
+
+* fcospi FRT,FRB (Rc=0)
+* fcospi. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_COSPI(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating TANPI Single
+
+X-Form
+
+* ftanpis FRT,FRB (Rc=0)
+* ftanpis. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_TANPI(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating TANPI
+
+X-Form
+
+* ftanpi FRT,FRB (Rc=0)
+* ftanpi. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_TANPI(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ASINPI Single
+
+X-Form
+
+* fasinpis FRT,FRB (Rc=0)
+* fasinpis. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ASINPI(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ASINPI
+
+X-Form
+
+* fasinpi FRT,FRB (Rc=0)
+* fasinpi. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ASINPI(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ACOSPI Single
+
+X-Form
+
+* facospis FRT,FRB (Rc=0)
+* facospis. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ACOSPI(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ACOSPI
+
+X-Form
+
+* facospi FRT,FRB (Rc=0)
+* facospi. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ACOSPI(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATANPI Single
+
+X-Form
+
+* fatanpis FRT,FRB (Rc=0)
+* fatanpis. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ATANPI(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATANPI
+
+X-Form
+
+* fatanpi FRT,FRB (Rc=0)
+* fatanpi. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ATANPI(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating SINH Single
+
+X-Form
+
+* fsinhs FRT,FRB (Rc=0)
+* fsinhs. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_SINH(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating SINH
+
+X-Form
+
+* fsinh FRT,FRB (Rc=0)
+* fsinh. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_SINH(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating COSH Single
+
+X-Form
+
+* fcoshs FRT,FRB (Rc=0)
+* fcoshs. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_COSH(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating COSH
+
+X-Form
+
+* fcosh FRT,FRB (Rc=0)
+* fcosh. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_COSH(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating TANH Single
+
+X-Form
+
+* ftanhs FRT,FRB (Rc=0)
+* ftanhs. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_TANH(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating TANH
+
+X-Form
+
+* ftanh FRT,FRB (Rc=0)
+* ftanh. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_TANH(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ASINH Single
+
+X-Form
+
+* fasinhs FRT,FRB (Rc=0)
+* fasinhs. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ASINH(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ASINH
+
+X-Form
+
+* fasinh FRT,FRB (Rc=0)
+* fasinh. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ASINH(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ACOSH Single
+
+X-Form
+
+* facoshs FRT,FRB (Rc=0)
+* facoshs. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ACOSH(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ACOSH
+
+X-Form
+
+* facosh FRT,FRB (Rc=0)
+* facosh. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ACOSH(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATANH Single
+
+X-Form
+
+* fatanhs FRT,FRB (Rc=0)
+* fatanhs. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_ATANH(SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating ATANH
+
+X-Form
+
+* fatanh FRT,FRB (Rc=0)
+* fatanh. FRT,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_ATANH(FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINNUM08 Single
+
+X-Form
+
+* fminnum08s FRT,FRA,FRB (Rc=0)
+* fminnum08s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MINNUM08(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINNUM08
+
+X-Form
+
+* fminnum08 FRT,FRA,FRB (Rc=0)
+* fminnum08. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MINNUM08(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXNUM08 Single
+
+X-Form
+
+* fmaxnum08s FRT,FRA,FRB (Rc=0)
+* fmaxnum08s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MAXNUM08(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXNUM08
+
+X-Form
+
+* fmaxnum08 FRT,FRA,FRB (Rc=0)
+* fmaxnum08. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MAXNUM08(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MIN19 Single
+
+X-Form
+
+* fmin19s FRT,FRA,FRB (Rc=0)
+* fmin19s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MIN19(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MIN19
+
+X-Form
+
+* fmin19 FRT,FRA,FRB (Rc=0)
+* fmin19. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MIN19(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAX19 Single
+
+X-Form
+
+* fmax19s FRT,FRA,FRB (Rc=0)
+* fmax19s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MAX19(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAX19
+
+X-Form
+
+* fmax19 FRT,FRA,FRB (Rc=0)
+* fmax19. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MAX19(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINNUM19 Single
+
+X-Form
+
+* fminnum19s FRT,FRA,FRB (Rc=0)
+* fminnum19s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MINNUM19(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINNUM19
+
+X-Form
+
+* fminnum19 FRT,FRA,FRB (Rc=0)
+* fminnum19. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MINNUM19(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXNUM19 Single
+
+X-Form
+
+* fmaxnum19s FRT,FRA,FRB (Rc=0)
+* fmaxnum19s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MAXNUM19(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXNUM19
+
+X-Form
+
+* fmaxnum19 FRT,FRA,FRB (Rc=0)
+* fmaxnum19. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MAXNUM19(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINC Single
+
+X-Form
+
+* fmincs FRT,FRA,FRB (Rc=0)
+* fmincs. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MINC(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINC
+
+X-Form
+
+* fminc FRT,FRA,FRB (Rc=0)
+* fminc. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MINC(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXC Single
+
+X-Form
+
+* fmaxcs FRT,FRA,FRB (Rc=0)
+* fmaxcs. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MAXC(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXC
+
+X-Form
+
+* fmaxc FRT,FRA,FRB (Rc=0)
+* fmaxc. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MAXC(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINMAGNUM08 Single
+
+X-Form
+
+* fminmagnum08s FRT,FRA,FRB (Rc=0)
+* fminmagnum08s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MINMAGNUM08(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINMAGNUM08
+
+X-Form
+
+* fminmagnum08 FRT,FRA,FRB (Rc=0)
+* fminmagnum08. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MINMAGNUM08(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXMAGNUM08 Single
+
+X-Form
+
+* fmaxmagnum08s FRT,FRA,FRB (Rc=0)
+* fmaxmagnum08s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MAXMAGNUM08(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXMAGNUM08
+
+X-Form
+
+* fmaxmagnum08 FRT,FRA,FRB (Rc=0)
+* fmaxmagnum08. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MAXMAGNUM08(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINMAG19 Single
+
+X-Form
+
+* fminmag19s FRT,FRA,FRB (Rc=0)
+* fminmag19s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MINMAG19(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINMAG19
+
+X-Form
+
+* fminmag19 FRT,FRA,FRB (Rc=0)
+* fminmag19. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MINMAG19(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXMAG19 Single
+
+X-Form
+
+* fmaxmag19s FRT,FRA,FRB (Rc=0)
+* fmaxmag19s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MAXMAG19(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXMAG19
+
+X-Form
+
+* fmaxmag19 FRT,FRA,FRB (Rc=0)
+* fmaxmag19. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MAXMAG19(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINMAGNUM19 Single
+
+X-Form
+
+* fminmagnum19s FRT,FRA,FRB (Rc=0)
+* fminmagnum19s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MINMAGNUM19(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINMAGNUM19
+
+X-Form
+
+* fminmagnum19 FRT,FRA,FRB (Rc=0)
+* fminmagnum19. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MINMAGNUM19(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXMAGNUM19 Single
+
+X-Form
+
+* fmaxmagnum19s FRT,FRA,FRB (Rc=0)
+* fmaxmagnum19s. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MAXMAGNUM19(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXMAGNUM19
+
+X-Form
+
+* fmaxmagnum19 FRT,FRA,FRB (Rc=0)
+* fmaxmagnum19. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MAXMAGNUM19(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINMAGC Single
+
+X-Form
+
+* fminmagcs FRT,FRA,FRB (Rc=0)
+* fminmagcs. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MINMAGC(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MINMAGC
+
+X-Form
+
+* fminmagc FRT,FRA,FRB (Rc=0)
+* fminmagc. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MINMAGC(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXMAGC Single
+
+X-Form
+
+* fmaxmagcs FRT,FRA,FRB (Rc=0)
+* fmaxmagcs. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MAXMAGC(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MAXMAGC
+
+X-Form
+
+* fmaxmagc FRT,FRA,FRB (Rc=0)
+* fmaxmagc. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MAXMAGC(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MOD Single
+
+X-Form
+
+* fmods FRT,FRA,FRB (Rc=0)
+* fmods. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_MOD(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating MOD
+
+X-Form
+
+* fmod FRT,FRA,FRB (Rc=0)
+* fmod. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_MOD(FRA, FRB)
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating REMAINDER Single
+
+X-Form
+
+* fremainders FRT,FRA,FRB (Rc=0)
+* fremainders. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE(bfp32_REMAINDER(SINGLE(FRA), SINGLE(FRB)))
+
+Special Registers Altered:
+
+    FPRF FR FI
+    FX OX UX XX
+    VXSNAN VXISI VXIMZ
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating REMAINDER
+
+X-Form
+
+* fremainder FRT,FRA,FRB (Rc=0)
+* fremainder. FRT,FRA,FRB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- bfp64_REMAINDER(FRA, FRB)
 
 Special Registers Altered:
 
