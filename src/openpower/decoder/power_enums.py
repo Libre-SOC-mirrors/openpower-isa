@@ -270,7 +270,7 @@ class SVExtraReg(Enum):
     @classmethod
     def _missing_(cls, value):
         selectors = (
-            In1Sel, In2Sel, In3Sel, CRInSel,
+            In1Sel, In2Sel, In3Sel, CRInSel, CRIn2Sel,
             OutSel, CROutSel,
         )
         if isinstance(value, selectors):
