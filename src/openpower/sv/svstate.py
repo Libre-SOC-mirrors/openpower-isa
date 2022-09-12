@@ -19,7 +19,10 @@ https://libre-soc.org/openpower/sv/sprs/
 | 38:39 | mo0      | REMAP RT SVSHAPE0-3    |
 | 40:41 | mo1      | REMAP EA SVSHAPE0-3    |
 | 42:46 | SVme     | REMAP enable (RA-RT)  |
-| 47:61 | rsvd     | reserved              |
+| 47:52 | rsvd     | reserved              |
+| 53    | pack     | PACK (srcstrp reorder)  |
+| 54    | unpack   | UNPACK (dststep order)  |
+| 55:61 | hphint   | Horizontal Hint       |
 | 62    | RMpst    | REMAP persistence     |
 | 63    | vfirst   | Vertical First mode   |
 """
@@ -32,7 +35,10 @@ from nmigen import Signal, Record
 class SVSTATERec(Record):
     layout = [("vfirst", 1),
             ("RMpst", 1),
-            ("rsvd", 15),
+            ("hphint", 7),
+            ("unpack", 1),
+            ("pack", 1),
+            ("rsvd", 6),
             ("SVme", 5),
             ("mo1", 2),
             ("mo0", 2),
