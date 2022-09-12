@@ -5,8 +5,8 @@
 
 SVL-Form
 
-* svstep RT,SVi,vf
-* svstep. RT,SVi,vf
+* svstep RT,SVi,vf (Rc=0)
+* svstep. RT,SVi,vf (Rc=1)
 
 Pseudo-code:
 
@@ -21,8 +21,8 @@ Special Registers Altered:
 
 SVL-Form
 
-* setvl RT,RA,SVi,vf,vs,ms
-* setvl. RT,RA,SVi,vf,vs,ms
+* setvl RT,RA,SVi,vf,vs,ms (Rc=0)
+* setvl. RT,RA,SVi,vf,vs,ms (Rc=1)
 
 Pseudo-code:
 

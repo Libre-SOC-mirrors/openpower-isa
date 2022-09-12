@@ -67,10 +67,16 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def test_5_sv_management(self):
+    def test_5_setvl(self):
         expected = [
                     "setvl 5,4,5,0,1,1",
                     "setvl. 5,4,5,0,1,1",
+                        ]
+        self._do_tst(expected)
+
+    def test_6_sv_setvl(self):
+        expected = [
+                    "sv.setvl 5,4,5,0,1,1",
                         ]
         self._do_tst(expected)
 
