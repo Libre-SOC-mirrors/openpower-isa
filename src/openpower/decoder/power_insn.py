@@ -644,8 +644,8 @@ class RegisterOperand(DynamicOperand):
                     value = ((spec << scalar_shift) | value)
                     span = ((spec_shift * ('{0}',)) + spec_span + span)
 
-                (value, span) = self.sv_spec_leave(value=value, span=span,
-                    origin_value=origin_value, origin_span=origin_span)
+            (value, span) = self.sv_spec_leave(value=value, span=span,
+                origin_value=origin_value, origin_span=origin_span)
 
         return (vector, value, span)
 
