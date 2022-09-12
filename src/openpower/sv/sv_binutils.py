@@ -391,10 +391,14 @@ class Opcode(Struct):
     mask: Mask
 
 
-class Opcodes(Object, c_typedef="const uint64_t *"):
+class Opcodes(Object, c_typedef="const struct svp64_opcode *"):
     def __init__(self, offset):
         self.__offset = offset
         return super().__init__()
+
+    @classmethod
+    def c_var(cls, name, prefix="", suffix=""):
+        return f"{prefix}{cls.c_typedef}{name}{suffix}"
 
     @classmethod
     def c_decl(cls):
