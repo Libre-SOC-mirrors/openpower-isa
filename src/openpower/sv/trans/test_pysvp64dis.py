@@ -20,7 +20,7 @@ class SVSTATETestCase(unittest.TestCase):
             print ("insns", insns)
             for i, line in enumerate(dump(insns, verbosity=Verbosity.SHORT)):
                 name = expected[i].split(" ")[0]
-                with self.subTest(name):
+                with self.subTest("%d:%s" % (i, name)):
                     print("instruction", repr(line), repr(expected[i]))
                     self.assertEqual(expected[i], line,
                                      "instruction does not match "
@@ -60,6 +60,13 @@ class SVSTATETestCase(unittest.TestCase):
         expected = [
                     'sv.crand *16,*2,*33',
                     'sv.crand 12,2,33',
+                        ]
+        self._do_tst(expected)
+
+    def test_5_sv_management(self):
+        expected = [
+                    "setvl 5,4,5,0,1,1",
+                    "setvl. 5,4,5,0,1,1",
                         ]
         self._do_tst(expected)
 
