@@ -405,6 +405,68 @@ class RegType(Enum):
     BT = CR_BIT
 
 
+FPTRANS_INSNS = (
+    "fatan2", "fatan2s",
+    "fatan2pi", "fatan2pis",
+    "fpow", "fpows",
+    "fpown", "fpowns",
+    "fpowr", "fpowrs",
+    "frootn", "frootns",
+    "fhypot", "fhypots",
+    "frsqrt", "frsqrts",
+    "fcbrt", "fcbrts",
+    "frecip", "frecips",
+    "fexp2m1", "fexp2m1s",
+    "flog2p1", "flog2p1s",
+    "fexp2", "fexp2s",
+    "flog2", "flog2s",
+    "fexpm1", "fexpm1s",
+    "flogp1", "flogp1s",
+    "fexp", "fexps",
+    "flog", "flogs",
+    "fexp10m1", "fexp10m1s",
+    "flog10p1", "flog10p1s",
+    "fexp10", "fexp10s",
+    "flog10", "flog10s",
+    "fsin", "fsins",
+    "fcos", "fcoss",
+    "ftan", "ftans",
+    "fasin", "fasins",
+    "facos", "facoss",
+    "fatan", "fatans",
+    "fsinpi", "fsinpis",
+    "fcospi", "fcospis",
+    "ftanpi", "ftanpis",
+    "fasinpi", "fasinpis",
+    "facospi", "facospis",
+    "fatanpi", "fatanpis",
+    "fsinh", "fsinhs",
+    "fcosh", "fcoshs",
+    "ftanh", "ftanhs",
+    "fasinh", "fasinhs",
+    "facosh", "facoshs",
+    "fatanh", "fatanhs",
+    "fminnum08", "fminnum08s",
+    "fmaxnum08", "fmaxnum08s",
+    "fmin19", "fmin19s",
+    "fmax19", "fmax19s",
+    "fminnum19", "fminnum19s",
+    "fmaxnum19", "fmaxnum19s",
+    "fminc", "fmincs",
+    "fmaxc", "fmaxcs",
+    "fminmagnum08", "fminmagnum08s",
+    "fmaxmagnum08", "fmaxmagnum08s",
+    "fminmag19", "fminmag19s",
+    "fmaxmag19", "fmaxmag19s",
+    "fminmagnum19", "fminmagnum19s",
+    "fmaxmagnum19", "fmaxmagnum19s",
+    "fminmagc", "fminmagcs",
+    "fmaxmagc", "fmaxmagcs",
+    "fmod", "fmods",
+    "fremainder", "fremainders",
+)
+
+
 # supported instructions: make sure to keep up-to-date with CSV files
 # just like everything else
 _insns = [
@@ -442,7 +504,6 @@ _insns = [
     "ffmsubs", "ffmadds", "ffnmsubs", "ffnmadds",       # FFT FP 3-arg
     "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
-    "fsins", "fcoss",                                   # FP SIN/COS
     "fmvis",                                            # FP load immediate
     "fishmv",                                           # Float Replace Lower-Half Single, Immediate
     'grev', 'grev.', 'grevi', 'grevi.',
@@ -503,6 +564,7 @@ _insns = [
     "tw", "twi",
     "wait",
     "xor", "xori", "xoris",
+    *FPTRANS_INSNS,
 ]
 
 # two-way lookup of instruction-to-index and vice-versa

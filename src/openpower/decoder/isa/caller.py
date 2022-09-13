@@ -30,7 +30,7 @@ from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
                                            OutSel, CRInSel, CROutSel, LDSTMode,
                                            SVP64RMMode, SVP64PredMode,
                                            SVP64PredInt, SVP64PredCR,
-                                           SVP64LDSTmode)
+                                           SVP64LDSTmode, FPTRANS_INSNS)
 
 from openpower.decoder.power_enums import SVPtype
 
@@ -1179,7 +1179,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
 
         # list of instructions not being supported by binutils (.long)
         dotstrp = asmop[:-1] if asmop[-1] == '.' else asmop
-        if dotstrp in [ 'fsins', 'fcoss',
+        if dotstrp in [*FPTRANS_INSNS,
                     'ffmadds', 'fdmadds', 'ffadds',
                      'mins', 'maxs', 'minu', 'maxu',
                     'setvl', 'svindex', 'svremap', 'svstep',
