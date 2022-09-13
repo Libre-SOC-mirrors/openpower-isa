@@ -404,6 +404,12 @@ class RegType(Enum):
     BI = CR_BIT
     BT = CR_BIT
 
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, SVExtraReg):
+            return cls.__members__[value.name]
+        return super()._missing_(value)
+
 
 FPTRANS_INSNS = (
     "fatan2", "fatan2s",
