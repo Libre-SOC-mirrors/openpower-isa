@@ -1318,6 +1318,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # the ALL/ANY mode we can early-exit
         if self.is_svp64_mode and ins_name.startswith("sv.bc"):
             no_in_vec = yield self.dec2.no_in_vec  # BI is scalar
+            # XXX TODO - pack/unpack here
             end_loop = no_in_vec or srcstep == vl-1 or dststep == vl-1
             self.namespace['end_loop'] = SelectableInt(end_loop, 1)
 
@@ -1805,10 +1806,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         dststep = self.svstate.dststep
         ssubstep = self.svstate.ssubstep
         dsubstep = self.svstate.dsubstep
+        pack = self.svstate.pack
+        unpack = self.svstate.unpack
         vl = self.svstate.vl
         subvl = yield self.dec2.rm_dec.rm_in.subvl
         log("    srcstep", srcstep)
         log("    dststep", dststep)
+        log("        pack", pack)
+        log("      unpack", unpack)
         log("    ssubstep", ssubstep)
         log("    dsubstep", dsubstep)
         log("         vl", vl)
@@ -1836,6 +1841,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         dststep = self.svstate.dststep
         ssubstep = self.svstate.ssubstep
         dsubstep = self.svstate.dsubstep
+        pack = self.svstate.pack
+        unpack = self.svstate.unpack
         rm_mode = yield self.dec2.rm_dec.mode
         reverse_gear = yield self.dec2.rm_dec.reverse_gear
         sv_ptype = yield self.dec2.dec.op.SV_Ptype
@@ -1848,6 +1855,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         log("    svstate.dststep", dststep)
         log("    svstate.ssubstep", ssubstep)
         log("    svstate.dsubstep", dsubstep)
+        log("    svstate.pack", pack)
+        log("    svstate.unpack", unpack)
         log("    mode", rm_mode)
         log("    reverse", reverse_gear)
         log("    out_vec", out_vec)
@@ -1869,8 +1878,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         else:
             svp64_is_vector = out_vec
         # loops end at the first "hit" (source or dest)
-        loopend = ((srcstep == vl-1 and ssubstep == subvl) or
-                   (dststep == vl-1 and dsubstep == subvl))
+        end_src = srcstep == vl-1
+        end_dst = dststep == vl-1
+        loopend = ((end_src and ssubstep == subvl) or
+                   (end_dst and dsubstep == subvl))
         if not svp64_is_vector or loopend:
             # reset loop to zero and update NIA
             self.svp64_reset_loop()
@@ -1879,8 +1890,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             return True
 
         # still looping, advance and update NIA
-        yield from self.advance_svstate_steps()
+        yield from self.advance_svstate_steps(end_src, end_dst)
         self.namespace['SVSTATE'] = self.svstate
+
         # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
         # (by default, NIA is CIA+4 if v3.0B or CIA+8 if SVP64)
         # this way we keep repeating the same instruction (with new steps)
@@ -1895,23 +1907,47 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         """
         subvl = yield self.dec2.rm_dec.rm_in.subvl
         # first source step
+        pack = self.svstate.pack
         ssubstep = self.svstate.ssubstep
+        srcstep = self.svstate.srcstep
         end_sub = ssubstep == subvl
-        if end_sub:
-            if not end_src:
-                self.svstate.srcstep += SelectableInt(1, 7)
-            self.svstate.ssubstep = SelectableInt(0, 2)  # reset
+        if pack:
+            # pack advances subvl in *outer* loop
+            if end_src:
+                if not end_sub:
+                    self.svstate.ssubstep += SelectableInt(1, 7)
+                self.svstate.srcstep = SelectableInt(0, 2)  # reset
+            else:
+                self.svstate.srcstep += SelectableInt(1, 2) # advance srcstep
         else:
-            self.svstate.ssubstep += SelectableInt(1, 2) # advance ssubstep
+            # advance subvl in *inner* loop
+            if end_sub:
+                if not end_src:
+                    self.svstate.srcstep += SelectableInt(1, 7)
+                self.svstate.ssubstep = SelectableInt(0, 2)  # reset
+            else:
+                self.svstate.ssubstep += SelectableInt(1, 2) # advance ssubstep
+
         # now dest step
         dsubstep = self.svstate.dsubstep
+        unpack = self.svstate.unpack
         end_sub = dsubstep == subvl
-        if end_sub:
-            if not end_dst:
-                self.svstate.dststep += SelectableInt(1, 7)
-            self.svstate.dsubstep = SelectableInt(0, 2)  # reset
+        if unpack:
+            # unpack advances subvl in *outer* loop
+            if end_dst:
+                if not end_sub:
+                    self.svstate.dsubstep += SelectableInt(1, 7)
+                self.svstate.dststep = SelectableInt(0, 2)  # reset
+            else:
+                self.svstate.dststep += SelectableInt(1, 2) # advance dststep
         else:
-            self.svstate.dsubstep += SelectableInt(1, 2) # advance ssubstep
+            # advance subvl in *inner* loop
+            if end_sub:
+                if not end_dst:
+                    self.svstate.dststep += SelectableInt(1, 7)
+                self.svstate.dsubstep = SelectableInt(0, 2)  # reset
+            else:
+                self.svstate.dsubstep += SelectableInt(1, 2) # advance ssubstep
 
     def update_pc_next(self):
         # UPDATE program counter
