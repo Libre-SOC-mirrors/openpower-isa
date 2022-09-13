@@ -49,7 +49,6 @@ https://libre-soc.org/openpower/sv/branches/
 
 LD/ST immed:
 00	0	zz els	normal mode (with element-stride option)
-00	1	zz els	Pack/unpack (with element-stride option)
 01	inv	CR-bit	Rc=1: ffirst CR sel
 01	inv	els RC1	Rc=0: ffirst z/nonz
 10	N	zz els	sat mode: N=0/1 u/s
@@ -71,12 +70,12 @@ Arithmetic:
 | 00  |   0 |  dz  sz | simple mode                      |
 | 00  |   1 | 0  RG   | scalar reduce mode (mapreduce), SUBVL=1 |
 | 00  |   1 | SVM 0   | subvector reduce mode, SUBVL>1   |
-| 00  |   1 | SVM 1   | Pack/Unpack mode, SUBVL>1   |
+| 00  |   1 | /   1   | reserved |
 | 01  | inv | CR-bit  | Rc=1: ffirst CR sel              |
 | 01  | inv | VLi RC1 |  Rc=0: ffirst z/nonz |
 | 10  |   N | dz   sz |  sat mode: N=0/1 u/s, SUBVL=1 |
 | 10  |   N | zz   0  |  sat mode: N=0/1 u/s, SUBVL>1 |
-| 10  |   N | zz   1  |  Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1 |
+| 10  |   N | /    1  |  reserved |
 | 11  | inv | CR-bit  |  Rc=1: pred-result CR sel |
 | 11  | inv | zz  RC1 |  Rc=0: pred-result z/nonz |
 
@@ -127,8 +126,6 @@ class SVP64RMModeDecode(Elaboratable):
         # Modes n stuff
         self.ew_src = Signal(SVP64width) # source elwidth
         self.ew_dst = Signal(SVP64width) # dest elwidth
-        self.pack = Signal() # pack mode
-        self.unpack = Signal() # unpack mode
         self.saturate = Signal(SVP64sat)
         self.RC1 = Signal()
         self.cr_sel = Signal(2)  # bit of CR to test (index 0-3)
@@ -146,7 +143,6 @@ class SVP64RMModeDecode(Elaboratable):
         # decode pieces of mode
         is_ldst = Signal()
         is_bc = Signal()
-        do_pu = Signal() # whether to decode pack/unpack
         comb += is_ldst.eq(self.fn_in == Function.LDST)
         comb += is_bc.eq(self.fn_in == Function.BRANCH)
         mode2 = sel(m, mode, SVP64MODE.MOD2)
@@ -177,12 +173,8 @@ class SVP64RMModeDecode(Elaboratable):
                 with m.Case(0): # needs further decoding (LDST no mapreduce)
                     with m.If(is_ldst):
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
-                        comb += do_pu.eq(mode[SVP64MODE.LDST_PACK]) # Pack mode
                     with m.Elif(mode[SVP64MODE.REDUCE]):
                         comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
-                        # Pack only active if SVM=1 & SUBVL>1 & Mode[4]=1
-                        with m.If(self.rm_in.subvl != Const(0, 2)): # active
-                            comb += do_pu.eq(mode[SVP64MODE.ARITH_PACK])
                     with m.Else():
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
                 with m.Case(1):
@@ -237,14 +229,8 @@ class SVP64RMModeDecode(Elaboratable):
                 with m.Default():
                     comb += self.saturate.eq(SVP64sat.NONE)
 
-            # extract pack/unpack, actually just ELWIDTH_SRC, so
-            # do elwidth/elwidth_src at same time
-            with m.If(do_pu):
-                comb += self.pack.eq(self.rm_in.ewsrc[0])
-                comb += self.unpack.eq(self.rm_in.ewsrc[1])
-                comb += self.ew_src.eq(self.rm_in.elwidth) # make same as elwid
-            with m.Else():
-                comb += self.ew_src.eq(self.rm_in.ewsrc)
+            # do elwidth/elwidth_src extract
+            comb += self.ew_src.eq(self.rm_in.ewsrc)
             comb += self.ew_dst.eq(self.rm_in.elwidth)
 
             # extract els (element strided mode bit)
