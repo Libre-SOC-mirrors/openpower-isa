@@ -48,8 +48,10 @@ class SimRunner(StateRunner):
         self.dut = dut
 
         self.mmu = pspec.mmu == True
+        fp_en = pspec.fp_en == True
         regreduce_en = pspec.regreduce_en == True
-        self.simdec2 = simdec2 = PowerDecode2(None, regreduce_en=regreduce_en)
+        self.simdec2 = simdec2 = PowerDecode2(
+            None, regreduce_en=regreduce_en, fp_en=fp_en)
         m.submodules.simdec2 = simdec2  # pain in the neck
 
     def prepare_for_test(self, test):
@@ -71,7 +73,8 @@ class SimRunner(StateRunner):
                   disassembly=insncode,
                   bigendian=bigendian,
                   initial_svstate=test.svstate,
-                  mmu=self.mmu)
+                  mmu=self.mmu,
+                  fpregfile=test.fpregs)
 
         # run the loop of the instructions on the current test
         index = sim.pc.CIA.value//4
@@ -127,7 +130,7 @@ class TestRunnerBase(FHDLTestCase):
 
     def __init__(self, tst_data, microwatt_mmu=False, rom=None,
                  svp64=True, run_hdl=None, run_sim=True,
-                 allow_overlap=False, inorder=False):
+                 allow_overlap=False, inorder=False, fp=False):
         super().__init__("run_all")
         self.test_data = tst_data
         self.microwatt_mmu = microwatt_mmu
@@ -137,6 +140,7 @@ class TestRunnerBase(FHDLTestCase):
         self.inorder = inorder
         self.run_hdl = run_hdl
         self.run_sim = run_sim
+        self.fp = fp
 
     def run_all(self):
         m = Module()
@@ -170,7 +174,8 @@ class TestRunnerBase(FHDLTestCase):
                      allow_overlap=self.allow_overlap,
                      inorder=self.inorder,
                      mmu=self.microwatt_mmu,
-                     reg_wid=64)
+                     reg_wid=64,
+                     fp_en=self.fp)
 
         ###### SETUP PHASE #######
         # Determine the simulations needed and add to state_list

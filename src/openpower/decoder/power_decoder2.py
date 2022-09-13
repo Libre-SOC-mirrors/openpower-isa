@@ -764,10 +764,11 @@ class PowerDecodeSubset(Elaboratable):
     """
 
     def __init__(self, dec, opkls=None, fn_name=None, final=False, state=None,
-                 svp64_en=True, regreduce_en=False):
+                 svp64_en=True, regreduce_en=False, fp_en=False):
 
         self.svp64_en = svp64_en
         self.regreduce_en = regreduce_en
+        self.fp_en = fp_en
         if svp64_en:
             self.is_svp64_mode = Signal()  # mark decoding as SVP64 Mode
             self.use_svp64_fft = Signal()      # FFT Mode
@@ -809,7 +810,7 @@ class PowerDecodeSubset(Elaboratable):
         if dec is None:
             dec = create_pdecode(name=fn_name, col_subset=col_subset,
                                  row_subset=row_subset,
-                                 conditions=conditions)
+                                 conditions=conditions, include_fp=fp_en)
         self.dec = dec
 
         # set up a copy of the PowerOp
@@ -1112,9 +1113,9 @@ class PowerDecode2(PowerDecodeSubset):
     """
 
     def __init__(self, dec, opkls=None, fn_name=None, final=False,
-                 state=None, svp64_en=True, regreduce_en=False):
+                 state=None, svp64_en=True, regreduce_en=False, fp_en=False):
         super().__init__(dec, opkls, fn_name, final, state, svp64_en,
-                         regreduce_en=False)
+                         regreduce_en=False, fp_en=fp_en)
         self.ldst_exc = LDSTException("dec2_exc")  # rewrites as OP_TRAP
         self.instr_fault = Signal()  # rewrites instruction as OP_FETCH_FAILED
 

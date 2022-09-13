@@ -164,6 +164,10 @@ class State:
             if(reg != 0):
                 msg = "%se.intregs[%d] = 0x%x\n"
                 sout.write( msg % (lindent, i, reg))
+        for i, reg in enumerate(self.fpregs):
+            if reg != 0:
+                msg = "%se.fpregs[%d] = 0x%x\n"
+                sout.write(msg % (lindent, i, reg))
         # CR fields
         for i in range(8):
             cri = self.crregs[i]

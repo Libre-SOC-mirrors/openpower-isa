@@ -121,6 +121,7 @@ class TestAccumulatorBase:
                  initial_svstate=0,
                  expected=None,
                  stop_at_pc=None,
+                 fpregs=None,
                  src_loc_at=0):
 
         # name of caller of this function
@@ -136,7 +137,8 @@ class TestAccumulatorBase:
                       expected=expected,
                       stop_at_pc=stop_at_pc,
                       test_file=test_file,
-                      subtest_args=self.__subtest_args.copy())
+                      subtest_args=self.__subtest_args.copy(),
+                      fpregs=fpregs)
 
         self.test_data.append(tc)
 
@@ -152,7 +154,8 @@ class TestCase:
                  expected=None,
                  stop_at_pc=None,
                  test_file=None,
-                 subtest_args=None):
+                 subtest_args=None,
+                 fpregs=None):
 
         self.program = program
         self.name = name
@@ -163,7 +166,10 @@ class TestCase:
             sprs = {}
         if mem is None:
             mem = {}
+        if fpregs is None:
+            fpregs = [0] * 32
         self.regs = regs
+        self.fpregs = fpregs
         self.sprs = sprs
         self.cr = cr
         self.mem = mem
