@@ -542,6 +542,23 @@ class DynamicOperand(Operand):
             yield str(int(value))
 
 
+class SignedOperand(DynamicOperand):
+    def disassemble(self, insn, record,
+            verbosity=Verbosity.NORMAL, indent=""):
+        span = self.span(record=record)
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
+        value = insn[span]
+
+        if verbosity >= Verbosity.VERBOSE:
+            span = map(str, span)
+            yield f"{indent}{self.name}"
+            yield f"{indent}{indent}{int(value):0{value.bits}b}"
+            yield f"{indent}{indent}{', '.join(span)}"
+        else:
+            yield str(value.to_signed_int())
+
+
 @_dataclasses.dataclass(eq=True, frozen=True)
 class StaticOperand(Operand):
     value: int
@@ -733,8 +750,8 @@ class TargetAddrOperand(RegisterOperand):
             yield f"{indent}{indent}{indent}{int(value):0{value.bits}b}00"
             yield f"{indent}{indent}{indent}{', '.join(span + ('{0}', '{0}'))}"
         else:
-            yield hex(int(_selectconcat(value,
-                _SelectableInt(value=0b00, bits=2))))
+            yield hex(_selectconcat(value,
+                _SelectableInt(value=0b00, bits=2)).to_signed_int())
 
 
 class TargetAddrOperandLI(TargetAddrOperand):
@@ -790,7 +807,7 @@ class DOperandDX(DynamicOperand):
                 yield f"{indent}{indent}{indent}{int(value):0{value.bits}b}"
                 yield f"{indent}{indent}{indent}{', '.join(span)}"
         else:
-            yield str(int(value))
+            yield str(value.to_signed_int())
 
 
 class Operands(tuple):
@@ -814,6 +831,16 @@ class Operands(tuple):
             "SVxd": NonZeroOperand,
             "SVyd": NonZeroOperand,
             "SVzd": NonZeroOperand,
+            "BD": SignedOperand,
+            "D": SignedOperand,
+            "DQ": SignedOperand,
+            "DS": SignedOperand,
+            "SI": SignedOperand,
+            "IB": SignedOperand,
+            "LI": SignedOperand,
+            "SIM": SignedOperand,
+            "SVD": SignedOperand,
+            "SVDS": SignedOperand,
         }
 
         operands = []
