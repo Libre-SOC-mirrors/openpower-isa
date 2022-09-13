@@ -121,8 +121,8 @@
     | PO   |   VRS         |  RA         |  RB         |   XO |  / |
     | PO   |    MO         |  ///        |  ///        |   XO |  / |
     | PO   |       RT      | /// |L3     |     ///     |   XO | /  |
-    | PO   |   FRT         |   FRA       |   FRB       |   XO |  / |
-    | PO   |   FRT         |   FRA       |    RB       |   XO |  / |
+    | PO   |   FRT         |   FRA       |   FRB       |   XO | Rc |
+    | PO   |   FRT         |   FRA       |    RB       |   XO | Rc |
 
 # 1.6.8 XL-FORM
     |0     |6    |9  |11  |14   |16    |19|20|21    |31 |
