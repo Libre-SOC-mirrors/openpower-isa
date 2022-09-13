@@ -1474,6 +1474,34 @@ class CROpRM(BaseRM):
     ff5: ff5
 
 
+class BranchBaseRM(BaseRM):
+    ALL: BaseRM[4]
+    SNZ: BaseRM[5]
+    SL: BaseRM[17]
+    SLu: BaseRM[18]
+    LRu: BaseRM[22]
+    sz: BaseRM[23]
+
+
+class BranchRM(BranchBaseRM):
+    class simple(BranchBaseRM):
+        """simple mode"""
+        pass
+
+    class vls(BranchBaseRM):
+        """VLSET mode"""
+        VSb: BaseRM[7]
+        VLI: BaseRM[21]
+
+    class ctr(BranchBaseRM):
+        """CTR-test mode"""
+        CTi: BaseRM[6]
+
+    class ctrvls(vls, ctr):
+        """CTR-test+VLSET mode"""
+        pass
+
+
 class RM(BaseRM):
     normal: NormalRM
     ldst_imm: LDSTImmRM
@@ -1514,10 +1542,7 @@ class SVP64Instruction(PrefixedInstruction):
         subvl = self.prefix.rm.subvl
         rm = self.prefix.rm
 
-        if record.svp64.mode is _SVMode.BRANCH:
-            return (rm, "branch")
-
-        elif record.svp64.mode is _SVMode.NORMAL:
+        if record.svp64.mode is _SVMode.NORMAL:
             rm = rm.normal
             if rm.mode[0:2] == 0b00:
                 if rm.mode[2] == 0b0:
@@ -1551,6 +1576,7 @@ class SVP64Instruction(PrefixedInstruction):
                     rm = rm.prrc1
                 else:
                     rm = rm.prrc0
+
         elif record.svp64.mode is _SVMode.LDST_IMM:
             rm = rm.ldst_imm
             if rm.mode[0:2] == 0b00:
@@ -1570,6 +1596,7 @@ class SVP64Instruction(PrefixedInstruction):
                     rm = rm.prrc1
                 else:
                     rm = rm.prrc0
+
         elif record.svp64.mode is _SVMode.LDST_IMM:
             rm = rm.ldst_idx
             if rm.mode[0:2] == 0b00:
@@ -1612,6 +1639,21 @@ class SVP64Instruction(PrefixedInstruction):
                 else:
                     raise ValueError(record.svp64)
 
+        elif record.svp64.mode is _SVMode.BRANCH:
+            if rm[19] == 0b0:
+                if rm[20] == 0b0:
+                    rm = rm.simple
+                else:
+                    rm = rm.vls
+            else:
+                if rm[20] == 0b0:
+                    rm = rm.ctr
+                else:
+                    rm = rm.ctrvls
+
+        else:
+            raise ValueError(self)
+
         table = {
             NormalRM.simple: "normal: simple",
             NormalRM.smr: "normal: smr",
@@ -1643,6 +1685,10 @@ class SVP64Instruction(PrefixedInstruction):
             CROpRM.reserved: "reserved",
             CROpRM.ff3: "ffirst 3-bit mode",
             CROpRM.ff5: "ffirst 5-bit mode",
+            BranchRM.simple: "simple mode",
+            BranchRM.vls: "VLSET mode",
+            BranchRM.ctr: "CTR-test mode",
+            BranchRM.ctrvls: "CTR-test+VLSET mode",
         }
         for (cls, desc) in table.items():
             if isinstance(rm, cls):
