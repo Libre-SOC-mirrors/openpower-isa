@@ -1415,10 +1415,70 @@ class LDSTIdxRM(BaseRM):
     prrc0: prrc0
 
 
+class CROpRM(BaseRM):
+    class simple(BaseRM):
+        """simple mode"""
+        sz: BaseRM[6]
+        SNZ: BaseRM[7]
+        RG: BaseRM[20]
+        dz: BaseRM[22]
+
+    class smr(BaseRM):
+        """scalar reduce mode (mapreduce), SUBVL=1"""
+        sz: BaseRM[6]
+        SNZ: BaseRM[7]
+        RG: BaseRM[20]
+
+    class svmr(BaseRM):
+        """subvector reduce mode, SUBVL>1"""
+        zz: BaseRM[6]
+        SNZ: BaseRM[7]
+        RG: BaseRM[20]
+        SVM: BaseRM[22]
+        dz: BaseRM[6]
+        sz: BaseRM[6]
+
+    class reserved(BaseRM):
+        """reserved"""
+        zz: BaseRM[6]
+        SNZ: BaseRM[7]
+        RG: BaseRM[20]
+        dz: BaseRM[6]
+        sz: BaseRM[6]
+
+    class ff3(BaseRM):
+        """ffirst 3-bit mode"""
+        zz: BaseRM[6]
+        SNZ: BaseRM[7]
+        VLI: BaseRM[20]
+        inv: BaseRM[21]
+        CR: BaseRM[22, 23]
+        dz: BaseRM[6]
+        sz: BaseRM[6]
+
+    class ff5(BaseRM):
+        """ffirst 5-bit mode"""
+        zz: BaseRM[6]
+        SNZ: BaseRM[7]
+        VLI: BaseRM[20]
+        inv: BaseRM[21]
+        dz: BaseRM[22]
+        dz: BaseRM[6]
+        sz: BaseRM[6]
+
+    simple: simple
+    smr: smr
+    svmr: svmr
+    reserved: reserved
+    ff3: ff3
+    ff5: ff5
+
+
 class RM(BaseRM):
     normal: NormalRM
     ldst_imm: LDSTImmRM
     ldst_idx: LDSTIdxRM
+    cr_op: CROpRM
 
 
 class SVP64Instruction(PrefixedInstruction):
@@ -1456,9 +1516,6 @@ class SVP64Instruction(PrefixedInstruction):
 
         if record.svp64.mode is _SVMode.BRANCH:
             return (rm, "branch")
-
-        elif record.svp64.mode is _SVMode.CROP:
-            return (rm, "crop")
 
         elif record.svp64.mode is _SVMode.NORMAL:
             rm = rm.normal
@@ -1527,6 +1584,34 @@ class SVP64Instruction(PrefixedInstruction):
                 else:
                     rm = rm.prrc0
 
+        elif record.svp64.mode is _SVMode.CROP:
+            rm = rm.cr_op
+            if rm[19] == 0b0:
+                if rm[21] == 0b0:
+                    rm = rm.simple
+                else:
+                    if subvl == 0:
+                        rm = rm.smr
+                    else:
+                        if rm[23] == 0b0:
+                            rm = rm.svmr
+                        else:
+                            rm = rm.reserved
+            else:
+                regtype = None
+                for idx in range(0, 4):
+                    for entry in record.svp64.extra[idx]:
+                        if entry.regtype is _SVExtraRegType.DST:
+                            if regtype is not None:
+                                raise ValueError(record.svp64)
+                            regtype = _RegType(entry.reg)
+                if regtype is _RegType.CR_REG:
+                    rm = rm.ff5
+                elif regtype is _RegType.CR_BIT:
+                    rm = rm.ff3
+                else:
+                    raise ValueError(record.svp64)
+
         table = {
             NormalRM.simple: "normal: simple",
             NormalRM.smr: "normal: smr",
@@ -1552,6 +1637,12 @@ class SVP64Instruction(PrefixedInstruction):
             LDSTIdxRM.sat: "ld/st idx: sat",
             LDSTIdxRM.prrc1: "ld/st idx: prrc1",
             LDSTIdxRM.prrc0: "ld/st idx: prrc0",
+            CROpRM.simple: "simple mode",
+            CROpRM.smr: "scalar reduce mode (mapreduce), SUBVL=1",
+            CROpRM.svmr: "subvector reduce mode, SUBVL>1",
+            CROpRM.reserved: "reserved",
+            CROpRM.ff3: "ffirst 3-bit mode",
+            CROpRM.ff5: "ffirst 5-bit mode",
         }
         for (cls, desc) in table.items():
             if isinstance(rm, cls):
