@@ -143,3 +143,19 @@ class SVP64State(SelectableInt):
     def RMpst(self, value):
         self.fsi['RMpst'].eq(value)
 
+    @property
+    def unpack(self):
+        return self.fsi['unpack'].asint(msb0=True)
+
+    @maxvl.setter
+    def unpack(self, value):
+        self.fsi['unpack'].eq(value)
+
+    @property
+    def pack(self):
+        return self.fsi['pack'].asint(msb0=True)
+
+    @maxvl.setter
+    def pack(self, value):
+        self.fsi['pack'].eq(value)
+

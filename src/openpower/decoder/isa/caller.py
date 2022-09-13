@@ -1694,6 +1694,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         dststep = self.svstate.dststep
         ssubstep = self.svstate.ssubstep
         dsubstep = self.svstate.dsubstep
+        pack = self.svstate.pack
+        unpack = self.svstate.unpack
         sv_a_nz = yield self.dec2.sv_a_nz
         fft_mode = yield self.dec2.use_svp64_fft
         in1 = yield self.dec2.e.read_reg1.data
@@ -1707,8 +1709,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         srcmask = dstmask = 0xffff_ffff_ffff_ffff
 
         pmode = yield self.dec2.rm_dec.predmode
-        pack = yield self.dec2.rm_dec.pack
-        unpack = yield self.dec2.rm_dec.unpack
         reverse_gear = yield self.dec2.rm_dec.reverse_gear
         sv_ptype = yield self.dec2.dec.op.SV_Ptype
         srcpred = yield self.dec2.rm_dec.srcpred
@@ -1742,19 +1742,30 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # okaaay, so here we simply advance srcstep (TODO dststep)
         # this can ONLY be done at the beginning of the "for" loop
         # (this is all actually a FSM so it's hell to keep track sigh)
+        srcstep_skip = False
         if ssubstart:
             # until the predicate mask has a "1" bit... or we run out of VL
             # let srcstep==VL be the indicator to move to next instruction
             if not pred_src_zero:
-                while (((1 << srcstep) & srcmask) == 0) and (srcstep != vl):
-                    log("      sskip", bin(1 << srcstep))
-                    srcstep += 1
+                srcstep_skip = True
+
+        # srcstep-skipping opportunity identified
+        if srcstep_skip:
+            while (((1 << srcstep) & srcmask) == 0) and (srcstep != vl):
+                log("      sskip", bin(1 << srcstep))
+                srcstep += 1
+
+        dststep_skip = False
         if dsubstart:
             # same for dststep
             if not pred_dst_zero:
-                while (((1 << dststep) & dstmask) == 0) and (dststep != vl):
-                    log("      dskip", bin(1 << dststep))
-                    dststep += 1
+                dststep_skip = True
+
+        # dststep-skipping opportunity identified
+        if dststep_skip:
+            while (((1 << dststep) & dstmask) == 0) and (dststep != vl):
+                log("      dskip", bin(1 << dststep))
+                dststep += 1
 
         # now work out if the relevant mask bits require zeroing
         if pred_dst_zero:
