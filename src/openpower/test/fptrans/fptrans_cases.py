@@ -4,6 +4,10 @@ from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 
 
+# FIXME: output values are just what my computer produces for the current
+# simulator, they are probably not all correct.
+
+
 class FPTransCases(TestAccumulatorBase):
     def case_fatan2s(self):
         lst = list(SVP64Asm(["fatan2s 3,4,5"]))
