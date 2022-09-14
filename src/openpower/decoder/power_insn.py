@@ -1058,6 +1058,12 @@ class Instruction(_Mapping):
     def __hash__(self):
         return hash(int(self))
 
+    def __getitem__(self, key):
+        return self.storage.__getitem__(key)
+
+    def __setitem__(self, key, value):
+        return self.storage.__setitem__(key, value)
+
     def record(self, db):
         record = db[self]
         if record is None:
