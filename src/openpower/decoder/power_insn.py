@@ -1064,6 +1064,10 @@ class Instruction(_Mapping):
     def __setitem__(self, key, value):
         return self.storage.__setitem__(key, value)
 
+    def bytes(self, byteorder="little"):
+        nr_bytes = (self.storage.bits // 8)
+        return int(self).to_bytes(nr_bytes, byteorder=byteorder)
+
     def record(self, db):
         record = db[self]
         if record is None:
