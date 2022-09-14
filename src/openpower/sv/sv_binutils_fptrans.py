@@ -2,15 +2,11 @@ import argparse as _argparse
 import dataclasses as _dataclasses
 import enum as _enum
 import functools as _functools
-import operator as _operator
+
 
 from openpower.decoder.power_enums import (
     FPTRANS_INSNS as _FPTRANS_INSNS,
-    Enum,
     find_wiki_dir as _find_wiki_dir,
-)
-from openpower.decoder.selectable_int import (
-    SelectableInt as _SelectableInt,
 )
 from openpower.decoder.power_insn import (
     Database as _Database,
@@ -138,11 +134,24 @@ def opcodes(entry):
     return f"{{{string}}},"
 
 
-def asm(entry):
-    for (idx, operand) in enumerate(entry.dynamic_operands):
-        values = ([0] * len(entry.dynamic_operands))
-        values[idx] = ((1 << len(operand.span)) - 1)
-        return f"{entry.name} {','.join(map(str, values))}"
+def asm(entry, regex=False):
+    operands = tuple(entry.dynamic_operands)
+    for (idx, operand) in enumerate(operands):
+        values = []
+        for each in operands:
+            if each.name in ("FRT", "FRA", "FRB"):
+                values.append("f0")
+            elif each.name in ("RB"):
+                values.append("r0")
+            else:
+                values.append("0")
+        value = str((1 << len(operand.span)) - 1)
+        if operand.name in ("FRT", "FRA", "FRB"):
+            value = f"f{value}"
+        elif operand.name in ("RB"):
+            value = f"r{value}"
+        values[idx] = value
+        return f"{entry.name} {'+' if regex else ''}{','.join(values)}"
 
 
 def dis(entry):
@@ -158,7 +167,7 @@ def dis(entry):
         insn[span] = ((1 << len(span)) - 1)
         big = " ".join(map(objdump, insn.bytes(byteorder="big")))
         little = " ".join(map(objdump, insn.bytes(byteorder="little")))
-        return f".*\t({big}|{little}) \t{asm(entry)}"
+        return f".*:\t({big}|{little}) \t{asm(entry, regex=True)}"
 
 
 class Mode(_enum.Enum):
@@ -191,6 +200,8 @@ if __name__ == "__main__":
         print(".*:     file format .*")
         print("")
         print("")
+        print("Disassembly of section \\.text:")
+        print("0+ <\.text>:")
 
     for line in map(generator, entries):
         print(line)
