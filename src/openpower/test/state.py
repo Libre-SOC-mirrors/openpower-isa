@@ -188,7 +188,7 @@ class State:
 
 class SimState(State):
     """SimState: Obtains registers and memory from an ISACaller object.
-    Note that yields are "faked" to maintain consistency and compatability
+    Note that yields are "faked" to maintain consistency and compatibility
     within the API.
     """
     def __init__(self, sim):

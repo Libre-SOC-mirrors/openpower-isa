@@ -8,7 +8,7 @@ from openpower.test.fptrans.fptrans_cases import FPTransCases
 # writing the test_caller invocation this way makes it work with pytest
 
 
-class TestSVP64ALU(TestRunnerBase):
+class TestFPTrans(TestRunnerBase):
     def __init__(self, test):
         assert test == 'test'
         super().__init__(FPTransCases().test_data, fp=True)
