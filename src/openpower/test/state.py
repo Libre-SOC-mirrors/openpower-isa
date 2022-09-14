@@ -186,6 +186,16 @@ class State:
             sout.close()
 
 
+def _get_regs(regs, asint=lambda v: v.asint()):
+    retval = []
+    while True:
+        try:
+            retval.append(asint(regs[len(retval)]))
+        except (IndexError, KeyError):
+            break
+    return retval
+
+
 class SimState(State):
     """SimState: Obtains registers and memory from an ISACaller object.
     Note that yields are "faked" to maintain consistency and compatibility
@@ -197,28 +207,19 @@ class SimState(State):
     def get_fpregs(self):
         if False:
             yield
-        self.fpregs = []
-        for i in range(32):
-            simregval = self.sim.fpr[i].asint()
-            self.fpregs.append(simregval)
+        self.fpregs = _get_regs(self.sim.fpr)
         log("class sim fp regs", list(map(hex, self.fpregs)))
 
     def get_intregs(self):
         if False:
             yield
-        self.intregs = []
-        for i in range(32):
-            simregval = self.sim.gpr[i].asint()
-            self.intregs.append(simregval)
+        self.intregs = _get_regs(self.sim.gpr)
         log("class sim int regs", list(map(hex, self.intregs)))
 
     def get_crregs(self):
         if False:
             yield
-        self.crregs = []
-        for i in range(8):
-            cri = self.sim.crl[i].get_range().value
-            self.crregs.append(cri)
+        self.crregs = _get_regs(self.sim.crl, lambda v: v.get_range().value)
         log("class sim cr regs", list(map(hex, self.crregs)))
 
     def get_xregs(self):
