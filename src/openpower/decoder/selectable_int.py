@@ -386,7 +386,6 @@ class SelectableInt:
             return SelectableInt(value, bits)
         else:
             bits = []
-            key = tuple(key)
             for bit in key:
                 if not isinstance(bit, (int, SelectableInt)):
                     raise ValueError(key)
@@ -434,7 +433,21 @@ class SelectableInt:
             value = value << start
             self.value = (self.value & ~mask) | (value & mask)
         else:
-            raise ValueError(key)
+            bits = []
+            for bit in key:
+                if not isinstance(bit, (int, SelectableInt)):
+                    raise ValueError(key)
+                bits.append(bit)
+
+            if isinstance(value, int):
+                if value.bit_count() > len(bits):
+                    raise ValueError(value)
+                value = SelectableInt(value=value, bits=len(bits))
+            if not isinstance(value, SelectableInt):
+                raise ValueError(value)
+
+            for (src, dst) in enumerate(bits):
+                self[dst] = value[src]
 
     def __ge__(self, other):
         if isinstance(other, FieldSelectableInt):
