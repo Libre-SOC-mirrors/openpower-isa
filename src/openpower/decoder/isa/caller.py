@@ -743,10 +743,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 assert regnum <= 7, "sigh, TODO, 128 CR fields"
                 val = (val & 0b11) | (regnum << 2)
             else:
-                if name == 'spr':
-                    sig = getattr(fields, name.upper())
-                else:
-                    sig = getattr(fields, name)
+                sig = getattr(fields, name)
                 val = yield sig
             # these are all opcode fields involved in index-selection of CR,
             # and need to do "standard" arithmetic.  CR[BA+32] for example

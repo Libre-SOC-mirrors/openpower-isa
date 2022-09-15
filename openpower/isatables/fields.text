@@ -824,6 +824,10 @@
          Immediate field that specifies signed versus
          unsigned conversion.
          Formats: X
+    spr (16:20,11:15)
+         Field used to specify a Special Purpose Register
+         for the mtspr and mfspr instructions.
+         Formats: XFX
     SPR (11:20)
          Field used to specify a Special Purpose Register
          for the mtspr and mfspr instructions.

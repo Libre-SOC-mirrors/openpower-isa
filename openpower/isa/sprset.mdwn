@@ -31,11 +31,11 @@
 
 XFX-Form
 
-* mtspr SPR,RS
+* mtspr spr,RS
 
 Pseudo-code:
 
-    n <- spr[5:9] || spr[0:4]
+    n <- spr
     switch (n)
       case(13): see(Book_III_p974)
       case(808, 809, 810, 811):
@@ -55,11 +55,11 @@ Special Registers Altered:
 
 XFX-Form
 
-* mfspr RT,SPR
+* mfspr RT,spr
 
 Pseudo-code:
 
-    n <- spr[5:9] || spr[0:4]
+    n <- spr
     switch (n)
       case(129): see(Book_III_p975)
       case(808, 809, 810, 811):
