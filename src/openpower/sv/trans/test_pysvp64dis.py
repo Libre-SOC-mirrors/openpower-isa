@@ -155,6 +155,14 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_8_madd(self):
+        expected = [
+                    "maddhd 5,4,5,3",
+                    "maddhdu 5,4,5,3",
+                    "maddld 5,4,5,3",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 

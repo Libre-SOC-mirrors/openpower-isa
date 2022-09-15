@@ -6,6 +6,7 @@ minor_58.csv,58,30:31,NONE,integer
 minor_62.csv,62,30:31,NONE,integer
 minor_22.csv,22,21:31,NONE,pattern
 minor_5.csv,5,21:31,NONE,pattern
+minor_4.csv,4,26:31,NONE,integer
 minor_63.csv,63,21:30,NONE,pattern
 minor_59.csv,59,21:30,NONE,pattern
 major.csv,NONE,0:5,NONE,integer
