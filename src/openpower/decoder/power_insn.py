@@ -1823,6 +1823,9 @@ class MarkdownDatabase:
     def __iter__(self):
         yield from self.__db.items()
 
+    def __contains__(self, key):
+        return self.__db.__contains__(key)
+
     def __getitem__(self, key):
         return self.__db.__getitem__(key)
 
@@ -1868,63 +1871,64 @@ class PPCDatabase:
                     for insn in parse(stream, factory):
                         records[section][insn.comment].add(insn)
 
-        db = dd(set)
+        sections = dd(set)
         for (section, group) in records.items():
             for records in group.values():
-                db[section].add(PPCMultiRecord(records))
+                sections[section].add(PPCMultiRecord(records))
+
+        db = {}
+        for (section, records) in sections.items():
+            for record in records:
+                def exact_match(names):
+                    for name in names:
+                        if name in mdwndb:
+                            yield name
+
+                def Rc_match(names):
+                    for name in names:
+                        if f"{name}." in mdwndb:
+                            yield f"{name}."
+                        yield name
+
+                def LK_match(names):
+                    if "lk" not in record.flags:
+                        yield from names
+                        return
+
+                    for name in names:
+                        if f"{name}l" in mdwndb:
+                            yield f"{name}l"
+                        yield name
+
+                def AA_match(names):
+                    if record.intop not in {_MicrOp.OP_B, _MicrOp.OP_BC}:
+                        yield from names
+                        return
+
+                    for name in names:
+                        operands = mdwndb[name].operands["AA"]
+                        if ((operands is not None) and
+                                (f"{name}a" in mdwndb)):
+                            yield f"{name}a"
+                        yield name
+
+                def reductor(names, match):
+                    return match(names)
+
+                matches = (exact_match, Rc_match, LK_match, AA_match)
+
+                names = _functools.reduce(reductor, matches, record.names)
+                for name in names:
+                    db[name] = (section, record)
 
         self.__db = db
         self.__mdwndb = mdwndb
 
         return super().__init__()
 
+    @_functools.lru_cache(maxsize=512, typed=False)
     def __getitem__(self, key):
-        def exact_match(key, record):
-            return (key in record.names)
-
-        def Rc_match(key, record):
-            if not key.endswith("."):
-                return False
-
-            if record.Rc is _RCOE.NONE:
-                return False
-
-            return exact_match(key[:-1], record)
-
-        def LK_match(key, record):
-            if not key.endswith("l"):
-                return False
-
-            if "lk" not in record.flags:
-                return False
-
-            return exact_match(key[:-1], record)
-
-        def AA_match(key, record):
-            if not key.endswith("a"):
-                return False
-
-            if record.intop not in {_MicrOp.OP_B, _MicrOp.OP_BC}:
-                return False
-
-            if self.__mdwndb[key].operands["AA"] is None:
-                return False
-
-            return (exact_match(key[:-1], record) or
-                LK_match(key[:-1], record))
-
-        for (section, records) in self.__db.items():
-            for record in records:
-                if exact_match(key, record):
-                    return (section, record)
-
-            for record in records:
-                if (Rc_match(key, record) or
-                        LK_match(key, record) or
-                        AA_match(key, record)):
-                    return (section, record)
-
-        return (None, None)
+        return self.__db.get(key, (None, None))
 
 
 class SVP64Database:
