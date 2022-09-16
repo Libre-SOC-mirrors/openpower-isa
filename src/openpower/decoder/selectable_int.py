@@ -440,7 +440,7 @@ class SelectableInt:
                 bits.append(bit)
 
             if isinstance(value, int):
-                if value.bit_count() > len(bits):
+                if value.bit_length() > len(bits):
                     raise ValueError(value)
                 value = SelectableInt(value=value, bits=len(bits))
             if not isinstance(value, SelectableInt):
