@@ -1,7 +1,14 @@
 from openpower.simulator.program import Program
 from openpower.sv.trans.pysvp64dis import load, dump
 from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.decoder.power_insn import Verbosity
+from openpower.decoder.power_insn import (
+    Database,
+    Verbosity,
+)
+from openpower.decoder.power_enums import (
+    find_wiki_dir,
+)
+from openpower.sv import sv_binutils_fptrans
 import unittest
 import sys
 
@@ -162,6 +169,12 @@ class SVSTATETestCase(unittest.TestCase):
                     "maddld 5,4,5,3",
                         ]
         self._do_tst(expected)
+
+    def test_9_fptrans(self):
+        db = Database(find_wiki_dir())
+        entries = sorted(sv_binutils_fptrans.collect(db))
+        dis = lambda entry: sv_binutils_fptrans.dis(entry, binutils=False)
+        self._do_tst(list(map(dis, entries)))
 
 if __name__ == "__main__":
     unittest.main()
