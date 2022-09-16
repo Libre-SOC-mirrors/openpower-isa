@@ -776,7 +776,7 @@ class TargetAddrOperandBD(TargetAddrOperand):
             verbosity=verbosity, indent=indent)
 
 
-class DOperandDX(DynamicOperand):
+class DOperandDX(SignedOperand):
     def span(self, record):
         operands = map(DynamicOperand, ("d0", "d1", "d2"))
         spans = map(lambda operand: operand.span(record=record), operands)
@@ -862,10 +862,10 @@ class Operands(tuple):
                 if immediate is not None:
                     operands.append(ImmediateOperand(name=immediate))
 
-                if insn in custom_insns and operand in custom_insns[insn]:
-                    dynamic_cls = custom_insns[insn][operand]
                 if operand in custom_fields:
                     dynamic_cls = custom_fields[operand]
+                if insn in custom_insns and operand in custom_insns[insn]:
+                    dynamic_cls = custom_insns[insn][operand]
 
                 if operand in _RegType.__members__:
                     regtype = _RegType[operand]
