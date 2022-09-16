@@ -134,27 +134,27 @@ def opcodes(entry):
     return f"{{{string}}},"
 
 
-def asm(entry, regex=False):
+def asm(entry, binutils=True, regex=False):
     operands = tuple(entry.dynamic_operands)
     for (idx, operand) in enumerate(operands):
         values = []
         for each in operands:
-            if each.name in ("FRT", "FRA", "FRB"):
+            if binutils and each.name in ("FRT", "FRA", "FRB"):
                 values.append("f0")
-            elif each.name in ("RB"):
+            elif binutils and each.name in ("RB"):
                 values.append("r0")
             else:
                 values.append("0")
         value = str((1 << len(operand.span)) - 1)
-        if operand.name in ("FRT", "FRA", "FRB"):
+        if binutils and operand.name in ("FRT", "FRA", "FRB"):
             value = f"f{value}"
-        elif operand.name in ("RB"):
+        elif binutils and operand.name in ("RB"):
             value = f"r{value}"
         values[idx] = value
         return f"{entry.name} {'+' if regex else ''}{','.join(values)}"
 
 
-def dis(entry):
+def dis(entry, binutils=True):
     def objdump(byte):
         return f"{byte:02x}"
 
@@ -165,9 +165,13 @@ def dis(entry):
             insn[span] = static_operand.value
         span = dynamic_operand.span
         insn[span] = ((1 << len(span)) - 1)
-        big = " ".join(map(objdump, insn.bytes(byteorder="big")))
-        little = " ".join(map(objdump, insn.bytes(byteorder="little")))
-        return f".*:\t({big}|{little}) \t{asm(entry, regex=True)}"
+        if binutils:
+            big = " ".join(map(objdump, insn.bytes(byteorder="big")))
+            little = " ".join(map(objdump, insn.bytes(byteorder="little")))
+            desc = asm(entry, binutils=binutils, regex=True)
+            return f".*:\t({big}|{little}) \t{desc}"
+        else:
+            return asm(entry, binutils=binutils, regex=False)
 
 
 class Mode(_enum.Enum):
