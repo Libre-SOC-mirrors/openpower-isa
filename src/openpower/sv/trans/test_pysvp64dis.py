@@ -1,13 +1,8 @@
 from openpower.simulator.program import Program
 from openpower.sv.trans.pysvp64dis import load, dump
 from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.decoder.power_insn import (
-    Database,
-    Verbosity,
-)
-from openpower.decoder.power_enums import (
-    find_wiki_dir,
-)
+from openpower.decoder.power_insn import Database, Verbosity
+from openpower.decoder.power_enums import find_wiki_dir
 from openpower.sv import sv_binutils_fptrans
 import unittest
 import sys
@@ -171,6 +166,7 @@ class SVSTATETestCase(unittest.TestCase):
         self._do_tst(expected)
 
     def test_9_fptrans(self):
+        "enumerates a list of fptrans instruction disassembly entries"
         db = Database(find_wiki_dir())
         entries = sorted(sv_binutils_fptrans.collect(db))
         dis = lambda entry: sv_binutils_fptrans.dis(entry, binutils=False)
