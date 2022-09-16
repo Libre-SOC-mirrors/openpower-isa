@@ -143,7 +143,7 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_minor_19(self):
         self.run_tst((1, 11), "minor_19.csv", minor=(19, (26, 32)),
-                     suffix=(0, 5))
+                     suffix=(0, 5), opint=False)
 
     # def test_minor_19_00000(self):
     #     self.run_tst((1, 11), "minor_19_00000.csv")
