@@ -1371,10 +1371,8 @@ class NormalSaturationExtRM(NormalBaseRM):
 
     @property
     def specifiers(self):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
+        if self.zz:
+            yield f"zz"
         if self.sat:
             yield "sats"
         else:
@@ -1398,10 +1396,8 @@ class NormalPredResultRc0RM(NormalBaseRM):
 
     @property
     def specifiers(self):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
+        if self.zz:
+            yield f"zz"
         yield from super().specifiers
 
 
@@ -1431,10 +1427,8 @@ class LDSTImmSimpleRM(LDSTImmBaseRM):
 
     @property
     def specifiers(self):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
+        if self.zz:
+            yield f"zz"
         yield from super().specifiers
 
 
@@ -1461,10 +1455,8 @@ class LDSTImmSaturationRM(LDSTImmBaseRM):
 
     @property
     def specifiers(self):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
+        if self.zz:
+            yield f"zz"
         if self.sat:
             yield "sats"
         else:
@@ -1563,10 +1555,8 @@ class LDSTIdxPredResultRc0RM(LDSTIdxBaseRM):
 
     @property
     def specifiers(self):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
+        if self.zz:
+            yield f"zz"
         yield from super().specifiers
 
 
@@ -1617,10 +1607,8 @@ class CROpRM(BaseRM):
 
         @property
         def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
+            if self.zz:
+                yield f"zz"
             yield from super().specifiers
 
     class reserved(BaseRM):
@@ -1633,10 +1621,8 @@ class CROpRM(BaseRM):
 
         @property
         def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
+            if self.zz:
+                yield f"zz"
             yield from super().specifiers
 
     class ff3(BaseRM):
@@ -1651,10 +1637,8 @@ class CROpRM(BaseRM):
 
         @property
         def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
+            if self.zz:
+                yield f"zz"
             yield from super().specifiers
 
     class ff5(BaseRM):
