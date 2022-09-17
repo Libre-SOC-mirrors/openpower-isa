@@ -1349,8 +1349,11 @@ class SVP64Asm:
                     mode |= (predresult << SVP64MODE.BO_LSB)  # set BO
 
         # whewww.... modes all done :)
-        # now put into svp64_rm
-        mode |= sv_mode
+        # now put into svp64_rm, but respect MSB0 order
+        if sv_mode&1:
+            mode |= (0b1<<SVP64MODE.MOD2_LSB)
+        if sv_mode&2:
+            mode |= (0b1<<SVP64MODE.MOD2_MSB)
         # mode: bits 19-23
         svp64_rm.mode = mode
 
