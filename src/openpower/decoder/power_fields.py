@@ -71,6 +71,9 @@ class Reference:
     def __eq__(self, other):
         return self.__binary_operator(_operator.eq, other)
 
+    def __bool__(self):
+        return bool(int(self))
+
     def __int__(self):
         span = dict.fromkeys(self.__class__.span).keys()
         return int(_selectconcat(*(self.storage[bit] for bit in span)))
