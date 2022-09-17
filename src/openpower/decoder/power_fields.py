@@ -162,9 +162,6 @@ class FieldMeta(type):
     def span(cls):
         return cls.__members__
 
-    def traverse(cls, path):
-        yield (path, cls.__members__)
-
 
 class Field(Reference, metaclass=FieldMeta):
     def __len__(self):
@@ -183,6 +180,10 @@ class Field(Reference, metaclass=FieldMeta):
             return _SelectableInt(value=bit, bits=1)
 
         return _selectconcat(*(self[bit] for bit in tuple(key)))
+
+    def traverse(self, path):
+        span = self.__class__.__members__
+        yield (path, self.storage[span], span)
 
 
 class MappingMeta(type):
@@ -255,15 +256,6 @@ class MappingMeta(type):
         for field in cls.__members__.values():
             yield from field.span
 
-    def traverse(cls, path=""):
-        for (name, field) in cls:
-            if name == "_":
-                yield from field.traverse(path=path)
-            elif path == "":
-                yield from field.traverse(path=name)
-            else:
-                yield from field.traverse(path=f"{path}.{name}")
-
 
 class Mapping(Reference, metaclass=MappingMeta):
     def __init__(self, storage, **kwargs):
@@ -287,6 +279,15 @@ class Mapping(Reference, metaclass=MappingMeta):
             return self.storage[key]
 
         return self.__members[key]
+
+    def traverse(self, path=""):
+        for (name, member) in self.__members.items():
+            if name == "_":
+                yield from member.traverse(path=path)
+            elif path == "":
+                yield from member.traverse(path=name)
+            else:
+                yield from member.traverse(path=f"{path}.{name}")
 
 
 def decode_instructions(form):
