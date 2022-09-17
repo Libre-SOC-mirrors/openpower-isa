@@ -1280,7 +1280,12 @@ class BaseRM(_Mapping):
 
     @property
     def specifiers(self):
-        yield from ()
+        if self.subvl == 1:
+            yield "vec2"
+        elif self.subvl == 2:
+            yield "vec3"
+        elif self.subvl == 3:
+            yield "vec4"
 
     def disassemble(self, verbosity=Verbosity.NORMAL):
         if verbosity >= Verbosity.VERBOSE:
