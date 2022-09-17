@@ -276,7 +276,7 @@ class Mapping(Reference, metaclass=MappingMeta):
 
     def __getitem__(self, key):
         if isinstance(key, (int, slice, list, tuple, range)):
-            return self.storage[key]
+            return self["_"][key]
 
         return self.__members[key]
 
