@@ -1314,10 +1314,6 @@ class NormalRM(BaseRM):
         """normal: subvector reduce mode, SUBVL>1"""
         SVM: BaseRM.mode[3]
 
-    class pu(BaseRM):
-        """normal: Pack/Unpack mode, SUBVL>1"""
-        SVM: BaseRM.mode[3]
-
     class ffrc1(BaseRM):
         """normal: Rc=1: ffirst CR sel"""
         inv: BaseRM.mode[2]
@@ -1342,13 +1338,6 @@ class NormalRM(BaseRM):
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
 
-    class satpu(BaseRM):
-        """normal: Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1"""
-        N: BaseRM.mode[2]
-        zz: BaseRM.mode[3]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
-
     class prrc1(BaseRM):
         """normal: Rc=1: pred-result CR sel"""
         inv: BaseRM.mode[2]
@@ -1366,12 +1355,10 @@ class NormalRM(BaseRM):
     smr: smr
     pmr: pmr
     svmr: svmr
-    pu: pu
     ffrc1: ffrc1
     ffrc0: ffrc0
     sat: sat
     satx: satx
-    satpu: satpu
     prrc1: prrc1
     prrc0: prrc0
 
@@ -1379,13 +1366,6 @@ class NormalRM(BaseRM):
 class LDSTImmRM(BaseRM):
     class simple(BaseRM):
         """ld/st immediate: simple mode"""
-        zz: BaseRM.mode[3]
-        els: BaseRM.mode[4]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
-
-    class spu(BaseRM):
-        """ld/st immediate: Structured Pack/Unpack"""
         zz: BaseRM.mode[3]
         els: BaseRM.mode[4]
         dz: BaseRM.mode[3]
@@ -1422,7 +1402,6 @@ class LDSTImmRM(BaseRM):
         RC1: BaseRM.mode[4]
 
     simple: simple
-    spu: spu
     ffrc1: ffrc1
     ffrc0: ffrc0
     sat: sat
@@ -1579,8 +1558,8 @@ class RM(BaseRM):
                     else:
                         if rm.mode[4] == 0b0:
                             rm = rm.svmr
-                        else:
-                            rm = rm.pu
+                        #else:
+                        #    rm = rm.pu
             elif rm.mode[0:2] == 0b01:
                 if Rc:
                     rm = rm.ffrc1
@@ -1592,8 +1571,8 @@ class RM(BaseRM):
                 else:
                     if rm.mode[4]:
                         rm = rm.satx
-                    else:
-                        rm = rm.satpu
+                    #else:
+                    #   rm = rm.satpu
             elif rm.mode[0:2] == 0b11:
                 if Rc:
                     rm = rm.prrc1
@@ -1605,8 +1584,8 @@ class RM(BaseRM):
             if rm.mode[0:2] == 0b00:
                 if rm.mode[2] == 0b0:
                     rm = rm.simple
-                else:
-                    rm = rm.spu
+                #else:
+                #    rm = rm.spu
             elif rm.mode[0:2] == 0b01:
                 if Rc:
                     rm = rm.ffrc1
