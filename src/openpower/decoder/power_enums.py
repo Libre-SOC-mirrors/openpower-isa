@@ -211,6 +211,15 @@ class SVEtype(Enum):
 
 
 @unique
+class SVmask_src(Enum):
+    NO = 0
+    EN = 1
+
+    def __repr__(self):
+        return self.name
+
+
+@unique
 class SVExtra(Enum):
     NONE = 0
     Idx0 = 1

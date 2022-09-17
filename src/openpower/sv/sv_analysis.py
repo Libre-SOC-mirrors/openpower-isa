@@ -793,9 +793,9 @@ def process_csvs(format):
             if vstripped in ['RM-2P-1S1D', 'RM-2P-2S',
                          'RM-2P-2S1D', 'RM-2P-1S2D', 'RM-2P-3S',
                         ]:
-                res['SM'] = '1'
+                res['SM'] = 'EN'
             else:
-                res['SM'] = '0'
+                res['SM'] = 'NO'
             # add to svp64 csvs
             # for k in ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']:
             #    del res[k]
