@@ -1305,6 +1305,14 @@ class NormalRM(BaseRM):
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[4]
 
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
     class smr(BaseRM):
         """normal: scalar reduce mode (mapreduce), SUBVL=1"""
         RG: BaseRM.mode[4]
@@ -1334,12 +1342,43 @@ class NormalRM(BaseRM):
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[4]
 
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
     class satx(BaseRM):
         """normal: sat mode: N=0/1 u/s, SUBVL>1"""
         N: BaseRM.mode[2]
         zz: BaseRM.mode[3]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
+    class satpu(BaseRM):
+        """normal: Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1"""
+        N: BaseRM.mode[2]
+        zz: BaseRM.mode[3]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
 
     class prrc1(BaseRM):
         """normal: Rc=1: pred-result CR sel"""
@@ -1353,6 +1392,14 @@ class NormalRM(BaseRM):
         RC1: BaseRM.mode[4]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
 
     simple: simple
     smr: smr
@@ -1374,6 +1421,29 @@ class LDSTImmRM(BaseRM):
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
 
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
+    class spu(BaseRM):
+        """ld/st immediate: Structured Pack/Unpack"""
+        zz: BaseRM.mode[3]
+        els: BaseRM.mode[4]
+        dz: BaseRM.mode[3]
+        sz: BaseRM.mode[3]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
     class ffrc1(BaseRM):
         """ld/st immediate: Rc=1: ffirst CR sel"""
         inv: BaseRM.mode[2]
@@ -1392,6 +1462,14 @@ class LDSTImmRM(BaseRM):
         els: BaseRM.mode[4]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
 
     class prrc1(BaseRM):
         """ld/st immediate: Rc=1: pred-result CR sel"""
@@ -1419,17 +1497,41 @@ class LDSTIdxRM(BaseRM):
         sz: BaseRM.mode[3]
         dz: BaseRM.mode[3]
 
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
     class stride(BaseRM):
         """ld/st index: strided (scalar only source)"""
         SEA: BaseRM.mode[2]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[4]
 
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
     class sat(BaseRM):
         """ld/st index: sat mode: N=0/1 u/s"""
         N: BaseRM.mode[2]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[4]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
 
     class prrc1(BaseRM):
         """ld/st index: Rc=1: pred-result CR sel"""
@@ -1443,6 +1545,14 @@ class LDSTIdxRM(BaseRM):
         RC1: BaseRM.mode[4]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
 
     simple: simple
     stride: stride
@@ -1459,11 +1569,25 @@ class CROpRM(BaseRM):
         RG: BaseRM[20]
         dz: BaseRM[22]
 
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
     class smr(BaseRM):
         """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
         sz: BaseRM[6]
         SNZ: BaseRM[7]
         RG: BaseRM[20]
+
+        @property
+        def specifiers(self):
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
 
     class svmr(BaseRM):
         """cr_op: subvector reduce mode, SUBVL>1"""
@@ -1474,6 +1598,14 @@ class CROpRM(BaseRM):
         dz: BaseRM[6]
         sz: BaseRM[6]
 
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
     class reserved(BaseRM):
         """cr_op: reserved"""
         zz: BaseRM[6]
@@ -1481,6 +1613,14 @@ class CROpRM(BaseRM):
         RG: BaseRM[20]
         dz: BaseRM[6]
         sz: BaseRM[6]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
 
     class ff3(BaseRM):
         """cr_op: ffirst 3-bit mode"""
@@ -1492,15 +1632,29 @@ class CROpRM(BaseRM):
         dz: BaseRM[6]
         sz: BaseRM[6]
 
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
+
     class ff5(BaseRM):
         """cr_op: ffirst 5-bit mode"""
-        zz: BaseRM[6]
+        sz: BaseRM[6]
         SNZ: BaseRM[7]
         VLI: BaseRM[20]
         inv: BaseRM[21]
         dz: BaseRM[22]
-        dz: BaseRM[6]
-        sz: BaseRM[6]
+
+        @property
+        def specifiers(self):
+            if self.dz:
+                yield f"dz"
+            if self.sz:
+                yield f"sz"
+            yield from super().specifiers
 
     simple: simple
     smr: smr
