@@ -225,6 +225,7 @@ class FieldSelectableIntTestCase(unittest.TestCase):
         self.assertEqual(fs.get_range(), 0b1011)
 
 
+@functools.total_ordering
 class SelectableInt:
     """SelectableInt - a class that behaves exactly like python int
 
@@ -449,41 +450,8 @@ class SelectableInt:
             for (src, dst) in enumerate(bits):
                 self[dst] = value[src]
 
-    def __ge__(self, other):
-        if isinstance(other, FieldSelectableInt):
-            other = other.get_range()
-        if isinstance(other, SelectableInt):
-            other = check_extsign(self, other)
-            assert other.bits == self.bits
-            other = other.to_signed_int()
-        if isinstance(other, int):
-            return onebit(self.to_signed_int() >= other)
-        assert False
-
-    def __le__(self, other):
-        if isinstance(other, FieldSelectableInt):
-            other = other.get_range()
-        if isinstance(other, SelectableInt):
-            other = check_extsign(self, other)
-            assert other.bits == self.bits
-            other = other.to_signed_int()
-        if isinstance(other, int):
-            return onebit(self.to_signed_int() <= other)
-        assert False
-
-    def __gt__(self, other):
-        if isinstance(other, FieldSelectableInt):
-            other = other.get_range()
-        if isinstance(other, SelectableInt):
-            other = check_extsign(self, other)
-            assert other.bits == self.bits
-            other = other.to_signed_int()
-        if isinstance(other, int):
-            return onebit(self.to_signed_int() > other)
-        assert False
-
     def __lt__(self, other):
-        log ("SelectableInt lt", self, other)
+        log ("SelectableInt __lt__", self, other)
         if isinstance(other, FieldSelectableInt):
             other = other.get_range()
         if isinstance(other, SelectableInt):
@@ -498,7 +466,7 @@ class SelectableInt:
         assert False
 
     def __eq__(self, other):
-        log("__eq__", self, other)
+        log("SelectableInt __eq__", self, other)
         if isinstance(other, FieldSelectableInt):
             other = other.get_range()
         if isinstance(other, SelectableInt):
