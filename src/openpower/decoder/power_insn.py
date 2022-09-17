@@ -1302,6 +1302,7 @@ class BaseRM(_Mapping):
 class NormalBaseRM(BaseRM):
     pass
 
+
 class NormalSimpleRM(NormalBaseRM):
     """normal: simple mode"""
     dz: BaseRM.mode[3]

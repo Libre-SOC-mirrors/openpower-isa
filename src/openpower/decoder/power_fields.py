@@ -232,17 +232,7 @@ class MappingMeta(type):
         return length
 
     def __getitem__(cls, selector):
-        best_min = 0
-        best_max = 0
-        for field in cls.__members__.values():
-            length = len(field)
-            best_min = min(best_min, length)
-            best_max = max(best_max, length)
-
-        items = tuple(range(best_min, best_max))
-        field = FieldMeta(cls.__name__, (Field,), {}, items=items)
-
-        return field[selector]
+        return cls.__members__["_"][selector]
 
     def remap(cls, scheme):
         ns = {}
