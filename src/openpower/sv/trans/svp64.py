@@ -1107,6 +1107,8 @@ class SVP64Asm:
                 sv_mode = 0b10
                 saturation = 0
             # predicate zeroing
+            elif encmode == 'zz': # TODO, a lot more checking on legality
+                dst_zero = 1      # NOT on cr_ops, that's RM[6]
             elif encmode == 'sz':
                 src_zero = 1
             elif encmode == 'dz':
@@ -1235,11 +1237,11 @@ class SVP64Asm:
         """
             | 0-1 |  2  |  3   4  |  description               |
             | --- | --- |---------|--------------------------- |
-            | 00  | 0   |  dz els | normal mode                |
-            | 00  | 1   |  dz shf | shift mode                 |
+            | 00  | 0   |  zz els | normal mode                |
+            | 00  | 1   |  /  /   | reserved                   |
             | 01  | inv | CR-bit  | Rc=1: ffirst CR sel        |
             | 01  | inv | els RC1 |  Rc=0: ffirst z/nonz       |
-            | 10  |   N | dz  els |  sat mode: N=0/1 u/s       |
+            | 10  |   N | zz  els |  sat mode: N=0/1 u/s       |
             | 11  | inv | CR-bit  |  Rc=1: pred-result CR sel  |
             | 11  | inv | els RC1 |  Rc=0: pred-result z/nonz  |
         """

@@ -248,6 +248,7 @@ class SVP64MODEb(_Const):
     # when predicate not set: 0=ignore/skip 1=zero
     DZ = 3  # for destination
     SZ = 4  # for source
+    ZZ = 3  # for both sz/dz, on all but CR-ops
     # for branch-conditional
     BC_SNZ = 3  # for branch-conditional mode
     BC_VLI = 2  # for VL include/exclude on VLSET mode
