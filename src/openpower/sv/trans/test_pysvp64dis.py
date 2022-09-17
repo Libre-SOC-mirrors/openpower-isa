@@ -172,6 +172,14 @@ class SVSTATETestCase(unittest.TestCase):
         dis = lambda entry: sv_binutils_fptrans.dis(entry, binutils=False)
         self._do_tst(list(map(dis, entries)))
 
+    def test_10_vec(self):
+        expected = [
+                    "sv.add./vec2 *3,*7,*11",
+                    "sv.add./vec3 *3,*7,*11",
+                    "sv.add./vec4 *3,*7,*11",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
