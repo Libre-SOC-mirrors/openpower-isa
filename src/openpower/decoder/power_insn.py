@@ -1299,130 +1299,123 @@ class BaseRM(_Mapping):
                 yield f"{indent}{', '.join(map(str, members))}"
 
 
-class NormalRM(BaseRM):
-    class simple(BaseRM):
-        """normal: simple mode"""
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[4]
+class NormalBaseRM(BaseRM):
+    pass
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
+class NormalSimpleRM(NormalBaseRM):
+    """normal: simple mode"""
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[4]
 
-    class smr(BaseRM):
-        """normal: scalar reduce mode (mapreduce), SUBVL=1"""
-        RG: BaseRM.mode[4]
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
 
-    class pmr(BaseRM):
-        """normal: parallel reduce mode (mapreduce), SUBVL=1"""
-        pass
 
-    class svmr(BaseRM):
-        """normal: subvector reduce mode, SUBVL>1"""
-        SVM: BaseRM.mode[3]
+class NormalScalarReduceRM(NormalBaseRM):
+    """normal: scalar reduce mode (mapreduce), SUBVL=1"""
+    RG: BaseRM.mode[4]
 
-    class ffrc1(BaseRM):
-        """normal: Rc=1: ffirst CR sel"""
-        inv: BaseRM.mode[2]
-        CR: BaseRM.mode[3, 4]
 
-    class ffrc0(BaseRM):
-        """normal: Rc=0: ffirst z/nonz"""
-        inv: BaseRM.mode[2]
-        VLi: BaseRM.mode[3]
-        RC1: BaseRM.mode[4]
+class NormalParallelReduceRM(NormalBaseRM):
+    """normal: parallel reduce mode (mapreduce), SUBVL=1"""
+    pass
 
-    class sat(BaseRM):
-        """normal: sat mode: N=0/1 u/s, SUBVL=1"""
-        N: BaseRM.mode[2]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[4]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            if self.sat:
-                yield "sats"
-            else:
-                yield "satu"
-            yield from super().specifiers
+class NormalSubvectorReduceRM(NormalBaseRM):
+    """normal: subvector reduce mode, SUBVL>1"""
+    SVM: BaseRM.mode[3]
 
-    class satx(BaseRM):
-        """normal: sat mode: N=0/1 u/s, SUBVL>1"""
-        N: BaseRM.mode[2]
-        zz: BaseRM.mode[3]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            if self.sat:
-                yield "sats"
-            else:
-                yield "satu"
-            yield from super().specifiers
+class NormalFailFirstRc1RM(NormalBaseRM):
+    """normal: Rc=1: ffirst CR sel"""
+    inv: BaseRM.mode[2]
+    CR: BaseRM.mode[3, 4]
 
-    class satpu(BaseRM):
-        """normal: Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1"""
-        N: BaseRM.mode[2]
-        zz: BaseRM.mode[3]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
+class NormalFailFirstRc0RM(NormalBaseRM):
+    """normal: Rc=0: ffirst z/nonz"""
+    inv: BaseRM.mode[2]
+    VLi: BaseRM.mode[3]
+    RC1: BaseRM.mode[4]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            if self.sat:
-                yield "sats"
-            else:
-                yield "satu"
-            yield from super().specifiers
 
-    class prrc1(BaseRM):
-        """normal: Rc=1: pred-result CR sel"""
-        inv: BaseRM.mode[2]
-        CR: BaseRM.mode[3, 4]
+class NormalSaturationRM(NormalBaseRM):
+    """normal: sat mode: N=0/1 u/s, SUBVL=1"""
+    N: BaseRM.mode[2]
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[4]
 
-    class prrc0(BaseRM):
-        """normal: Rc=0: pred-result z/nonz"""
-        inv: BaseRM.mode[2]
-        zz: BaseRM.mode[3]
-        RC1: BaseRM.mode[4]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        if self.sat:
+            yield "sats"
+        else:
+            yield "satu"
+        yield from super().specifiers
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
 
-    simple: simple
-    smr: smr
-    pmr: pmr
-    svmr: svmr
-    ffrc1: ffrc1
-    ffrc0: ffrc0
-    sat: sat
-    satx: satx
-    prrc1: prrc1
-    prrc0: prrc0
+class NormalSaturationExtRM(NormalBaseRM):
+    """normal: sat mode: N=0/1 u/s, SUBVL>1"""
+    N: BaseRM.mode[2]
+    zz: BaseRM.mode[3]
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[3]
+
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        if self.sat:
+            yield "sats"
+        else:
+            yield "satu"
+        yield from super().specifiers
+
+
+class NormalPredResultRc1RM(NormalBaseRM):
+    """normal: Rc=1: pred-result CR sel"""
+    inv: BaseRM.mode[2]
+    CR: BaseRM.mode[3, 4]
+
+
+class NormalPredResultRc0RM(NormalBaseRM):
+    """normal: Rc=0: pred-result z/nonz"""
+    inv: BaseRM.mode[2]
+    zz: BaseRM.mode[3]
+    RC1: BaseRM.mode[4]
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[3]
+
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
+
+
+class NormalRM(NormalBaseRM):
+    simple: NormalSimpleRM
+    smr: NormalScalarReduceRM
+    pmr: NormalParallelReduceRM
+    svmr: NormalSubvectorReduceRM
+    ffrc1: NormalFailFirstRc1RM
+    ffrc0: NormalFailFirstRc0RM
+    sat: NormalSaturationRM
+    satx: NormalSaturationExtRM
+    prrc1: NormalPredResultRc1RM
+    prrc0: NormalPredResultRc0RM
 
 
 class LDSTImmRM(BaseRM):
