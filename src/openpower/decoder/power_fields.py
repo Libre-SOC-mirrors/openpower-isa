@@ -165,9 +165,6 @@ class FieldMeta(type):
 
 
 class Field(Reference, metaclass=FieldMeta):
-    def __len__(self):
-        return self.__class__.__len__()
-
     def __repr__(self):
         return f"[{len(self.__class__)}]0x{int(self):x}"
 
