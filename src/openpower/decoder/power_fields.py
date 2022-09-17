@@ -8,6 +8,7 @@ from openpower.decoder.selectable_int import (
     SelectableInt as _SelectableInt,
     BitRange as _BitRange,
     selectconcat as _selectconcat,
+    selectltu as _selectltu,
 )
 
 
@@ -62,10 +63,10 @@ class Reference:
         else:
             raise ValueError(other)
 
-        return op(lhs, rhs)
+        return op(int(lhs), int(rhs))
 
     def __lt__(self, other):
-        return self.__binary_operator(_operator.lt, other)
+        return self.__binary_operator(_selectltu, other)
 
     def __eq__(self, other):
         return self.__binary_operator(_operator.eq, other)
