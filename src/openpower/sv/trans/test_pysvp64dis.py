@@ -188,6 +188,13 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_12_sat(self):
+        expected = [
+                    "sv.add./satu *3,*7,*11",
+                    "sv.add./sats *3,*7,*11",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
