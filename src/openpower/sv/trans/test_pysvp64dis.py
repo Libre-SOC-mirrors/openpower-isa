@@ -180,6 +180,14 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_11_elwidth(self):
+        expected = [
+                    "sv.add./ew=8 *3,*7,*11",
+                    "sv.add./ew=16 *3,*7,*11",
+                    "sv.add./ew=32 *3,*7,*11",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
