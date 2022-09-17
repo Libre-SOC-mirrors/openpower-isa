@@ -1278,6 +1278,10 @@ class BaseRM(_Mapping):
     extra2: Extra2.remap(range(10, 19))
     extra3: Extra3.remap(range(10, 19))
 
+    @property
+    def specifiers(self):
+        yield from ()
+
     def disassemble(self, verbosity=Verbosity.NORMAL):
         if verbosity >= Verbosity.VERBOSE:
             indent = (" " * 4)
@@ -1712,20 +1716,30 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{blob_suffix}.long 0x{int(self.suffix):08x}"
             return
 
-        operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db, verbosity=verbosity)))
-        if operands:
-            yield f"{blob_prefix}sv.{record.name} {','.join(operands)}"
-        else:
-            yield f"{blob_prefix}{record.name}"
-        if blob_suffix:
-            yield f"{blob_suffix}"
+        name = f"sv.{record.name}"
 
         Rc = False
         if record.mdwn.operands["Rc"] is not None:
             Rc = bool(self.suffix[record.fields["Rc"]])
-
         rm = self.prefix.rm.select(record=record, Rc=Rc)
+
+        specifiers = tuple(rm.specifiers)
+        if specifiers:
+            specifiers = f"/{'/'.join(specifiers)}"
+        else:
+            specifiers = ""
+
+        operands = tuple(map(_operator.itemgetter(1),
+            self.dynamic_operands(db=db, verbosity=verbosity)))
+        if operands:
+            operands = f" {','.join(operands)}"
+        else:
+            operands = ""
+
+        yield f"{blob_prefix}{name}{specifiers}{operands}"
+        if blob_suffix:
+            yield f"{blob_suffix}"
+
         if verbosity >= Verbosity.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
