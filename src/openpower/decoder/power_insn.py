@@ -1688,50 +1688,10 @@ class SVP64Instruction(PrefixedInstruction):
                 else:
                     rm = rm.ctrvls
 
-        else:
+        if rm.__class__ is self.prefix.rm.__class__:
             raise ValueError(self)
 
-        table = {
-            NormalRM.simple: "normal: simple",
-            NormalRM.smr: "normal: smr",
-            NormalRM.pmr: "normal: pmr",
-            NormalRM.svmr: "normal: svmr",
-            NormalRM.pu: "normal: pu",
-            NormalRM.ffrc1: "normal: ffrc1",
-            NormalRM.ffrc0: "normal: ffrc0",
-            NormalRM.sat: "normal: sat",
-            NormalRM.satx: "normal: satx",
-            NormalRM.satpu: "normal: satpu",
-            NormalRM.prrc1: "normal: prrc1",
-            NormalRM.prrc0: "normal: prrc0",
-            LDSTImmRM.simple: "ld/st imm: simple",
-            LDSTImmRM.spu: "ld/st imm: spu",
-            LDSTImmRM.ffrc1: "ld/st imm: ffrc1",
-            LDSTImmRM.ffrc0: "ld/st imm: ffrc0",
-            LDSTImmRM.sat: "ld/st imm: sat",
-            LDSTImmRM.prrc1: "ld/st imm: prrc1",
-            LDSTImmRM.prrc0: "ld/st imm: prrc0",
-            LDSTIdxRM.simple: "ld/st idx: simple",
-            LDSTIdxRM.stride: "ld/st idx: stride",
-            LDSTIdxRM.sat: "ld/st idx: sat",
-            LDSTIdxRM.prrc1: "ld/st idx: prrc1",
-            LDSTIdxRM.prrc0: "ld/st idx: prrc0",
-            CROpRM.simple: "simple mode",
-            CROpRM.smr: "scalar reduce mode (mapreduce), SUBVL=1",
-            CROpRM.svmr: "subvector reduce mode, SUBVL>1",
-            CROpRM.reserved: "reserved",
-            CROpRM.ff3: "ffirst 3-bit mode",
-            CROpRM.ff5: "ffirst 5-bit mode",
-            BranchRM.simple: "simple mode",
-            BranchRM.vls: "VLSET mode",
-            BranchRM.ctr: "CTR-test mode",
-            BranchRM.ctrvls: "CTR-test+VLSET mode",
-        }
-        for (cls, desc) in table.items():
-            if isinstance(rm, cls):
-                return (rm, desc)
-
-        raise ValueError(self)
+        return rm
 
     def disassemble(self, db,
             byteorder="little",
@@ -1761,12 +1721,12 @@ class SVP64Instruction(PrefixedInstruction):
         if blob_suffix:
             yield f"{blob_suffix}"
 
-        (rm, rm_desc) = self.rm(db=db)
-
         if verbosity >= Verbosity.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
             spec = self.spec(db=db, prefix="sv.")
+            rm = self.rm(db=db)
+
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
             yield f"{indent}pcode"
@@ -1789,7 +1749,7 @@ class SVP64Instruction(PrefixedInstruction):
                     verbosity=verbosity, indent=indent)
 
             yield f"{indent}RM"
-            yield f"{indent}{indent}{rm_desc}"
+            yield f"{indent}{indent}{rm.__doc__}"
             yield ""
 
 
