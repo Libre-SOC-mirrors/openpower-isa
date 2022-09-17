@@ -1494,79 +1494,88 @@ class LDSTImmRM(LDSTImmBaseRM):
     prrc0: LDSTImmPredResultRc0RM
 
 
-class LDSTIdxRM(BaseRM):
-    class simple(BaseRM):
-        """ld/st index: simple mode"""
-        SEA: BaseRM.mode[2]
-        sz: BaseRM.mode[3]
-        dz: BaseRM.mode[3]
+class LDSTIdxBaseRM(BaseRM):
+    pass
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
 
-    class stride(BaseRM):
-        """ld/st index: strided (scalar only source)"""
-        SEA: BaseRM.mode[2]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[4]
+class LDSTIdxSimpleRM(LDSTIdxBaseRM):
+    """ld/st index: simple mode"""
+    SEA: BaseRM.mode[2]
+    sz: BaseRM.mode[3]
+    dz: BaseRM.mode[3]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
 
-    class sat(BaseRM):
-        """ld/st index: sat mode: N=0/1 u/s"""
-        N: BaseRM.mode[2]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[4]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            if self.sat:
-                yield "sats"
-            else:
-                yield "satu"
-            yield from super().specifiers
+class LDSTIdxStrideRM(LDSTIdxBaseRM):
+    """ld/st index: strided (scalar only source)"""
+    SEA: BaseRM.mode[2]
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[4]
 
-    class prrc1(BaseRM):
-        """ld/st index: Rc=1: pred-result CR sel"""
-        inv: BaseRM.mode[2]
-        CR: BaseRM.mode[3, 4]
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
 
-    class prrc0(BaseRM):
-        """ld/st index: Rc=0: pred-result z/nonz"""
-        inv: BaseRM.mode[2]
-        zz: BaseRM.mode[3]
-        RC1: BaseRM.mode[4]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
+class LDSTIdxSaturationRM(LDSTIdxBaseRM):
+    """ld/st index: sat mode: N=0/1 u/s"""
+    N: BaseRM.mode[2]
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[4]
 
-    simple: simple
-    stride: stride
-    sat: sat
-    prrc1: prrc1
-    prrc0: prrc0
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        if self.sat:
+            yield "sats"
+        else:
+            yield "satu"
+        yield from super().specifiers
+
+
+class LDSTIdxPredResultRc1RM(LDSTIdxBaseRM):
+    """ld/st index: Rc=1: pred-result CR sel"""
+    inv: BaseRM.mode[2]
+    CR: BaseRM.mode[3, 4]
+
+
+class LDSTIdxPredResultRc0RM(LDSTIdxBaseRM):
+    """ld/st index: Rc=0: pred-result z/nonz"""
+    inv: BaseRM.mode[2]
+    zz: BaseRM.mode[3]
+    RC1: BaseRM.mode[4]
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[3]
+
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
+
+
+class LDSTIdxRM(LDSTIdxBaseRM):
+    simple: LDSTIdxSimpleRM
+    stride: LDSTIdxStrideRM
+    sat: LDSTIdxSaturationRM
+    prrc1: LDSTIdxPredResultRc1RM
+    prrc0: LDSTIdxPredResultRc0RM
 
 
 class CROpRM(BaseRM):
