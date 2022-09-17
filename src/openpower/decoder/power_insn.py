@@ -1356,7 +1356,7 @@ class NormalSaturationRM(NormalBaseRM):
             yield f"dz"
         if self.sz:
             yield f"sz"
-        if self.sat:
+        if self.N:
             yield "sats"
         else:
             yield "satu"
@@ -1374,7 +1374,7 @@ class NormalSaturationExtRM(NormalBaseRM):
     def specifiers(self):
         if self.zz:
             yield f"zz"
-        if self.sat:
+        if self.N:
             yield "sats"
         else:
             yield "satu"
@@ -1458,7 +1458,7 @@ class LDSTImmSaturationRM(LDSTImmBaseRM):
     def specifiers(self):
         if self.zz:
             yield f"zz"
-        if self.sat:
+        if self.N:
             yield "sats"
         else:
             yield "satu"
@@ -1533,7 +1533,7 @@ class LDSTIdxSaturationRM(LDSTIdxBaseRM):
             yield f"dz"
         if self.sz:
             yield f"sz"
-        if self.sat:
+        if self.N:
             yield "sats"
         else:
             yield "satu"
