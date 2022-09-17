@@ -152,9 +152,11 @@ class FieldMeta(type):
             rlen = f"len({cls.__name__})"
             raise RemapError(f"{llen} != {rlen}")
 
+        ns = {}
+        ns["__doc__"] = cls.__doc__
         items = map(lambda item: scheme.__members__[item], cls)
 
-        return cls.__class__(cls.__name__, (cls,), {}, items=items)
+        return cls.__class__(cls.__name__, (cls,), ns, items=items)
 
     @property
     def span(cls):
@@ -244,6 +246,7 @@ class MappingMeta(type):
         for (name, field) in cls:
             annotations[name] = field.remap(scheme)
         ns["__annotations__"] = annotations
+        ns["__doc__"] = cls.__doc__
 
         return cls.__class__(cls.__name__, (cls,), ns)
 
