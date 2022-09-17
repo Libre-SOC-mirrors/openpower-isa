@@ -178,6 +178,9 @@ class Field(Reference, metaclass=FieldMeta):
         if isinstance(key, int):
             bit = self.storage[self.__class__.__members__[key]]
             return _SelectableInt(value=bit, bits=1)
+        if isinstance(key, slice):
+            assert key.step is None or key.step == 1
+            key = range(key.start, key.stop)
 
         return _selectconcat(*(self[bit] for bit in tuple(key)))
 
