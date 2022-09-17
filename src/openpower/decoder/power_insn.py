@@ -1418,85 +1418,80 @@ class NormalRM(NormalBaseRM):
     prrc0: NormalPredResultRc0RM
 
 
-class LDSTImmRM(BaseRM):
-    class simple(BaseRM):
-        """ld/st immediate: simple mode"""
-        zz: BaseRM.mode[3]
-        els: BaseRM.mode[4]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
+class LDSTImmBaseRM(BaseRM):
+    pass
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
 
-    class spu(BaseRM):
-        """ld/st immediate: Structured Pack/Unpack"""
-        zz: BaseRM.mode[3]
-        els: BaseRM.mode[4]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
+class LDSTImmSimpleRM(LDSTImmBaseRM):
+    """ld/st immediate: simple mode"""
+    zz: BaseRM.mode[3]
+    els: BaseRM.mode[4]
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[3]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
 
-    class ffrc1(BaseRM):
-        """ld/st immediate: Rc=1: ffirst CR sel"""
-        inv: BaseRM.mode[2]
-        CR: BaseRM.mode[3, 4]
 
-    class ffrc0(BaseRM):
-        """ld/st immediate: Rc=0: ffirst z/nonz"""
-        inv: BaseRM.mode[2]
-        els: BaseRM.mode[3]
-        RC1: BaseRM.mode[4]
+class LDSTImmFailFirstRc1RM(LDSTImmBaseRM):
+    """ld/st immediate: Rc=1: ffirst CR sel"""
+    inv: BaseRM.mode[2]
+    CR: BaseRM.mode[3, 4]
 
-    class sat(BaseRM):
-        """ld/st immediate: sat mode: N=0/1 u/s"""
-        N: BaseRM.mode[2]
-        zz: BaseRM.mode[3]
-        els: BaseRM.mode[4]
-        dz: BaseRM.mode[3]
-        sz: BaseRM.mode[3]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            if self.sat:
-                yield "sats"
-            else:
-                yield "satu"
-            yield from super().specifiers
+class LDSTImmFailFirstRc0RM(LDSTImmBaseRM):
+    """ld/st immediate: Rc=0: ffirst z/nonz"""
+    inv: BaseRM.mode[2]
+    els: BaseRM.mode[3]
+    RC1: BaseRM.mode[4]
 
-    class prrc1(BaseRM):
-        """ld/st immediate: Rc=1: pred-result CR sel"""
-        inv: BaseRM.mode[2]
-        CR: BaseRM.mode[3, 4]
 
-    class prrc0(BaseRM):
-        """ld/st immediate: Rc=0: pred-result z/nonz"""
-        inv: BaseRM.mode[2]
-        els: BaseRM.mode[3]
-        RC1: BaseRM.mode[4]
+class LDSTImmSaturationRM(LDSTImmBaseRM):
+    """ld/st immediate: sat mode: N=0/1 u/s"""
+    N: BaseRM.mode[2]
+    zz: BaseRM.mode[3]
+    els: BaseRM.mode[4]
+    dz: BaseRM.mode[3]
+    sz: BaseRM.mode[3]
 
-    simple: simple
-    ffrc1: ffrc1
-    ffrc0: ffrc0
-    sat: sat
-    prrc1: prrc1
-    prrc0: prrc0
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        if self.sat:
+            yield "sats"
+        else:
+            yield "satu"
+        yield from super().specifiers
+
+
+class LDSTImmPredResultRc1RM(LDSTImmBaseRM):
+    """ld/st immediate: Rc=1: pred-result CR sel"""
+    inv: BaseRM.mode[2]
+    CR: BaseRM.mode[3, 4]
+
+
+class LDSTImmPredResultRc0RM(LDSTImmBaseRM):
+    """ld/st immediate: Rc=0: pred-result z/nonz"""
+    inv: BaseRM.mode[2]
+    els: BaseRM.mode[3]
+    RC1: BaseRM.mode[4]
+
+
+class LDSTImmRM(LDSTImmBaseRM):
+    simple: LDSTImmSimpleRM
+    ffrc1: LDSTImmFailFirstRc1RM
+    ffrc0: LDSTImmFailFirstRc0RM
+    sat: LDSTImmSaturationRM
+    prrc1: LDSTImmPredResultRc1RM
+    prrc0: LDSTImmPredResultRc0RM
 
 
 class LDSTIdxRM(BaseRM):
