@@ -1212,7 +1212,7 @@ class PrefixedInstruction(Instruction):
         (prefix, suffix) = map(transform, (prefix, suffix))
         value = _selectconcat(prefix, suffix)
 
-        return super().integer(value=value)
+        return super().integer(bits=64, value=value)
 
 
 class Mode(_Mapping):
@@ -1278,67 +1278,75 @@ class BaseRM(_Mapping):
     extra2: Extra2.remap(range(10, 19))
     extra3: Extra3.remap(range(10, 19))
 
+    def disassemble(self, verbosity=Verbosity.NORMAL):
+        if verbosity >= Verbosity.VERBOSE:
+            indent = (" " * 4)
+            for (name, value, members) in self.traverse(path="RM"):
+                yield f"{name}"
+                yield f"{indent}{int(value):0{value.bits}b}"
+                yield f"{indent}{', '.join(map(str, members))}"
+
 
 class NormalRM(BaseRM):
     class simple(BaseRM):
-        """simple mode"""
+        """normal: simple mode"""
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[4]
 
-    class smr(Mode):
-        """scalar reduce mode (mapreduce), SUBVL=1"""
+    class smr(BaseRM):
+        """normal: scalar reduce mode (mapreduce), SUBVL=1"""
         RG: BaseRM.mode[4]
 
-    class pmr(Mode):
-        """parallel reduce mode (mapreduce), SUBVL=1"""
+    class pmr(BaseRM):
+        """normal: parallel reduce mode (mapreduce), SUBVL=1"""
         pass
 
-    class svmr(Mode):
-        """subvector reduce mode, SUBVL>1"""
+    class svmr(BaseRM):
+        """normal: subvector reduce mode, SUBVL>1"""
         SVM: BaseRM.mode[3]
 
-    class pu(Mode):
-        """Pack/Unpack mode, SUBVL>1"""
+    class pu(BaseRM):
+        """normal: Pack/Unpack mode, SUBVL>1"""
         SVM: BaseRM.mode[3]
 
-    class ffrc1(Mode):
-        """Rc=1: ffirst CR sel"""
+    class ffrc1(BaseRM):
+        """normal: Rc=1: ffirst CR sel"""
         inv: BaseRM.mode[2]
         CR: BaseRM.mode[3, 4]
 
-    class ffrc0(Mode):
-        """Rc=0: ffirst z/nonz"""
+    class ffrc0(BaseRM):
+        """normal: Rc=0: ffirst z/nonz"""
         inv: BaseRM.mode[2]
         VLi: BaseRM.mode[3]
         RC1: BaseRM.mode[4]
 
-    class sat(Mode):
-        """sat mode: N=0/1 u/s, SUBVL=1"""
+    class sat(BaseRM):
+        """normal: sat mode: N=0/1 u/s, SUBVL=1"""
         N: BaseRM.mode[2]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[4]
 
-    class satx(Mode):
-        """sat mode: N=0/1 u/s, SUBVL>1"""
+    class satx(BaseRM):
+        """normal: sat mode: N=0/1 u/s, SUBVL>1"""
         N: BaseRM.mode[2]
         zz: BaseRM.mode[3]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
 
-    class satpu(Mode):
-        """Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1"""
+    class satpu(BaseRM):
+        """normal: Pack/Unpack sat mode: N=0/1 u/s, SUBVL>1"""
         N: BaseRM.mode[2]
         zz: BaseRM.mode[3]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
 
-    class prrc1(Mode):
-        """Rc=1: pred-result CR sel"""
+    class prrc1(BaseRM):
+        """normal: Rc=1: pred-result CR sel"""
         inv: BaseRM.mode[2]
         CR: BaseRM.mode[3, 4]
 
-    class prrc0(Mode):
-        """Rc=0: pred-result z/nonz"""
+    class prrc0(BaseRM):
+        """normal: Rc=0: pred-result z/nonz"""
         inv: BaseRM.mode[2]
         zz: BaseRM.mode[3]
         RC1: BaseRM.mode[4]
@@ -1360,46 +1368,46 @@ class NormalRM(BaseRM):
 
 
 class LDSTImmRM(BaseRM):
-    class simple(Mode):
-        """simple mode"""
+    class simple(BaseRM):
+        """ld/st immediate: simple mode"""
         zz: BaseRM.mode[3]
         els: BaseRM.mode[4]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
 
-    class spu(Mode):
-        """Structured Pack/Unpack"""
+    class spu(BaseRM):
+        """ld/st immediate: Structured Pack/Unpack"""
         zz: BaseRM.mode[3]
         els: BaseRM.mode[4]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
 
-    class ffrc1(Mode):
-        """Rc=1: ffirst CR sel"""
+    class ffrc1(BaseRM):
+        """ld/st immediate: Rc=1: ffirst CR sel"""
         inv: BaseRM.mode[2]
         CR: BaseRM.mode[3, 4]
 
-    class ffrc0(Mode):
-        """Rc=0: ffirst z/nonz"""
+    class ffrc0(BaseRM):
+        """ld/st immediate: Rc=0: ffirst z/nonz"""
         inv: BaseRM.mode[2]
         els: BaseRM.mode[3]
         RC1: BaseRM.mode[4]
 
-    class sat(Mode):
-        """sat mode: N=0/1 u/s"""
+    class sat(BaseRM):
+        """ld/st immediate: sat mode: N=0/1 u/s"""
         N: BaseRM.mode[2]
         zz: BaseRM.mode[3]
         els: BaseRM.mode[4]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[3]
 
-    class prrc1(Mode):
-        """Rc=1: pred-result CR sel"""
+    class prrc1(BaseRM):
+        """ld/st immediate: Rc=1: pred-result CR sel"""
         inv: BaseRM.mode[2]
         CR: BaseRM.mode[3, 4]
 
-    class prrc0(Mode):
-        """Rc=0: pred-result z/nonz"""
+    class prrc0(BaseRM):
+        """ld/st immediate: Rc=0: pred-result z/nonz"""
         inv: BaseRM.mode[2]
         els: BaseRM.mode[3]
         RC1: BaseRM.mode[4]
@@ -1414,31 +1422,31 @@ class LDSTImmRM(BaseRM):
 
 
 class LDSTIdxRM(BaseRM):
-    class simple(Mode):
-        """simple mode"""
+    class simple(BaseRM):
+        """ld/st index: simple mode"""
         SEA: BaseRM.mode[2]
         sz: BaseRM.mode[3]
         dz: BaseRM.mode[3]
 
-    class stride(Mode):
-        """strided (scalar only source)"""
+    class stride(BaseRM):
+        """ld/st index: strided (scalar only source)"""
         SEA: BaseRM.mode[2]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[4]
 
-    class sat(Mode):
-        """sat mode: N=0/1 u/s"""
+    class sat(BaseRM):
+        """ld/st index: sat mode: N=0/1 u/s"""
         N: BaseRM.mode[2]
         dz: BaseRM.mode[3]
         sz: BaseRM.mode[4]
 
-    class prrc1(Mode):
-        """Rc=1: pred-result CR sel"""
+    class prrc1(BaseRM):
+        """ld/st index: Rc=1: pred-result CR sel"""
         inv: BaseRM.mode[2]
         CR: BaseRM.mode[3, 4]
 
-    class prrc0(Mode):
-        """Rc=0: pred-result z/nonz"""
+    class prrc0(BaseRM):
+        """ld/st index: Rc=0: pred-result z/nonz"""
         inv: BaseRM.mode[2]
         zz: BaseRM.mode[3]
         RC1: BaseRM.mode[4]
@@ -1454,20 +1462,20 @@ class LDSTIdxRM(BaseRM):
 
 class CROpRM(BaseRM):
     class simple(BaseRM):
-        """simple mode"""
+        """cr_op: simple mode"""
         sz: BaseRM[6]
         SNZ: BaseRM[7]
         RG: BaseRM[20]
         dz: BaseRM[22]
 
     class smr(BaseRM):
-        """scalar reduce mode (mapreduce), SUBVL=1"""
+        """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
         sz: BaseRM[6]
         SNZ: BaseRM[7]
         RG: BaseRM[20]
 
     class svmr(BaseRM):
-        """subvector reduce mode, SUBVL>1"""
+        """cr_op: subvector reduce mode, SUBVL>1"""
         zz: BaseRM[6]
         SNZ: BaseRM[7]
         RG: BaseRM[20]
@@ -1476,7 +1484,7 @@ class CROpRM(BaseRM):
         sz: BaseRM[6]
 
     class reserved(BaseRM):
-        """reserved"""
+        """cr_op: reserved"""
         zz: BaseRM[6]
         SNZ: BaseRM[7]
         RG: BaseRM[20]
@@ -1484,7 +1492,7 @@ class CROpRM(BaseRM):
         sz: BaseRM[6]
 
     class ff3(BaseRM):
-        """ffirst 3-bit mode"""
+        """cr_op: ffirst 3-bit mode"""
         zz: BaseRM[6]
         SNZ: BaseRM[7]
         VLI: BaseRM[20]
@@ -1494,7 +1502,7 @@ class CROpRM(BaseRM):
         sz: BaseRM[6]
 
     class ff5(BaseRM):
-        """ffirst 5-bit mode"""
+        """cr_op: ffirst 5-bit mode"""
         zz: BaseRM[6]
         SNZ: BaseRM[7]
         VLI: BaseRM[20]
@@ -1522,20 +1530,20 @@ class BranchBaseRM(BaseRM):
 
 class BranchRM(BranchBaseRM):
     class simple(BranchBaseRM):
-        """simple mode"""
+        """branch: simple mode"""
         pass
 
     class vls(BranchBaseRM):
-        """VLSET mode"""
+        """branch: VLSET mode"""
         VSb: BaseRM[7]
         VLI: BaseRM[21]
 
     class ctr(BranchBaseRM):
-        """CTR-test mode"""
+        """branch: CTR-test mode"""
         CTi: BaseRM[6]
 
     class ctrvls(vls, ctr):
-        """CTR-test+VLSET mode"""
+        """branch: CTR-test+VLSET mode"""
         pass
 
 
@@ -1545,39 +1553,8 @@ class RM(BaseRM):
     ldst_idx: LDSTIdxRM
     cr_op: CROpRM
 
-
-class SVP64Instruction(PrefixedInstruction):
-    """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
-    class Prefix(PrefixedInstruction.Prefix):
-        id: _Field = (7, 9)
-        rm: RM.remap((6, 8) + tuple(range(10, 32)))
-
-    prefix: Prefix
-
-    def record(self, db):
-        record = db[self.suffix]
-        if record is None:
-            raise KeyError(self)
-        return record
-
-    @property
-    def binary(self):
-        bits = []
-        for idx in range(64):
-            bit = int(self[idx])
-            bits.append(bit)
-        return "".join(map(str, bits))
-
-    def rm(self, db):
-        record = self.record(db=db)
-
-        Rc = False
-        if record.mdwn.operands["Rc"] is not None:
-            Rc = bool(self[record.fields["Rc"]])
-
-        record = self.record(db=db)
-        subvl = self.prefix.rm.subvl
-        rm = self.prefix.rm
+    def select(self, record, Rc):
+        rm = self
 
         if record.svp64.mode is _SVMode.NORMAL:
             rm = rm.normal
@@ -1585,7 +1562,7 @@ class SVP64Instruction(PrefixedInstruction):
                 if rm.mode[2] == 0b0:
                     rm = rm.simple
                 else:
-                    if subvl == 0b00:
+                    if self.subvl == 0b00:
                         if rm.mode[3] == 0b0:
                             rm = rm.smr
                         else:
@@ -1601,7 +1578,7 @@ class SVP64Instruction(PrefixedInstruction):
                 else:
                     rm = rm.ffrc0
             elif rm.mode[0:2] == 0b10:
-                if subvl == 0b00:
+                if self.subvl == 0b00:
                     rm = rm.sat
                 else:
                     if rm.mode[4]:
@@ -1654,7 +1631,7 @@ class SVP64Instruction(PrefixedInstruction):
                 if rm[21] == 0b0:
                     rm = rm.simple
                 else:
-                    if subvl == 0:
+                    if self.subvl == 0:
                         rm = rm.smr
                     else:
                         if rm[23] == 0b0:
@@ -1688,10 +1665,33 @@ class SVP64Instruction(PrefixedInstruction):
                 else:
                     rm = rm.ctrvls
 
-        if rm.__class__ is self.prefix.rm.__class__:
+        if rm.__class__ is self.__class__:
             raise ValueError(self)
 
         return rm
+
+
+class SVP64Instruction(PrefixedInstruction):
+    """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
+    class Prefix(PrefixedInstruction.Prefix):
+        id: _Field = (7, 9)
+        rm: RM.remap((6, 8) + tuple(range(10, 32)))
+
+    prefix: Prefix
+
+    def record(self, db):
+        record = db[self.suffix]
+        if record is None:
+            raise KeyError(self)
+        return record
+
+    @property
+    def binary(self):
+        bits = []
+        for idx in range(64):
+            bit = int(self[idx])
+            bits.append(bit)
+        return "".join(map(str, bits))
 
     def disassemble(self, db,
             byteorder="little",
@@ -1704,9 +1704,9 @@ class SVP64Instruction(PrefixedInstruction):
                 blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
                 return f"{blob}    "
 
+        record = self.record(db=db)
         blob_prefix = blob(int(self.prefix))
         blob_suffix = blob(int(self.suffix))
-        record = db[self]
         if record is None or record.svp64 is None:
             yield f"{blob_prefix}.long 0x{int(self.prefix):08x}"
             yield f"{blob_suffix}.long 0x{int(self.suffix):08x}"
@@ -1721,11 +1721,15 @@ class SVP64Instruction(PrefixedInstruction):
         if blob_suffix:
             yield f"{blob_suffix}"
 
+        Rc = False
+        if record.mdwn.operands["Rc"] is not None:
+            Rc = bool(self.suffix[record.fields["Rc"]])
+
+        rm = self.prefix.rm.select(record=record, Rc=Rc)
         if verbosity >= Verbosity.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
             spec = self.spec(db=db, prefix="sv.")
-            rm = self.rm(db=db)
 
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
@@ -1747,9 +1751,10 @@ class SVP64Instruction(PrefixedInstruction):
             for operand in record.mdwn.operands:
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
-
             yield f"{indent}RM"
             yield f"{indent}{indent}{rm.__doc__}"
+            for line in rm.disassemble(verbosity=verbosity):
+                yield f"{indent}{indent}{line}"
             yield ""
 
 
