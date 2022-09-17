@@ -1348,6 +1348,10 @@ class NormalRM(BaseRM):
                 yield f"dz"
             if self.sz:
                 yield f"sz"
+            if self.sat:
+                yield "sats"
+            else:
+                yield "satu"
             yield from super().specifiers
 
     class satx(BaseRM):
@@ -1363,6 +1367,10 @@ class NormalRM(BaseRM):
                 yield f"dz"
             if self.sz:
                 yield f"sz"
+            if self.sat:
+                yield "sats"
+            else:
+                yield "satu"
             yield from super().specifiers
 
     class satpu(BaseRM):
@@ -1378,6 +1386,10 @@ class NormalRM(BaseRM):
                 yield f"dz"
             if self.sz:
                 yield f"sz"
+            if self.sat:
+                yield "sats"
+            else:
+                yield "satu"
             yield from super().specifiers
 
     class prrc1(BaseRM):
@@ -1469,6 +1481,10 @@ class LDSTImmRM(BaseRM):
                 yield f"dz"
             if self.sz:
                 yield f"sz"
+            if self.sat:
+                yield "sats"
+            else:
+                yield "satu"
             yield from super().specifiers
 
     class prrc1(BaseRM):
@@ -1531,6 +1547,10 @@ class LDSTIdxRM(BaseRM):
                 yield f"dz"
             if self.sz:
                 yield f"sz"
+            if self.sat:
+                yield "sats"
+            else:
+                yield "satu"
             yield from super().specifiers
 
     class prrc1(BaseRM):
