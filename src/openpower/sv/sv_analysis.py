@@ -717,7 +717,7 @@ def process_csvs(format):
     # create a CSV file, per category, with SV "augmentation" info
     # XXX note: 'out2' not added here, needs to be added to CSV files
     # KEEP TRACK OF THESE https://bugs.libre-soc.org/show_bug.cgi?id=619
-    csvcols = ['insn', 'mode', 'CONDITIONS', 'Ptype', 'Etype',]
+    csvcols = ['insn', 'mode', 'CONDITIONS', 'Ptype', 'Etype', 'SM']
     csvcols += ['0', '1', '2', '3']
     csvcols += ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']  # temporary
     for key in primarykeys:
@@ -785,6 +785,17 @@ def process_csvs(format):
             #print("regs", insn_name, regs)
             extra_classifier(insn_name, value, name, res, regs)
 
+            # source-mask is hard to detect, it's part of RM-nn-nn.
+            # to make disassembler easier, create a yes/no decision here
+            # see https://libre-soc.org/openpower/sv/svp64/#extra_remap
+            # MASK_SRC
+            vstripped = value.replace("LDST", "")
+            if vstripped in ['RM-2P-1S1D', 'RM-2P-2S',
+                         'RM-2P-2S1D', 'RM-2P-1S2D', 'RM-2P-3S',
+                        ]:
+                res['SM'] = '0'
+            else:
+                res['SM'] = '0'
             # add to svp64 csvs
             # for k in ['in1', 'in2', 'in3', 'out', 'CR in', 'CR out']:
             #    del res[k]
@@ -836,7 +847,7 @@ def process_csvs(format):
     for fname in glob_valid_csvs(pth):
         svp64_csv = svt.get_svp64_csv(fname)
 
-    csvcols = ['insn', 'mode', 'Ptype', 'Etype']
+    csvcols = ['insn', 'mode', 'Ptype', 'Etype', 'SM']
     csvcols += ['in1', 'in2', 'in3', 'out', 'out2', 'CR in', 'CR out']
 
     if format is Format.VHDL:
