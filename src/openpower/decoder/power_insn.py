@@ -30,6 +30,7 @@ from openpower.decoder.power_enums import (
     CryIn as _CryIn,
     Form as _Form,
     SVEtype as _SVEtype,
+    SVmask_src as _SVmask_src,
     SVMode as _SVMode,
     SVPtype as _SVPtype,
     SVExtra as _SVExtra,
@@ -308,6 +309,7 @@ class SVP64Record:
     name: str
     ptype: _SVPtype = _SVPtype.NONE
     etype: _SVEtype = _SVEtype.NONE
+    msrc: _SVmask_src = _SVmask_src.NO # MASK_SRC is active
     in1: _In1Sel = _In1Sel.NONE
     in2: _In2Sel = _In2Sel.NONE
     in3: _In3Sel = _In3Sel.NONE
@@ -325,6 +327,7 @@ class SVP64Record:
         "CONDITIONS": "conditions",
         "Ptype": "ptype",
         "Etype": "etype",
+        "SM": "msrc",
         "CR in": "cr_in",
         "CR out": "cr_out",
     }
