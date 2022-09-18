@@ -1349,6 +1349,13 @@ class NormalSubvectorReduceRM(NormalBaseRM):
     """normal: subvector reduce mode, SUBVL>1"""
     SVM: BaseRM.mode[3]
 
+    @property
+    def specifiers(self):
+        if self.SVM:
+            yield "svm"
+
+        yield from super().specifiers
+
 
 class NormalReservedRM(NormalBaseRM):
     """normal: reserved"""
@@ -1645,6 +1652,9 @@ class CROpSubvectorReduceRM(CROpBaseRM):
     def specifiers(self):
         if self.zz:
             yield f"zz"
+        if self.SVM:
+            yield "svm"
+
         yield from super().specifiers
 
 
