@@ -1399,6 +1399,13 @@ class NormalFailFirstRc0RM(NormalBaseRM):
     VLi: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
+    def specifiers(self, record):
+        if self.RC1:
+            inv = "~" if self.inv else ""
+            yield f"ff={inv}RC1"
+
+        yield from super().specifiers(record=record)
+
 
 class NormalSaturationRM(NormalBaseRM):
     """normal: sat mode: N=0/1 u/s, SUBVL=1"""
@@ -1436,6 +1443,9 @@ class NormalPredResultRc0RM(NormalBaseRM):
     def specifiers(self, record):
         if self.zz:
             yield f"zz"
+        if self.RC1:
+            inv = "~" if self.inv else ""
+            yield f"pr={inv}RC1"
 
         yield from super().specifiers(record=record)
 
@@ -1486,6 +1496,12 @@ class LDSTImmFailFirstRc0RM(LDSTImmBaseRM):
     els: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
+    def specifiers(self, record):
+        if self.RC1:
+            inv = "~" if self.inv else ""
+            yield f"ff={inv}RC1"
+
+        yield from super().specifiers(record=record)
 
 class LDSTImmSaturationRM(LDSTImmBaseRM):
     """ld/st immediate: sat mode: N=0/1 u/s"""
@@ -1518,6 +1534,12 @@ class LDSTImmPredResultRc0RM(LDSTImmBaseRM):
     els: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
+    def specifiers(self, record):
+        if self.RC1:
+            inv = "~" if self.inv else ""
+            yield f"pr={inv}RC1"
+
+        yield from super().specifiers(record=record)
 
 class LDSTImmRM(LDSTImmBaseRM):
     simple: LDSTImmSimpleRM
@@ -1599,6 +1621,9 @@ class LDSTIdxPredResultRc0RM(LDSTIdxBaseRM):
     def specifiers(self, record):
         if self.zz:
             yield f"zz"
+        if self.RC1:
+            inv = "~" if self.inv else ""
+            yield f"pr={inv}RC1"
 
         yield from super().specifiers(record=record)
 
