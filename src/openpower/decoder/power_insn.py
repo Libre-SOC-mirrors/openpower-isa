@@ -1924,7 +1924,7 @@ class SVP64Instruction(PrefixedInstruction):
 
         Rc = False
         if record.mdwn.operands["Rc"] is not None:
-            Rc = bool(self.suffix[record.fields["Rc"]])
+            Rc = bool(record.mdwn.operands["Rc"].value)
         rm = self.prefix.rm.select(record=record, Rc=Rc)
 
         specifiers = tuple(rm.specifiers(record=record))
