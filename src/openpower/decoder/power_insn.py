@@ -1364,15 +1364,9 @@ class SZBaseRM(BaseRM):
 class MRBaseRM(BaseRM):
     def specifiers(self, record):
         if self.RG:
-            # reverse-gear but this is a mix-in class, different reports needed
-            if isinstance(self, CROpSimpleRM):
-                yield "rg" # simple CR Mode reports /rg
-            else:
-                yield "mrr" # all others assume "mapreduce+reverse"
+            yield "mrr"
         else:
-            # in CR-Simple just don't report anything
-            if not isinstance(self, CROpSimpleRM):
-                yield "mr" # all but CR-Simple report "mapreduce"
+            yield "mr"
 
         yield from super().specifiers(record=record)
 
@@ -1661,12 +1655,17 @@ class CROpBaseRM(BaseRM):
     SNZ: BaseRM[7]
 
 
-class CROpSimpleRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpSimpleRM(DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: simple mode"""
     RG: BaseRM[20]
     dz: BaseRM[22]
     sz: BaseRM[23]
 
+    def specifiers(self, record):
+        if self.RG:
+            yield "rg" # simple CR Mode reports /rg
+
+        yield from super().specifiers(record=record)
 
 class CROpSMRRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
