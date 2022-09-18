@@ -730,7 +730,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         # then "yield" fields only from op_fields rather than hard-coded
         # list, here.
         fields = self.decoder.sigforms[formname]
-        log("prep_namespace", formname, op_fields)
+        log("prep_namespace", formname, op_fields, insn_name)
         for name in op_fields:
             # CR immediates. deal with separately.  needs modifying
             # pseudocode
@@ -1141,6 +1141,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         asmop = yield from self.get_assembly_name()
         log("call", ins_name, asmop)
 
+        # sv.setvl is *not* a loop-function. sigh
+        log("is_svp64_mode", self.is_svp64_mode, asmop)
+
         # check privileged
         int_op = yield self.dec2.dec.op.internal_op
         spr_msb = yield from self.get_spr_msb()
@@ -1232,8 +1235,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         log("sv rm", sv_rm, dest_cr, src_cr, src_byname, dest_byname)
 
         # see if srcstep/dststep need skipping over masked-out predicate bits
-        if (self.is_svp64_mode or ins_name == 'setvl' or
-                ins_name in ['svremap', 'svstate']):
+        if (self.is_svp64_mode or ins_name in ['setvl', 'svremap', 'svstate']):
             yield from self.svstate_pre_inc()
         if self.is_svp64_mode:
             pre = yield from self.update_new_svstate_steps()
@@ -1621,7 +1623,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             end_dst = dststep == vl-1
             if self.allow_next_step_inc != 2:
                 yield from self.advance_svstate_steps(end_src, end_dst)
-            self.namespace['SVSTATE'] = self.svstate.spr
+            #self.namespace['SVSTATE'] = self.svstate.spr
             # set CR0 (if Rc=1) based on end
             if rc_en:
                 endtest = 1 if (end_src or end_dst) else 0
@@ -1818,7 +1820,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
 
         # check if end reached (we let srcstep overrun, above)
         # nothing needs doing (TODO zeroing): just do next instruction
-        return srcstep == vl or dststep == vl
+        return ((ssubstep == subvl and srcstep == vl) or
+                (dsubstep == subvl and dststep == vl))
 
     def svstate_post_inc(self, insn_name, vf=0):
         # check if SV "Vertical First" mode is enabled
@@ -1879,6 +1882,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         end_dst = dststep == vl-1
         loopend = ((end_src and ssubstep == subvl) or
                    (end_dst and dsubstep == subvl))
+        log("loopend", loopend, end_src, end_dst,
+                                ssubstep == subvl, dsubstep == subvl)
         if not svp64_is_vector or loopend:
             # reset loop to zero and update NIA
             self.svp64_reset_loop()
@@ -1903,22 +1908,28 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         TODO when Pack/Unpack is set, substep becomes the *outer* loop
         """
         subvl = yield self.dec2.rm_dec.rm_in.subvl
-        # first source step
         pack = self.svstate.pack
+        unpack = self.svstate.unpack
         ssubstep = self.svstate.ssubstep
+        dsubstep = self.svstate.dsubstep
+        end_ssub = ssubstep == subvl
+        end_dsub = dsubstep == subvl
+        log("    pack/unpack/subvl", pack, unpack, subvl,
+                                     "end", end_src, end_dst,
+                                     "sub", end_ssub, end_dsub)
+        # first source step
         srcstep = self.svstate.srcstep
-        end_sub = ssubstep == subvl
         if pack:
             # pack advances subvl in *outer* loop
             if end_src:
-                if not end_sub:
-                    self.svstate.ssubstep += SelectableInt(1, 7)
-                self.svstate.srcstep = SelectableInt(0, 2)  # reset
+                if not end_ssub:
+                    self.svstate.ssubstep += SelectableInt(1, 2)
+                self.svstate.srcstep = SelectableInt(0, 7)  # reset
             else:
-                self.svstate.srcstep += SelectableInt(1, 2) # advance srcstep
+                self.svstate.srcstep += SelectableInt(1, 7) # advance srcstep
         else:
             # advance subvl in *inner* loop
-            if end_sub:
+            if end_ssub:
                 if not end_src:
                     self.svstate.srcstep += SelectableInt(1, 7)
                 self.svstate.ssubstep = SelectableInt(0, 2)  # reset
@@ -1926,30 +1937,29 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
                 self.svstate.ssubstep += SelectableInt(1, 2) # advance ssubstep
 
         # now dest step
-        dsubstep = self.svstate.dsubstep
-        unpack = self.svstate.unpack
-        end_sub = dsubstep == subvl
         if unpack:
             # unpack advances subvl in *outer* loop
             if end_dst:
-                if not end_sub:
-                    self.svstate.dsubstep += SelectableInt(1, 7)
-                self.svstate.dststep = SelectableInt(0, 2)  # reset
+                if not end_dsub:
+                    self.svstate.dsubstep += SelectableInt(1, 2)
+                self.svstate.dststep = SelectableInt(0, 7)  # reset
             else:
-                self.svstate.dststep += SelectableInt(1, 2) # advance dststep
+                self.svstate.dststep += SelectableInt(1, 7) # advance dststep
         else:
             # advance subvl in *inner* loop
-            if end_sub:
+            if end_dsub:
                 if not end_dst:
                     self.svstate.dststep += SelectableInt(1, 7)
                 self.svstate.dsubstep = SelectableInt(0, 2)  # reset
             else:
                 self.svstate.dsubstep += SelectableInt(1, 2) # advance ssubstep
+        log("    advance", self.svstate.srcstep, self.svstate.ssubstep,
+                           "dst", self.svstate.dststep, self.svstate.dsubstep)
 
     def update_pc_next(self):
         # UPDATE program counter
         self.pc.update(self.namespace, self.is_svp64_mode)
-        self.svstate.spr = self.namespace['SVSTATE']
+        #self.svstate.spr = self.namespace['SVSTATE']
         log("end of call", self.namespace['CIA'],
             self.namespace['NIA'],
             self.namespace['SVSTATE'])

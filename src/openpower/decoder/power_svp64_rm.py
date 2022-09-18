@@ -126,6 +126,7 @@ class SVP64RMModeDecode(Elaboratable):
         # Modes n stuff
         self.ew_src = Signal(SVP64width) # source elwidth
         self.ew_dst = Signal(SVP64width) # dest elwidth
+        self.subvl= Signal(2) # subvl
         self.saturate = Signal(SVP64sat)
         self.RC1 = Signal()
         self.cr_sel = Signal(2)  # bit of CR to test (index 0-3)
@@ -232,6 +233,7 @@ class SVP64RMModeDecode(Elaboratable):
             # do elwidth/elwidth_src extract
             comb += self.ew_src.eq(self.rm_in.ewsrc)
             comb += self.ew_dst.eq(self.rm_in.elwidth)
+            comb += self.subvl.eq(self.rm_in.subvl)
 
             # extract els (element strided mode bit)
             # see https://libre-soc.org/openpower/sv/ldst/
