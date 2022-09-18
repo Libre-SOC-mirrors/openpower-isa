@@ -1589,101 +1589,111 @@ class LDSTIdxRM(LDSTIdxBaseRM):
     prrc0: LDSTIdxPredResultRc0RM
 
 
-class CROpRM(BaseRM):
-    class simple(BaseRM):
-        """cr_op: simple mode"""
-        sz: BaseRM[6]
-        SNZ: BaseRM[7]
-        RG: BaseRM[20]
-        dz: BaseRM[22]
+class CROpBaseRM(BaseRM):
+    pass
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
 
-    class smr(BaseRM):
-        """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
-        sz: BaseRM[6]
-        SNZ: BaseRM[7]
-        RG: BaseRM[20]
+class CROpSimpleRM(CROpBaseRM):
+    """cr_op: simple mode"""
+    sz: BaseRM[6]
+    SNZ: BaseRM[7]
+    RG: BaseRM[20]
+    dz: BaseRM[22]
 
-        @property
-        def specifiers(self):
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
 
-    class svmr(BaseRM):
-        """cr_op: subvector reduce mode, SUBVL>1"""
-        zz: BaseRM[6]
-        SNZ: BaseRM[7]
-        RG: BaseRM[20]
-        SVM: BaseRM[22]
-        dz: BaseRM[6]
-        sz: BaseRM[6]
 
-        @property
-        def specifiers(self):
-            if self.zz:
-                yield f"zz"
-            yield from super().specifiers
+class CROpScalarReduceRM(CROpBaseRM):
+    """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
+    sz: BaseRM[6]
+    SNZ: BaseRM[7]
+    RG: BaseRM[20]
 
-    class reserved(BaseRM):
-        """cr_op: reserved"""
-        zz: BaseRM[6]
-        SNZ: BaseRM[7]
-        RG: BaseRM[20]
-        dz: BaseRM[6]
-        sz: BaseRM[6]
+    @property
+    def specifiers(self):
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
 
-        @property
-        def specifiers(self):
-            if self.zz:
-                yield f"zz"
-            yield from super().specifiers
 
-    class ff3(BaseRM):
-        """cr_op: ffirst 3-bit mode"""
-        zz: BaseRM[6]
-        SNZ: BaseRM[7]
-        VLI: BaseRM[20]
-        inv: BaseRM[21]
-        CR: BaseRM[22, 23]
-        dz: BaseRM[6]
-        sz: BaseRM[6]
+class CROpSubvectorReduceRM(CROpBaseRM):
+    """cr_op: subvector reduce mode, SUBVL>1"""
+    zz: BaseRM[6]
+    SNZ: BaseRM[7]
+    RG: BaseRM[20]
+    SVM: BaseRM[22]
+    dz: BaseRM[6]
+    sz: BaseRM[6]
 
-        @property
-        def specifiers(self):
-            if self.zz:
-                yield f"zz"
-            yield from super().specifiers
+    @property
+    def specifiers(self):
+        if self.zz:
+            yield f"zz"
+        yield from super().specifiers
 
-    class ff5(BaseRM):
-        """cr_op: ffirst 5-bit mode"""
-        sz: BaseRM[6]
-        SNZ: BaseRM[7]
-        VLI: BaseRM[20]
-        inv: BaseRM[21]
-        dz: BaseRM[22]
 
-        @property
-        def specifiers(self):
-            if self.dz:
-                yield f"dz"
-            if self.sz:
-                yield f"sz"
-            yield from super().specifiers
+class CROpReservedRM(CROpBaseRM):
+    """cr_op: reserved"""
+    zz: BaseRM[6]
+    SNZ: BaseRM[7]
+    RG: BaseRM[20]
+    dz: BaseRM[6]
+    sz: BaseRM[6]
 
-    simple: simple
-    smr: smr
-    svmr: svmr
-    reserved: reserved
-    ff3: ff3
-    ff5: ff5
+    @property
+    def specifiers(self):
+        if self.zz:
+            yield f"zz"
+        yield from super().specifiers
+
+
+class CROpFailFirst3RM(CROpBaseRM):
+    """cr_op: ffirst 3-bit mode"""
+    zz: BaseRM[6]
+    SNZ: BaseRM[7]
+    VLI: BaseRM[20]
+    inv: BaseRM[21]
+    CR: BaseRM[22, 23]
+    dz: BaseRM[6]
+    sz: BaseRM[6]
+
+    @property
+    def specifiers(self):
+        if self.zz:
+            yield f"zz"
+        yield from super().specifiers
+
+
+class CROpFailFirst5RM(CROpBaseRM):
+    """cr_op: ffirst 5-bit mode"""
+    sz: BaseRM[6]
+    SNZ: BaseRM[7]
+    VLI: BaseRM[20]
+    inv: BaseRM[21]
+    dz: BaseRM[22]
+
+    @property
+    def specifiers(self):
+        if self.dz:
+            yield f"dz"
+        if self.sz:
+            yield f"sz"
+        yield from super().specifiers
+
+
+class CROpRM(CROpBaseRM):
+    simple: CROpSimpleRM
+    smr: CROpScalarReduceRM
+    svmr: CROpSubvectorReduceRM
+    reserved: CROpReservedRM
+    ff3: CROpFailFirst3RM
+    ff5: CROpFailFirst5RM
 
 
 class BranchBaseRM(BaseRM):
