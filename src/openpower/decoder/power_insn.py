@@ -1344,6 +1344,13 @@ class NormalScalarReduceRM(NormalBaseRM):
     """normal: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM.mode[4]
 
+    @property
+    def specifiers(self):
+        if self.RG:
+            yield "mrr"
+
+        yield from super().specifiers
+
 
 class NormalSubvectorReduceRM(NormalBaseRM):
     """normal: subvector reduce mode, SUBVL>1"""
@@ -1623,6 +1630,9 @@ class CROpSimpleRM(CROpBaseRM):
             yield f"dz"
         if self.sz:
             yield f"sz"
+        if self.RG:
+            yield "mrr"
+
         yield from super().specifiers
 
 
@@ -1636,6 +1646,9 @@ class CROpScalarReduceRM(CROpBaseRM):
     def specifiers(self):
         if self.sz:
             yield f"sz"
+        if self.RG:
+            yield "mrr"
+
         yield from super().specifiers
 
 
@@ -1654,6 +1667,8 @@ class CROpSubvectorReduceRM(CROpBaseRM):
             yield f"zz"
         if self.SVM:
             yield "svm"
+        if self.RG:
+            yield "mrr"
 
         yield from super().specifiers
 
@@ -1670,6 +1685,9 @@ class CROpReservedRM(CROpBaseRM):
     def specifiers(self):
         if self.zz:
             yield f"zz"
+        if self.RG:
+            yield "mrr"
+
         yield from super().specifiers
 
 
