@@ -1773,13 +1773,13 @@ class RM(BaseRM):
             # ironically/coincidentally this table is identical to NORMAL
             # mode except reserved in place of smr
             table = (
-                (0b000000, 0b111000, "simple"), # simple     (no Rc)
-                (0b001000, 0b111000, "reserved"), # rsvd     (no Rc)
-                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
-                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
-                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
-                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+                (0b000000, 0b111000, "simple"),   # simple     (no Rc)
+                (0b001000, 0b111000, "reserved"), # rsvd       (no Rc)
+                (0b010000, 0b110001, "ffrc0"),    # ffirst,     Rc=0
+                (0b010001, 0b110001, "ffrc1"),    # ffirst,     Rc=1
+                (0b100000, 0b110000, "sat"),      # saturation (no Rc)
+                (0b110000, 0b110001, "prrc0"),    # predicate,  Rc=0
+                (0b110001, 0b110001, "prrc1"),    # predicate,  Rc=1
             )
             rm = rm.ldst_imm
             search = ((int(rm.mode) << 1) | Rc)
