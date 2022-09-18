@@ -1307,6 +1307,16 @@ class FFPRRc0BaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
+class SatBaseRM(BaseRM):
+    def specifiers(self, record):
+        if self.N:
+            yield "sats"
+        else:
+            yield "satu"
+
+        yield from super().specifiers(record=record)
+
+
 class NormalLDSTBaseRM(BaseRM):
     def specifiers(self, record):
         widths = {
@@ -1416,7 +1426,7 @@ class NormalFFRc0RM(FFPRRc0BaseRM, NormalBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class NormalSatRM(NormalBaseRM):
+class NormalSatRM(SatBaseRM, NormalBaseRM):
     """normal: sat mode: N=0/1 u/s, SUBVL=1"""
     N: BaseRM.mode[2]
     dz: BaseRM.mode[3]
@@ -1427,10 +1437,6 @@ class NormalSatRM(NormalBaseRM):
             yield f"dz"
         if self.sz:
             yield f"sz"
-        if self.N:
-            yield "sats"
-        else:
-            yield "satu"
 
         yield from super().specifiers(record=record)
 
@@ -1510,7 +1516,7 @@ class LDSTImmFFRc0RM(FFPRRc0BaseRM, LDSTImmBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class LDSTImmSatRM(LDSTImmBaseRM):
+class LDSTImmSatRM(SatBaseRM, LDSTImmBaseRM):
     """ld/st immediate: sat mode: N=0/1 u/s"""
     N: BaseRM.mode[2]
     zz: BaseRM.mode[3]
@@ -1521,10 +1527,6 @@ class LDSTImmSatRM(LDSTImmBaseRM):
     def specifiers(self, record):
         if self.zz:
             yield f"zz"
-        if self.N:
-            yield "sats"
-        else:
-            yield "satu"
 
         yield from super().specifiers(record=record)
 
@@ -1593,7 +1595,7 @@ class LDSTIdxStrideRM(LDSTIdxBaseRM):
         yield from super().specifiers(record=record)
 
 
-class LDSTIdxSatRM(LDSTIdxBaseRM):
+class LDSTIdxSatRM(SatBaseRM, LDSTIdxBaseRM):
     """ld/st index: sat mode: N=0/1 u/s"""
     N: BaseRM.mode[2]
     dz: BaseRM.mode[3]
@@ -1604,10 +1606,6 @@ class LDSTIdxSatRM(LDSTIdxBaseRM):
             yield f"dz"
         if self.sz:
             yield f"sz"
-        if self.N:
-            yield "sats"
-        else:
-            yield "satu"
 
         yield from super().specifiers(record=record)
 
