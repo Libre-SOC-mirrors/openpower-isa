@@ -1298,6 +1298,10 @@ class BaseRM(_Mapping):
                 yield f"{indent}{', '.join(map(str, members))}"
 
 
+# ********************
+# Normal mode
+# https://libre-soc.org/openpower/sv/normal/
+
 class NormalLDSTBaseRM(BaseRM):
     def specifiers(self, record):
         widths = {
@@ -1461,6 +1465,10 @@ class NormalRM(NormalBaseRM):
     prrc0: NormalPredResultRc0RM
 
 
+# ********************
+# LD/ST Immediate mode
+# https://libre-soc.org/openpower/sv/ldst/
+
 class LDSTImmBaseRM(NormalLDSTBaseRM):
     pass
 
@@ -1551,6 +1559,10 @@ class LDSTImmRM(LDSTImmBaseRM):
     prrc0: LDSTImmPredResultRc0RM
 
 
+# ********************
+# LD/ST Indexed mode
+# https://libre-soc.org/openpower/sv/ldst/
+
 class LDSTIdxBaseRM(NormalLDSTBaseRM):
     pass
 
@@ -1635,6 +1647,11 @@ class LDSTIdxRM(LDSTIdxBaseRM):
     prrc1: LDSTIdxPredResultRc1RM
     prrc0: LDSTIdxPredResultRc0RM
 
+
+
+# ********************
+# CR ops mode
+# https://libre-soc.org/openpower/sv/cr_ops/
 
 class CROpBaseRM(BaseRM):
     pass
@@ -1728,6 +1745,11 @@ class CROpRM(CROpBaseRM):
     reserved: CROpReservedRM
     ff3: CROpFailFirst3RM
     ff5: CROpFailFirst5RM
+
+
+# ********************
+# Branches mode
+# https://libre-soc.org/openpower/sv/branches/
 
 
 class BranchBaseRM(BaseRM):
