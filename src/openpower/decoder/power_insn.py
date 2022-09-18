@@ -1754,7 +1754,7 @@ class RM(BaseRM):
         table = None
         if record.svp64.mode is _SVMode.NORMAL:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
-            #         mode   Rc   mask Rc  action(getattr)
+            #    mode  Rc  mask  Rc  member
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
                 (0b001000, 0b111000, "smr"),    # mapreduce  (no Rc)
@@ -1769,7 +1769,7 @@ class RM(BaseRM):
 
         elif record.svp64.mode is _SVMode.LDST_IMM:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
-            #         mode   Rc   mask Rc  action(getattr)
+            #    mode  Rc  mask  Rc  member
             # ironically/coincidentally this table is identical to NORMAL
             # mode except reserved in place of smr
             table = (
@@ -1786,7 +1786,7 @@ class RM(BaseRM):
 
         elif record.svp64.mode is _SVMode.LDST_IDX:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
-            #         mode   Rc   mask Rc  action(getattr)
+            #    mode  Rc  mask  Rc  member
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
                 (0b010000, 0b110000, "stride"), # strided,   (no Rc)
@@ -1799,7 +1799,7 @@ class RM(BaseRM):
 
         elif record.svp64.mode is _SVMode.CROP:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
-            #         mode   3b   mask 3b  action(getattr)
+            #    mode  3b  mask  3b  member
             table = (
                 (0b000000, 0b111000, "simple"), # simple
                 (0b001000, 0b111000, "smr"),    # mapreduce
