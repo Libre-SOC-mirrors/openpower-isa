@@ -1415,20 +1415,20 @@ class NormalLDSTBaseRM(BaseRM):
             sw = predicates.get((mmode, smask))
             dw = predicates.get((mmode, dmask))
             if sw:
-                yield f"sm={sw}"
+                yield "sm="+sw
             if dw:
-                yield f"dm={dw}"
+                yield "dm="+dw
 
         # elwidths: use "w=" if same otherwise dw/sw
-        dw = int(self.elwidth)
-        sw = int(self.ewsrc)
-        if all((dw, sw)) and (dw == sw):
-            yield f"w={widths[dw]}"
+        dws = widths.get(int(self.elwidth))
+        sws = widths.get(int(self.ewsrc))
+        if dws == sws and dws:
+            yield "w="+dws
         else:
-            if dw != 0b00:
-                yield f"dw={widths[dw]}"
-            if sw != 0b00:
-                yield f"sw={widths[sw]}"
+            if dws:
+                yield "dw="+dws
+            if sws:
+                yield "sw="+sws
 
         yield from super().specifiers(record=record)
 
