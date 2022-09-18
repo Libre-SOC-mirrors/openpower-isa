@@ -645,9 +645,7 @@ def decode_bo(encoding):
     }
     assert encoding in pmap, \
         "encoding %s for BO Mode not recognised" % encoding
-    # barse-ackwards MSB0/LSB0. sigh
-    mapped = pmap[encoding]
-    return int(bin(mapped)[:1:-1], 2) # to 0bNNN, reverse-and-strip b0, base2
+    return pmap[encoding]
 
 
 # partial-decode fail-first mode
