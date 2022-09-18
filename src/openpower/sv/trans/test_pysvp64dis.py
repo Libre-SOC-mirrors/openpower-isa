@@ -221,6 +221,14 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.add/pr=~RC1 *3,*7,*11",
                         ]
 
+    def test_14_rc1_ff_pr(self):
+        expected = [
+                    "sv.add./ff=eq *3,*7,*11",
+                    "sv.add./ff=ns *3,*7,*11",
+                    "sv.add./pr=eq *3,*7,*11",
+                    "sv.add./pr=ns *3,*7,*11",
+                        ]
+
 if __name__ == "__main__":
     unittest.main()
 
