@@ -63,7 +63,7 @@ class Reference:
         else:
             raise ValueError(other)
 
-        return op(int(lhs), int(rhs))
+        return op(lhs, rhs)
 
     def __lt__(self, other):
         return self.__binary_operator(_selectltu, other)
