@@ -1790,19 +1790,21 @@ class RM(BaseRM):
                     rm = getattr(rm, action)
                     break
 
-        elif record.svp64.mode is _SVMode.LDST_IMM:
+        elif record.svp64.mode is _SVMode.LDST_IDX:
+            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
+            #         mode   Rc   mask Rc  action(getattr)
+            table = [(0b000000, 0b111000, "simple"), # simple    (no Rc)
+                     (0b010000, 0b110000, "stride"), # strided,  (no Rc)
+                     (0b100000, 0b110000, "sat"),    # saturation(no Rc)
+                     (0b110000, 0b110001, "prrc0"),  # predicate, Rc=0
+                     (0b110001, 0b110001, "prrc1"),  # predicate, Rc=1
+                    ]
             rm = rm.ldst_idx
-            if rm.mode[0:2] == 0b00:
-                rm = rm.simple
-            elif rm.mode[0:2] == 0b01:
-                rm = rm.stride
-            elif rm.mode[0:2] == 0b10:
-                rm = rm.sat
-            elif rm.mode[0:2] == 0b11:
-                if Rc:
-                    rm = rm.prrc1
-                else:
-                    rm = rm.prrc0
+            search = (int(rm.mode) << 1) | Rc
+            for (val, mask, action) in table:
+                if (val&search) == (mask&search):
+                    rm = getattr(rm, action)
+                    break
 
         elif record.svp64.mode is _SVMode.CROP:
             rm = rm.cr_op
