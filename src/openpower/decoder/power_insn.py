@@ -1658,7 +1658,6 @@ class CROpBaseRM(BaseRM):
 class CROpSimpleRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: simple mode"""
     RG: BaseRM[20]
-    sz: BaseRM[21]
     dz: BaseRM[22]
     sz: BaseRM[23]
 
@@ -1675,8 +1674,9 @@ class CROpFF3RM(ZZBaseRM, CROpBaseRM):
     VLI: BaseRM[20]
     inv: BaseRM[21]
     CR: BaseRM[22, 23]
-    sz: BaseRM[21]
-    dz: BaseRM[22]
+    zz: BaseRM[6]
+    sz: BaseRM[6]
+    dz: BaseRM[6]
 
     def specifiers(self, record):
         yield from super().specifiers(record=record, mode="ff")
