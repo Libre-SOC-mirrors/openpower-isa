@@ -1303,7 +1303,7 @@ class FFPRRc1BaseRM(BaseRM):
         inv = _SelectableInt(value=int(self.inv), bits=1)
         CR = _SelectableInt(value=int(self.CR), bits=2)
         mask = int(_selectconcat(inv, CR))
-        predicate = {
+        predicate = { # exactly same table as in NormalLDSTBaseRM
             0b000: "lt",
             0b001: "ge",
             0b010: "gt",
@@ -1389,7 +1389,7 @@ class NormalLDSTBaseRM(BaseRM):
             (0, 0b101): "~r10",
             (0, 0b110): "r30",
             (0, 0b111): "~r30",
-            # CRs
+            # CRs - exactly the same table as in FFPRRc1BaseRM
             (1, 0b000): "lt",
             (1, 0b001): "ge",
             (1, 0b010): "gt",
