@@ -1375,7 +1375,7 @@ class NormalSimpleRM(NormalBaseRM):
         yield from super().specifiers(record=record)
 
 
-class NormalScalarReduceRM(NormalBaseRM):
+class NormalSMRRM(NormalBaseRM):
     """normal: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM.mode[4]
 
@@ -1391,13 +1391,13 @@ class NormalReservedRM(NormalBaseRM):
     pass
 
 
-class NormalFailFirstRc1RM(NormalBaseRM):
+class NormalFFRc1RM(NormalBaseRM):
     """normal: Rc=1: ffirst CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
 
 
-class NormalFailFirstRc0RM(NormalBaseRM):
+class NormalFFRc0RM(NormalBaseRM):
     """normal: Rc=0: ffirst z/nonz"""
     inv: BaseRM.mode[2]
     VLi: BaseRM.mode[3]
@@ -1411,7 +1411,7 @@ class NormalFailFirstRc0RM(NormalBaseRM):
         yield from super().specifiers(record=record)
 
 
-class NormalSaturationRM(NormalBaseRM):
+class NormalSatRM(NormalBaseRM):
     """normal: sat mode: N=0/1 u/s, SUBVL=1"""
     N: BaseRM.mode[2]
     dz: BaseRM.mode[3]
@@ -1430,13 +1430,13 @@ class NormalSaturationRM(NormalBaseRM):
         yield from super().specifiers(record=record)
 
 
-class NormalPredResultRc1RM(NormalBaseRM):
+class NormalPRRc1RM(NormalBaseRM):
     """normal: Rc=1: pred-result CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
 
 
-class NormalPredResultRc0RM(NormalBaseRM):
+class NormalPRRc0RM(NormalBaseRM):
     """normal: Rc=0: pred-result z/nonz"""
     inv: BaseRM.mode[2]
     zz: BaseRM.mode[3]
@@ -1456,13 +1456,13 @@ class NormalPredResultRc0RM(NormalBaseRM):
 
 class NormalRM(NormalBaseRM):
     simple: NormalSimpleRM
-    smr: NormalScalarReduceRM
+    smr: NormalSMRRM
     reserved: NormalReservedRM
-    ffrc1: NormalFailFirstRc1RM
-    ffrc0: NormalFailFirstRc0RM
-    sat: NormalSaturationRM
-    prrc1: NormalPredResultRc1RM
-    prrc0: NormalPredResultRc0RM
+    ffrc1: NormalFFRc1RM
+    ffrc0: NormalFFRc0RM
+    sat: NormalSatRM
+    prrc1: NormalPRRc1RM
+    prrc0: NormalPRRc0RM
 
 
 # ********************
@@ -1492,13 +1492,13 @@ class LDSTImmReservedRM(LDSTImmBaseRM):
     pass
 
 
-class LDSTImmFailFirstRc1RM(LDSTImmBaseRM):
+class LDSTImmFFRc1RM(LDSTImmBaseRM):
     """ld/st immediate: Rc=1: ffirst CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
 
 
-class LDSTImmFailFirstRc0RM(LDSTImmBaseRM):
+class LDSTImmFFRc0RM(LDSTImmBaseRM):
     """ld/st immediate: Rc=0: ffirst z/nonz"""
     inv: BaseRM.mode[2]
     els: BaseRM.mode[3]
@@ -1511,7 +1511,7 @@ class LDSTImmFailFirstRc0RM(LDSTImmBaseRM):
 
         yield from super().specifiers(record=record)
 
-class LDSTImmSaturationRM(LDSTImmBaseRM):
+class LDSTImmSatRM(LDSTImmBaseRM):
     """ld/st immediate: sat mode: N=0/1 u/s"""
     N: BaseRM.mode[2]
     zz: BaseRM.mode[3]
@@ -1530,13 +1530,13 @@ class LDSTImmSaturationRM(LDSTImmBaseRM):
         yield from super().specifiers(record=record)
 
 
-class LDSTImmPredResultRc1RM(LDSTImmBaseRM):
+class LDSTImmPRRc1RM(LDSTImmBaseRM):
     """ld/st immediate: Rc=1: pred-result CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
 
 
-class LDSTImmPredResultRc0RM(LDSTImmBaseRM):
+class LDSTImmPRRc0RM(LDSTImmBaseRM):
     """ld/st immediate: Rc=0: pred-result z/nonz"""
     inv: BaseRM.mode[2]
     els: BaseRM.mode[3]
@@ -1552,11 +1552,11 @@ class LDSTImmPredResultRc0RM(LDSTImmBaseRM):
 class LDSTImmRM(LDSTImmBaseRM):
     simple: LDSTImmSimpleRM
     reserved: LDSTImmReservedRM
-    ffrc1: LDSTImmFailFirstRc1RM
-    ffrc0: LDSTImmFailFirstRc0RM
-    sat: LDSTImmSaturationRM
-    prrc1: LDSTImmPredResultRc1RM
-    prrc0: LDSTImmPredResultRc0RM
+    ffrc1: LDSTImmFFRc1RM
+    ffrc0: LDSTImmFFRc0RM
+    sat: LDSTImmSatRM
+    prrc1: LDSTImmPRRc1RM
+    prrc0: LDSTImmPRRc0RM
 
 
 # ********************
@@ -1597,7 +1597,7 @@ class LDSTIdxStrideRM(LDSTIdxBaseRM):
         yield from super().specifiers(record=record)
 
 
-class LDSTIdxSaturationRM(LDSTIdxBaseRM):
+class LDSTIdxSatRM(LDSTIdxBaseRM):
     """ld/st index: sat mode: N=0/1 u/s"""
     N: BaseRM.mode[2]
     dz: BaseRM.mode[3]
@@ -1616,13 +1616,13 @@ class LDSTIdxSaturationRM(LDSTIdxBaseRM):
         yield from super().specifiers(record=record)
 
 
-class LDSTIdxPredResultRc1RM(LDSTIdxBaseRM):
+class LDSTIdxPRRc1RM(LDSTIdxBaseRM):
     """ld/st index: Rc=1: pred-result CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
 
 
-class LDSTIdxPredResultRc0RM(LDSTIdxBaseRM):
+class LDSTIdxPRRc0RM(LDSTIdxBaseRM):
     """ld/st index: Rc=0: pred-result z/nonz"""
     inv: BaseRM.mode[2]
     zz: BaseRM.mode[3]
@@ -1643,9 +1643,9 @@ class LDSTIdxPredResultRc0RM(LDSTIdxBaseRM):
 class LDSTIdxRM(LDSTIdxBaseRM):
     simple: LDSTIdxSimpleRM
     stride: LDSTIdxStrideRM
-    sat: LDSTIdxSaturationRM
-    prrc1: LDSTIdxPredResultRc1RM
-    prrc0: LDSTIdxPredResultRc0RM
+    sat: LDSTIdxSatRM
+    prrc1: LDSTIdxPRRc1RM
+    prrc0: LDSTIdxPRRc0RM
 
 
 
@@ -1675,7 +1675,7 @@ class CROpSimpleRM(CROpBaseRM):
         yield from super().specifiers(record=record)
 
 
-class CROpScalarReduceRM(CROpBaseRM):
+class CROpSMRRM(CROpBaseRM):
     """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
     SNZ: BaseRM[7]
     RG: BaseRM[20]
@@ -1741,7 +1741,7 @@ class CROpFailFirst5RM(CROpBaseRM):
 
 class CROpRM(CROpBaseRM):
     simple: CROpSimpleRM
-    smr: CROpScalarReduceRM
+    smr: CROpSMRRM
     reserved: CROpReservedRM
     ff3: CROpFailFirst3RM
     ff5: CROpFailFirst5RM
