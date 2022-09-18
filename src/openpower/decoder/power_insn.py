@@ -1755,44 +1755,47 @@ class RM(BaseRM):
         if record.svp64.mode is _SVMode.NORMAL:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
             #         mode   Rc   mask Rc  action(getattr)
-            table = [(0b000000, 0b111000, "simple"), # simple    (no Rc)
-                     (0b001000, 0b111000, "smr"),    # mapreduce (no Rc)
-                     (0b010000, 0b110001, "ffrc0"),  # ffirst,    Rc=0
-                     (0b010001, 0b110001, "ffrc1"),  # ffirst,    Rc=1
-                     (0b100000, 0b110000, "sat"),    # saturation(no Rc)
-                     (0b110000, 0b110001, "prrc0"),  # predicate, Rc=0
-                     (0b110001, 0b110001, "prrc1"),  # predicate, Rc=1
-                    ]
+            table = (
+                (0b000000, 0b111000, "simple"), # simple     (no Rc)
+                (0b001000, 0b111000, "smr"),    # mapreduce  (no Rc)
+                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
+                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
+                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
+                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+            )
             rm = rm.normal
-            search = (int(rm.mode) << 1) | Rc
+            search = ((int(rm.mode) << 1) | Rc)
 
         elif record.svp64.mode is _SVMode.LDST_IMM:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
             #         mode   Rc   mask Rc  action(getattr)
             # ironically/coincidentally this table is identical to NORMAL
             # mode except reserved in place of smr
-            table = [(0b000000, 0b111000, "simple"), # simple    (no Rc)
-                     (0b001000, 0b111000, "reserved"), # rsvd (no Rc)
-                     (0b010000, 0b110001, "ffrc0"),  # ffirst,    Rc=0
-                     (0b010001, 0b110001, "ffrc1"),  # ffirst,    Rc=1
-                     (0b100000, 0b110000, "sat"),    # saturation(no Rc)
-                     (0b110000, 0b110001, "prrc0"),  # predicate, Rc=0
-                     (0b110001, 0b110001, "prrc1"),  # predicate, Rc=1
-                    ]
+            table = (
+                (0b000000, 0b111000, "simple"), # simple     (no Rc)
+                (0b001000, 0b111000, "reserved"), # rsvd     (no Rc)
+                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
+                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
+                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
+                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+            )
             rm = rm.ldst_imm
-            search = (int(rm.mode) << 1) | Rc
+            search = ((int(rm.mode) << 1) | Rc)
 
         elif record.svp64.mode is _SVMode.LDST_IDX:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
             #         mode   Rc   mask Rc  action(getattr)
-            table = [(0b000000, 0b111000, "simple"), # simple    (no Rc)
-                     (0b010000, 0b110000, "stride"), # strided,  (no Rc)
-                     (0b100000, 0b110000, "sat"),    # saturation(no Rc)
-                     (0b110000, 0b110001, "prrc0"),  # predicate, Rc=0
-                     (0b110001, 0b110001, "prrc1"),  # predicate, Rc=1
-                    ]
+            table = (
+                (0b000000, 0b111000, "simple"), # simple     (no Rc)
+                (0b010000, 0b110000, "stride"), # strided,   (no Rc)
+                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
+                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+            )
             rm = rm.ldst_idx
-            search = (int(rm.mode) << 1) | Rc
+            search = ((int(rm.mode) << 1) | Rc)
 
         elif record.svp64.mode is _SVMode.CROP:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
@@ -1822,9 +1825,9 @@ class RM(BaseRM):
 
         # look up in table
         if table is not None:
-            for (val, mask, action) in table:
-                if (val&search) == (mask&search):
-                    rm = getattr(rm, action)
+            for (value, mask, member) in table:
+                if ((value & search) == (mask & search)):
+                    rm = getattr(rm, member)
                     break
 
         elif record.svp64.mode is _SVMode.BRANCH:
