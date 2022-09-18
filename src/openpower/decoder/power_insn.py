@@ -1927,19 +1927,18 @@ class SVP64Instruction(PrefixedInstruction):
             Rc = bool(record.mdwn.operands["Rc"].value)
         rm = self.prefix.rm.select(record=record, Rc=Rc)
 
-        specifiers = tuple(rm.specifiers(record=record))
-        if specifiers:
-            specifiers = "/".join(specifiers)
-            specifiers = f"/{specifiers}"
-        else:
-            specifiers = ""
+        # convert specifiers to /x/y/z
+        specifiers = list(rm.specifiers(record=record))
+        if specifiers: # if any add one extra to get the extra "/"
+            specifiers = ['']+specifiers
+        specifiers = "/".join(specifiers)
 
+        # convert operands to " ,x,y,z"
         operands = tuple(map(_operator.itemgetter(1),
             self.dynamic_operands(db=db, verbosity=verbosity)))
-        if operands:
-            operands = f" {','.join(operands)}"
-        else:
-            operands = ""
+        operands = ','.join(operands)
+        if operands: # if any separate with a space
+            operands = " " + operands
 
         yield f"{blob_prefix}{name}{specifiers}{operands}"
         if blob_suffix:
