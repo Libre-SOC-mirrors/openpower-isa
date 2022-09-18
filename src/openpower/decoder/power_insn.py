@@ -1751,6 +1751,7 @@ class RM(BaseRM):
     def select(self, record, Rc):
         rm = self
 
+        table = None
         if record.svp64.mode is _SVMode.NORMAL:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
             #         mode   Rc   mask Rc  action(getattr)
@@ -1762,13 +1763,8 @@ class RM(BaseRM):
                      (0b110000, 0b110001, "prrc0"),  # predicate, Rc=0
                      (0b110001, 0b110001, "prrc1"),  # predicate, Rc=1
                     ]
-
             rm = rm.normal
             search = (int(rm.mode) << 1) | Rc
-            for (val, mask, action) in table:
-                if (val&search) == (mask&search):
-                    rm = getattr(rm, action)
-                    break
 
         elif record.svp64.mode is _SVMode.LDST_IMM:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
@@ -1785,10 +1781,6 @@ class RM(BaseRM):
                     ]
             rm = rm.ldst_imm
             search = (int(rm.mode) << 1) | Rc
-            for (val, mask, action) in table:
-                if (val&search) == (mask&search):
-                    rm = getattr(rm, action)
-                    break
 
         elif record.svp64.mode is _SVMode.LDST_IDX:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
@@ -1801,6 +1793,9 @@ class RM(BaseRM):
                     ]
             rm = rm.ldst_idx
             search = (int(rm.mode) << 1) | Rc
+
+        # look up in table
+        if table is not None:
             for (val, mask, action) in table:
                 if (val&search) == (mask&search):
                     rm = getattr(rm, action)
