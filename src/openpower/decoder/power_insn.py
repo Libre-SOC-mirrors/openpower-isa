@@ -1959,7 +1959,7 @@ class SVP64Instruction(PrefixedInstruction):
         operands = tuple(map(_operator.itemgetter(1),
             self.dynamic_operands(db=db, verbosity=verbosity)))
         operands = ','.join(operands)
-        if operands: # if any separate with a space
+        if len(operands) > 0: # if any separate with a space
             operands = " " + operands
 
         yield f"{blob_prefix}{name}{specifiers}{operands}"
