@@ -1303,14 +1303,18 @@ class BaseRM(_Mapping):
 class NormalLDSTBaseRM(BaseRM):
     @property
     def specifiers(self):
+        width = {
+            0b11: "8",
+            0b10: "16",
+            0b01: "32",
+        }
+
         ew = int(self.elwidth)
         if ew != 0b00:
-            ew = {
-                0b11: "8",
-                0b10: "16",
-                0b01: "32",
-            }[ew]
-            yield f"ew={ew}"
+            yield f"ew={width[ew]}"
+        sw = int(self.ewsrc)
+        if sw != 0b00:
+            yield f"sw={width[sw]}"
 
         yield from super().specifiers
 
