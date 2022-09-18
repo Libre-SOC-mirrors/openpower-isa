@@ -1309,12 +1309,15 @@ class NormalLDSTBaseRM(BaseRM):
             0b01: "32",
         }
 
-        ew = int(self.elwidth)
-        if ew != 0b00:
-            yield f"ew={width[ew]}"
+        dw = int(self.elwidth)
         sw = int(self.ewsrc)
-        if sw != 0b00:
-            yield f"sw={width[sw]}"
+        if all((dw, sw)) and dw == sw:
+            yield f"w={width[dw]}"
+        else:
+            if dw != 0b00:
+                yield f"dw={width[dw]}"
+            if sw != 0b00:
+                yield f"sw={width[sw]}"
 
         yield from super().specifiers
 
