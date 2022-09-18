@@ -1643,7 +1643,7 @@ class CROpSMRRM(DZBaseRM, SZBaseRM, CROpBaseRM):
         yield from super().specifiers(record=record)
 
 
-class CROpFailFirst3RM(ZZBaseRM, CROpBaseRM):
+class CROpFF3RM(ZZBaseRM, CROpBaseRM):
     """cr_op: ffirst 3-bit mode"""
     VLI: BaseRM[20]
     inv: BaseRM[21]
@@ -1652,7 +1652,7 @@ class CROpFailFirst3RM(ZZBaseRM, CROpBaseRM):
     dz: BaseRM[22]
 
 
-class CROpFailFirst5RM(DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpFF5RM(DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
     VLI: BaseRM[20]
     inv: BaseRM[21]
@@ -1666,8 +1666,8 @@ class CROpFailFirst5RM(DZBaseRM, SZBaseRM, CROpBaseRM):
 class CROpRM(CROpBaseRM):
     simple: CROpSimpleRM
     smr: CROpSMRRM
-    ff3: CROpFailFirst3RM
-    ff5: CROpFailFirst5RM
+    ff3: CROpFF3RM
+    ff5: CROpFF5RM
 
 
 # ********************
