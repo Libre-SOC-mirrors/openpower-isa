@@ -1746,24 +1746,24 @@ class RM(BaseRM):
                     break
 
         elif record.svp64.mode is _SVMode.LDST_IMM:
+            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
+            #         mode   Rc   mask Rc  action(getattr)
+            # ironically/coincidentally this table is identical to NORMAL
+            # mode except reserved in place of smr
+            table = [(0b000000, 0b111000, "simple"), # simple    (no Rc)
+                     (0b001000, 0b111000, "reserved"), # rsvd (no Rc)
+                     (0b010000, 0b110001, "ffrc0"),  # ffirst,    Rc=0
+                     (0b010001, 0b110001, "ffrc1"),  # ffirst,    Rc=1
+                     (0b100000, 0b110000, "sat"),    # saturation(no Rc)
+                     (0b110000, 0b110001, "prrc0"),  # predicate, Rc=0
+                     (0b110001, 0b110001, "prrc1"),  # predicate, Rc=1
+                    ]
             rm = rm.ldst_imm
-            if rm.mode[0:2] == 0b00:
-                if rm.mode[2] == 0b0:
-                    rm = rm.simple
-                else:
-                    rm = rm.reserved
-            elif rm.mode[0:2] == 0b01:
-                if Rc:
-                    rm = rm.ffrc1
-                else:
-                    rm = rm.ffrc0
-            elif rm.mode[0:2] == 0b10:
-                rm = rm.sat
-            elif rm.mode[0:2] == 0b11:
-                if Rc:
-                    rm = rm.prrc1
-                else:
-                    rm = rm.prrc0
+            search = (int(rm.mode) << 1) | Rc
+            for (val, mask, action) in table:
+                if (val&search) == (mask&search):
+                    rm = getattr(rm, action)
+                    break
 
         elif record.svp64.mode is _SVMode.LDST_IMM:
             rm = rm.ldst_idx
