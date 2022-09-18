@@ -659,10 +659,10 @@ class RegisterOperand(DynamicOperand):
                 spec = _SelectableInt(value=spec.value, bits=bits)
                 if vector:
                     value = ((value << vector_shift) | (spec << spec_shift))
-                    span = (span + spec_span + ((spec_shift * ('{0}',))))
+                    span = (span + spec_span + ((spec_shift * ("{0}",))))
                 else:
                     value = ((spec << scalar_shift) | value)
-                    span = ((spec_shift * ('{0}',)) + spec_span + span)
+                    span = ((spec_shift * ("{0}",)) + spec_span + span)
 
             (value, span) = self.sv_spec_leave(value=value, span=span,
                 origin_value=origin_value, origin_span=origin_span)
@@ -747,11 +747,11 @@ class TargetAddrOperand(RegisterOperand):
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
-            span = tuple(map(str, span))
+            span = (tuple(map(str, span)) + ("{0}", "{0}"))
             yield f"{indent}{self.name} = EXTS({field} || 0b00))"
             yield f"{indent}{indent}{field}"
             yield f"{indent}{indent}{indent}{int(value):0{value.bits}b}00"
-            yield f"{indent}{indent}{indent}{', '.join(span + ('{0}', '{0}'))}"
+            yield f"{indent}{indent}{indent}{', '.join(span)}"
         else:
             yield hex(_selectconcat(value,
                 _SelectableInt(value=0b00, bits=2)).to_signed_int())
@@ -1089,9 +1089,11 @@ class Instruction(_Mapping):
 
         operands = ""
         if dynamic_operands:
-            operands += f" {','.join(dynamic_operands)}"
+            operands += " "
+            operands += ",".join(dynamic_operands)
         if static_operands:
-            operands += f" ({' '.join(static_operands)})"
+            operands += " "
+            operands += " ".join(static_operands)
 
         return f"{prefix}{record.name}{operands}"
 
@@ -1163,7 +1165,8 @@ class WordInstruction(Instruction):
         operands = tuple(map(_operator.itemgetter(1),
             self.dynamic_operands(db=db, verbosity=verbosity)))
         if operands:
-            yield f"{blob}{record.name} {','.join(operands)}"
+            operands = ",".join(operands)
+            yield f"{blob}{record.name} {operands}"
         else:
             yield f"{blob}{record.name}"
 
@@ -1401,35 +1404,39 @@ class NormalLDSTBaseRM(BaseRM):
         }
 
         # predication - single and twin.  use "m=" if same otherwise sm/dm
-        sw = dw = predicates.get((int(self.mmode), int(self.mask)))
+        mmode = int(self.mmode)
+        mask = int(self.mask)
+        sw = dw = predicates.get((mmode, mask))
         if record.svp64.ptype is _SVPtype.P2:
-            sw = predicates.get((int(self.mmode), int(self.smask)))
+            smask = int(self.smask)
+            sw = predicates.get((mmode, smask))
         if sw == dw and dw:
-            yield "m="+dw
+            yield ("m=" + dw)
         else:
             if sw:
-                yield "sm="+sw
+                yield ("sm=" + sw)
             if dw:
-                yield "dm="+dw
+                yield ("dm=" + dw)
 
         # elwidths: use "w=" if same otherwise dw/sw
         dws = widths.get(int(self.elwidth))
         sws = widths.get(int(self.ewsrc))
         if dws == sws and dws:
-            yield "w="+dws
+            yield ("w=" + dws)
         else:
             if dws:
-                yield "dw="+dws
+                yield ("dw=" + dws)
             if sws:
-                yield "sw="+sws
+                yield ("sw=" + sws)
 
         yield from super().specifiers(record=record)
 
 
-# ********************
-# Normal mode
-# https://libre-soc.org/openpower/sv/normal/
 class NormalBaseRM(NormalLDSTBaseRM):
+    """
+    Normal mode
+    https://libre-soc.org/openpower/sv/normal/
+    """
     pass
 
 
@@ -1510,11 +1517,11 @@ class NormalRM(NormalBaseRM):
     prrc0: NormalPRRc0RM
 
 
-# ********************
-# LD/ST Immediate mode
-# https://libre-soc.org/openpower/sv/ldst/
-
 class LDSTImmBaseRM(NormalLDSTBaseRM):
+    """
+    LD/ST Immediate mode
+    https://libre-soc.org/openpower/sv/ldst/
+    """
     pass
 
 
@@ -1588,11 +1595,11 @@ class LDSTImmRM(LDSTImmBaseRM):
     prrc0: LDSTImmPRRc0RM
 
 
-# ********************
-# LD/ST Indexed mode
-# https://libre-soc.org/openpower/sv/ldst/
-
 class LDSTIdxBaseRM(NormalLDSTBaseRM):
+    """
+    LD/ST Indexed mode
+    https://libre-soc.org/openpower/sv/ldst/
+    """
     pass
 
 
@@ -1647,10 +1654,11 @@ class LDSTIdxRM(LDSTIdxBaseRM):
 
 
 
-# ********************
-# CR ops mode
-# https://libre-soc.org/openpower/sv/cr_ops/
 class CROpBaseRM(BaseRM):
+    """
+    CR ops mode
+    https://libre-soc.org/openpower/sv/cr_ops/
+    """
     SNZ: BaseRM[7]
 
 
@@ -1908,15 +1916,15 @@ class SVP64Instruction(PrefixedInstruction):
         # convert specifiers to /x/y/z
         specifiers = list(rm.specifiers(record=record))
         if specifiers: # if any add one extra to get the extra "/"
-            specifiers = ['']+specifiers
+            specifiers = ([""] + specifiers)
         specifiers = "/".join(specifiers)
 
         # convert operands to " ,x,y,z"
         operands = tuple(map(_operator.itemgetter(1),
             self.dynamic_operands(db=db, verbosity=verbosity)))
-        operands = ','.join(operands)
+        operands = ",".join(operands)
         if len(operands) > 0: # if any separate with a space
-            operands = " " + operands
+            operands = (" " + operands)
 
         yield f"{blob_prefix}{name}{specifiers}{operands}"
         if blob_suffix:
