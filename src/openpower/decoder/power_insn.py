@@ -1751,6 +1751,12 @@ class RM(BaseRM):
     def select(self, record, Rc):
         rm = self
 
+        # the idea behind these tables is that they are now literally
+        # in identical format to insndb.csv and minor_xx.csv and can
+        # be done precisely as that.  the only thing to watch out for
+        # is the insertion of Rc=1 as a "mask/value" bit and likewise
+        # regtype detection (3-bit BF/BFA, 5-bit BA/BB/BT) also inserted
+        # as the LSB.
         table = None
         if record.svp64.mode is _SVMode.NORMAL:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
