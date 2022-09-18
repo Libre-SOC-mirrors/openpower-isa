@@ -1800,12 +1800,13 @@ class RM(BaseRM):
 
         elif record.svp64.mode is _SVMode.BRANCH:
             # just mode 5-bit. could be reduced down to 2, oh well.
-            #         mode       mask   action(getattr)
-            table = [(0b00000, 0b11000, "simple"), # simple
-                     (0b01000, 0b11000, "vls"),    # VLset
-                     (0b10000, 0b11000, "ctr"),    # CTR mode
-                     (0b11000, 0b11000, "ctrvls"), # CTR+VLset mode
-                    ]
+            #    mode     mask     member
+            table = (
+                (0b00000, 0b11000, "simple"), # simple
+                (0b01000, 0b11000, "vls"),    # VLset
+                (0b10000, 0b11000, "ctr"),    # CTR mode
+                (0b11000, 0b11000, "ctrvls"), # CTR+VLset mode
+            )
             # slightly weird: doesn't have a 5-bit "mode" field like others
             search = int(rm[19:23])
 
