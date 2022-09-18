@@ -1800,11 +1800,12 @@ class RM(BaseRM):
         elif record.svp64.mode is _SVMode.CROP:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
             #         mode   3b   mask 3b  action(getattr)
-            table = [(0b000000, 0b111000, "simple"), # simple
-                     (0b001000, 0b111000, "smr"),    # mapreduce
-                     (0b100000, 0b100000, "ff5"),    # failfirst, 5-bit CR
-                     (0b100001, 0b100001, "ff3"),    # failfirst, 3-bit CR
-                    ]
+            table = (
+                (0b000000, 0b111000, "simple"), # simple
+                (0b001000, 0b111000, "smr"),    # mapreduce
+                (0b100000, 0b100000, "ff5"),    # failfirst, 5-bit CR
+                (0b100001, 0b100001, "ff3"),    # failfirst, 3-bit CR
+            )
             # determine CR type, 5-bit (BA/BB/BT) or 3-bit Field (BF/BFA)
             regtype = None
             for idx in range(0, 4):
@@ -1821,7 +1822,7 @@ class RM(BaseRM):
                 raise ValueError(record.svp64)
             # finally provide info for search
             rm = rm.cr_op
-            search = (int(rm.mode) << 1) | (regtype or 0)
+            search = ((int(rm.mode) << 1) | (regtype or 0))
 
         # look up in table
         if table is not None:
