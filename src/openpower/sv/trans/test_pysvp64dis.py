@@ -185,6 +185,12 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.add./ew=8 *3,*7,*11",
                     "sv.add./ew=16 *3,*7,*11",
                     "sv.add./ew=32 *3,*7,*11",
+                    "sv.add./sw=8 *3,*7,*11",
+                    "sv.add./sw=16 *3,*7,*11",
+                    "sv.add./sw=32 *3,*7,*11",
+                    "sv.add./ew=8/sw=16 *3,*7,*11",
+                    "sv.add./ew=16/sw=32 *3,*7,*11",
+                    "sv.add./ew=32/sw=8 *3,*7,*11",
                         ]
         self._do_tst(expected)
 
