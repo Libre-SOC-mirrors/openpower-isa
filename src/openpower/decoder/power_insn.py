@@ -1373,6 +1373,8 @@ class MRBaseRM(BaseRM):
 
 class NormalLDSTBaseRM(BaseRM):
     def specifiers(self, record):
+        # these go in inverse order. calculable as: "8<<(3-width)"
+        # TODO later: fp operations would be ew=fp16 ew=bf16 ew=fp32
         widths = {
             0b11: "8",
             0b10: "16",
@@ -1398,14 +1400,17 @@ class NormalLDSTBaseRM(BaseRM):
             (1, 0b111): "ns",
         }
 
+        # predication - single and twin.  use "m=" if same otherwise sm/dm
         mmode = int(self.mmode)
         mask = int(self.mask)
         if record.svp64.ptype is _SVPtype.P2:
             (smask, dmask) = (int(self.smask), mask)
         else:
             (smask, dmask) = (mask, mask)
-        if all((smask, dmask)) and (smask == dmask):
-            yield f"m={predicates[(mmode, smask)]}"
+        if smask == dmask:
+            m = predicates.get((mmode, smask))
+            if m:
+                yield "m="+m
         else:
             sw = predicates.get((mmode, smask))
             dw = predicates.get((mmode, dmask))
@@ -1414,6 +1419,7 @@ class NormalLDSTBaseRM(BaseRM):
             if dw:
                 yield f"dm={dw}"
 
+        # elwidths: use "w=" if same otherwise dw/sw
         dw = int(self.elwidth)
         sw = int(self.ewsrc)
         if all((dw, sw)) and (dw == sw):

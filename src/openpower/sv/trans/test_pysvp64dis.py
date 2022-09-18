@@ -231,6 +231,23 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_15_predicates(self):
+        expected = [
+                    "sv.add./m=r3 *3,*7,*11",
+                    "sv.add./m=1<<r3 *3,*7,*11",
+                    "sv.add./m=~r10 *3,*7,*11",
+                    "sv.add./m=so *3,*7,*11",
+                    "sv.add./m=ne *3,*7,*11",
+                    "sv.add./m=lt *3,*7,*11",
+                    "sv.add. *3,*7,*11",
+                    "sv.extsw/m=r30 3,7",
+                    "sv.extsw/sm=r30/dm=~r30 3,7",
+                    "sv.extsw/sm=gt/dm=eq 3,7",
+                    "sv.extsw/sm=~r3 3,7",
+                    "sv.extsw/dm=r30 3,7",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
