@@ -1794,34 +1794,38 @@ class RM(BaseRM):
             rm = rm.ldst_idx
             search = (int(rm.mode) << 1) | Rc
 
+        elif record.svp64.mode is _SVMode.CROP:
+            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
+            #         mode   3b   mask 3b  action(getattr)
+            table = [(0b000000, 0b111000, "simple"), # simple
+                     (0b001000, 0b111000, "smr"),    # mapreduce
+                     (0b100000, 0b100000, "ff5"),    # failfirst, 5-bit CR
+                     (0b100001, 0b100001, "ff3"),    # failfirst, 3-bit CR
+                    ]
+            # determine CR type, 5-bit (BA/BB/BT) or 3-bit Field (BF/BFA)
+            regtype = None
+            for idx in range(0, 4):
+                for entry in record.svp64.extra[idx]:
+                    if entry.regtype is _SVExtraRegType.DST:
+                        if regtype is not None:
+                            raise ValueError(record.svp64)
+                        regtype = _RegType(entry.reg)
+            if regtype is _RegType.CR_REG:
+                regtype = 0 # 5-bit
+            elif regtype is _RegType.CR_BIT:
+                regtype = 1 # 3-bit
+            else:
+                raise ValueError(record.svp64)
+            # finally provide info for search
+            rm = rm.cr_op
+            search = (int(rm.mode) << 1) | (regtype or 0)
+
         # look up in table
         if table is not None:
             for (val, mask, action) in table:
                 if (val&search) == (mask&search):
                     rm = getattr(rm, action)
                     break
-
-        elif record.svp64.mode is _SVMode.CROP:
-            rm = rm.cr_op
-            if rm[19] == 0b0:
-                if rm[21] == 0b0:
-                    rm = rm.simple
-                else:
-                    rm = rm.smr
-            else:
-                regtype = None
-                for idx in range(0, 4):
-                    for entry in record.svp64.extra[idx]:
-                        if entry.regtype is _SVExtraRegType.DST:
-                            if regtype is not None:
-                                raise ValueError(record.svp64)
-                            regtype = _RegType(entry.reg)
-                if regtype is _RegType.CR_REG:
-                    rm = rm.ff5
-                elif regtype is _RegType.CR_BIT:
-                    rm = rm.ff3
-                else:
-                    raise ValueError(record.svp64)
 
         elif record.svp64.mode is _SVMode.BRANCH:
             if rm[19] == 0b0:
