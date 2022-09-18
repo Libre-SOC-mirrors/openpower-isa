@@ -1352,18 +1352,6 @@ class NormalScalarReduceRM(NormalBaseRM):
         yield from super().specifiers
 
 
-class NormalSubvectorReduceRM(NormalBaseRM):
-    """normal: subvector reduce mode, SUBVL>1"""
-    SVM: BaseRM.mode[3]
-
-    @property
-    def specifiers(self):
-        if self.SVM:
-            yield "svm"
-
-        yield from super().specifiers
-
-
 class NormalReservedRM(NormalBaseRM):
     """normal: reserved"""
     pass
@@ -1443,7 +1431,6 @@ class NormalPredResultRc0RM(NormalBaseRM):
 class NormalRM(NormalBaseRM):
     simple: NormalSimpleRM
     smr: NormalScalarReduceRM
-    svmr: NormalSubvectorReduceRM
     reserved: NormalReservedRM
     ffrc1: NormalFailFirstRc1RM
     ffrc0: NormalFailFirstRc0RM
@@ -1652,27 +1639,6 @@ class CROpScalarReduceRM(CROpBaseRM):
         yield from super().specifiers
 
 
-class CROpSubvectorReduceRM(CROpBaseRM):
-    """cr_op: subvector reduce mode, SUBVL>1"""
-    zz: BaseRM[6]
-    SNZ: BaseRM[7]
-    RG: BaseRM[20]
-    SVM: BaseRM[22]
-    dz: BaseRM[6]
-    sz: BaseRM[6]
-
-    @property
-    def specifiers(self):
-        if self.zz:
-            yield f"zz"
-        if self.SVM:
-            yield "svm"
-        if self.RG:
-            yield "mrr"
-
-        yield from super().specifiers
-
-
 class CROpReservedRM(CROpBaseRM):
     """cr_op: reserved"""
     zz: BaseRM[6]
@@ -1728,7 +1694,6 @@ class CROpFailFirst5RM(CROpBaseRM):
 class CROpRM(CROpBaseRM):
     simple: CROpSimpleRM
     smr: CROpScalarReduceRM
-    svmr: CROpSubvectorReduceRM
     reserved: CROpReservedRM
     ff3: CROpFailFirst3RM
     ff5: CROpFailFirst5RM
@@ -1786,12 +1751,7 @@ class RM(BaseRM):
                 if rm.mode[2] == 0b0:
                     rm = rm.simple
                 else:
-                    if self.subvl == 1:
-                        rm = rm.smr
-                    elif self.subvl > 1:
-                        rm = rm.svmr
-                    else:
-                        rm = rm.reserved
+                    rm = rm.smr
             elif rm.mode[0:2] == 0b01:
                 if Rc:
                     rm = rm.ffrc1
@@ -1849,12 +1809,7 @@ class RM(BaseRM):
                 if rm[21] == 0b0:
                     rm = rm.simple
                 else:
-                    if self.subvl == 1:
-                        rm = rm.smr
-                    elif self.subvl > 1:
-                        rm = rm.svmr
-                    else:
-                        rm = rm.reserved
+                    rm = rm.smr
             else:
                 regtype = None
                 for idx in range(0, 4):
