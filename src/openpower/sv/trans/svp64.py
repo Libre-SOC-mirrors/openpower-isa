@@ -1113,6 +1113,7 @@ class SVP64Asm:
             # predicate zeroing
             elif encmode == 'zz': # TODO, a lot more checking on legality
                 dst_zero = 1      # NOT on cr_ops, that's RM[6]
+                src_zero = 1
             elif encmode == 'sz':
                 src_zero = 1
             elif encmode == 'dz':
