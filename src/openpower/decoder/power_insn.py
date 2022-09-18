@@ -1281,8 +1281,7 @@ class BaseRM(_Mapping):
     extra2: Extra2.remap(range(10, 19))
     extra3: Extra3.remap(range(10, 19))
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         subvl = int(self.subvl)
         if subvl > 0:
             yield {
@@ -1301,8 +1300,7 @@ class BaseRM(_Mapping):
 
 
 class NormalLDSTBaseRM(BaseRM):
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         width = {
             0b11: "8",
             0b10: "16",
@@ -1319,7 +1317,7 @@ class NormalLDSTBaseRM(BaseRM):
             if sw != 0b00:
                 yield f"sw={width[sw]}"
 
-        yield from super().specifiers
+        yield from super().specifiers(record=record)
 
 
 class NormalBaseRM(NormalLDSTBaseRM):
@@ -1331,25 +1329,23 @@ class NormalSimpleRM(NormalBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.dz:
             yield f"dz"
         if self.sz:
             yield f"sz"
-        yield from super().specifiers
+        yield from super().specifiers(record=record)
 
 
 class NormalScalarReduceRM(NormalBaseRM):
     """normal: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM.mode[4]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.RG:
             yield "mrr"
 
-        yield from super().specifiers
+        yield from super().specifiers(record=record)
 
 
 class NormalReservedRM(NormalBaseRM):
@@ -1376,8 +1372,7 @@ class NormalSaturationRM(NormalBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.dz:
             yield f"dz"
         if self.sz:
@@ -1386,7 +1381,8 @@ class NormalSaturationRM(NormalBaseRM):
             yield "sats"
         else:
             yield "satu"
-        yield from super().specifiers
+
+        yield from super().specifiers(record=record)
 
 
 class NormalPredResultRc1RM(NormalBaseRM):
@@ -1403,11 +1399,11 @@ class NormalPredResultRc0RM(NormalBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[3]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.zz:
             yield f"zz"
-        yield from super().specifiers
+
+        yield from super().specifiers(record=record)
 
 
 class NormalRM(NormalBaseRM):
@@ -1432,11 +1428,11 @@ class LDSTImmSimpleRM(LDSTImmBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[3]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.zz:
             yield f"zz"
-        yield from super().specifiers
+
+        yield from super().specifiers(record=record)
 
 
 class LDSTImmReservedRM(LDSTImmBaseRM):
@@ -1465,15 +1461,15 @@ class LDSTImmSaturationRM(LDSTImmBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[3]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.zz:
             yield f"zz"
         if self.N:
             yield "sats"
         else:
             yield "satu"
-        yield from super().specifiers
+
+        yield from super().specifiers(record=record)
 
 
 class LDSTImmPredResultRc1RM(LDSTImmBaseRM):
@@ -1509,13 +1505,13 @@ class LDSTIdxSimpleRM(LDSTIdxBaseRM):
     sz: BaseRM.mode[3]
     dz: BaseRM.mode[3]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.dz:
             yield f"dz"
         if self.sz:
             yield f"sz"
-        yield from super().specifiers
+
+        yield from super().specifiers(record=record)
 
 
 class LDSTIdxStrideRM(LDSTIdxBaseRM):
@@ -1524,13 +1520,13 @@ class LDSTIdxStrideRM(LDSTIdxBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.dz:
             yield f"dz"
         if self.sz:
             yield f"sz"
-        yield from super().specifiers
+
+        yield from super().specifiers(record=record)
 
 
 class LDSTIdxSaturationRM(LDSTIdxBaseRM):
@@ -1539,8 +1535,7 @@ class LDSTIdxSaturationRM(LDSTIdxBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.dz:
             yield f"dz"
         if self.sz:
@@ -1549,7 +1544,8 @@ class LDSTIdxSaturationRM(LDSTIdxBaseRM):
             yield "sats"
         else:
             yield "satu"
-        yield from super().specifiers
+
+        yield from super().specifiers(record=record)
 
 
 class LDSTIdxPredResultRc1RM(LDSTIdxBaseRM):
@@ -1566,11 +1562,11 @@ class LDSTIdxPredResultRc0RM(LDSTIdxBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[3]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.zz:
             yield f"zz"
-        yield from super().specifiers
+
+        yield from super().specifiers(record=record)
 
 
 class LDSTIdxRM(LDSTIdxBaseRM):
@@ -1592,8 +1588,7 @@ class CROpSimpleRM(CROpBaseRM):
     RG: BaseRM[20]
     dz: BaseRM[22]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.dz:
             yield f"dz"
         if self.sz:
@@ -1601,7 +1596,7 @@ class CROpSimpleRM(CROpBaseRM):
         if self.RG:
             yield "mrr"
 
-        yield from super().specifiers
+        yield from super().specifiers(record=record)
 
 
 class CROpScalarReduceRM(CROpBaseRM):
@@ -1610,14 +1605,13 @@ class CROpScalarReduceRM(CROpBaseRM):
     SNZ: BaseRM[7]
     RG: BaseRM[20]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.sz:
             yield f"sz"
         if self.RG:
             yield "mrr"
 
-        yield from super().specifiers
+        yield from super().specifiers(record=record)
 
 
 class CROpReservedRM(CROpBaseRM):
@@ -1628,14 +1622,13 @@ class CROpReservedRM(CROpBaseRM):
     dz: BaseRM[6]
     sz: BaseRM[6]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.zz:
             yield f"zz"
         if self.RG:
             yield "mrr"
 
-        yield from super().specifiers
+        yield from super().specifiers(record=record)
 
 
 class CROpFailFirst3RM(CROpBaseRM):
@@ -1648,11 +1641,10 @@ class CROpFailFirst3RM(CROpBaseRM):
     dz: BaseRM[6]
     sz: BaseRM[6]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.zz:
             yield f"zz"
-        yield from super().specifiers
+        yield from super().specifiers(record=record)
 
 
 class CROpFailFirst5RM(CROpBaseRM):
@@ -1663,13 +1655,12 @@ class CROpFailFirst5RM(CROpBaseRM):
     inv: BaseRM[21]
     dz: BaseRM[22]
 
-    @property
-    def specifiers(self):
+    def specifiers(self, record):
         if self.dz:
             yield f"dz"
         if self.sz:
             yield f"sz"
-        yield from super().specifiers
+        yield from super().specifiers(record=record)
 
 
 class CROpRM(CROpBaseRM):
@@ -1867,9 +1858,10 @@ class SVP64Instruction(PrefixedInstruction):
             Rc = bool(self.suffix[record.fields["Rc"]])
         rm = self.prefix.rm.select(record=record, Rc=Rc)
 
-        specifiers = tuple(rm.specifiers)
+        specifiers = tuple(rm.specifiers(record=record))
         if specifiers:
-            specifiers = f"/{'/'.join(specifiers)}"
+            specifiers = "/".join(specifiers)
+            specifiers = f"/{specifiers}"
         else:
             specifiers = ""
 
