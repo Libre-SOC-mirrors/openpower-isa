@@ -1401,19 +1401,12 @@ class NormalLDSTBaseRM(BaseRM):
         }
 
         # predication - single and twin.  use "m=" if same otherwise sm/dm
-        mmode = int(self.mmode)
-        mask = int(self.mask)
+        sw = dw = predicates.get((int(self.mmode), int(self.mask)))
         if record.svp64.ptype is _SVPtype.P2:
-            (smask, dmask) = (int(self.smask), mask)
+            sw = predicates.get((int(self.mmode), int(self.smask)))
+        if sw == dw and dw:
+            yield "m="+dw
         else:
-            (smask, dmask) = (mask, mask)
-        if smask == dmask:
-            m = predicates.get((mmode, smask))
-            if m:
-                yield "m="+m
-        else:
-            sw = predicates.get((mmode, smask))
-            dw = predicates.get((mmode, dmask))
             if sw:
                 yield "sm="+sw
             if dw:
