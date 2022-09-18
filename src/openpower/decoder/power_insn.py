@@ -1298,6 +1298,26 @@ class BaseRM(_Mapping):
                 yield f"{indent}{', '.join(map(str, members))}"
 
 
+class FFPRRc1BaseRM(BaseRM):
+    def specifiers(self, record, mode):
+        inv = _SelectableInt(value=int(self.inv), bits=1)
+        CR = _SelectableInt(value=int(self.CR), bits=2)
+        mask = int(_selectconcat(inv, CR))
+        predicate = {
+            0b000: "lt",
+            0b001: "ge",
+            0b010: "gt",
+            0b011: "le",
+            0b100: "eq",
+            0b101: "ne",
+            0b110: "so",
+            0b111: "ns",
+        }[mask]
+        yield f"{mode}={predicate}"
+
+        yield from super().specifiers(record=record)
+
+
 class FFPRRc0BaseRM(BaseRM):
     def specifiers(self, record, mode):
         if self.RC1:
@@ -1429,10 +1449,13 @@ class NormalReservedRM(NormalBaseRM):
     pass
 
 
-class NormalFFRc1RM(NormalBaseRM):
+class NormalFFRc1RM(FFPRRc1BaseRM, NormalBaseRM):
     """normal: Rc=1: ffirst CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
+
+    def specifiers(self, record):
+        yield from super().specifiers(record=record, mode="ff")
 
 
 class NormalFFRc0RM(FFPRRc0BaseRM, NormalBaseRM):
@@ -1452,10 +1475,13 @@ class NormalSatRM(SatBaseRM, DZBaseRM, SZBaseRM, NormalBaseRM):
     sz: BaseRM.mode[4]
 
 
-class NormalPRRc1RM(NormalBaseRM):
+class NormalPRRc1RM(FFPRRc1BaseRM, NormalBaseRM):
     """normal: Rc=1: pred-result CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
+
+    def specifiers(self, record):
+        yield from super().specifiers(record=record, mode="pr")
 
 
 class NormalPRRc0RM(FFPRRc0BaseRM, ZZBaseRM, NormalBaseRM):
@@ -1502,10 +1528,13 @@ class LDSTImmReservedRM(LDSTImmBaseRM):
     pass
 
 
-class LDSTImmFFRc1RM(LDSTImmBaseRM):
+class LDSTImmFFRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
     """ld/st immediate: Rc=1: ffirst CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
+
+    def specifiers(self, record):
+        yield from super().specifiers(record=record, mode="ff")
 
 
 class LDSTImmFFRc0RM(FFPRRc0BaseRM, LDSTImmBaseRM):
@@ -1527,10 +1556,13 @@ class LDSTImmSatRM(SatBaseRM, ZZBaseRM, LDSTImmBaseRM):
     sz: BaseRM.mode[3]
 
 
-class LDSTImmPRRc1RM(LDSTImmBaseRM):
+class LDSTImmPRRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
     """ld/st immediate: Rc=1: pred-result CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
+
+    def specifiers(self, record):
+        yield from super().specifiers(record=record, mode="pr")
 
 
 class LDSTImmPRRc0RM(FFPRRc0BaseRM, LDSTImmBaseRM):
@@ -1586,6 +1618,9 @@ class LDSTIdxPRRc1RM(LDSTIdxBaseRM):
     """ld/st index: Rc=1: pred-result CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
+
+    def specifiers(self, record):
+        yield from super().specifiers(record=record, mode="pr")
 
 
 class LDSTIdxPRRc0RM(FFPRRc0BaseRM, ZZBaseRM, LDSTIdxBaseRM):
@@ -1650,6 +1685,9 @@ class CROpFF3RM(ZZBaseRM, CROpBaseRM):
     CR: BaseRM[22, 23]
     sz: BaseRM[21]
     dz: BaseRM[22]
+
+    def specifiers(self, record):
+        yield from super().specifiers(record=record, mode="ff")
 
 
 class CROpFF5RM(DZBaseRM, SZBaseRM, CROpBaseRM):
