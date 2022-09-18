@@ -1389,24 +1389,6 @@ class NormalSaturationRM(NormalBaseRM):
         yield from super().specifiers
 
 
-class NormalSaturationExtRM(NormalBaseRM):
-    """normal: sat mode: N=0/1 u/s, SUBVL>1"""
-    N: BaseRM.mode[2]
-    zz: BaseRM.mode[3]
-    dz: BaseRM.mode[3]
-    sz: BaseRM.mode[3]
-
-    @property
-    def specifiers(self):
-        if self.zz:
-            yield f"zz"
-        if self.N:
-            yield "sats"
-        else:
-            yield "satu"
-        yield from super().specifiers
-
-
 class NormalPredResultRc1RM(NormalBaseRM):
     """normal: Rc=1: pred-result CR sel"""
     inv: BaseRM.mode[2]
@@ -1435,7 +1417,6 @@ class NormalRM(NormalBaseRM):
     ffrc1: NormalFailFirstRc1RM
     ffrc0: NormalFailFirstRc0RM
     sat: NormalSaturationRM
-    satx: NormalSaturationExtRM
     prrc1: NormalPredResultRc1RM
     prrc0: NormalPredResultRc0RM
 
