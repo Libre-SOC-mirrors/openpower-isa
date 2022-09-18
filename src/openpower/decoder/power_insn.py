@@ -1345,20 +1345,21 @@ class NormalScalarReduceRM(NormalBaseRM):
     RG: BaseRM.mode[4]
 
 
-class NormalParallelReduceRM(NormalBaseRM):
-    """normal: parallel reduce mode (mapreduce), SUBVL=1"""
-    pass
-
-
 class NormalSubvectorReduceRM(NormalBaseRM):
     """normal: subvector reduce mode, SUBVL>1"""
     SVM: BaseRM.mode[3]
+
+
+class NormalReservedRM(NormalBaseRM):
+    """normal: reserved"""
+    pass
 
 
 class NormalFailFirstRc1RM(NormalBaseRM):
     """normal: Rc=1: ffirst CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
+
 
 class NormalFailFirstRc0RM(NormalBaseRM):
     """normal: Rc=0: ffirst z/nonz"""
@@ -1428,8 +1429,8 @@ class NormalPredResultRc0RM(NormalBaseRM):
 class NormalRM(NormalBaseRM):
     simple: NormalSimpleRM
     smr: NormalScalarReduceRM
-    pmr: NormalParallelReduceRM
     svmr: NormalSubvectorReduceRM
+    reserved: NormalReservedRM
     ffrc1: NormalFailFirstRc1RM
     ffrc0: NormalFailFirstRc0RM
     sat: NormalSaturationRM
@@ -1454,6 +1455,11 @@ class LDSTImmSimpleRM(LDSTImmBaseRM):
         if self.zz:
             yield f"zz"
         yield from super().specifiers
+
+
+class LDSTImmReservedRM(LDSTImmBaseRM):
+    """ld/st immediate: reserved"""
+    pass
 
 
 class LDSTImmFailFirstRc1RM(LDSTImmBaseRM):
@@ -1503,6 +1509,7 @@ class LDSTImmPredResultRc0RM(LDSTImmBaseRM):
 
 class LDSTImmRM(LDSTImmBaseRM):
     simple: LDSTImmSimpleRM
+    reserved: LDSTImmReservedRM
     ffrc1: LDSTImmFailFirstRc1RM
     ffrc0: LDSTImmFailFirstRc0RM
     sat: LDSTImmSaturationRM
@@ -1751,16 +1758,12 @@ class RM(BaseRM):
                 if rm.mode[2] == 0b0:
                     rm = rm.simple
                 else:
-                    if self.subvl == 0b00:
-                        if rm.mode[3] == 0b0:
-                            rm = rm.smr
-                        else:
-                            rm = rm.pmr
+                    if self.subvl == 1:
+                        rm = rm.smr
+                    elif self.subvl > 1:
+                        rm = rm.svmr
                     else:
-                        if rm.mode[4] == 0b0:
-                            rm = rm.svmr
-                        #else:
-                        #    rm = rm.pu
+                        rm = rm.reserved
             elif rm.mode[0:2] == 0b01:
                 if Rc:
                     rm = rm.ffrc1
@@ -1772,8 +1775,6 @@ class RM(BaseRM):
                 else:
                     if rm.mode[4]:
                         rm = rm.satx
-                    #else:
-                    #   rm = rm.satpu
             elif rm.mode[0:2] == 0b11:
                 if Rc:
                     rm = rm.prrc1
@@ -1785,8 +1786,8 @@ class RM(BaseRM):
             if rm.mode[0:2] == 0b00:
                 if rm.mode[2] == 0b0:
                     rm = rm.simple
-                #else:
-                #    rm = rm.spu
+                else:
+                    rm = rm.reserved
             elif rm.mode[0:2] == 0b01:
                 if Rc:
                     rm = rm.ffrc1
@@ -1820,13 +1821,12 @@ class RM(BaseRM):
                 if rm[21] == 0b0:
                     rm = rm.simple
                 else:
-                    if self.subvl == 0:
+                    if self.subvl == 1:
                         rm = rm.smr
+                    elif self.subvl > 1:
+                        rm = rm.svmr
                     else:
-                        if rm[23] == 0b0:
-                            rm = rm.svmr
-                        else:
-                            rm = rm.reserved
+                        rm = rm.reserved
             else:
                 regtype = None
                 for idx in range(0, 4):
