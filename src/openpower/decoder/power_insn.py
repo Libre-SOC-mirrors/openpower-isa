@@ -1798,7 +1798,7 @@ class RM(BaseRM):
             search = ((int(rm.mode) << 1) | Rc)
 
         elif record.svp64.mode is _SVMode.CROP:
-            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
+            # concatenate mode 5-bit with regtype (LSB) then do mask/map search
             #    mode  3b  mask  3b  member
             table = (
                 (0b000000, 0b111000, "simple"), # simple
@@ -1824,24 +1824,23 @@ class RM(BaseRM):
             rm = rm.cr_op
             search = ((int(rm.mode) << 1) | (regtype or 0))
 
+        elif record.svp64.mode is _SVMode.BRANCH:
+            # just mode 5-bit. could be reduced down to 2, oh well.
+            #         mode       mask   action(getattr)
+            table = [(0b00000, 0b11000, "simple"), # simple
+                     (0b01000, 0b11000, "vls"),    # VLset
+                     (0b10000, 0b11000, "ctr"),    # CTR mode
+                     (0b11000, 0b11000, "ctrvls"), # CTR+VLset mode
+                    ]
+            # slightly weird: doesn't have a 5-bit "mode" field like others
+            search = int(rm[19:23])
+
         # look up in table
         if table is not None:
             for (value, mask, member) in table:
                 if ((value & search) == (mask & search)):
                     rm = getattr(rm, member)
                     break
-
-        elif record.svp64.mode is _SVMode.BRANCH:
-            if rm[19] == 0b0:
-                if rm[20] == 0b0:
-                    rm = rm.simple
-                else:
-                    rm = rm.vls
-            else:
-                if rm[20] == 0b0:
-                    rm = rm.ctr
-                else:
-                    rm = rm.ctrvls
 
         if rm.__class__ is self.__class__:
             raise ValueError(self)
