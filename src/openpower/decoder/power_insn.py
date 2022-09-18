@@ -1325,6 +1325,22 @@ class ZZBaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
+class DZBaseRM(BaseRM):
+    def specifiers(self, record):
+        if self.dz:
+            yield "dz"
+
+        yield from super().specifiers(record=record)
+
+
+class SZBaseRM(BaseRM):
+    def specifiers(self, record):
+        if self.sz:
+            yield "sz"
+
+        yield from super().specifiers(record=record)
+
+
 class NormalLDSTBaseRM(BaseRM):
     def specifiers(self, record):
         widths = {
@@ -1388,17 +1404,12 @@ class NormalBaseRM(NormalLDSTBaseRM):
     pass
 
 
-class NormalSimpleRM(NormalBaseRM):
+class NormalSimpleRM(DZBaseRM, SZBaseRM, NormalBaseRM):
     """normal: simple mode"""
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
     def specifiers(self, record):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
-
         yield from super().specifiers(record=record)
 
 
@@ -1434,19 +1445,11 @@ class NormalFFRc0RM(FFPRRc0BaseRM, NormalBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class NormalSatRM(SatBaseRM, NormalBaseRM):
+class NormalSatRM(SatBaseRM, DZBaseRM, SZBaseRM, NormalBaseRM):
     """normal: sat mode: N=0/1 u/s, SUBVL=1"""
     N: BaseRM.mode[2]
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
-
-    def specifiers(self, record):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
-
-        yield from super().specifiers(record=record)
 
 
 class NormalPRRc1RM(NormalBaseRM):
@@ -1558,49 +1561,25 @@ class LDSTIdxBaseRM(NormalLDSTBaseRM):
     pass
 
 
-class LDSTIdxSimpleRM(LDSTIdxBaseRM):
+class LDSTIdxSimpleRM(DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
     """ld/st index: simple mode"""
     SEA: BaseRM.mode[2]
-    sz: BaseRM.mode[3]
     dz: BaseRM.mode[3]
-
-    def specifiers(self, record):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
-
-        yield from super().specifiers(record=record)
+    sz: BaseRM.mode[4]
 
 
-class LDSTIdxStrideRM(LDSTIdxBaseRM):
+class LDSTIdxStrideRM(DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
     """ld/st index: strided (scalar only source)"""
     SEA: BaseRM.mode[2]
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
-    def specifiers(self, record):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
 
-        yield from super().specifiers(record=record)
-
-
-class LDSTIdxSatRM(SatBaseRM, LDSTIdxBaseRM):
+class LDSTIdxSatRM(SatBaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
     """ld/st index: sat mode: N=0/1 u/s"""
     N: BaseRM.mode[2]
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
-
-    def specifiers(self, record):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
-
-        yield from super().specifiers(record=record)
 
 
 class LDSTIdxPRRc1RM(LDSTIdxBaseRM):
@@ -1633,52 +1612,29 @@ class LDSTIdxRM(LDSTIdxBaseRM):
 # ********************
 # CR ops mode
 # https://libre-soc.org/openpower/sv/cr_ops/
-
 class CROpBaseRM(BaseRM):
-    pass
+    SNZ: BaseRM[7]
 
 
-class CROpSimpleRM(CROpBaseRM):
+class CROpSimpleRM(DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: simple mode"""
-    SNZ: BaseRM[7]
     RG: BaseRM[20]
     sz: BaseRM[21]
     dz: BaseRM[22]
+    sz: BaseRM[23]
 
     def specifiers(self, record):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
         if self.RG:
             yield "mrr"
 
         yield from super().specifiers(record=record)
 
 
-class CROpSMRRM(CROpBaseRM):
+class CROpSMRRM(DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
-    SNZ: BaseRM[7]
     RG: BaseRM[20]
-    sz: BaseRM[21]
     dz: BaseRM[22]
-
-    def specifiers(self, record):
-        if self.sz:
-            yield f"sz"
-        if self.RG:
-            yield "mrr"
-
-        yield from super().specifiers(record=record)
-
-
-class CROpReservedRM(ZZBaseRM, CROpBaseRM):
-    """cr_op: reserved"""
-    zz: BaseRM[6]
-    SNZ: BaseRM[7]
-    RG: BaseRM[20]
-    sz: BaseRM[6]
-    dz: BaseRM[6]
+    sz: BaseRM[23]
 
     def specifiers(self, record):
         if self.RG:
@@ -1689,7 +1645,6 @@ class CROpReservedRM(ZZBaseRM, CROpBaseRM):
 
 class CROpFailFirst3RM(ZZBaseRM, CROpBaseRM):
     """cr_op: ffirst 3-bit mode"""
-    SNZ: BaseRM[7]
     VLI: BaseRM[20]
     inv: BaseRM[21]
     CR: BaseRM[22, 23]
@@ -1697,26 +1652,20 @@ class CROpFailFirst3RM(ZZBaseRM, CROpBaseRM):
     dz: BaseRM[22]
 
 
-class CROpFailFirst5RM(CROpBaseRM):
+class CROpFailFirst5RM(DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
-    sz: BaseRM[6]
-    SNZ: BaseRM[7]
     VLI: BaseRM[20]
     inv: BaseRM[21]
     dz: BaseRM[22]
+    sz: BaseRM[23]
 
     def specifiers(self, record):
-        if self.dz:
-            yield f"dz"
-        if self.sz:
-            yield f"sz"
         yield from super().specifiers(record=record)
 
 
 class CROpRM(CROpBaseRM):
     simple: CROpSimpleRM
     smr: CROpSMRRM
-    reserved: CROpReservedRM
     ff3: CROpFailFirst3RM
     ff5: CROpFailFirst5RM
 
@@ -1724,8 +1673,6 @@ class CROpRM(CROpBaseRM):
 # ********************
 # Branches mode
 # https://libre-soc.org/openpower/sv/branches/
-
-
 class BranchBaseRM(BaseRM):
     ALL: BaseRM[4]
     SNZ: BaseRM[5]
