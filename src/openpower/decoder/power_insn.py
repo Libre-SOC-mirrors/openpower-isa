@@ -1659,9 +1659,9 @@ class CROpBaseRM(BaseRM):
 
 class CROpSimpleRM(CROpBaseRM):
     """cr_op: simple mode"""
-    sz: BaseRM[6]
     SNZ: BaseRM[7]
     RG: BaseRM[20]
+    sz: BaseRM[21]
     dz: BaseRM[22]
 
     def specifiers(self, record):
@@ -1677,9 +1677,10 @@ class CROpSimpleRM(CROpBaseRM):
 
 class CROpScalarReduceRM(CROpBaseRM):
     """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
-    sz: BaseRM[6]
     SNZ: BaseRM[7]
     RG: BaseRM[20]
+    sz: BaseRM[21]
+    dz: BaseRM[22]
 
     def specifiers(self, record):
         if self.sz:
@@ -1695,8 +1696,8 @@ class CROpReservedRM(CROpBaseRM):
     zz: BaseRM[6]
     SNZ: BaseRM[7]
     RG: BaseRM[20]
-    dz: BaseRM[6]
     sz: BaseRM[6]
+    dz: BaseRM[6]
 
     def specifiers(self, record):
         if self.zz:
@@ -1709,13 +1710,12 @@ class CROpReservedRM(CROpBaseRM):
 
 class CROpFailFirst3RM(CROpBaseRM):
     """cr_op: ffirst 3-bit mode"""
-    zz: BaseRM[6]
     SNZ: BaseRM[7]
     VLI: BaseRM[20]
     inv: BaseRM[21]
     CR: BaseRM[22, 23]
-    dz: BaseRM[6]
-    sz: BaseRM[6]
+    sz: BaseRM[21]
+    dz: BaseRM[22]
 
     def specifiers(self, record):
         if self.zz:
