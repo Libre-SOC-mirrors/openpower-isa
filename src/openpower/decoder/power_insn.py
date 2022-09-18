@@ -1301,7 +1301,18 @@ class BaseRM(_Mapping):
 
 
 class NormalBaseRM(BaseRM):
-    pass
+    @property
+    def specifiers(self):
+        ew = int(self.elwidth)
+        if ew != 0b00:
+            ew = {
+                0b11: "8",
+                0b10: "16",
+                0b01: "32",
+            }[ew]
+            yield f"ew={ew}"
+
+        yield from super().specifiers
 
 
 class NormalSimpleRM(NormalBaseRM):
@@ -1417,7 +1428,18 @@ class NormalRM(NormalBaseRM):
 
 
 class LDSTImmBaseRM(BaseRM):
-    pass
+    @property
+    def specifiers(self):
+        ew = int(self.elwidth)
+        if ew != 0b00:
+            ew = {
+                0b11: "8",
+                0b10: "16",
+                0b01: "32",
+            }[ew]
+            yield f"ew={ew}"
+
+        yield from super().specifiers
 
 
 class LDSTImmSimpleRM(LDSTImmBaseRM):
@@ -1489,7 +1511,18 @@ class LDSTImmRM(LDSTImmBaseRM):
 
 
 class LDSTIdxBaseRM(BaseRM):
-    pass
+    @property
+    def specifiers(self):
+        ew = int(self.elwidth)
+        if ew != 0b00:
+            ew = {
+                0b11: "8",
+                0b10: "16",
+                0b01: "32",
+            }[ew]
+            yield f"ew={ew}"
+
+        yield from super().specifiers
 
 
 class LDSTIdxSimpleRM(LDSTIdxBaseRM):
