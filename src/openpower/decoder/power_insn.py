@@ -1276,7 +1276,6 @@ class BaseRM(_Mapping):
     subvl: _Field = range(8, 10)
     mode: Mode.remap(range(19, 24))
     smask: _Field = range(16, 19)
-
     extra: Extra.remap(range(10, 19))
     extra2: Extra2.remap(range(10, 19))
     extra3: Extra3.remap(range(10, 19))
@@ -1301,21 +1300,56 @@ class BaseRM(_Mapping):
 
 class NormalLDSTBaseRM(BaseRM):
     def specifiers(self, record):
-        width = {
+        widths = {
             0b11: "8",
             0b10: "16",
             0b01: "32",
         }
+        predicates = {
+            # integer
+            (0, 0b001): "1<<r3",
+            (0, 0b010): "r3",
+            (0, 0b011): "~r3",
+            (0, 0b100): "r10",
+            (0, 0b101): "~r10",
+            (0, 0b110): "r30",
+            (0, 0b111): "~r30",
+            # CRs
+            (1, 0b000): "lt",
+            (1, 0b001): "ge",
+            (1, 0b010): "gt",
+            (1, 0b011): "le",
+            (1, 0b100): "eq",
+            (1, 0b101): "ne",
+            (1, 0b110): "so",
+            (1, 0b111): "ns",
+        }
+
+        mmode = int(self.mmode)
+        mask = int(self.mask)
+        if record.svp64.ptype is _SVPtype.P2:
+            (smask, dmask) = (int(self.smask), mask)
+        else:
+            (smask, dmask) = (mask, mask)
+        if all((smask, dmask)) and (smask == dmask):
+            yield f"m={predicates[(mmode, smask)]}"
+        else:
+            sw = predicates.get((mmode, smask))
+            dw = predicates.get((mmode, dmask))
+            if sw:
+                yield f"sm={sw}"
+            if dw:
+                yield f"dm={dw}"
 
         dw = int(self.elwidth)
         sw = int(self.ewsrc)
-        if all((dw, sw)) and dw == sw:
-            yield f"w={width[dw]}"
+        if all((dw, sw)) and (dw == sw):
+            yield f"w={widths[dw]}"
         else:
             if dw != 0b00:
-                yield f"dw={width[dw]}"
+                yield f"dw={widths[dw]}"
             if sw != 0b00:
-                yield f"sw={width[sw]}"
+                yield f"sw={widths[sw]}"
 
         yield from super().specifiers(record=record)
 
