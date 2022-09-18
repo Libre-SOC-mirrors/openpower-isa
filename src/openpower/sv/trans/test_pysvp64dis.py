@@ -204,6 +204,13 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_12_smr_svmr(self):
+        expected = [
+                    "sv.add./mrr/vec2 *3,*7,*11",
+                    "sv.add./svm/vec4 *3,*7,*11",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
