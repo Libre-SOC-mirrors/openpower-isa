@@ -1298,9 +1298,14 @@ class BaseRM(_Mapping):
                 yield f"{indent}{', '.join(map(str, members))}"
 
 
-# ********************
-# Normal mode
-# https://libre-soc.org/openpower/sv/normal/
+class FFPRRc0BaseRM(BaseRM):
+    def specifiers(self, record, mode):
+        if self.RC1:
+            inv = "~" if self.inv else ""
+            yield f"{mode}={inv}RC1"
+
+        yield from super().specifiers(record=record)
+
 
 class NormalLDSTBaseRM(BaseRM):
     def specifiers(self, record):
@@ -1358,6 +1363,9 @@ class NormalLDSTBaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
+# ********************
+# Normal mode
+# https://libre-soc.org/openpower/sv/normal/
 class NormalBaseRM(NormalLDSTBaseRM):
     pass
 
@@ -1372,6 +1380,7 @@ class NormalSimpleRM(NormalBaseRM):
             yield f"dz"
         if self.sz:
             yield f"sz"
+
         yield from super().specifiers(record=record)
 
 
@@ -1397,18 +1406,14 @@ class NormalFFRc1RM(NormalBaseRM):
     CR: BaseRM.mode[3, 4]
 
 
-class NormalFFRc0RM(NormalBaseRM):
+class NormalFFRc0RM(FFPRRc0BaseRM, NormalBaseRM):
     """normal: Rc=0: ffirst z/nonz"""
     inv: BaseRM.mode[2]
     VLi: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
     def specifiers(self, record):
-        if self.RC1:
-            inv = "~" if self.inv else ""
-            yield f"ff={inv}RC1"
-
-        yield from super().specifiers(record=record)
+        yield from super().specifiers(record=record, mode="ff")
 
 
 class NormalSatRM(NormalBaseRM):
@@ -1436,7 +1441,7 @@ class NormalPRRc1RM(NormalBaseRM):
     CR: BaseRM.mode[3, 4]
 
 
-class NormalPRRc0RM(NormalBaseRM):
+class NormalPRRc0RM(FFPRRc0BaseRM, NormalBaseRM):
     """normal: Rc=0: pred-result z/nonz"""
     inv: BaseRM.mode[2]
     zz: BaseRM.mode[3]
@@ -1447,11 +1452,8 @@ class NormalPRRc0RM(NormalBaseRM):
     def specifiers(self, record):
         if self.zz:
             yield f"zz"
-        if self.RC1:
-            inv = "~" if self.inv else ""
-            yield f"pr={inv}RC1"
 
-        yield from super().specifiers(record=record)
+        yield from super().specifiers(record=record, mode="pr")
 
 
 class NormalRM(NormalBaseRM):
@@ -1498,18 +1500,15 @@ class LDSTImmFFRc1RM(LDSTImmBaseRM):
     CR: BaseRM.mode[3, 4]
 
 
-class LDSTImmFFRc0RM(LDSTImmBaseRM):
+class LDSTImmFFRc0RM(FFPRRc0BaseRM, LDSTImmBaseRM):
     """ld/st immediate: Rc=0: ffirst z/nonz"""
     inv: BaseRM.mode[2]
     els: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
     def specifiers(self, record):
-        if self.RC1:
-            inv = "~" if self.inv else ""
-            yield f"ff={inv}RC1"
+        yield from super().specifiers(record=record, mode="ff")
 
-        yield from super().specifiers(record=record)
 
 class LDSTImmSatRM(LDSTImmBaseRM):
     """ld/st immediate: sat mode: N=0/1 u/s"""
@@ -1536,18 +1535,15 @@ class LDSTImmPRRc1RM(LDSTImmBaseRM):
     CR: BaseRM.mode[3, 4]
 
 
-class LDSTImmPRRc0RM(LDSTImmBaseRM):
+class LDSTImmPRRc0RM(FFPRRc0BaseRM, LDSTImmBaseRM):
     """ld/st immediate: Rc=0: pred-result z/nonz"""
     inv: BaseRM.mode[2]
     els: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
     def specifiers(self, record):
-        if self.RC1:
-            inv = "~" if self.inv else ""
-            yield f"pr={inv}RC1"
+        yield from super().specifiers(record=record, mode="pr")
 
-        yield from super().specifiers(record=record)
 
 class LDSTImmRM(LDSTImmBaseRM):
     simple: LDSTImmSimpleRM
@@ -1622,7 +1618,7 @@ class LDSTIdxPRRc1RM(LDSTIdxBaseRM):
     CR: BaseRM.mode[3, 4]
 
 
-class LDSTIdxPRRc0RM(LDSTIdxBaseRM):
+class LDSTIdxPRRc0RM(FFPRRc0BaseRM, LDSTIdxBaseRM):
     """ld/st index: Rc=0: pred-result z/nonz"""
     inv: BaseRM.mode[2]
     zz: BaseRM.mode[3]
@@ -1633,11 +1629,8 @@ class LDSTIdxPRRc0RM(LDSTIdxBaseRM):
     def specifiers(self, record):
         if self.zz:
             yield f"zz"
-        if self.RC1:
-            inv = "~" if self.inv else ""
-            yield f"pr={inv}RC1"
 
-        yield from super().specifiers(record=record)
+        yield from super().specifiers(record=record, mode="pr")
 
 
 class LDSTIdxRM(LDSTIdxBaseRM):
