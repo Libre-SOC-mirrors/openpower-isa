@@ -1361,6 +1361,16 @@ class SZBaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
+class MRBaseRM(BaseRM):
+    def specifiers(self, record):
+        if self.RG:
+            yield "mrr"
+        else:
+            yield "mr"
+
+        yield from super().specifiers(record=record)
+
+
 class NormalLDSTBaseRM(BaseRM):
     def specifiers(self, record):
         widths = {
@@ -1433,15 +1443,9 @@ class NormalSimpleRM(DZBaseRM, SZBaseRM, NormalBaseRM):
         yield from super().specifiers(record=record)
 
 
-class NormalSMRRM(NormalBaseRM):
+class NormalSMRRM(MRBaseRM, NormalBaseRM):
     """normal: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM.mode[4]
-
-    def specifiers(self, record):
-        if self.RG:
-            yield "mrr"
-
-        yield from super().specifiers(record=record)
 
 
 class NormalReservedRM(NormalBaseRM):
@@ -1651,31 +1655,19 @@ class CROpBaseRM(BaseRM):
     SNZ: BaseRM[7]
 
 
-class CROpSimpleRM(DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpSimpleRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: simple mode"""
     RG: BaseRM[20]
     sz: BaseRM[21]
     dz: BaseRM[22]
     sz: BaseRM[23]
 
-    def specifiers(self, record):
-        if self.RG:
-            yield "mrr"
 
-        yield from super().specifiers(record=record)
-
-
-class CROpSMRRM(DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpSMRRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM[20]
     dz: BaseRM[22]
     sz: BaseRM[23]
-
-    def specifiers(self, record):
-        if self.RG:
-            yield "mrr"
-
-        yield from super().specifiers(record=record)
 
 
 class CROpFF3RM(ZZBaseRM, CROpBaseRM):
