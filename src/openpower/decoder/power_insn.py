@@ -1705,23 +1705,32 @@ class BranchBaseRM(BaseRM):
     sz: BaseRM[23]
 
 
+class BranchSimpleRM(BranchBaseRM):
+    """branch: simple mode"""
+    pass
+
+
+class BranchVLSRM(BranchBaseRM):
+    """branch: VLSET mode"""
+    VSb: BaseRM[7]
+    VLI: BaseRM[21]
+
+
+class BranchCTRRM(BranchBaseRM):
+    """branch: CTR-test mode"""
+    CTi: BaseRM[6]
+
+
+class BranchCTRVLSRM(BranchVLSRM, BranchCTRRM):
+    """branch: CTR-test+VLSET mode"""
+    pass
+
+
 class BranchRM(BranchBaseRM):
-    class simple(BranchBaseRM):
-        """branch: simple mode"""
-        pass
-
-    class vls(BranchBaseRM):
-        """branch: VLSET mode"""
-        VSb: BaseRM[7]
-        VLI: BaseRM[21]
-
-    class ctr(BranchBaseRM):
-        """branch: CTR-test mode"""
-        CTi: BaseRM[6]
-
-    class ctrvls(vls, ctr):
-        """branch: CTR-test+VLSET mode"""
-        pass
+    simple: BranchSimpleRM
+    vls: BranchVLSRM
+    ctr: BranchCTRRM
+    ctrvls: BranchCTRVLSRM
 
 
 class RM(BaseRM):
