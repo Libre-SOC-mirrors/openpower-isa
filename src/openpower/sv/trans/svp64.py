@@ -1089,9 +1089,14 @@ class SVP64Asm:
             # vec2/3/4
             elif encmode.startswith("vec"):
                 subvl = decode_subvl(encmode[3:])
-            # elwidth
-            elif encmode.startswith("ew="):
+            # elwidth (both src and dest, like mask)
+            elif encmode.startswith("w="):
+                destwid = decode_elwidth(encmode[2:])
+                srcwid = decode_elwidth(encmode[2:])
+            # just dest width
+            elif encmode.startswith("dw="):
                 destwid = decode_elwidth(encmode[3:])
+            # just src width
             elif encmode.startswith("sw="):
                 srcwid = decode_elwidth(encmode[3:])
             # element-strided LD/ST
