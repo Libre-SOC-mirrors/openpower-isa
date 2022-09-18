@@ -1049,7 +1049,6 @@ class SVP64Asm:
         mapreduce = False
         reverse_gear = False
         mapreduce_crm = False
-        mapreduce_svm = False
 
         predresult = False
         failfirst = False
@@ -1143,8 +1142,6 @@ class SVP64Asm:
                 assert sv_mode is None
                 sv_mode = 0b00
                 mapreduce_crm = True
-            elif encmode == 'svm':  # sub-vector mode
-                mapreduce_svm = True
             elif is_bc:
                 if encmode == 'all':
                     bc_all = 1
@@ -1206,9 +1203,6 @@ class SVP64Asm:
                 "dest-mask can only be specified on Twin-predicate ops"
 
         # construct the mode field, doing sanity-checking along the way
-        if mapreduce_svm:
-            assert sv_mode == 0b00, "sub-vector mode in mapreduce only"
-            assert subvl != 0, "sub-vector mode not possible on SUBVL=1"
 
         if src_zero:
             assert has_smask or mask_m_specified, \
@@ -1227,9 +1221,7 @@ class SVP64Asm:
             | 0-1 |  2  |  3   4  |  description              |
             | --- | --- |---------|-------------------------- |
             | 00  |   0 |  dz  sz | simple mode                      |
-            | 00  |   1 | 0  RG   | scalar reduce mode (mapreduce), SUBVL=1 |
-            | 00  |   1 | SVM 0   | subvector reduce mode, SUBVL>1   |
-            | 00  |   1 | /   1   | reserved |
+            | 00  |   1 | 0  RG   | scalar reduce mode (mapreduce) |
             | 01  | inv | CR-bit  | Rc=1: ffirst CR sel              |
             | 01  | inv | VLi RC1 |  Rc=0: ffirst z/nonz |
             | 10  |   N | dz   sz |  sat mode: N=0/1 u/s |
@@ -1307,8 +1299,6 @@ class SVP64Asm:
                 # SVM mode can be enabled only when SUBVL=2/3/4 (vec2/3/4)
                 if subvl == 0:
                     mode |= dst_zero << SVP64MODE.DZ  # predicate zeroing
-                elif mapreduce_svm:
-                    mode |= (0b1 << SVP64MODE.SVM)  # sets SVM mode
 
             ######################################
             # "failfirst" modes

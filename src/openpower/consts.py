@@ -242,13 +242,10 @@ class SVP64MODEb(_Const):
     MOD2_MSB = 0
     MOD2_LSB = 1
     MOD3 = 3
-    # pack detection (TODO, CR-ops needs one of these too)
-    LDST_PACK = 2 # set =1 for LD/ST-immediate Pack mode
-    ARITH_PACK = 4 # set =1 for Arithmetic Pack mode
     # when predicate not set: 0=ignore/skip 1=zero
     DZ = 3  # for destination
     SZ = 4  # for source
-    ZZ = 3  # for both sz/dz, on all but CR-ops
+    ZZ = 3  # for both sz/dz, on all but CR-ops, which, whoops, is RM bit 6.
     # for branch-conditional
     BC_SNZ = 3  # for branch-conditional mode
     BC_VLI = 2  # for VL include/exclude on VLSET mode
@@ -256,7 +253,6 @@ class SVP64MODEb(_Const):
     BC_CTRTEST = 0 # CTR-test mode
     # reduce mode
     REDUCE = 2  # 0=normal predication 1=reduce mode
-    SVM = 3  # subvector reduce mode 0=independent 1=horizontal
     CRM = 4  # CR mode on reduce (Rc=1) 0=some 1=all
     RG = 4   # Reverse-gear on reduce
     # saturation mode
