@@ -248,6 +248,13 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_15_els(self):
+        expected = [
+                    "sv.stw/els *4,16(2)",
+                    "sv.lfs/els *1,256(4)",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
