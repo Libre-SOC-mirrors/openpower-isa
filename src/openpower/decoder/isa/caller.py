@@ -558,7 +558,7 @@ class StepLoop:
                     subvl = self.subvl
                     srcmask = self.srcmask
                     srcstep = self.svstate.srcstep
-                    if self.pred_sz or (1 << srcstep) & srcmask) != 0)
+                    if self.pred_sz or ((1 << srcstep) & srcmask) != 0:
                         log("    advance src", srcstep, self.svstate.vl,
                                                self.svstate.ssubstep, subvl)
                         # yield actual substep/srcstep
@@ -592,7 +592,7 @@ class StepLoop:
                     subvl = self.subvl
                     dstmask = self.dstmask
                     dststep = self.svstate.dststep
-                    if self.pred_dz or (1 << dststep) & dstmask) != 0)
+                    if self.pred_dz or ((1 << dststep) & dstmask) != 0:
                         log("    advance dst", dststep, self.svstate.vl,
                                                self.svstate.dsubstep, subvl)
                         # yield actual substep/dststep
@@ -1698,6 +1698,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 overflow = None # do not override overflow except in setvl
             self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
 
+        yield from self.do_outregs_nia(asmop, ins_name, info,
+                                       output_names, results,
+                                       carry_en, rc_en)
+
+    def do_outregs_nia(self, asmop, ins_name,
+                       info, output_names, results, carry_en, rc_en):
         # any modified return results?
         if info.write_regs:
             for name, output in zip(output_names, results):
