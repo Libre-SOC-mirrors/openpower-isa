@@ -1054,16 +1054,6 @@ class SVP64Asm:
         failfirst = False
         ldst_elstride = 0
 
-        # branch-conditional bits
-        bc_all = 0
-        bc_lru = 0
-        bc_brc = 0
-        bc_svstep = 0
-        bc_vsb = 0
-        bc_vlset = 0
-        bc_vli = 0
-        bc_snz = 0
-
         # ok let's start identifying opcode augmentation fields
         for encmode in opmodes:
             # predicate mask (src and dest)
@@ -1145,29 +1135,34 @@ class SVP64Asm:
                 mapreduce_crm = True
             elif is_bc:
                 if encmode == 'all':
-                    bc_all = 1
-                elif encmode == 'ctr':  # ctr-test mode
-                    bc_ctr = 1
-                elif encmode == 'cti':  # ctr-test with inclusive mode
-                    bc_ctr = 1
-                    bc_cti = 1
-                elif encmode == 'vs':  # VLSET mode
-                    bc_vlset = 1
-                elif encmode == 'vsi':  # VLSET mode with VLI (VL inclusives)
-                    bc_vlset = 1
-                    bc_vli = 1
-                elif encmode == 'vsb':  # VLSET mode with VSb
-                    bc_vlset = 1
-                    bc_vsb = 1
-                elif encmode == 'vsbi':  # VLSET mode with VLI and VSb
-                    bc_vlset = 1
-                    bc_vli = 1
-                    bc_vsb = 1
-                elif encmode == 'snz':  # sz (only) already set above
-                    src_zero = 1
-                    bc_snz = 1
-                elif encmode == 'lu':  # LR update mode
-                    bc_lru = 1
+                    svp64_rm.branch.ALL = 1
+                elif encmode == 'snz':
+                    svp64_rm.branch.SNZ = 1
+                elif encmode == 'sl':
+                    svp64_rm.branch.SL = 1
+                elif encmode == 'slu':
+                    svp64_rm.branch.SLu = 1
+                elif encmode == 'lru':
+                    svp64_rm.branch.LRu = 1
+                elif encmode == 'vs':
+                    svp64_rm.branch.VLS = 1
+                elif encmode == 'vsi':
+                    svp64_rm.branch.VLS = 1
+                    svp64_rm.branch.vls.VLI = 1
+                elif encmode == 'vsb':
+                    svp64_rm.branch.VLS = 1
+                    svp64_rm.branch.vls.VSb = 1
+                elif encmode == 'vsbi':
+                    svp64_rm.branch.VLS = 1
+                    svp64_rm.branch.vls.VLb = 1
+                    svp64_rm.branch.vls.VLI = 1
+                elif encmode == 'ctr':
+                    svp64_rm.branch.CTR = 1
+                    svp64_rm.branch.VLS = 0
+                    svp64_rm.branch.ctr.CTi = 1
+                elif encmode == 'cti':
+                    svp64_rm.branch.CTR = 1
+                    svp64_rm.branch.ctr.CTi = 1
                 else:
                     raise AssertionError("unknown encmode %s" % encmode)
             else:
@@ -1260,17 +1255,10 @@ class SVP64Asm:
         """ TODO branches and cr_ops
         """
 
-        # now create mode and (overridden) src/dst widths
-        # XXX TODO: sanity-check bc modes
         if is_bc:
-            sv_mode = ((bc_svstep << SVP64MODE.MOD2_MSB) |
-                       (bc_vlset << SVP64MODE.MOD2_LSB) |
-                       (bc_snz << SVP64MODE.BC_SNZ))
-            srcwid = (bc_vsb << 1) | bc_lru
-            destwid = (bc_lru << 1) | bc_all
+            sv_mode = int(svp64_rm.mode[0, 1])
 
         else:
-
             ######################################
             # "normal" mode
             if sv_mode is None:
@@ -1350,13 +1338,16 @@ class SVP64Asm:
             mode |= (0b1<<SVP64MODE.MOD2_LSB)
         if sv_mode&2:
             mode |= (0b1<<SVP64MODE.MOD2_MSB)
-        # mode: bits 19-23
-        svp64_rm.mode = mode
+
+        if not is_bc:
+            # mode: bits 19-23
+            svp64_rm.mode = mode
 
         # put in predicate masks into svp64_rm
-        if ptype == '2P':
-            # source pred: bits 16-18
-            svp64_rm.smask = smask
+        if not is_bc:
+            if ptype == '2P':
+                # source pred: bits 16-18
+                svp64_rm.smask = smask
         # mask mode: bit 0
         svp64_rm.mmode = mmode
         # 1-pred: bits 1-3
@@ -1381,7 +1372,7 @@ class SVP64Asm:
         log("    dstwid 4-5  :", bin(destwid))
         log("    srcwid 6-7  :", bin(srcwid))
         log("    subvl  8-9  :", bin(subvl))
-        log("    mode   19-23:", bin(mode))
+        log("    mode   19-23:", bin(svp64_rm.mode))
         offs = 2 if etype == 'EXTRA2' else 3  # 2 or 3 bits
         for idx, sv_extra in extras.items():
             if idx is None:
