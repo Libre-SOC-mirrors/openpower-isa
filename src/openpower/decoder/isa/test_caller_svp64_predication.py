@@ -19,7 +19,9 @@ class DecoderTestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
         for i in range(32):
-            self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
+            self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64),
+                             "reg %d expected %x got %x" % \
+                            (i, sim.gpr(i).value, expected[i]))
 
     def tst_sv_load_store(self):
         lst = SVP64Asm(["addi 1, 0, 0x0010",
