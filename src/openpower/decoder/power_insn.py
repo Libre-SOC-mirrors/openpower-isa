@@ -1374,6 +1374,14 @@ class MRBaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
+class ElsBaseRM(BaseRM):
+    def specifiers(self, record):
+        if self.els:
+            yield "els"
+
+        yield from super().specifiers(record=record)
+
+
 class NormalLDSTBaseRM(BaseRM):
     def specifiers(self, record):
         # these go in inverse order. calculable as: "8<<(3-width)"
@@ -1525,7 +1533,7 @@ class LDSTImmBaseRM(NormalLDSTBaseRM):
     pass
 
 
-class LDSTImmSimpleRM(ZZBaseRM, LDSTImmBaseRM):
+class LDSTImmSimpleRM(ElsBaseRM, ZZBaseRM, LDSTImmBaseRM):
     """ld/st immediate: simple mode"""
     zz: BaseRM.mode[3]
     els: BaseRM.mode[4]
@@ -1547,7 +1555,7 @@ class LDSTImmFFRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class LDSTImmFFRc0RM(FFPRRc0BaseRM, LDSTImmBaseRM):
+class LDSTImmFFRc0RM(FFPRRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
     """ld/st immediate: Rc=0: ffirst z/nonz"""
     inv: BaseRM.mode[2]
     els: BaseRM.mode[3]
@@ -1557,7 +1565,7 @@ class LDSTImmFFRc0RM(FFPRRc0BaseRM, LDSTImmBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class LDSTImmSatRM(SatBaseRM, ZZBaseRM, LDSTImmBaseRM):
+class LDSTImmSatRM(ElsBaseRM, SatBaseRM, ZZBaseRM, LDSTImmBaseRM):
     """ld/st immediate: sat mode: N=0/1 u/s"""
     N: BaseRM.mode[2]
     zz: BaseRM.mode[3]
@@ -1575,7 +1583,7 @@ class LDSTImmPRRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
         yield from super().specifiers(record=record, mode="pr")
 
 
-class LDSTImmPRRc0RM(FFPRRc0BaseRM, LDSTImmBaseRM):
+class LDSTImmPRRc0RM(FFPRRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
     """ld/st immediate: Rc=0: pred-result z/nonz"""
     inv: BaseRM.mode[2]
     els: BaseRM.mode[3]
