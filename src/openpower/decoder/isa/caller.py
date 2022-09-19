@@ -1683,28 +1683,31 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             if hasattr(self.dec2.e.do, "rc"):
                 rc_en = yield self.dec2.e.do.rc.rc
         if rc_en and ins_name not in ['svstep']:
-            if ins_name.startswith("f"):
-                rc_reg = "CR1" # not calculated correctly yet (not FP compares)
-            else:
-                rc_reg = "CR0"
-            regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, rc_reg)
-            cmps = results
-            # hang on... for `setvl` actually you want to test SVSTATE.VL
-            is_setvl = ins_name == 'setvl'
-            if is_setvl:
-                vl = results[0].vl
-                cmps = (SelectableInt(vl, 64), overflow,)
-            else:
-                overflow = None # do not override overflow except in setvl
-            self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
+            yield from self.do_rc_ov(ins_name, results, overflow)
 
+        # any modified return results?
         yield from self.do_outregs_nia(asmop, ins_name, info,
                                        output_names, results,
                                        carry_en, rc_en)
 
+    def do_rc_ov(self, ins_name, results, overflow):
+        if ins_name.startswith("f"):
+            rc_reg = "CR1" # not calculated correctly yet (not FP compares)
+        else:
+            rc_reg = "CR0"
+        regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, rc_reg)
+        cmps = results
+        # hang on... for `setvl` actually you want to test SVSTATE.VL
+        is_setvl = ins_name == 'setvl'
+        if is_setvl:
+            vl = results[0].vl
+            cmps = (SelectableInt(vl, 64), overflow,)
+        else:
+            overflow = None # do not override overflow except in setvl
+        self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
+
     def do_outregs_nia(self, asmop, ins_name,
                        info, output_names, results, carry_en, rc_en):
-        # any modified return results?
         if info.write_regs:
             for name, output in zip(output_names, results):
                 yield from self.check_write(info, name, output, carry_en)
