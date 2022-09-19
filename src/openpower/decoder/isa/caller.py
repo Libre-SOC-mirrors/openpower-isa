@@ -529,8 +529,10 @@ class StepLoop:
 
     def __init__(self, svstate):
         self.svstate = svstate
-        #self.src_it = self.src_iterator()
-        #self.dst_it = self.dst_iterator()
+
+    def get_iterators(self):
+        self.src_it = self.src_iterator()
+        self.dst_it = self.dst_iterator()
 
     def src_iterator(self):
         """source-stepping iterator
@@ -606,40 +608,22 @@ class StepLoop:
         self.src_iterator()
         self.dst_iterator()
 
-    def svstate_pre_inc(self):
-        """check if srcstep/dststep need to skip over masked-out predicate bits
-        note that this is not supposed to do anything to substep,
-        it is purely for skipping masked-out bits
+    def read_src_mask(self):
+        """read/update pred_src_zero and src mask
         """
         # get SVSTATE VL (oh and print out some debug stuff)
-        # yield Delay(1e-10)  # make changes visible
         vl = self.svstate.vl
-        subvl = yield self.dec2.rm_dec.rm_in.subvl
         srcstep = self.svstate.srcstep
-        dststep = self.svstate.dststep
         ssubstep = self.svstate.ssubstep
-        dsubstep = self.svstate.dsubstep
-        pack = self.svstate.pack
-        unpack = self.svstate.unpack
-        sv_a_nz = yield self.dec2.sv_a_nz
-        fft_mode = yield self.dec2.use_svp64_fft
-        in1 = yield self.dec2.e.read_reg1.data
-        log("SVP64: VL, subvl, srcstep, dststep, ssubstep, dsybstep, sv_a_nz, "
-            "in1 fft, svp64",
-            vl, subvl, srcstep, dststep, ssubstep, dsubstep,
-            sv_a_nz, in1, fft_mode,
-            self.is_svp64_mode)
 
         # get predicate mask (all 64 bits)
-        srcmask = dstmask = 0xffff_ffff_ffff_ffff
+        srcmask = 0xffff_ffff_ffff_ffff
 
         pmode = yield self.dec2.rm_dec.predmode
-        reverse_gear = yield self.dec2.rm_dec.reverse_gear
         sv_ptype = yield self.dec2.dec.op.SV_Ptype
         srcpred = yield self.dec2.rm_dec.srcpred
         dstpred = yield self.dec2.rm_dec.dstpred
         pred_src_zero = yield self.dec2.rm_dec.pred_sz
-        pred_dst_zero = yield self.dec2.rm_dec.pred_dz
         if pmode == SVP64PredMode.INT.value:
             srcmask = dstmask = get_predint(self.gpr, dstpred)
             if sv_ptype == SVPtype.P2.value:
@@ -650,23 +634,14 @@ class StepLoop:
                 srcmask = get_predcr(self.crl, srcpred, vl)
         # work out if the ssubsteps are completed
         ssubstart = ssubstep == 0
-        dsubstart = dsubstep == 0
         log("    pmode", pmode)
-        log("    pack/unpack", pack, unpack)
-        log("    reverse", reverse_gear)
         log("    ptype", sv_ptype)
         log("    srcpred", bin(srcpred))
-        log("    dstpred", bin(dstpred))
         log("    srcmask", bin(srcmask))
-        log("    dstmask", bin(dstmask))
         log("    pred_sz", bin(pred_src_zero))
-        log("    pred_dz", bin(pred_dst_zero))
         log("    ssubstart", ssubstart)
-        log("    dsubstart", dsubstart)
 
-        # okaaay, so here we simply advance srcstep (TODO dststep)
-        # this can ONLY be done at the beginning of the "for" loop
-        # (this is all actually a FSM so it's hell to keep track sigh)
+        # store all that above
         self.srcstep_skip = False
         self.srcmask = srcmask
         self.pred_src_zero = pred_src_zero
@@ -678,7 +653,35 @@ class StepLoop:
             if not pred_src_zero:
                 self.srcstep_skip = True
 
-        self.skip_src()
+    def read_dst_mask(self):
+        """same as read_src_mask - check and record everything needed
+        """
+        # get SVSTATE VL (oh and print out some debug stuff)
+        # yield Delay(1e-10)  # make changes visible
+        vl = self.svstate.vl
+        dststep = self.svstate.dststep
+        dsubstep = self.svstate.dsubstep
+
+        # get predicate mask (all 64 bits)
+        dstmask = 0xffff_ffff_ffff_ffff
+
+        pmode = yield self.dec2.rm_dec.predmode
+        reverse_gear = yield self.dec2.rm_dec.reverse_gear
+        sv_ptype = yield self.dec2.dec.op.SV_Ptype
+        dstpred = yield self.dec2.rm_dec.dstpred
+        pred_dst_zero = yield self.dec2.rm_dec.pred_dz
+        if pmode == SVP64PredMode.INT.value:
+            dstmask = get_predint(self.gpr, dstpred)
+        elif pmode == SVP64PredMode.CR.value:
+            dstmask = get_predcr(self.crl, dstpred, vl)
+        # work out if the ssubsteps are completed
+        dsubstart = dsubstep == 0
+        log("    pmode", pmode)
+        log("    ptype", sv_ptype)
+        log("    dstpred", bin(dstpred))
+        log("    dstmask", bin(dstmask))
+        log("    pred_dz", bin(pred_dst_zero))
+        log("    dsubstart", dsubstart)
 
         self.dststep_skip = False
         self.dstmask = dstmask
@@ -686,10 +689,21 @@ class StepLoop:
         self.new_dsubstep = dsubstep
         log("    new dsubstep", dsubstep)
         if dsubstart:
-            # same for dststep
             if not pred_dst_zero:
                 self.dststep_skip = True
 
+        self.skip_dst()
+
+    def svstate_pre_inc(self):
+        """check if srcstep/dststep need to skip over masked-out predicate bits
+        note that this is not supposed to do anything to substep,
+        it is purely for skipping masked-out bits
+        """
+
+        yield from self.read_src_mask()
+        yield from self.read_dst_mask()
+
+        self.skip_src()
         self.skip_dst()
 
     def skip_src(self):
