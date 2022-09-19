@@ -1814,76 +1814,76 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def check_step_increment(self, results, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
+        if not self.allow_next_step_inc:
+            if self.is_svp64_mode:
+                return (yield from self.svstate_post_inc(ins_name))
+
+            # XXX only in non-SVP64 mode!
+            # record state of whether the current operation was an svshape,
+            # OR svindex!
+            # to be able to know if it should apply in the next instruction.
+            # also (if going to use this instruction) should disable ability
+            # to interrupt in between. sigh.
+            self.last_op_svshape = asmop in ['svremap', 'svindex',
+                                             'svshape2']
+            return True
+
         pre = False
         post = False
         nia_update = True
-        if self.allow_next_step_inc:
-            log("SVSTATE_NEXT: inc requested, mode",
-                self.svstate_next_mode, self.allow_next_step_inc)
-            yield from self.svstate_pre_inc()
-            pre = yield from self.update_new_svstate_steps()
-            if pre:
-                # reset at end of loop including exit Vertical Mode
-                log("SVSTATE_NEXT: end of loop, reset")
-                self.svp64_reset_loop()
-                self.svstate.vfirst = 0
-                self.update_nia()
-                if not rc_en:
-                    return True
-                results = [SelectableInt(0, 64)]
-                self.handle_comparison(results)  # CR0
+        log("SVSTATE_NEXT: inc requested, mode",
+            self.svstate_next_mode, self.allow_next_step_inc)
+        yield from self.svstate_pre_inc()
+        pre = yield from self.update_new_svstate_steps()
+        if pre:
+            # reset at end of loop including exit Vertical Mode
+            log("SVSTATE_NEXT: end of loop, reset")
+            self.svp64_reset_loop()
+            self.svstate.vfirst = 0
+            self.update_nia()
+            if not rc_en:
                 return True
-            if self.allow_next_step_inc == 2:
-                log("SVSTATE_NEXT: read")
-                nia_update = (yield from self.svstate_post_inc(ins_name))
-            else:
-                log("SVSTATE_NEXT: post-inc")
-            # use actual src/dst-step here to check end, do NOT
-            # use bit-reversed version
-            srcstep, dststep = self.new_srcstep, self.new_dststep
-            ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
-            remaps = self.get_remap_indices()
-            remap_idxs = self.remap_idxs
-            vl = self.svstate.vl
-            subvl = yield self.dec2.rm_dec.rm_in.subvl
-            end_src = srcstep == vl-1
-            end_dst = dststep == vl-1
-            if self.allow_next_step_inc != 2:
-                yield from self.advance_svstate_steps(end_src, end_dst)
-            #self.namespace['SVSTATE'] = self.svstate.spr
-            # set CR0 (if Rc=1) based on end
-            if rc_en:
-                endtest = 1 if (end_src or end_dst) else 0
-                #results = [SelectableInt(endtest, 64)]
-                # self.handle_comparison(results) # CR0
+            results = [SelectableInt(0, 64)]
+            self.handle_comparison(results)  # CR0
+            return True
+        if self.allow_next_step_inc == 2:
+            log("SVSTATE_NEXT: read")
+            nia_update = (yield from self.svstate_post_inc(ins_name))
+        else:
+            log("SVSTATE_NEXT: post-inc")
+        # use actual src/dst-step here to check end, do NOT
+        # use bit-reversed version
+        srcstep, dststep = self.new_srcstep, self.new_dststep
+        ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
+        remaps = self.get_remap_indices()
+        remap_idxs = self.remap_idxs
+        vl = self.svstate.vl
+        subvl = yield self.dec2.rm_dec.rm_in.subvl
+        end_src = srcstep == vl-1
+        end_dst = dststep == vl-1
+        if self.allow_next_step_inc != 2:
+            yield from self.advance_svstate_steps(end_src, end_dst)
+        #self.namespace['SVSTATE'] = self.svstate.spr
+        # set CR0 (if Rc=1) based on end
+        if rc_en:
+            endtest = 1 if (end_src or end_dst) else 0
+            #results = [SelectableInt(endtest, 64)]
+            # self.handle_comparison(results) # CR0
 
-                # see if svstep was requested, if so, which SVSTATE
-                endings = 0b111
-                if self.svstate_next_mode > 0:
-                    shape_idx = self.svstate_next_mode.value-1
-                    endings = self.remap_loopends[shape_idx]
-                cr_field = SelectableInt((~endings) << 1 | endtest, 4)
-                log("svstep Rc=1, CR0", cr_field)
-                self.crl[0].eq(cr_field)  # CR0
-            if end_src or end_dst:
-                # reset at end of loop including exit Vertical Mode
-                log("SVSTATE_NEXT: after increments, reset")
-                self.svp64_reset_loop()
-                self.svstate.vfirst = 0
-            return nia_update
-
-        if self.is_svp64_mode:
-            return (yield from self.svstate_post_inc(ins_name))
-
-        # XXX only in non-SVP64 mode!
-        # record state of whether the current operation was an svshape,
-        # OR svindex!
-        # to be able to know if it should apply in the next instruction.
-        # also (if going to use this instruction) should disable ability
-        # to interrupt in between. sigh.
-        self.last_op_svshape = asmop in ['svremap', 'svindex', 'svshape2']
-
-        return True
+            # see if svstep was requested, if so, which SVSTATE
+            endings = 0b111
+            if self.svstate_next_mode > 0:
+                shape_idx = self.svstate_next_mode.value-1
+                endings = self.remap_loopends[shape_idx]
+            cr_field = SelectableInt((~endings) << 1 | endtest, 4)
+            log("svstep Rc=1, CR0", cr_field)
+            self.crl[0].eq(cr_field)  # CR0
+        if end_src or end_dst:
+            # reset at end of loop including exit Vertical Mode
+            log("SVSTATE_NEXT: after increments, reset")
+            self.svp64_reset_loop()
+            self.svstate.vfirst = 0
+        return nia_update
 
     def SVSTATE_NEXT(self, mode, submode):
         """explicitly moves srcstep/dststep on to next element, for
