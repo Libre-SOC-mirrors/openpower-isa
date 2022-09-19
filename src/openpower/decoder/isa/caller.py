@@ -529,21 +529,21 @@ class StepLoop:
 
     def __init__(self, svstate):
         self.svstate = svstate
+        #self.src_it = self.src_iterator()
+        #self.dst_it = self.dst_iterator()
 
-    def advance_svstate_steps(self, end_src=False, end_dst=False):
-        """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
-        TODO when Pack/Unpack is set, substep becomes the *outer* loop
+    def src_iterator(self):
+        """source-stepping iterator
         """
-        subvl = yield self.dec2.rm_dec.rm_in.subvl
+        end_src = self.end_src
+        subvl = self.subvl
         pack = self.svstate.pack
         unpack = self.svstate.unpack
         ssubstep = self.svstate.ssubstep
-        dsubstep = self.svstate.dsubstep
         end_ssub = ssubstep == subvl
-        end_dsub = dsubstep == subvl
         log("    pack/unpack/subvl", pack, unpack, subvl,
-                                     "end", end_src, end_dst,
-                                     "sub", end_ssub, end_dsub)
+                                     "end", end_src, 
+                                     "sub", end_ssub)
         # first source step
         srcstep = self.svstate.srcstep
         if pack:
@@ -563,6 +563,20 @@ class StepLoop:
             else:
                 self.svstate.ssubstep += SelectableInt(1, 2) # advance ssubstep
 
+        log("    advance src", self.svstate.srcstep, self.svstate.ssubstep)
+
+    def dst_iterator(self):
+        """dest step iterator
+        """
+        end_dst = self.end_dst
+        subvl = self.subvl
+        pack = self.svstate.pack
+        unpack = self.svstate.unpack
+        dsubstep = self.svstate.dsubstep
+        end_dsub = dsubstep == subvl
+        log("    pack/unpack/subvl", pack, unpack, subvl,
+                                     "end", end_dst,
+                                     "sub", end_dsub)
         # now dest step
         if unpack:
             # unpack advances subvl in *outer* loop
@@ -580,8 +594,17 @@ class StepLoop:
                 self.svstate.dsubstep = SelectableInt(0, 2)  # reset
             else:
                 self.svstate.dsubstep += SelectableInt(1, 2) # advance ssubstep
-        log("    advance", self.svstate.srcstep, self.svstate.ssubstep,
-                           "dst", self.svstate.dststep, self.svstate.dsubstep)
+        log("    advance dst", self.svstate.dststep, self.svstate.dsubstep)
+
+    def advance_svstate_steps(self, end_src=False, end_dst=False):
+        """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
+        TODO when Pack/Unpack is set, substep becomes the *outer* loop
+        """
+        self.subvl = yield self.dec2.rm_dec.rm_in.subvl
+        self.end_src = end_src
+        self.end_dst = end_dst
+        self.src_iterator()
+        self.dst_iterator()
 
     def svstate_pre_inc(self):
         """check if srcstep/dststep need to skip over masked-out predicate bits
