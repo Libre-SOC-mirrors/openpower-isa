@@ -1723,13 +1723,15 @@ class CROpRM(CROpBaseRM):
 # ********************
 # Branches mode
 # https://libre-soc.org/openpower/sv/branches/
-class BranchBaseRM(BaseRM):
+class BranchBaseRM(SZBaseRM, BaseRM):
     ALL: BaseRM[4]
     SNZ: BaseRM[5]
     SL: BaseRM[17]
     SLu: BaseRM[18]
     LRu: BaseRM[22]
     sz: BaseRM[23]
+    CTR: BaseRM[19]
+    VLS: BaseRM[20]
 
 
 class BranchSimpleRM(BranchBaseRM):
@@ -1765,6 +1767,7 @@ class RM(BaseRM):
     ldst_imm: LDSTImmRM
     ldst_idx: LDSTIdxRM
     cr_op: CROpRM
+    branch: BranchRM
 
     def select(self, record, Rc):
         rm = self
