@@ -421,7 +421,7 @@ class BitSel:
             (start, end) = value
         if start < 0 or end < 0 or start >= end:
             raise ValueError(value)
-        
+
         self.__start = start
         self.__end = end
 
