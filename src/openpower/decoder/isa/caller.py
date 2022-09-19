@@ -1765,6 +1765,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             return
         if isinstance(output, int):
             output = SelectableInt(output, 256)
+        # write carry flafs
         if name in ['CA', 'CA32']:
             if carry_en:
                 log("writing %s to XER" % name, output)
@@ -1772,7 +1773,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 self.spr['XER'][XER_bits[name]] = output.value
             else:
                 log("NOT writing %s to XER" % name, output)
-        elif name in info.special_regs:
+            return
+        # write special SPRs
+        if name in info.special_regs:
             log('writing special %s' % name, output, special_sprs)
             log("write reg %s 0x%x" % (name, output.value))
             if name in special_sprs:
@@ -1781,31 +1784,32 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 self.namespace[name].eq(output)
             if name == 'MSR':
                 log('msr written', hex(self.msr.value))
+            return
+        # find out1/out2 PR/FPR
+        regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
+        if regnum is None:
+            regnum, is_vec = yield from get_pdecode_idx_out2(self.dec2, name)
+        if regnum is None:
+            # temporary hack for not having 2nd output
+            regnum = yield getattr(self.decoder, name)
+            is_vec = False
+        # convenient debug prefix
+        if name in fregs:
+            reg_prefix = 'f'
         else:
-            regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
-            if regnum is None:
-                regnum, is_vec = yield from get_pdecode_idx_out2(
-                    self.dec2, name)
-            if regnum is None:
-                # temporary hack for not having 2nd output
-                regnum = yield getattr(self.decoder, name)
-                is_vec = False
-            if self.is_svp64_mode and self.pred_dst_zero:
-                log('zeroing reg %d %s' % (regnum, str(output)),
-                    is_vec)
-                output = SelectableInt(0, 256)
-            else:
-                if name in fregs:
-                    reg_prefix = 'f'
-                else:
-                    reg_prefix = 'r'
-                log("write reg %s%d %0xx" % (reg_prefix, regnum, output.value))
-            if output.bits > 64:
-                output = SelectableInt(output.value, 64)
-            if name in fregs:
-                self.fpr[regnum] = output
-            else:
-                self.gpr[regnum] = output
+            reg_prefix = 'r'
+        # check zeroing due to predicate bit being zero
+        if self.is_svp64_mode and self.pred_dst_zero:
+            log('zeroing reg %d %s' % (regnum, str(output)), is_vec)
+            output = SelectableInt(0, 256)
+        log("write reg %s%d %0xx" % (reg_prefix, regnum, output.value))
+        # zero-extend tov64 bit begore storing (should use EXT oh well)
+        if output.bits > 64:
+            output = SelectableInt(output.value, 64)
+        if name in fregs:
+            self.fpr[regnum] = output
+        else:
+            self.gpr[regnum] = output
 
     def check_step_increment(self, results, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
