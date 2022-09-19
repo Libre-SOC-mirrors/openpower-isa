@@ -542,7 +542,7 @@ class StepLoop:
         ssubstep = self.svstate.ssubstep
         end_ssub = ssubstep == subvl
         log("    pack/unpack/subvl", pack, unpack, subvl,
-                                     "end", end_src, 
+                                     "end", end_src,
                                      "sub", end_ssub)
         # first source step
         srcstep = self.svstate.srcstep
@@ -667,27 +667,59 @@ class StepLoop:
         # okaaay, so here we simply advance srcstep (TODO dststep)
         # this can ONLY be done at the beginning of the "for" loop
         # (this is all actually a FSM so it's hell to keep track sigh)
-        srcstep_skip = False
+        self.srcstep_skip = False
+        self.srcmask = srcmask
+        self.pred_src_zero = pred_src_zero
+        self.new_ssubstep = ssubstep
+        log("    new ssubstep", ssubstep)
         if ssubstart:
             # until the predicate mask has a "1" bit... or we run out of VL
             # let srcstep==VL be the indicator to move to next instruction
             if not pred_src_zero:
-                srcstep_skip = True
+                self.srcstep_skip = True
 
+        self.skip_src()
+
+        self.dststep_skip = False
+        self.dstmask = dstmask
+        self.pred_dst_zero = pred_dst_zero
+        self.new_dsubstep = dsubstep
+        log("    new dsubstep", dsubstep)
+        if dsubstart:
+            # same for dststep
+            if not pred_dst_zero:
+                self.dststep_skip = True
+
+        self.skip_dst()
+
+    def skip_src(self):
+
+        srcstep = self.svstate.srcstep
+        srcmask = self.srcmask
+        pred_src_zero = self.pred_src_zero
+        vl = self.svstate.vl
         # srcstep-skipping opportunity identified
-        if srcstep_skip:
+        if self.srcstep_skip:
             while (((1 << srcstep) & srcmask) == 0) and (srcstep != vl):
                 log("      sskip", bin(1 << srcstep))
                 srcstep += 1
 
-        dststep_skip = False
-        if dsubstart:
-            # same for dststep
-            if not pred_dst_zero:
-                dststep_skip = True
+        # now work out if the relevant mask bits require zeroing
+        if pred_src_zero:
+            pred_src_zero = ((1 << srcstep) & srcmask) == 0
 
+        # store new srcstep / dststep
+        self.new_srcstep = srcstep
+        self.pred_src_zero = pred_src_zero
+        log("    new srcstep", srcstep)
+
+    def skip_dst(self):
         # dststep-skipping opportunity identified
-        if dststep_skip:
+        dststep = self.svstate.dststep
+        dstmask = self.dstmask
+        pred_dst_zero = self.pred_dst_zero
+        vl = self.svstate.vl
+        if self.dststep_skip:
             while (((1 << dststep) & dstmask) == 0) and (dststep != vl):
                 log("      dskip", bin(1 << dststep))
                 dststep += 1
@@ -695,17 +727,11 @@ class StepLoop:
         # now work out if the relevant mask bits require zeroing
         if pred_dst_zero:
             pred_dst_zero = ((1 << dststep) & dstmask) == 0
-        if pred_src_zero:
-            pred_src_zero = ((1 << srcstep) & srcmask) == 0
 
         # store new srcstep / dststep
-        self.new_srcstep, self.new_dststep = (srcstep, dststep)
-        self.new_ssubstep, self.new_dsubstep = (ssubstep, dsubstep)
-        self.pred_dst_zero, self.pred_src_zero = (pred_dst_zero, pred_src_zero)
-        log("    new srcstep", srcstep)
+        self.new_dststep = dststep
+        self.pred_dst_zero = pred_dst_zero
         log("    new dststep", dststep)
-        log("    new ssubstep", ssubstep)
-        log("    new dsubstep", dsubstep)
 
 
 class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
