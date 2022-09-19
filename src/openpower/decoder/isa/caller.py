@@ -537,6 +537,79 @@ class StepLoop:
     def src_iterator(self):
         """source-stepping iterator
         """
+        pack = self.svstate.pack
+
+        # source step
+        if pack:
+            # pack advances subvl in *outer* loop
+            if end_src:
+                if not end_ssub:
+                    self.svstate.ssubstep += SelectableInt(1, 2)
+                self.svstate.srcstep = SelectableInt(0, 7)  # reset
+            else:
+                self.svstate.srcstep += SelectableInt(1, 7) # advance srcstep
+        else:
+            # these cannot be done as for-loops because SVSTATE may change
+            # (srcstep/substep may be modified, interrupted, subvl/vl change)
+            # but they *can* be done as while-loops as long as every SVSTATE
+            # "thing" is re-read every single time a yield gives indices
+            while True: # outer vl loop
+                while True: # inner subvl loop
+                    subvl = self.subvl
+                    srcmask = self.srcmask
+                    srcstep = self.svstate.srcstep
+                    if self.pred_sz or (1 << srcstep) & srcmask) != 0)
+                        log("    advance src", srcstep, self.svstate.vl,
+                                               self.svstate.ssubstep, subvl)
+                        # yield actual substep/srcstep
+                        yield (self.svstate.ssubstep, srcstep)
+                    if self.svstate.ssubstep == subvl: # end-point
+                        self.svstate.ssubstep = SelectableInt(0, 2)  # reset
+                        break
+                    self.svstate.ssubstep += SelectableInt(1, 2)
+                vl = self.svstate.vl
+                if srcstep == vl-1: # end-point
+                    self.svstate.srcstep = SelectableInt(0, 7)  # reset
+                    break # trigger StopIteration
+                self.svstate.srcstep += SelectableInt(1, 7) # advance srcstep
+
+    def dst_iterator(self):
+        """dest-stepping iterator
+        """
+        unpack = self.svstate.unpack
+
+        # dest step
+        if unpack:
+            # pack advances subvl in *outer* loop
+            pass # TODO
+        else:
+            # these cannot be done as for-loops because SVSTATE may change
+            # (dststep/substep may be modified, interrupted, subvl/vl change)
+            # but they *can* be done as while-loops as long as every SVSTATE
+            # "thing" is re-read every single time a yield gives indices
+            while True: # outer vl loop
+                while True: # inner subvl loop
+                    subvl = self.subvl
+                    dstmask = self.dstmask
+                    dststep = self.svstate.dststep
+                    if self.pred_dz or (1 << dststep) & dstmask) != 0)
+                        log("    advance dst", dststep, self.svstate.vl,
+                                               self.svstate.dsubstep, subvl)
+                        # yield actual substep/dststep
+                        yield (self.svstate.dsubstep, dststep)
+                    if self.svstate.dsubstep == subvl: # end-point
+                        self.svstate.dsubstep = SelectableInt(0, 2)  # reset
+                        break
+                    self.svstate.dsubstep += SelectableInt(1, 2)
+                vl = self.svstate.vl
+                if dststep == vl-1: # end-point
+                    self.svstate.dststep = SelectableInt(0, 7)  # reset
+                    break # trigger StopIteration
+                self.svstate.dststep += SelectableInt(1, 7) # advance dststep
+
+    def src_iterate(self):
+        """source-stepping iterator
+        """
         end_src = self.end_src
         subvl = self.subvl
         pack = self.svstate.pack
@@ -567,7 +640,7 @@ class StepLoop:
 
         log("    advance src", self.svstate.srcstep, self.svstate.ssubstep)
 
-    def dst_iterator(self):
+    def dst_iterate(self):
         """dest step iterator
         """
         end_dst = self.end_dst
@@ -605,8 +678,8 @@ class StepLoop:
         self.subvl = yield self.dec2.rm_dec.rm_in.subvl
         self.end_src = end_src
         self.end_dst = end_dst
-        self.src_iterator()
-        self.dst_iterator()
+        self.src_iterate()
+        self.dst_iterate()
 
     def read_src_mask(self):
         """read/update pred_sz and src mask
