@@ -527,8 +527,8 @@ class StepLoop:
     """deals with svstate looping.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, svstate):
+        self.svstate = svstate
 
     def advance_svstate_steps(self, end_src=False, end_dst=False):
         """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
@@ -742,7 +742,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if isinstance(initial_svstate, int):
             initial_svstate = SVP64State(initial_svstate)
         # SVSTATE, MSR and PC
-        self.svstate = initial_svstate
+        StepLoop.__init__(self, initial_svstate)
         self.msr = SelectableInt(initial_msr, 64)  # underlying reg
         self.pc = PC()
         # GPR FPR SPR registers
