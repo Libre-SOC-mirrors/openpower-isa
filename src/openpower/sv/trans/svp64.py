@@ -1146,11 +1146,11 @@ class SVP64Asm:
             elif is_bc:
                 if encmode == 'all':
                     bc_all = 1
-                elif encmode == 'st':  # svstep mode
-                    bc_step = 1
-                elif encmode == 'sr':  # svstep BRc mode
-                    bc_step = 1
-                    bc_brc = 1
+                elif encmode == 'ctr':  # ctr-test mode
+                    bc_ctr = 1
+                elif encmode == 'cti':  # ctr-test with inclusive mode
+                    bc_ctr = 1
+                    bc_cti = 1
                 elif encmode == 'vs':  # VLSET mode
                     bc_vlset = 1
                 elif encmode == 'vsi':  # VLSET mode with VLI (VL inclusives)
