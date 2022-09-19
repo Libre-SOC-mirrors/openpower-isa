@@ -1733,6 +1733,20 @@ class BranchBaseRM(SZBaseRM, BaseRM):
     CTR: BaseRM[19]
     VLS: BaseRM[20]
 
+    def specifiers(self, record):
+        if self.ALL:
+            yield "all"
+        if self.SNZ:
+            yield "snz"
+        if self.SL:
+            yield "sl"
+        if self.SLu:
+            yield "slu"
+        if self.LRu:
+            yield "lru"
+
+        yield from super().specifiers(record=record)
+
 
 class BranchSimpleRM(BranchBaseRM):
     """branch: simple mode"""

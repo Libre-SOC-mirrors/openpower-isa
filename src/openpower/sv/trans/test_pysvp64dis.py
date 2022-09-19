@@ -255,6 +255,15 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_16_bc(self):
+        expected = [
+                    "sv.bc/all 12,*1,0xc",
+                    "sv.bc/snz 12,*1,0xc",
+                    "sv.bc/all/sl/slu 12,*1,0xc",
+                    "sv.bc/all/snz/sl/slu/lru 12,*1,0xc",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
