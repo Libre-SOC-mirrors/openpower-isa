@@ -281,6 +281,21 @@ def help():
     exit(-1)
 
 
+def run_a_simulation(lst, bigendian, orig_filename,
+                     prog, qemu_cosim, initial_regs,
+                     initial_sprs, svstate, mmu,
+                     initial_cr, mem,
+                     initial_fprs, initial_pc):
+
+    with Program(lst, bigendian=bigendian, orig_filename=binaryname) as prog:
+        simulator, qemu = run_tst(None, prog, qemu_cosim,
+                            initial_regs,
+                            initial_sprs=initial_sprs,
+                            svstate=svstate, mmu=mmu,
+                            initial_cr=initial_cr, mem=initial_mem,
+                            initial_fprs=initial_fprs,
+                            initial_pc=initial_pc)
+
 def run_simulation():
 
     binaryname = None
