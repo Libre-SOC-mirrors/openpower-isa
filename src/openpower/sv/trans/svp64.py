@@ -1365,11 +1365,12 @@ class SVP64Asm:
         # and subvl: bits 8-9
         svp64_rm.subvl = subvl
 
-        # put in elwidths
-        # srcwid: bits 6-7
-        svp64_rm.ewsrc = srcwid
-        # destwid: bits 4-5
-        svp64_rm.elwidth = destwid
+        # put in elwidths unless bc
+        if not is_bc:
+            # srcwid: bits 6-7
+            svp64_rm.ewsrc = srcwid
+            # destwid: bits 4-5
+            svp64_rm.elwidth = destwid
 
         # nice debug printout. (and now for something completely different)
         # https://youtu.be/u0WOIwlXE9g?t=146

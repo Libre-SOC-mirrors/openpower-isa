@@ -1852,16 +1852,17 @@ class RM(BaseRM):
             search = ((int(rm.mode) << 1) | (regtype or 0))
 
         elif record.svp64.mode is _SVMode.BRANCH:
-            # just mode 5-bit. could be reduced down to 2, oh well.
-            #    mode     mask     member
+            # just mode 2-bit
+            #    mode  mask  member
             table = (
-                (0b00000, 0b11000, "simple"), # simple
-                (0b01000, 0b11000, "vls"),    # VLset
-                (0b10000, 0b11000, "ctr"),    # CTR mode
-                (0b11000, 0b11000, "ctrvls"), # CTR+VLset mode
+                (0b00, 0b11, "simple"), # simple
+                (0b01, 0b11, "vls"),    # VLset
+                (0b10, 0b11, "ctr"),    # CTR mode
+                (0b11, 0b11, "ctrvls"), # CTR+VLset mode
             )
             # slightly weird: doesn't have a 5-bit "mode" field like others
-            search = int(rm[19:23])
+            rm = rm.branch
+            search = int(rm.mode[0, 1])
 
         # look up in table
         if table is not None:
