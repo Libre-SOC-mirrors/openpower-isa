@@ -1642,6 +1642,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # detect if CA/CA32 already in outputs (sra*, basically)
         already_done = 0
+        output_names = []
         if info.write_regs:
             output_names = create_args(info.write_regs)
             for name in output_names:
@@ -1651,10 +1652,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                     already_done |= 2
 
         log("carry already done?", bin(already_done))
-        if hasattr(self.dec2.e.do, "output_carry"):
-            carry_en = yield self.dec2.e.do.output_carry
-        else:
-            carry_en = False
+        carry_en = yield self.dec2.e.do.output_carry
         if carry_en:
             yield from self.handle_carry_(inputs, results, already_done)
 
@@ -1667,12 +1665,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         if not self.is_svp64_mode:  # yeah just no. not in parallel processing
             # detect if overflow was in return result
-            if hasattr(self.dec2.e.do, "oe"):
-                ov_en = yield self.dec2.e.do.oe.oe
-                ov_ok = yield self.dec2.e.do.oe.ok
-            else:
-                ov_en = False
-                ov_ok = False
+            ov_en = yield self.dec2.e.do.oe.oe
+            ov_ok = yield self.dec2.e.do.oe.ok
             log("internal overflow", ins_name, overflow, "en?", ov_en, ov_ok)
             if ov_en & ov_ok:
                 yield from self.handle_overflow(inputs, results, overflow)
@@ -1706,12 +1700,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             overflow = None # do not override overflow except in setvl
         self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
 
-    def do_outregs_nia(self, asmop, ins_name,
-                       info, output_names, results, carry_en, rc_en):
+    def do_outregs_nia(self, asmop, ins_name, info, output_names, results,
+                       carry_en, rc_en):
+        # write out any regs for this instruction
         if info.write_regs:
             for name, output in zip(output_names, results):
                 yield from self.check_write(info, name, output, carry_en)
 
+        # check advancement of src/dst/sub-steps and if PC needs updating
         nia_update = (yield from self.check_step_increment(results, rc_en,
                                                            asmop, ins_name))
         if nia_update:
