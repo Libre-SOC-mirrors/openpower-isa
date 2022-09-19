@@ -523,7 +523,169 @@ def get_pdecode_idx_out2(dec2, name):
     return None, False
 
 
-class ISACaller(ISACallerHelper, ISAFPHelpers):
+class StepLoop:
+    """deals with svstate looping.
+    """
+
+    def __init__(self):
+        pass
+
+    def advance_svstate_steps(self, end_src=False, end_dst=False):
+        """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
+        TODO when Pack/Unpack is set, substep becomes the *outer* loop
+        """
+        subvl = yield self.dec2.rm_dec.rm_in.subvl
+        pack = self.svstate.pack
+        unpack = self.svstate.unpack
+        ssubstep = self.svstate.ssubstep
+        dsubstep = self.svstate.dsubstep
+        end_ssub = ssubstep == subvl
+        end_dsub = dsubstep == subvl
+        log("    pack/unpack/subvl", pack, unpack, subvl,
+                                     "end", end_src, end_dst,
+                                     "sub", end_ssub, end_dsub)
+        # first source step
+        srcstep = self.svstate.srcstep
+        if pack:
+            # pack advances subvl in *outer* loop
+            if end_src:
+                if not end_ssub:
+                    self.svstate.ssubstep += SelectableInt(1, 2)
+                self.svstate.srcstep = SelectableInt(0, 7)  # reset
+            else:
+                self.svstate.srcstep += SelectableInt(1, 7) # advance srcstep
+        else:
+            # advance subvl in *inner* loop
+            if end_ssub:
+                if not end_src:
+                    self.svstate.srcstep += SelectableInt(1, 7)
+                self.svstate.ssubstep = SelectableInt(0, 2)  # reset
+            else:
+                self.svstate.ssubstep += SelectableInt(1, 2) # advance ssubstep
+
+        # now dest step
+        if unpack:
+            # unpack advances subvl in *outer* loop
+            if end_dst:
+                if not end_dsub:
+                    self.svstate.dsubstep += SelectableInt(1, 2)
+                self.svstate.dststep = SelectableInt(0, 7)  # reset
+            else:
+                self.svstate.dststep += SelectableInt(1, 7) # advance dststep
+        else:
+            # advance subvl in *inner* loop
+            if end_dsub:
+                if not end_dst:
+                    self.svstate.dststep += SelectableInt(1, 7)
+                self.svstate.dsubstep = SelectableInt(0, 2)  # reset
+            else:
+                self.svstate.dsubstep += SelectableInt(1, 2) # advance ssubstep
+        log("    advance", self.svstate.srcstep, self.svstate.ssubstep,
+                           "dst", self.svstate.dststep, self.svstate.dsubstep)
+
+    def svstate_pre_inc(self):
+        """check if srcstep/dststep need to skip over masked-out predicate bits
+        note that this is not supposed to do anything to substep,
+        it is purely for skipping masked-out bits
+        """
+        # get SVSTATE VL (oh and print out some debug stuff)
+        # yield Delay(1e-10)  # make changes visible
+        vl = self.svstate.vl
+        subvl = yield self.dec2.rm_dec.rm_in.subvl
+        srcstep = self.svstate.srcstep
+        dststep = self.svstate.dststep
+        ssubstep = self.svstate.ssubstep
+        dsubstep = self.svstate.dsubstep
+        pack = self.svstate.pack
+        unpack = self.svstate.unpack
+        sv_a_nz = yield self.dec2.sv_a_nz
+        fft_mode = yield self.dec2.use_svp64_fft
+        in1 = yield self.dec2.e.read_reg1.data
+        log("SVP64: VL, subvl, srcstep, dststep, ssubstep, dsybstep, sv_a_nz, "
+            "in1 fft, svp64",
+            vl, subvl, srcstep, dststep, ssubstep, dsubstep,
+            sv_a_nz, in1, fft_mode,
+            self.is_svp64_mode)
+
+        # get predicate mask (all 64 bits)
+        srcmask = dstmask = 0xffff_ffff_ffff_ffff
+
+        pmode = yield self.dec2.rm_dec.predmode
+        reverse_gear = yield self.dec2.rm_dec.reverse_gear
+        sv_ptype = yield self.dec2.dec.op.SV_Ptype
+        srcpred = yield self.dec2.rm_dec.srcpred
+        dstpred = yield self.dec2.rm_dec.dstpred
+        pred_src_zero = yield self.dec2.rm_dec.pred_sz
+        pred_dst_zero = yield self.dec2.rm_dec.pred_dz
+        if pmode == SVP64PredMode.INT.value:
+            srcmask = dstmask = get_predint(self.gpr, dstpred)
+            if sv_ptype == SVPtype.P2.value:
+                srcmask = get_predint(self.gpr, srcpred)
+        elif pmode == SVP64PredMode.CR.value:
+            srcmask = dstmask = get_predcr(self.crl, dstpred, vl)
+            if sv_ptype == SVPtype.P2.value:
+                srcmask = get_predcr(self.crl, srcpred, vl)
+        # work out if the ssubsteps are completed
+        ssubstart = ssubstep == 0
+        dsubstart = dsubstep == 0
+        log("    pmode", pmode)
+        log("    pack/unpack", pack, unpack)
+        log("    reverse", reverse_gear)
+        log("    ptype", sv_ptype)
+        log("    srcpred", bin(srcpred))
+        log("    dstpred", bin(dstpred))
+        log("    srcmask", bin(srcmask))
+        log("    dstmask", bin(dstmask))
+        log("    pred_sz", bin(pred_src_zero))
+        log("    pred_dz", bin(pred_dst_zero))
+        log("    ssubstart", ssubstart)
+        log("    dsubstart", dsubstart)
+
+        # okaaay, so here we simply advance srcstep (TODO dststep)
+        # this can ONLY be done at the beginning of the "for" loop
+        # (this is all actually a FSM so it's hell to keep track sigh)
+        srcstep_skip = False
+        if ssubstart:
+            # until the predicate mask has a "1" bit... or we run out of VL
+            # let srcstep==VL be the indicator to move to next instruction
+            if not pred_src_zero:
+                srcstep_skip = True
+
+        # srcstep-skipping opportunity identified
+        if srcstep_skip:
+            while (((1 << srcstep) & srcmask) == 0) and (srcstep != vl):
+                log("      sskip", bin(1 << srcstep))
+                srcstep += 1
+
+        dststep_skip = False
+        if dsubstart:
+            # same for dststep
+            if not pred_dst_zero:
+                dststep_skip = True
+
+        # dststep-skipping opportunity identified
+        if dststep_skip:
+            while (((1 << dststep) & dstmask) == 0) and (dststep != vl):
+                log("      dskip", bin(1 << dststep))
+                dststep += 1
+
+        # now work out if the relevant mask bits require zeroing
+        if pred_dst_zero:
+            pred_dst_zero = ((1 << dststep) & dstmask) == 0
+        if pred_src_zero:
+            pred_src_zero = ((1 << srcstep) & srcmask) == 0
+
+        # store new srcstep / dststep
+        self.new_srcstep, self.new_dststep = (srcstep, dststep)
+        self.new_ssubstep, self.new_dsubstep = (ssubstep, dsubstep)
+        self.pred_dst_zero, self.pred_src_zero = (pred_dst_zero, pred_src_zero)
+        log("    new srcstep", srcstep)
+        log("    new dststep", dststep)
+        log("    new ssubstep", ssubstep)
+        log("    new dsubstep", dsubstep)
+
+
+class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     # decoder2 - an instance of power_decoder2
     # regfile - a list of initial values for the registers
     # initial_{etc} - initial values for SPRs, Condition Register, Mem, MSR
@@ -1681,107 +1843,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
             return SelectableInt(self.svstate.dststep, 7)
         return SelectableInt(0, 7)
 
-    def svstate_pre_inc(self):
-        """check if srcstep/dststep need to skip over masked-out predicate bits
-        note that this is not supposed to do anything to substep,
-        it is purely for skipping masked-out bits
-        """
-        # get SVSTATE VL (oh and print out some debug stuff)
-        # yield Delay(1e-10)  # make changes visible
-        vl = self.svstate.vl
-        subvl = yield self.dec2.rm_dec.rm_in.subvl
-        srcstep = self.svstate.srcstep
-        dststep = self.svstate.dststep
-        ssubstep = self.svstate.ssubstep
-        dsubstep = self.svstate.dsubstep
-        pack = self.svstate.pack
-        unpack = self.svstate.unpack
-        sv_a_nz = yield self.dec2.sv_a_nz
-        fft_mode = yield self.dec2.use_svp64_fft
-        in1 = yield self.dec2.e.read_reg1.data
-        log("SVP64: VL, subvl, srcstep, dststep, ssubstep, dsybstep, sv_a_nz, "
-            "in1 fft, svp64",
-            vl, subvl, srcstep, dststep, ssubstep, dsubstep,
-            sv_a_nz, in1, fft_mode,
-            self.is_svp64_mode)
-
-        # get predicate mask (all 64 bits)
-        srcmask = dstmask = 0xffff_ffff_ffff_ffff
-
-        pmode = yield self.dec2.rm_dec.predmode
-        reverse_gear = yield self.dec2.rm_dec.reverse_gear
-        sv_ptype = yield self.dec2.dec.op.SV_Ptype
-        srcpred = yield self.dec2.rm_dec.srcpred
-        dstpred = yield self.dec2.rm_dec.dstpred
-        pred_src_zero = yield self.dec2.rm_dec.pred_sz
-        pred_dst_zero = yield self.dec2.rm_dec.pred_dz
-        if pmode == SVP64PredMode.INT.value:
-            srcmask = dstmask = get_predint(self.gpr, dstpred)
-            if sv_ptype == SVPtype.P2.value:
-                srcmask = get_predint(self.gpr, srcpred)
-        elif pmode == SVP64PredMode.CR.value:
-            srcmask = dstmask = get_predcr(self.crl, dstpred, vl)
-            if sv_ptype == SVPtype.P2.value:
-                srcmask = get_predcr(self.crl, srcpred, vl)
-        # work out if the ssubsteps are completed
-        ssubstart = ssubstep == 0
-        dsubstart = dsubstep == 0
-        log("    pmode", pmode)
-        log("    pack/unpack", pack, unpack)
-        log("    reverse", reverse_gear)
-        log("    ptype", sv_ptype)
-        log("    srcpred", bin(srcpred))
-        log("    dstpred", bin(dstpred))
-        log("    srcmask", bin(srcmask))
-        log("    dstmask", bin(dstmask))
-        log("    pred_sz", bin(pred_src_zero))
-        log("    pred_dz", bin(pred_dst_zero))
-        log("    ssubstart", ssubstart)
-        log("    dsubstart", dsubstart)
-
-        # okaaay, so here we simply advance srcstep (TODO dststep)
-        # this can ONLY be done at the beginning of the "for" loop
-        # (this is all actually a FSM so it's hell to keep track sigh)
-        srcstep_skip = False
-        if ssubstart:
-            # until the predicate mask has a "1" bit... or we run out of VL
-            # let srcstep==VL be the indicator to move to next instruction
-            if not pred_src_zero:
-                srcstep_skip = True
-
-        # srcstep-skipping opportunity identified
-        if srcstep_skip:
-            while (((1 << srcstep) & srcmask) == 0) and (srcstep != vl):
-                log("      sskip", bin(1 << srcstep))
-                srcstep += 1
-
-        dststep_skip = False
-        if dsubstart:
-            # same for dststep
-            if not pred_dst_zero:
-                dststep_skip = True
-
-        # dststep-skipping opportunity identified
-        if dststep_skip:
-            while (((1 << dststep) & dstmask) == 0) and (dststep != vl):
-                log("      dskip", bin(1 << dststep))
-                dststep += 1
-
-        # now work out if the relevant mask bits require zeroing
-        if pred_dst_zero:
-            pred_dst_zero = ((1 << dststep) & dstmask) == 0
-        if pred_src_zero:
-            pred_src_zero = ((1 << srcstep) & srcmask) == 0
-
-        # store new srcstep / dststep
-        self.new_srcstep, self.new_dststep = (srcstep, dststep)
-        self.new_ssubstep, self.new_dsubstep = (ssubstep, dsubstep)
-        self.pred_dst_zero, self.pred_src_zero = (pred_dst_zero, pred_src_zero)
-        log("    new srcstep", srcstep)
-        log("    new dststep", dststep)
-        log("    new ssubstep", ssubstep)
-        log("    new dsubstep", dsubstep)
-
     def get_src_dststeps(self):
         """gets srcstep, dststep, and ssubstep, dsubstep
         """
@@ -1902,59 +1963,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers):
         self.namespace['NIA'] = self.pc.NIA
         log("end of sub-pc call", self.namespace['CIA'], self.namespace['NIA'])
         return False  # DO NOT allow PC update whilst Sub-PC loop running
-
-    def advance_svstate_steps(self, end_src=False, end_dst=False):
-        """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
-        TODO when Pack/Unpack is set, substep becomes the *outer* loop
-        """
-        subvl = yield self.dec2.rm_dec.rm_in.subvl
-        pack = self.svstate.pack
-        unpack = self.svstate.unpack
-        ssubstep = self.svstate.ssubstep
-        dsubstep = self.svstate.dsubstep
-        end_ssub = ssubstep == subvl
-        end_dsub = dsubstep == subvl
-        log("    pack/unpack/subvl", pack, unpack, subvl,
-                                     "end", end_src, end_dst,
-                                     "sub", end_ssub, end_dsub)
-        # first source step
-        srcstep = self.svstate.srcstep
-        if pack:
-            # pack advances subvl in *outer* loop
-            if end_src:
-                if not end_ssub:
-                    self.svstate.ssubstep += SelectableInt(1, 2)
-                self.svstate.srcstep = SelectableInt(0, 7)  # reset
-            else:
-                self.svstate.srcstep += SelectableInt(1, 7) # advance srcstep
-        else:
-            # advance subvl in *inner* loop
-            if end_ssub:
-                if not end_src:
-                    self.svstate.srcstep += SelectableInt(1, 7)
-                self.svstate.ssubstep = SelectableInt(0, 2)  # reset
-            else:
-                self.svstate.ssubstep += SelectableInt(1, 2) # advance ssubstep
-
-        # now dest step
-        if unpack:
-            # unpack advances subvl in *outer* loop
-            if end_dst:
-                if not end_dsub:
-                    self.svstate.dsubstep += SelectableInt(1, 2)
-                self.svstate.dststep = SelectableInt(0, 7)  # reset
-            else:
-                self.svstate.dststep += SelectableInt(1, 7) # advance dststep
-        else:
-            # advance subvl in *inner* loop
-            if end_dsub:
-                if not end_dst:
-                    self.svstate.dststep += SelectableInt(1, 7)
-                self.svstate.dsubstep = SelectableInt(0, 2)  # reset
-            else:
-                self.svstate.dsubstep += SelectableInt(1, 2) # advance ssubstep
-        log("    advance", self.svstate.srcstep, self.svstate.ssubstep,
-                           "dst", self.svstate.dststep, self.svstate.dsubstep)
 
     def update_pc_next(self):
         # UPDATE program counter
