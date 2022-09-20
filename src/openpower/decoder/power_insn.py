@@ -1969,9 +1969,8 @@ class SVP64Instruction(PrefixedInstruction):
             Rc = bool(record.mdwn.operands["Rc"].value)
         rm = self.prefix.rm.select(record=record, Rc=Rc)
 
-        # convert specifiers to /x/y/z
-        specifiers = list(rm.specifiers(record=record))
-        specifiers.sort() # sort lexicographically
+        # convert specifiers to /x/y/z (sorted lexicographically)
+        specifiers = sorted(rm.specifiers(record=record))
         if specifiers: # if any add one extra to get the extra "/"
             specifiers = ([""] + specifiers)
         specifiers = "/".join(specifiers)
