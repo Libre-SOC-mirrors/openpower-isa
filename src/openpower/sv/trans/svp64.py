@@ -1261,6 +1261,8 @@ class SVP64Asm:
 
         if is_bc:
             sv_mode = int(svp64_rm.mode[0, 1])
+            if src_zero:
+                svp64_rm.branch.sz = 1
 
         else:
             ######################################
