@@ -1483,6 +1483,9 @@ class NormalFFRc0RM(FFPRRc0BaseRM, NormalBaseRM):
     RC1: BaseRM.mode[4]
 
     def specifiers(self, record):
+        if self.VLi:
+            yield "vli"
+
         yield from super().specifiers(record=record, mode="ff")
 
 
