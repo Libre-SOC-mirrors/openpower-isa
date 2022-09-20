@@ -314,12 +314,20 @@ def read_csvs():
                 continue  # skip pseudo-alias lxxxbr
             if insn_name in ['mcrxr', 'mcrxrx', 'darn']:
                 continue
-            if insn_name in ['bctar', 'bcctr']:
+            if insn_name in ['bctar', 'bcctr']: # for now. TODO
                 continue
             if 'rfid' in insn_name:
                 continue
             if 'addpcis' in insn_name: # skip for now
                 continue
+
+            # sv.bc is being classified as 2P-2S-1D by mistake due to SPRs
+            if insn_name.startswith('bc'):
+                # whoops: remove out reg (SPRs CTR etc)
+                row['in1'] = 'NONE'
+                row['in2'] = 'NONE'
+                row['in3'] = 'NONE'
+                row['out'] = 'NONE'
 
             insns[(insn_name, condition)] = row  # accumulate csv data
             insn_to_csv[insn_name] = csvname_  # CSV file name by instruction
@@ -512,9 +520,6 @@ def extra_classifier(insn_name, value, name, res, regs):
         elif regs == ['', 'FRB', '', 'FRT', '', 'CR1']:
             res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA3
             res['1'] = 's:FRB'  # FRB: Rsrc1_EXTRA3
-        elif insn_name.startswith('bc'):
-            res['0'] = 'd:BI'  # BI: Rdest1_EXTRA3
-            res['1'] = 's:BI'  # BI: Rsrc1_EXTRA3
         elif insn_name == 'fishmv':
             # an overwrite instruction
             res['0'] = 'd:FRS'  # FRS: Rdest1_EXTRA3
@@ -615,6 +620,12 @@ def extra_classifier(insn_name, value, name, res, regs):
         if insn_name == 'fmvis':
             res['0'] = 'd:FRS'  # FRS: Rdest1_EXTRA3
 
+    # HACK! thos should be RM-1P-1S butvthere is a bug with sv.bc
+    elif value == 'RM-2P-1S':
+        res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
+        if insn_name.startswith('bc'):
+            res['0'] = 's:BI'  # BI: Rsrc1_EXTRA3
+
 
 def process_csvs(format):
 
@@ -650,7 +661,7 @@ def process_csvs(format):
               '1W-CRi': 'RM-2P-1S1D',
               'CRio': 'RM-2P-1S1D',
               'CR=2R1W': 'RM-1P-2S1D',
-              'CRi': 'non-SV',
+              'CRi': 'RM-2P-1S', # HACK, bc here, it should be 1P
               'imm': 'non-SV',
               '': 'non-SV',
               'LDST-2R-imm': 'LDSTRM-2P-2S',
