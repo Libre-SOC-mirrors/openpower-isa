@@ -999,34 +999,14 @@ class SVP64Asm:
             else:
                 svp64_rm.extra3[idx] = sv_extra
 
-        # identify if the op is a LD/ST. the "blegh" way. copied
-        # from power_enums.  TODO, split the list _insns down.
-        is_ld = v30b_op in [
-            "lbarx", "lbz", "lbzu", "lbzux", "lbzx",            # load byte
-            "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
-            "lfs", "lfsx", "lfsu", "lfsux",                     # FP load single
-            "lfd", "lfdx", "lfdu", "lfdux", "lfiwzx", "lfiwax",  # FP load dbl
-            "lha", "lharx", "lhau", "lhaux", "lhax",            # load half
-            "lhbrx", "lhz", "lhzu", "lhzux", "lhzx",            # more load half
-            "lwa", "lwarx", "lwaux", "lwax", "lwbrx",           # load word
-            "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
-        ]
-        is_st = v30b_op in [
-            "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
-            "std", "stdbrx", "stdcx", "stdu", "stdux", "stdx",
-            "stfs", "stfsx", "stfsu", "stfux",                  # FP store sgl
-            "stfd", "stfdx", "stfdu", "stfdux", "stfiwx",       # FP store dbl
-            "sth", "sthbrx", "sthcx", "sthu", "sthux", "sthx",
-            "stw", "stwbrx", "stwcx", "stwu", "stwux", "stwx",
-        ]
-        # use this to determine if the SVP64 RM format is different.
+        # identify if the op is a LD/ST. 
         # see https://libre-soc.org/openpower/sv/ldst/
-        is_ldst = is_ld or is_st
+        is_ldst = rm['mode'] in [ 'LDST_IDX', 'LDST_IMM']
+        is_ld = v30b_op.startswith("l") and is_ldst
+        is_st = v30b_op.startswith("s") and is_ldst
 
         # branch-conditional detection
-        is_bc = v30b_op in [
-            "bc", "bclr",
-        ]
+        is_bc = rm['mode'] == 'BRANCH'
 
         # parts of svp64_rm
         mmode = 0  # bit 0
@@ -1649,6 +1629,9 @@ if __name__ == '__main__':
         'sv.ffmadds. 6.v, 2.v, 4.v, 6.v',  # incorrectly inserted 32-bit op
         'sv.ffmadds 6.v, 2.v, 4.v, 6.v',  # correctly converted to .long
         'svshape2 8, 1, 31, 7, 1, 1',
+        'sv.ld 5.v, 4(1.v)',
+        'sv.stw 5.v, 4(1.v)',
+        'sv.bc/all 3,12,192',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))
