@@ -261,6 +261,12 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.bc/snz 12,*1,0xc",
                     "sv.bc/all/sl/slu 12,*1,0xc",
                     "sv.bc/all/snz/sl/slu/lru 12,*1,0xc",
+                    "sv.bc/vs/all/snz/sl/slu/lru 12,*1,0xc",
+                    "sv.bc/vsi/all/snz/sl/slu/lru 12,*1,0xc",
+                    "sv.bc/vsb/all/snz/sl/slu/lru 12,*1,0xc",
+                    "sv.bc/vsbi/all/snz/sl/slu/lru 12,*1,0xc",
+                    "sv.bc/ctr/all/snz/sl/slu/lru 12,*1,0xc",
+                    "sv.bc/cti/all/snz/sl/slu/lru 12,*1,0xc",
                         ]
         self._do_tst(expected)
 

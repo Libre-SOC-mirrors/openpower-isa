@@ -1758,10 +1758,28 @@ class BranchVLSRM(BranchBaseRM):
     VSb: BaseRM[7]
     VLI: BaseRM[21]
 
+    def specifiers(self, record):
+        yield {
+            (0b0, 0b0): "vs",
+            (0b0, 0b1): "vsi",
+            (0b1, 0b0): "vsb",
+            (0b1, 0b1): "vsbi",
+        }[int(self.VSb), int(self.VLI)]
+
+        yield from super().specifiers(record=record)
+
 
 class BranchCTRRM(BranchBaseRM):
     """branch: CTR-test mode"""
     CTi: BaseRM[6]
+
+    def specifiers(self, record):
+        if self.CTi:
+            yield "cti"
+        else:
+            yield "ctr"
+
+        yield from super().specifiers(record=record)
 
 
 class BranchCTRVLSRM(BranchVLSRM, BranchCTRRM):
