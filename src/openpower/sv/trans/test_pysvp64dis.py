@@ -294,6 +294,12 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_17_vli(self):
+        expected = [
+                    "sv.add/ff=RC1/vli 3,7,11",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
 
