@@ -1723,7 +1723,7 @@ class CROpRM(CROpBaseRM):
 # ********************
 # Branches mode
 # https://libre-soc.org/openpower/sv/branches/
-class BranchBaseRM(SZBaseRM, BaseRM):
+class BranchBaseRM(BaseRM):
     ALL: BaseRM[4]
     SNZ: BaseRM[5]
     SL: BaseRM[17]
@@ -1736,8 +1736,20 @@ class BranchBaseRM(SZBaseRM, BaseRM):
     def specifiers(self, record):
         if self.ALL:
             yield "all"
+
+        # /sz
+        #   branch.sz=1
+        #   branch.snz=0
+        # /snz
+        #   branch.sz=1
+        #   branch.snz=1
         if self.SNZ:
+            if not self.sz:
+                raise ValueError(self.sz)
             yield "snz"
+        elif self.sz:
+            yield "sz"
+
         if self.SL:
             yield "sl"
         if self.SLu:
