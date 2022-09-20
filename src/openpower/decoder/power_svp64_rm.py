@@ -152,21 +152,16 @@ class SVP64RMModeDecode(Elaboratable):
             # Branch-Conditional is completely different
             # Counter-Test Mode.
             with m.If(mode[SVP64MODE.BC_CTRTEST]):
-                with m.If(self.rm_in.ewsrc[0]):
+                with m.If(self.rm_in.ewsrc[1]):
                     comb += self.bc_ctrtest.eq(SVP64BCCTRMode.TEST_INV)
                 with m.Else():
                     comb += self.bc_ctrtest.eq(SVP64BCCTRMode.TEST)
-            # VLSET mode
-            with m.If(mode[SVP64MODE.BC_VLSET]):
-                with m.If(mode[SVP64MODE.BC_VLI]):
-                    comb += self.bc_vlset.eq(SVP64BCVLSETMode.VL_INCL)
-                with m.Else():
-                    comb += self.bc_vlset.eq(SVP64BCVLSETMode.VL_EXCL)
+
             # BC Mode ALL or ANY (Great-Big-AND-gate or Great-Big-OR-gate)
-            comb += self.bc_gate.eq(self.rm_in.elwidth[0])
+            comb += self.bc_gate.eq(self.rm_in.elwidth[1])
             # Link-Register Update
-            comb += self.bc_lru.eq(self.rm_in.elwidth[1])
-            comb += self.bc_vsb.eq(self.rm_in.ewsrc[1])
+            comb += self.bc_lru.eq(self.rm_in.elwidth[0])
+            comb += self.bc_vsb.eq(self.rm_in.ewsrc[0])
 
         with m.Else():
             # combined arith / ldst decoding due to similarity
