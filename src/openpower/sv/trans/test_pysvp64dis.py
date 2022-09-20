@@ -242,8 +242,8 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.add./m=lt *3,*7,*11",
                     "sv.add. *3,*7,*11",
                     "sv.extsw/m=r30 3,7",
-                    "sv.extsw/sm=r30/dm=~r30 3,7",
-                    "sv.extsw/sm=gt/dm=eq 3,7",
+                    "sv.extsw/dm=~r30/sm=r30 3,7",
+                    "sv.extsw/dm=eq/sm=gt 3,7",
                     "sv.extsw/sm=~r3 3,7",
                     "sv.extsw/dm=r30 3,7",
                         ]
@@ -283,14 +283,14 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.bc/m=r3/snz 12,*1,0xc",
                     "sv.bc/m=r3/sz 12,*1,0xc",
                     "sv.bc/all/sl/slu 12,*1,0xc",
-                    "sv.bc/all/snz/sl/slu/lru 12,*1,0xc",
-                    "sv.bc/vs/all/snz/sl/slu/lru 12,*1,0xc",
-                    "sv.bc/vsi/all/snz/sl/slu/lru 12,*1,0xc",
-                    "sv.bc/vsb/all/snz/sl/slu/lru 12,*1,0xc",
-                    "sv.bc/vsbi/all/snz/sl/slu/lru 12,*1,0xc",
-                    "sv.bc/ctr/all/snz/sl/slu/lru 12,*1,0xc",
-                    "sv.bc/cti/all/snz/sl/slu/lru 12,*1,0xc",
-                    "sv.bc/vsb/ctr/all/snz/sl/slu/lru 12,*1,0xc",
+                    "sv.bc/all/lru/sl/slu/snz 12,*1,0xc",
+                    "sv.bc/all/lru/sl/slu/snz/vs 12,*1,0xc",
+                    "sv.bc/all/lru/sl/slu/snz/vsi 12,*1,0xc",
+                    "sv.bc/all/lru/sl/slu/snz/vsb 12,*1,0xc",
+                    "sv.bc/all/lru/sl/slu/snz/vsbi 12,*1,0xc",
+                    "sv.bc/all/ctr/lru/snz/sl/slu 12,*1,0xc",
+                    "sv.bc/all/cti/sl/slu/lru/snz 12,*1,0xc",
+                    "sv.bc/all/ctr/sl/slu/lru/snz/vsb 12,*1,0xc",
                         ]
         self._do_tst(expected)
 

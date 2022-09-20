@@ -1971,6 +1971,7 @@ class SVP64Instruction(PrefixedInstruction):
 
         # convert specifiers to /x/y/z
         specifiers = list(rm.specifiers(record=record))
+        specifiers.sort() # sort lexicographically
         if specifiers: # if any add one extra to get the extra "/"
             specifiers = ([""] + specifiers)
         specifiers = "/".join(specifiers)
