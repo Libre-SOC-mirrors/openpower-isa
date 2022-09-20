@@ -1054,6 +1054,8 @@ class SVP64Asm:
         failfirst = False
         ldst_elstride = 0
 
+        vli = False
+
         # ok let's start identifying opcode augmentation fields
         for encmode in opmodes:
             # predicate mask (src and dest)
@@ -1133,6 +1135,9 @@ class SVP64Asm:
                 assert sv_mode is None
                 sv_mode = 0b00
                 mapreduce_crm = True
+            elif encmode == 'vli':
+                assert sv_mode == 0b01 # only allow ff mode
+                vli = True
             elif is_bc:
                 if encmode == 'all':
                     svp64_rm.branch.ALL = 1
@@ -1341,6 +1346,8 @@ class SVP64Asm:
         if not is_bc:
             # mode: bits 19-23
             svp64_rm.mode = mode
+            if vli:
+                svp64_rm.normal.ffrc0.VLi = 1
 
         # put in predicate masks into svp64_rm
         if not is_bc:
