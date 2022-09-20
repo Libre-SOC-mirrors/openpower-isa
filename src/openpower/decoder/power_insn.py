@@ -1306,16 +1306,7 @@ class FFPRRc1BaseRM(BaseRM):
         inv = _SelectableInt(value=int(self.inv), bits=1)
         CR = _SelectableInt(value=int(self.CR), bits=2)
         mask = int(_selectconcat(inv, CR))
-        predicate = { # exactly same table as in NormalLDSTBaseRM
-            0b000: "lt",
-            0b001: "ge",
-            0b010: "gt",
-            0b011: "le",
-            0b100: "eq",
-            0b101: "ne",
-            0b110: "so",
-            0b111: "ns",
-        }[mask]
+        predicate = PredicateBaseRM.predicate(True, mask)
         yield f"{mode}={predicate}"
 
         yield from super().specifiers(record=record)
@@ -1382,65 +1373,85 @@ class ElsBaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
-class NormalLDSTBaseRM(BaseRM):
-    def specifiers(self, record):
-        # these go in inverse order. calculable as: "8<<(3-width)"
-        # TODO later: fp operations would be ew=fp16 ew=bf16 ew=fp32
-        widths = {
+class WidthBaseRM(BaseRM):
+    @staticmethod
+    def width(FP, width):
+        width = {
             0b11: "8",
             0b10: "16",
             0b01: "32",
-        }
-        predicates = {
-            # integer
-            (0, 0b001): "1<<r3",
-            (0, 0b010): "r3",
-            (0, 0b011): "~r3",
-            (0, 0b100): "r10",
-            (0, 0b101): "~r10",
-            (0, 0b110): "r30",
-            (0, 0b111): "~r30",
-            # CRs - exactly the same table as in FFPRRc1BaseRM
-            (1, 0b000): "lt",
-            (1, 0b001): "ge",
-            (1, 0b010): "gt",
-            (1, 0b011): "le",
-            (1, 0b100): "eq",
-            (1, 0b101): "ne",
-            (1, 0b110): "so",
-            (1, 0b111): "ns",
-        }
+        }.get(width)
+        if width is None:
+            return None
+        if FP:
+            width = ("fp" + width)
+        return width
 
-        # predication - single and twin.  use "m=" if same otherwise sm/dm
-        mmode = int(self.mmode)
-        mask = int(self.mask)
-        sw = dw = predicates.get((mmode, mask))
-        if record.svp64.ptype is _SVPtype.P2:
-            smask = int(self.smask)
-            sw = predicates.get((mmode, smask))
-        if sw == dw and dw:
-            yield ("m=" + dw)
-        else:
-            if sw:
-                yield ("sm=" + sw)
-            if dw:
-                yield ("dm=" + dw)
-
+    def specifiers(self, record):
         # elwidths: use "w=" if same otherwise dw/sw
-        dws = widths.get(int(self.elwidth))
-        sws = widths.get(int(self.ewsrc))
-        if dws == sws and dws:
-            yield ("w=" + dws)
+        # FIXME this should consider FP instructions
+        FP = False
+        dw = WidthBaseRM.width(FP, int(self.elwidth))
+        sw = WidthBaseRM.width(FP, int(self.ewsrc))
+        if dw == sw and dw:
+            yield ("w=" + dw)
         else:
-            if dws:
-                yield ("dw=" + dws)
-            if sws:
-                yield ("sw=" + sws)
+            if dw:
+                yield ("dw=" + dw)
+            if sw:
+                yield ("sw=" + sw)
 
         yield from super().specifiers(record=record)
 
 
-class NormalBaseRM(NormalLDSTBaseRM):
+class PredicateBaseRM(BaseRM):
+    @staticmethod
+    def predicate(CR, mask):
+        return {
+            # integer
+            (False, 0b001): "1<<r3",
+            (False, 0b010): "r3",
+            (False, 0b011): "~r3",
+            (False, 0b100): "r10",
+            (False, 0b101): "~r10",
+            (False, 0b110): "r30",
+            (False, 0b111): "~r30",
+            # CRs
+            (True, 0b000): "lt",
+            (True, 0b001): "ge",
+            (True, 0b010): "gt",
+            (True, 0b011): "le",
+            (True, 0b100): "eq",
+            (True, 0b101): "ne",
+            (True, 0b110): "so",
+            (True, 0b111): "ns",
+        }.get((CR, mask))
+
+    def specifiers(self, record):
+        # predication - single and twin
+        # use "m=" if same otherwise sm/dm
+        CR = (int(self.mmode) == 1)
+        mask = int(self.mask)
+        sm = dm = PredicateBaseRM.predicate(CR, mask)
+        if record.svp64.ptype is _SVPtype.P2:
+            smask = int(self.smask)
+            sm = PredicateBaseRM.predicate(CR, smask)
+        if sm == dm and dm:
+            yield ("m=" + dm)
+        else:
+            if sm:
+                yield ("sm=" + sm)
+            if dm:
+                yield ("dm=" + dm)
+
+        yield from super().specifiers(record=record)
+
+
+class PredicateWidthBaseRM(WidthBaseRM, PredicateBaseRM):
+    pass
+
+
+class NormalBaseRM(PredicateWidthBaseRM):
     """
     Normal mode
     https://libre-soc.org/openpower/sv/normal/
@@ -1528,7 +1539,7 @@ class NormalRM(NormalBaseRM):
     prrc0: NormalPRRc0RM
 
 
-class LDSTImmBaseRM(NormalLDSTBaseRM):
+class LDSTImmBaseRM(PredicateWidthBaseRM):
     """
     LD/ST Immediate mode
     https://libre-soc.org/openpower/sv/ldst/
@@ -1606,7 +1617,7 @@ class LDSTImmRM(LDSTImmBaseRM):
     prrc0: LDSTImmPRRc0RM
 
 
-class LDSTIdxBaseRM(NormalLDSTBaseRM):
+class LDSTIdxBaseRM(PredicateWidthBaseRM):
     """
     LD/ST Indexed mode
     https://libre-soc.org/openpower/sv/ldst/
@@ -1759,6 +1770,14 @@ class BranchBaseRM(BaseRM):
             yield "slu"
         if self.LRu:
             yield "lru"
+
+        # Branch modes lack source mask.
+        # Therefore a custom code is needed.
+        CR = (int(self.mmode) == 1)
+        mask = int(self.mask)
+        m = PredicateBaseRM.predicate(CR, mask)
+        if m is not None:
+            yield ("m=" + m)
 
         yield from super().specifiers(record=record)
 
