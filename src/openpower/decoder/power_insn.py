@@ -1295,10 +1295,11 @@ class BaseRM(_Mapping):
     def disassemble(self, verbosity=Verbosity.NORMAL):
         if verbosity >= Verbosity.VERBOSE:
             indent = (" " * 4)
-            for (name, value, members) in self.traverse(path="RM"):
+            for (name, span) in self.traverse(path="RM"):
+                value = self.storage[span]
                 yield f"{name}"
                 yield f"{indent}{int(value):0{value.bits}b}"
-                yield f"{indent}{', '.join(map(str, members))}"
+                yield f"{indent}{', '.join(map(str, span))}"
 
 
 class FFPRRc1BaseRM(BaseRM):

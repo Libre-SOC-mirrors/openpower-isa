@@ -320,7 +320,7 @@ class Instruction(Struct, c_tag="svp64_insn"):
 
         yield from super().c_decl()
         yield ""
-        for (path, field) in _SVP64Instruction.traverse():
+        for (path, field) in _SVP64Instruction.traverse(path="svp64_insn"):
             yield from getter(path, field)
             yield from setter(path, field)
 

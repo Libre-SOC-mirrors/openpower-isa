@@ -185,9 +185,9 @@ class Field(Reference, metaclass=FieldMeta):
 
         return _selectconcat(*(self[bit] for bit in tuple(key)))
 
-    def traverse(self, path):
-        span = self.__class__.__members__
-        yield (path, self.storage[span], span)
+    @classmethod
+    def traverse(cls, path):
+        yield (path, cls.__members__)
 
 
 class MappingMeta(type):
@@ -274,8 +274,9 @@ class Mapping(Reference, metaclass=MappingMeta):
 
         return self.__members[key]
 
-    def traverse(self, path=""):
-        for (name, member) in self.__members.items():
+    @classmethod
+    def traverse(cls, path):
+        for (name, member) in cls.__members__.items():
             if name == "_":
                 yield from member.traverse(path=path)
             elif path == "":
