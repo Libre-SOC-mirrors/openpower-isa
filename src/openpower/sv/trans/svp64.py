@@ -1326,30 +1326,21 @@ class SVP64Asm:
             mode |= (0b1<<SVP64MODE.MOD2_MSB)
 
         if not is_bc:
-            # mode: bits 19-23
-            svp64_rm.mode = mode
+            svp64_rm.mode = mode      # mode: bits 19-23
             if vli:
                 svp64_rm.normal.ffrc0.VLi = 1
 
-        # put in predicate masks into svp64_rm
-        if not is_bc:
+            # put in predicate masks into svp64_rm
             if ptype == '2P':
-                # source pred: bits 16-18
-                svp64_rm.smask = smask
-        # mask mode: bit 0
-        svp64_rm.mmode = mmode
-        # 1-pred: bits 1-3
-        svp64_rm.mask = pmask
+                svp64_rm.smask = smask # source pred: bits 16-18
 
-        # and subvl: bits 8-9
-        svp64_rm.subvl = subvl
+            # put in elwidths unless bc
+            svp64_rm.ewsrc = srcwid    # srcwid: bits 6-7
+            svp64_rm.elwidth = destwid # destwid: bits 4-5
 
-        # put in elwidths unless bc
-        if not is_bc:
-            # srcwid: bits 6-7
-            svp64_rm.ewsrc = srcwid
-            # destwid: bits 4-5
-            svp64_rm.elwidth = destwid
+        svp64_rm.mmode = mmode         # mask mode: bit 0
+        svp64_rm.mask = pmask          # 1-pred: bits 1-3
+        svp64_rm.subvl = subvl         # and subvl: bits 8-9
 
         # nice debug printout. (and now for something completely different)
         # https://youtu.be/u0WOIwlXE9g?t=146
