@@ -1137,6 +1137,7 @@ class SVP64Asm:
                 if encmode == 'all':
                     svp64_rm.branch.ALL = 1
                 elif encmode == 'snz':
+                    svp64_rm.branch.sz = 1
                     svp64_rm.branch.SNZ = 1
                 elif encmode == 'sl':
                     svp64_rm.branch.SL = 1
