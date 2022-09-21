@@ -281,13 +281,26 @@ def help():
     exit(-1)
 
 
-def run_a_simulation(lst, bigendian, orig_filename,
-                     prog, qemu_cosim, initial_regs,
+def run_a_simulation(binary, bigendian, prog, 
+                     qemu_cosim, initial_regs,
                      initial_sprs, svstate, mmu,
-                     initial_cr, mem,
+                     initial_cr, initial_mem,
                      initial_fprs, initial_pc):
 
-    with Program(lst, bigendian=bigendian, orig_filename=binaryname) as prog:
+    log ("binary", binary)
+    log ("bigendian", bigendian)
+    log ("prog", prog)
+    log ("qemu_cosim", qemu_cosim)
+    log ("initial_regs", initial_regs)
+    log ("initial_sprs", initial_sprs)
+    log ("svstate", svstate)
+    log ("mmu", mmu)
+    log ("initial_cr", initial_cr)
+    log ("initial_mem", initial_mem)
+    log ("initial_fprs", initial_fprs)
+    log ("initial_pc", initial_pc)
+
+    with Program(binary, bigendian=bigendian, orig_filename=None) as prog:
         simulator, qemu = run_tst(None, prog, qemu_cosim,
                             initial_regs,
                             initial_sprs=initial_sprs,
@@ -295,6 +308,9 @@ def run_a_simulation(lst, bigendian, orig_filename,
                             initial_cr=initial_cr, mem=initial_mem,
                             initial_fprs=initial_fprs,
                             initial_pc=initial_pc)
+        print("GPRs")
+        simulator.gpr.dump()
+        return simulator
 
 def run_simulation():
 
