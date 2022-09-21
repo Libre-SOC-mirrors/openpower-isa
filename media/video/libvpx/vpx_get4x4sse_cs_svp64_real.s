@@ -29,21 +29,21 @@ vpx_get4x4sse_cs_svp64_real:
 	sv.lha	*ref, 0(ref_ptr)		# Load 4 ints from (ref_ptr)
 	add 	src_ptr, src_ptr, src_stride	# Advance src_ptr by src_stride
 	add 	ref_ptr, ref_ptr, ref_stride	# Advance ref_ptr by ref_stride
-	sv.lha 	*{src + 4}, 0(src_ptr)
-	sv.lha 	*{ref + 4}, 0(ref_ptr)
+	sv.lha 	*(src + 4), 0(src_ptr)
+	sv.lha 	*(ref + 4), 0(ref_ptr)
 	add 	src_ptr, src_ptr, src_stride
 	add 	ref_ptr, ref_ptr, ref_stride
-	sv.lha 	*{src + 8}, 0(src_ptr)
-	sv.lha 	*{ref + 8}, 0(ref_ptr)
+	sv.lha 	*(src + 8), 0(src_ptr)
+	sv.lha 	*(ref + 8), 0(ref_ptr)
 	add 	src_ptr, src_ptr, src_stride
 	add 	ref_ptr, ref_ptr, ref_stride
-	sv.lha 	*{src + 12}, 0(src_ptr)
-	sv.lha 	*{ref + 12}, 0(ref_ptr)
+	sv.lha 	*(src + 12), 0(src_ptr)
+	sv.lha 	*(ref + 12), 0(ref_ptr)
 
 	# now our values are in consecutive registers and we can set VL to 16 elements
-	setvl 0,0,16,0,1,1
+	setvl		0,0,16,0,1,1
 	# equivalent to: for (i = 0; i < 16; i++) diff[i] = src[i] - ref[i];
-	sv.sub 		*diff, *src, *ref
+	sv.sub		*diff, *src, *ref
 	# equivalent to: for (i = 0; i < 16; i++) prod[i] = diff[i] * diff[i];
 	sv.mulld 	*prod, *diff, *diff
 	# equivalent to: for (i = 0; i < 32; i++) sum += prod[i];
