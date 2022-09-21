@@ -235,6 +235,13 @@ class PPCRecord:
         "CONDITIONS": "conditions",
     }
 
+    def __lt__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        lhs = (self.opcode, self.comment)
+        rhs = (other.opcode, other.comment)
+        return (lhs < rhs)
+
     @classmethod
     def CSV(cls, record, opcode_cls):
         typemap = {field.name:field.type for field in _dataclasses.fields(cls)}
@@ -942,7 +949,9 @@ class Record:
     def __lt__(self, other):
         if not isinstance(other, Record):
             return NotImplemented
-        return (min(self.opcodes) < min(other.opcodes))
+        lhs = (min(self.opcodes), self.name)
+        rhs = (min(other.opcodes), other.name)
+        return (lhs < rhs)
 
     @property
     def opcodes(self):
@@ -2067,7 +2076,7 @@ class MarkdownDatabase:
             operands = Operands(insn=name, iterable=operands)
             db[name] = MarkdownRecord(pcode=pcode, operands=operands)
 
-        self.__db = db
+        self.__db = dict(sorted(db.items()))
 
         return super().__init__()
 
@@ -2103,11 +2112,12 @@ class FieldsDatabase:
 
 class PPCDatabase:
     def __init__(self, root, mdwndb):
-        # The code below groups the instructions by section:identifier.
-        # We use the comment as an identifier, there's nothing better.
+        # The code below groups the instructions by name:section.
+        # There can be multiple names for the same instruction.
         # The point is to capture different opcodes for the same instruction.
         dd = _collections.defaultdict
-        records = dd(lambda: dd(set))
+        sections = {}
+        records = _collections.defaultdict(set)
         path = (root / "insndb.csv")
         with open(path, "r", encoding="UTF-8") as stream:
             for section in parse(stream, Section.CSV):
@@ -2120,60 +2130,71 @@ class PPCDatabase:
                     PPCRecord.CSV, opcode_cls=opcode_cls)
                 with open(path, "r", encoding="UTF-8") as stream:
                     for insn in parse(stream, factory):
-                        records[section][insn.comment].add(insn)
+                        for name in insn.names:
+                            records[name].add(insn)
+                            sections[name] = section
 
-        sections = dd(set)
-        for (section, group) in records.items():
-            for records in group.values():
-                sections[section].add(PPCMultiRecord(records))
+        for (name, multirecord) in sorted(records.items()):
+            multirecord = PPCMultiRecord(sorted(multirecord))
+            records[name] = multirecord
+
+        def exact_match(name):
+            record = records.get(name)
+            if record is None:
+                return None
+            return name
+
+        def LK_match(name):
+            if not name.endswith("l"):
+                return None
+            alias = exact_match(name[:-1])
+            if alias is None:
+                return None
+            record = records[alias]
+            if "lk" not in record.flags:
+                raise ValueError(record)
+            return alias
+
+        def AA_match(name):
+            if not name.endswith("a"):
+                return None
+            alias = LK_match(name[:-1])
+            if alias is None:
+                return None
+            record = records[alias]
+            if record.intop not in {_MicrOp.OP_B, _MicrOp.OP_BC}:
+                raise ValueError(record)
+            operands = mdwndb[name].operands["AA"]
+            if operands is None:
+                raise ValueError(record)
+            return alias
+
+        def Rc_match(name):
+            if not name.endswith("."):
+                return None
+            alias = exact_match(name[:-1])
+            if alias is None:
+                return None
+            record = records[alias]
+            if record.Rc is _RCOE.NONE:
+                raise ValueError(record)
+            return alias
 
         db = {}
-        for (section, records) in sections.items():
-            for record in records:
-                def exact_match(names):
-                    for name in names:
-                        if name in mdwndb:
-                            yield name
+        matches = (exact_match, LK_match, AA_match, Rc_match)
+        for (name, _) in mdwndb:
+            alias = None
+            for match in matches:
+                alias = match(name)
+                if alias is not None:
+                    break
+            if alias is None:
+                continue
+            section = sections[alias]
+            record = records[alias]
+            db[name] = (section, record)
 
-                def Rc_match(names):
-                    for name in names:
-                        if f"{name}." in mdwndb:
-                            yield f"{name}."
-                        yield name
-
-                def LK_match(names):
-                    if "lk" not in record.flags:
-                        yield from names
-                        return
-
-                    for name in names:
-                        if f"{name}l" in mdwndb:
-                            yield f"{name}l"
-                        yield name
-
-                def AA_match(names):
-                    if record.intop not in {_MicrOp.OP_B, _MicrOp.OP_BC}:
-                        yield from names
-                        return
-
-                    for name in names:
-                        operands = mdwndb[name].operands["AA"]
-                        if ((operands is not None) and
-                                (f"{name}a" in mdwndb)):
-                            yield f"{name}a"
-                        yield name
-
-                def reductor(names, match):
-                    return match(names)
-
-                matches = (exact_match, Rc_match, LK_match, AA_match)
-
-                names = _functools.reduce(reductor, matches, record.names)
-                for name in names:
-                    db[name] = (section, record)
-
-        self.__db = db
-        self.__mdwndb = mdwndb
+        self.__db = dict(sorted(db.items()))
 
         return super().__init__()
 
@@ -2192,8 +2213,9 @@ class SVP64Database:
                 path = (prefix / _pathlib.Path(name))
                 with open(path, "r", encoding="UTF-8") as stream:
                     db.update(parse(stream, SVP64Record.CSV))
+        db = {record.name:record for record in db}
 
-        self.__db = {record.name:record for record in db}
+        self.__db = dict(sorted(db.items()))
         self.__ppcdb = ppcdb
 
         return super().__init__()
@@ -2239,9 +2261,9 @@ class Database:
                 PO = ppc[0].opcode
             opcodes[PO.value].add(record)
 
-        self.__db = db
-        self.__names = names
-        self.__opcodes = opcodes
+        self.__db = sorted(db)
+        self.__names = dict(sorted(names.items()))
+        self.__opcodes = dict(sorted(opcodes.items()))
 
         return super().__init__()
 
