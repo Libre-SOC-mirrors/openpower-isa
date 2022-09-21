@@ -4,9 +4,9 @@
 .set ref_stride, 6
 .set sum, 7
 .set src, 10
-.set ref, 36
-.set diff, 52
-.set prod, 68
+.set ref, 26
+.set diff, 42
+.set prod, 58
 .set ctr, 9
 
 	.machine libresoc
@@ -21,24 +21,25 @@ vpx_get4x4sse_cs_svp64_real:
 	.cfi_startproc
 	# Set sum to zero
 	li sum, 0				# Set sum to zero
-	li ctr, 4				# Need 4 iterations of 4 elements
-	mtctr ctr				# Set counter special register
+	sldi	src_stride, src_stride, 1	# strides are for 16-bit elements
+	sldi	ref_stride, ref_stride, 1	# we need to increase by bytes
 	# Load 16 elements from src_ptr and ref_ptr, at groups of 4 with stride
 	setvl	0,0,4,0,1,1			# Set VL to 4 elements
 	sv.lha	*src, 0(src_ptr)		# Load 4 ints from (src_ptr)
-	sv.lha	*ref, 0(ref_ptr)		# Load 4 ints from (ref_ptr)
 	add 	src_ptr, src_ptr, src_stride	# Advance src_ptr by src_stride
+	sv.lha 	*src + 4, 0(src_ptr)
+	add 	src_ptr, src_ptr, src_stride
+	sv.lha 	*src + 8, 0(src_ptr)
+	add 	src_ptr, src_ptr, src_stride
+	sv.lha 	*src + 12, 0(src_ptr)
+	setvl	0,0,4,0,1,1			# Set VL to 4 elements
+	sv.lha	*ref, 0(ref_ptr)		# Load 4 ints from (ref_ptr)
 	add 	ref_ptr, ref_ptr, ref_stride	# Advance ref_ptr by ref_stride
-	sv.lha 	*(src + 4), 0(src_ptr)
-	sv.lha 	*(ref + 4), 0(ref_ptr)
-	add 	src_ptr, src_ptr, src_stride
+	sv.lha 	*ref + 4, 0(ref_ptr)
 	add 	ref_ptr, ref_ptr, ref_stride
-	sv.lha 	*(src + 8), 0(src_ptr)
-	sv.lha 	*(ref + 8), 0(ref_ptr)
-	add 	src_ptr, src_ptr, src_stride
+	sv.lha 	*ref + 8, 0(ref_ptr)
 	add 	ref_ptr, ref_ptr, ref_stride
-	sv.lha 	*(src + 12), 0(src_ptr)
-	sv.lha 	*(ref + 12), 0(ref_ptr)
+	sv.lha 	*ref + 12, 0(ref_ptr)
 
 	# now our values are in consecutive registers and we can set VL to 16 elements
 	setvl		0,0,16,0,1,1
