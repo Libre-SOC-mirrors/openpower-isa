@@ -2,7 +2,8 @@ from openpower.simulator.program import Program
 from openpower.endian import bigendian
 from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.test.state import ExpectedState
-
+from openpower.sv.trans.svp64 import SVP64Asm
+from openpower.decoder.isa.caller import SVP64State
 import random
 
 
@@ -156,3 +157,17 @@ class MulTestCases3Arg(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian), initial_regs)
 
 
+class SVP64MAdd(TestAccumulatorBase):
+    # TODO add test case for these 3 operand cases (madd
+    # needs to be implemented)
+    # "maddhd","maddhdu","maddld"
+    def case_sv_maddld(self):
+        lst = list(SVP64Asm(["sv.maddld *4, *8, *12, 16"]))
+        initial_regs = [0] * 32
+        initial_regs[8:16] = range(1, 17)
+        initial_regs[16] = 0x10000
+        svstate = SVP64State()
+        svstate.vl = 4
+        svstate.maxvl = 4
+        self.add_case(Program(lst, bigendian), initial_regs,
+                      initial_svstate=svstate)
