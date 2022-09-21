@@ -222,6 +222,7 @@ Pseudo-code:
         # set up template in SVSHAPE0, then copy to 1-3
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
+        SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
         if (SVrm = 0b1011) then
             SVSHAPE0[30:31] <- 0b11      # iDCT mode
             SVSHAPE0[18:20] <- 0b011     # iDCT Outer Butterfly sub-mode
@@ -251,6 +252,7 @@ Pseudo-code:
         # set up template in SVSHAPE0, then copy to 1-3
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
+        SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
         SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode
         SVSHAPE0[6:11] <- 0b000100       # DCT Inner Butterfly COS-gen mode
         if (SVrm = 0b0101) then
@@ -266,6 +268,7 @@ Pseudo-code:
         vlen[0:6] <- (0b00 || SVxd) + 0b0000001
         # set up template in SVSHAPE0
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
+        SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
         if (SVrm = 0b1110) then
             SVSHAPE0[18:20] <- 0b001     # DCT opposite half-swap
         if (SVrm = 0b1111) then
@@ -291,6 +294,7 @@ Pseudo-code:
         vlen[0:6] <- i
         # set up template in SVSHAPE0, then copy to 1. only 2 needed
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
+        SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
         SVSHAPE0[30:31] <- 0b10          # parallel reduce submode
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
