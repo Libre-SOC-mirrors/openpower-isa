@@ -466,7 +466,7 @@ def inverse_transform2(vec):
     if False:
         # ci schedule
         SVSHAPE0 = SVSHAPE()
-        SVSHAPE0.lims = [xdim, 4, 0]
+        SVSHAPE0.lims = [xdim, 4, 1]
         SVSHAPE0.mode = 0b01
         SVSHAPE0.submode2 = 0b01
         SVSHAPE0.skip = 0b10
@@ -474,7 +474,7 @@ def inverse_transform2(vec):
         SVSHAPE0.invxyz = [1,0,1] # inversion if desired
         # size schedule
         SVSHAPE1 = SVSHAPE()
-        SVSHAPE1.lims = [xdim, 4, 0]
+        SVSHAPE1.lims = [xdim, 4, 1]
         SVSHAPE1.mode = 0b01
         SVSHAPE1.submode2 = 0b01
         SVSHAPE1.skip = 0b11
@@ -482,7 +482,7 @@ def inverse_transform2(vec):
         SVSHAPE1.invxyz = [1,0,1] # inversion if desired
         # k schedule
         SVSHAPE2 = SVSHAPE()
-        SVSHAPE2.lims = [xdim, 4, 0]
+        SVSHAPE2.lims = [xdim, 4, 1]
         SVSHAPE2.mode = 0b01
         SVSHAPE2.submode2 = 0b01
         SVSHAPE2.skip = 0b00
@@ -508,7 +508,7 @@ def inverse_transform2(vec):
 
     # j schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, 0b0000010, 0]
+    SVSHAPE0.lims = [xdim, 0b0000010, 1]
     SVSHAPE0.submode2 = 0b11
     SVSHAPE0.mode = 0b11
     SVSHAPE0.skip = 0b00
@@ -516,7 +516,7 @@ def inverse_transform2(vec):
     SVSHAPE0.invxyz = [1,0,1] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, 0b0000010, 0]
+    SVSHAPE1.lims = [xdim, 0b0000010, 1]
     SVSHAPE1.mode = 0b11
     SVSHAPE1.submode2 = 0b11
     SVSHAPE1.skip = 0b01
@@ -543,7 +543,7 @@ def inverse_transform2(vec):
 
     # j schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, 0b000001, 0]
+    SVSHAPE0.lims = [xdim, 0b000001, 1]
     SVSHAPE0.mode = 0b11
     SVSHAPE0.submode2 = 0b11
     SVSHAPE0.skip = 0b00
@@ -551,7 +551,7 @@ def inverse_transform2(vec):
     SVSHAPE0.invxyz = [0,0,0] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, 0b000001, 0]
+    SVSHAPE1.lims = [xdim, 0b000001, 1]
     SVSHAPE1.mode = 0b11
     SVSHAPE1.submode2 = 0b11
     SVSHAPE1.skip = 0b01
@@ -559,7 +559,7 @@ def inverse_transform2(vec):
     SVSHAPE1.invxyz = [0,0,0] # inversion if desired
     # ci schedule
     SVSHAPE2 = SVSHAPE()
-    SVSHAPE2.lims = [xdim, 0b000001, 0]
+    SVSHAPE2.lims = [xdim, 0b000001, 1]
     SVSHAPE2.mode = 0b11
     SVSHAPE2.submode2 = 0b11
     SVSHAPE2.skip = 0b10
@@ -567,7 +567,7 @@ def inverse_transform2(vec):
     SVSHAPE2.invxyz = [0,0,0] # inversion if desired
     # size schedule
     SVSHAPE3 = SVSHAPE()
-    SVSHAPE3.lims = [xdim, 0b000001, 0]
+    SVSHAPE3.lims = [xdim, 0b000001, 1]
     SVSHAPE3.mode = 0b11
     SVSHAPE3.submode2 = 0b11
     SVSHAPE3.skip = 0b11
@@ -641,7 +641,7 @@ def transform2(vec):
         pass
     # ci schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, 4, 0]
+    SVSHAPE0.lims = [xdim, 4, 1]
     SVSHAPE0.mode = 0b01
     SVSHAPE0.submode2 = 0b01
     SVSHAPE0.skip = 0b10
@@ -649,7 +649,7 @@ def transform2(vec):
     SVSHAPE0.invxyz = [1,0,0] # inversion if desired
     # size schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, 4, 0]
+    SVSHAPE1.lims = [xdim, 4, 1]
     SVSHAPE1.mode = 0b01
     SVSHAPE1.submode2 = 0b01
     SVSHAPE1.skip = 0b11
@@ -657,7 +657,7 @@ def transform2(vec):
     SVSHAPE1.invxyz = [1,0,0] # inversion if desired
     # k schedule
     SVSHAPE2 = SVSHAPE()
-    SVSHAPE2.lims = [xdim, 4, 0]
+    SVSHAPE2.lims = [xdim, 4, 1]
     SVSHAPE2.mode = 0b01
     SVSHAPE2.submode2 = 0b01
     SVSHAPE2.skip = 0b00
@@ -685,7 +685,7 @@ def transform2(vec):
 
     # j schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, 0b000001, 0]
+    SVSHAPE0.lims = [xdim, 0b000001, 1]
     SVSHAPE0.mode = 0b01
     SVSHAPE0.submode2 = 0b01
     SVSHAPE0.skip = 0b00
@@ -693,7 +693,7 @@ def transform2(vec):
     SVSHAPE0.invxyz = [1,0,0] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, 0b000001, 0]
+    SVSHAPE1.lims = [xdim, 0b000001, 1]
     SVSHAPE1.mode = 0b01
     SVSHAPE1.submode2 = 0b01
     SVSHAPE1.skip = 0b01
@@ -701,7 +701,7 @@ def transform2(vec):
     SVSHAPE1.invxyz = [1,0,0] # inversion if desired
     # ci schedule
     SVSHAPE2 = SVSHAPE()
-    SVSHAPE2.lims = [xdim, 0b000001, 0]
+    SVSHAPE2.lims = [xdim, 0b000001, 1]
     SVSHAPE2.mode = 0b01
     SVSHAPE2.submode2 = 0b01
     SVSHAPE2.skip = 0b10
@@ -709,7 +709,7 @@ def transform2(vec):
     SVSHAPE2.invxyz = [1,0,0] # inversion if desired
     # size schedule
     SVSHAPE3 = SVSHAPE()
-    SVSHAPE3.lims = [xdim, 0b000001, 0]
+    SVSHAPE3.lims = [xdim, 0b000001, 1]
     SVSHAPE3.mode = 0b01
     SVSHAPE3.submode2 = 0b01
     SVSHAPE3.skip = 0b11
@@ -743,7 +743,7 @@ def transform2(vec):
 
     # j schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, 0b0000010, 0]
+    SVSHAPE0.lims = [xdim, 0b0000010, 1]
     SVSHAPE0.submode2 = 0b100
     SVSHAPE0.mode = 0b01
     SVSHAPE0.skip = 0b00
@@ -751,7 +751,7 @@ def transform2(vec):
     SVSHAPE0.invxyz = [0,0,0] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, 0b0000010, 0]
+    SVSHAPE1.lims = [xdim, 0b0000010, 1]
     SVSHAPE1.mode = 0b01
     SVSHAPE1.submode2 = 0b100
     SVSHAPE1.skip = 0b01
@@ -779,7 +779,7 @@ def demo_idct():
     n = 8
     xdim = n
     ydim = 0 # not needed
-    zdim = 0 # again, not needed
+    zdim = 1 # again, not needed
 
     # set up an SVSHAPE
     class SVSHAPE:
@@ -791,7 +791,7 @@ def demo_idct():
 
     # j schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, 0b0000010, 0]
+    SVSHAPE0.lims = [xdim, 0b0000010, 1]
     SVSHAPE0.submode2 = 0b11
     SVSHAPE0.mode = 0b11
     SVSHAPE0.skip = 0b00
@@ -799,7 +799,7 @@ def demo_idct():
     SVSHAPE0.invxyz = [1,0,1] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, 0b0000010, 0]
+    SVSHAPE1.lims = [xdim, 0b0000010, 1]
     SVSHAPE1.mode = 0b11
     SVSHAPE1.submode2 = 0b11
     SVSHAPE1.skip = 0b01
@@ -825,7 +825,7 @@ def demo_idct():
 
     # j schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, 0b000001, 0]
+    SVSHAPE0.lims = [xdim, 0b000001, 1]
     SVSHAPE0.mode = 0b11
     SVSHAPE0.submode2 = 0b11
     SVSHAPE0.skip = 0b00
@@ -833,7 +833,7 @@ def demo_idct():
     SVSHAPE0.invxyz = [0,0,0] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, 0b000001, 0]
+    SVSHAPE1.lims = [xdim, 0b000001, 1]
     SVSHAPE1.mode = 0b11
     SVSHAPE1.submode2 = 0b11
     SVSHAPE1.skip = 0b01

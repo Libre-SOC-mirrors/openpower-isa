@@ -45,7 +45,7 @@ def transform_inner_radix2_dct(vec, ctable):
     ################
     xdim = n
     ydim = 0
-    zdim = 0
+    zdim = 1
 
     # set up an SVSHAPE
     class SVSHAPE:
@@ -97,7 +97,7 @@ def transform_outer_radix2_dct(vec):
     # outer butterfly
     xdim = n
     ydim = 0
-    zdim = 0
+    zdim = 1
 
     # j schedule
     class SVSHAPE:
@@ -149,14 +149,14 @@ def transform_inner_radix2_idct(vec, ctable):
     ################
     xdim = n
     ydim = 0
-    zdim = 0
+    zdim = 1
 
     # set up an SVSHAPE
     class SVSHAPE:
         pass
     # j schedule
     SVSHAPE0 = SVSHAPE()
-    SVSHAPE0.lims = [xdim, 0b000001, 0]
+    SVSHAPE0.lims = [xdim, 0b000001, 1]
     SVSHAPE0.mode = 0b11
     SVSHAPE0.submode2 = 0b11
     SVSHAPE0.skip = 0b00
@@ -164,7 +164,7 @@ def transform_inner_radix2_idct(vec, ctable):
     SVSHAPE0.invxyz = [0,0,0] # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
-    SVSHAPE1.lims = [xdim, 0b000001, 0]
+    SVSHAPE1.lims = [xdim, 0b000001, 1]
     SVSHAPE1.mode = 0b11
     SVSHAPE1.submode2 = 0b11
     SVSHAPE1.skip = 0b01
@@ -201,7 +201,7 @@ def transform_outer_radix2_idct(vec):
     # outer butterfly
     xdim = n
     ydim = 0
-    zdim = 0
+    zdim = 1
 
     # reference (read/write) the in-place data in *reverse-bit-order*
     ri = list(range(n))
