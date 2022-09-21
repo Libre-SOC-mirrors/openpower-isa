@@ -357,6 +357,7 @@ class Desc(Struct):
     extra_idx_out: Extra
     extra_idx_out2: Extra
     extra_idx_cr_in: Extra
+    extra_idx_cr_in2: Extra
     extra_idx_cr_out: Extra
 
     @classmethod
@@ -450,7 +451,7 @@ class Codegen(_enum.Enum):
 
             enums = (
                 In1Sel, In2Sel, In3Sel, OutSel,
-                CRInSel, CROutSel,
+                CRInSel, CRIn2Sel, CROutSel,
                 PType, EType, Extra,
                 Mode, Function,
             )
@@ -547,6 +548,9 @@ class Codegen(_enum.Enum):
                 CRInSel.BC: "BC",
                 CRInSel.BA: "BA",
                 CRInSel.WHOLE_REG: "FXM",
+            })
+            yield from opindex(CRIn2Sel, "cr_in2", {
+                CRIn2Sel.BB: "BB",
             })
             yield from opindex(CROutSel, "cr_out", {
                 CROutSel.BF: "BF",
