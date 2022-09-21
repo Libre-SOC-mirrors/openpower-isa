@@ -29,8 +29,7 @@ vpx_get_mb_ss_svp64_real:
 	sv.add/mr	sum, *prod, sum
 	addi in, in, 64				# Advance (in) pointer by 64 bytes
 	bdnz .L2				# Loop until CTR is zero
-	li in, 0				# Zero register 3 (result)
-	addi in, sum, 0				# Add sum to r3
+	mr in, sum				# Set r3 to sum
 	blr
 	.long 0
 	.byte 0,0,0,0,0,0,0,0
