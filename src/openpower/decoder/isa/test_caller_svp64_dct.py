@@ -387,7 +387,13 @@ class DCTTestCase(FHDLTestCase):
                 print ("err", i, err)
                 self.assertTrue(err < 1e-6)
 
-    def test_sv_remap_fpmadds_idct_inner_4(self, stride=2):
+    def test_sv_remap_fpmadds_idct_inner_4_stride_1(self):
+        self.sv_remap_fpmadds_idct_inner_4(stride=2)
+
+    def test_sv_remap_fpmadds_idct_inner_4_stride_1(self):
+        self.sv_remap_fpmadds_idct_inner_4(stride=1)
+
+    def sv_remap_fpmadds_idct_inner_4(self, stride=2):
         """>>> lst = ["svshape 4, 1, 1, 10, 0",
                       "svremap 27, 0, 1, 2, 1, 0, 0",
                       "sv.ffmadds *0, *0, *0, *8"
@@ -450,7 +456,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("err", i, err)
                 self.assertTrue(err < 1e-6)
 
-    def test_sv_remap_fpmadds_idct_outer_8(self):
+    def test_sv_remap_fpmadds_idct_outer_8(self, stride=2):
         """>>> lst = ["svshape 8, 1, 1, 11, 0",
                      "svremap 27, 0, 1, 2, 1, 0, 0",
                          "sv.fadds *0, *0, *0"
@@ -460,7 +466,7 @@ class DCTTestCase(FHDLTestCase):
 
             SVP64 "REMAP" in Butterfly Mode.
         """
-        lst = SVP64Asm( ["svshape 8, 1, 1, 11, 0", # outer butterfly
+        lst = SVP64Asm( ["svshape 8, 1, %d, 11, 0" % stride, # outer butterfly
                          "svremap 27, 0, 1, 2, 1, 0, 0",
                          "sv.fadds *0, *0, *0"
                         ])
@@ -479,7 +485,7 @@ class DCTTestCase(FHDLTestCase):
         # store in regfile
         fprs = [0] * 32
         for i, a in enumerate(av):
-            fprs[i+0] = fp64toselectable(a)
+            fprs[i*stride+0] = fp64toselectable(a)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
@@ -495,12 +501,13 @@ class DCTTestCase(FHDLTestCase):
             res = transform_outer_radix2_idct(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i, float(sim.fpr(i)), "expected", expected)
+                print ("i", i*stride, float(sim.fpr(i*stride)),
+                       "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
-                actual = float(sim.fpr(i))
+                actual = float(sim.fpr(i*stride))
                 # approximate error calculation, good enough test
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
@@ -508,7 +515,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("err", i, err)
                 self.assertTrue(err < 1e-6)
 
-    def test_sv_remap_fpmadds_dct_outer_8(self):
+    def test_sv_remap_fpmadds_dct_outer_8(self, stride=2):
         """>>> lst = ["svshape 8, 1, 1, 3, 0",
                      "svremap 27, 1, 0, 2, 0, 1, 0",
                          "sv.fadds *0, *0, *0"
@@ -518,7 +525,7 @@ class DCTTestCase(FHDLTestCase):
 
             SVP64 "REMAP" in Butterfly Mode.
         """
-        lst = SVP64Asm( ["svshape 8, 1, 1, 3, 0",
+        lst = SVP64Asm( ["svshape 8, 1, %d, 3, 0" % stride,
                          "svremap 27, 1, 0, 2, 0, 1, 0",
                          "sv.fadds *0, *0, *0"
                         ])
@@ -530,7 +537,7 @@ class DCTTestCase(FHDLTestCase):
         # store in regfile
         fprs = [0] * 32
         for i, a in enumerate(av):
-            fprs[i+0] = fp64toselectable(a)
+            fprs[i*stride+0] = fp64toselectable(a)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
@@ -546,12 +553,13 @@ class DCTTestCase(FHDLTestCase):
             res = transform_outer_radix2_dct(av)
 
             for i, expected in enumerate(res):
-                print ("i", i, float(sim.fpr(i)), "expected", expected)
+                print ("i", i*stride, float(sim.fpr(i*stride)),
+                       "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
-                actual = float(sim.fpr(i))
+                actual = float(sim.fpr(i*stride))
                 # approximate error calculation, good enough test
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
@@ -559,21 +567,21 @@ class DCTTestCase(FHDLTestCase):
                 print ("err", i, err)
                 self.assertTrue(err < 1e-6)
 
-    def test_sv_remap_fpmadds_idct_8(self):
+    def test_sv_remap_fpmadds_idct_8(self, stride=2):
         """>>> lst = ["svremap 27, 1, 0, 2, 0, 1, 1",
                          "svshape 8, 1, 1, 11, 0",
                          "sv.fadds *0, *0, *0",
                          "svshape 8, 1, 1, 10, 0",
-                         "sv.ffmadds *0, *0, *0, *8"
+                         "sv.ffmadds *0, *0, *0, *16"
                      ]
             runs a full in-place 8-long O(N log2 N) inverse-DCT, both
             inner and outer butterfly "REMAP" schedules.
         """
         lst = SVP64Asm( ["svremap 27, 0, 1, 2, 1, 0, 1",
-                         "svshape 8, 1, 1, 11, 0",
+                         "svshape 8, 1, %d, 11, 0" % stride,
                          "sv.fadds *0, *0, *0",
-                         "svshape 8, 1, 1, 10, 0",
-                         "sv.ffmadds *0, *0, *0, *8"
+                         "svshape 8, 1, %d, 10, 0" % stride,
+                         "sv.ffmadds *0, *0, *0, *16"
                         ])
         lst = list(lst)
 
@@ -605,9 +613,9 @@ class DCTTestCase(FHDLTestCase):
         # store in regfile
         fprs = [0] * 32
         for i, a in enumerate(av):
-            fprs[i+0] = fp64toselectable(a)
+            fprs[i*stride+0] = fp64toselectable(a)
         for i, c in enumerate(ctable):
-            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+            fprs[i+16] = fp64toselectable(1.0 / c) # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
@@ -628,20 +636,21 @@ class DCTTestCase(FHDLTestCase):
             #res = transform_outer_radix2_idct(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i, float(sim.fpr(i)), "expected", expected)
+                print ("i", i*stride, float(sim.fpr(i*stride)),
+                       "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
-                actual = float(sim.fpr(i))
+                actual = float(sim.fpr(i*stride))
                 # approximate error calculation, good enough test
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print ("err", i*stride, err)
                 self.assertTrue(err < 1e-5)
 
-    def test_sv_remap_fpmadds_dct_8(self):
+    def test_sv_remap_fpmadds_dct_8(self, stride=2):
         """>>> lst = ["svremap 27, 1, 0, 2, 0, 1, 1",
                       "svshape 8, 1, 1, 2, 0",
                       "sv.fdmadds *0, *0, *0, *8"
@@ -652,9 +661,9 @@ class DCTTestCase(FHDLTestCase):
             inner and outer butterfly "REMAP" schedules.
         """
         lst = SVP64Asm( ["svremap 27, 1, 0, 2, 0, 1, 1",
-                         "svshape 8, 1, 1, 2, 0",
-                         "sv.fdmadds *0, *0, *0, *8",
-                         "svshape 8, 1, 1, 3, 0",
+                         "svshape 8, 1, %d, 2, 0" % stride,
+                         "sv.fdmadds *0, *0, *0, *16",
+                         "svshape 8, 1, %d, 3, 0" % stride,
                          "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
@@ -679,9 +688,9 @@ class DCTTestCase(FHDLTestCase):
         # store in regfile
         fprs = [0] * 32
         for i, a in enumerate(av):
-            fprs[i+0] = fp64toselectable(a)
+            fprs[i*stride+0] = fp64toselectable(a)
         for i, c in enumerate(ctable):
-            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+            fprs[i+16] = fp64toselectable(1.0 / c) # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
@@ -697,12 +706,13 @@ class DCTTestCase(FHDLTestCase):
             res = transform2(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i, float(sim.fpr(i)), "expected", expected)
+                print ("i", i*stride, float(sim.fpr(i*stride)),
+                       "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
-                actual = float(sim.fpr(i))
+                actual = float(sim.fpr(i*stride))
                 # approximate error calculation, good enough test
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
@@ -860,7 +870,7 @@ class DCTTestCase(FHDLTestCase):
                                         "err", err)
                 self.assertTrue(err < 1e-6)
 
-    def test_sv_remap_fpmadds_dct_8_mode_4(self):
+    def test_sv_remap_fpmadds_dct_8_mode_4(self, stride=2):
         """>>> lst = ["svremap 31, 1, 0, 2, 0, 1, 1",
                       "svshape 8, 1, 1, 4, 0",
                       "sv.fdmadds *0, *0, *0, *8"
@@ -872,9 +882,9 @@ class DCTTestCase(FHDLTestCase):
             uses shorter tables: FRC also needs to be on a Schedule
         """
         lst = SVP64Asm( ["svremap 31, 1, 0, 2, 0, 1, 1",
-                         "svshape 8, 1, 1, 4, 0",
-                         "sv.fdmadds *0, *0, *0, *8",
-                         "svshape 8, 1, 1, 3, 0",
+                         "svshape 8, 1, %d, 4, 0" % stride,
+                         "sv.fdmadds *0, *0, *0, *16",
+                         "svshape 8, 1, %d, 3, 0" % stride,
                          "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
@@ -898,9 +908,9 @@ class DCTTestCase(FHDLTestCase):
         # store in regfile
         fprs = [0] * 32
         for i, a in enumerate(av):
-            fprs[i+0] = fp64toselectable(a)
+            fprs[i*stride+0] = fp64toselectable(a)
         for i, c in enumerate(ctable):
-            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+            fprs[i+16] = fp64toselectable(1.0 / c) # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
@@ -916,12 +926,13 @@ class DCTTestCase(FHDLTestCase):
             res = transform2(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i, float(sim.fpr(i)), "expected", expected)
+                print ("i", i*stride, float(sim.fpr(i*stride)),
+                       "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
-                actual = float(sim.fpr(i))
+                actual = float(sim.fpr(i*stride))
                 # approximate error calculation, good enough test
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
@@ -929,7 +940,7 @@ class DCTTestCase(FHDLTestCase):
                 print ("err", i, err)
                 self.assertTrue(err < 1e-5)
 
-    def test_sv_remap_fpmadds_ldbrev_dct_8_mode_4(self):
+    def test_sv_remap_fpmadds_ldbrev_dct_8_mode_4(self, stride=1):
         """>>> lst = [# LOAD bit-reversed with half-swap
                       "svshape 8, 1, 1, 6, 0",
                       "svremap 1, 0, 0, 0, 0, 0, 0",
@@ -949,13 +960,13 @@ class DCTTestCase(FHDLTestCase):
             Schedule
         """
         lst = SVP64Asm( ["addi 1, 0, 0x000",
-                         "svshape 8, 1, 1, 6, 0",
+                         "svshape 8, 1, %d, 6, 0" % stride,
                          "svremap 1, 0, 0, 0, 0, 0, 0",
                          "sv.lfs/els *0, 4(1)",
                          "svremap 31, 1, 0, 2, 0, 1, 1",
-                         "svshape 8, 1, 1, 4, 0",
-                         "sv.fdmadds *0, *0, *0, *8",
-                         "svshape 8, 1, 1, 3, 0",
+                         "svshape 8, 1, %d, 4, 0" % stride,
+                         "sv.fdmadds *0, *0, *0, *32",
+                         "svshape 8, 1, %d, 3, 0" % stride,
                          "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
@@ -986,9 +997,9 @@ class DCTTestCase(FHDLTestCase):
             size //= 2
 
         # store in regfile
-        fprs = [0] * 32
+        fprs = [0] * 64
         for i, c in enumerate(ctable):
-            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+            fprs[i+32] = fp64toselectable(1.0 / c) # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs,
@@ -1005,13 +1016,14 @@ class DCTTestCase(FHDLTestCase):
             res = transform2(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i, float(sim.fpr(i)), "expected", expected)
+                print ("i", i*stride, float(sim.fpr(i*stride)),
+                       "expected", expected)
 
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
-                actual = float(sim.fpr(i))
+                actual = float(sim.fpr(i*stride))
                 # approximate error calculation, good enough test
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
