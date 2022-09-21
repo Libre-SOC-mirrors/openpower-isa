@@ -43,7 +43,7 @@ vpx_get4x4sse_cs_svp64_real:
 	# now our values are in consecutive registers and we can set VL to 16 elements
 	setvl		0,0,16,0,1,1
 	# equivalent to: for (i = 0; i < 16; i++) diff[i] = src[i] - ref[i];
-	sv.sub		*diff, *src, *ref
+	sv.subf		*diff, *src, *ref
 	# equivalent to: for (i = 0; i < 16; i++) prod[i] = diff[i] * diff[i];
 	sv.mulld 	*prod, *diff, *diff
 	# equivalent to: for (i = 0; i < 32; i++) sum += prod[i];
