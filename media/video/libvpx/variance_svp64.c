@@ -21,23 +21,6 @@ static const uint8_t bilinear_filters[8][2] = {
   { 64, 64 }, { 48, 80 },  { 32, 96 }, { 16, 112 },
 };
 
-uint32_t vpx_get4x4sse_cs_svp64(const uint8_t *src_ptr, int src_stride,
-                            const uint8_t *ref_ptr, int ref_stride) {
-  int distortion = 0;
-  int r, c;
-
-  for (r = 0; r < 4; ++r) {
-    for (c = 0; c < 4; ++c) {
-      int diff = src_ptr[c] - ref_ptr[c];
-      distortion += diff * diff;
-    }
-
-    src_ptr += src_stride;
-    ref_ptr += ref_stride;
-  }
-
-  return distortion;
-}
 
 static void variance_svp64(const uint8_t *src_ptr, int src_stride,
                      const uint8_t *ref_ptr, int ref_stride, int w, int h,
