@@ -597,7 +597,12 @@ def extra_classifier(insn_name, value, name, res, regs):
 
     elif value == 'RM-1P-3S1D':
         res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
-        if regs == ['RA', 'RB', 'RT', 'RT', '', 'CR0']:
+        if regs == ['RA', 'RB', 'RC', 'RT', '', '']: # madd*
+            res['0'] = 'd:RT'  # RT,CR0: Rdest1_EXTRA2
+            res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
+            res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
+            res['3'] = 's:RC'  # RT: Rsrc3_EXTRA2
+        elif regs == ['RA', 'RB', 'RT', 'RT', '', 'CR0']: # overwrite 3-in
             res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
@@ -607,7 +612,7 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
             res['3'] = 's:BC'  # BC: Rsrc3_EXTRA2
-        else:
+        else: # fmadd*
             res['0'] = 'd:FRT;d:CR1'  # FRT, CR1: Rdest1_EXTRA2
             res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA2
             res['2'] = 's:FRB'  # FRB: Rsrc2_EXTRA2
@@ -640,6 +645,7 @@ def process_csvs(format):
 
     # mapping to old SVPrefix "Forms"
     mapsto = {'3R-1W-CRo': 'RM-1P-3S1D',
+              '3R-1W': 'RM-1P-3S1D',
               '2R-1W-CRio': 'RM-1P-2S1D',
               '2R-1W-CRi': 'RM-1P-3S1D',
               '2R-1W-CRo': 'RM-1P-2S1D',
