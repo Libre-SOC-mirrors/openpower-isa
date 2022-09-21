@@ -48,7 +48,7 @@ def iterate_dct_inner_halfswap_loadstore(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    stride = SVSHAPE.lims[2] + 1
+    stride = SVSHAPE.lims[2]
     print ("inner halfswap loadstore", n, mode, SVSHAPE.skip,
             "submode", SVSHAPE.submode2, "stride", stride)
 
@@ -84,7 +84,7 @@ def iterate_dct_inner_costable_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    stride = SVSHAPE.lims[2] + 1
+    stride = SVSHAPE.lims[2]
     print ("inner costable", mode, "stride", stride)
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
@@ -146,7 +146,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    stride = SVSHAPE.lims[2] + 1
+    stride = SVSHAPE.lims[2]
     print ("inner butterfly", mode, SVSHAPE.skip,
            "submode", SVSHAPE.submode2, "stride", stride)
     # creating lists of indices to iterate over in each dimension
@@ -259,7 +259,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    stride = SVSHAPE.lims[2] + 1
+    stride = SVSHAPE.lims[2]
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
@@ -885,7 +885,7 @@ def demo_dct():
     n = 8
     xdim = n
     ydim = 0 # not needed
-    zdim = 0 # again, not needed
+    zdim = 1 # must be set at least to 1
 
 
     ################

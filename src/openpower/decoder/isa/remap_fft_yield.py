@@ -25,7 +25,8 @@
 def iterate_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
-    stride = SVSHAPE.lims[2] + 1 # stride-multiplier on reg access
+    stride = SVSHAPE.lims[2] # stride-multiplier on reg access
+    print ("iterate fft butterfly", n, "stride", stride)
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
@@ -85,7 +86,7 @@ def demo():
     # set the dimension sizes here
     xdim = 8
     ydim = 0 # not needed
-    zdim = 0 # again, not needed
+    zdim = 1 # stride must be set to 1
 
     # set total. err don't know how to calculate how many there are...
     # do it manually for now
