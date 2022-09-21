@@ -105,6 +105,7 @@ Pseudo-code:
 
     # for convenience, VL to be calculated and stored in SVSTATE
     vlen <- [0] * 7
+    mscale[0:6] <- 0b0000001 # for scaling MAXVL
     itercount[0:6] <- [0] * 7
     SVSTATE[0:31] <- [0] * 32
     # only overwrite REMAP if "persistence" is zero
@@ -156,6 +157,7 @@ Pseudo-code:
         # for FRA and FRT
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D FFT)
+        mscale <- (0b0 || SVzd) + 1
         SVSHAPE0[30:31] <- 0b01          # Butterfly mode
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
@@ -181,6 +183,7 @@ Pseudo-code:
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
+        mscale <- (0b0 || SVzd) + 1
         if (SVrm = 0b1010) | (SVrm = 0b1100) then
             SVSHAPE0[30:31] <- 0b11          # iDCT mode
             SVSHAPE0[18:20] <- 0b011         # iDCT Inner Butterfly sub-mode
@@ -223,6 +226,7 @@ Pseudo-code:
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
+        mscale <- (0b0 || SVzd) + 1
         if (SVrm = 0b1011) then
             SVSHAPE0[30:31] <- 0b11      # iDCT mode
             SVSHAPE0[18:20] <- 0b011     # iDCT Outer Butterfly sub-mode
@@ -253,6 +257,7 @@ Pseudo-code:
         # set up FRB and FRS
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
+        mscale <- (0b0 || SVzd) + 1
         SVSHAPE0[30:31] <- 0b01          # DCT/FFT mode
         SVSHAPE0[6:11] <- 0b000100       # DCT Inner Butterfly COS-gen mode
         if (SVrm = 0b0101) then
@@ -269,6 +274,7 @@ Pseudo-code:
         # set up template in SVSHAPE0
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
+        mscale <- (0b0 || SVzd) + 1
         if (SVrm = 0b1110) then
             SVSHAPE0[18:20] <- 0b001     # DCT opposite half-swap
         if (SVrm = 0b1111) then
@@ -295,14 +301,17 @@ Pseudo-code:
         # set up template in SVSHAPE0, then copy to 1. only 2 needed
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
+        mscale <- (0b0 || SVzd) + 1
         SVSHAPE0[30:31] <- 0b10          # parallel reduce submode
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
         # set up right operand (left operand 28:29 is zero)
         SVSHAPE1[28:29] <- 0b01           # right operand
     # set VL, MVL and Vertical-First
-    SVSTATE[0:6] <- vlen
-    SVSTATE[7:13] <- vlen
+    m[0:12] <- vlen * mscale
+    maxvl[0:6] <- m[6:12]
+    SVSTATE[0:6] <- vlen    # VL
+    SVSTATE[7:13] <- maxvl  # MAVXL
     SVSTATE[63] <- vf
 
 Special Registers Altered:

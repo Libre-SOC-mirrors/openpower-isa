@@ -313,10 +313,10 @@ class DCTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+0), t)
                 self.assertEqual(sim.fpr(i+4), u)
 
-    def test_sv_remap_fpmadds_dct_inner_4(self):
+    def test_sv_remap_fpmadds_dct_inner_4(self, stride=1):
         """>>> lst = ["svshape 4, 1, 1, 2, 0",
                      "svremap 27, 1, 0, 2, 0, 1, 0",
-                        "sv.fdmadds *0, *0, *0, *8"
+                        "sv.fdmadds *0, *0, *0, *32"
                      ]
             runs a full in-place 4-long O(N log2 N) inner butterfly schedule
             for DCT
@@ -328,9 +328,9 @@ class DCTTestCase(FHDLTestCase):
             is straight Vectorised (0123...) because DCT coefficients
             cannot be shared between butterfly layers (due to +0.5)
         """
-        lst = SVP64Asm( ["svshape 4, 1, 1, 2, 0",
+        lst = SVP64Asm( ["svshape 4, 1, %d, 2, 0" % stride,
                          "svremap 27, 1, 0, 2, 0, 1, 0",
-                         "sv.fdmadds *0, *0, *0, *8"
+                         "sv.fdmadds *0, *0, *0, *32"
                         ])
         lst = list(lst)
 
@@ -347,11 +347,11 @@ class DCTTestCase(FHDLTestCase):
         av = [av[ri[i]] for i in range(n)]
 
         # store in regfile
-        fprs = [0] * 32
+        fprs = [0] * 64
         for i, c in enumerate(coe):
-            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+            fprs[i*stride+32] = fp64toselectable(1.0 / c) # invert
         for i, a in enumerate(av):
-            fprs[i+0] = fp64toselectable(a)
+            fprs[i*stride+0] = fp64toselectable(a)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
@@ -367,12 +367,13 @@ class DCTTestCase(FHDLTestCase):
             res = transform_inner_radix2_dct(avi, coe)
 
             for i, expected in enumerate(res):
-                print ("i", i, float(sim.fpr(i)), "expected", expected)
+                print ("i", i*stride, float(sim.fpr(i*stride)),
+                       "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
                 expected = float(expected)
-                actual = float(sim.fpr(i))
+                actual = float(sim.fpr(i*stride))
                 # approximate error calculation, good enough test
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
