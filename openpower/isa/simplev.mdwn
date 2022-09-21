@@ -204,6 +204,7 @@ Pseudo-code:
         SVSHAPE0[28:29] <- 0b01           # j+halfstep schedule
         # for cos coefficient
         SVSHAPE2[28:29] <- 0b10           # ci (k for mode 4) schedule
+        SVSHAPE2[12:17] <- 0b000000       # reset costable "striding" to 1
         if (SVrm != 0b0100) & (SVrm != 0b1100) then
             SVSHAPE3[28:29] <- 0b11           # size schedule
     # set schedule up for (i)DCT Outer butterfly
@@ -236,10 +237,12 @@ Pseudo-code:
             SVSHAPE0[18:20] <- 0b100     # DCT Outer Butterfly sub-mode
         SVSHAPE0[6:11] <- 0b000010       # DCT Butterfly mode
         # copy
-        SVSHAPE1[0:31] <- SVSHAPE0[0:31]
-        SVSHAPE2[0:31] <- SVSHAPE0[0:31]
+        SVSHAPE1[0:31] <- SVSHAPE0[0:31] # j+halfstep schedule
+        SVSHAPE2[0:31] <- SVSHAPE0[0:31] # costable coefficients
         # for FRA and FRT
         SVSHAPE1[28:29] <- 0b01           # j+halfstep schedule
+        # reset costable "striding" to 1
+        SVSHAPE2[12:17] <- 0b000000
     # set schedule up for DCT COS table generation
     if (SVrm = 0b0101) | (SVrm = 0b1101) then
         # calculate O(N log2 N)
@@ -310,8 +313,8 @@ Pseudo-code:
     # set VL, MVL and Vertical-First
     m[0:12] <- vlen * mscale
     maxvl[0:6] <- m[6:12]
-    SVSTATE[0:6] <- vlen    # VL
-    SVSTATE[7:13] <- maxvl  # MAVXL
+    SVSTATE[0:6] <- maxvl  # MAVXL
+    SVSTATE[7:13] <- vlen  # VL
     SVSTATE[63] <- vf
 
 Special Registers Altered:
