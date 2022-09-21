@@ -397,6 +397,9 @@ class Opcodes(Object, c_typedef="const struct svp64_opcode *"):
         self.__offset = offset
         return super().__init__()
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.__offset})"
+
     @classmethod
     def c_var(cls, name, prefix="", suffix=""):
         return f"{prefix}{cls.c_typedef}{name}{suffix}"
