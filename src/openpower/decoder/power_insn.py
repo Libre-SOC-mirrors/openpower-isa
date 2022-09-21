@@ -398,6 +398,7 @@ class SVP64Record:
     extra_idx_out = property(_functools.partial(extra_idx, key="out"))
     extra_idx_out2 = property(_functools.partial(extra_idx, key="out2"))
     extra_idx_cr_in = property(_functools.partial(extra_idx, key="cr_in"))
+    extra_idx_cr_in2 = property(_functools.partial(extra_idx, key="cr_in2"))
     extra_idx_cr_out = property(_functools.partial(extra_idx, key="cr_out"))
 
     @_functools.lru_cache(maxsize=None)
@@ -410,6 +411,7 @@ class SVP64Record:
     extra_reg_out = property(_functools.partial(extra_reg, key="out"))
     extra_reg_out2 = property(_functools.partial(extra_reg, key="out2"))
     extra_reg_cr_in = property(_functools.partial(extra_reg, key="cr_in"))
+    extra_reg_cr_in2 = property(_functools.partial(extra_reg, key="cr_in2"))
     extra_reg_cr_out = property(_functools.partial(extra_reg, key="cr_out"))
 
 
@@ -1028,6 +1030,7 @@ class Record:
     extra_idx_out = property(lambda self: self.svp64.extra_idx_out)
     extra_idx_out2 = property(lambda self: self.svp64.extra_idx_out2)
     extra_idx_cr_in = property(lambda self: self.svp64.extra_idx_cr_in)
+    extra_idx_cr_in2 = property(lambda self: self.svp64.extra_idx_cr_in2)
     extra_idx_cr_out = property(lambda self: self.svp64.extra_idx_cr_out)
 
 
