@@ -25,7 +25,8 @@
 def iterate_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
-    # createing lists of indices to iterate over in each dimension
+    stride = SVSHAPE.lims[2] + 1 # stride-multiplier on reg access
+    # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
     x_r = []
@@ -78,7 +79,7 @@ def iterate_butterfly_indices(SVSHAPE):
                                ((y_end and z_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
 
-                    yield result + SVSHAPE.offset, loopends
+                    yield (result * stride) + SVSHAPE.offset, loopends
 
 def demo():
     # set the dimension sizes here

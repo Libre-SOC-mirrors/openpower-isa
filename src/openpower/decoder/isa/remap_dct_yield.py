@@ -48,8 +48,9 @@ def iterate_dct_inner_halfswap_loadstore(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
+    stride = SVSHAPE.lims[2] + 1
     print ("inner halfswap loadstore", n, mode, SVSHAPE.skip,
-            "submode", SVSHAPE.submode2)
+            "submode", SVSHAPE.submode2, "stride", stride)
 
     # reference list for not needing to do data-swaps, just swap what
     # *indices* are referenced (two levels of indirection at the moment)
@@ -74,7 +75,7 @@ def iterate_dct_inner_halfswap_loadstore(SVSHAPE):
 
     for i, jl in enumerate(ji):
         y_end = jl == ji[-1]
-        yield jl, (0b111 if y_end else 0b000)
+        yield jl * stride, (0b111 if y_end else 0b000)
 
 
 # python "yield" can be iterated. use this to make it clear how
@@ -83,7 +84,8 @@ def iterate_dct_inner_costable_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    print ("inner costable", mode)
+    stride = SVSHAPE.lims[2] + 1
+    print ("inner costable", mode, "stride", stride)
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
@@ -135,7 +137,7 @@ def iterate_dct_inner_costable_indices(SVSHAPE):
                            ((y_end and z_end)<<1) |
                             ((y_end and x_end and z_end)<<2))
 
-                yield result + SVSHAPE.offset, loopends
+                yield (result * stride) + SVSHAPE.offset, loopends
                 k += 1
 
 # python "yield" can be iterated. use this to make it clear how
@@ -144,7 +146,9 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
-    print ("inner butterfly", mode, SVSHAPE.skip, "submode", SVSHAPE.submode2)
+    stride = SVSHAPE.lims[2] + 1
+    print ("inner butterfly", mode, SVSHAPE.skip,
+           "submode", SVSHAPE.submode2, "stride", stride)
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
@@ -234,7 +238,7 @@ def iterate_dct_inner_butterfly_indices(SVSHAPE):
                                ((y_end and z_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
 
-                    yield result + SVSHAPE.offset, loopends
+                    yield (result * stride) + SVSHAPE.offset, loopends
                     k += 1
 
                 # now in-place swap
@@ -255,6 +259,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
     # get indices to iterate over, in the required order
     n = SVSHAPE.lims[0]
     mode = SVSHAPE.lims[1]
+    stride = SVSHAPE.lims[2] + 1
     # creating lists of indices to iterate over in each dimension
     # has to be done dynamically, because it depends on the size
     # first, the size-based loop (which can be done statically)
@@ -347,7 +352,7 @@ def iterate_dct_outer_butterfly_indices(SVSHAPE):
                                ((y_end and z_end)<<1) |
                                 ((y_end and x_end and z_end)<<2))
 
-                    yield result + SVSHAPE.offset, loopends
+                    yield (result * stride) + SVSHAPE.offset, loopends
                     k += 1
 
                 # now in-place swap (disabled)
