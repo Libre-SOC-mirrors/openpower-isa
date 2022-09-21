@@ -796,7 +796,7 @@ class SVP64Asm:
         svp64 = self.svp64
         insn_no_comments = insn.partition('#')[0]
         # find first space, to get opcode
-        ls = insn_no_comments.split(' ')
+        ls = insn_no_comments.split()
         opcode = ls[0]
         # now find opcode fields
         fields = ''.join(ls[1:]).split(',')
@@ -1488,6 +1488,13 @@ def macro_subst(macros, txt):
             if toreplace == txt:
                 again = True
                 replaced = txt.replace(toreplace, "%s.v" % value)
+                log("macro", txt, "replaced", replaced, toreplace, value)
+                txt = replaced
+                continue
+            toreplace = '*%s' % macro
+            if toreplace in txt:
+                again = True
+                replaced = txt.replace(toreplace, '*%s' % value)
                 log("macro", txt, "replaced", replaced, toreplace, value)
                 txt = replaced
                 continue
