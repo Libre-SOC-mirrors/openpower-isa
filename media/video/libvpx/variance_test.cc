@@ -184,7 +184,7 @@ class SumOfSquaresTest : public ::testing::TestWithParam<SumOfSquaresFunction> {
 void SumOfSquaresTest::ConstTest() {
   int16_t mem[256];
   unsigned int res;
-  for (int v = 0; v < 20; ++v) {
+  for (int v = 0; v < 5; ++v) {
     for (int i = 0; i < 256; ++i) {
       mem[i] = v;
     }
@@ -195,7 +195,7 @@ void SumOfSquaresTest::ConstTest() {
 
 void SumOfSquaresTest::RefTest() {
   int16_t mem[256];
-  for (int i = 0; i < 20; ++i) {
+  for (int i = 0; i < 5; ++i) {
     for (int j = 0; j < 256; ++j) {
       mem[j] = rnd_.Rand8() - rnd_.Rand8();
     }
