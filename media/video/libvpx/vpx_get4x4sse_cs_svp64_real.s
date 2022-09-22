@@ -32,7 +32,6 @@ vpx_get4x4sse_cs_svp64_real:
 	sv.lha 	*src + 8, 0(src_ptr)
 	add 	src_ptr, src_ptr, src_stride
 	sv.lha 	*src + 12, 0(src_ptr)
-	setvl	0,0,4,0,1,1			# Set VL to 4 elements
 	sv.lha	*ref, 0(ref_ptr)		# Load 4 ints from (ref_ptr)
 	add 	ref_ptr, ref_ptr, ref_stride	# Advance ref_ptr by ref_stride
 	sv.lha 	*ref + 4, 0(ref_ptr)
