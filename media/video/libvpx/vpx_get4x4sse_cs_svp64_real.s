@@ -46,7 +46,7 @@ vpx_get4x4sse_cs_svp64_real:
 	sv.subf		*diff, *src, *ref
 	# equivalent to: for (i = 0; i < 16; i++) prod[i] = diff[i] * diff[i];
 	sv.mulld 	*prod, *diff, *diff
-	# equivalent to: for (i = 0; i < 32; i++) sum += prod[i];
+	# equivalent to: for (i = 0; i < 16; i++) sum += prod[i];
 	sv.add/mr	sum, *prod, sum
 	mr 3, sum				# Set r3 to sum
 	blr
