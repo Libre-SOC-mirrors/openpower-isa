@@ -23,6 +23,8 @@ vpx_get_mb_ss_svp64_real:
 	setvl 0,0,32,0,1,1			# Set VL to 32 elements
 .L2:
 	sv.lha	 	*src, 0(in)		# Load 32 ints from (in)
+    # XXX these next two should be doable as "sv.maddld/mr sum, *src, *src, sum"
+    # but we have to wait for an update to binutils
 	# equivalent to: for (i = 0; i < 32; i++) vprod[i] = src[i] * src[i];
 	sv.mulld 	*prod, *src, *src
 	# equivalent to: for (i = 0; i < 32; i++) sum += prod[i];
