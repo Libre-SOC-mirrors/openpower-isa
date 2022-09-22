@@ -338,6 +338,38 @@ class Name(Object, str, c_typedef="const char *"):
         return f"{prefix}const char *{name}{suffix}"
 
 
+class BooleanMeta(ObjectMeta):
+    def __len__(cls):
+        return 1
+
+
+class Boolean(Object, metaclass=BooleanMeta):
+    def __init__(self, value):
+        self.__state = bool(value)
+        return super().__init__()
+
+    def __bool__(self):
+        return self.__state
+
+    def __repr__(self):
+        return self.__state.__repr__()
+
+    @property
+    def name(self):
+        return "true" if self else "false"
+
+    @property
+    def value(self):
+        return "true" if self else "false"
+
+    def c_value(self, *, prefix="", suffix="", **kwargs):
+        yield f"{prefix}{self.value}{suffix}"
+
+    @classmethod
+    def c_var(cls, name, prefix="", suffix=""):
+        return f"{prefix}bool {name}{suffix}"
+
+
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Desc(Struct):
     mode: Mode
@@ -359,6 +391,7 @@ class Desc(Struct):
     extra_idx_cr_in: Extra
     extra_idx_cr_in2: Extra
     extra_idx_cr_out: Extra
+    Rc: Boolean
 
     @classmethod
     def c_decl(cls):
@@ -495,6 +528,7 @@ class Codegen(_enum.Enum):
             yield from disclaimer.splitlines()
             yield ""
 
+            yield "#include <stdbool.h>"
             yield "#include \"opcode/ppc-svp64.h\""
             yield ""
 
@@ -627,7 +661,9 @@ def collect(db):
                 desc = None
                 break
 
-            if issubclass(cls, _enum.Enum):
+            if issubclass(cls, Boolean):
+                value = Boolean(value)
+            elif issubclass(cls, _enum.Enum):
                 value = cls[value.name]
             else:
                 value = cls(value)
