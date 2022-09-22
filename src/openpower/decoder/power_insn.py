@@ -1042,6 +1042,12 @@ class Record:
     extra_idx_cr_in2 = property(lambda self: self.svp64.extra_idx_cr_in2)
     extra_idx_cr_out = property(lambda self: self.svp64.extra_idx_cr_out)
 
+    @cached_property
+    def Rc(self):
+        Rc = self.mdwn.operands["Rc"]
+        if Rc is None:
+            return False
+        return bool(Rc.value)
 
 class Instruction(_Mapping):
     @classmethod
@@ -1842,8 +1848,9 @@ class RM(BaseRM):
     cr_op: CROpRM
     branch: BranchRM
 
-    def select(self, record, Rc):
+    def select(self, record):
         rm = self
+        Rc = record.Rc
 
         # the idea behind these tables is that they are now literally
         # in identical format to insndb.csv and minor_xx.csv and can
@@ -1993,10 +2000,7 @@ class SVP64Instruction(PrefixedInstruction):
 
         name = f"sv.{record.name}"
 
-        Rc = False
-        if record.mdwn.operands["Rc"] is not None:
-            Rc = bool(record.mdwn.operands["Rc"].value)
-        rm = self.prefix.rm.select(record=record, Rc=Rc)
+        rm = self.prefix.rm.select(record=record)
 
         # convert specifiers to /x/y/z (sorted lexicographically)
         specifiers = sorted(rm.specifiers(record=record))
