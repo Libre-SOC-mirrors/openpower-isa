@@ -990,8 +990,8 @@ class Record:
         return False
 
     @property
-    def function(self):
-        return self.ppc.function
+    def mode(self):
+        return self.svp64.mode
 
     @property
     def in1(self):

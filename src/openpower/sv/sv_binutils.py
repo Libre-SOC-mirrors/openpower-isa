@@ -18,7 +18,7 @@ from openpower.decoder.power_enums import (
     SVPtype as _SVPtype,
     SVEtype as _SVEtype,
     SVExtra as _SVExtra,
-    Function as _Function,
+    SVMode as _SVMode,
     find_wiki_dir as _find_wiki_dir,
 )
 from openpower.consts import SVP64MODE as _SVP64MODE
@@ -184,7 +184,7 @@ CROutSel = Enum("CROutSel", _CROutSel, c_tag="svp64_cr_out_sel")
 PType = Enum("PType", _SVPtype, c_tag="svp64_ptype")
 EType = Enum("EType", _SVEtype, c_tag="svp64_etype", exclude="NONE")
 Extra = Enum("Extra", _SVExtra, c_tag="svp64_extra", exclude="Idx_1_2")
-Function = Enum("Function", _Function, c_tag="svp64_function")
+Mode = Enum("Mode", _SVMode, c_tag="svp64_mode")
 
 
 class Constant(_enum.Enum, metaclass=EnumMeta):
@@ -201,7 +201,7 @@ class Constant(_enum.Enum, metaclass=EnumMeta):
         yield f"{prefix}{self.c_tag.upper()}_{self.c_name.upper()}{suffix}"
 
 
-Mode = Constant("Mode", _SVP64MODE)
+ModeConst = Constant("Mode", _SVP64MODE)
 
 
 class StructMeta(ObjectMeta):
@@ -340,7 +340,7 @@ class Name(Object, str, c_typedef="const char *"):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Desc(Struct):
-    function: Function
+    mode: Mode
     in1: In1Sel
     in2: In2Sel
     in3: In3Sel
@@ -456,7 +456,7 @@ class Codegen(_enum.Enum):
                 In1Sel, In2Sel, In3Sel, OutSel,
                 CRInSel, CRIn2Sel, CROutSel,
                 PType, EType, Extra,
-                Mode, Function,
+                Mode, ModeConst,
             )
             for enum in enums:
                 yield from enum.c_decl()
