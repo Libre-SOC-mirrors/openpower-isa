@@ -46,29 +46,30 @@ Pseudo-code:
         testbit = SNZ
     else
         testbit <- CR[BI+32]
-    # actual element test here
-    cond_ok <- BO[0] | ¬(testbit ^ BO[1])
-    # test for VL to be set (and exit)
-    if VLSET & (cond_ok = VSb) then
-        if VLI then
-            SVSTATE[7:13] <- (srcstep+1)
-        else
-            SVSTATE[7:13] <- srcstep+1
-        end_loop <- 0b1
-    # XXX if svstep_mode then
-    # XXX   SVSTATE.srcstep = new_srcstep
-    # actual branch
+    # test CTR mode here
     if (mode_is_64bit) then M <- 0
     else M <- 32
     if ¬BO[2] then CTR <- CTR - 1
     ctr_ok <- BO[2] | ((CTR[M:63] != 0) ^ BO[3])
+    # actual element test here
+    cond_ok <- BO[0] | ¬(testbit ^ BO[1])
+    # test for VL to be set (and exit)
+    if VLSET & ((cond_ok & ctr_ok) = VSb) then
+        if VLI then
+            SVSTATE[7:13] <- (srcstep+1)
+        else
+            SVSTATE[7:13] <- srcstep
+        end_loop <- 0b1
+    # XXX if svstep_mode then
+    # XXX   SVSTATE.srcstep = new_srcstep
+    # actual branch
     test_branch <- 0b1
     if ALL then
         # in ALL mode only try branching at end of loop
         if ¬end_loop then
             test_branch <- 0b0
         # test early-exit. ALL will exit if cond_ok fails
-        if ¬cond_ok then
+        if ¬(cond_ok & ctr_ok) then
             end_loop <- 0b1
             test_branch <- 0b0
     lr_ok <- LRu

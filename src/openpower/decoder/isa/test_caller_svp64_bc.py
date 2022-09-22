@@ -104,6 +104,44 @@ class DecoderTestCase(FHDLTestCase):
                 else:
                     self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
 
+    def test_sv_branch_ctr(self):
+        """XXX under development, seems to be good.
+        basically this will reduce CTR under a *vector* loop, where BO[0]
+        is 1 so there is no CR-bit-test, and BO[2] is 0 so there is a CTR-zero
+        test.  when the CTR-zero test fails the loop is exited, with CTR
+        having been reduced by up to at least VL times.  without VLSET
+        mode at the same time (which truncates VL at this same fail-point)
+        however this is not necessarily so useful, but at least the branch
+        occurs with CTR being reduced *at least* by VL.
+        """
+        for i in [1,2,3]:
+            lst = SVP64Asm(
+                [
+                "sv.bc/ctr/all 16, *0, 0xc", # branch, test CTR, reducing by VL
+                "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
+                "or 0, 0, 0"]          # branch target
+                )
+            lst = list(lst)
+
+            # SVSTATE (in this case, VL=2)
+            svstate = SVP64State()
+            svstate.vl = 2 # VL
+            svstate.maxvl = 2 # MAXVL
+            print ("SVSTATE", bin(svstate.asint()))
+            sprs = {'CTR': i}
+
+            with Program(lst, bigendian=False) as program:
+                sim = self.run_tst_program(program, svstate=svstate,
+                                           initial_sprs=sprs)
+                sim.gpr.dump()
+                sim.spr.dump()
+                if i != 3:
+                    self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
+                    self.assertEqual(sim.spr('CTR'), SelectableInt(0, 64))
+                else:
+                    self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
+                    self.assertEqual(sim.spr('CTR'), SelectableInt(1, 64))
+
     def tst_sv_add_cr(self):
         """>>> lst = ['sv.add. *1, *5, *9'
                        ]
@@ -147,10 +185,12 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR1, SelectableInt(4, 4))
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None):
+                              svstate=None,
+                              initial_sprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
-        simulator = run_tst(prog, initial_regs, svstate=svstate)
+        simulator = run_tst(prog, initial_regs, svstate=svstate,
+                            initial_sprs=initial_sprs)
         simulator.gpr.dump()
         return simulator
 

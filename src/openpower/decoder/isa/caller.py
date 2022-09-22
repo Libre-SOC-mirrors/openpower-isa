@@ -2086,7 +2086,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         end_dst = dststep == vl-1
         loopend = ((end_src and ssubstep == subvl) or
                    (end_dst and dsubstep == subvl))
-        log("loopend", loopend, end_src, end_dst,
+        log("loopend", svp64_is_vector, loopend, end_src, end_dst,
                                 ssubstep == subvl, dsubstep == subvl)
         if not svp64_is_vector or loopend:
             # reset loop to zero and update NIA
