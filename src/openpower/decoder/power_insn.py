@@ -1486,11 +1486,6 @@ class NormalSMRRM(MRBaseRM, NormalBaseRM):
     RG: BaseRM.mode[4]
 
 
-class NormalReservedRM(NormalBaseRM):
-    """normal: reserved"""
-    pass
-
-
 class NormalFFRc1RM(FFPRRc1BaseRM, NormalBaseRM):
     """normal: Rc=1: ffirst CR sel"""
     inv: BaseRM.mode[2]
@@ -1544,7 +1539,6 @@ class NormalPRRc0RM(FFPRRc0BaseRM, ZZBaseRM, NormalBaseRM):
 class NormalRM(NormalBaseRM):
     simple: NormalSimpleRM
     smr: NormalSMRRM
-    reserved: NormalReservedRM
     ffrc1: NormalFFRc1RM
     ffrc0: NormalFFRc0RM
     sat: NormalSatRM
@@ -1568,8 +1562,8 @@ class LDSTImmSimpleRM(ElsBaseRM, ZZBaseRM, LDSTImmBaseRM):
     sz: BaseRM.mode[3]
 
 
-class LDSTImmReservedRM(LDSTImmBaseRM):
-    """ld/st immediate: reserved"""
+class LDSTImmRsvdRM(LDSTImmBaseRM):
+    """ld/st immediate: rsvd"""
     pass
 
 
@@ -1622,7 +1616,7 @@ class LDSTImmPRRc0RM(FFPRRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
 
 class LDSTImmRM(LDSTImmBaseRM):
     simple: LDSTImmSimpleRM
-    reserved: LDSTImmReservedRM
+    rsvd: LDSTImmRsvdRM
     ffrc1: LDSTImmFFRc1RM
     ffrc0: LDSTImmFFRc0RM
     sat: LDSTImmSatRM
@@ -1879,13 +1873,13 @@ class RM(BaseRM):
             # ironically/coincidentally this table is identical to NORMAL
             # mode except reserved in place of smr
             table = (
-                (0b000000, 0b111000, "simple"),   # simple     (no Rc)
-                (0b001000, 0b111000, "reserved"), # rsvd       (no Rc)
-                (0b010000, 0b110001, "ffrc0"),    # ffirst,     Rc=0
-                (0b010001, 0b110001, "ffrc1"),    # ffirst,     Rc=1
-                (0b100000, 0b110000, "sat"),      # saturation (no Rc)
-                (0b110000, 0b110001, "prrc0"),    # predicate,  Rc=0
-                (0b110001, 0b110001, "prrc1"),    # predicate,  Rc=1
+                (0b000000, 0b111000, "simple"), # simple     (no Rc)
+                (0b001000, 0b111000, "rsvd"),   # rsvd       (no Rc)
+                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
+                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
+                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
+                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
             )
             rm = rm.ldst_imm
             search = ((int(rm.mode) << 1) | Rc)
