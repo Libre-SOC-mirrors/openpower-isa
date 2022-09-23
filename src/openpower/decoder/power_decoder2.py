@@ -1033,14 +1033,21 @@ class PowerDecodeSubset(Elaboratable):
             comb += major.eq(self.dec.opcode_in[26:32])
             xo = Signal(10)
             comb += xo.eq(self.dec.opcode_in[1:11])
-            comb += self.implicit_rs.eq((major == 59) & xo.matches(
-                '-----00100',  # ffmsubs
-                '-----00101',  # ffmadds
-                '-----00110',  # ffnmsubs
-                '-----00111',  # ffnmadds
-                '1111100000',  # ffadds
-                '-----11011',  # fdmadds
-            ))
+            with m.If((major == 59) & xo.matches(
+                    '-----00100',  # ffmsubs
+                    '-----00101',  # ffmadds
+                    '-----00110',  # ffnmsubs
+                    '-----00111',  # ffnmadds
+                    '1111100000',  # ffadds
+                    '-----11011',  # fdmadds
+                )):
+                comb += self.implicit_rs.eq(1)
+            xo6 = Signal(6)
+            comb += xo6.eq(self.dec.opcode_in[0:6])
+            with m.If((major == 4) & xo6.matches(
+                    '11100-',  # pcdec
+                )):
+                comb += self.implicit_rs.eq(1)
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
