@@ -1523,7 +1523,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             return
 
         # look up instruction in ISA.instrs, prepare namespace
-        info = self.instrs[ins_name]
+        if ins_name == 'pcdec': # grrrr yes there are others ("stbcx." etc.)
+            info = self.instrs[ins_name+"."]
+        else:
+            info = self.instrs[ins_name]
         yield from self.prep_namespace(ins_name, info.form, info.op_fields)
 
         # preserve order of register names
@@ -1660,7 +1663,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 if name == 'CA32':
                     already_done |= 2
 
-        log("carry already done?", bin(already_done))
+        log("carry already done?", bin(already_done), output_names)
         carry_en = yield self.dec2.e.do.output_carry
         if carry_en:
             yield from self.handle_carry_(inputs, results, already_done)
@@ -1671,6 +1674,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             for name, output in zip(output_names, results):
                 if name == 'overflow':
                     overflow = output
+
+        # and one called CR0
+        cr0 = None
+        if info.write_regs:
+            for name, output in zip(output_names, results):
+                if name == 'CR0':
+                    cr0 = output
 
         if not self.is_svp64_mode:  # yeah just no. not in parallel processing
             # detect if overflow was in return result
@@ -1685,15 +1695,22 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if not self.is_svp64_mode or not pred_dst_zero:
             if hasattr(self.dec2.e.do, "rc"):
                 rc_en = yield self.dec2.e.do.rc.rc
+        # argh - these are *always* Rc=1 (but not really, they do write to CR0)
+        if ins_name == 'pcdec': # TODO add stbcx etc. when supported
+            log ("hack-enable Rc=1 for %s - CR0" % ins_name, cr0)
+            rc_en = True
+        # don't do Rc=1 for svstep it is handled explicitly.
+        # XXX TODO: now that CR0 is supported, sort out svstep's pseudocode
+        # to write directly to CR0 instead of in ISACaller. hooyahh.
         if rc_en and ins_name not in ['svstep']:
-            yield from self.do_rc_ov(ins_name, results, overflow)
+            yield from self.do_rc_ov(ins_name, results, overflow, cr0)
 
         # any modified return results?
         yield from self.do_outregs_nia(asmop, ins_name, info,
                                        output_names, results,
                                        carry_en, rc_en)
 
-    def do_rc_ov(self, ins_name, results, overflow):
+    def do_rc_ov(self, ins_name, results, overflow, cr0):
         if ins_name.startswith("f"):
             rc_reg = "CR1"  # not calculated correctly yet (not FP compares)
         else:
@@ -1707,7 +1724,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             cmps = (SelectableInt(vl, 64), overflow,)
         else:
             overflow = None  # do not override overflow except in setvl
-        self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
+
+        # if there was not an explicit CR0 in the pseudocode, do implicit Rc=1
+        if cr0 is None:
+            self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
+            return
+        # otherwise we just blat CR0 into the required regnum
+        log("explicit rc0", cr0)
+        self.crl[regnum].eq(cr0)
 
     def do_outregs_nia(self, asmop, ins_name, info, output_names, results,
                        carry_en, rc_en):

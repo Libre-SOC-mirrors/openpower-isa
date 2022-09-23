@@ -564,7 +564,9 @@ def fishmv(fields):
     )
 
 
-@_custom_insns()
+@_custom_insns(
+    _insn("pcdec."), # named "pcdec." because it always writes to CR0
+)
 def pcdec(fields):
     # 1.6.21.1 VA2-FORM
     #    |0      |6     |11     |16     |21  |24|26  |31  |
@@ -1642,6 +1644,7 @@ if __name__ == '__main__':
         'sv.ld 5.v, 4(1.v)',
         'sv.stw 5.v, 4(1.v)',
         'sv.bc/all 3,12,192',
+        'pcdec. 0,0,0,0,0',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))
