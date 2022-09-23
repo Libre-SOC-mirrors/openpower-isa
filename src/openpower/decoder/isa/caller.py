@@ -1695,10 +1695,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if not self.is_svp64_mode or not pred_dst_zero:
             if hasattr(self.dec2.e.do, "rc"):
                 rc_en = yield self.dec2.e.do.rc.rc
-        # argh - these are *always* Rc=1 (but not really, they do write to CR0)
-        if ins_name == 'pcdec': # TODO add stbcx etc. when supported
-            log ("hack-enable Rc=1 for %s - CR0" % ins_name, cr0)
-            rc_en = True
         # don't do Rc=1 for svstep it is handled explicitly.
         # XXX TODO: now that CR0 is supported, sort out svstep's pseudocode
         # to write directly to CR0 instead of in ISACaller. hooyahh.
