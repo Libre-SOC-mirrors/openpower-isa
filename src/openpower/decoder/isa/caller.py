@@ -445,7 +445,7 @@ def get_pdecode_cr_out(dec2, name):
     if name == 'CR0':
         if out_sel == CROutSel.CR0.value:
             return out, o_isvec
-    if name == 'CR1': # these are not actually calculated correctly
+    if name == 'CR1':  # these are not actually calculated correctly
         if out_sel == CROutSel.CR1.value:
             return out, o_isvec
     log("get_pdecode_cr_out not found", name)
@@ -547,31 +547,31 @@ class StepLoop:
                     self.svstate.ssubstep += SelectableInt(1, 2)
                 self.svstate.srcstep = SelectableInt(0, 7)  # reset
             else:
-                self.svstate.srcstep += SelectableInt(1, 7) # advance srcstep
+                self.svstate.srcstep += SelectableInt(1, 7)  # advance srcstep
         else:
             # these cannot be done as for-loops because SVSTATE may change
             # (srcstep/substep may be modified, interrupted, subvl/vl change)
             # but they *can* be done as while-loops as long as every SVSTATE
             # "thing" is re-read every single time a yield gives indices
-            while True: # outer vl loop
-                while True: # inner subvl loop
+            while True:  # outer vl loop
+                while True:  # inner subvl loop
                     subvl = self.subvl
                     srcmask = self.srcmask
                     srcstep = self.svstate.srcstep
                     if self.pred_sz or ((1 << srcstep) & srcmask) != 0:
                         log("    advance src", srcstep, self.svstate.vl,
-                                               self.svstate.ssubstep, subvl)
+                            self.svstate.ssubstep, subvl)
                         # yield actual substep/srcstep
                         yield (self.svstate.ssubstep, srcstep)
-                    if self.svstate.ssubstep == subvl: # end-point
+                    if self.svstate.ssubstep == subvl:  # end-point
                         self.svstate.ssubstep = SelectableInt(0, 2)  # reset
                         break
                     self.svstate.ssubstep += SelectableInt(1, 2)
                 vl = self.svstate.vl
-                if srcstep == vl-1: # end-point
+                if srcstep == vl-1:  # end-point
                     self.svstate.srcstep = SelectableInt(0, 7)  # reset
-                    break # trigger StopIteration
-                self.svstate.srcstep += SelectableInt(1, 7) # advance srcstep
+                    break  # trigger StopIteration
+                self.svstate.srcstep += SelectableInt(1, 7)  # advance srcstep
 
     def dst_iterator(self):
         """dest-stepping iterator
@@ -581,31 +581,31 @@ class StepLoop:
         # dest step
         if unpack:
             # pack advances subvl in *outer* loop
-            pass # TODO
+            pass  # TODO
         else:
             # these cannot be done as for-loops because SVSTATE may change
             # (dststep/substep may be modified, interrupted, subvl/vl change)
             # but they *can* be done as while-loops as long as every SVSTATE
             # "thing" is re-read every single time a yield gives indices
-            while True: # outer vl loop
-                while True: # inner subvl loop
+            while True:  # outer vl loop
+                while True:  # inner subvl loop
                     subvl = self.subvl
                     dstmask = self.dstmask
                     dststep = self.svstate.dststep
                     if self.pred_dz or ((1 << dststep) & dstmask) != 0:
                         log("    advance dst", dststep, self.svstate.vl,
-                                               self.svstate.dsubstep, subvl)
+                            self.svstate.dsubstep, subvl)
                         # yield actual substep/dststep
                         yield (self.svstate.dsubstep, dststep)
-                    if self.svstate.dsubstep == subvl: # end-point
+                    if self.svstate.dsubstep == subvl:  # end-point
                         self.svstate.dsubstep = SelectableInt(0, 2)  # reset
                         break
                     self.svstate.dsubstep += SelectableInt(1, 2)
                 vl = self.svstate.vl
-                if dststep == vl-1: # end-point
+                if dststep == vl-1:  # end-point
                     self.svstate.dststep = SelectableInt(0, 7)  # reset
-                    break # trigger StopIteration
-                self.svstate.dststep += SelectableInt(1, 7) # advance dststep
+                    break  # trigger StopIteration
+                self.svstate.dststep += SelectableInt(1, 7)  # advance dststep
 
     def src_iterate(self):
         """source-stepping iterator
@@ -617,8 +617,8 @@ class StepLoop:
         ssubstep = self.svstate.ssubstep
         end_ssub = ssubstep == subvl
         log("    pack/unpack/subvl", pack, unpack, subvl,
-                                     "end", end_src,
-                                     "sub", end_ssub)
+            "end", end_src,
+            "sub", end_ssub)
         # first source step
         srcstep = self.svstate.srcstep
         if pack:
@@ -628,7 +628,7 @@ class StepLoop:
                     self.svstate.ssubstep += SelectableInt(1, 2)
                 self.svstate.srcstep = SelectableInt(0, 7)  # reset
             else:
-                self.svstate.srcstep += SelectableInt(1, 7) # advance srcstep
+                self.svstate.srcstep += SelectableInt(1, 7)  # advance srcstep
         else:
             # advance subvl in *inner* loop
             if end_ssub:
@@ -636,7 +636,8 @@ class StepLoop:
                     self.svstate.srcstep += SelectableInt(1, 7)
                 self.svstate.ssubstep = SelectableInt(0, 2)  # reset
             else:
-                self.svstate.ssubstep += SelectableInt(1, 2) # advance ssubstep
+                # advance ssubstep
+                self.svstate.ssubstep += SelectableInt(1, 2)
 
         log("    advance src", self.svstate.srcstep, self.svstate.ssubstep)
 
@@ -650,8 +651,8 @@ class StepLoop:
         dsubstep = self.svstate.dsubstep
         end_dsub = dsubstep == subvl
         log("    pack/unpack/subvl", pack, unpack, subvl,
-                                     "end", end_dst,
-                                     "sub", end_dsub)
+            "end", end_dst,
+            "sub", end_dsub)
         # now dest step
         if unpack:
             # unpack advances subvl in *outer* loop
@@ -660,7 +661,7 @@ class StepLoop:
                     self.svstate.dsubstep += SelectableInt(1, 2)
                 self.svstate.dststep = SelectableInt(0, 7)  # reset
             else:
-                self.svstate.dststep += SelectableInt(1, 7) # advance dststep
+                self.svstate.dststep += SelectableInt(1, 7)  # advance dststep
         else:
             # advance subvl in *inner* loop
             if end_dsub:
@@ -668,7 +669,8 @@ class StepLoop:
                     self.svstate.dststep += SelectableInt(1, 7)
                 self.svstate.dsubstep = SelectableInt(0, 2)  # reset
             else:
-                self.svstate.dsubstep += SelectableInt(1, 2) # advance ssubstep
+                # advance ssubstep
+                self.svstate.dsubstep += SelectableInt(1, 2)
         log("    advance dst", self.svstate.dststep, self.svstate.dsubstep)
 
     def advance_svstate_steps(self, end_src=False, end_dst=False):
@@ -991,7 +993,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.spr['SRR1'].value = msr
         if self.is_svp64_mode:
             self.spr['SVSRR0'] = self.namespace['SVSTATE'].value
-        self.trap_nia = SelectableInt(trap_addr | (kaivb&~0x1fff), 64)
+        self.trap_nia = SelectableInt(trap_addr | (kaivb & ~0x1fff), 64)
         self.spr['SRR1'][trap_bit] = 1  # change *copy* of MSR in SRR1
 
         # set exception bits.  TODO: this should, based on the address
@@ -1167,7 +1169,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # now update XER OV/OV32/SO
         so = self.spr['XER'][XER_bits['SO']]
-        new_so = so | ov # sticky overflow ORs in old with new
+        new_so = so | ov  # sticky overflow ORs in old with new
         self.spr['XER'][XER_bits['OV']] = ov
         self.spr['XER'][XER_bits['OV32']] = ov32
         self.spr['XER'][XER_bits['SO']] = new_so
@@ -1476,14 +1478,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # list of instructions not being supported by binutils (.long)
         dotstrp = asmop[:-1] if asmop[-1] == '.' else asmop
         if dotstrp in [*FPTRANS_INSNS,
-                    'ffmadds', 'fdmadds', 'ffadds',
-                     'mins', 'maxs', 'minu', 'maxu',
-                    'setvl', 'svindex', 'svremap', 'svstep',
-                    'svshape', 'svshape2',
-                    'grev', 'ternlogi', 'bmask', 'cprop',
-                    'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
-                    'fmvis', 'fishmv',
-                    ]:
+                       'ffmadds', 'fdmadds', 'ffadds',
+                       'mins', 'maxs', 'minu', 'maxu',
+                       'setvl', 'svindex', 'svremap', 'svstep',
+                       'svshape', 'svshape2',
+                       'grev', 'ternlogi', 'bmask', 'cprop',
+                       'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
+                       'fmvis', 'fishmv',
+                       ]:
             illegal = False
             ins_name = dotstrp
 
@@ -1686,7 +1688,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
     def do_rc_ov(self, ins_name, results, overflow):
         if ins_name.startswith("f"):
-            rc_reg = "CR1" # not calculated correctly yet (not FP compares)
+            rc_reg = "CR1"  # not calculated correctly yet (not FP compares)
         else:
             rc_reg = "CR0"
         regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, rc_reg)
@@ -1697,7 +1699,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             vl = results[0].vl
             cmps = (SelectableInt(vl, 64), overflow,)
         else:
-            overflow = None # do not override overflow except in setvl
+            overflow = None  # do not override overflow except in setvl
         self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
 
     def do_outregs_nia(self, asmop, ins_name, info, output_names, results,
@@ -2087,7 +2089,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         loopend = ((end_src and ssubstep == subvl) or
                    (end_dst and dsubstep == subvl))
         log("loopend", svp64_is_vector, loopend, end_src, end_dst,
-                                ssubstep == subvl, dsubstep == subvl)
+            ssubstep == subvl, dsubstep == subvl)
         if not svp64_is_vector or loopend:
             # reset loop to zero and update NIA
             self.svp64_reset_loop()
