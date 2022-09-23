@@ -15,7 +15,6 @@ from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.consts import SVP64CROffs
 from copy import deepcopy
 from openpower.decoder.helpers import fp64toselectable
-from openpower.decoder.isa.remap_preduce_yield import preduce_y
 from functools import reduce
 import operator
 
@@ -62,6 +61,51 @@ class DecoderTestCase(FHDLTestCase):
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
+            self.assertEqual(sim.svstate.vl, 2)
+            self.assertEqual(sim.svstate.maxvl, 4)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+
+    def tst_sv_addi_ffirst_vli(self):
+        lst = SVP64Asm([ "sv.subf/ff=~RC1/vli *0,8,*0"
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        gprs = [0] * 64
+        gprs[8] = 3
+        vec = [9, 8, 3, 4]
+
+        res = []
+        # store GPRs
+        for i, x in enumerate(vec):
+            gprs[i] = x
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=gprs,
+                                                svstate=svstate)
+            for i in range(4):
+                val = sim.gpr(i).value
+                res.append(val)
+                print ("i", i, val)
+            # confirm that the results are as expected
+            expected = deepcopy(vec)
+            for i in range(4):
+                expected[i] -= gprs[8]
+                if expected[i] == 0:
+                    break
+            for i, v in enumerate(res):
+                self.assertEqual(v, expected[i])
+
+            self.assertEqual(sim.svstate.vl, 3)
+            self.assertEqual(sim.svstate.maxvl, 4)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
