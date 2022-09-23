@@ -1,6 +1,6 @@
 # SPDX-License-Header: CC-BY-4
 # derived from microwatt decode1.vhdl, with thanks and gratitude (IBM, OPF)
 opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry out,ldst len,BR,sgn ext,upd,rsrv,32b,sgn,rc,lk,sgl pipe,comment,form,CONDITIONS,unofficial,comment2
-48,ALU,OP_MADDHD,RA,RB,RC,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddhd,VA,,1,
-49,ALU,OP_MADDHDU,RA,RB,RC,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddhdu,VA,,1,
-51,ALU,OP_MADDLD,RA,RB,RC,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddld,VA,,1,
+48,ALU,OP_MADDHD,RA,RB,RC,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddhd,VA,,,
+49,ALU,OP_MADDHDU,RA,RB,RC,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddhdu,VA,,,
+51,ALU,OP_MADDLD,RA,RB,RC,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddld,VA,,,
