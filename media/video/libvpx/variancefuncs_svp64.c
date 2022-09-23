@@ -21,27 +21,6 @@ static const uint8_t bilinear_filters[8][2] = {
   { 64, 64 }, { 48, 80 },  { 32, 96 }, { 16, 112 },
 };
 
-
-static void variance_svp64(const uint8_t *src_ptr, int src_stride,
-                     const uint8_t *ref_ptr, int ref_stride, int w, int h,
-                     uint32_t *sse, int *sum) {
-  int i, j;
-
-  *sum = 0;
-  *sse = 0;
-
-  for (i = 0; i < h; ++i) {
-    for (j = 0; j < w; ++j) {
-      const int diff = src_ptr[j] - ref_ptr[j];
-      *sum += diff;
-      *sse += diff * diff;
-    }
-
-    src_ptr += src_stride;
-    ref_ptr += ref_stride;
-  }
-}
-
 // Applies a 1-D 2-tap bilinear filter to the source block in either horizontal
 // or vertical direction to produce the filtered output block. Used to implement
 // the first-pass of 2-D separable filter.
