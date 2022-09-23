@@ -288,11 +288,11 @@
 
 # 1.6.31 SVC-FORM
     |0     |6    |9    |11     |
-    | PO   | SCi | SCm | SCimm |
+    | PO   | SCi | SCm | SCi   |
 
 # 1.6.32 SVR-FORM
     |0     |6    |9    |11    | 15     |
-    | PO   | SCi | SCm | SRbr | SRimm  |
+    | PO   | SCi | SCm | SRb  | SRi    |
 
 # 1.6.33 SVD-FORM
     |0     |6    |11   |16   |21      |31 |
@@ -786,13 +786,13 @@
     SCm (9:10)
         SV Context Propagation Mode
         Formats: SVC, SVR
-    SCimm (11:31)
+    SCi (11:31)
         SV Context Propagation immediate bitfield
         Formats: SVC
-    SRbr (11:14)
+    SRb (11:14)
         SV REMAP byte-reversal field.
         Formats: SVC
-    SRimm (15:31)
+    SRi (15:31)
         SV REMAP immediate FIFO bitfield
         Formats: SVC
     SH (16:20)
