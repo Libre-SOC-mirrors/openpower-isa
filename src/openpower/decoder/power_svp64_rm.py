@@ -147,6 +147,7 @@ class SVP64RMModeDecode(Elaboratable):
         comb += is_ldst.eq(self.fn_in == Function.LDST)
         comb += is_bc.eq(self.fn_in == Function.BRANCH)
         mode2 = sel(m, mode, SVP64MODE.MOD2)
+        cr = sel(m, mode, SVP64MODE.CR)
 
         with m.If(is_bc):
             # Branch-Conditional is completely different
@@ -214,6 +215,12 @@ class SVP64RMModeDecode(Elaboratable):
                     with m.Else():
                         comb += self.pred_sz.eq(mode[SVP64MODE.SZ])
                         comb += self.pred_dz.eq(mode[SVP64MODE.DZ])
+
+            # extract failfirst
+            with m.If(self.mode == SVP64RMMode.FFIRST): # fail-first
+                with m.If(self.rc_in):
+                    comb += self.inv.eq(mode[SVP64MODE.INV])
+                    comb += self.cr_sel.eq(cr)
 
             # extract saturate
             with m.Switch(mode2):

@@ -1701,10 +1701,29 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if rc_en and ins_name not in ['svstep']:
             yield from self.do_rc_ov(ins_name, results, overflow, cr0)
 
+        # check failfirst
+        rm_mode = yield self.dec2.rm_dec.mode
+        ff_inv = yield self.dec2.rm_dec.inv
+        cr_bit = yield self.dec2.rm_dec.cr_sel
+        log(" ff rm_mode", rc_en, rm_mode, SVP64RMMode.FFIRST.value)
+        log("        inv", ff_inv)
+        log("     cr_bit", cr_bit)
+        ffirst_hit = False
+        if rc_en and rm_mode == SVP64RMMode.FFIRST.value:
+            regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
+            crtest = self.crl[regnum]
+            ffirst_hit = crtest[cr_bit] != ff_inv
+            log("cr test", regnum, int(crtest), crtest, cr_bit, ff_inv)
+            log("cr test?", ffirst_hit)
+            if ffirst_hit:
+                self.svstate.vl = srcstep
+                yield self.dec2.state.svstate.eq(self.svstate.value)
+                yield Settle()  # let decoder update
+
         # any modified return results?
         yield from self.do_outregs_nia(asmop, ins_name, info,
                                        output_names, results,
-                                       carry_en, rc_en)
+                                       carry_en, rc_en, ffirst_hit)
 
     def do_rc_ov(self, ins_name, results, overflow, cr0):
         if ins_name.startswith("f"):
@@ -1724,20 +1743,24 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # if there was not an explicit CR0 in the pseudocode, do implicit Rc=1
         if cr0 is None:
             self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
-            return
-        # otherwise we just blat CR0 into the required regnum
-        log("explicit rc0", cr0)
-        self.crl[regnum].eq(cr0)
+        else:
+            # otherwise we just blat CR0 into the required regnum
+            log("explicit rc0", cr0)
+            self.crl[regnum].eq(cr0)
 
     def do_outregs_nia(self, asmop, ins_name, info, output_names, results,
-                       carry_en, rc_en):
+                       carry_en, rc_en, ffirst_hit):
         # write out any regs for this instruction
         if info.write_regs:
             for name, output in zip(output_names, results):
                 yield from self.check_write(info, name, output, carry_en)
 
-        # check advancement of src/dst/sub-steps and if PC needs updating
-        nia_update = (yield from self.check_step_increment(results, rc_en,
+        if ffirst_hit:
+            self.svp64_reset_loop()
+            nia_update = True
+        else:
+            # check advancement of src/dst/sub-steps and if PC needs updating
+            nia_update = (yield from self.check_step_increment(results, rc_en,
                                                            asmop, ins_name))
         if nia_update:
             self.update_pc_next()
@@ -2045,6 +2068,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         unpack = self.svstate.unpack
         vl = self.svstate.vl
         subvl = yield self.dec2.rm_dec.rm_in.subvl
+        rm_mode = yield self.dec2.rm_dec.mode
+        ff_inv = yield self.dec2.rm_dec.inv
+        cr_bit = yield self.dec2.rm_dec.cr_sel
         log("    srcstep", srcstep)
         log("    dststep", dststep)
         log("        pack", pack)
@@ -2053,6 +2079,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("    dsubstep", dsubstep)
         log("         vl", vl)
         log("      subvl", subvl)
+        log("    rm_mode", rm_mode)
+        log("        inv", ff_inv)
+        log("     cr_bit", cr_bit)
 
         # check if end reached (we let srcstep overrun, above)
         # nothing needs doing (TODO zeroing): just do next instruction
