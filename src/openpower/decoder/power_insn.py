@@ -1487,7 +1487,7 @@ class NormalSimpleRM(DZBaseRM, SZBaseRM, NormalBaseRM):
         yield from super().specifiers(record=record)
 
 
-class NormalSMRRM(MRBaseRM, NormalBaseRM):
+class NormalMRRM(MRBaseRM, NormalBaseRM):
     """normal: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM.mode[4]
 
@@ -1544,7 +1544,7 @@ class NormalPRRc0RM(FFPRRc0BaseRM, ZZBaseRM, NormalBaseRM):
 
 class NormalRM(NormalBaseRM):
     simple: NormalSimpleRM
-    smr: NormalSMRRM
+    mr: NormalMRRM
     ffrc1: NormalFFRc1RM
     ffrc0: NormalFFRc0RM
     sat: NormalSatRM
@@ -1709,7 +1709,7 @@ class CROpSimpleRM(DZBaseRM, SZBaseRM, CROpBaseRM):
 
         yield from super().specifiers(record=record)
 
-class CROpSMRRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpMRRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM[20]
     dz: BaseRM[22]
@@ -1742,7 +1742,7 @@ class CROpFF5RM(DZBaseRM, SZBaseRM, CROpBaseRM):
 
 class CROpRM(CROpBaseRM):
     simple: CROpSimpleRM
-    smr: CROpSMRRM
+    mr: CROpMRRM
     ff3: CROpFF3RM
     ff5: CROpFF5RM
 
@@ -1864,7 +1864,7 @@ class RM(BaseRM):
             #    mode  Rc  mask  Rc  member
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
-                (0b001000, 0b111000, "smr"),    # mapreduce  (no Rc)
+                (0b001000, 0b111000, "mr"),     # mapreduce  (no Rc)
                 (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
                 (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)
@@ -1878,7 +1878,7 @@ class RM(BaseRM):
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
             #    mode  Rc  mask  Rc  member
             # ironically/coincidentally this table is identical to NORMAL
-            # mode except reserved in place of smr
+            # mode except reserved in place of mr
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
                 (0b001000, 0b111000, "rsvd"),   # rsvd       (no Rc)
@@ -1909,7 +1909,7 @@ class RM(BaseRM):
             #    mode  3b  mask  3b  member
             table = (
                 (0b000000, 0b111000, "simple"), # simple
-                (0b001000, 0b111000, "smr"),    # mapreduce
+                (0b001000, 0b111000, "mr"),     # mapreduce
                 (0b100000, 0b100000, "ff5"),    # failfirst, 5-bit CR
                 (0b100001, 0b100001, "ff3"),    # failfirst, 3-bit CR
             )
