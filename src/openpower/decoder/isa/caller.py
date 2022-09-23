@@ -1884,7 +1884,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.is_svp64_mode and self.pred_dst_zero:
             log('zeroing reg %d %s' % (regnum, str(output)), is_vec)
             output = SelectableInt(0, 256)
-        log("write reg %s%d %0xx" % (reg_prefix, regnum, output.value))
+        log("write reg %s%d 0x%x" % (reg_prefix, regnum, output.value),
+            kind=LogKind.InstrInOuts)
         # zero-extend tov64 bit begore storing (should use EXT oh well)
         if output.bits > 64:
             output = SelectableInt(output.value, 64)
