@@ -95,6 +95,7 @@ REG_SORT_ORDER = {
     "CA32": 0,
 
     "overflow": 7,  # should definitely be last
+    "CR0": 8,       # likewise
 }
 
 fregs = ['FRA', 'FRB', 'FRC', 'FRS', 'FRT']
@@ -1848,6 +1849,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
     def check_write(self, info, name, output, carry_en):
         if name == 'overflow':  # ignore, done already (above)
+            return
+        if name == 'CR0':  # ignore, done already (above)
             return
         if isinstance(output, int):
             output = SelectableInt(output, 256)

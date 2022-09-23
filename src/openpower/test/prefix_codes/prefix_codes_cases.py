@@ -2,7 +2,7 @@ from openpower.test.common import TestAccumulatorBase
 from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
-
+from copy import deepcopy
 
 def tree_code(code):
     # type: (str) -> int
@@ -34,11 +34,15 @@ class PrefixCodesCases(TestAccumulatorBase):
         gpr5_codes = ["0", "11", "1001", "101010"]
         gpr7_codes = ["1001"] * 8 + ["101010", "11"] * 4
         gprs[5] = code_seq(*gpr5_codes, prefix1=True)
-        gprs[6] = make_tree("0", "11", "1001", "101010")
+        gprs[6] = make_tree("0", "11", "1001", "101010") & 0xffff_ffff_ffff_ffff
         gprs[7] = code_seq(*gpr7_codes)
-        e = ExpectedState(pc=4, int_regs=gprs)
-        e.intregs[4] = int.from_bytes(
+        expected_regs = deepcopy(gprs)
+        expected_regs[4] = int.from_bytes(
             map(tree_code, (gpr5_codes + gpr7_codes)[:8]), 'little')
-        e.intregs[5] = code_seq(*(gpr5_codes + gpr7_codes)[8:], prefix1=True)
+        expected_regs[5] = code_seq(*(gpr5_codes + gpr7_codes)[8:],
+                                    prefix1=True)
+        expected_regs[4] = 0x2190702
+        expected_regs[5] = 0x35
+        e = ExpectedState(pc=4, int_regs=expected_regs)
         e.crregs[0] = 0b1000
         self.add_case(Program(lst, False), gprs, expected=e)

@@ -750,7 +750,7 @@ class PowerParser:
         name = p[1]
         if name in self.available_op_fields:
             self.op_fields.add(name)
-        if name == 'overflow':
+        if name in ['overflow', 'CR0']:
             self.write_regs.add(name)
         if self.include_ca_in_write:
             if name in ['CA', 'CA32']:
