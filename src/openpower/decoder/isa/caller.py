@@ -376,6 +376,8 @@ def get_pdecode_idx_in(dec2, name):
             return in3, in3_isvec
     # XXX TODO, RC doesn't exist yet!
     elif name == 'RC':
+        if in3_sel == In3Sel.RC.value:
+            return in3, in3_isvec
         assert False, "RC does not exist yet"
     elif name == 'RS':
         if in1_sel == In1Sel.RS.value:
