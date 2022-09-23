@@ -1359,14 +1359,14 @@ class PowerDecode2(PowerDecodeSubset):
             comb += self.o2_isvec.eq(o2_svdec.isvec)
 
             # urrr... don't ask... the implicit register FRS in FFT mode
-            # "tracks" FRT exactly except it's offset by VL.  rather than
+            # "tracks" FRT exactly except it's offset by MAXVL.  rather than
             # mess up the above with if-statements, override it here.
             # same trick is applied to FRA, above, but it's a lot cleaner, there
             with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
                 comb += offs.eq(0)
                 with m.If(~self.remap_active[4]):
                     with m.If(o2_svdec.isvec):
-                        comb += offs.eq(vl)  # VL for Vectors
+                        comb += offs.eq(maxvl)  # MAXVL for Vectors
                     with m.Else():
                         comb += offs.eq(1)  # add 1 if scalar
                 svdec = o_svdec  # yes take source as o_svdec...
