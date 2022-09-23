@@ -669,8 +669,8 @@ def decode_bo(encoding):
     # barse-ackwards MSB0/LSB0. sigh
     mapped = pmap[encoding]
     si =  SelectableInt(0, 3)
-    si[0] = mapped>>2
-    si[1:3] = mapped & 3
+    si[0] = mapped>>2 # inv
+    si[1:3] = mapped & 3 # CR
     return int(si)
 
 

@@ -227,6 +227,11 @@ class SVSTATETestCase(unittest.TestCase):
         expected = [
                     "sv.add./ff=eq *3,*7,*11",
                     "sv.add./ff=ns *3,*7,*11",
+                    "sv.add./ff=lt *3,*7,*11",
+                    "sv.add./ff=ge *3,*7,*11",
+                    "sv.add./ff=le *3,*7,*11",
+                    "sv.add./ff=gt *3,*7,*11",
+                    "sv.add./ff=ne *3,*7,*11",
                     "sv.add./pr=eq *3,*7,*11",
                     "sv.add./pr=ns *3,*7,*11",
                         ]
