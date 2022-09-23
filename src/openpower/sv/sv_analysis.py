@@ -314,11 +314,11 @@ def read_csvs():
                 continue  # skip pseudo-alias lxxxbr
             if insn_name in ['mcrxr', 'mcrxrx', 'darn']:
                 continue
-            if insn_name in ['bctar', 'bcctr']: # for now. TODO
+            if insn_name in ['bctar', 'bcctr']:  # for now. TODO
                 continue
             if 'rfid' in insn_name:
                 continue
-            if 'addpcis' in insn_name: # skip for now
+            if 'addpcis' in insn_name:  # skip for now
                 continue
 
             # sv.bc is being classified as 2P-2S-1D by mistake due to SPRs
@@ -352,7 +352,7 @@ def read_csvs():
     primarykeys.sort()
 
     return (csvs, csvs_svp64, primarykeys, bykey, insn_to_csv, insns,
-           dictkeys, immediates)
+            dictkeys, immediates)
 
 
 def regs_profile(insn, res):
@@ -420,7 +420,7 @@ def extra_classifier(insn_name, value, name, res, regs):
     #     if regs == ['RA', '', '', 'RT', '', '']:
     # is in the order in1  in2  in3 out1 out2 Rc=1
 
-    #********
+    # ********
     # start with LD/ST
 
     if value == 'LDSTRM-2P-1S1D':
@@ -466,13 +466,13 @@ def extra_classifier(insn_name, value, name, res, regs):
     elif value == 'LDSTRM-2P-3S':
         res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
         if 'cx' in insn_name:
-            res['0'] = "%s;%s" % (sRS, dCR) # RS: Rsrc1_EXTRA2 CR0: dest
+            res['0'] = "%s;%s" % (sRS, dCR)  # RS: Rsrc1_EXTRA2 CR0: dest
         else:
             res['0'] = sRS  # RS: Rsrc1_EXTRA2
         res['1'] = 's:RA'  # RA: Rsrc2_EXTRA2
         res['2'] = 's:RB'  # RA: Rsrc3_EXTRA2
 
-    #**********
+    # **********
     # now begins,arithmetic
 
     elif value == 'RM-2P-1S1D':
@@ -597,12 +597,12 @@ def extra_classifier(insn_name, value, name, res, regs):
 
     elif value == 'RM-1P-3S1D':
         res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
-        if regs == ['RA', 'RB', 'RC', 'RT', '', '']: # madd*
+        if regs == ['RA', 'RB', 'RC', 'RT', '', '']:  # madd*
             res['0'] = 'd:RT'  # RT,CR0: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
             res['3'] = 's:RC'  # RT: Rsrc3_EXTRA2
-        elif regs == ['RA', 'RB', 'RT', 'RT', '', 'CR0']: # overwrite 3-in
+        elif regs == ['RA', 'RB', 'RT', 'RT', '', 'CR0']:  # overwrite 3-in
             res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
@@ -612,7 +612,7 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
             res['3'] = 's:BC'  # BC: Rsrc3_EXTRA2
-        else: # fmadd*
+        else:  # fmadd*
             res['0'] = 'd:FRT;d:CR1'  # FRT, CR1: Rdest1_EXTRA2
             res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA2
             res['2'] = 's:FRB'  # FRB: Rsrc2_EXTRA2
@@ -641,7 +641,7 @@ def process_csvs(format):
     print('')
 
     (csvs, csvs_svp64, primarykeys, bykey, insn_to_csv, insns,
-           dictkeys, immediates) = read_csvs()
+     dictkeys, immediates) = read_csvs()
 
     # mapping to old SVPrefix "Forms"
     mapsto = {'3R-1W-CRo': 'RM-1P-3S1D',
@@ -667,7 +667,7 @@ def process_csvs(format):
               '1W-CRi': 'RM-2P-1S1D',
               'CRio': 'RM-2P-1S1D',
               'CR=2R1W': 'RM-1P-2S1D',
-              'CRi': 'RM-2P-1S', # HACK, bc here, it should be 1P
+              'CRi': 'RM-2P-1S',  # HACK, bc here, it should be 1P
               'imm': 'non-SV',
               '': 'non-SV',
               'LDST-2R-imm': 'LDSTRM-2P-2S',
@@ -783,10 +783,10 @@ def process_csvs(format):
 
             # set the SVP64 mode to NORMAL, LDST, BRANCH or CR
             crops = ['mfcr', 'mfocrf', 'mtcrf', 'mtocrf',
-                    ]
+                     ]
             mode = 'NORMAL'
             if value.startswith('LDST'):
-                if 'x' in insn_name: # Indexed detection
+                if 'x' in insn_name:  # Indexed detection
                     mode = 'LDST_IDX'
                 else:
                     mode = 'LDST_IMM'
@@ -808,8 +808,8 @@ def process_csvs(format):
             # MASK_SRC
             vstripped = value.replace("LDST", "")
             if vstripped in ['RM-2P-1S1D', 'RM-2P-2S',
-                         'RM-2P-2S1D', 'RM-2P-1S2D', 'RM-2P-3S',
-                        ]:
+                             'RM-2P-2S1D', 'RM-2P-1S2D', 'RM-2P-3S',
+                             ]:
                 res['SM'] = 'EN'
             else:
                 res['SM'] = 'NO'
@@ -834,8 +834,8 @@ def process_csvs(format):
         if value == '-':
             continue
             from time import sleep
-            print ("WARNING, filename '-' should NOT exist. instrs missing")
-            print ("TODO: fix this (and put in the bugreport number here)")
+            print("WARNING, filename '-' should NOT exist. instrs missing")
+            print("TODO: fix this (and put in the bugreport number here)")
             sleep(2)
         # print out svp64 tables by category
         print("## %s" % value)
