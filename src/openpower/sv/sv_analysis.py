@@ -602,6 +602,11 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
             res['3'] = 's:RC'  # RT: Rsrc3_EXTRA2
+        elif regs == ['RA', 'RB', 'RC', 'RT', '', 'CR0']:  # pcdec
+            res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
+            res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
+            res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
+            res['3'] = 's:RC'  # RT: Rsrc3_EXTRA2
         elif regs == ['RA', 'RB', 'RT', 'RT', '', 'CR0']:  # overwrite 3-in
             res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2

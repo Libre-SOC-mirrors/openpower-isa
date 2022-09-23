@@ -28,5 +28,6 @@
 /svfixedload.py
 /svfparith.py
 /svfpload.py
+/prefix_codes.py
 *.orig
 *.rej

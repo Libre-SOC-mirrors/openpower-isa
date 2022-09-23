@@ -564,6 +564,25 @@ def fishmv(fields):
     )
 
 
+@_custom_insns()
+def pcdec(fields):
+    # 1.6.21.1 VA2-FORM
+    #    |0      |6     |11     |16     |21  |24|26  |31  |
+    #    | PO    |  RT  |   RA  |   RB  | RC    | XO |once|
+    PO = 4
+    XO = 0b11100
+    (RT, RA, RB, RC, once) = fields
+    return instruction(
+        (PO, 0, 5),
+        (RT, 6, 10),
+        (RA, 11, 15),
+        (RB, 16, 20),
+        (RC, 21, 25),
+        (XO, 26, 30),
+        (once, 31, 31),
+    )
+
+
 # decode GPR into sv extra
 def get_extra_gpr(etype, regmode, field):
     if regmode == 'scalar':

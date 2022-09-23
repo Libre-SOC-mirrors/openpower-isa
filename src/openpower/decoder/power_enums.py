@@ -549,6 +549,7 @@ _insns = [
     "nand", "neg", "nego",
     "nop",
     "nor", "or", "orc", "ori", "oris",
+    "pcdec",
     "popcntb", "popcntd", "popcntw",
     "prtyd", "prtyw",
     "rfid",
@@ -692,6 +693,7 @@ class MicrOp(Enum):
     OP_SVINDEX = 95
     OP_FMVIS = 96
     OP_FISHMV = 97
+    OP_PCDEC = 98
 
 
 @unique
