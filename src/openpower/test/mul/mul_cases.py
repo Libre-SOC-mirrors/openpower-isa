@@ -4,6 +4,7 @@ from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.test.state import ExpectedState
 from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.decoder.isa.caller import SVP64State
+from copy import deepcopy
 import random
 
 
@@ -162,6 +163,7 @@ class SVP64MAdd(TestAccumulatorBase):
     # needs to be implemented)
     # "maddhd","maddhdu","maddld"
     def case_sv_maddld(self):
+        #                     muladdlo RT = RA * RB + RC
         lst = list(SVP64Asm(["sv.maddld *4, *8, *12, 16"]))
         initial_regs = [0] * 32
         initial_regs[8:16] = range(1, 17)
@@ -169,5 +171,13 @@ class SVP64MAdd(TestAccumulatorBase):
         svstate = SVP64State()
         svstate.vl = 4
         svstate.maxvl = 4
+        expected_regs = deepcopy(initial_regs)
+        r16 = initial_regs[16]
+        for i in range(4):
+            # mul-and-add-lo is: RT = RA*RB+RC. RC (16) is scalar, RA/RB vector
+            res = initial_regs[8+i] * initial_regs[12+i] + r16
+            expected_regs[4+i] = res & 0xffff_ffff_ffff_ffff
+        e = ExpectedState(expected_regs, 8)
         self.add_case(Program(lst, bigendian), initial_regs,
-                      initial_svstate=svstate)
+                      initial_svstate=svstate,
+                      expected=e)
