@@ -470,11 +470,11 @@ class DecodeOut2(Elaboratable):
         self.dec = dec
         self.op = op
         self.sel_in = Signal(OutSel, reset_less=True)
-        self.svp64_fft_mode = Signal(reset_less=True)  # SVP64 FFT mode
+        self.implicit_rs = Signal(reset_less=True)  # SVP64 implicit RS/FRS
         self.lk = Signal(reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o2")
-        self.fp_madd_en = Signal(reset_less=True)  # FFT instruction detected
+        self.rs_en = Signal(reset_less=True)  # FFT instruction detected
         self.fast_out = Data(4, "fast_o2")
         self.fast_out3 = Data(4, "fast_o3")
 
@@ -513,10 +513,10 @@ class DecodeOut2(Elaboratable):
         # SVP64 FFT mode, FP mul-add: 2nd output reg (FRS) same as FRT
         # will be offset by VL in hardware
         # with m.Case(MicrOp.OP_FP_MADD):
-        with m.If(self.svp64_fft_mode):
+        with m.If(self.implicit_rs):
             comb += self.reg_out.data.eq(self.dec.FRT)
             comb += self.reg_out.ok.eq(1)
-            comb += self.fp_madd_en.eq(1)
+            comb += self.rs_en.eq(1)
 
         return m
 
@@ -771,7 +771,7 @@ class PowerDecodeSubset(Elaboratable):
         self.fp_en = fp_en
         if svp64_en:
             self.is_svp64_mode = Signal()  # mark decoding as SVP64 Mode
-            self.use_svp64_fft = Signal()      # FFT Mode
+            self.implicit_rs = Signal()    # implicit RS/FRS
             self.sv_rm = SVP64Rec(name="dec_svp64")  # SVP64 RM field
             self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
             # set these to the predicate mask bits needed for the ALU
@@ -858,7 +858,7 @@ class PowerDecodeSubset(Elaboratable):
         if self.svp64_en:
             ports += self.sv_rm.ports()
             ports.append(self.is_svp64_mode)
-            ports.append(self.use_svp64_fft)
+            ports.append(self.implicit_rs)
         return ports
 
     def needs_field(self, field, op_field):
@@ -1033,7 +1033,7 @@ class PowerDecodeSubset(Elaboratable):
             comb += major.eq(self.dec.opcode_in[26:32])
             xo = Signal(10)
             comb += xo.eq(self.dec.opcode_in[1:11])
-            comb += self.use_svp64_fft.eq((major == 59) & xo.matches(
+            comb += self.implicit_rs.eq((major == 59) & xo.matches(
                 '-----00100',  # ffmsubs
                 '-----00101',  # ffmadds
                 '-----00110',  # ffnmsubs
@@ -1232,7 +1232,7 @@ class PowerDecode2(PowerDecodeSubset):
         comb += dec_o.sel_in.eq(self.op_get("out_sel"))
         comb += dec_o2.sel_in.eq(self.op_get("out_sel"))
         if self.svp64_en:
-            comb += dec_o2.svp64_fft_mode.eq(self.use_svp64_fft)
+            comb += dec_o2.implicit_rs.eq(self.implicit_rs)
         if hasattr(do, "lk"):
             comb += dec_o2.lk.eq(do.lk)
 
@@ -1318,7 +1318,7 @@ class PowerDecode2(PowerDecodeSubset):
                     # automagically add on an extra offset to RB.
                     # however when REMAP is active, the FFT REMAP
                     # schedule takes care of this offset.
-                    with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
+                    with m.If(dec_o2.reg_out.ok & dec_o2.rs_en):
                         with m.If(~self.remap_active[i]):
                             with m.If(svdec.isvec):
                                 comb += offs.eq(maxvl)  # MAXVL for Vectors
@@ -1362,7 +1362,7 @@ class PowerDecode2(PowerDecodeSubset):
             # "tracks" FRT exactly except it's offset by MAXVL.  rather than
             # mess up the above with if-statements, override it here.
             # same trick is applied to FRA, above, but it's a lot cleaner, there
-            with m.If(dec_o2.reg_out.ok & dec_o2.fp_madd_en):
+            with m.If(dec_o2.reg_out.ok & dec_o2.rs_en):
                 comb += offs.eq(0)
                 with m.If(~self.remap_active[4]):
                     with m.If(o2_svdec.isvec):
