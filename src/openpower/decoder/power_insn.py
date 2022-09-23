@@ -1305,7 +1305,7 @@ class FFPRRc1BaseRM(BaseRM):
     def specifiers(self, record, mode):
         inv = _SelectableInt(value=int(self.inv), bits=1)
         CR = _SelectableInt(value=int(self.CR), bits=2)
-        mask = int(_selectconcat(inv, CR))
+        mask = int(_selectconcat(CR, inv))
         predicate = PredicateBaseRM.predicate(True, mask)
         yield f"{mode}={predicate}"
 
