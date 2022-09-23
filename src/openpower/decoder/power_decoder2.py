@@ -514,7 +514,7 @@ class DecodeOut2(Elaboratable):
         # will be offset by VL in hardware
         # with m.Case(MicrOp.OP_FP_MADD):
         with m.If(self.implicit_rs):
-            comb += self.reg_out.data.eq(self.dec.FRT)
+            comb += self.reg_out.data.eq(self.dec.FRT) # same as RT, for pcdec
             comb += self.reg_out.ok.eq(1)
             comb += self.rs_en.eq(1)
 

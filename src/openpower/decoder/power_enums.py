@@ -751,6 +751,7 @@ class OutSel(Enum):
     RT_OR_ZERO = 4
     FRT = 5
     FRS = 6
+    RS = 7
 
 
 @unique
