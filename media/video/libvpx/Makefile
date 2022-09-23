@@ -11,8 +11,8 @@ ASFLAGS= -mlibresoc
 LDFLAGS=-lgtest -pthread -lpython3.7m
 
 BINFILES = vpx_get_mb_ss_svp64_real.bin vpx_get4x4sse_cs_svp64_real.bin 
-ASFILES  = vpx_get_mb_ss_svp64_real.s vpx_get4x4sse_cs_svp64_real.s
-CFILES   = variance_ref.c  variance_svp64.c  variance_svp64_wrappers.c  vpx_mem.c
+ASFILES  = vpx_get_mb_ss_svp64_real.s vpx_get4x4sse_cs_svp64_real.s variance_svp64_real.s
+CFILES   = variance_ref.c  variancefuncs_svp64.c  variance_svp64_wrappers.c  vpx_mem.c
 CPPFILES = test_libvpx.cc  variance_test.cc
 EXAMPLEC = pypowersim_wrapper_example.c
 EXAMPLEOBJ= ${EXAMPLEC:.c=.o}
