@@ -1865,8 +1865,8 @@ class RM(BaseRM):
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
                 (0b001000, 0b111000, "mr"),     # mapreduce  (no Rc)
-                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
                 (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
+                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)
                 (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
                 (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
@@ -1882,11 +1882,11 @@ class RM(BaseRM):
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
                 (0b001000, 0b111000, "rsvd"),   # rsvd       (no Rc)
-                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
                 (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
+                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
                 (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
             )
             rm = rm.ldst_imm
             search = ((int(rm.mode) << 1) | Rc)
@@ -1898,8 +1898,8 @@ class RM(BaseRM):
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
                 (0b010000, 0b110000, "stride"), # strided,   (no Rc)
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
                 (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
             )
             rm = rm.ldst_idx
             search = ((int(rm.mode) << 1) | Rc)
@@ -1910,8 +1910,8 @@ class RM(BaseRM):
             table = (
                 (0b000000, 0b111000, "simple"), # simple
                 (0b001000, 0b111000, "mr"),     # mapreduce
-                (0b100000, 0b100000, "ff5"),    # failfirst, 5-bit CR
                 (0b100001, 0b100001, "ff3"),    # failfirst, 3-bit CR
+                (0b100000, 0b100000, "ff5"),    # failfirst, 5-bit CR
             )
             # determine CR type, 5-bit (BA/BB/BT) or 3-bit Field (BF/BFA)
             regtype = None
