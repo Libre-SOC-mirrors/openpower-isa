@@ -181,3 +181,37 @@ class SVP64MAdd(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate,
                       expected=e)
+
+    def case_sv_maddld_mapreduce(self):
+        """test of using maddld in "mapreduce" mode (sum-of-products)
+        for this to work, RT must be the same reg as RC: r4 is chosen.
+        normally without /mr the fact that RT is scalar would *stop*
+        the looping at the first (scalar) write to RT.
+
+        "/mr" *disables* that and relies on the hardware to issue
+        multiple "maddld" operations, performing the usual NECESSARY
+        Register Hazard Dependency Checking *as if* this was an ACTUAL
+        sequence of four *scalar* maddld inline operations:
+
+        maddld 4,8,12,4 maddld 4,9,13,4 maddld 4,10,14,4 maddld 4,11,15,4
+        """
+        #                     muladdlo RT = RA * RB + RC
+        lst = list(SVP64Asm(["sv.maddld/mr 4, *8, *12, 4"]))
+        initial_regs = [0] * 32
+        initial_regs[4] = 0x10000
+        initial_regs[8:16] = range(1, 17)
+        svstate = SVP64State()
+        svstate.vl = 4
+        svstate.maxvl = 4
+        # calculate expected results (multiply-and-accumulate
+        expected_regs = deepcopy(initial_regs)
+        accumulator = initial_regs[4]
+        for i in range(4):
+            # mul-and-add-lo is: RT = RA*RB+RC. RT and RC scalar, RA/RB vector
+            accumulator += initial_regs[8+i] * initial_regs[12+i]
+            accumulator &= 0xffff_ffff_ffff_ffff # truncate hi-bits
+        expected_regs[4] = accumulator
+        e = ExpectedState(expected_regs, 8)
+        self.add_case(Program(lst, bigendian), initial_regs,
+                      initial_svstate=svstate,
+                      expected=e)
