@@ -516,7 +516,7 @@ def get_pdecode_idx_out2(dec2, name):
                 return out, o_isvec
     if name == 'FRS':
         int_op = yield dec2.dec.op.internal_op
-        fft_en = yield dec2.use_svp64_fft
+        fft_en = yield dec2.implicit_rs
         # if int_op == MicrOp.OP_FP_MADD.value and fft_en:
         if fft_en:
             log("get_pdecode_idx_out2", out_sel, OutSel.FRS.value,
