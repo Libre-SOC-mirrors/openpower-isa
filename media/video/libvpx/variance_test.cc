@@ -310,14 +310,14 @@ class MainTestClass
 
 template <typename VarianceFunctionType>
 void MainTestClass<VarianceFunctionType>::ZeroTest() {
-  for (int i = 0; i <= 255; ++i) {
+  for (int i = 0; i <= 3; ++i) {
     if (!use_high_bit_depth()) {
       memset(src_, i, block_size());
     } else {
       uint16_t *const src16 = CONVERT_TO_SHORTPTR(src_);
       for (int k = 0; k < block_size(); ++k) src16[k] = i << byte_shift();
     }
-    for (int j = 0; j <= 255; ++j) {
+    for (int j = 0; j <= 3; ++j) {
       if (!use_high_bit_depth()) {
         memset(ref_, j, block_size());
       } else {
@@ -334,7 +334,7 @@ void MainTestClass<VarianceFunctionType>::ZeroTest() {
 
 template <typename VarianceFunctionType>
 void MainTestClass<VarianceFunctionType>::RefTest() {
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < block_size(); j++) {
       if (!use_high_bit_depth()) {
         src_[j] = rnd_.Rand8();
@@ -355,7 +355,7 @@ void MainTestClass<VarianceFunctionType>::RefTest() {
 
 template <typename VarianceFunctionType>
 void MainTestClass<VarianceFunctionType>::RefStrideTest() {
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 3; ++i) {
     const int ref_stride = (i & 1) * width();
     const int src_stride = ((i >> 1) & 1) * width();
     for (int j = 0; j < block_size(); j++) {
