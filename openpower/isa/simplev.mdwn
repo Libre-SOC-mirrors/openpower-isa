@@ -105,7 +105,7 @@ Pseudo-code:
 
     # for convenience, VL to be calculated and stored in SVSTATE
     vlen <- [0] * 7
-    mscale[0:6] <- 0b0000001 # for scaling MAXVL
+    mscale[0:5] <- 0b000001 # for scaling MAXVL
     itercount[0:6] <- [0] * 7
     SVSTATE[0:31] <- [0] * 32
     # only overwrite REMAP if "persistence" is zero
