@@ -10,11 +10,7 @@
 
 #include <stdint.h>
 
-#define DECLARE_ALIGNED(n, typ, val) typ val __attribute__((aligned(n)))
-
-#define ROUND_POWER_OF_TWO(value, n) (((value) + (1 << ((n)-1))) >> (n))
-
-#define FILTER_BITS 7
+#include "variance_ref.h"
 
 static const uint8_t bilinear_filters[8][2] = {
   { 128, 0 }, { 112, 16 }, { 96, 32 }, { 80, 48 },
@@ -49,7 +45,7 @@ uint32_t vpx_get_mb_ss_c(const int16_t *src_ptr) {
   return sum;
 }
 
-static void variance(const uint8_t *src_ptr, int src_stride,
+void variance_c(const uint8_t *src_ptr, int src_stride,
                      const uint8_t *ref_ptr, int ref_stride, int w, int h,
                      uint32_t *sse, int *sum) {
   int i, j;
@@ -77,7 +73,7 @@ static void variance(const uint8_t *src_ptr, int src_stride,
 // taps should sum to FILTER_WEIGHT. pixel_step defines whether the filter is
 // applied horizontally (pixel_step = 1) or vertically (pixel_step = stride).
 // It defines the offset required to move from one input to the next.
-static void var_filter_block2d_bil_first_pass(
+void var_filter_block2d_bil_first_pass_c(
     const uint8_t *src_ptr, uint16_t *ref_ptr, unsigned int src_pixels_per_line,
     int pixel_step, unsigned int output_height, unsigned int output_width,
     const uint8_t *filter) {
@@ -106,7 +102,7 @@ static void var_filter_block2d_bil_first_pass(
 // filter is applied horizontally (pixel_step = 1) or vertically
 // (pixel_step = stride). It defines the offset required to move from one input
 // to the next. Output is 8-bit.
-static void var_filter_block2d_bil_second_pass(
+void var_filter_block2d_bil_second_pass_c(
     const uint16_t *src_ptr, uint8_t *ref_ptr, unsigned int src_pixels_per_line,
     unsigned int pixel_step, unsigned int output_height,
     unsigned int output_width, const uint8_t *filter) {
@@ -145,7 +141,7 @@ void vpx_comp_avg_pred_c(uint8_t *comp_pred, const uint8_t *pred, int width,
                                      const uint8_t *ref_ptr, int ref_stride, \
                                      uint32_t *sse) {                        \
     int sum;                                                                 \
-    variance(src_ptr, src_stride, ref_ptr, ref_stride, W, H, sse, &sum);     \
+    variance_c(src_ptr, src_stride, ref_ptr, ref_stride, W, H, sse, &sum);   \
     return *sse - (uint32_t)(((int64_t)sum * sum) / (W * H));                \
   }
 
@@ -156,9 +152,9 @@ void vpx_comp_avg_pred_c(uint8_t *comp_pred, const uint8_t *pred, int width,
     uint16_t fdata3[(H + 1) * W];                                            \
     uint8_t temp2[H * W];                                                    \
                                                                              \
-    var_filter_block2d_bil_first_pass(src_ptr, fdata3, src_stride, 1, H + 1, \
+    var_filter_block2d_bil_first_pass_c(src_ptr, fdata3, src_stride, 1, H + 1, \
                                       W, bilinear_filters[x_offset]);        \
-    var_filter_block2d_bil_second_pass(fdata3, temp2, W, W, H, W,            \
+    var_filter_block2d_bil_second_pass_c(fdata3, temp2, W, W, H, W,          \
                                        bilinear_filters[y_offset]);          \
                                                                              \
     return vpx_variance##W##x##H##_c(temp2, W, ref_ptr, ref_stride, sse);    \
@@ -173,9 +169,9 @@ void vpx_comp_avg_pred_c(uint8_t *comp_pred, const uint8_t *pred, int width,
     uint8_t temp2[H * W];                                                    \
     DECLARE_ALIGNED(16, uint8_t, temp3[H * W]);                              \
                                                                              \
-    var_filter_block2d_bil_first_pass(src_ptr, fdata3, src_stride, 1, H + 1, \
+    var_filter_block2d_bil_first_pass_c(src_ptr, fdata3, src_stride, 1, H + 1, \
                                       W, bilinear_filters[x_offset]);        \
-    var_filter_block2d_bil_second_pass(fdata3, temp2, W, W, H, W,            \
+    var_filter_block2d_bil_second_pass_c(fdata3, temp2, W, W, H, W,          \
                                        bilinear_filters[y_offset]);          \
                                                                              \
     vpx_comp_avg_pred_c(temp3, second_pred, W, H, temp2, W);                 \
@@ -191,7 +187,7 @@ void vpx_comp_avg_pred_c(uint8_t *comp_pred, const uint8_t *pred, int width,
   void vpx_get##W##x##H##var_c(const uint8_t *src_ptr, int src_stride,  \
                                const uint8_t *ref_ptr, int ref_stride,  \
                                uint32_t *sse, int *sum) {               \
-    variance(src_ptr, src_stride, ref_ptr, ref_stride, W, H, sse, sum); \
+    variance_c(src_ptr, src_stride, ref_ptr, ref_stride, W, H, sse, sum); \
   }
 
 /* Identical to the variance call except it does not calculate the
@@ -203,7 +199,7 @@ void vpx_comp_avg_pred_c(uint8_t *comp_pred, const uint8_t *pred, int width,
                                 const uint8_t *ref_ptr, int ref_stride,  \
                                 uint32_t *sse) {                         \
     int sum;                                                             \
-    variance(src_ptr, src_stride, ref_ptr, ref_stride, W, H, sse, &sum); \
+    variance_c(src_ptr, src_stride, ref_ptr, ref_stride, W, H, sse, &sum); \
     return *sse;                                                         \
   }
 
