@@ -578,6 +578,7 @@ class Codegen(_enum.Enum):
                     OutSel.RT_OR_ZERO: "RT",
                     OutSel.FRT: "FRT",
                     OutSel.FRS: "FRS",
+                    OutSel.RS: "RS",
                 })
             yield from opindex(CRInSel, "cr_in", {
                 CRInSel.BI: "BI",
