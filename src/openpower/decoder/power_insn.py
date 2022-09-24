@@ -1947,7 +1947,7 @@ class RM(BaseRM):
         # look up in table
         if table is not None:
             for (value, mask, member) in table:
-                if ((value & search) == (mask & search)):
+                if ((value & mask) == (mask & search)):
                     rm = getattr(rm, member)
                     break
 
