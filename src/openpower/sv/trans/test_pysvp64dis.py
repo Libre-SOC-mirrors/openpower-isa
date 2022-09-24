@@ -284,6 +284,7 @@ class SVSTATETestCase(unittest.TestCase):
     def test_17_vli(self):
         expected = [
                     "sv.add/ff=RC1/vli 3,7,11",
+                    "sv.add/ff=~RC1/vli 3,7,11",
                         ]
         self._do_tst(expected)
 
