@@ -1064,6 +1064,7 @@ class SVP64Asm:
         ldst_elstride = 0
 
         vli = False
+        sea = False
 
         # ok let's start identifying opcode augmentation fields
         for encmode in opmodes:
@@ -1362,6 +1363,9 @@ class SVP64Asm:
             mode |= (0b1<<SVP64MODE.MOD2_LSB)
         if sv_mode&2:
             mode |= (0b1<<SVP64MODE.MOD2_MSB)
+
+        if sea:
+            mode |= (0b1 << SVP64MODE.SEA)
 
         if not is_bc:
             svp64_rm.mode = mode      # mode: bits 19-23
