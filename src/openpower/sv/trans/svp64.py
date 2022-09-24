@@ -666,7 +666,9 @@ def decode_bo(encoding):
     }
     assert encoding in pmap, \
         "encoding %s for BO Mode not recognised" % encoding
-    # barse-ackwards MSB0/LSB0. sigh
+    # barse-ackwards MSB0/LSB0. sigh.  this would be nice to be the
+    # same as the decode_predicate() CRfield table above, but (inv,CRbit)
+    # is how it is in the spec [decode_predicate is (CRbit,inv)]
     mapped = pmap[encoding]
     si =  SelectableInt(0, 3)
     si[0] = mapped & 1 # inv
