@@ -1147,14 +1147,11 @@ class SVP64Asm:
             elif encmode == 'vli':
                 assert sv_mode == 0b01 # only allow ff mode
                 vli = True
-<<<<<<< HEAD
-=======
             elif encmode == 'sea':
                 assert sv_mode in (None, 0b00, 0b01)
                 assert rm['mode'] == "LDST_IDX"
                 sea = True
                 assert failfirst is False, "cannot use ffirst+signed-address"
->>>>>>> 54866195 (add asserts to ensure failfirst+sea not attempted)
             elif is_bc:
                 if encmode == 'all':
                     svp64_rm.branch.ALL = 1
