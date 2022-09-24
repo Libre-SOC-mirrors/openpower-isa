@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+#include "variance_svp64_wrappers.h"
+
 #define DECLARE_ALIGNED(n, typ, val) typ val __attribute__((aligned(n)))
 
 #define ROUND_POWER_OF_TWO(value, n) (((value) + (1 << ((n)-1))) >> (n))
