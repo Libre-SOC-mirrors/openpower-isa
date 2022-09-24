@@ -298,7 +298,9 @@ class SVSTATETestCase(unittest.TestCase):
     def test_19_ldst_idx_els(self):
         expected = [
                     "sv.stdx/els *4,16,2",
+                    "sv.stdx/sea/els *4,16,2",
                     "sv.ldx/els *4,16,2",
+                    "sv.ldx/sea/els *4,16,2",
                         ]
         self._do_tst(expected)
 

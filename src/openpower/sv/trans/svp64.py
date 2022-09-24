@@ -1154,7 +1154,6 @@ class SVP64Asm:
                 assert sv_mode == 0b01 # only allow ff mode
                 vli = True
             elif encmode == 'sea':
-                assert sv_mode in (None, 0b00, 0b01)
                 assert is_ldst_idx
                 sea = True
                 assert failfirst is False, "cannot use ffirst+signed-address"
@@ -1191,6 +1190,10 @@ class SVP64Asm:
                     raise AssertionError("unknown encmode %s" % encmode)
             else:
                 raise AssertionError("unknown encmode %s" % encmode)
+
+        # check sea *after* all qualifiers are evaluated
+        if sea:
+            assert sv_mode in (None, 0b00, 0b01)
 
         if ptype == '2P':
             # since m=xx takes precedence (overrides) sm=xx and dm=xx,
