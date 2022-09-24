@@ -261,6 +261,7 @@ class SVP64MODEb(_Const):
     INV = 2  # invert CR sense 0=set 1=unset
     CR_MSB = 3  # CR bit to update (with Rc=1)
     CR_LSB = 4
+    VLI = 3
     RC1 = 4  # update CR as if Rc=1 (when Rc=0)
     # LD immediate els (element-stride) locations, depending on mode
     ELS_NORMAL = 4

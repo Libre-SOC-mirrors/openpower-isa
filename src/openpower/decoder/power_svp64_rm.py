@@ -129,6 +129,7 @@ class SVP64RMModeDecode(Elaboratable):
         self.subvl= Signal(2) # subvl
         self.saturate = Signal(SVP64sat)
         self.RC1 = Signal()
+        self.vli = Signal()
         self.cr_sel = Signal(2)  # bit of CR to test (index 0-3)
         self.inv = Signal(1)     # and whether it's inverted (like branch BO)
         self.map_evm = Signal(1)
@@ -218,9 +219,14 @@ class SVP64RMModeDecode(Elaboratable):
 
             # extract failfirst
             with m.If(self.mode == SVP64RMMode.FFIRST): # fail-first
+                comb += self.inv.eq(mode[SVP64MODE.INV])
                 with m.If(self.rc_in):
-                    comb += self.inv.eq(mode[SVP64MODE.INV])
                     comb += self.cr_sel.eq(cr)
+                with m.Else():
+                    # only when Rc=0
+                    comb += self.RC1.eq(mode[SVP64MODE.RC1])
+                    comb += self.vli.eq(mode[SVP64MODE.VLI])
+                    comb += self.cr_sel.eq(0b10) # EQ bit index is implicit
 
             # extract saturate
             with m.Switch(mode2):

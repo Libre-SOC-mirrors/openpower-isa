@@ -1352,6 +1352,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         else:
             rc_en = False
             rc_ok = False
+        # annoying: ignore rc_ok if RC1 is set (for creating *assembly name*)
+        RC1 = yield self.dec2.rm_dec.RC1
+        if RC1:
+            rc_en = False
+            rc_ok = False
         # grrrr have to special-case MUL op (see DecodeOE)
         log("ov %d en %d rc %d en %d op %d" %
             (ov_ok, ov_en, rc_ok, rc_en, int_op))
@@ -1705,8 +1710,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         rm_mode = yield self.dec2.rm_dec.mode
         ff_inv = yield self.dec2.rm_dec.inv
         cr_bit = yield self.dec2.rm_dec.cr_sel
+        RC1 = yield self.dec2.rm_dec.RC1
+        vli = yield self.dec2.rm_dec.vli # VL inclusive if truncated
         log(" ff rm_mode", rc_en, rm_mode, SVP64RMMode.FFIRST.value)
         log("        inv", ff_inv)
+        log("        RC1", RC1)
+        log("        vli", vli)
         log("     cr_bit", cr_bit)
         ffirst_hit = False
         if rc_en and rm_mode == SVP64RMMode.FFIRST.value:
@@ -1716,7 +1725,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             log("cr test", regnum, int(crtest), crtest, cr_bit, ff_inv)
             log("cr test?", ffirst_hit)
             if ffirst_hit:
-                self.svstate.vl = srcstep
+                vli = SelectableInt(int(vli), 7)
+                self.svstate.vl = srcstep + vli
                 yield self.dec2.state.svstate.eq(self.svstate.value)
                 yield Settle()  # let decoder update
 

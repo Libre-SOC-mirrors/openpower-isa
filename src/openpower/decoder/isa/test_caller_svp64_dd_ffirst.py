@@ -66,8 +66,8 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def tst_sv_addi_ffirst_vli(self):
-        lst = SVP64Asm([ "sv.subf/ff=~RC1/vli *0,8,*0"
+    def test_sv_addi_ffirst_vli(self):
+        lst = SVP64Asm([ "sv.subf/ff=RC1/vli *0,8,*0"
                         ])
         lst = list(lst)
 

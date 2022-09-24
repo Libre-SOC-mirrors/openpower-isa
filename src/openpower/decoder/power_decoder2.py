@@ -983,15 +983,6 @@ class PowerDecodeSubset(Elaboratable):
             comb += dec_bi.sel_in.eq(self.op_get("in2_sel"))
             comb += self.do_copy("imm_data", dec_bi.imm_out)  # imm in RB
 
-        # rc and oe out
-        comb += self.do_copy("rc", dec_rc.rc_out)
-        if self.svp64_en:
-            # OE only enabled when SVP64 not active
-            with m.If(~self.is_svp64_mode):
-                comb += self.do_copy("oe", dec_oe.oe_out)
-        else:
-            comb += self.do_copy("oe", dec_oe.oe_out)
-
         # CR in/out - note: these MUST match with what happens in
         # DecodeCROut!
         rc_out = self.dec_rc.rc_out.data
@@ -1048,6 +1039,26 @@ class PowerDecodeSubset(Elaboratable):
                     '11100-',  # pcdec
                 )):
                 comb += self.implicit_rs.eq(1)
+
+        # rc and oe out
+        comb += self.do_copy("rc", dec_rc.rc_out)
+        if self.svp64_en:
+            # OE only enabled when SVP64 not active
+            with m.If(~self.is_svp64_mode):
+                comb += self.do_copy("oe", dec_oe.oe_out)
+            # RC1 overrides Rc if rc type is NONE or ONE or Rc=0, in svp64_mode
+            # for instructions with a forced-Rc=1 (stbcx., pcdec.)
+            # the RC1 RM bit *becomes* Rc=0/1, but for instructions
+            # that have Rc=0/1 then when Rc=0 RC1 *becomes* (replaces) Rc.
+            with m.Elif((dec_rc.sel_in.matches(RCOE.RC, RCOE.RC_ONLY) &
+                         dec_rc.rc_out.data == 0) |
+                         (dec_rc.sel_in == RCOE.ONE)):
+                RC1 = Data(1, "RC1")
+                comb += RC1.ok.eq(rm_dec.RC1)
+                comb += RC1.RC1.eq(rm_dec.RC1)
+                comb += self.do_copy("rc", RC1)
+        else:
+            comb += self.do_copy("oe", dec_oe.oe_out)
 
         # decoded/selected instruction flags
         comb += self.do_copy("data_len", self.op_get("ldst_len"))
