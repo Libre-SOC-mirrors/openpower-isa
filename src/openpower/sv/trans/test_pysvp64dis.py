@@ -288,6 +288,12 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_18_sea(self):
+        expected = [
+                    "sv.ldux/sea 5,6,7",
+                        ]
+        self._do_tst(expected)
+
+
 if __name__ == "__main__":
     unittest.main()
-
