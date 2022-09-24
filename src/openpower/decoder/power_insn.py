@@ -1470,6 +1470,14 @@ class PredicateWidthBaseRM(WidthBaseRM, PredicateBaseRM):
     pass
 
 
+class SEABaseRM(BaseRM):
+    def specifiers(self, record):
+        if self.SEA:
+            yield "sea"
+
+        yield from super().specifiers(record=record)
+
+
 class NormalBaseRM(PredicateWidthBaseRM):
     """
     Normal mode
@@ -1638,14 +1646,14 @@ class LDSTIdxBaseRM(PredicateWidthBaseRM):
     pass
 
 
-class LDSTIdxSimpleRM(DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
+class LDSTIdxSimpleRM(SEABaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
     """ld/st index: simple mode"""
     SEA: BaseRM.mode[2]
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
 
-class LDSTIdxStrideRM(DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
+class LDSTIdxStrideRM(SEABaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
     """ld/st index: strided (scalar only source)"""
     SEA: BaseRM.mode[2]
     dz: BaseRM.mode[3]
@@ -1895,7 +1903,7 @@ class RM(BaseRM):
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
             #    mode  Rc  mask  Rc  member
             table = (
-                (0b000000, 0b111000, "simple"), # simple     (no Rc)
+                (0b000000, 0b110000, "simple"), # simple     (no Rc)
                 (0b010000, 0b110000, "stride"), # strided,   (no Rc)
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)
                 (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
