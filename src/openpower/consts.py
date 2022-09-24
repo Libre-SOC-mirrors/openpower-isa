@@ -242,6 +242,7 @@ class SVP64MODEb(_Const):
     MOD2_MSB = 0
     MOD2_LSB = 1
     MOD3 = 3
+    SEA = 2
     # when predicate not set: 0=ignore/skip 1=zero
     DZ = 3  # for destination
     SZ = 4  # for source
