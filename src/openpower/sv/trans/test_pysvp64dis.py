@@ -295,5 +295,13 @@ class SVSTATETestCase(unittest.TestCase):
         self._do_tst(expected)
 
 
+    def test_19_ldst_idx_els(self):
+        expected = [
+                    "sv.stdx/els *4,16,2",
+                    "sv.ldx/els *4,16,2",
+                        ]
+        self._do_tst(expected)
+
+
 if __name__ == "__main__":
     unittest.main()

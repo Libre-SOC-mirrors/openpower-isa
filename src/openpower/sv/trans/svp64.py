@@ -1062,6 +1062,7 @@ class SVP64Asm:
         predresult = False
         failfirst = False
         ldst_elstride = 0
+        sea = False
 
         vli = False
         sea = False
@@ -1285,8 +1286,15 @@ class SVP64Asm:
 
         else:
             ######################################
+            # "element-strided" mode, ldst_idx
+            if sv_mode == 0b01 and is_ldst_idx:
+                mode |= src_zero << SVP64MODE.SZ  # predicate zeroing
+                mode |= dst_zero << SVP64MODE.DZ  # predicate zeroing
+                mode |= sea << SVP64MODE.SEA  # el-strided
+
+            ######################################
             # "normal" mode
-            if sv_mode is None:
+            elif sv_mode is None:
                 mode |= src_zero << SVP64MODE.SZ  # predicate zeroing
                 mode |= dst_zero << SVP64MODE.DZ  # predicate zeroing
                 if is_ldst:
