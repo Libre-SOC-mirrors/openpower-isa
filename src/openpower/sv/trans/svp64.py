@@ -1263,13 +1263,13 @@ class SVP64Asm:
 
         # for LD/ST-indexed (RA+RB):
         """
-            | 0-1 |  2  |  3   4  |  description              |
-            | --- | --- |---------|-------------------------- |
-            | 00  | SEA |  dz  sz | normal mode        |
-            | 01  | SEA | dz sz  | Strided (scalar only source)   |
-            | 10  |   N | dz   sz |  sat mode: N=0/1 u/s |
-            | 11  | inv | CR-bit  |  Rc=1: pred-result CR sel |
-            | 11  | inv | dz  RC1 |  Rc=0: pred-result z/nonz |
+            | 0-1 |  2  |  3   4  |  description                 |
+            | --- | --- |---------|----------------------------- |
+            | 00  | SEA |  dz  sz | normal mode                  |
+            | 01  | SEA |  dz sz  | strided (scalar only source) |
+            | 10  |   N | dz   sz | sat mode: N=0/1 u/s          |
+            | 11  | inv | CR-bit  | Rc=1: pred-result CR sel     |
+            | 11  | inv | dz  RC1 | Rc=0: pred-result z/nonz     |
         """
 
         # and leaving out branches and cr_ops for now because they're
