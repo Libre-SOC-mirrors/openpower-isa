@@ -1155,7 +1155,7 @@ class SVP64Asm:
                 vli = True
             elif encmode == 'sea':
                 assert sv_mode in (None, 0b00, 0b01)
-                assert rm['mode'] == "LDST_IDX"
+                assert is_ldst_idx
                 sea = True
                 assert failfirst is False, "cannot use ffirst+signed-address"
             elif is_bc:
