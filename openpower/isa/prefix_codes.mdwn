@@ -4,7 +4,7 @@
 
 VA2-Form
 
-* pcdec. RT,RA,RB,RC,once (Rc=1)
+* pcdec. RT,RA,RB,RC,once
 
 Pseudo-code:
 
