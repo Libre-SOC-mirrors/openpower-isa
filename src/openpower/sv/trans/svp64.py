@@ -1030,6 +1030,7 @@ class SVP64Asm:
         # identify if the op is a LD/ST. 
         # see https://libre-soc.org/openpower/sv/ldst/
         is_ldst = rm['mode'] in [ 'LDST_IDX', 'LDST_IMM']
+        is_ldst_idx = rm['mode'] ==  'LDST_IDX'
         is_ld = v30b_op.startswith("l") and is_ldst
         is_st = v30b_op.startswith("s") and is_ldst
 
@@ -1101,6 +1102,9 @@ class SVP64Asm:
             # element-strided LD/ST
             elif encmode == 'els':
                 ldst_elstride = 1
+                # in indexed mode, set sv_mode=0b01
+                if is_ldst_idx:
+                    sv_mode = 0b01
             # saturation
             elif encmode == 'sats':
                 assert sv_mode is None
