@@ -1478,6 +1478,14 @@ class SEABaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
+class VLiBaseRM(BaseRM):
+    def specifiers(self, record):
+        if self.VLi:
+            yield "vli"
+
+        yield from super().specifiers(record=record)
+
+
 class NormalBaseRM(PredicateWidthBaseRM):
     """
     Normal mode
@@ -1509,16 +1517,13 @@ class NormalFFRc1RM(FFPRRc1BaseRM, NormalBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class NormalFFRc0RM(FFPRRc0BaseRM, NormalBaseRM):
+class NormalFFRc0RM(FFPRRc0BaseRM, VLiBaseRM, NormalBaseRM):
     """normal: Rc=0: ffirst z/nonz"""
     inv: BaseRM.mode[2]
     VLi: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
     def specifiers(self, record):
-        if self.VLi:
-            yield "vli"
-
         yield from super().specifiers(record=record, mode="ff")
 
 
@@ -1724,9 +1729,9 @@ class CROpMRRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     sz: BaseRM[23]
 
 
-class CROpFF3RM(ZZBaseRM, CROpBaseRM):
+class CROpFF3RM(VLiBaseRM, ZZBaseRM, CROpBaseRM):
     """cr_op: ffirst 3-bit mode"""
-    VLI: BaseRM[20]
+    VLi: BaseRM[20]
     inv: BaseRM[21]
     CR: BaseRM[22, 23]
     zz: BaseRM[6]
@@ -1737,9 +1742,9 @@ class CROpFF3RM(ZZBaseRM, CROpBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class CROpFF5RM(DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpFF5RM(VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
-    VLI: BaseRM[20]
+    VLi: BaseRM[20]
     inv: BaseRM[21]
     dz: BaseRM[22]
     sz: BaseRM[23]
@@ -1811,7 +1816,7 @@ class BranchSimpleRM(BranchBaseRM):
 class BranchVLSRM(BranchBaseRM):
     """branch: VLSET mode"""
     VSb: BaseRM[7]
-    VLI: BaseRM[21]
+    VLi: BaseRM[21]
 
     def specifiers(self, record):
         yield {
@@ -1819,7 +1824,7 @@ class BranchVLSRM(BranchBaseRM):
             (0b0, 0b1): "vsi",
             (0b1, 0b0): "vsb",
             (0b1, 0b1): "vsbi",
-        }[int(self.VSb), int(self.VLI)]
+        }[int(self.VSb), int(self.VLi)]
 
         yield from super().specifiers(record=record)
 
