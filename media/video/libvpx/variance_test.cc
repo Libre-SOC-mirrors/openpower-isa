@@ -310,14 +310,14 @@ class MainTestClass
 
 template <typename VarianceFunctionType>
 void MainTestClass<VarianceFunctionType>::ZeroTest() {
-  for (int i = 0; i <= 3; ++i) {
+  for (int i = 0; i <= 1; ++i) {
     if (!use_high_bit_depth()) {
       memset(src_, i, block_size());
     } else {
       uint16_t *const src16 = CONVERT_TO_SHORTPTR(src_);
       for (int k = 0; k < block_size(); ++k) src16[k] = i << byte_shift();
     }
-    for (int j = 0; j <= 3; ++j) {
+    for (int j = 0; j <= 1; ++j) {
       if (!use_high_bit_depth()) {
         memset(ref_, j, block_size());
       } else {
@@ -422,7 +422,7 @@ void MainTestClass<VarianceFunctionType>::SpeedTest() {
 
 template <typename FunctionType>
 void MainTestClass<FunctionType>::RefTestMse() {
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < block_size(); ++j) {
       src_[j] = rnd_.Rand8();
       ref_[j] = rnd_.Rand8();
@@ -438,7 +438,7 @@ void MainTestClass<FunctionType>::RefTestMse() {
 
 template <typename FunctionType>
 void MainTestClass<FunctionType>::RefTestSse() {
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < block_size(); ++j) {
       src_[j] = rnd_.Rand8();
       ref_[j] = rnd_.Rand8();
@@ -475,163 +475,9 @@ void MainTestClass<FunctionType>::MaxTestSse() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-template <typename FunctionType>
-class SubpelVarianceTest
-    : public ::testing::TestWithParam<TestParams<FunctionType> > {
- public:
-  virtual void SetUp() {
-    params_ = this->GetParam();
-
-    rnd_.Reset(ACMRandom::DeterministicSeed());
-    if (!use_high_bit_depth()) {
-      src_ = reinterpret_cast<uint8_t *>(vpx_memalign(16, block_size()));
-      sec_ = reinterpret_cast<uint8_t *>(vpx_memalign(16, block_size()));
-      ref_ = reinterpret_cast<uint8_t *>(
-          vpx_malloc(block_size() + width() + height() + 1));
-    }
-    ASSERT_NE(src_, nullptr);
-    ASSERT_NE(sec_, nullptr);
-    ASSERT_NE(ref_, nullptr);
-  }
-
-  virtual void TearDown() {
-    if (!use_high_bit_depth()) {
-      vpx_free(src_);
-      vpx_free(sec_);
-      vpx_free(ref_);
-    }
-    libvpx_test::ClearSystemState();
-  }
-
- protected:
-  void RefTest();
-  void ExtremeRefTest();
-  void SpeedTest();
-
-  ACMRandom rnd_;
-  uint8_t *src_;
-  uint8_t *ref_;
-  uint8_t *sec_;
-  TestParams<FunctionType> params_;
-
-  // some relay helpers
-  bool use_high_bit_depth() const { return params_.use_high_bit_depth; }
-  int byte_shift() const { return params_.bit_depth - 8; }
-  int block_size() const { return params_.block_size; }
-  int width() const { return params_.width; }
-  int height() const { return params_.height; }
-  uint32_t mask() const { return params_.mask; }
-};
-
-template <typename SubpelVarianceFunctionType>
-void SubpelVarianceTest<SubpelVarianceFunctionType>::RefTest() {
-  for (int x = 0; x < 8; ++x) {
-    for (int y = 0; y < 8; ++y) {
-      if (!use_high_bit_depth()) {
-        for (int j = 0; j < block_size(); j++) {
-          src_[j] = rnd_.Rand8();
-        }
-        for (int j = 0; j < block_size() + width() + height() + 1; j++) {
-          ref_[j] = rnd_.Rand8();
-        }
-      }
-      unsigned int sse1, sse2;
-      unsigned int var1;
-      ASM_REGISTER_STATE_CHECK(
-          var1 = params_.func(ref_, width() + 1, x, y, src_, width(), &sse1));
-      const unsigned int var2 = subpel_variance_ref(
-          ref_, src_, params_.log2width, params_.log2height, x, y, &sse2,
-          use_high_bit_depth(), params_.bit_depth);
-      EXPECT_EQ(sse1, sse2) << "at position " << x << ", " << y;
-      EXPECT_EQ(var1, var2) << "at position " << x << ", " << y;
-    }
-  }
-}
-
-template <typename SubpelVarianceFunctionType>
-void SubpelVarianceTest<SubpelVarianceFunctionType>::ExtremeRefTest() {
-  // Compare against reference.
-  // Src: Set the first half of values to 0, the second half to the maximum.
-  // Ref: Set the first half of values to the maximum, the second half to 0.
-  for (int x = 0; x < 8; ++x) {
-    for (int y = 0; y < 8; ++y) {
-      const int half = block_size() / 2;
-      if (!use_high_bit_depth()) {
-        memset(src_, 0, half);
-        memset(src_ + half, 255, half);
-        memset(ref_, 255, half);
-        memset(ref_ + half, 0, half + width() + height() + 1);
-      }
-      unsigned int sse1, sse2;
-      unsigned int var1;
-      ASM_REGISTER_STATE_CHECK(
-          var1 = params_.func(ref_, width() + 1, x, y, src_, width(), &sse1));
-      const unsigned int var2 = subpel_variance_ref(
-          ref_, src_, params_.log2width, params_.log2height, x, y, &sse2,
-          use_high_bit_depth(), params_.bit_depth);
-      EXPECT_EQ(sse1, sse2) << "for xoffset " << x << " and yoffset " << y;
-      EXPECT_EQ(var1, var2) << "for xoffset " << x << " and yoffset " << y;
-    }
-  }
-}
-
-template <typename SubpelVarianceFunctionType>
-void SubpelVarianceTest<SubpelVarianceFunctionType>::SpeedTest() {
-  // The only interesting points are 0, 4, and anything else. To make the loops
-  // simple we will use 0, 2 and 4.
-  for (int x = 0; x <= 4; x += 2) {
-    for (int y = 0; y <= 4; y += 2) {
-      if (!use_high_bit_depth()) {
-        memset(src_, 25, block_size());
-        memset(ref_, 50, block_size());
-      }
-      unsigned int sse;
-      vpx_usec_timer timer;
-      vpx_usec_timer_start(&timer);
-      for (int i = 0; i < 1000000000 / block_size(); ++i) {
-        const uint32_t variance =
-            params_.func(ref_, width() + 1, x, y, src_, width(), &sse);
-        (void)variance;
-      }
-      vpx_usec_timer_mark(&timer);
-      const int elapsed_time = static_cast<int>(vpx_usec_timer_elapsed(&timer));
-      printf("SubpelVariance %dx%d xoffset: %d yoffset: %d time: %5d ms\n",
-             width(), height(), x, y, elapsed_time / 1000);
-    }
-  }
-}
-
-template <>
-void SubpelVarianceTest<vpx_subp_avg_variance_fn_t>::RefTest() {
-  for (int x = 0; x < 8; ++x) {
-    for (int y = 0; y < 8; ++y) {
-      if (!use_high_bit_depth()) {
-        for (int j = 0; j < block_size(); j++) {
-          src_[j] = rnd_.Rand8();
-          sec_[j] = rnd_.Rand8();
-        }
-        for (int j = 0; j < block_size() + width() + height() + 1; j++) {
-          ref_[j] = rnd_.Rand8();
-        }
-      }
-      uint32_t sse1, sse2;
-      uint32_t var1, var2;
-      ASM_REGISTER_STATE_CHECK(var1 = params_.func(ref_, width() + 1, x, y,
-                                                   src_, width(), &sse1, sec_));
-      var2 = subpel_avg_variance_ref(ref_, src_, sec_, params_.log2width,
-                                     params_.log2height, x, y, &sse2,
-                                     use_high_bit_depth(), params_.bit_depth);
-      EXPECT_EQ(sse1, sse2) << "at position " << x << ", " << y;
-      EXPECT_EQ(var1, var2) << "at position " << x << ", " << y;
-    }
-  }
-}
-
 typedef MainTestClass<Get4x4SseFunc> VpxSseTest;
 typedef MainTestClass<vpx_variance_fn_t> VpxMseTest;
 typedef MainTestClass<vpx_variance_fn_t> VpxVarianceTest;
-typedef SubpelVarianceTest<vpx_subpixvariance_fn_t> VpxSubpelVarianceTest;
-typedef SubpelVarianceTest<vpx_subp_avg_variance_fn_t> VpxSubpelAvgVarianceTest;
 
 TEST_P(VpxSseTest, RefSse) { RefTestSse(); }
 TEST_P(VpxSseTest, MaxSse) { MaxTestSse(); }
@@ -643,9 +489,6 @@ TEST_P(VpxVarianceTest, RefStride) { RefStrideTest(); }
 TEST_P(VpxVarianceTest, OneQuarter) { OneQuarterTest(); }
 TEST_P(SumOfSquaresTest, Const) { ConstTest(); }
 TEST_P(SumOfSquaresTest, Ref) { RefTest(); }
-TEST_P(VpxSubpelVarianceTest, Ref) { RefTest(); }
-TEST_P(VpxSubpelVarianceTest, ExtremeRef) { ExtremeRefTest(); }
-TEST_P(VpxSubpelAvgVarianceTest, Ref) { RefTest(); }
 
 INSTANTIATE_TEST_SUITE_P(C, SumOfSquaresTest,
                          ::testing::Values(vpx_get_mb_ss_c));
@@ -665,10 +508,7 @@ INSTANTIATE_TEST_SUITE_P(C, VpxMseTest,
 typedef TestParams<vpx_variance_fn_t> VarianceParams;
 INSTANTIATE_TEST_SUITE_P(
     C, VpxVarianceTest,
-    ::testing::Values(VarianceParams(6, 6, &vpx_variance64x64_c),
-                      VarianceParams(6, 5, &vpx_variance64x32_c),
-                      VarianceParams(5, 6, &vpx_variance32x64_c),
-                      VarianceParams(5, 5, &vpx_variance32x32_c),
+    ::testing::Values(VarianceParams(5, 5, &vpx_variance32x32_c),
                       VarianceParams(5, 4, &vpx_variance32x16_c),
                       VarianceParams(4, 5, &vpx_variance16x32_c),
                       VarianceParams(4, 4, &vpx_variance16x16_c),
@@ -678,42 +518,6 @@ INSTANTIATE_TEST_SUITE_P(
                       VarianceParams(3, 2, &vpx_variance8x4_c),
                       VarianceParams(2, 3, &vpx_variance4x8_c),
                       VarianceParams(2, 2, &vpx_variance4x4_c)));
-
-typedef TestParams<vpx_subpixvariance_fn_t> SubpelVarianceParams;
-INSTANTIATE_TEST_SUITE_P(
-    C, VpxSubpelVarianceTest,
-    ::testing::Values(
-        SubpelVarianceParams(6, 6, &vpx_sub_pixel_variance64x64_c, 0),
-        SubpelVarianceParams(6, 5, &vpx_sub_pixel_variance64x32_c, 0),
-        SubpelVarianceParams(5, 6, &vpx_sub_pixel_variance32x64_c, 0),
-        SubpelVarianceParams(5, 5, &vpx_sub_pixel_variance32x32_c, 0),
-        SubpelVarianceParams(5, 4, &vpx_sub_pixel_variance32x16_c, 0),
-        SubpelVarianceParams(4, 5, &vpx_sub_pixel_variance16x32_c, 0),
-        SubpelVarianceParams(4, 4, &vpx_sub_pixel_variance16x16_c, 0),
-        SubpelVarianceParams(4, 3, &vpx_sub_pixel_variance16x8_c, 0),
-        SubpelVarianceParams(3, 4, &vpx_sub_pixel_variance8x16_c, 0),
-        SubpelVarianceParams(3, 3, &vpx_sub_pixel_variance8x8_c, 0),
-        SubpelVarianceParams(3, 2, &vpx_sub_pixel_variance8x4_c, 0),
-        SubpelVarianceParams(2, 3, &vpx_sub_pixel_variance4x8_c, 0),
-        SubpelVarianceParams(2, 2, &vpx_sub_pixel_variance4x4_c, 0)));
-
-typedef TestParams<vpx_subp_avg_variance_fn_t> SubpelAvgVarianceParams;
-INSTANTIATE_TEST_SUITE_P(
-    C, VpxSubpelAvgVarianceTest,
-    ::testing::Values(
-        SubpelAvgVarianceParams(6, 6, &vpx_sub_pixel_avg_variance64x64_c, 0),
-        SubpelAvgVarianceParams(6, 5, &vpx_sub_pixel_avg_variance64x32_c, 0),
-        SubpelAvgVarianceParams(5, 6, &vpx_sub_pixel_avg_variance32x64_c, 0),
-        SubpelAvgVarianceParams(5, 5, &vpx_sub_pixel_avg_variance32x32_c, 0),
-        SubpelAvgVarianceParams(5, 4, &vpx_sub_pixel_avg_variance32x16_c, 0),
-        SubpelAvgVarianceParams(4, 5, &vpx_sub_pixel_avg_variance16x32_c, 0),
-        SubpelAvgVarianceParams(4, 4, &vpx_sub_pixel_avg_variance16x16_c, 0),
-        SubpelAvgVarianceParams(4, 3, &vpx_sub_pixel_avg_variance16x8_c, 0),
-        SubpelAvgVarianceParams(3, 4, &vpx_sub_pixel_avg_variance8x16_c, 0),
-        SubpelAvgVarianceParams(3, 3, &vpx_sub_pixel_avg_variance8x8_c, 0),
-        SubpelAvgVarianceParams(3, 2, &vpx_sub_pixel_avg_variance8x4_c, 0),
-        SubpelAvgVarianceParams(2, 3, &vpx_sub_pixel_avg_variance4x8_c, 0),
-        SubpelAvgVarianceParams(2, 2, &vpx_sub_pixel_avg_variance4x4_c, 0)));
 
 INSTANTIATE_TEST_SUITE_P(SVP64, SumOfSquaresTest,
                          ::testing::Values(vpx_get_mb_ss_svp64));
@@ -733,10 +537,7 @@ INSTANTIATE_TEST_SUITE_P(SVP64, VpxMseTest,
 typedef TestParams<vpx_variance_fn_t> VarianceParams;
 INSTANTIATE_TEST_SUITE_P(
     SVP64, VpxVarianceTest,
-    ::testing::Values(VarianceParams(6, 6, &vpx_variance64x64_svp64),
-                      VarianceParams(6, 5, &vpx_variance64x32_svp64),
-                      VarianceParams(5, 6, &vpx_variance32x64_svp64),
-                      VarianceParams(5, 5, &vpx_variance32x32_svp64),
+    ::testing::Values(VarianceParams(5, 5, &vpx_variance32x32_svp64),
                       VarianceParams(5, 4, &vpx_variance32x16_svp64),
                       VarianceParams(4, 5, &vpx_variance16x32_svp64),
                       VarianceParams(4, 4, &vpx_variance16x16_svp64),
@@ -746,41 +547,5 @@ INSTANTIATE_TEST_SUITE_P(
                       VarianceParams(3, 2, &vpx_variance8x4_svp64),
                       VarianceParams(2, 3, &vpx_variance4x8_svp64),
                       VarianceParams(2, 2, &vpx_variance4x4_svp64)));
-
-typedef TestParams<vpx_subpixvariance_fn_t> SubpelVarianceParams;
-INSTANTIATE_TEST_SUITE_P(
-    SVP64, VpxSubpelVarianceTest,
-    ::testing::Values(
-        SubpelVarianceParams(6, 6, &vpx_sub_pixel_variance64x64_svp64, 0),
-        SubpelVarianceParams(6, 5, &vpx_sub_pixel_variance64x32_svp64, 0),
-        SubpelVarianceParams(5, 6, &vpx_sub_pixel_variance32x64_svp64, 0),
-        SubpelVarianceParams(5, 5, &vpx_sub_pixel_variance32x32_svp64, 0),
-        SubpelVarianceParams(5, 4, &vpx_sub_pixel_variance32x16_svp64, 0),
-        SubpelVarianceParams(4, 5, &vpx_sub_pixel_variance16x32_svp64, 0),
-        SubpelVarianceParams(4, 4, &vpx_sub_pixel_variance16x16_svp64, 0),
-        SubpelVarianceParams(4, 3, &vpx_sub_pixel_variance16x8_svp64, 0),
-        SubpelVarianceParams(3, 4, &vpx_sub_pixel_variance8x16_svp64, 0),
-        SubpelVarianceParams(3, 3, &vpx_sub_pixel_variance8x8_svp64, 0),
-        SubpelVarianceParams(3, 2, &vpx_sub_pixel_variance8x4_svp64, 0),
-        SubpelVarianceParams(2, 3, &vpx_sub_pixel_variance4x8_svp64, 0),
-        SubpelVarianceParams(2, 2, &vpx_sub_pixel_variance4x4_svp64, 0)));
-
-typedef TestParams<vpx_subp_avg_variance_fn_t> SubpelAvgVarianceParams;
-INSTANTIATE_TEST_SUITE_P(
-    SVP64, VpxSubpelAvgVarianceTest,
-    ::testing::Values(
-        SubpelAvgVarianceParams(6, 6, &vpx_sub_pixel_avg_variance64x64_svp64, 0),
-        SubpelAvgVarianceParams(6, 5, &vpx_sub_pixel_avg_variance64x32_svp64, 0),
-        SubpelAvgVarianceParams(5, 6, &vpx_sub_pixel_avg_variance32x64_svp64, 0),
-        SubpelAvgVarianceParams(5, 5, &vpx_sub_pixel_avg_variance32x32_svp64, 0),
-        SubpelAvgVarianceParams(5, 4, &vpx_sub_pixel_avg_variance32x16_svp64, 0),
-        SubpelAvgVarianceParams(4, 5, &vpx_sub_pixel_avg_variance16x32_svp64, 0),
-        SubpelAvgVarianceParams(4, 4, &vpx_sub_pixel_avg_variance16x16_svp64, 0),
-        SubpelAvgVarianceParams(4, 3, &vpx_sub_pixel_avg_variance16x8_svp64, 0),
-        SubpelAvgVarianceParams(3, 4, &vpx_sub_pixel_avg_variance8x16_svp64, 0),
-        SubpelAvgVarianceParams(3, 3, &vpx_sub_pixel_avg_variance8x8_svp64, 0),
-        SubpelAvgVarianceParams(3, 2, &vpx_sub_pixel_avg_variance8x4_svp64, 0),
-        SubpelAvgVarianceParams(2, 3, &vpx_sub_pixel_avg_variance4x8_svp64, 0),
-        SubpelAvgVarianceParams(2, 2, &vpx_sub_pixel_avg_variance4x4_svp64, 0)));
 
 }  // namespace
