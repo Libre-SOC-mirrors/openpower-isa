@@ -1664,6 +1664,11 @@ class LDSTIdxStrideRM(SEABaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
+    def specifiers(self, record):
+        yield "els"
+
+        yield from super().specifiers(record=record)
+
 
 class LDSTIdxSatRM(SatBaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
     """ld/st index: sat mode: N=0/1 u/s"""
