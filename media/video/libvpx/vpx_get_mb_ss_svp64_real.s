@@ -17,21 +17,21 @@ vpx_get_mb_ss_svp64_real:
 .LFB0:
 	.cfi_startproc
 	# Set sum to zero
-	li sum, 0				# Set sum to zero
-	li ctr, 8				# Need 8 iterations of 32 elements
-	mtctr ctr				# Set counter special register
-	setvl 0,0,32,0,1,1			# Set VL to 32 elements
+	li		sum, 0			# Set sum to zero
+	li		ctr, 8			# Need 8 iterations of 32 elements
+	mtctr		ctr			# Set counter special register
+	setvl		0,0,32,0,1,1		# Set VL to 32 elements
 .L2:
 	sv.lha	 	*src, 0(in)		# Load 32 ints from (in)
-    # XXX these next two should be doable as "sv.maddld/mr sum, *src, *src, sum"
-    # but we have to wait for an update to binutils
+	# The following pair of sv.mulld,sv.add/mr is equivalent to sv.maddld/mr
 	# equivalent to: for (i = 0; i < 32; i++) vprod[i] = src[i] * src[i];
-	sv.mulld 	*prod, *src, *src
+	#sv.mulld 	*prod, *src, *src
 	# equivalent to: for (i = 0; i < 32; i++) sum += prod[i];
-	sv.add/mr	sum, *prod, sum
-	addi in, in, 64				# Advance (in) pointer by 64 bytes
-	bdnz .L2				# Loop until CTR is zero
-	mr in, sum				# Set r3 to sum
+	#sv.add/mr	sum, *prod, sum
+	sv.maddld/mr	sum, *src, *src, sum
+	addi		in, in, 64		# Advance (in) pointer by 64 bytes
+	bdnz		.L2			# Loop until CTR is zero
+	mr		in, sum			# Set r3 to sum
 	blr
 	.long 0
 	.byte 0,0,0,0,0,0,0,0
