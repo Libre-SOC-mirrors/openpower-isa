@@ -1226,7 +1226,6 @@ class SVP64Asm:
                 "dest-mask can only be specified on Twin-predicate ops"
 
         # construct the mode field, doing sanity-checking along the way
-
         if src_zero:
             assert has_smask or mask_m_specified, \
                 "src zeroing requires a source predicate"
