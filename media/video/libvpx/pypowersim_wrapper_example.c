@@ -49,6 +49,8 @@ int test_function_wrapper(int x) {
 
     Py_DECREF(state->result_obj);
 
+    pypowersim_finalize(state);
+
     // Return value
     return val;
 }
@@ -58,7 +60,6 @@ int main(int argc, char* argv[]) {
        int result = test_function_wrapper(i);
        printf("i = %d, result = %d\n", i, result);
     }
-    pypowersim_finalize();
     return 0;
 }
 

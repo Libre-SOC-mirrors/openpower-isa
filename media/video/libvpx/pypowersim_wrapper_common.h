@@ -3,10 +3,11 @@
 #include <stdio.h>
 
 static const char* PLUGIN_NAME = "pypowersim";
+static int python_initialized = 0;
+static PyObject *plugin_name = NULL;
+static PyObject *plugin_module = NULL;
 
 typedef struct pypowersim_state {
-    PyObject *name;
-    PyObject *plugin_module;
     PyObject *binary;
     PyObject *bigendian;
     PyObject *prog;
@@ -25,32 +26,38 @@ typedef struct pypowersim_state {
 } pypowersim_state_t;
 
 pypowersim_state_t *pypowersim_prepare(void) {
-    // Initialize Python C API
-    Py_Initialize();
-    // Add pypowersim directory to Python path
-    PyObject* sysPath = PySys_GetObject((char*)"path");
-    PyObject* curDir = PyUnicode_FromString("../../../src/openpower/decoder/isa/");
-    PyList_Append(sysPath, curDir);
-    Py_DECREF(curDir);
-
     // Allocate memory for state
     pypowersim_state_t *state = malloc(sizeof(pypowersim_state_t));
     if (!state) {
         printf("Error creating pypowersim_state object\n");
 	exit(1);
     }
-    // Set plugin name and module
-    state->name = PyUnicode_FromString(PLUGIN_NAME);
-    state->plugin_module = PyImport_Import(state->name);
-    Py_DECREF(state->name);
-    if (!state->plugin_module) {
-        PyErr_Print();
-        printf("Error importing module\n");
-	exit(1);
+    memset(state, 0, sizeof(pypowersim_state_t));
+
+    // Add pypowersim directory to Python path
+    if (!python_initialized) {
+      // Initialize Python C API
+      Py_Initialize();
+
+      PyObject* sysPath = PySys_GetObject((char*)"path");
+      PyObject* curDir = PyUnicode_FromString("../../../src/openpower/decoder/isa/");
+      PyList_Append(sysPath, curDir);
+      Py_DECREF(curDir);
+
+      // Set plugin name and module
+      plugin_name = PyUnicode_FromString(PLUGIN_NAME);
+      plugin_module = PyImport_Import(plugin_name);
+      Py_DECREF(plugin_name);
+      if (!plugin_module) {
+          PyErr_Print();
+          printf("Error importing module\n");
+    	exit(1);
+      }
+      python_initialized = 1;
     }
+
     // Set simulator object
-    state->simulator = PyObject_GetAttrString(state->plugin_module, "run_a_simulation");
-    Py_DECREF(state->plugin_module);
+    state->simulator = PyObject_GetAttrString(plugin_module, "run_a_simulation");
     if (!state->simulator) {
         PyErr_Print();
         printf("Error retrieving 'run_a_simulation'\n");
@@ -101,8 +108,26 @@ void pypowersim_prepareargs(pypowersim_state_t *state) {
     }
 }
 
-void pypowersim_finalize(void) {
+void pypowersim_finalize(pypowersim_state_t *state) {
+    if (state->simulator) Py_DECREF(state->simulator);
+    if (state->binary) Py_DECREF(state->binary);
+    if (state->bigendian) Py_DECREF(state->bigendian);
+    if (state->prog) Py_DECREF(state->prog);
+    if (state->qemu_cosim) Py_DECREF(state->qemu_cosim);
+    if (state->initial_regs) Py_DECREF(state->initial_regs);
+    if (state->initial_sprs) Py_DECREF(state->initial_sprs);
+    if (state->svstate) Py_DECREF(state->svstate);
+    if (state->mmu) Py_DECREF(state->mmu);
+    if (state->initial_cr) Py_DECREF(state->initial_cr);
+    if (state->initial_mem) Py_DECREF(state->initial_mem);
+    if (state->initial_fprs) Py_DECREF(state->initial_fprs);
+    if (state->initial_pc) Py_DECREF(state->initial_pc);
+    if (state->args) Py_DECREF(state->args);
+    if (state->result_obj) Py_DECREF(state->result_obj);
+    memset(state, 0, sizeof(pypowersim_state_t));
+    if (state) free(state);
+
     // Finalize Python C API
-    Py_Finalize();
+    // Py_Finalize();
 }
 
