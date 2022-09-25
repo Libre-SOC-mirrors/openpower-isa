@@ -115,10 +115,10 @@ uint32_t vpx_get4x4sse_cs_svp64(const uint8_t *src_ptr, int src_stride,
     // Load data into buffer from real memory
     for (int r=0; r < 4; r++) {
       PyObject *address = PyLong_FromUnsignedLongLong(ref_ptr_svp64);
-      uint64_t val = (uint64_t)(src_ptr[0]) & 0xffff;
-      val |= ((uint64_t)(src_ptr[1]) & 0xffff) << 16;
-      val |= ((uint64_t)(src_ptr[2]) & 0xffff) << 32;
-      val |= ((uint64_t)(src_ptr[3]) & 0xffff) << 48;
+      uint64_t val = (uint64_t)(ref_ptr[0]) & 0xffff;
+      val |= ((uint64_t)(ref_ptr[1]) & 0xffff) << 16;
+      val |= ((uint64_t)(ref_ptr[2]) & 0xffff) << 32;
+      val |= ((uint64_t)(ref_ptr[3]) & 0xffff) << 48;
       //printf("ref: %p -> %04x %04x %04x %04x, val: %016lx -> %p\n", ref_ptr, ref_ptr[0], ref_ptr[1], ref_ptr[2], ref_ptr[3], val, ref_ptr_svp64);
       PyObject *word = PyLong_FromUnsignedLongLong(val);
       PyDict_SetItem(state->initial_mem, address, word);
@@ -163,10 +163,10 @@ void variance_svp64(const uint8_t *src_ptr, int src_stride,
                     const uint8_t *ref_ptr, int ref_stride, int w, int h,
                     uint32_t *sse, int *sum) {
 
-    int sse2, sum2;
+    /*int sse2, sum2;
     variance_c(src_ptr, src_stride, ref_ptr, ref_stride, w, h, &sse2, &sum2);
     printf("src_ptr: %p, src_stride: %d, ref_ptr: %p, ref_stride: %d, w: %d, h: %d, sse_ptr: %p, sum_ptr: %p, sse2: %d, sum2: %d\n",
-		    src_ptr, src_stride, ref_ptr, ref_stride, w, h, sse, sum, sse2, sum2);
+		    src_ptr, src_stride, ref_ptr, ref_stride, w, h, sse, sum, sse2, sum2);*/
     // It cannot be the same pointer as the original function, as it is really a separate CPU/RAM
     // we have to memcpy from src_ptr to this pointer, the address was chosen arbitrarily
     uint64_t src_ptr_svp64 = 0x100000;
@@ -190,6 +190,7 @@ void variance_svp64(const uint8_t *src_ptr, int src_stride,
         val |= ((uint64_t)(src_ptr[c + 1]) & 0xffff) << 16;
         val |= ((uint64_t)(src_ptr[c + 2]) & 0xffff) << 32;
         val |= ((uint64_t)(src_ptr[c + 3]) & 0xffff) << 48;
+        //printf("src: %p -> %04x %04x %04x %04x, val: %016lx -> %p\n", src_ptr, src_ptr[c], src_ptr[c + 1], src_ptr[c + 2], src_ptr[c + 3], val, src_ptr_svp64);
         PyObject *word = PyLong_FromUnsignedLongLong(val);
         PyDict_SetItem(state->initial_mem, address, word);
       }
@@ -207,10 +208,10 @@ void variance_svp64(const uint8_t *src_ptr, int src_stride,
     for (int r=0; r < h; r++) {
       for (int c=0; c < w; c += 4) {
         PyObject *address = PyLong_FromUnsignedLongLong(ref_ptr_svp64 + c*2);
-        uint64_t val = (uint64_t)(src_ptr[c + 0]) & 0xffff;
-        val |= ((uint64_t)(src_ptr[c + 1]) & 0xffff) << 16;
-        val |= ((uint64_t)(src_ptr[c + 2]) & 0xffff) << 32;
-        val |= ((uint64_t)(src_ptr[c + 3]) & 0xffff) << 48;
+        uint64_t val = (uint64_t)(ref_ptr[c + 0]) & 0xffff;
+        val |= ((uint64_t)(ref_ptr[c + 1]) & 0xffff) << 16;
+        val |= ((uint64_t)(ref_ptr[c + 2]) & 0xffff) << 32;
+        val |= ((uint64_t)(ref_ptr[c + 3]) & 0xffff) << 48;
         //printf("ref: %p -> %04x %04x %04x %04x, val: %016lx -> %p\n", ref_ptr, ref_ptr[0], ref_ptr[1], ref_ptr[2], ref_ptr[3], val, ref_ptr_svp64);
         PyObject *word = PyLong_FromUnsignedLongLong(val);
         PyDict_SetItem(state->initial_mem, address, word);
