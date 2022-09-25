@@ -1173,14 +1173,14 @@ class SVP64Asm:
                     svp64_rm.branch.VLS = 1
                 elif encmode == 'vsi':
                     svp64_rm.branch.VLS = 1
-                    svp64_rm.branch.vls.VLI = 1
+                    svp64_rm.branch.vls.VLi = 1
                 elif encmode == 'vsb':
                     svp64_rm.branch.VLS = 1
                     svp64_rm.branch.vls.VSb = 1
                 elif encmode == 'vsbi':
                     svp64_rm.branch.VLS = 1
                     svp64_rm.branch.vls.VSb = 1
-                    svp64_rm.branch.vls.VLI = 1
+                    svp64_rm.branch.vls.VLi = 1
                 elif encmode == 'ctr':
                     svp64_rm.branch.CTR = 1
                 elif encmode == 'cti':
