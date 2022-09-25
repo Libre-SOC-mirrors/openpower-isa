@@ -1186,6 +1186,8 @@ class SVP64Asm:
                 elif encmode == 'cti':
                     svp64_rm.branch.CTR = 1
                     svp64_rm.branch.ctr.CTi = 1
+                elif encmode in ['dz', 'zz']:
+                    raise AssertionError("no encmode %s, use 'sz'" % encmode)
                 else:
                     raise AssertionError("unknown encmode %s" % encmode)
             else:
