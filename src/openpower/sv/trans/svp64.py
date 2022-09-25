@@ -1186,12 +1186,14 @@ class SVP64Asm:
                 elif encmode == 'cti':
                     svp64_rm.branch.CTR = 1
                     svp64_rm.branch.ctr.CTi = 1
-                elif encmode in ['dz', 'zz']:
-                    raise AssertionError("no encmode %s, use 'sz'" % encmode)
                 else:
                     raise AssertionError("unknown encmode %s" % encmode)
             else:
                 raise AssertionError("unknown encmode %s" % encmode)
+
+        # sanity check if dz/zz used in branch-mode
+        if is_bc and dst_zero:
+            raise AssertionError("dz/zz not supported in branch, use 'sz'")
 
         # check sea *after* all qualifiers are evaluated
         if sea:
