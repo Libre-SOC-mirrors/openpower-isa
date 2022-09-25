@@ -308,10 +308,10 @@ def run_a_simulation(binary, bigendian, prog,
                             initial_cr=initial_cr, mem=initial_mem,
                             initial_fprs=initial_fprs,
                             initial_pc=initial_pc)
-        print("GPRs")
-        simulator.gpr.dump()
-        print("memory")
-        simulator.mem.dump()
+        #print("GPRs")
+        #simulator.gpr.dump()
+        #print("memory")
+        #simulator.mem.dump()
 
         return simulator
 
