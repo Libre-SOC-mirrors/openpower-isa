@@ -25,6 +25,8 @@ Pseudo-code:
         if in_bits = 1 then
             if ra_used | (_RA = 0) then
                 early_stop <- 0b1
+                if decoded != 1 then  # error: stopped in the middle of a code
+                    so_bit <- 0b1
                 leave
             ra_used <- 0b1
             in_bit <- (RA)[63]
