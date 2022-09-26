@@ -149,7 +149,7 @@ class DecoderTestCase(FHDLTestCase):
                     skew = i*2+j
                     self.assertEqual(sim.gpr(0+offs), SelectableInt(skew, 64))
 
-    def tst_svstep_predicate_pack(self):
+    def test_svstep_predicate_pack(self):
         """tests pack mode with a predicate
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",

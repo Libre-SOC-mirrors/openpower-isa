@@ -756,11 +756,10 @@ class StepLoop:
         self.pred_sz = pred_sz
         self.new_ssubstep = ssubstep
         log("    new ssubstep", ssubstep)
-        if ssubstart:
-            # until the predicate mask has a "1" bit... or we run out of VL
-            # let srcstep==VL be the indicator to move to next instruction
-            if not pred_sz:
-                self.srcstep_skip = True
+        # until the predicate mask has a "1" bit... or we run out of VL
+        # let srcstep==VL be the indicator to move to next instruction
+        if not pred_sz:
+            self.srcstep_skip = True
 
     def read_dst_mask(self):
         """same as read_src_mask - check and record everything needed
@@ -797,9 +796,8 @@ class StepLoop:
         self.pred_dz = pred_dz
         self.new_dsubstep = dsubstep
         log("    new dsubstep", dsubstep)
-        if dsubstart:
-            if not pred_dz:
-                self.dststep_skip = True
+        if not pred_dz:
+            self.dststep_skip = True
 
     def svstate_pre_inc(self):
         """check if srcstep/dststep need to skip over masked-out predicate bits
