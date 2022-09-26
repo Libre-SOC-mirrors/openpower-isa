@@ -62,7 +62,8 @@ class PrefixCodesCases(TestAccumulatorBase):
         max_count = 1 if once else 8
         decoded, expected_SO = reference_pcdec(
             supported_codes, input_bits, max_count=max_count)
-        expected_EQ = len(decoded) == 0
+        expected_GT = len(decoded) == 0
+        expected_EQ = len(decoded) < max_count
         expected_RT = int.from_bytes(
             [int("1" + code, 2) for code in decoded], 'little')
         decoded_bits_len = len("".join(decoded))
@@ -91,7 +92,8 @@ class PrefixCodesCases(TestAccumulatorBase):
         e = ExpectedState(pc=4, int_regs=gprs)
         e.intregs[4] = expected_RT
         e.intregs[5] = expected_RS
-        e.crregs[0] = expected_ra_used * 8 + expected_EQ * 2 + expected_SO
+        e.crregs[0] = (expected_ra_used * 8 + expected_GT * 4
+                       + expected_EQ * 2 + expected_SO)
         with self.subTest(supported_codes=supported_codes,
                           input_bits=original_input_bits):
             self.add_case(Program(lst, False), gprs, expected=e,

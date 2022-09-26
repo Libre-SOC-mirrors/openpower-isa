@@ -19,10 +19,12 @@ Pseudo-code:
     out_byte <- 0
     decoded[0:7] <- 1
     so_bit <- 0b0
+    early_stop <- 0b0
     do while out_byte < 8
         in_bit <- in_bits[63]
         if in_bits = 1 then
             if ra_used | (_RA = 0) then
+                early_stop <- 0b1
                 leave
             ra_used <- 0b1
             in_bit <- (RA)[63]
@@ -42,10 +44,11 @@ Pseudo-code:
                     leave
         else
             so_bit <- 0b1
+            early_stop <- 0b1
             leave
     RT <- output
     RS <- final_in_bits
-    CR0 <- final_ra_used || 0b0 || (output = 0) || so_bit
+    CR0 <- final_ra_used || (output = 0) || early_stop || so_bit
 
 Special Registers Altered:
 
