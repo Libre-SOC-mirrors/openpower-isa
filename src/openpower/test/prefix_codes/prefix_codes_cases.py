@@ -81,7 +81,7 @@ class PrefixCodesCases(TestAccumulatorBase):
         RC_val = int("1" + rev_input_bits, 2)
         if expected_RS is None:
             expected_RS = RC_val >> decoded_bits_len
-        lst = list(SVP64Asm([f"pcdec. 4,6,{RB},5,0"]))
+        lst = list(SVP64Asm([f"pcdec. 4,{RB},6,5,0"]))
         gprs = [0] * 32
         gprs[6] = RA_val
         if RB:

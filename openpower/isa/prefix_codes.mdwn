@@ -1,6 +1,6 @@
 <!-- https://libre-soc.org/openpower/prefix_codes/ -->
 
-# [DRAFT] Prefix-code decode
+# [DRBFT] Prefix-code decode
 
 VA2-Form
 
@@ -8,7 +8,7 @@ VA2-Form
 
 Pseudo-code:
 
-    tree[0:63] <- (RA)
+    tree[0:63] <- (RB)
     rb_used <- 0b0
     in_bits[0:63] <- (RC|0)
     if in_bits = 0 then
@@ -22,11 +22,11 @@ Pseudo-code:
     do while out_byte < 8
         in_bit <- in_bits[63]
         if in_bits = 1 then
-            if rb_used | (_RB = 0) then
+            if rb_used | (_RA = 0) then
                 leave
             rb_used <- 0b1
-            in_bit <- (RB)[63]
-            in_bits <- 0b1 || (RB)[0:62]
+            in_bit <- (RA)[63]
+            in_bits <- 0b1 || (RA)[0:62]
         else
             in_bits <- 0b0 || in_bits[0:62]
         # walk the binary tree in `tree` from parent to the selected child
