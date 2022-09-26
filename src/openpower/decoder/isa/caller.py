@@ -618,13 +618,13 @@ class StepLoop:
     def src_iterate(self):
         """source-stepping iterator
         """
-        end_src = self.end_src
         subvl = self.subvl
         vl = self.svstate.vl
         pack = self.svstate.pack
         unpack = self.svstate.unpack
         ssubstep = self.svstate.ssubstep
         end_ssub = ssubstep == subvl
+        end_src = self.svstate.srcstep == vl-1
         log("    pack/unpack/subvl", pack, unpack, subvl,
             "end", end_src,
             "sub", end_ssub)
@@ -641,7 +641,7 @@ class StepLoop:
         else:
             # advance subvl in *inner* loop
             if end_ssub:
-                if self.svstate.srcstep == vl-1:  # end-point
+                if end_src:  # end-point
                     self.loopend = True
                 else:
                     self.svstate.srcstep += SelectableInt(1, 7)
@@ -650,18 +650,35 @@ class StepLoop:
                 # advance ssubstep
                 self.svstate.ssubstep += SelectableInt(1, 2)
 
-        log("    advance src", self.svstate.srcstep, self.svstate.ssubstep)
+        log("    advance src", self.svstate.srcstep, self.svstate.ssubstep,
+                               self.loopend)
+
+    def at_loopend(self):
+        """tells if this is the last possible element.  uses the cached values
+        for src/dst-step and sub-steps
+        """
+        subvl = self.subvl
+        vl = self.svstate.vl
+        srcstep, dststep = self.new_srcstep, self.new_dststep
+        ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
+        end_ssub = ssubstep == subvl
+        end_dsub = dsubstep == subvl
+        if srcstep == vl-1 and end_ssub:
+            return True
+        if dststep == vl-1 and end_dsub:
+            return True
+        return False
 
     def dst_iterate(self):
         """dest step iterator
         """
-        end_dst = self.end_dst
         vl = self.svstate.vl
         subvl = self.subvl
         pack = self.svstate.pack
         unpack = self.svstate.unpack
         dsubstep = self.svstate.dsubstep
         end_dsub = dsubstep == subvl
+        end_dst = self.svstate.dststep == vl-1
         log("    pack/unpack/subvl", pack, unpack, subvl,
             "end", end_dst,
             "sub", end_dsub)
@@ -677,7 +694,7 @@ class StepLoop:
         else:
             # advance subvl in *inner* loop
             if end_dsub:
-                if self.svstate.dststep == vl-1:  # end-point
+                if end_dst:  # end-point
                     self.loopend = True
                 else:
                     self.svstate.dststep += SelectableInt(1, 7)
@@ -685,15 +702,14 @@ class StepLoop:
             else:
                 # advance ssubstep
                 self.svstate.dsubstep += SelectableInt(1, 2)
-        log("    advance dst", self.svstate.dststep, self.svstate.dsubstep)
+        log("    advance dst", self.svstate.dststep, self.svstate.dsubstep,
+                               self.loopend)
 
-    def advance_svstate_steps(self, end_src=False, end_dst=False):
+    def advance_svstate_steps(self):
         """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
         TODO when Pack/Unpack is set, substep becomes the *outer* loop
         """
         self.subvl = yield self.dec2.rm_dec.rm_in.subvl
-        self.end_src = end_src
-        self.end_dst = end_dst
         self.src_iterate()
         self.dst_iterate()
 
@@ -2001,22 +2017,17 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             nia_update = (yield from self.svstate_post_inc(ins_name))
         else:
             log("SVSTATE_NEXT: post-inc")
-        # use actual src/dst-step here to check end, do NOT
-        # use bit-reversed version
-        srcstep, dststep = self.new_srcstep, self.new_dststep
-        ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
+        # use actual (cached) src/dst-step here to check end
         remaps = self.get_remap_indices()
         remap_idxs = self.remap_idxs
         vl = self.svstate.vl
         subvl = yield self.dec2.rm_dec.rm_in.subvl
-        end_src = srcstep == vl-1
-        end_dst = dststep == vl-1
         if self.allow_next_step_inc != 2:
-            yield from self.advance_svstate_steps(end_src, end_dst)
+            yield from self.advance_svstate_steps()
         #self.namespace['SVSTATE'] = self.svstate.spr
         # set CR0 (if Rc=1) based on end
+        endtest = 1 if self.at_loopend() else 0
         if rc_en:
-            endtest = 1 if (end_src or end_dst) else 0
             #results = [SelectableInt(endtest, 64)]
             # self.handle_comparison(results) # CR0
 
@@ -2026,9 +2037,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 shape_idx = self.svstate_next_mode.value-1
                 endings = self.remap_loopends[shape_idx]
             cr_field = SelectableInt((~endings) << 1 | endtest, 4)
-            log("svstep Rc=1, CR0", cr_field)
+            log("svstep Rc=1, CR0", cr_field, endtest)
             self.crl[0].eq(cr_field)  # CR0
-        if end_src or end_dst:
+        if endtest:
             # reset at end of loop including exit Vertical Mode
             log("SVSTATE_NEXT: after increments, reset")
             self.svp64_reset_loop()
@@ -2160,12 +2171,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         else:
             svp64_is_vector = out_vec
         # loops end at the first "hit" (source or dest)
-        end_src = srcstep == vl-1
-        end_dst = dststep == vl-1
-        loopend = ((end_src and ssubstep == subvl) or
-                   (end_dst and dsubstep == subvl))
-        log("loopend", svp64_is_vector, loopend, end_src, end_dst,
-            ssubstep == subvl, dsubstep == subvl)
+        yield from self.advance_svstate_steps()
+        loopend = self.loopend
+        log("loopend", svp64_is_vector, loopend)
         if not svp64_is_vector or loopend:
             # reset loop to zero and update NIA
             self.svp64_reset_loop()
@@ -2174,7 +2182,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             return True
 
         # still looping, advance and update NIA
-        yield from self.advance_svstate_steps(end_src, end_dst)
         self.namespace['SVSTATE'] = self.svstate
 
         # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
