@@ -65,7 +65,7 @@ class PrefixCodesCases(TestAccumulatorBase):
         expected_RT = int.from_bytes(
             [int("1" + code, 2) for code in decoded], 'little')
         decoded_bits_len = len("".join(decoded))
-        expected_rb_used = False
+        expected_ra_used = False
         RB_val = make_tree(*supported_codes)
         rev_input_bits = input_bits[::-1]
         RA_val = 0
@@ -75,8 +75,8 @@ class PrefixCodesCases(TestAccumulatorBase):
             RA_val = int(rev_input_bits[:64], 2)
             RA = 7
             rev_input_bits = rev_input_bits[64:]
-            expected_rb_used = decoded_bits_len > len(rev_input_bits)
-            if expected_rb_used:
+            expected_ra_used = decoded_bits_len > len(rev_input_bits)
+            if expected_ra_used:
                 expected_RS = (RA_val + 2 ** 64) >> decoded_bits_len
         RC_val = int("1" + rev_input_bits, 2)
         if expected_RS is None:
@@ -90,7 +90,7 @@ class PrefixCodesCases(TestAccumulatorBase):
         e = ExpectedState(pc=4, int_regs=gprs)
         e.intregs[4] = expected_RT
         e.intregs[5] = expected_RS
-        e.crregs[0] = expected_rb_used * 8 + expected_EQ * 2 + expected_SO
+        e.crregs[0] = expected_ra_used * 8 + expected_EQ * 2 + expected_SO
         with self.subTest(supported_codes=supported_codes,
                           input_bits=original_input_bits):
             self.add_case(Program(lst, False), gprs, expected=e,

@@ -9,12 +9,12 @@ VA2-Form
 Pseudo-code:
 
     tree[0:63] <- (RB)
-    rb_used <- 0b0
+    ra_used <- 0b0
     in_bits[0:63] <- (RC|0)
     if in_bits = 0 then
         in_bits[0:63] <- 1
     final_in_bits <- in_bits
-    final_rb_used <- rb_used
+    final_ra_used <- ra_used
     output <- [0] * 64
     out_byte <- 0
     decoded[0:7] <- 1
@@ -22,9 +22,9 @@ Pseudo-code:
     do while out_byte < 8
         in_bit <- in_bits[63]
         if in_bits = 1 then
-            if rb_used | (_RA = 0) then
+            if ra_used | (_RA = 0) then
                 leave
-            rb_used <- 0b1
+            ra_used <- 0b1
             in_bit <- (RA)[63]
             in_bits <- 0b1 || (RA)[0:62]
         else
@@ -34,7 +34,7 @@ Pseudo-code:
         if decoded <u 64 then
             if tree[63 - decoded] then
                 final_in_bits <- in_bits
-                final_rb_used <- rb_used
+                final_ra_used <- ra_used
                 output[56 - 8 * out_byte:63 - 8 * out_byte] <- decoded
                 decoded[0:7] <- 1
                 out_byte <- out_byte + 1
@@ -45,7 +45,7 @@ Pseudo-code:
             leave
     RT <- output
     RS <- final_in_bits
-    CR0 <- final_rb_used || 0b0 || (output = 0) || so_bit
+    CR0 <- final_ra_used || 0b0 || (output = 0) || so_bit
 
 Special Registers Altered:
 
