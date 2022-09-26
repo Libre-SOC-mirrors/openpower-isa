@@ -633,7 +633,9 @@ class StepLoop:
         if pack:
             # pack advances subvl in *outer* loop
             if end_src:
-                if not end_ssub:
+                if end_ssub:
+                    self.loopend = True
+                else:
                     self.svstate.ssubstep += SelectableInt(1, 2)
                 self.svstate.srcstep = SelectableInt(0, 7)  # reset
             else:
@@ -653,22 +655,6 @@ class StepLoop:
         log("    advance src", self.svstate.srcstep, self.svstate.ssubstep,
                                self.loopend)
 
-    def at_loopend(self):
-        """tells if this is the last possible element.  uses the cached values
-        for src/dst-step and sub-steps
-        """
-        subvl = self.subvl
-        vl = self.svstate.vl
-        srcstep, dststep = self.new_srcstep, self.new_dststep
-        ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
-        end_ssub = ssubstep == subvl
-        end_dsub = dsubstep == subvl
-        if srcstep == vl-1 and end_ssub:
-            return True
-        if dststep == vl-1 and end_dsub:
-            return True
-        return False
-
     def dst_iterate(self):
         """dest step iterator
         """
@@ -686,7 +672,9 @@ class StepLoop:
         if unpack:
             # unpack advances subvl in *outer* loop
             if end_dst:
-                if not end_dsub:
+                if end_dsub:
+                    self.loopend = True
+                else:
                     self.svstate.dsubstep += SelectableInt(1, 2)
                 self.svstate.dststep = SelectableInt(0, 7)  # reset
             else:
@@ -704,6 +692,22 @@ class StepLoop:
                 self.svstate.dsubstep += SelectableInt(1, 2)
         log("    advance dst", self.svstate.dststep, self.svstate.dsubstep,
                                self.loopend)
+
+    def at_loopend(self):
+        """tells if this is the last possible element.  uses the cached values
+        for src/dst-step and sub-steps
+        """
+        subvl = self.subvl
+        vl = self.svstate.vl
+        srcstep, dststep = self.new_srcstep, self.new_dststep
+        ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
+        end_ssub = ssubstep == subvl
+        end_dsub = dsubstep == subvl
+        if srcstep == vl-1 and end_ssub:
+            return True
+        if dststep == vl-1 and end_dsub:
+            return True
+        return False
 
     def advance_svstate_steps(self):
         """ advance sub/steps. note that Pack/Unpack *INVERTS* the order.
@@ -2067,6 +2071,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.svstate_next_mode == 6:
             self.svstate_next_mode = 0
             return SelectableInt(self.svstate.dststep, 7)
+        if self.svstate_next_mode == 7:
+            self.svstate_next_mode = 0
+            return SelectableInt(self.svstate.ssubstep, 7)
+        if self.svstate_next_mode == 8:
+            self.svstate_next_mode = 0
+            return SelectableInt(self.svstate.dsubstep, 7)
         return SelectableInt(0, 7)
 
     def get_src_dststeps(self):
