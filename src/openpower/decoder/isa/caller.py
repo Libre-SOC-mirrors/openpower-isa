@@ -536,6 +536,7 @@ class StepLoop:
 
     def __init__(self, svstate):
         self.svstate = svstate
+        self.loopend = False
 
     def get_iterators(self):
         self.src_it = self.src_iterator()
@@ -619,6 +620,7 @@ class StepLoop:
         """
         end_src = self.end_src
         subvl = self.subvl
+        vl = self.svstate.vl
         pack = self.svstate.pack
         unpack = self.svstate.unpack
         ssubstep = self.svstate.ssubstep
@@ -639,7 +641,9 @@ class StepLoop:
         else:
             # advance subvl in *inner* loop
             if end_ssub:
-                if not end_src:
+                if self.svstate.srcstep == vl-1:  # end-point
+                    self.loopend = True
+                else:
                     self.svstate.srcstep += SelectableInt(1, 7)
                 self.svstate.ssubstep = SelectableInt(0, 2)  # reset
             else:
@@ -652,6 +656,7 @@ class StepLoop:
         """dest step iterator
         """
         end_dst = self.end_dst
+        vl = self.svstate.vl
         subvl = self.subvl
         pack = self.svstate.pack
         unpack = self.svstate.unpack
@@ -672,7 +677,9 @@ class StepLoop:
         else:
             # advance subvl in *inner* loop
             if end_dsub:
-                if not end_dst:
+                if self.svstate.dststep == vl-1:  # end-point
+                    self.loopend = True
+                else:
                     self.svstate.dststep += SelectableInt(1, 7)
                 self.svstate.dsubstep = SelectableInt(0, 2)  # reset
             else:
@@ -2191,6 +2198,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.svstate.dststep = 0
         self.svstate.ssubstep = 0
         self.svstate.dsubstep = 0
+        self.loopend = False
         log("    svstate.srcstep loop end (PC to update)")
         self.namespace['SVSTATE'] = self.svstate
 
