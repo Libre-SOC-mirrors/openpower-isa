@@ -23,7 +23,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test_svstep_pack(self):
+    def tst_svstep_pack(self):
         """tests pack mode
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
@@ -52,7 +52,6 @@ class DecoderTestCase(FHDLTestCase):
             sim.gpr.dump()
             self.assertEqual(sim.svstate.vl, 4)
             self.assertEqual(sim.svstate.maxvl, 4)
-            # svstep called four times, reset occurs, srcstep zero
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             for j in range(2):
@@ -71,17 +70,15 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0[CRFields.GT], 0)
             self.assertEqual(CR0[CRFields.SO], 1)
 
-    def tst_svstep_unpack(self):
+    def test_svstep_unpack(self):
         """tests unpack mode
-        oh ha ha very funny,  the dest indices are themselves put *into*
+        oh ha ha very funny,  cannot use sv.srcstep on unpack:
+        the dest indices are themselves put *into*
         the vector output in the order of their own values.
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
                         "svstep 0, 14, 0",  # set src-pack
-                        "sv.svstep./vec2 *8, 5, 1", # svstep get vector dststep
-                        "sv.svstep./vec2 *0, 6, 1", # svstep get vector srcstep
-                        "sv.svstep./vec2 *24, 7, 1", # svstep get dst substep
-                        "sv.svstep./vec2 *16, 8, 1", # svstep get src substep
+                        "sv.ori/vec2 *0, *32, 0", # copy 01234567 to new order
                         ])
         lst = list(lst)
 
@@ -91,8 +88,12 @@ class DecoderTestCase(FHDLTestCase):
         #svstate.maxvl = 2 # MAXVL
         print ("SVSTATE", bin(svstate.asint()))
 
+        initial_regs = [0]*64
+        for i in range(8):
+            initial_regs[32+i] = i
+
         with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, svstate=svstate)
+            sim = self.run_tst_program(program, initial_regs, svstate=svstate)
             print ("SVSTATE after", bin(sim.svstate.asint()))
             print ("        vl", bin(sim.svstate.vl))
             print ("        mvl", bin(sim.svstate.maxvl))
@@ -102,24 +103,51 @@ class DecoderTestCase(FHDLTestCase):
             sim.gpr.dump()
             self.assertEqual(sim.svstate.vl, 4)
             self.assertEqual(sim.svstate.maxvl, 4)
-            # svstep called four times, reset occurs, srcstep zero
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             for j in range(2):
                 for i in range(4):
                     offs = j*4+i
                     skew = i*2+j
-                    self.assertEqual(sim.gpr(0+offs), SelectableInt(i, 64))
-                    self.assertEqual(sim.gpr(8+skew), SelectableInt(i, 64))
-                    self.assertEqual(sim.gpr(16+offs), SelectableInt(j, 64))
-                    self.assertEqual(sim.gpr(24+skew), SelectableInt(j, 64))
-            self.assertEqual(sim.svstate.vfirst, 0)
-            CR0 = sim.crl[0]
-            print("      CR0", bin(CR0.get_range().value))
-            self.assertEqual(CR0[CRFields.EQ], 0)
-            self.assertEqual(CR0[CRFields.LT], 0)
-            self.assertEqual(CR0[CRFields.GT], 0)
-            self.assertEqual(CR0[CRFields.SO], 1)
+                    self.assertEqual(sim.gpr(0+skew), SelectableInt(offs, 64))
+
+    def test_svstep_pack2(self):
+        """tests pack mode
+        """
+        lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
+                        "svstep 0, 15, 0",  # set dst-pack
+                        "sv.ori/vec2 *0, *32, 0", # copy 01234567 to new order
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        #svstate.vl = 2 # VL
+        #svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0]*64
+        for i in range(8):
+            initial_regs[32+i] = i
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            sim.gpr.dump()
+            self.assertEqual(sim.svstate.vl, 4)
+            self.assertEqual(sim.svstate.maxvl, 4)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            for j in range(2):
+                for i in range(4):
+                    offs = j*4+i
+                    skew = i*2+j
+                    self.assertEqual(sim.gpr(0+offs), SelectableInt(skew, 64))
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
