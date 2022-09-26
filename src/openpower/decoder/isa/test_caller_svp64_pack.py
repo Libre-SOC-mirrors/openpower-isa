@@ -23,7 +23,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def tst_svstep_pack(self):
+    def test_svstep_pack(self):
         """tests pack mode
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
@@ -148,6 +148,63 @@ class DecoderTestCase(FHDLTestCase):
                     offs = j*4+i
                     skew = i*2+j
                     self.assertEqual(sim.gpr(0+offs), SelectableInt(skew, 64))
+
+    def tst_svstep_predicate_pack(self):
+        """tests pack mode with a predicate
+        """
+        lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
+                        "svstep 0, 15, 0",  # set dst-pack
+                        "sv.ori/vec2/m=r3 *8, *16, 0",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        #svstate.vl = 2 # VL
+        #svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        mask = 0b1110
+        initial_regs = [0xffffffff]*64
+        initial_regs[3] = mask
+        for i in range(8):
+            initial_regs[16+i] = i
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs, svstate=svstate)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            sim.gpr.dump()
+            self.assertEqual(sim.svstate.vl, 4)
+            self.assertEqual(sim.svstate.maxvl, 4)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+
+            # sigh, in sz=0 mode you end up skipping.  have to
+            # take that into account, extracting the expected values
+            to_expect = []
+            for j in range(2):
+                for i in range(4):
+                    offs = j*4+i
+                    skew = i*2+j
+                    if mask & (1<<(skew>>1)):
+                        to_expect.append(skew)
+
+            print ("expected", to_expect)
+            for j in range(2):
+                for i in range(4):
+                    offs = j*4+i
+                    skew = i*2+j
+                    if mask & (1<<(offs>>1)):
+                        expected = SelectableInt(to_expect.pop(0), 64)
+                    else:
+                        expected = SelectableInt(0xffffffff, 64)
+                    print ("checking", hex(expected.value), "at", offs)
+                    self.assertEqual(sim.gpr(8+offs), expected)
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
