@@ -66,26 +66,26 @@ class PrefixCodesCases(TestAccumulatorBase):
             [int("1" + code, 2) for code in decoded], 'little')
         decoded_bits_len = len("".join(decoded))
         expected_rb_used = False
-        RA_val = make_tree(*supported_codes)
+        RB_val = make_tree(*supported_codes)
         rev_input_bits = input_bits[::-1]
-        RB_val = 0
-        RB = 0
+        RA_val = 0
+        RA = 0
         expected_RS = None
         if len(input_bits) >= 64:
-            RB_val = int(rev_input_bits[:64], 2)
-            RB = 7
+            RA_val = int(rev_input_bits[:64], 2)
+            RA = 7
             rev_input_bits = rev_input_bits[64:]
             expected_rb_used = decoded_bits_len > len(rev_input_bits)
             if expected_rb_used:
-                expected_RS = (RB_val + 2 ** 64) >> decoded_bits_len
+                expected_RS = (RA_val + 2 ** 64) >> decoded_bits_len
         RC_val = int("1" + rev_input_bits, 2)
         if expected_RS is None:
             expected_RS = RC_val >> decoded_bits_len
-        lst = list(SVP64Asm([f"pcdec. 4,{RB},6,5,0"]))
+        lst = list(SVP64Asm([f"pcdec. 4,{RA},6,5,0"]))
         gprs = [0] * 32
-        gprs[6] = RA_val
-        if RB:
-            gprs[RB] = RB_val
+        gprs[6] = RB_val
+        if RA:
+            gprs[RA] = RA_val
         gprs[5] = RC_val
         e = ExpectedState(pc=4, int_regs=gprs)
         e.intregs[4] = expected_RT

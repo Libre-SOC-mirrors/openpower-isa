@@ -1,6 +1,6 @@
 <!-- https://libre-soc.org/openpower/prefix_codes/ -->
 
-# [DRBFT] Prefix-code decode
+# [DRAFT] Prefix-code decode
 
 VA2-Form
 
