@@ -53,14 +53,15 @@ CODES = {CODE_2, CODE_7, CODE_19, CODE_35, CODE_37}
 
 
 class PrefixCodesCases(TestAccumulatorBase):
-    def check_pcdec(self, supported_codes, input_bits, src_loc_at=0):
-        # type: (set[str], str, int) -> None
+    def check_pcdec(self, supported_codes, input_bits, once, src_loc_at=0):
+        # type: (set[str], str, bool, int) -> None
         original_input_bits = input_bits
         input_bits = input_bits.replace("_", "")
         assert input_bits.lstrip("01") == "", "input_bits must be binary bits"
         assert len(input_bits) < 128, "input_bits too long"
+        max_count = 1 if once else 8
         decoded, expected_SO = reference_pcdec(
-            supported_codes, input_bits, max_count=8)
+            supported_codes, input_bits, max_count=max_count)
         expected_EQ = len(decoded) == 0
         expected_RT = int.from_bytes(
             [int("1" + code, 2) for code in decoded], 'little')
@@ -81,7 +82,7 @@ class PrefixCodesCases(TestAccumulatorBase):
         RC_val = int("1" + rev_input_bits, 2)
         if expected_RS is None:
             expected_RS = RC_val >> decoded_bits_len
-        lst = list(SVP64Asm([f"pcdec. 4,{RA},6,5,0"]))
+        lst = list(SVP64Asm([f"pcdec. 4,{RA},6,5,{int(once)}"]))
         gprs = [0] * 32
         gprs[6] = RB_val
         if RA:
@@ -97,36 +98,73 @@ class PrefixCodesCases(TestAccumulatorBase):
                           src_loc_at=src_loc_at + 1)
 
     def case_pcdec_empty(self):
-        self.check_pcdec({CODE_2}, "")
+        self.check_pcdec({CODE_2}, "", False)
+
+    def case_pcdec_empty_once(self):
+        self.check_pcdec({CODE_2}, "", True)
 
     def case_pcdec_only_one_code(self):
-        self.check_pcdec({CODE_37}, CODE_37)
+        self.check_pcdec({CODE_37}, CODE_37, False)
+
+    def case_pcdec_only_one_code_once(self):
+        self.check_pcdec({CODE_37}, CODE_37, True)
 
     def case_pcdec_short_seq(self):
-        self.check_pcdec(CODES, "_".join([CODE_2, CODE_19, CODE_35]))
+        self.check_pcdec(CODES, "_".join([CODE_2, CODE_19, CODE_35]), False)
+
+    def case_pcdec_short_seq_once(self):
+        self.check_pcdec(CODES, "_".join([CODE_2, CODE_19, CODE_35]), True)
 
     def case_pcdec_medium_seq(self):
-        self.check_pcdec(CODES, "0_11_1001_10101_10111_10111_10101_1001_11_0")
+        self.check_pcdec(
+            CODES, "0_11_1001_10101_10111_10111_10101_1001_11_0", False)
+
+    def case_pcdec_medium_seq_once(self):
+        self.check_pcdec(
+            CODES, "0_11_1001_10101_10111_10111_10101_1001_11_0", True)
 
     def case_pcdec_long_seq(self):
         self.check_pcdec(CODES,
                          "0_11_1001_10101_10111_10111_10101_1001_11_0"
-                         + CODE_37 * 6)
+                         + CODE_37 * 6, False)
+
+    def case_pcdec_long_seq_once(self):
+        self.check_pcdec(CODES,
+                         "0_11_1001_10101_10111_10111_10101_1001_11_0"
+                         + CODE_37 * 6, True)
 
     def case_pcdec_invalid_code_at_start(self):
-        self.check_pcdec(CODES, "_".join(["1000", CODE_35]))
+        self.check_pcdec(CODES, "_".join(["1000", CODE_35]), False)
+
+    def case_pcdec_invalid_code_at_start_once(self):
+        self.check_pcdec(CODES, "_".join(["1000", CODE_35]), True)
 
     def case_pcdec_invalid_code_after_3(self):
         self.check_pcdec(CODES, "_".join(
-            [CODE_2, CODE_19, CODE_35, "1000", CODE_35]))
+            [CODE_2, CODE_19, CODE_35, "1000", CODE_35]), False)
+
+    def case_pcdec_invalid_code_after_3_once(self):
+        self.check_pcdec(CODES, "_".join(
+            [CODE_2, CODE_19, CODE_35, "1000", CODE_35]), True)
 
     def case_pcdec_invalid_code_after_8(self):
         self.check_pcdec(CODES, "_".join(
-            [CODE_2, CODE_19, *([CODE_35] * 6), "1000", CODE_35]))
+            [CODE_2, CODE_19, *([CODE_35] * 6), "1000", CODE_35]), False)
+
+    def case_pcdec_invalid_code_after_8_once(self):
+        self.check_pcdec(CODES, "_".join(
+            [CODE_2, CODE_19, *([CODE_35] * 6), "1000", CODE_35]), True)
 
     def case_pcdec_invalid_code_in_rb(self):
         self.check_pcdec(CODES, "_".join(
-            [CODE_2, CODE_19, "1000", *([CODE_19] * 15)]))
+            [CODE_2, CODE_19, "1000", *([CODE_19] * 15)]), False)
+
+    def case_pcdec_invalid_code_in_rb_once(self):
+        self.check_pcdec(CODES, "_".join(
+            [CODE_2, CODE_19, "1000", *([CODE_19] * 15)]), True)
 
     def case_pcdec_overlong_code(self):
-        self.check_pcdec(CODES, "_".join([CODE_2, CODE_19, "10000000"]))
+        self.check_pcdec(CODES, "_".join([CODE_2, CODE_19, "10000000"]), False)
+
+    def case_pcdec_overlong_code_once(self):
+        self.check_pcdec(CODES, "_".join([CODE_2, CODE_19, "10000000"]), True)
