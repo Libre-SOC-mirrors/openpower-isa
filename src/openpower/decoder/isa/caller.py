@@ -630,28 +630,46 @@ class StepLoop:
             "sub", end_ssub)
         # first source step
         srcstep = self.svstate.srcstep
+        srcmask = self.srcmask
         if pack:
             # pack advances subvl in *outer* loop
-            if end_src:
-                if end_ssub:
-                    self.loopend = True
+            while True:
+                end_src = srcstep == vl-1
+                if end_src:
+                    if end_ssub:
+                        self.loopend = True
+                    else:
+                        self.svstate.ssubstep += SelectableInt(1, 2)
+                    srcstep = 0  # reset
+                    break
                 else:
-                    self.svstate.ssubstep += SelectableInt(1, 2)
-                self.svstate.srcstep = SelectableInt(0, 7)  # reset
-            else:
-                self.svstate.srcstep += SelectableInt(1, 7)  # advance srcstep
+                    srcstep += 1  # advance srcstep
+                    break         # XXX remove this
+                    if not self.srcstep_skip:
+                        break
+                    if ((1 << srcstep) & srcmask) == 1:
+                        break
         else:
             # advance subvl in *inner* loop
             if end_ssub:
-                if end_src:  # end-point
-                    self.loopend = True
-                else:
-                    self.svstate.srcstep += SelectableInt(1, 7)
+                while True:
+                    end_src = srcstep == vl-1
+                    if end_src:  # end-point
+                        self.loopend = True
+                        break
+                    else:
+                        srcstep += 1
+                    break # XXX remove this
+                    if not self.srcstep_skip:
+                        break
+                    if ((1 << srcstep) & srcmask) == 1:
+                        break
                 self.svstate.ssubstep = SelectableInt(0, 2)  # reset
             else:
                 # advance ssubstep
                 self.svstate.ssubstep += SelectableInt(1, 2)
 
+        self.svstate.srcstep = SelectableInt(srcstep, 7)
         log("    advance src", self.svstate.srcstep, self.svstate.ssubstep,
                                self.loopend)
 
@@ -664,32 +682,52 @@ class StepLoop:
         unpack = self.svstate.unpack
         dsubstep = self.svstate.dsubstep
         end_dsub = dsubstep == subvl
-        end_dst = self.svstate.dststep == vl-1
+        dststep = self.svstate.dststep
+        end_dst = dststep == vl-1
+        dstmask = self.dstmask
         log("    pack/unpack/subvl", pack, unpack, subvl,
             "end", end_dst,
             "sub", end_dsub)
         # now dest step
         if unpack:
             # unpack advances subvl in *outer* loop
-            if end_dst:
-                if end_dsub:
-                    self.loopend = True
+            while True:
+                end_dst = dststep == vl-1
+                if end_dst:
+                    if end_dsub:
+                        self.loopend = True
+                    else:
+                        self.svstate.dsubstep += SelectableInt(1, 2)
+                    dststep = 0  # reset
+                    break
                 else:
-                    self.svstate.dsubstep += SelectableInt(1, 2)
-                self.svstate.dststep = SelectableInt(0, 7)  # reset
-            else:
-                self.svstate.dststep += SelectableInt(1, 7)  # advance dststep
+                    dststep += 1  # advance dststep
+                    break         # XXX remove this
+                    if not self.dststep_skip:
+                        break
+                    if ((1 << dststep) & dstmask) == 1:
+                        break
         else:
             # advance subvl in *inner* loop
             if end_dsub:
-                if end_dst:  # end-point
-                    self.loopend = True
-                else:
-                    self.svstate.dststep += SelectableInt(1, 7)
+                while True:
+                    end_dst = dststep == vl-1
+                    if end_dst:  # end-point
+                        self.loopend = True
+                        break
+                    else:
+                        dststep += 1
+                    break # XXX remove this
+                    if not self.dststep_skip:
+                        break
+                    if ((1 << dststep) & dstmask) == 1:
+                        break
                 self.svstate.dsubstep = SelectableInt(0, 2)  # reset
             else:
                 # advance ssubstep
                 self.svstate.dsubstep += SelectableInt(1, 2)
+
+        self.svstate.dststep = SelectableInt(dststep, 7)
         log("    advance dst", self.svstate.dststep, self.svstate.dsubstep,
                                self.loopend)
 
