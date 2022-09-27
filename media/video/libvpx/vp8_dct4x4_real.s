@@ -94,7 +94,7 @@ vp8_short_fdct4x4_svp64_real:
 
 	# op[4] += (d1 != 0)
 	#ori			pred, 0, 0b0000000011110000
-	setvl			0,0,4,0,1,1			# Set VL to 16 elements
+	setvl			0,0,4,0,1,1			# Set VL to 4 elements
 	sv.cmpi			*cr0, 0, *t+12, 1
 	sv.addi/m=ne		*op+4, *op+4, 1
 
