@@ -24,17 +24,3 @@ uint32_t vpx_get_mb_ss_c(const int16_t *src_ptr);
 void variance_c(const uint8_t *src_ptr, int src_stride,
                 const uint8_t *ref_ptr, int ref_stride, int w, int h,
                 uint32_t *sse, int *sum);
-
-void var_filter_block2d_bil_first_pass_c(
-    const uint8_t *src_ptr, uint16_t *ref_ptr, unsigned int src_pixels_per_line,
-    int pixel_step, unsigned int output_height, unsigned int output_width,
-    const uint8_t *filter);
-
-void var_filter_block2d_bil_second_pass_c(
-    const uint16_t *src_ptr, uint8_t *ref_ptr, unsigned int src_pixels_per_line,
-    unsigned int pixel_step, unsigned int output_height,
-    unsigned int output_width, const uint8_t *filter);
-
-void vpx_comp_avg_pred_c(uint8_t *comp_pred, const uint8_t *pred, int width,
-                         int height, const uint8_t *ref, int ref_stride);
-
