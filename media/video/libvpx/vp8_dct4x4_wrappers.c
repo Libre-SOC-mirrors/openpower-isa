@@ -78,8 +78,8 @@ void vp8_short_fdct4x4_svp64(int16_t *input, int16_t *output, int32_t pitch) {
       //printf("output: %p -> %04x %04x %04x %04x\t val: %016lx -> %p\n", output, (uint16_t)output[i], (uint16_t)output[i + 1], (uint16_t)output[i + 2], (uint16_t)output[i + 3], val, output_svp64);
     }
 
-    for (int i=0; i < 16; i += 4) {
+    /*for (int i=0; i < 16; i += 4) {
       printf("output[%d] : %04x %04x %04x %04x\n", i, (uint16_t)output[i],  (uint16_t)output[i+1],  (uint16_t)output[i+2],  (uint16_t)output[i+3]);
       printf("output2[%d]: %04x %04x %04x %04x\n", i, (uint16_t)output2[i], (uint16_t)output2[i+1], (uint16_t)output2[i+2], (uint16_t)output2[i+3]);
-    }
+    }*/
 }
