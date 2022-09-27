@@ -634,6 +634,7 @@ class StepLoop:
         if pack:
             # pack advances subvl in *outer* loop
             while True:
+                assert srcstep <= vl-1
                 end_src = srcstep == vl-1
                 if end_src:
                     if end_ssub:
@@ -654,6 +655,7 @@ class StepLoop:
             # advance subvl in *inner* loop
             if end_ssub:
                 while True:
+                    assert srcstep <= vl-1
                     end_src = srcstep == vl-1
                     if end_src:  # end-point
                         self.loopend = True
@@ -694,6 +696,7 @@ class StepLoop:
         if unpack:
             # unpack advances subvl in *outer* loop
             while True:
+                assert dststep <= vl-1
                 end_dst = dststep == vl-1
                 if end_dst:
                     if end_dsub:
@@ -714,6 +717,7 @@ class StepLoop:
             # advance subvl in *inner* loop
             if end_dsub:
                 while True:
+                    assert dststep <= vl-1
                     end_dst = dststep == vl-1
                     if end_dst:  # end-point
                         self.loopend = True
@@ -756,6 +760,8 @@ class StepLoop:
         TODO when Pack/Unpack is set, substep becomes the *outer* loop
         """
         self.subvl = yield self.dec2.rm_dec.rm_in.subvl
+        if self.loopend: # huhn??
+            return
         self.src_iterate()
         self.dst_iterate()
 
@@ -861,6 +867,9 @@ class StepLoop:
         vl = self.svstate.vl
         # srcstep-skipping opportunity identified
         if self.srcstep_skip:
+            # cannot do this with sv.bc - XXX TODO
+            if srcmask == 0:
+                self.loopend = True
             while (((1 << srcstep) & srcmask) == 0) and (srcstep != vl):
                 log("      sskip", bin(1 << srcstep))
                 srcstep += 1
@@ -881,6 +890,9 @@ class StepLoop:
         pred_dst_zero = self.pred_dz
         vl = self.svstate.vl
         if self.dststep_skip:
+            # cannot do this with sv.bc - XXX TODO
+            if dstmask == 0:
+                self.loopend = True
             while (((1 << dststep) & dstmask) == 0) and (dststep != vl):
                 log("      dskip", bin(1 << dststep))
                 dststep += 1
@@ -2163,6 +2175,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # check if end reached (we let srcstep overrun, above)
         # nothing needs doing (TODO zeroing): just do next instruction
+        if self.loopend:
+            return True
         return ((ssubstep == subvl and srcstep == vl) or
                 (dsubstep == subvl and dststep == vl))
 
