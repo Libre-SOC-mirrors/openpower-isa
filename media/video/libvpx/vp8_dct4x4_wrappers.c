@@ -8,10 +8,9 @@
 
 void vp8_short_fdct4x4_svp64(int16_t *input, int16_t *output, int32_t pitch) {
 
-    printf("pitch: %d\n", pitch);
+/*    printf("pitch: %d\n", pitch);
     int16_t output2[16];
-    vp8_short_fdct4x4_c(input, output2, pitch);
-
+    vp8_short_fdct4x4_c(input, output2, pitch);*/
 
     // It cannot be the same pointer as the original function, as it is really a separate CPU/RAM
     // we have to memcpy from input to this pointer, the address was chosen arbitrarily
