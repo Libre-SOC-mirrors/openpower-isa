@@ -644,11 +644,12 @@ class StepLoop:
                     break
                 else:
                     srcstep += 1  # advance srcstep
-                    break         # XXX remove this
                     if not self.srcstep_skip:
                         break
-                    if ((1 << srcstep) & srcmask) == 1:
+                    if ((1 << srcstep) & srcmask) != 0:
                         break
+                    else:
+                        log("      sskip", bin(srcmask), bin(1 << srcstep))
         else:
             # advance subvl in *inner* loop
             if end_ssub:
@@ -659,11 +660,12 @@ class StepLoop:
                         break
                     else:
                         srcstep += 1
-                    break # XXX remove this
                     if not self.srcstep_skip:
                         break
-                    if ((1 << srcstep) & srcmask) == 1:
+                    if ((1 << srcstep) & srcmask) != 0:
                         break
+                    else:
+                        log("      sskip", bin(srcmask), bin(1 << srcstep))
                 self.svstate.ssubstep = SelectableInt(0, 2)  # reset
             else:
                 # advance ssubstep
@@ -702,11 +704,12 @@ class StepLoop:
                     break
                 else:
                     dststep += 1  # advance dststep
-                    break         # XXX remove this
                     if not self.dststep_skip:
                         break
-                    if ((1 << dststep) & dstmask) == 1:
+                    if ((1 << dststep) & dstmask) != 0:
                         break
+                    else:
+                        log("      dskip", bin(dstmask), bin(1 << dststep))
         else:
             # advance subvl in *inner* loop
             if end_dsub:
@@ -717,11 +720,12 @@ class StepLoop:
                         break
                     else:
                         dststep += 1
-                    break # XXX remove this
                     if not self.dststep_skip:
                         break
-                    if ((1 << dststep) & dstmask) == 1:
+                    if ((1 << dststep) & dstmask) != 0:
                         break
+                    else:
+                        log("      dskip", bin(dstmask), bin(1 << dststep))
                 self.svstate.dsubstep = SelectableInt(0, 2)  # reset
             else:
                 # advance ssubstep

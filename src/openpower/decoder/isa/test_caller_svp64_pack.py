@@ -164,7 +164,7 @@ class DecoderTestCase(FHDLTestCase):
         #svstate.maxvl = 2 # MAXVL
         print ("SVSTATE", bin(svstate.asint()))
 
-        mask = 0b1110
+        mask = 0b0110
         initial_regs = [0xffffffff]*64
         initial_regs[3] = mask
         for i in range(8):
