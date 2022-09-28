@@ -45,3 +45,26 @@ Pseudo-code:
 Special Registers Altered:
 
     None
+
+# [DRAFT] Twin (Quad) Left Shift Doubleword
+
+Z23-Form
+
+* dsld   RT,RA,RB,sm  (Rc=0)
+* dsld.   RT,RA,RB,sm  (Rc=1)
+
+Pseudo-code:
+
+    sh <- (RB)
+    src <- (RA) || (RT)
+    n <- sh[XLEN-7:XLEN-1]
+    r <- ROTL128(src, n)
+    if sh[XLEN-8] = 0 then
+         m <- MASK(0, XLEN*-1-n, XLEN*2)
+    else m <- [0]*XLEN*2
+    r <- r & m
+    RA <- r[XLEN:XLEN*2-1]
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
