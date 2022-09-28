@@ -1791,6 +1791,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             yield from self.do_rc_ov(ins_name, results, overflow, cr0)
 
         # check failfirst
+        ffirst_hit = (yield from self.check_ffirst(rc_en, srcstep))
+
+        # any modified return results?
+        yield from self.do_outregs_nia(asmop, ins_name, info,
+                                       output_names, results,
+                                       carry_en, rc_en, ffirst_hit)
+
+    def check_ffirst(self, rc_en, srcstep):
         rm_mode = yield self.dec2.rm_dec.mode
         ff_inv = yield self.dec2.rm_dec.inv
         cr_bit = yield self.dec2.rm_dec.cr_sel
@@ -1801,23 +1809,20 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("        RC1", RC1)
         log("        vli", vli)
         log("     cr_bit", cr_bit)
-        ffirst_hit = False
-        if rc_en and rm_mode == SVP64RMMode.FFIRST.value:
-            regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
-            crtest = self.crl[regnum]
-            ffirst_hit = crtest[cr_bit] != ff_inv
-            log("cr test", regnum, int(crtest), crtest, cr_bit, ff_inv)
-            log("cr test?", ffirst_hit)
-            if ffirst_hit:
-                vli = SelectableInt(int(vli), 7)
-                self.svstate.vl = srcstep + vli
-                yield self.dec2.state.svstate.eq(self.svstate.value)
-                yield Settle()  # let decoder update
-
-        # any modified return results?
-        yield from self.do_outregs_nia(asmop, ins_name, info,
-                                       output_names, results,
-                                       carry_en, rc_en, ffirst_hit)
+        if not rc_en or rm_mode != SVP64RMMode.FFIRST.value:
+            return False
+        regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
+        crtest = self.crl[regnum]
+        ffirst_hit = crtest[cr_bit] != ff_inv
+        log("cr test", regnum, int(crtest), crtest, cr_bit, ff_inv)
+        log("cr test?", ffirst_hit)
+        if not ffirst_hit:
+            return False
+        vli = SelectableInt(int(vli), 7)
+        self.svstate.vl = srcstep + vli
+        yield self.dec2.state.svstate.eq(self.svstate.value)
+        yield Settle()  # let decoder update
+        return True
 
     def do_rc_ov(self, ins_name, results, overflow, cr0):
         if ins_name.startswith("f"):
