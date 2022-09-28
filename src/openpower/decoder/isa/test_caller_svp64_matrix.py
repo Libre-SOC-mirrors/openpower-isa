@@ -187,6 +187,71 @@ class DecoderTestCase(FHDLTestCase):
             #    self.assertEqual(sim.fpr(i+2), t)
             #    self.assertEqual(sim.fpr(i+6), u)
 
+    def test_sv_remap3_horizontal_or(self):
+        """>>> lst = ["svshape 3, 2, 1, 0, 0",
+                        "svremap 31, 1, 3, 1, 1, 1, 0",
+                        "sv.or *12, *12, *6"
+                        ]
+                REMAP horizontal-or on RA,RS,RB
+
+                This is horribly obscure because RA (the destination)
+                actually gets treated as RT by the REMAP subsystem.
+
+                The purpose here is to demonstrate a horizontal mapreduce
+                by using/abusing Matrix REMAP (ignoring the B-Matrix entirely)
+
+                if data is laid out in R G B R G B R G B format and
+                comprises tuples (R<<16 G<<8 B<<0) then a horizontal-or
+                may reduce down to (R<<16) | (G<<8> | (B<<0) on a per-row
+                basis.
+        """
+        lst = SVP64Asm(["svshape 3, 2, 1, 0, 0",
+                        # also works:
+                        # "svremap 31, 3, 0, 3, 1, 2, 0",
+                        # "sv.ternlogi *12, *0, *6, 250" # 0b11111110
+                        "svremap 31, 1, 3, 1, 1, 1, 0",
+                        "sv.or *12, *12, *6"
+                        ])
+        lst = list(lst)
+
+        # 3x2 matrix of data to be ORed together by row
+        X1 = [[0x1, 0x10, 0x100],
+              [0x2, 0x40, 0x300],
+             ]
+
+        # get the dimensions of the 2 matrices
+        xdim1 = len(X1[0])
+        ydim1 = len(X1)
+
+        print ("xdim1, ydim1", xdim1, ydim1)
+
+        expected = [0, 0]
+        for i, row in enumerate(X1):
+            expected[i] = reduce(operator.or_, row)
+            print ("\texpected ORed", hex(expected[i]))
+        xf = reduce(operator.add, X1)
+        print ("flattened X")
+        print ("\t", xf)
+
+        res = []
+        # store FPs
+        gprs = [0] * 64
+        for i, x in enumerate(xf):
+            gprs[i+6] = x
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, gprs)
+            print ("spr svshape0", sim.spr['SVSHAPE0'])
+            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print ("spr svshape1", sim.spr['SVSHAPE1'])
+            print ("spr svshape2", sim.spr['SVSHAPE2'])
+            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            for i in range(2):
+                print ("i", i, sim.gpr(12+i), hex(expected[i]))
+                self.assertEqual(sim.gpr(12+i), SelectableInt(expected[i], 64))
+
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
                               initial_mem=None,
