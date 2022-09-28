@@ -272,6 +272,7 @@
     | PO   |  FRT |    TE    |   FRB |RMC|   XO |Rc |
     | PO   |  FRTp|    TE    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRT |   FRA    |   FRB |RMC|   XO |Rc |
+    | PO   |  RT  |   RA     |   RB  |sm |   XO |Rc |
     | PO   |  FRTp|   FRA    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRTp|  FRAp    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRT |  /// | R | FRB   |RMC|   XO |Rc |
@@ -715,11 +716,11 @@
     RA (11:15)
         Field used to specify a GPR to be used as a
         source or as a target.
-        Formats: A, BM2, D, DQ, DQE, DS, M, MD, MDS, TX, VA, VA2, VX, X, XO, XS, SVL, XB, TLI
+        Formats: A, BM2, D, DQ, DQE, DS, M, MD, MDS, TX, VA, VA2, VX, X, XO, XS, SVL, XB, TLI, Z23
     RB (16:20)
         Field used to specify a GPR to be used as a
         source.
-        Formats: A, BM2, M, MDS, VA, VA2, X, XO, TLI
+        Formats: A, BM2, M, MDS, VA, VA2, X, XO, TLI, Z23
     Rc (21)
         RECORD bit.
         0    Do not alter the Condition Register.
@@ -766,7 +767,7 @@
         Formats: DS, X
     RT (6:10)
         Field used to specify a GPR to be used as a target.
-        Formats: A, BM2, D, DQE, DS, DX, VA, VA2, VX, X, XFX, XO, XX2, SVL, XB, TLI
+        Formats: A, BM2, D, DQE, DS, DX, VA, VA2, VX, X, XFX, XO, XX2, SVL, XB, TLI, Z23
     RTp (6:10)
         Field used to specify an even/odd pair of GPRs to
         be concatenated and used as a target.
@@ -789,6 +790,9 @@
     SCi (11:31)
         SV Context Propagation immediate bitfield
         Formats: SVC
+    sm (21:22)
+        Immediate field used for selecting operands (shift mode)
+        Formats: Z23
     SRb (11:14)
         SV REMAP byte-reversal field.
         Formats: SVC
