@@ -1714,7 +1714,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # the ALL/ANY mode we can early-exit
         if self.is_svp64_mode and ins_name.startswith("sv.bc"):
             no_in_vec = yield self.dec2.no_in_vec  # BI is scalar
-            # XXX TODO - pack/unpack here
             end_loop = no_in_vec or srcstep == vl-1 or dststep == vl-1
             self.namespace['end_loop'] = SelectableInt(end_loop, 1)
 
