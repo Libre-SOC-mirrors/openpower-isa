@@ -25,7 +25,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test_sv_remap1(self):
+    def tst_sv_remap1(self):
         """>>> lst = ["svshape 2, 2, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
                        "sv.fmadds *0, *8, *16, *0"
@@ -91,7 +91,7 @@ class DecoderTestCase(FHDLTestCase):
             #    self.assertEqual(sim.fpr(i+2), t)
             #    self.assertEqual(sim.fpr(i+6), u)
 
-    def test_sv_remap2(self):
+    def tst_sv_remap2(self):
         """>>> lst = ["svshape 5, 4, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
                        "sv.fmadds *0, *8, *16, *0"
@@ -190,7 +190,7 @@ class DecoderTestCase(FHDLTestCase):
     def test_sv_remap3_horizontal_or(self):
         """>>> lst = ["svshape 3, 2, 1, 0, 0",
                         "svremap 31, 1, 3, 1, 1, 1, 0",
-                        "sv.or *12, *12, *6"
+                        "sv.or *0, *0, *6"
                         ]
                 REMAP horizontal-or on RA,RS,RB
 
@@ -205,27 +205,30 @@ class DecoderTestCase(FHDLTestCase):
                 may reduce down to (R<<16) | (G<<8> | (B<<0) on a per-row
                 basis.
         """
-        lst = SVP64Asm(["svshape 3, 2, 1, 0, 0",
+        # 3x4 matrix of data to be ORed together by row.
+        # Add any number of extra rows (up to 6) here (6 because sv.or *0,*0,*6)
+        X1 = [[0x1, 0x10, 0x100], # 0x111
+              [0x2, 0x40, 0x300], # 0x342
+              [0x9, 0x70, 0x800], # 0x879
+              [0x3, 0x71, 0x460], # overlaps (still ORed) - 0x473
+             ]
+
+        # get the dimensions of the array
+        xdim1 = len(X1[0])
+        ydim1 = len(X1)
+
+        lst = SVP64Asm(["svshape %d, %d, 1, 0, 0" % (xdim1, ydim1),
                         # also works:
                         # "svremap 31, 3, 0, 3, 1, 2, 0",
                         # "sv.ternlogi *12, *0, *6, 250" # 0b11111110
                         "svremap 31, 1, 3, 1, 1, 1, 0",
-                        "sv.or *12, *12, *6"
+                        "sv.or *0, *0, *6"
                         ])
         lst = list(lst)
 
-        # 3x2 matrix of data to be ORed together by row
-        X1 = [[0x1, 0x10, 0x100],
-              [0x2, 0x40, 0x300],
-             ]
-
-        # get the dimensions of the 2 matrices
-        xdim1 = len(X1[0])
-        ydim1 = len(X1)
-
         print ("xdim1, ydim1", xdim1, ydim1)
 
-        expected = [0, 0]
+        expected = [0] * ydim1
         for i, row in enumerate(X1):
             expected[i] = reduce(operator.or_, row)
             print ("\texpected ORed", hex(expected[i]))
@@ -248,9 +251,10 @@ class DecoderTestCase(FHDLTestCase):
             print ("spr svshape1", sim.spr['SVSHAPE1'])
             print ("spr svshape2", sim.spr['SVSHAPE2'])
             print ("spr svshape3", sim.spr['SVSHAPE3'])
-            for i in range(2):
-                print ("i", i, sim.gpr(12+i), hex(expected[i]))
-                self.assertEqual(sim.gpr(12+i), SelectableInt(expected[i], 64))
+            for i in range(ydim1):
+                print ("i", i, sim.gpr(0+i), hex(expected[i]))
+            for i in range(ydim1):
+                self.assertEqual(sim.gpr(0+i), SelectableInt(expected[i], 64))
 
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
