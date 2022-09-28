@@ -1799,7 +1799,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             yield from self.do_rc_ov(ins_name, results, overflow, cr0)
 
         # check failfirst
-        ffirst_hit = (yield from self.check_ffirst(rc_en, srcstep))
+        ffirst_hit = False
+        if self.is_svp64_mode:
+            ffirst_hit = (yield from self.check_ffirst(rc_en, srcstep))
 
         # any modified return results?
         yield from self.do_outregs_nia(asmop, ins_name, info,
