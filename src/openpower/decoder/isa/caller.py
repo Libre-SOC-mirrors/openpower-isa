@@ -2147,19 +2147,23 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         return (self.new_srcstep, self.new_dststep,
                 self.new_ssubstep, self.new_dsubstep)
 
-    def update_new_svstate_steps(self):
-        # note, do not get the bit-reversed srcstep here!
-        srcstep, dststep = self.new_srcstep, self.new_dststep
-        ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
+    def update_svstate_namespace(self, overwrite_svstate=True):
+        if overwrite_svstate:
+            # note, do not get the bit-reversed srcstep here!
+            srcstep, dststep = self.new_srcstep, self.new_dststep
+            ssubstep, dsubstep = self.new_ssubstep, self.new_dsubstep
 
-        # update SVSTATE with new srcstep
-        self.svstate.srcstep = srcstep
-        self.svstate.dststep = dststep
-        self.svstate.ssubstep = ssubstep
-        self.svstate.dsubstep = dsubstep
+            # update SVSTATE with new srcstep
+            self.svstate.srcstep = srcstep
+            self.svstate.dststep = dststep
+            self.svstate.ssubstep = ssubstep
+            self.svstate.dsubstep = dsubstep
         self.namespace['SVSTATE'] = self.svstate
         yield self.dec2.state.svstate.eq(self.svstate.value)
         yield Settle()  # let decoder update
+
+    def update_new_svstate_steps(self, overwrite_svstate=True):
+        yield from self.update_svstate_namespace(overwrite_svstate)
         srcstep = self.svstate.srcstep
         dststep = self.svstate.dststep
         ssubstep = self.svstate.ssubstep
