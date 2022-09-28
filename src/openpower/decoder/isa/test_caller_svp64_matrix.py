@@ -192,9 +192,13 @@ class DecoderTestCase(FHDLTestCase):
                         "svremap 31, 1, 3, 1, 1, 1, 0",
                         "sv.or *0, *0, *6"
                         ]
-                REMAP horizontal-or on RA,RS,RB
+                REMAP horizontal-or using "or RA,RS,RB"
+                same trick can be applied to do horizontal-add
+                or horizontal-multiply.  just remember for multiply
+                to pre-load 1 (1.0) into the results first (or any other
+                scaling factor).
 
-                This is horribly obscure because RA (the destination)
+                sv.or is horribly obscure because RA (the destination)
                 actually gets treated as RT by the REMAP subsystem.
 
                 The purpose here is to demonstrate a horizontal mapreduce
