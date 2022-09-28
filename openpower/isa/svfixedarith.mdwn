@@ -56,14 +56,12 @@ Z23-Form
 Pseudo-code:
 
     sh <- (RB)
-    src <- (RA) || (RT)
-    n <- sh[XLEN-7:XLEN-1]
-    r <- ROTL128(src, n)
-    if sh[XLEN-8] = 0 then
-         m <- MASK(0, XLEN*-1-n, XLEN*2)
-    else m <- [0]*XLEN*2
-    r <- r & m
-    RA <- r[XLEN:XLEN*2-1]
+    hi <- (RT)
+    lo <- (RA)
+    n <- sh[58:63]
+    mask[0:63] <- MASK(0, 63 - n)
+    v[0:63] <- (hi & mask) | (lo & ¬mask)
+    RT <- ROTL64(v, n)
 
 Special Registers Altered:
 
