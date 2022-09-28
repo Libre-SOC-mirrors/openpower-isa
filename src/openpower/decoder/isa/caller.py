@@ -853,6 +853,7 @@ class StepLoop:
         it is purely for skipping masked-out bits
         """
 
+        self.subvl = yield self.dec2.rm_dec.rm_in.subvl
         yield from self.read_src_mask()
         yield from self.read_dst_mask()
 
@@ -1472,6 +1473,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 asmop = 'mtcrf'
         return asmop
 
+    def reset_remaps(self):
+        self.remap_loopends = [0] * 4
+        self.remap_idxs = [0, 1, 2, 3]
+
     def get_remap_indices(self):
         """WARNING, this function stores remap_idxs and remap_loopends
         in the class for later use.  this to avoid problems with yield
@@ -1479,6 +1484,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # go through all iterators in lock-step, advance to next remap_idx
         srcstep, dststep, ssubstep, dsubstep = self.get_src_dststeps()
         # get four SVSHAPEs. here we are hard-coding
+        self.reset_remaps()
         SVSHAPE0 = self.spr['SVSHAPE0']
         SVSHAPE1 = self.spr['SVSHAPE1']
         SVSHAPE2 = self.spr['SVSHAPE2']
@@ -1490,8 +1496,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                   (SVSHAPE3, SVSHAPE3.get_iterator()),
                   ]
 
-        self.remap_loopends = [0] * 4
-        self.remap_idxs = [0, 1, 2, 3]
         dbg = []
         for i, (shape, remap) in enumerate(remaps):
             # zero is "disabled"
@@ -1627,6 +1631,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("sv rm", sv_rm, dest_cr, src_cr, src_byname, dest_byname)
 
         # see if srcstep/dststep need skipping over masked-out predicate bits
+        self.reset_remaps()
         if (self.is_svp64_mode or ins_name in ['setvl', 'svremap', 'svstate']):
             yield from self.svstate_pre_inc()
         if self.is_svp64_mode:
