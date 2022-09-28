@@ -117,23 +117,23 @@ def MASK32(x, y):
     return MASK(x+32, y+32)
 
 
-def MASK(x, y):
+def MASK(x, y, lim=64):
     if isinstance(x, SelectableInt):
         x = x.value
     if isinstance(y, SelectableInt):
         y = y.value
     if x < y:
-        x = 64-x
-        y = 63-y
-        mask_a = ((1 << x) - 1) & ((1 << 64) - 1)
-        mask_b = ((1 << y) - 1) & ((1 << 64) - 1)
+        x = lim-x
+        y = (lim-1)-y
+        mask_a = ((1 << x) - 1) & ((1 << lim) - 1)
+        mask_b = ((1 << y) - 1) & ((1 << lim) - 1)
     elif x == y:
-        return 1 << (63-x)
+        return 1 << ((lim-1)-x)
     else:
-        x = 64-x
-        y = 63-y
-        mask_a = ((1 << x) - 1) & ((1 << 64) - 1)
-        mask_b = (~((1 << y) - 1)) & ((1 << 64) - 1)
+        x = lim-x
+        y = (lim-1)-y
+        mask_a = ((1 << x) - 1) & ((1 << lim) - 1)
+        mask_b = (~((1 << y) - 1)) & ((1 << lim) - 1)
     return mask_a ^ mask_b
 
 
