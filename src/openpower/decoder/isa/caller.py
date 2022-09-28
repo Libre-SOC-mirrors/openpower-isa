@@ -537,11 +537,20 @@ class StepLoop:
     def __init__(self, svstate):
         self.svstate = svstate
         self.loopend = False
+        self.new_iterators()
 
-    def get_iterators(self):
+    def new_iterators(self):
         self.src_it = self.src_iterator()
         self.dst_it = self.dst_iterator()
-
+        self.end_src = False
+        self.end_dst = False
+        self.new_srcstep = 0
+        self.new_dststep = 0
+        self.new_ssubstep = 0
+        self.new_dsubstep = 0
+        self.pred_dst_zero = 0
+        self.pred_src_zero = 0
+ 
     def src_iterator(self):
         """source-stepping iterator
         """
