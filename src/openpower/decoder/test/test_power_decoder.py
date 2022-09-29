@@ -13,11 +13,11 @@ import time
 import unittest
 from openpower.decoder.power_decoder import (create_pdecode)
 from openpower.decoder.power_enums import (Function, MicrOp,
-                                     In1Sel, In2Sel, In3Sel,
-                                     CRInSel, CROutSel,
-                                     OutSel, RCOE, LdstLen, CryIn,
-                                     single_bit_flags,
-                                     get_signal_name, get_csv)
+                                           In1Sel, In2Sel, In3Sel,
+                                           CRInSel, CROutSel,
+                                           OutSel, RCOE, LdstLen, CryIn,
+                                           single_bit_flags,
+                                           get_signal_name, get_csv)
 
 
 class DecoderTestCase(FHDLTestCase):
@@ -72,7 +72,7 @@ class DecoderTestCase(FHDLTestCase):
                         continue
                     # skip "conditions" for now
                     if (row['CONDITIONS'] and
-                        row['CONDITIONS'] in ['SVP64BREV']):
+                            row['CONDITIONS'] in ['SVP64BREV']):
                         continue
                     op = row['opcode']
                     if not opint:  # HACK: convert 001---10 to 0b00100010
@@ -110,7 +110,7 @@ class DecoderTestCase(FHDLTestCase):
                         expected = enm[row[name]]
                         msg = f"{sig.name} == {enm(result)}, expected: {expected}"
                         msg += "- op: %x, opcode %s" % (opint, row['opcode'])
-                        print (msg)
+                        print(msg)
                         self.assertEqual(enm(result), expected, msg)
                     for bit in single_bit_flags:
                         sig = getattr(dut.op, get_signal_name(bit))
@@ -119,7 +119,7 @@ class DecoderTestCase(FHDLTestCase):
                         msg = f"{sig.name} == {result}, expected: {expected}"
                         self.assertEqual(expected, result, msg)
             ticend = time.perf_counter()
-            print ("time taken:", ticend - tic)
+            print("time taken:", ticend - tic)
 
         sim.add_process(process)
         prefix = os.path.splitext(csvname)[0]
@@ -131,7 +131,7 @@ class DecoderTestCase(FHDLTestCase):
     def generate_ilang(self):
         conditions = {'SVP64BREV': Signal(name="svp64brev", reset_less=True),
                       'SVP64FFT': Signal(name="svp64fft", reset_less=True),
-                     }
+                      }
         pdecode = create_pdecode(conditions=conditions)
         vl = rtlil.convert(pdecode, ports=pdecode.ports())
         with open("decoder.il", "w") as f:
