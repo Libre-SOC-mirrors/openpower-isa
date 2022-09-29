@@ -536,14 +536,12 @@ class StepLoop:
 
     def __init__(self, svstate):
         self.svstate = svstate
-        self.loopend = False
         self.new_iterators()
 
     def new_iterators(self):
         self.src_it = self.src_iterator()
         self.dst_it = self.dst_iterator()
-        self.end_src = False
-        self.end_dst = False
+        self.loopend = False
         self.new_srcstep = 0
         self.new_dststep = 0
         self.new_ssubstep = 0
@@ -559,12 +557,38 @@ class StepLoop:
         # source step
         if pack:
             # pack advances subvl in *outer* loop
-            if end_src:
-                if not end_ssub:
-                    self.svstate.ssubstep += SelectableInt(1, 2)
-                self.svstate.srcstep = SelectableInt(0, 7)  # reset
-            else:
-                self.svstate.srcstep += SelectableInt(1, 7)  # advance srcstep
+            while True:  # outer subvl loop
+                while True:  # inner vl loop
+                    subvl = self.subvl
+                    srcmask = self.srcmask
+                    srcstep = self.svstate.srcstep
+                    pred_src_zero = ((1 << srcstep) & srcmask) != 0
+                    if self.pred_sz or pred_src_zero:
+                        self.pred_src_zero = not pred_src_zero
+                        log("    advance src", srcstep, self.svstate.vl,
+                            self.svstate.ssubstep, subvl)
+                        # yield actual substep/srcstep
+                        yield (self.svstate.ssubstep, srcstep)
+                    vl = self.svstate.vl
+                    subvl = self.subvl
+                    srcstep = self.svstate.srcstep
+                    log("    advance src check", srcstep, vl,
+                        self.svstate.ssubstep, subvl, srcstep == vl-1,
+                        self.svstate.ssubstep == subvl)
+                    if srcstep == vl-1:  # end-point
+                        self.svstate.srcstep = SelectableInt(0, 7)  # reset
+                        if self.svstate.ssubstep == subvl:  # end-point
+                            log("    advance pack stop")
+                            return
+                        break # exit inner loop
+                    self.svstate.srcstep += SelectableInt(1, 7)  # advance ss
+                subvl = self.subvl
+                if self.svstate.ssubstep == subvl:  # end-point
+                    self.svstate.ssubstep = SelectableInt(0, 2)  # reset
+                    log("    advance pack stop")
+                    return
+                self.svstate.ssubstep += SelectableInt(1, 2)
+
         else:
             # these cannot be done as for-loops because SVSTATE may change
             # (srcstep/substep may be modified, interrupted, subvl/vl change)
@@ -575,19 +599,22 @@ class StepLoop:
                     subvl = self.subvl
                     srcmask = self.srcmask
                     srcstep = self.svstate.srcstep
-                    if self.pred_sz or ((1 << srcstep) & srcmask) != 0:
+                    pred_src_zero = ((1 << srcstep) & srcmask) != 0
+                    if self.pred_sz or pred_src_zero:
+                        self.pred_src_zero = not pred_src_zero
                         log("    advance src", srcstep, self.svstate.vl,
                             self.svstate.ssubstep, subvl)
                         # yield actual substep/srcstep
                         yield (self.svstate.ssubstep, srcstep)
                     if self.svstate.ssubstep == subvl:  # end-point
                         self.svstate.ssubstep = SelectableInt(0, 2)  # reset
-                        break
+                        break # exit inner loop
                     self.svstate.ssubstep += SelectableInt(1, 2)
                 vl = self.svstate.vl
                 if srcstep == vl-1:  # end-point
                     self.svstate.srcstep = SelectableInt(0, 7)  # reset
-                    break  # trigger StopIteration
+                    self.loopend = True
+                    return
                 self.svstate.srcstep += SelectableInt(1, 7)  # advance srcstep
 
     def dst_iterator(self):
@@ -598,7 +625,35 @@ class StepLoop:
         # dest step
         if unpack:
             # pack advances subvl in *outer* loop
-            pass  # TODO
+            while True:  # outer subvl loop
+                while True:  # inner vl loop
+                    subvl = self.subvl
+                    dstmask = self.dstmask
+                    dststep = self.svstate.dststep
+                    pred_dst_zero = ((1 << dststep) & dstmask) != 0
+                    if self.pred_dz or pred_dst_zero:
+                        self.pred_dst_zero = not pred_dst_zero
+                        log("    advance dst", dststep, self.svstate.vl,
+                            self.svstate.dsubstep, subvl)
+                        # yield actual substep/dststep
+                        yield (self.svstate.dsubstep, dststep)
+                    vl = self.svstate.vl
+                    dststep = self.svstate.dststep
+                    log("    advance dst check", dststep, self.svstate.vl,
+                        self.svstate.ssubstep, subvl)
+                    if dststep == vl-1:  # end-point
+                        self.svstate.dststep = SelectableInt(0, 7)  # reset
+                        if self.svstate.dsubstep == subvl:  # end-point
+                            log("    advance unpack stop")
+                            return
+                        break
+                    self.svstate.dststep += SelectableInt(1, 7)  # advance ds
+                subvl = self.subvl
+                if self.svstate.dsubstep == subvl:  # end-point
+                    self.svstate.dsubstep = SelectableInt(0, 2)  # reset
+                    log("    advance unpack stop")
+                    return
+                self.svstate.dsubstep += SelectableInt(1, 2)
         else:
             # these cannot be done as for-loops because SVSTATE may change
             # (dststep/substep may be modified, interrupted, subvl/vl change)
@@ -609,7 +664,9 @@ class StepLoop:
                     subvl = self.subvl
                     dstmask = self.dstmask
                     dststep = self.svstate.dststep
-                    if self.pred_dz or ((1 << dststep) & dstmask) != 0:
+                    pred_dst_zero = ((1 << dststep) & dstmask) != 0
+                    if self.pred_dz or pred_dst_zero:
+                        self.pred_dst_zero = not pred_dst_zero
                         log("    advance dst", dststep, self.svstate.vl,
                             self.svstate.dsubstep, subvl)
                         # yield actual substep/dststep
@@ -618,10 +675,11 @@ class StepLoop:
                         self.svstate.dsubstep = SelectableInt(0, 2)  # reset
                         break
                     self.svstate.dsubstep += SelectableInt(1, 2)
+                subvl = self.subvl
                 vl = self.svstate.vl
                 if dststep == vl-1:  # end-point
                     self.svstate.dststep = SelectableInt(0, 7)  # reset
-                    break  # trigger StopIteration
+                    return
                 self.svstate.dststep += SelectableInt(1, 7)  # advance dststep
 
     def src_iterate(self):
