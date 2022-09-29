@@ -471,6 +471,7 @@ class DecodeOut2(Elaboratable):
         self.op = op
         self.sel_in = Signal(OutSel, reset_less=True)
         self.implicit_rs = Signal(reset_less=True)  # SVP64 implicit RS/FRS
+        self.implicit_from_rc = Signal(reset_less=True)# implicit RS from RC
         self.lk = Signal(reset_less=True)
         self.insn_in = Signal(32, reset_less=True)
         self.reg_out = Data(5, "reg_o2")
@@ -514,7 +515,10 @@ class DecodeOut2(Elaboratable):
         # will be offset by VL in hardware
         # with m.Case(MicrOp.OP_FP_MADD):
         with m.If(self.implicit_rs):
-            comb += self.reg_out.data.eq(self.dec.FRT) # same as RT, for pcdec
+            with m.If(self.implicit_from_rc):
+                comb += self.reg_out.data.eq(self.dec.FRC) # same as RC
+            with m.Else():
+                comb += self.reg_out.data.eq(self.dec.FRT) # same as RT
             comb += self.reg_out.ok.eq(1)
             comb += self.rs_en.eq(1)
 
@@ -772,6 +776,8 @@ class PowerDecodeSubset(Elaboratable):
         if svp64_en:
             self.is_svp64_mode = Signal()  # mark decoding as SVP64 Mode
             self.implicit_rs = Signal()    # implicit RS/FRS
+            self.extend_rb_maxvl = Signal() # jumps RB by an additional MAXVL
+            self.extend_rc_maxvl = Signal() # jumps RS by MAXVL from RC
             self.sv_rm = SVP64Rec(name="dec_svp64")  # SVP64 RM field
             self.rm_dec = SVP64RMModeDecode("svp64_rm_dec")
             # set these to the predicate mask bits needed for the ALU
@@ -1024,6 +1030,9 @@ class PowerDecodeSubset(Elaboratable):
             comb += major.eq(self.dec.opcode_in[26:32])
             xo = Signal(10)
             comb += xo.eq(self.dec.opcode_in[1:11])
+            comb += self.implicit_rs.eq(0)
+            comb += self.extend_rb_maxvl.eq(0)
+            comb += self.extend_rc_maxvl.eq(0)
             with m.If((major == 59) & xo.matches(
                     '-----00100',  # ffmsubs
                     '-----00101',  # ffmadds
@@ -1033,6 +1042,7 @@ class PowerDecodeSubset(Elaboratable):
                     '-----11011',  # fdmadds
                 )):
                 comb += self.implicit_rs.eq(1)
+                comb += self.extend_rb_maxvl.eq(1) # extend RB
             xo6 = Signal(6)
             comb += xo6.eq(self.dec.opcode_in[0:6])
             with m.If((major == 4) & xo6.matches(
@@ -1041,6 +1051,7 @@ class PowerDecodeSubset(Elaboratable):
                     '110100',  # divmod2du
                 )):
                 comb += self.implicit_rs.eq(1)
+                comb += self.extend_rc_maxvl.eq(1) # RS=RT+MAXVL or RS=RC
 
         # rc and oe out
         comb += self.do_copy("rc", dec_rc.rc_out)
@@ -1253,6 +1264,7 @@ class PowerDecode2(PowerDecodeSubset):
         comb += dec_o2.sel_in.eq(self.op_get("out_sel"))
         if self.svp64_en:
             comb += dec_o2.implicit_rs.eq(self.implicit_rs)
+            comb += dec_o2.implicit_from_rc.eq(self.extend_rc_maxvl)
         if hasattr(do, "lk"):
             comb += dec_o2.lk.eq(do.lk)
 
@@ -1338,7 +1350,8 @@ class PowerDecode2(PowerDecodeSubset):
                     # automagically add on an extra offset to RB.
                     # however when REMAP is active, the FFT REMAP
                     # schedule takes care of this offset.
-                    with m.If(dec_o2.reg_out.ok & dec_o2.rs_en):
+                    with m.If(dec_o2.reg_out.ok & dec_o2.rs_en &
+                              self.extend_rb_maxvl):
                         with m.If(~self.remap_active[i]):
                             with m.If(svdec.isvec):
                                 comb += offs.eq(maxvl)  # MAXVL for Vectors
@@ -1381,31 +1394,43 @@ class PowerDecode2(PowerDecodeSubset):
             # urrr... don't ask... the implicit register FRS in FFT mode
             # "tracks" FRT exactly except it's offset by MAXVL.  rather than
             # mess up the above with if-statements, override it here.
-            # same trick is applied to FRA, above, but it's a lot cleaner, there
+            # same trick is applied to FRB, above, but it's a lot cleaner there
             with m.If(dec_o2.reg_out.ok & dec_o2.rs_en):
+                imp_reg_out = Signal(7)
+                imp_isvec   = Signal(1)
+                with m.If(self.extend_rc_maxvl): # maddedu etc. from RC
+                    comb += imp_isvec.eq(in3_svdec.isvec)
+                    comb += imp_reg_out.eq(in3_svdec.reg_out)
+                with m.Else():
+                    comb += imp_isvec.eq(o_svdec.isvec)
+                    comb += imp_reg_out.eq(o_svdec.reg_out)
                 comb += offs.eq(0)
                 with m.If(~self.remap_active[4]):
-                    with m.If(o2_svdec.isvec):
+                    with m.If(imp_isvec):
                         comb += offs.eq(maxvl)  # MAXVL for Vectors
+                    with m.Elif(self.extend_rc_maxvl): # maddedu etc. from RC
+                        comb += offs.eq(0)  # keep as RC
                     with m.Else():
                         comb += offs.eq(1)  # add 1 if scalar
-                svdec = o_svdec  # yes take source as o_svdec...
-                with m.If(svdec.isvec):
+                with m.If(imp_isvec):
                     step = Signal(7, name="step_%s" % rname.lower())
                     with m.If(self.remap_active[4]):
-                        comb += step.eq(o2_step)
+                        with m.If(self.extend_rc_maxvl): # maddedu etc. from RC
+                            comb += step.eq(in3_step)
+                        with m.Else():
+                            comb += step.eq(o2_step)
                     with m.Else():
                         comb += step.eq(dststep)
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
                         roffs = offs+(vl-1-step)
-                        comb += to_reg.data.eq(roffs+svdec.reg_out)
+                        comb += to_reg.data.eq(roffs+imp_reg_out)
                     with m.Else():
-                        comb += to_reg.data.eq(offs+step+svdec.reg_out)
+                        comb += to_reg.data.eq(offs+step+imp_reg_out)
                 with m.Else():
-                    comb += to_reg.data.eq(offs+svdec.reg_out)
+                    comb += to_reg.data.eq(offs+imp_reg_out)
                 # ... but write to *second* output
-                comb += self.o2_isvec.eq(svdec.isvec)
+                comb += self.o2_isvec.eq(imp_isvec)
                 comb += o2_svdec.idx.eq(self.op_get("sv_out"))
 
             # TODO add SPRs here.  must be True when *all* are scalar
