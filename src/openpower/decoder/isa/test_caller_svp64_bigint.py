@@ -124,6 +124,47 @@ class DecoderTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, initial_regs, svstate)
             self._check_regs(sim, expected_regs)
 
+    def test_sv_bigint_mul(self):
+        """performs a carry-rollover-vector-mul-with-add with a scalar,
+        using "RC" as a 64-bit carry
+
+                                 r1                    r0
+                                 0xffff_ffff_ffff_ffff 0xffff_ffff_ffff_ffff *
+        r4 (scalar)                                    0xffff_ffff_ffff_fffe +
+        r10 (scalar-add-in)                            0x0000_0000_0000_0100 +
+
+           0xffff_ffff_ffff_fffd 0xffff_ffff_ffff_ffff 0x0000_0000_0000_0102
+           r10 (RC, MSB)         r9                    r8
+        """
+        isa = SVP64Asm(['sv.maddedu *8, *0, 4, 10'
+                       ])
+        lst = list(isa)
+        print ("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[0] = 0xffff_ffff_ffff_ffff   # lo dword of Vector A
+        initial_regs[1] = 0xffff_ffff_ffff_ffff   # hi dword of Vector A
+        initial_regs[4] = 0xffff_ffff_ffff_fffe   # scalar B
+        initial_regs[10] = 0x0000_0000_0000_0100  # RC-input
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl = 2 # VL
+        svstate.maxvl = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+        # copy before running
+        expected_regs = deepcopy(initial_regs)
+        # XXX the result is *three*-dword-long.  RC, the carry roll-over,
+        # is a *legitimate* (valid) part of the result as it contains the
+        # hi-64-bit of the last multiply.
+        expected_regs[8] = 0x0000_0000_0000_0102 # least dword
+        expected_regs[9] = 0xffff_ffff_ffff_ffff # next dword
+        expected_regs[10] = 0xffff_ffff_ffff_fffd # carry roll-over, top dword
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs, svstate)
+            self._check_regs(sim, expected_regs)
+
     def run_tst_program(self, prog, initial_regs=None,
                               svstate=None,
                               initial_cr=0):
