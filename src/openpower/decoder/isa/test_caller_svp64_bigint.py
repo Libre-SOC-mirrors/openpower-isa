@@ -34,7 +34,7 @@ class DecoderTestCase(FHDLTestCase):
         r5/r4: 0x8000_0000_0000_0000 0x0000_0000_0000_0001 =
         r1/r0: 0x8000_0000_0000_0002 0x0000_0000_0000_0000
         """
-        isa = SVP64Asm(['sv.addeo *0, *2, *4'
+        isa = SVP64Asm(['sv.adde *0, *2, *4'
                        ])
         lst = list(isa)
         print ("listing", lst)
