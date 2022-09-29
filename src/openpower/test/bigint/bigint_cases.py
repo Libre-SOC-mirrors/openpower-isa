@@ -7,8 +7,8 @@ _SHIFT_TEST_RANGE = range(-64, 128, 16)
 
 
 class BigIntCases(TestAccumulatorBase):
-    def case_madded(self):
-        lst = list(SVP64Asm(["madded 3,5,6,7"]))
+    def case_maddedu(self):
+        lst = list(SVP64Asm(["maddedu 3,5,6,7"]))
         gprs = [0] * 32
         gprs[5] = 0x123456789ABCDEF
         gprs[6] = 0xFEDCBA9876543210

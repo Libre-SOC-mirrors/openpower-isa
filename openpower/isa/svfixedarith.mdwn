@@ -2,7 +2,7 @@
 
 VA-Form
 
-* madded RT,RA,RB,RC
+* maddedu RT,RA,RB,RC
 
 Pseudo-code:
 

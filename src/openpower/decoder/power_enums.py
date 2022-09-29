@@ -541,7 +541,7 @@ _insns = [
     "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
     # "lwabr",           # load word SVP64 bit-reversed
     # "lwzbr", "lwzubr", # more load word SVP64 bit-reversed
-    "madded",
+    "maddedu",
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
@@ -698,7 +698,7 @@ class MicrOp(Enum):
     OP_FMVIS = 96
     OP_FISHMV = 97
     OP_PCDEC = 98
-    OP_MADDED = 99
+    OP_MADDEDU = 99
     OP_DIVMOD2DU = 100
     OP_DSHL = 101
     OP_DSHR = 102
