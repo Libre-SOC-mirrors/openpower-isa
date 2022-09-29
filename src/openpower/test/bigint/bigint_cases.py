@@ -2,6 +2,7 @@ from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
+from openpower.decoder.isa.caller import SVP64State
 
 _SHIFT_TEST_RANGE = range(-64, 128, 16)
 
@@ -143,3 +144,112 @@ class BigIntCases(TestAccumulatorBase):
                 v >>= sh % 64
                 e.intregs[3] = v % 2 ** 64
                 self.add_case(prog, gprs, expected=e)
+
+
+class SVP64BigIntCases(TestAccumulatorBase):
+    def case_sv_bigint_add(self):
+        """performs a carry-rollover-vector-add aka "big integer vector add"
+        this is remarkably simple, each sv.adde uses and produces a CA which
+        goes into the next sv.adde.  arbitrary size is possible (1024+) as
+        is looping using the CA bit from one sv.adde on another batch to do
+        unlimited-size biginteger add.
+
+        r19/r18: 0x0000_0000_0000_0001 0xffff_ffff_ffff_ffff +
+        r21/r20: 0x8000_0000_0000_0000 0x0000_0000_0000_0001 =
+        r17/r16: 0x8000_0000_0000_0002 0x0000_0000_0000_0000
+        """
+        prog = Program(list(SVP64Asm(["sv.adde *16, *18, *20"])), False)
+        gprs = [0] * 32
+        gprs[18] = 0xffff_ffff_ffff_ffff
+        gprs[19] = 0x0000_0000_0000_0001
+        gprs[20] = 0x0000_0000_0000_0001
+        gprs[21] = 0x8000_0000_0000_0000
+        svstate = SVP64State()
+        svstate.vl = 2
+        svstate.maxvl = 2
+        e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[16] = 0x0000_0000_0000_0000
+        e.intregs[17] = 0x8000_0000_0000_0002
+        self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def test_sv_bigint_shift_right_by_scalar(self):
+        """performs a bigint shift-right by scalar.
+
+        r18                   r17                   r16                      r3
+        0x0000_0000_5000_0002 0x8000_8000_8000_8001 0xffff_ffff_ffff_ffff >> 4
+        0x0000_0000_0500_0000 0x2800_0800_0800_0800 0x1fff_ffff_ffff_ffff
+        """
+        prog = Program(list(SVP64Asm(["sv.dsrd *16,*17,3,1"])), False)
+        gprs = [0] * 32
+        gprs[16] = 0xffff_ffff_ffff_ffff
+        gprs[17] = 0x8000_8000_8000_8001
+        gprs[18] = 0x0000_0000_5000_0002
+        gprs[3] = 4
+        svstate = SVP64State()
+        svstate.vl = 3
+        svstate.maxvl = 3
+        e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[16] = 0x1fff_ffff_ffff_ffff
+        e.intregs[17] = 0x2800_0800_0800_0800
+        e.intregs[18] = 0x0000_0000_0500_0000
+        self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def test_sv_bigint_shift_left_by_scalar(self):
+        """performs a bigint shift-left by scalar.
+
+        because the result is moved down by one register there is no need
+        for reverse-gear.
+
+        r18 is *not* modified (contains its original value).
+        r18                   r17                   r16                      r3
+        0x0000_0000_0001_0002 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001 << 4
+        r17                   r16                   r15
+        0x0000_0000_0010_0023 0xffff_ffff_ffff_fff4 0x0000_0000_0000_0010
+        """
+        prog = Program(list(SVP64Asm(["sv.dsld *15,*16,3,1"])), False)
+        gprs = [0] * 32
+        gprs[15] = 0
+        gprs[16] = 0x4000_0000_0000_0001
+        gprs[17] = 0x3fff_ffff_ffff_ffff
+        gprs[18] = 0x0000_0000_0001_0002
+        gprs[3] = 4
+        svstate = SVP64State()
+        svstate.vl = 3
+        svstate.maxvl = 3
+        e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[15] = 0x0000_0000_0000_0010
+        e.intregs[16] = 0xffff_ffff_ffff_fff4
+        e.intregs[17] = 0x0000_0000_0010_0023
+        self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def test_sv_bigint_mul_by_scalar(self):
+        """performs a carry-rollover-vector-mul-with-add with a scalar,
+        using "RC" as a 64-bit carry
+
+        r18                   r17                   r16
+        0x1234_0000_5678_0000 0x9ABC_0000_DEF0_0000 0x1357_0000_9BDF_0000 *
+                                                    r3 (scalar factor)
+                                                                 0x1_0001 +
+                                                    r4 (carry in)
+        r10 (scalar-add-in)                                        0xFEDC =
+        r18                   r17                   r16
+        0x1234_5678_5678_9ABC 0x9ABC_DEF0_DEF0_1357 0x1357_9BDF_9BDF_FEDC
+        r4 (carry out)
+                       0x1234
+        """
+        prog = Program(list(SVP64Asm(["sv.maddedu *16,*16,3,4"])), False)
+        gprs = [0] * 32
+        gprs[16] = 0x1357_0000_9BDF_0000
+        gprs[17] = 0x9ABC_0000_DEF0_0000
+        gprs[18] = 0x1234_0000_5678_0000
+        gprs[3] = 0x1_0001
+        gprs[4] = 0xFEDC
+        svstate = SVP64State()
+        svstate.vl = 3
+        svstate.maxvl = 3
+        e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[16] = 0x1357_9BDF_9BDF_FEDC
+        e.intregs[17] = 0x9ABC_DEF0_DEF0_1357
+        e.intregs[18] = 0x1234_5678_5678_9ABC
+        e.intregs[4] = 0x1234
+        self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
