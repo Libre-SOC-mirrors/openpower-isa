@@ -25,9 +25,9 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_sv_bigint_add(self):
         """performs a carry-rollover-vector-add aka "big integer vector add"
-        this is remarkably simple, each sv.addeo uses and produces a CA which
-        goes into the next sv.addeo.  arbitrary size is possible (1024+) as
-        is looping using the CA bit from one sv.addeo on another batch to do
+        this is remarkably simple, each sv.adde uses and produces a CA which
+        goes into the next sv.adde.  arbitrary size is possible (1024+) as
+        is looping using the CA bit from one sv.adde on another batch to do
         unlimited-size biginteger add.
 
         r3/r2: 0x0000_0000_0000_0001 0xffff_ffff_ffff_ffff +
