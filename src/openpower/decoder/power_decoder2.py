@@ -1037,6 +1037,8 @@ class PowerDecodeSubset(Elaboratable):
             comb += xo6.eq(self.dec.opcode_in[0:6])
             with m.If((major == 4) & xo6.matches(
                     '11100-',  # pcdec
+                    '110010',  # madded
+                    '110100',  # divrem2du
                 )):
                 comb += self.implicit_rs.eq(1)
 

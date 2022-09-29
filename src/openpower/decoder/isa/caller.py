@@ -1588,7 +1588,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        'svshape', 'svshape2',
                        'grev', 'ternlogi', 'bmask', 'cprop',
                        'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
-                       'fmvis', 'fishmv', 'pcdec'
+                       'fmvis', 'fishmv', 'pcdec', "madded", "divrem2du",
+                       "dsld", "dsrd",
                        ]:
             illegal = False
             ins_name = dotstrp

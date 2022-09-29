@@ -507,8 +507,11 @@ _insns = [
     "darn",
     "dcbf", "dcbst", "dcbt", "dcbtst", "dcbz",
     "divd", "divde", "divdeo", "divdeu",
-    "divdeuo", "divdo", "divdu", "divduo", "divw", "divwe", "divweo",
+    "divdeuo", "divdo", "divdu", "divduo",
+    "divrem2du",
+    "divw", "divwe", "divweo",
     "divweu", "divweuo", "divwo", "divwu", "divwuo",
+    "dsld", "dsrd",
     "eieio", "eqv",
     "extsb", "extsh", "extsw", "extswsli",
     "fadd", "fadds", "fsub", "fsubs",                   # FP add / sub
@@ -538,6 +541,7 @@ _insns = [
     "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
     # "lwabr",           # load word SVP64 bit-reversed
     # "lwzbr", "lwzubr", # more load word SVP64 bit-reversed
+    "madded",
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
@@ -694,6 +698,10 @@ class MicrOp(Enum):
     OP_FMVIS = 96
     OP_FISHMV = 97
     OP_PCDEC = 98
+    OP_MADDED = 99
+    OP_DIVREM2DU = 100
+    OP_DSHL = 101
+    OP_DSHR = 102
 
 
 @unique
