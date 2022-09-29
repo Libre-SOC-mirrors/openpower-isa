@@ -588,7 +588,7 @@ def pcdec(fields):
 
 @_custom_insns(
     _insn("madded", XO=50),
-    _insn("divrem2du", XO=52),
+    _insn("divmod2du", XO=52),
 )
 def va_form(fields, XO):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG

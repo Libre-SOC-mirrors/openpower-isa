@@ -508,7 +508,7 @@ _insns = [
     "dcbf", "dcbst", "dcbt", "dcbtst", "dcbz",
     "divd", "divde", "divdeo", "divdeu",
     "divdeuo", "divdo", "divdu", "divduo",
-    "divrem2du",
+    "divmod2du",
     "divw", "divwe", "divweo",
     "divweu", "divweuo", "divwo", "divwu", "divwuo",
     "dsld", "dsrd",
@@ -699,7 +699,7 @@ class MicrOp(Enum):
     OP_FISHMV = 97
     OP_PCDEC = 98
     OP_MADDED = 99
-    OP_DIVREM2DU = 100
+    OP_DIVMOD2DU = 100
     OP_DSHL = 101
     OP_DSHR = 102
 

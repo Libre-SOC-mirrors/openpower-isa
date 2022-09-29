@@ -18,8 +18,8 @@ class BigIntCases(TestAccumulatorBase):
         e.intregs[4] = (gprs[5] * gprs[6] + gprs[7]) >> 64
         self.add_case(Program(lst, False), gprs, expected=e)
 
-    def case_divrem2du(self):
-        lst = list(SVP64Asm(["divrem2du 3,5,6,7"]))
+    def case_divmod2du(self):
+        lst = list(SVP64Asm(["divmod2du 3,5,6,7"]))
         gprs = [0] * 32
         gprs[5] = 0x123456789ABCDEF
         gprs[6] = 0xFEDCBA9876543210
@@ -30,7 +30,7 @@ class BigIntCases(TestAccumulatorBase):
         e.intregs[4] = v % gprs[6]
         self.add_case(Program(lst, False), gprs, expected=e)
 
-    # FIXME: test more divrem2du special cases
+    # FIXME: test more divmod2du special cases
 
     def case_dsld0(self):
         prog = Program(list(SVP64Asm(["dsld 3,4,5,0"])), False)

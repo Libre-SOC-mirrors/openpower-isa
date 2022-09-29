@@ -22,7 +22,7 @@ Special Registers Altered:
 
 VA-Form
 
-* divrem2du   RT,RA,RB,RC
+* divmod2du   RT,RA,RB,RC
 
 Pseudo-code:
 
