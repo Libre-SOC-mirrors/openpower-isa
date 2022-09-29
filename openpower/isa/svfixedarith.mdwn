@@ -55,13 +55,62 @@ Z23-Form
 
 Pseudo-code:
 
-    sh <- (RB)
-    hi <- (RT)
-    lo <- (RA)
+    switch(sm)
+        case(0):
+            hi <- (RT)
+            lo <- (RA)
+            sh <- (RB)
+        case(1):
+            hi <- (RA)
+            lo <- (RT)
+            sh <- (RB)
+        case(2):
+            hi <- (RA)
+            lo <- (RB)
+            sh <- (RT)
+        default:
+            hi <- [0] * 64
+            lo <- (RA)
+            sh <- (RB)
     n <- sh[58:63]
-    mask[0:63] <- MASK(0, 63 - n)
+    mask[0:63] <- MASK(n, 63)
     v[0:63] <- (hi & mask) | (lo & ¬mask)
     RT <- ROTL64(v, n)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# [DRAFT] Double-width Shift Right Doubleword
+
+Z23-Form
+
+* dsrd    RT,RA,RB,sm  (Rc=0)
+* dsrd.   RT,RA,RB,sm  (Rc=1)
+
+Pseudo-code:
+
+    switch(sm)
+        case(0):
+            hi <- (RT)
+            lo <- (RA)
+            sh <- (RB)
+        case(1):
+            hi <- (RA)
+            lo <- (RT)
+            sh <- (RB)
+        case(2):
+            hi <- (RA)
+            lo <- (RB)
+            sh <- (RT)
+        default:
+            hi <- (RA)
+            lo <- [0] * 64
+            sh <- (RB)
+    n <- sh[58:63]
+    mask[0:63] <- MASK(0, 63 - n)
+    v[0:63] <- (hi & ¬mask) | (lo & mask)
+    RT <- ROTL64(v, 64 - n)
 
 Special Registers Altered:
 
