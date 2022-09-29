@@ -568,6 +568,7 @@ def fishmv(fields):
     _insn("pcdec."), # named "pcdec." because it always writes to CR0
 )
 def pcdec(fields):
+    # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # 1.6.21.1 VA2-FORM
     #    |0      |6     |11     |16     |21  |24|26  |31  |
     #    | PO    |  RT  |   RA  |   RB  | RC    | XO |once|
