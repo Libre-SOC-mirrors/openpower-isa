@@ -64,7 +64,7 @@ class DecoderTestCase(FHDLTestCase):
 
         r3                    r2                    r1                       r4
         0x0000_0000_0000_0002 0x8000_8000_8000_8001 0xffff_ffff_ffff_ffff >> 4
-        0x0000_0000_0000_0002 0x2800_0800_0800_0800 0x1fff_ffff_ffff_ffff >> 4
+        0x0000_0000_0000_0002 0x2800_0800_0800_0800 0x1fff_ffff_ffff_ffff
         """
         isa = SVP64Asm(['sv.dsrd *0,*1,4,1'
                        ])
