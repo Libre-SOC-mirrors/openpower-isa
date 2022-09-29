@@ -1,4 +1,4 @@
-# [DRAFT] Twin Multiply and Add Doubleword
+# [DRAFT] Multiply and Add Extended Doubleword
 
 VA-Form
 
@@ -18,11 +18,11 @@ Special Registers Altered:
 
     None
 
-# [DRAFT] Twin Divide/Modulo Quad Unsigned
+# [DRAFT] Divide/Modulo Double-width Doubleword Unsigned
 
 VA-Form
 
-* divmod2du   RT,RA,RB,RC
+* divrem2du   RT,RA,RB,RC
 
 Pseudo-code:
 
@@ -46,11 +46,11 @@ Special Registers Altered:
 
     None
 
-# [DRAFT] Twin (Quad) Left Shift Doubleword
+# [DRAFT] Double-width Shift Left Doubleword
 
 Z23-Form
 
-* dsld   RT,RA,RB,sm  (Rc=0)
+* dsld    RT,RA,RB,sm  (Rc=0)
 * dsld.   RT,RA,RB,sm  (Rc=1)
 
 Pseudo-code:
