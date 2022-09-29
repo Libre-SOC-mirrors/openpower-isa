@@ -8,9 +8,6 @@ from openpower.test.prefix_codes.prefix_codes_cases import PrefixCodesCases
 # writing the test_caller invocation this way makes it work with pytest
 
 
-# FIXME: fails because ISACaller can't currently handle writing to
-# both RT and RS
-#@unittest.expectedFailure
 class TestPrefixCodes(TestRunnerBase):
     def __init__(self, test):
         assert test == 'test'
