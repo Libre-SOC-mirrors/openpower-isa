@@ -15,7 +15,7 @@ class BigIntCases(TestAccumulatorBase):
         gprs[7] = 0x02468ACE13579BDF
         e = ExpectedState(pc=4, int_regs=gprs)
         e.intregs[3] = (gprs[5] * gprs[6] + gprs[7]) % 2 ** 64
-        e.intregs[4] = (gprs[5] * gprs[6] + gprs[7]) >> 64
+        e.intregs[7] = (gprs[5] * gprs[6] + gprs[7]) >> 64
         self.add_case(Program(lst, False), gprs, expected=e)
 
     def case_divmod2du(self):
@@ -27,7 +27,7 @@ class BigIntCases(TestAccumulatorBase):
         e = ExpectedState(pc=4, int_regs=gprs)
         v = gprs[5] | (gprs[7] << 64)
         e.intregs[3] = v // gprs[6]
-        e.intregs[4] = v % gprs[6]
+        e.intregs[7] = v % gprs[6]
         self.add_case(Program(lst, False), gprs, expected=e)
 
     # FIXME: test more divmod2du special cases
