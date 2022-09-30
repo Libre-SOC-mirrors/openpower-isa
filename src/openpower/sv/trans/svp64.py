@@ -174,7 +174,7 @@ def svshape(fields):
 
     # check SVrm for reserved (and svshape2) values
     assert SVrm not in [0b1000, 0b1001], \
-            "svshape reserved SVrm value %s" % bin(SVrm)
+        "svshape reserved SVrm value %s" % bin(SVrm)
 
     return instruction(
         (PO, 0, 5),
@@ -209,17 +209,17 @@ def svshape2(fields):
     """
     PO = 22
     XO = 0b011001
-    XO2 = 0b100 # not really XO2 but hey
+    XO2 = 0b100  # not really XO2 but hey
     (offs, yx, rmm, SVd, sk, mm) = fields
-    SVd -= 1 # offset by one
+    SVd -= 1  # offset by one
 
     return instruction(
         (PO, 0, 5),
         (offs, 6, 9),  # offset (the whole point of adding svshape2)
         (yx, 10, 10),  # like svindex
-        (rmm, 11, 15), # ditto svindex
-        (SVd, 16, 20), # ditto svindex
-        (XO2, 21, 23), # actually XO split across 2 places...
+        (rmm, 11, 15),  # ditto svindex
+        (SVd, 16, 20),  # ditto svindex
+        (XO2, 21, 23),  # actually XO split across 2 places...
         (mm, 24, 24),  # ditto svindex
         (sk, 25, 25),  # ditto svindex
         (XO, 26, 31),
@@ -565,29 +565,9 @@ def fishmv(fields):
 
 
 @_custom_insns(
-    _insn("pcdec."), # named "pcdec." because it always writes to CR0
-)
-def pcdec(fields):
-    # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-    # 1.6.21.1 VA-FORM
-    #    |0      |6     |11     |16     |21  |24|26  |
-    #    | PO    |  RT  |   RA  |   RB  | RC    | XO |
-    PO = 4
-    XO = 0b111000
-    (RT, RA, RB, RC, PCDc) = fields
-    return instruction(
-        (PO, 0, 5),
-        (RT, 6, 10),
-        (RA, 11, 15),
-        (RB, 16, 20),
-        (RC, 21, 25),
-        (XO, 26, 31),
-    )
-
-
-@_custom_insns(
     _insn("maddedu", XO=50),
     _insn("divmod2du", XO=52),
+    _insn("pcdec.", XO=56),
 )
 def va_form(fields, XO):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
@@ -715,9 +695,9 @@ def decode_bo(encoding):
     # same as the decode_predicate() CRfield table above, but (inv,CRbit)
     # is how it is in the spec [decode_predicate is (CRbit,inv)]
     mapped = pmap[encoding]
-    si =  SelectableInt(0, 3)
-    si[0] = mapped & 1 # inv
-    si[1:3] = mapped >> 1 # CR
+    si = SelectableInt(0, 3)
+    si[0] = mapped & 1  # inv
+    si[1:3] = mapped >> 1  # CR
     return int(si)
 
 
@@ -1072,10 +1052,10 @@ class SVP64Asm:
             else:
                 svp64_rm.extra3[idx] = sv_extra
 
-        # identify if the op is a LD/ST. 
+        # identify if the op is a LD/ST.
         # see https://libre-soc.org/openpower/sv/ldst/
-        is_ldst = rm['mode'] in [ 'LDST_IDX', 'LDST_IMM']
-        is_ldst_idx = rm['mode'] ==  'LDST_IDX'
+        is_ldst = rm['mode'] in ['LDST_IDX', 'LDST_IMM']
+        is_ldst_idx = rm['mode'] == 'LDST_IDX'
         is_ld = v30b_op.startswith("l") and is_ldst
         is_st = v30b_op.startswith("s") and is_ldst
 
@@ -1162,7 +1142,7 @@ class SVP64Asm:
                 sv_mode = 0b10
                 saturation = 0
             # predicate zeroing
-            elif encmode == 'zz': # TODO, a lot more checking on legality
+            elif encmode == 'zz':  # TODO, a lot more checking on legality
                 dst_zero = 1      # NOT on cr_ops, that's RM[6]
                 src_zero = 1
             elif encmode == 'sz':
@@ -1196,7 +1176,7 @@ class SVP64Asm:
                 sv_mode = 0b00
                 mapreduce_crm = True
             elif encmode == 'vli':
-                assert sv_mode == 0b01 # only allow ff mode
+                assert sv_mode == 0b01  # only allow ff mode
                 vli = True
             elif encmode == 'sea':
                 assert is_ldst_idx
@@ -1418,10 +1398,10 @@ class SVP64Asm:
 
         # whewww.... modes all done :)
         # now put into svp64_rm, but respect MSB0 order
-        if sv_mode&1:
-            mode |= (0b1<<SVP64MODE.MOD2_LSB)
-        if sv_mode&2:
-            mode |= (0b1<<SVP64MODE.MOD2_MSB)
+        if sv_mode & 1:
+            mode |= (0b1 << SVP64MODE.MOD2_LSB)
+        if sv_mode & 2:
+            mode |= (0b1 << SVP64MODE.MOD2_MSB)
 
         if sea:
             mode |= (0b1 << SVP64MODE.SEA)
@@ -1433,11 +1413,11 @@ class SVP64Asm:
 
             # put in predicate masks into svp64_rm
             if ptype == '2P':
-                svp64_rm.smask = smask # source pred: bits 16-18
+                svp64_rm.smask = smask  # source pred: bits 16-18
 
             # put in elwidths unless bc
             svp64_rm.ewsrc = srcwid    # srcwid: bits 6-7
-            svp64_rm.elwidth = destwid # destwid: bits 4-5
+            svp64_rm.elwidth = destwid  # destwid: bits 4-5
 
         svp64_rm.mmode = mmode         # mask mode: bit 0
         svp64_rm.mask = pmask          # 1-pred: bits 1-3
