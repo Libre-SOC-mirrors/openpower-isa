@@ -560,16 +560,18 @@ class StepLoop:
             # pack advances subvl in *outer* loop
             while True:  # outer subvl loop
                 while True:  # inner vl loop
+                    vl = self.svstate.vl
                     subvl = self.subvl
                     srcmask = self.srcmask
                     srcstep = self.svstate.srcstep
                     pred_src_zero = ((1 << srcstep) & srcmask) != 0
                     if self.pred_sz or pred_src_zero:
                         self.pred_src_zero = not pred_src_zero
-                        log("    advance src", srcstep, self.svstate.vl,
+                        log("    advance src", srcstep, vl,
                             self.svstate.ssubstep, subvl)
                         # yield actual substep/srcstep
                         yield (self.svstate.ssubstep, srcstep)
+                    # the way yield works these could have been modified.
                     vl = self.svstate.vl
                     subvl = self.subvl
                     srcstep = self.svstate.srcstep
@@ -597,13 +599,14 @@ class StepLoop:
             # "thing" is re-read every single time a yield gives indices
             while True:  # outer vl loop
                 while True:  # inner subvl loop
+                    vl = self.svstate.vl
                     subvl = self.subvl
                     srcmask = self.srcmask
                     srcstep = self.svstate.srcstep
                     pred_src_zero = ((1 << srcstep) & srcmask) != 0
                     if self.pred_sz or pred_src_zero:
                         self.pred_src_zero = not pred_src_zero
-                        log("    advance src", srcstep, self.svstate.vl,
+                        log("    advance src", srcstep, vl,
                             self.svstate.ssubstep, subvl)
                         # yield actual substep/srcstep
                         yield (self.svstate.ssubstep, srcstep)
@@ -628,19 +631,21 @@ class StepLoop:
             # pack advances subvl in *outer* loop
             while True:  # outer subvl loop
                 while True:  # inner vl loop
+                    vl = self.svstate.vl
                     subvl = self.subvl
                     dstmask = self.dstmask
                     dststep = self.svstate.dststep
                     pred_dst_zero = ((1 << dststep) & dstmask) != 0
                     if self.pred_dz or pred_dst_zero:
                         self.pred_dst_zero = not pred_dst_zero
-                        log("    advance dst", dststep, self.svstate.vl,
+                        log("    advance dst", dststep, vl,
                             self.svstate.dsubstep, subvl)
                         # yield actual substep/dststep
                         yield (self.svstate.dsubstep, dststep)
+                    # the way yield works these could have been modified.
                     vl = self.svstate.vl
                     dststep = self.svstate.dststep
-                    log("    advance dst check", dststep, self.svstate.vl,
+                    log("    advance dst check", dststep, vl,
                         self.svstate.ssubstep, subvl)
                     if dststep == vl-1:  # end-point
                         self.svstate.dststep = SelectableInt(0, 7)  # reset
