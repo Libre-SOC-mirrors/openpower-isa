@@ -286,25 +286,26 @@ class CRFields:
 
 
 def get_predint(gpr, mask):
+    r3 = gpr(3)
     r10 = gpr(10)
     r30 = gpr(30)
     log("get_predint", mask, SVP64PredInt.ALWAYS.value)
     if mask == SVP64PredInt.ALWAYS.value:
         return 0xffff_ffff_ffff_ffff  # 64 bits of 1
     if mask == SVP64PredInt.R3_UNARY.value:
-        return 1 << (gpr(3).value & 0b111111)
+        return 1 << (r3.value & 0b111111)
     if mask == SVP64PredInt.R3.value:
-        return gpr(3).value
+        return r3.value
     if mask == SVP64PredInt.R3_N.value:
-        return ~gpr(3).value
+        return ~r3.value
     if mask == SVP64PredInt.R10.value:
-        return gpr(10).value
+        return r10.value
     if mask == SVP64PredInt.R10_N.value:
-        return ~gpr(10).value
+        return ~r10.value
     if mask == SVP64PredInt.R30.value:
-        return gpr(30).value
+        return r30.value
     if mask == SVP64PredInt.R30_N.value:
-        return ~gpr(30).value
+        return ~r30.value
 
 # decode SVP64 predicate CR to reg number and invert status
 
