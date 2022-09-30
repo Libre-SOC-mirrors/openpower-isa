@@ -32,7 +32,9 @@ variance_svp64_real:
 	li	row, 0				# Set row to zero
 	sldi	src_stride, src_stride, 1	# strides are for 16-bit elements
 	sldi	ref_stride, ref_stride, 1	# we need to increase by bytes
+    # XXX this can go, no need to divide by 4
 	srdi	width, width, 2			# We load groups of 4
+    # XXX this to be moved inside (top of) L2 loop
 	setvl	0,0,4,0,1,1			# Set VL to 4 elements
 
 .L1:	# outer loop: for (r=0; r < h; r++)
@@ -41,6 +43,7 @@ variance_svp64_real:
 	mr	ctr, width			# Set up CTR to width/4 -1 on each row
 	mtctr	ctr				# Set up counter
 .L2:	# inner loop: for (c=0; c < w; c += 4)
+	# XXX setvl	30,0,4,0,1,1			# Set MAXVL=4, and r30=VL=MIN(CTR,MAXVL)
 	# Load 4 elements from src_ptr and ref_ptr
 	sv.lha	*src, 0(src_col)		# Load 4 ints from (src_ptr)
 	sv.lha	*ref, 0(ref_col)		# Load 4 ints from (ref_ptr)
@@ -56,6 +59,7 @@ variance_svp64_real:
 
 	addi	src_col, src_col, 8		# Increment src, ref by 8 bytes
 	addi	ref_col, ref_col, 8
+    # XXX replace with "sv.bc/ctr/all 16,*0,L2" which does "CTR -= VL"
 	bdnz	.L2				# Loop until CTR is zero
 
 	add 	src_ptr, src_ptr, src_stride	# Advance src_ptr by src_stride
