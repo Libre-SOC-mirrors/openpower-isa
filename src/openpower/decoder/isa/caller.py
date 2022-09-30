@@ -37,7 +37,7 @@ from openpower.decoder.power_enums import SVPtype
 from openpower.decoder.helpers import (exts, gtu, ltu, undefined,
                                        ISACallerHelper, ISAFPHelpers)
 from openpower.consts import PIb, MSRb  # big-endian (PowerISA versions)
-from openpower.consts import (SVP64MODE,
+from openpower.consts import (SVP64MODE, SVP64MODEb,
                               SVP64CROffs,
                               )
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
@@ -1220,13 +1220,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.is_svp64_mode and insn_name.startswith("sv.bc"):
             # blegh grab bits manually
             mode = yield self.dec2.rm_dec.rm_in.mode
-            bc_vlset = (mode & SVP64MODE.BC_VLSET) != 0
-            bc_vli = (mode & SVP64MODE.BC_VLI) != 0
-            bc_snz = (mode & SVP64MODE.BC_SNZ) != 0
+            mode = SelectableInt(mode, 5) # convert to SelectableInt before test
+            bc_vlset = mode[SVP64MODEb.BC_VLSET] != 0
+            bc_vli = mode[SVP64MODEb.BC_VLI] != 0
+            bc_snz = mode[SVP64MODEb.BC_SNZ] != 0
             bc_vsb = yield self.dec2.rm_dec.bc_vsb
             bc_lru = yield self.dec2.rm_dec.bc_lru
             bc_gate = yield self.dec2.rm_dec.bc_gate
             sz = yield self.dec2.rm_dec.pred_sz
+            self.namespace['mode'] = SelectableInt(mode, 5)
             self.namespace['ALL'] = SelectableInt(bc_gate, 1)
             self.namespace['VSb'] = SelectableInt(bc_vsb, 1)
             self.namespace['LRu'] = SelectableInt(bc_lru, 1)
