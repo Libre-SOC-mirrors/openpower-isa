@@ -66,6 +66,9 @@ special_sprs = {
     'VRSAVE': 256}
 
 
+# rrright.  this is here basically because the compiler pywriter returns
+# results in a specific priority order.  to make sure regs match up they
+# need partial sorting. sigh.
 REG_SORT_ORDER = {
     # TODO (lkcl): adjust other registers that should be in a particular order
     # probably CA, CA32, and CR
