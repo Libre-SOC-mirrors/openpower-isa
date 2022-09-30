@@ -569,20 +569,19 @@ def fishmv(fields):
 )
 def pcdec(fields):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-    # 1.6.21.1 VA2-FORM
-    #    |0      |6     |11     |16     |21  |24|26  |31  |
-    #    | PO    |  RT  |   RA  |   RB  | RC    | XO |once|
+    # 1.6.21.1 VA-FORM
+    #    |0      |6     |11     |16     |21  |24|26  |
+    #    | PO    |  RT  |   RA  |   RB  | RC    | XO |
     PO = 4
-    XO = 0b11100
-    (RT, RA, RB, RC, once) = fields
+    XO = 0b111000
+    (RT, RA, RB, RC, PCDc) = fields
     return instruction(
         (PO, 0, 5),
         (RT, 6, 10),
         (RA, 11, 15),
         (RB, 16, 20),
         (RC, 21, 25),
-        (XO, 26, 30),
-        (once, 31, 31),
+        (XO, 26, 31),
     )
 
 
@@ -1733,7 +1732,7 @@ if __name__ == '__main__':
         'sv.ld 5.v, 4(1.v)',
         'sv.stw 5.v, 4(1.v)',
         'sv.bc/all 3,12,192',
-        'pcdec. 0,0,0,0,0',
+        'pcdec. 0,0,0,0',
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))

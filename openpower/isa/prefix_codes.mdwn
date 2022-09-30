@@ -2,31 +2,28 @@
 
 # [DRAFT] Prefix-code decode
 
-VA2-Form
+VA-Form
 
-* pcdec. RT,RA,RB,RC,once
+* pcdec. RT,RA,RB,RC
 
 Pseudo-code:
 
     tree[0:63] <- (RB)
+    mode <- tree[62:63]
+    tree[62:63] <- 0
     ra_used <- 0b0
     in_bits[0:63] <- (RC|0)
     if in_bits = 0 then
         in_bits[0:63] <- 1
-    final_in_bits <- in_bits
-    final_ra_used <- ra_used
-    output <- [0] * 64
-    out_byte <- 0
-    decoded[0:7] <- 1
-    so_bit <- 0b0
-    early_stop <- 0b0
-    do while out_byte < 8
+    orig_in_bits <- in_bits
+    tree_index <- 1
+    found <- 0b0
+    hit_end <- 0b0
+    do bit_length = 1 to 6
         in_bit <- in_bits[63]
         if in_bits = 1 then
             if ra_used | (_RA = 0) then
-                early_stop <- 0b1
-                if decoded != 1 then  # error: stopped in the middle of a code
-                    so_bit <- 0b1
+                hit_end <- 0b1
                 leave
             ra_used <- 0b1
             in_bit <- (RA)[63]
@@ -34,23 +31,45 @@ Pseudo-code:
         else
             in_bits <- 0b0 || in_bits[0:62]
         # walk the binary tree in `tree` from parent to the selected child
-        decoded <- decoded[1:7] || in_bit
-        if decoded <u 64 then
-            if tree[63 - decoded] then
-                final_in_bits <- in_bits
-                final_ra_used <- ra_used
-                output[56 - 8 * out_byte:63 - 8 * out_byte] <- decoded
-                decoded[0:7] <- 1
-                out_byte <- out_byte + 1
-                if once then
-                    leave
-        else
-            so_bit <- 0b1
-            early_stop <- 0b1
+        tree_index <- tree_index * 2
+        if in_bit = 1 then
+            tree_index <- tree_index + 1
+        if tree_index < 64 then
+            if tree[63 - tree_index] then
+                found <- 0b1
+                leave
+    compressed_index <- 0
+    do i = 0 to 127
+        if i = tree_index then
             leave
-    RT <- output
-    RS <- final_in_bits
-    CR0 <- final_ra_used || (output = 0) || early_stop || so_bit
+        else if i >= 64 then
+            compressed_index <- compressed_index + 1
+        else if tree[63 - i] = 1 then
+            compressed_index <- compressed_index + 1
+    switch(mode)
+        case(0):
+            RT[0:63] <- tree_index
+            if ¬found then
+                in_bits <- orig_in_bits
+                ra_used <- 0b0
+        case(1):
+            RT[0:63] <- tree_index
+            if hit_end then
+                in_bits <- orig_in_bits
+                ra_used <- 0b0
+        case(2):
+            RT[0:63] <- compressed_index
+            if ¬found then
+                in_bits <- orig_in_bits
+                ra_used <- 0b0
+                RT[0:63] <- tree_index
+        default:
+            RT[0:63] <- compressed_index
+            if hit_end then
+                in_bits <- orig_in_bits
+                ra_used <- 0b0
+    RS <- in_bits
+    CR0 <- ra_used || (tree_index >= 64) || found || hit_end
 
 Special Registers Altered:
 

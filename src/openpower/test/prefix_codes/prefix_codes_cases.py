@@ -1,6 +1,6 @@
 import functools
 import itertools
-from openpower.test.common import TestAccumulatorBase
+from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
@@ -58,6 +58,7 @@ def _cached_program(*instrs):
 
 
 class PrefixCodesCases(TestAccumulatorBase):
+    @skip_case("FIXME(programmerjake): update for new pcdec. pseudocode")
     def check_pcdec(self, supported_codes, input_bits, once, src_loc_at=0):
         # type: (set[str], str, bool, int) -> None
         original_input_bits = input_bits

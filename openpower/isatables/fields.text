@@ -224,7 +224,6 @@
 # 1.6.21.1 VA2-FORM
     |0      |6     |11     |16     |21  |24|26  |31  |
     | PO    |  RT  |   RA  |   RB  | RC    | XO | Rc |
-    | PO    |  RT  |   RA  |   RB  | RC    | XO |once|
 
 # 1.6.22 VC-FORM
     |0      |6     |11     |16     |21|22   |31|
@@ -679,11 +678,6 @@
         Field used by XO-form instructions to enable set-
         ting OV and SO in the XER.
         Formats: XO
-    once (31)
-        Once bit. Used by Prefix-code encode/decode instructions.
-        0    Decode/Encode multiple times per instruction.
-        1    Only Decode once per instruction
-        Formats: VA2
     PO (0:5)
         Primary opcode field.
         Formats: all
