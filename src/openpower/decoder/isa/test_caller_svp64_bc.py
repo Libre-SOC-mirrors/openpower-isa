@@ -247,7 +247,7 @@ class DecoderTestCase(FHDLTestCase):
             [
             "setvl 1, 0, %d, 0, 1, 1" % maxvl, # VL (and r1) = MIN(CTR,MAXVL=4)
             "add 2, 2, 1",            # for fun accumulate r1 (VL) into r2
-            "sv.bc/ctr/all 16, *0, -0x8", # branch, test CTR, reducing by VL
+            "sv.bc/all 16, *0, -0x8", # branch, test CTR, reducing by VL
             ]
             )
         lst = list(lst)
