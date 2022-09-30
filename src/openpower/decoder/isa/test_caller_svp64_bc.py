@@ -162,7 +162,41 @@ class DecoderTestCase(FHDLTestCase):
                     if i == 9:
                         self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
                     else:
-                        self.assertEqual(svstate.vl, 0)
+                        self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
+                    self.assertEqual(svstate.vl, i-7)
+
+    def test_sv_branch_cond_ctr_vlset_inv(self):
+        for i in [7, 8, 9]:
+            lst = SVP64Asm(
+                [f"addi 1, 0, {i+1}",  # set r1 to i
+                 f"addi 2, 0, {i}",  # set r2 to i
+                "cmpi cr0, 1, 1, 8",  # compare r1 with 8 and store to cr0
+                "cmpi cr1, 1, 2, 8",  # compare r2 with 8 and store to cr1
+                "sv.bc/vsb 0, *1, 0xc", # bgt 0xc - branch if BOTH
+                                       # r1 AND r2 greater 8 to the nop below
+                                       # also truncate VL at the fail-point
+                "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
+                "or 0, 0, 0"]          # branch target
+                )
+            lst = list(lst)
+
+            # SVSTATE (in this case, VL=2)
+            svstate = SVP64State()
+            svstate.vl = 2 # VL
+            svstate.maxvl = 2 # MAXVL
+            print ("SVSTATE", bin(svstate.asint()))
+            sprs = {'CTR': i}
+
+            with self.subTest("vlset_ctr_inv %d" % i):
+                with Program(lst, bigendian=False) as program:
+                    sim = self.run_tst_program(program, svstate=svstate,
+                                               initial_sprs=sprs)
+                    print ("SVSTATE.vl", bin(svstate.vl))
+                    print ("CTR", sim.spr('CTR').value)
+                    if i == 9:
+                        self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
+                    else:
+                        self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
                     self.assertEqual(svstate.vl, i-7)
 
     def test_sv_branch_ctr(self):
