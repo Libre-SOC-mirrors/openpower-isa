@@ -282,9 +282,8 @@ class CRFields:
             _cr = FieldSelectableInt(self.cr, bits)
             self.crl.append(_cr)
 
+
 # decode SVP64 predicate integer to reg number and invert
-
-
 def get_predint(gpr, mask):
     r3 = gpr(3)
     r10 = gpr(10)
@@ -307,9 +306,8 @@ def get_predint(gpr, mask):
     if mask == SVP64PredInt.R30_N.value:
         return ~r30.value
 
+
 # decode SVP64 predicate CR to reg number and invert status
-
-
 def _get_predcr(mask):
     if mask == SVP64PredCR.LT.value:
         return 0, 1
@@ -328,10 +326,9 @@ def _get_predcr(mask):
     if mask == SVP64PredCR.NS.value:
         return 3, 0
 
+
 # read individual CR fields (0..VL-1), extract the required bit
 # and construct the mask
-
-
 def get_predcr(crl, mask, vl):
     idx, noninv = _get_predcr(mask)
     mask = 0
