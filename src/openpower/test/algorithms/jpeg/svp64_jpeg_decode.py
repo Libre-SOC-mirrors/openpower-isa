@@ -3,6 +3,7 @@
 
 from pathlib import Path
 from nmutil.plain_data import plain_data
+from openpower.util import LogKind
 
 RAINBOW_SMILEY = Path(__file__).with_name("rainbow_smiley.jpg").read_bytes()
 
@@ -54,6 +55,85 @@ class HuffmanTables:
                 code += 1
 
         self.tables[table_id] = table
+
+    def generate_tables_for_algorithm(self, start_addr, table_ids):
+        # type: (int, list[HuffmanTableId]) -> bytearray
+
+        def read(addr, byte_sz=1, signed=False):
+            # type: (int, int, bool) -> int
+            assert addr >= start_addr
+            addr -= start_addr
+            return int.from_bytes(mem[addr:addr + byte_sz], 'little',
+                                  signed=signed)
+
+        def write(addr, value, byte_sz=1):
+            # type: (int, int, int) -> None
+            assert addr >= start_addr
+            addr -= start_addr
+            if len(mem) < addr + byte_sz:
+                mem.extend(b"\x00" * (addr + byte_sz - len(mem)))
+            value &= (1 << (8 * byte_sz)) - 1
+            mem[addr:addr + byte_sz] = value.to_bytes(byte_sz, 'little')
+
+        def calloc(sz):
+            # type: (int) -> int
+            assert 0 < sz
+            retval = len(mem)
+            mem.extend(b"\x00" * sz)
+            return retval + start_addr
+
+        def write_tree_entry(addr, bits, value):
+            # type: (int, str, int) -> None
+            tree = short_tbl_off_or_value = long_tbl_off = 0  # declare
+
+            def read_all():
+                nonlocal tree, short_tbl_off_or_value, long_tbl_off
+                tree = read(addr, byte_sz=8)
+                short_tbl_off_or_value = read(addr + 8, byte_sz=4)
+                long_tbl_off = read(addr + 0xC, byte_sz=4)
+
+            def write_all():
+                write(addr, tree, byte_sz=8)
+                write(addr + 8, short_tbl_off_or_value, byte_sz=4)
+                write(addr + 0xC, long_tbl_off, byte_sz=4)
+
+            while True:
+                read_all()
+                if long_tbl_off == 0 and tree == 0:  # unallocated
+                    assert short_tbl_off_or_value == 0
+                    if bits == "":
+                        tree = 1
+                        short_tbl_off_or_value = value
+                        write_all()
+                        return
+                assert tree != 1 and bits != "", "conflict"
+                prefix = bits[:5]
+                tree_index = int("0b1" + prefix, 2)
+                tree |= 1 << tree_index
+                bits = bits[5:]
+                if tree_index < 32:
+                    if short_tbl_off_or_value == 0:
+                        short_tbl_addr = calloc(32)
+                        short_tbl_off_or_value = short_tbl_addr - start_addr
+                    else:
+                        short_tbl_addr = short_tbl_off_or_value + start_addr
+                    write(short_tbl_addr + tree_index, value)
+                    write_all()
+                    return
+                if long_tbl_off == 0:
+                    long_tbl_addr = calloc(32 * 8 * 2)
+                    long_tbl_off = long_tbl_addr - start_addr
+                else:
+                    long_tbl_addr = long_tbl_off + start_addr
+                write_all()
+                addr = long_tbl_addr + tree_index * 8 * 2
+
+        mem = bytearray()
+        assert start_addr == calloc(len(table_ids) * 8 * 2)
+        for i, table_id in enumerate(table_ids):
+            for bits, value in self.tables[table_id].items():
+                write_tree_entry(start_addr + 8 * 2 * i, bits, value)
+        return mem
 
 
 @plain_data()
@@ -255,4 +335,18 @@ def extract_demo_bitstream(data):
 DEMO_BITSTREAM = extract_demo_bitstream(RAINBOW_SMILEY)
 
 if __name__ == "__main__":
+    from openpower.decoder.isa.mem import Mem
     print(DEMO_BITSTREAM)
+    # use dict as ordered set
+    table_id_set = {}  # type: dict[HuffmanTableId, None]
+    for i in DEMO_BITSTREAM.scan_header:
+        table_id_set[i.dc_huffman_table_id] = None
+        table_id_set[i.ac_huffman_table_id] = None
+    table_ids = list(table_id_set)
+    mem_bytes = DEMO_BITSTREAM.huffman_tables.generate_tables_for_algorithm(
+        0x10000000, table_ids)
+    mem = Mem()
+    for i, b in enumerate(mem_bytes):
+        mem.st(0x10000000 + i, b, 1)
+    mem.log_fancy(log=lambda *args, kind=LogKind.Default, **kwargs:
+                  print(*args, **kwargs))
