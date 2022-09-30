@@ -153,7 +153,7 @@ class Mem:
         return res
 
     def log_fancy(self, *, kind=LogKind.Default, name="Memory",
-                  log2_line_size=4, log2_column_chunk_size=3):
+                  log2_line_size=4, log2_column_chunk_size=3, log=log):
         line_size = 1 << log2_line_size
         subline_mask = line_size - 1
         column_chunk_size = 1 << log2_column_chunk_size
