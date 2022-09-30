@@ -732,6 +732,7 @@ class StepLoop:
                     end_src = srcstep == vl-1
                     if end_src:  # end-point
                         self.loopend = True
+                        srcstep = 0
                         break
                     else:
                         srcstep += 1
@@ -794,6 +795,7 @@ class StepLoop:
                     end_dst = dststep == vl-1
                     if end_dst:  # end-point
                         self.loopend = True
+                        dststep = 0
                         break
                     else:
                         dststep += 1
