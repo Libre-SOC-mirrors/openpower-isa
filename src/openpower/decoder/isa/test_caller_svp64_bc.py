@@ -142,7 +142,40 @@ class DecoderTestCase(FHDLTestCase):
                     self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
                     self.assertEqual(sim.spr('CTR'), SelectableInt(1, 64))
 
-    def tst_sv_add_cr(self):
+    def test_sv_branch_ctr_loop(self):
+        """this is a branch-ctr-loop demo which shows an (unconditional)
+        decrementing of CTR by VL.  BI still has to be set to Vector even
+        though it is unused (BO[0]=1)
+        """
+        maxvl = 4
+        lst = SVP64Asm(
+            [
+            "setvl 1, 0, %d, 0, 1, 1" % maxvl, # VL (and r1) = MIN(CTR,MAXVL=4)
+            "add 2, 2, 1",            # for fun accumulate r1 (VL) into r2
+            "sv.bc/ctr/all 16, *0, -0x8", # branch, test CTR, reducing by VL
+            ]
+            )
+        lst = list(lst)
+
+        # SVSTATE - set vl and maxvl to 2, they get overridden with setvl
+        svstate = SVP64State()
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+        target = 15
+        sprs = {'CTR': target}
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_sprs=sprs)
+            sim.gpr.dump()
+            sim.spr.dump()
+            self.assertEqual(sim.spr('CTR'), SelectableInt(0, 64))
+            self.assertEqual(sim.gpr(2), SelectableInt(target, 64))
+            # MAXVL repeatedly subtracted from VL (r1), last loop has remainder
+            self.assertEqual(sim.gpr(1), SelectableInt(target % maxvl, 64))
+
+    def test_sv_add_cr(self):
         """>>> lst = ['sv.add. *1, *5, *9'
                        ]
 
