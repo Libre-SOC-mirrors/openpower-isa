@@ -59,7 +59,7 @@ variance_svp64_real:
 
 	addi	src_col, src_col, 8		# Increment src, ref by 8 bytes
 	addi	ref_col, ref_col, 8
-    # XXX replace with "sv.bc/ctr/all 16,*0,L2" which does "CTR -= VL"
+    # XXX replace with "sv.bc/all 16,*0,L2" which does "CTR -= VL"
 	bdnz	.L2				# Loop until CTR is zero
 
 	add 	src_ptr, src_ptr, src_stride	# Advance src_ptr by src_stride
