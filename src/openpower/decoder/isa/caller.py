@@ -1847,6 +1847,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                                        carry_en, rc_en, ffirst_hit)
 
     def check_ffirst(self, rc_en, srcstep):
+        """fail-first mode: checks a bit of Rc Vector, truncates VL
+        """
         rm_mode = yield self.dec2.rm_dec.mode
         ff_inv = yield self.dec2.rm_dec.inv
         cr_bit = yield self.dec2.rm_dec.cr_sel
@@ -1859,6 +1861,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("     cr_bit", cr_bit)
         if not rc_en or rm_mode != SVP64RMMode.FFIRST.value:
             return False
+        # get the CR vevtor, do BO-test
         regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
         crtest = self.crl[regnum]
         ffirst_hit = crtest[cr_bit] != ff_inv
@@ -1866,6 +1869,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("cr test?", ffirst_hit)
         if not ffirst_hit:
             return False
+        # Fail-first activated, truncate VL
         vli = SelectableInt(int(vli), 7)
         self.svstate.vl = srcstep + vli
         yield self.dec2.state.svstate.eq(self.svstate.value)
