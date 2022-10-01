@@ -1052,10 +1052,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # set up 4 dummy SVSHAPEs if they aren't already set up
         for i in range(4):
             sname = 'SVSHAPE%d' % i
-            if sname not in self.spr:
-                val = 0
-            else:
-                val = self.spr[sname].value
+            val = self.spr.get(sname, 0)
             # make sure it's an SVSHAPE
             self.spr[sname] = SVSHAPE(val, self.gpr)
         self.last_op_svshape = False
