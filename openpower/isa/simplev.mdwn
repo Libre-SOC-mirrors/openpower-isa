@@ -33,40 +33,34 @@ SVL-Form
 Pseudo-code:
 
     overflow <- 0b0
-    if (vf & (¬vs) & ¬(ms)) = 1 then
-        step <- SVSTATE_NEXT(SVi, 0b0)
-        if _RT != 0 then
-           GPR(_RT) <- [0]*57 || step
-    else
-        VLimm <- SVi + 1
-        # set or get MVL
-        if ms = 1 then MVL <- VLimm[0:6]
-        else           MVL <- SVSTATE[0:6]
-        # set or get VL
-        if vs = 0                then VL <- SVSTATE[7:13]
-        else if _RA != 0         then
-            if (RA) >u 0b1111111 then
-                VL <- 0b1111111
-                overflow <- 0b1
-            else                      VL <- (RA)[57:63]
-        else if _RA != 0         then VL <- (RA)[57:63]
-        else if _RT = 0          then VL <- VLimm[0:6]
-        else if CTR >u 0b1111111 then
+    VLimm <- SVi + 1
+    # set or get MVL
+    if ms = 1 then MVL <- VLimm[0:6]
+    else           MVL <- SVSTATE[0:6]
+    # set or get VL
+    if vs = 0                then VL <- SVSTATE[7:13]
+    else if _RA != 0         then
+        if (RA) >u 0b1111111 then
             VL <- 0b1111111
             overflow <- 0b1
-        else                          VL <- CTR[57:63]
-        # limit VL to within MVL
-        if VL >u MVL then
-            overflow <- 0b1
-            VL <- MVL
-        SVSTATE[0:6] <- MVL
-        SVSTATE[7:13] <- VL
-        if _RT != 0 then
-           GPR(_RT) <- [0]*57 || VL
-        if ((¬vs) & ¬(ms)) = 0 then
-            # set requested Vertical-First mode, clear persist
-            SVSTATE[63] <- vf
-            SVSTATE[62] <- 0b0
+        else                      VL <- (RA)[57:63]
+    else if _RT = 0          then VL <- VLimm[0:6]
+    else if CTR >u 0b1111111 then
+        VL <- 0b1111111
+        overflow <- 0b1
+    else                          VL <- CTR[57:63]
+    # limit VL to within MVL
+    if VL >u MVL then
+        overflow <- 0b1
+        VL <- MVL
+    SVSTATE[0:6] <- MVL
+    SVSTATE[7:13] <- VL
+    if _RT != 0 then
+       GPR(_RT) <- [0]*57 || VL
+    if ((¬vs) & ¬(ms)) = 0 then
+        # set requested Vertical-First mode, clear persist
+        SVSTATE[63] <- vf
+        SVSTATE[62] <- 0b0
 
 Special Registers Altered:
 
