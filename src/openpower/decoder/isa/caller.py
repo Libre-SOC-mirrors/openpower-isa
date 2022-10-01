@@ -1692,8 +1692,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # see if srcstep/dststep need skipping over masked-out predicate bits
         self.reset_remaps()
-        if (self.is_svp64_mode or ins_name in ['svstep',
-          'svremap', 'svstate']):
+        if (self.is_svp64_mode or ins_name in ['svstep', 'svremap']):
             yield from self.svstate_pre_inc()
         if self.is_svp64_mode:
             pre = yield from self.update_new_svstate_steps()
