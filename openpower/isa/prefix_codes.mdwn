@@ -40,12 +40,19 @@ Pseudo-code:
                 leave
     compressed_index <- 0
     do i = 0 to 127
+        possible <- 1
+        j <- i
+        do while j >= 4
+            j <- j / 2
+            if tree[63 - j] then
+                possible <- 0
+                leave
         if i = tree_index then
             leave
         else if i >= 64 then
-            compressed_index <- compressed_index + 1
+            compressed_index <- compressed_index + possible
         else if tree[63 - i] = 1 then
-            compressed_index <- compressed_index + 1
+            compressed_index <- compressed_index + possible
     switch(mode)
         case(0):
             RT[0:63] <- tree_index
