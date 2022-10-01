@@ -1813,9 +1813,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if carry_en:
             yield from self.handle_carry_(inputs, results[0], ca, ca32)
 
-        # check if one of the regs was named "overflow"
+        # get outout named "overflow" and "CR0"
         overflow = outs.get('overflow')
-        # and one called CR0
         cr0 = outs.get('CR0')
 
         if not self.is_svp64_mode:  # yeah just no. not in parallel processing
