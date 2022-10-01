@@ -1432,18 +1432,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         """execute one instruction
         """
         # get the disassembly code for this instruction
-        if self.is_svp64_mode:
-            if not self.disassembly:
-                code = yield from self.get_assembly_name()
-            else:
-                code = self.disassembly[self._pc+4]
-            log("    svp64 sim-execute", hex(self._pc), code)
+        if not self.disassembly:
+            code = yield from self.get_assembly_name()
         else:
-            if not self.disassembly:
-                code = yield from self.get_assembly_name()
-            else:
-                code = self.disassembly[self._pc]
-            log("sim-execute", hex(self._pc), code)
+            offs, dbg = 0, ""
+            if self.is_svp64_mode:
+               offs, dbg = 4, "svp64 "
+            code = self.disassembly[self._pc+offs]
+            log("    %s sim-execute" % dbg, hex(self._pc), code)
         opname = code.split(' ')[0]
         try:
             yield from self.call(opname)         # execute the instruction
