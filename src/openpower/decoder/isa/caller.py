@@ -1692,7 +1692,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # see if srcstep/dststep need skipping over masked-out predicate bits
         self.reset_remaps()
-        if (self.is_svp64_mode or ins_name in ['setvl', 'svremap', 'svstate']):
+        if (self.is_svp64_mode or ins_name in ['setvl', 'svstep',
+          'svremap', 'svstate']):
             yield from self.svstate_pre_inc()
         if self.is_svp64_mode:
             pre = yield from self.update_new_svstate_steps()
@@ -1882,7 +1883,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             rc_reg = "CR0"
         regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, rc_reg)
         # hang on... for `setvl` actually you want to test SVSTATE.VL
-        is_setvl = ins_name == 'setvl'
+        is_setvl = ins_name in ('svstep', 'setvl')
         if is_setvl:
             result = SelectableInt(result.vl, 64)
         else:
