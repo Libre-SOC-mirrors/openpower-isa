@@ -1241,7 +1241,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.namespace['sz'] = SelectableInt(sz, 1)
             self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
 
-    def handle_carry_(self, inputs, outputs, already_done):
+    def handle_carry_(self, inputs, output, ca, ca32):
         inv_a = yield self.dec2.e.do.invert_in
         if inv_a:
             inputs[0] = ~inputs[0]
@@ -1250,12 +1250,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if imm_ok:
             imm = yield self.dec2.e.do.imm_data.data
             inputs.append(SelectableInt(imm, 64))
-        assert len(outputs) >= 1
-        log("outputs", repr(outputs))
-        if isinstance(outputs, list) or isinstance(outputs, tuple):
-            output = outputs[0]
-        else:
-            output = outputs
         gts = []
         for x in inputs:
             log("gt input", x, output)
@@ -1264,10 +1258,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log(gts)
         cy = 1 if any(gts) else 0
         log("CA", cy, gts)
-        if not (1 & already_done):
+        if ca is None: # already written
             self.spr['XER'][XER_bits['CA']] = cy
 
-        log("inputs", already_done, inputs)
         # 32 bit carry
         # ARGH... different for OP_ADD... *sigh*...
         op = yield self.dec2.e.do.insn_type
@@ -1290,10 +1283,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 gts.append(gt)
             cy32 = 1 if any(gts) else 0
             log("CA32", cy32, gts)
-        if not (2 & already_done):
+        if ca32 is None: # already written
             self.spr['XER'][XER_bits['CA32']] = cy32
 
-    def handle_overflow(self, inputs, outputs, div_overflow):
+    def handle_overflow(self, inputs, output, div_overflow):
         if hasattr(self.dec2.e.do, "invert_in"):
             inv_a = yield self.dec2.e.do.invert_in
             if inv_a:
@@ -1303,8 +1296,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if imm_ok:
             imm = yield self.dec2.e.do.imm_data.data
             inputs.append(SelectableInt(imm, 64))
-        assert len(outputs) >= 1
-        log("handle_overflow", inputs, outputs, div_overflow)
+        log("handle_overflow", inputs, output, div_overflow)
         if len(inputs) < 2 and div_overflow is None:
             return
 
@@ -1314,8 +1306,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             ov, ov32 = div_overflow, div_overflow
         # arithmetic overflow can be done by analysing the input and output
         elif len(inputs) >= 2:
-            output = outputs[0]
-
             # OV (64-bit)
             input_sgn = [exts(x.value, x.bits) < 0 for x in inputs]
             output_sgn = exts(output.value, output.bits) < 0
@@ -1336,8 +1326,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.spr['XER'][XER_bits['SO']] = new_so
         log("    set overflow", ov, ov32, so, new_so)
 
-    def handle_comparison(self, outputs, cr_idx=0, overflow=None, no_so=False):
-        out = outputs[0]
+    def handle_comparison(self, out, cr_idx=0, overflow=None, no_so=False):
         assert isinstance(out, SelectableInt), \
             "out zero not a SelectableInt %s" % repr(outputs)
         log("handle_comparison", out.bits, hex(out.value))
@@ -1791,7 +1780,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # execute actual instruction here (finally)
         log("inputs", inputs)
         results = info.func(self, *inputs)
-        log("results", results)
+        output_names = create_args(info.write_regs)
+        outs = {}
+        for out, n in zip(results or [], output_names):
+            outs[n] = out
+        log("results", outs)
 
         # "inject" decorator takes namespace from function locals: we need to
         # overwrite NIA being overwritten (sigh)
@@ -1812,34 +1805,18 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.last_st_addr, self.last_ld_addr)
 
         # detect if CA/CA32 already in outputs (sra*, basically)
-        already_done = 0
-        output_names = []
-        if info.write_regs:
-            output_names = create_args(info.write_regs)
-            for name in output_names:
-                if name == 'CA':
-                    already_done |= 1
-                if name == 'CA32':
-                    already_done |= 2
+        ca = outs.get("CA")
+        ca32 = outs.get("CA32 ")
 
-        log("carry already done?", bin(already_done), output_names)
+        log("carry already done?", ca, ca32, output_names)
         carry_en = yield self.dec2.e.do.output_carry
         if carry_en:
-            yield from self.handle_carry_(inputs, results, already_done)
+            yield from self.handle_carry_(inputs, results[0], ca, ca32)
 
         # check if one of the regs was named "overflow"
-        overflow = None
-        if info.write_regs:
-            for name, output in zip(output_names, results):
-                if name == 'overflow':
-                    overflow = output
-
+        overflow = outs.get('overflow')
         # and one called CR0
-        cr0 = None
-        if info.write_regs:
-            for name, output in zip(output_names, results):
-                if name == 'CR0':
-                    cr0 = output
+        cr0 = outs.get('CR0')
 
         if not self.is_svp64_mode:  # yeah just no. not in parallel processing
             # detect if overflow was in return result
@@ -1847,7 +1824,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             ov_ok = yield self.dec2.e.do.oe.ok
             log("internal overflow", ins_name, overflow, "en?", ov_en, ov_ok)
             if ov_en & ov_ok:
-                yield from self.handle_overflow(inputs, results, overflow)
+                yield from self.handle_overflow(inputs, results[0], overflow)
 
         # only do SVP64 dest predicated Rc=1 if dest-pred is not enabled
         rc_en = False
@@ -1858,7 +1835,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # XXX TODO: now that CR0 is supported, sort out svstep's pseudocode
         # to write directly to CR0 instead of in ISACaller. hooyahh.
         if rc_en and ins_name not in ['svstep']:
-            yield from self.do_rc_ov(ins_name, results, overflow, cr0)
+            yield from self.do_rc_ov(ins_name, results[0], overflow, cr0)
 
         # check failfirst
         ffirst_hit = False
@@ -1866,8 +1843,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             ffirst_hit = (yield from self.check_ffirst(rc_en, srcstep))
 
         # any modified return results?
-        yield from self.do_outregs_nia(asmop, ins_name, info,
-                                       output_names, results,
+        yield from self.do_outregs_nia(asmop, ins_name, info, outs,
                                        carry_en, rc_en, ffirst_hit)
 
     def check_ffirst(self, rc_en, srcstep):
@@ -1896,42 +1872,39 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         yield Settle()  # let decoder update
         return True
 
-    def do_rc_ov(self, ins_name, results, overflow, cr0):
+    def do_rc_ov(self, ins_name, result, overflow, cr0):
         if ins_name.startswith("f"):
             rc_reg = "CR1"  # not calculated correctly yet (not FP compares)
         else:
             rc_reg = "CR0"
         regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, rc_reg)
-        cmps = results
         # hang on... for `setvl` actually you want to test SVSTATE.VL
         is_setvl = ins_name == 'setvl'
         if is_setvl:
-            vl = results[0].vl
-            cmps = (SelectableInt(vl, 64), overflow,)
+            result = SelectableInt(result.vl, 64)
         else:
             overflow = None  # do not override overflow except in setvl
 
         # if there was not an explicit CR0 in the pseudocode, do implicit Rc=1
         if cr0 is None:
-            self.handle_comparison(cmps, regnum, overflow, no_so=is_setvl)
+            self.handle_comparison(result, regnum, overflow, no_so=is_setvl)
         else:
             # otherwise we just blat CR0 into the required regnum
             log("explicit rc0", cr0)
             self.crl[regnum].eq(cr0)
 
-    def do_outregs_nia(self, asmop, ins_name, info, output_names, results,
+    def do_outregs_nia(self, asmop, ins_name, info, outs,
                        carry_en, rc_en, ffirst_hit):
         # write out any regs for this instruction
-        if info.write_regs:
-            for name, output in zip(output_names, results):
-                yield from self.check_write(info, name, output, carry_en)
+        for name, output in outs.items():
+            yield from self.check_write(info, name, output, carry_en)
 
         if ffirst_hit:
             self.svp64_reset_loop()
             nia_update = True
         else:
             # check advancement of src/dst/sub-steps and if PC needs updating
-            nia_update = (yield from self.check_step_increment(results, rc_en,
+            nia_update = (yield from self.check_step_increment(rc_en,
                                                            asmop, ins_name))
         if nia_update:
             self.update_pc_next()
@@ -2115,7 +2088,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         else:
             self.gpr[regnum] = output
 
-    def check_step_increment(self, results, rc_en, asmop, ins_name):
+    def check_step_increment(self, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
         # this is our Sub-Program-Counter loop from 0 to VL-1
         if not self.allow_next_step_inc:
@@ -2147,8 +2120,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.update_nia()
             if not rc_en:
                 return True
-            results = [SelectableInt(0, 64)]
-            self.handle_comparison(results)  # CR0
+            self.handle_comparison(SelectableInt(0, 64))  # CR0
             return True
         if self.allow_next_step_inc == 2:
             log("SVSTATE_NEXT: read")
