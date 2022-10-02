@@ -256,9 +256,18 @@ def svp64_utf8_validation_asm():
         f"bclr 20, 0, 0 # blr",
         f"final_check:",
 
-        # need to set VL to something non-zero otherwise all our scalar
-        # instructions don't run --- I definitely don't like that ... scalar
-        # instructions should run regardless of VL.
+        # need to set VL to 1, here
+        # https://bugs.libre-soc.org/show_bug.cgi?id=905
+        # (SVP64Single is planned for accessing high-regnumbers as Scalars)
+        #
+        # setting VL=0 (often set dynamically at runtime in Standard Cray
+        # Vectors) is the standard canonical way in Cray Vectors to legitimately
+        # request instructions not to be run at all (nops).
+        #
+        # a workaround for not having SVP64Single right now and still get
+        # at the high register numbers (32-127) is to static-set VL=1
+        # the alternative is to move cur_bytes to reg numbers 0-31 but
+        # 16 regs within the range 0-31 is a lot to ask for.
         f"setvl 0, 0, 1, 0, 1, 1",  # set VL to 1
 
         # check if prev input is incomplete
