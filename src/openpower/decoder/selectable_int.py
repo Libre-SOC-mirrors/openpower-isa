@@ -179,7 +179,7 @@ class FieldSelectableInt:
         res = 0
         brlen = len(self.br)
         for i, key in self.br.items():
-            log("asint", i, key, self.si[key])
+            #log("asint", i, key, self.si[key])
             bit = self.si[key].value
             #log("asint", i, key, bit)
             res |= bit << ((brlen-i-1) if msb0 else i)
@@ -357,7 +357,7 @@ class SelectableInt:
         return SelectableInt(self.value >> b.value, self.bits)
 
     def __getitem__(self, key):
-        log ("SelectableInt.__getitem__", self, key, type(key))
+        #log ("SelectableInt.__getitem__", self, key, type(key))
         if isinstance(key, SelectableInt):
             key = key.value
         if isinstance(key, int):
@@ -368,7 +368,7 @@ class SelectableInt:
             key = self.bits - (key + 1)
 
             value = (self.value >> key) & 1
-            log("getitem", key, self.bits, hex(self.value), value)
+            #log("getitem", key, self.bits, hex(self.value), value)
             return SelectableInt(value, 1)
         elif isinstance(key, slice):
             assert key.step is None or key.step == 1
@@ -380,10 +380,10 @@ class SelectableInt:
             start = self.bits - key.stop
 
             bits = stop - start
-            log ("__getitem__ slice num bits", start, stop, bits)
+            #log ("__getitem__ slice num bits", start, stop, bits)
             mask = (1 << bits) - 1
             value = (self.value >> start) & mask
-            log("getitem", stop, start, self.bits, hex(self.value), value)
+            #log("getitem", stop, start, self.bits, hex(self.value), value)
             return SelectableInt(value, bits)
         else:
             bits = []
@@ -400,7 +400,7 @@ class SelectableInt:
             if isinstance(value, SelectableInt):
                 assert value.bits == 1
                 value = value.value
-            log("setitem", key, self.bits, hex(self.value), hex(value))
+            #log("setitem", key, self.bits, hex(self.value), hex(value))
 
             assert key < self.bits
             assert key >= 0
@@ -414,7 +414,7 @@ class SelectableInt:
             if isinstance(kstart, SelectableInt): kstart = kstart.asint()
             if isinstance(kstop, SelectableInt): kstop = kstop.asint()
             if isinstance(kstep, SelectableInt): kstep = kstep.asint()
-            log ("__setitem__ slice ", kstart, kstop, kstep)
+            #log ("__setitem__ slice ", kstart, kstop, kstep)
             assert kstep is None or kstep == 1
             assert kstart < kstop
             assert kstart >= 0
@@ -429,7 +429,7 @@ class SelectableInt:
             if isinstance(value, SelectableInt):
                 assert value.bits == bits, "%d into %d" % (value.bits, bits)
                 value = value.value
-            log("setitem", key, self.bits, hex(self.value), hex(value))
+            #log("setitem", key, self.bits, hex(self.value), hex(value))
             mask = ((1 << bits) - 1) << start
             value = value << start
             self.value = (self.value & ~mask) | (value & mask)
