@@ -1691,6 +1691,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("sv rm", sv_rm, dest_cr, src_cr, src_byname, dest_byname)
 
         # see if srcstep/dststep need skipping over masked-out predicate bits
+        # svstep also needs advancement because it calls SVSTATE_NEXT.
+        # bit the remaps get computed just after pre_inc moves them on
+        # with remap_set_steps substituting for PowerDecider2 not doing it,
+        # and SVSTATE_NEXT not being able to.use yield, the preinc on
+        # svstep is necessary for now.
         self.reset_remaps()
         if (self.is_svp64_mode or ins_name in ['svstep']):
             yield from self.svstate_pre_inc()
