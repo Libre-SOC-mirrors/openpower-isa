@@ -797,7 +797,7 @@ def process_csvs(format):
                     mode = 'LDST_IMM'
             elif insn_name.startswith('bc'):
                 mode = 'BRANCH'
-            elif insn_name.startswith('cr') or insn_name in crops:
+            elif insn_name.startswith('cmp') or insn_name.startswith('cr') or insn_name in crops:
                 mode = 'CROP'
             res['mode'] = mode
 

@@ -304,6 +304,13 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_20_cmp(self):
+        expected = [
+                    "sv.cmp *4,1,*0,1",
+                    "sv.cmp/ff=RC1 *4,1,*0,1",
+                        ]
+        self._do_tst(expected)
+
 
 if __name__ == "__main__":
     unittest.main()

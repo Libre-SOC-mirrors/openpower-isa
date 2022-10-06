@@ -1059,8 +1059,9 @@ class SVP64Asm:
         is_ld = v30b_op.startswith("l") and is_ldst
         is_st = v30b_op.startswith("s") and is_ldst
 
-        # branch-conditional detection
+        # branch-conditional or CR detection
         is_bc = rm['mode'] == 'BRANCH'
+        is_cr = rm['mode'] == 'CROP'
 
         # parts of svp64_rm
         mmode = 0  # bit 0
@@ -1360,15 +1361,18 @@ class SVP64Asm:
                 if failfirst == 'RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
                     mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
-                    assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
+                    if not is_cr:
+                        assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
                 elif failfirst == '~RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
                     mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
                     mode |= (0b1 << SVP64MODE.INV)  # ... with inversion
-                    assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
+                    if not is_cr:
+                        assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
                 else:
                     assert dst_zero == 0, "dst-zero not allowed in ffirst BO"
-                    assert rc_mode, "ffirst BO only possible when Rc=1"
+                    if not is_cr:
+                        assert rc_mode, "ffirst BO only possible when Rc=1"
                     mode |= (failfirst << SVP64MODE.BO_LSB)  # set BO
 
             ######################################
@@ -1713,6 +1717,9 @@ if __name__ == '__main__':
         'sv.stw 5.v, 4(1.v)',
         'sv.bc/all 3,12,192',
         'pcdec. 0,0,0,0',
+    ]
+    lst = [
+        "sv.cmp/ff=gt *0,*1,*2,0",
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))
