@@ -1359,24 +1359,33 @@ class SVP64Asm:
 
             ######################################
             # "failfirst" modes
-            elif failfirst is not False: # sv_mode == 0b01:
+            elif failfirst is not False and not is_cr: # sv_mode == 0b01:
                 assert src_zero == 0, "dest-zero not allowed in failfirst mode"
                 if failfirst == 'RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
                     mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
-                    if not is_cr:
-                        assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
+                    assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
                 elif failfirst == '~RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
                     mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
                     mode |= (0b1 << SVP64MODE.INV)  # ... with inversion
-                    if not is_cr:
-                        assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
+                    assert rc_mode == False, "ffirst RC1 only ok when Rc=0"
                 else:
                     assert dst_zero == 0, "dst-zero not allowed in ffirst BO"
-                    if not is_cr:
-                        assert rc_mode, "ffirst BO only possible when Rc=1"
+                    assert rc_mode, "ffirst BO only possible when Rc=1"
                     mode |= (failfirst << SVP64MODE.BO_LSB)  # set BO
+
+            # (crops is really different)
+            elif failfirst is not False and is_cr:
+                if failfirst in ['RC1', '~RC1']:
+                    mode |= (src_zero << SVP64MODE.SZ)  # predicate src-zeroing
+                    mode |= (dst_zero << SVP64MODE.DZ)  # predicate dst-zeroing
+                    if failfirst == '~RC1':
+                        mode |= (0b1 << SVP64MODE.INV)  # ... with inversion
+                else:
+                    assert dst_zero == src_zero, "dz must equal sz in ffirst BO"
+                    mode |= (failfirst << SVP64MODE.BO_LSB)  # set BO
+                    svp64_rm.crops.zz = dst_zero
 
             ######################################
             # "saturation" modes

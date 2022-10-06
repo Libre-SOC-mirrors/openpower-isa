@@ -1747,15 +1747,17 @@ class CROpFF3RM(VLiBaseRM, ZZBaseRM, CROpBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class CROpFF5RM(VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpFF5RM(FFPRRc0BaseRM, PredicateWidthBaseRM,
+                VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
     VLi: BaseRM[20]
     inv: BaseRM[21]
+    RC1: BaseRM[19] # cheat: set RC=1 based on ffirst mode being set
     dz: BaseRM[22]
     sz: BaseRM[23]
 
     def specifiers(self, record):
-        yield from super().specifiers(record=record)
+        yield from super().specifiers(record=record, mode="ff")
 
 
 class CROpRM(CROpBaseRM):
