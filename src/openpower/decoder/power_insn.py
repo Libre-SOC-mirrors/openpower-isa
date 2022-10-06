@@ -1715,7 +1715,7 @@ class CROpBaseRM(BaseRM):
     SNZ: BaseRM[7]
 
 
-class CROpSimpleRM(DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpSimpleRM(PredicateBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: simple mode"""
     RG: BaseRM[20]
     dz: BaseRM[22]
@@ -1734,7 +1734,7 @@ class CROpMRRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     sz: BaseRM[23]
 
 
-class CROpFF3RM(VLiBaseRM, ZZBaseRM, CROpBaseRM):
+class CROpFF3RM(FFPRRc1BaseRM, VLiBaseRM, ZZBaseRM, PredicateBaseRM, CROpBaseRM):
     """cr_op: ffirst 3-bit mode"""
     VLi: BaseRM[20]
     inv: BaseRM[21]

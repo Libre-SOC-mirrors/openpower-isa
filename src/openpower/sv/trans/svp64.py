@@ -1385,7 +1385,7 @@ class SVP64Asm:
                 else:
                     assert dst_zero == src_zero, "dz must equal sz in ffirst BO"
                     mode |= (failfirst << SVP64MODE.BO_LSB)  # set BO
-                    svp64_rm.crops.zz = dst_zero
+                    svp64_rm.cr_op.zz = dst_zero
                 if vli:
                     sv_mode |= 1 # set VLI in LSB of 2-bit mode
                     #svp64_rm.cr_op.vli = 1

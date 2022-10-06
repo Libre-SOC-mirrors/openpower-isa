@@ -67,6 +67,12 @@ class SVSTATETestCase(unittest.TestCase):
         expected = [
                     'sv.crand *16,*2,*33',
                     'sv.crand 12,2,33',
+                    'sv.crand/ff=eq/m=r10 12,2,33',
+                    'sv.crand/m=r10 12,2,33',
+                    'sv.crand/m=r10/sz 12,2,33',
+                    # XXX dz/sz is not the canonical way, must be zz
+                    'sv.crand/dz/m=r10/sz 12,2,33', # NOT OK
+                    'sv.crand/m=r10/zz 12,2,33',    # SHOULD PASS
                         ]
         self._do_tst(expected)
 
