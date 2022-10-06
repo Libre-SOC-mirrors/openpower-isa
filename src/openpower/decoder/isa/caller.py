@@ -440,13 +440,16 @@ def get_pdecode_cr_out(dec2, name):
     sv_override = yield dec2.dec_cr_out.sv_override
     # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
     out = yield dec2.e.write_cr.data
-    o_isvec = yield dec2.o_isvec
+    o_isvec = yield dec2.cr_out_isvec
     log("get_pdecode_cr_out", out_sel, CROutSel.CR0.value, out, o_isvec)
     log("    sv_cr_out", sv_cr_out)
     log("    cr_bf", out_bitfield)
     log("    spec", spec)
     log("    override", sv_override)
     # identify which regnames map to out / o2
+    if name == 'BF':
+        if out_sel == CROutSel.BF.value:
+            return out, o_isvec
     if name == 'CR0':
         if out_sel == CROutSel.CR0.value:
             return out, o_isvec
@@ -465,6 +468,8 @@ def get_pdecode_idx_out(dec2, name):
     out = yield dec2.e.write_reg.data
     o_isvec = yield dec2.o_isvec
     # identify which regnames map to out / o2
+    if name == 'BF':
+        log("get_pdecode_idx_out", out_sel, out, o_isvec)
     if name == 'RA':
         log("get_pdecode_idx_out", out_sel, OutSel.RA.value, out, o_isvec)
         if out_sel == OutSel.RA.value:
@@ -1200,6 +1205,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 # low 2 LSBs (CR field selector) remain same, CR num extended
                 assert regnum <= 7, "sigh, TODO, 128 CR fields"
                 val = (val & 0b11) | (regnum << 2)
+            elif self.is_svp64_mode and name in ['BF']:  # TODO, more CRs
+                regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "BF")
+                log('hack %s' % name, regnum, is_vec)
+                val = regnum
             else:
                 sig = getattr(fields, name)
                 val = yield sig
@@ -1744,9 +1753,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # main input registers (RT, RA ...)
         inputs = []
         for name in input_names:
-            log("name", name)
             regval = (yield from self.get_input(name))
-            log("regval", regval)
+            log("regval name", name, regval)
             inputs.append(regval)
 
         # arrrrgh, awful hack, to get _RT into namespace
