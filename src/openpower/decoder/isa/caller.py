@@ -1926,14 +1926,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def do_outregs_nia(self, asmop, ins_name, info, outs,
                        carry_en, rc_en, ffirst_hit):
         ffirst_hit, vli = ffirst_hit
-        if not ffirst_hit or vli:
-            # write out any regs for this instruction
-            for name, output in outs.items():
-                yield from self.check_write(info, name, output, carry_en)
+        # write out any regs for this instruction
+        for name, output in outs.items():
+            yield from self.check_write(info, name, output, carry_en)
         # restore the CR value on non-VLI failfirst (from sv.cmp and others
         # which write directly to CR in the pseudocode (gah, what a mess)
-        if ffirst_hit and not vli:
-            self.cr.value = self.cr_backup
+        #if ffirst_hit and not vli:
+        #    self.cr.value = self.cr_backup
 
         if ffirst_hit:
             self.svp64_reset_loop()

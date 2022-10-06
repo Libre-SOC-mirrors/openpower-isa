@@ -84,7 +84,7 @@ class DecoderTestCase(FHDLTestCase):
 
         gprs = [0] * 64
         vec = [1, 2, 3]
-        crs_expected = [8, 0, 0] # LT EQ GT
+        crs_expected = [8, 2, 0] # LT EQ GT
 
         res = []
         # store GPRs
@@ -122,7 +122,7 @@ class DecoderTestCase(FHDLTestCase):
 
         gprs = [0] * 64
         vec = [1, 2, 3]
-        crs_expected = [8, 2, 0] # LT EQ GT
+        crs_expected = [8, 2, 4] # LT EQ GT
 
         res = []
         # store GPRs

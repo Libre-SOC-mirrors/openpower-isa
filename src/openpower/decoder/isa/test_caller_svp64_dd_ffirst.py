@@ -57,10 +57,10 @@ class DecoderTestCase(FHDLTestCase):
             expected_vl = 0
             for i in range(4):
                 result = expected[i] - gprs[8]
+                expected[i] = result
                 if result <= 0:
                     break
                 # only write out if successful
-                expected[i] = result
                 expected_vl += 1
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
@@ -101,10 +101,9 @@ class DecoderTestCase(FHDLTestCase):
             expected = deepcopy(vec)
             for i in range(4):
                 result = expected[i] - gprs[8]
+                expected[i] = result
                 if result == 0:
                     break
-                # only write out if successful
-                expected[i] = result
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
@@ -144,10 +143,9 @@ class DecoderTestCase(FHDLTestCase):
             expected = deepcopy(vec)
             for i in range(4):
                 result = expected[i] - gprs[8]
+                expected[i] = result
                 if result == 0:
                     break
-                # only write out if successful
-                expected[i] = result
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
