@@ -25,6 +25,51 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
+    def test_sv_addi_ffirst_le(self):
+        lst = SVP64Asm([ "sv.subf./ff=le *0,8,*0"
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        gprs = [0] * 64
+        gprs[8] = 3
+        vec = [9, 8, 3, 4]
+
+        res = []
+        # store GPRs
+        for i, x in enumerate(vec):
+            gprs[i] = x
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=gprs,
+                                                svstate=svstate)
+            for i in range(4):
+                val = sim.gpr(i).value
+                res.append(val)
+                print ("i", i, val)
+            # confirm that the results are as expected
+            expected = deepcopy(vec)
+            expected_vl = 0
+            for i in range(4):
+                result = expected[i] - gprs[8]
+                if result <= 0:
+                    break
+                # only write out if successful
+                expected[i] = result
+                expected_vl += 1
+            for i, v in enumerate(res):
+                self.assertEqual(v, expected[i])
+
+            self.assertEqual(sim.svstate.vl, expected_vl)
+            self.assertEqual(sim.svstate.maxvl, 4)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+
     def test_sv_addi_ffirst(self):
         lst = SVP64Asm([ "sv.subf./ff=eq *0,8,*0"
                         ])
@@ -55,9 +100,11 @@ class DecoderTestCase(FHDLTestCase):
             # confirm that the results are as expected
             expected = deepcopy(vec)
             for i in range(4):
-                expected[i] -= gprs[8]
-                if expected[i] == 0:
+                result = expected[i] - gprs[8]
+                if result == 0:
                     break
+                # only write out if successful
+                expected[i] = result
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
@@ -96,9 +143,11 @@ class DecoderTestCase(FHDLTestCase):
             # confirm that the results are as expected
             expected = deepcopy(vec)
             for i in range(4):
-                expected[i] -= gprs[8]
-                if expected[i] == 0:
+                result = expected[i] - gprs[8]
+                if result == 0:
                     break
+                # only write out if successful
+                expected[i] = result
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
