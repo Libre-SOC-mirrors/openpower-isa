@@ -103,6 +103,8 @@ class SVP64RMModeDecode(Elaboratable):
         self.svp64_vf_in = Signal()  # Vertical-First Mode
         self.ptype_in = Signal(SVPtype)
         self.rc_in = Signal()
+        self.cr_5bit_in = Signal()  # if CR field was 5-bit
+        self.cr_2bit_in = Signal()  # bottom 2 bits of CR field
         self.ldst_ra_vec = Signal() # set when RA is vec, indicate Index mode
         self.ldst_imz_in = Signal() # set when LD/ST immediate is zero
 
@@ -179,6 +181,15 @@ class SVP64RMModeDecode(Elaboratable):
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
                 with m.Case(2,3):
                     comb += self.mode.eq(SVP64RMMode.FFIRST) # fail-first
+
+            # extract failfirst
+            with m.If(self.mode == SVP64RMMode.FFIRST): # fail-first
+                comb += self.inv.eq(mode[SVP64MODE.INV])
+                comb += self.vli.eq(mode[SVP64MODE.BC_VLSET])
+                with m.If(self.cr_5bit_in):
+                    comb += self.cr_sel.eq(0b10) # EQ bit index is implicit
+                with m.Else():
+                    comb += self.cr_sel.eq(cr)
 
         with m.Else():
             # combined arith / ldst decoding due to similarity

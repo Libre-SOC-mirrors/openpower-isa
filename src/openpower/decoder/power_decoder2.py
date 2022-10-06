@@ -678,6 +678,8 @@ class DecodeCROut(Elaboratable):
         self.cr_bitfield = Data(3, "cr_bitfield")
         self.whole_reg = Data(8,  "cr_fxm")
         self.sv_override = Signal(2, reset_less=True)  # do not do EXTRA spec
+        self.cr_5bit = Signal(reset_less=True)  # set True for 5-bit
+        self.cr_2bit = Signal(2, reset_less=True)  # get lowest 2 bits
 
     def elaborate(self, platform):
         m = Module()
@@ -689,6 +691,7 @@ class DecodeCROut(Elaboratable):
         comb += self.cr_bitfield.ok.eq(0)
         comb += self.whole_reg.ok.eq(0)
         comb += self.sv_override.eq(0)
+        comb += self.cr_5bit.eq(0)
 
         # please note these MUST match (setting of cr_bitfield.ok) exactly
         # with write_cr0 below in PowerDecoder2.  the reason it's separated
@@ -713,6 +716,8 @@ class DecodeCROut(Elaboratable):
             with m.Case(CROutSel.BT):
                 comb += self.cr_bitfield.data.eq(self.dec.FormXL.BT[2:5])
                 comb += self.cr_bitfield.ok.eq(1)
+                comb += self.cr_5bit.eq(1)
+                comb += self.cr_2bit.eq(self.dec.FormXL.BT[0:2])
             with m.Case(CROutSel.WHOLE_REG):
                 comb += self.whole_reg.ok.eq(1)
                 move_one = Signal(reset_less=True)
@@ -1153,6 +1158,7 @@ class PowerDecode2(PowerDecodeSubset):
                          regreduce_en=False, fp_en=fp_en)
         self.ldst_exc = LDSTException("dec2_exc")  # rewrites as OP_TRAP
         self.instr_fault = Signal()  # rewrites instruction as OP_FETCH_FAILED
+        self.crout_5bit = Signal()  # CR out is 5-bit
 
         if self.svp64_en:
             self.cr_out_isvec = Signal(1, name="cr_out_isvec")
@@ -1226,6 +1232,7 @@ class PowerDecode2(PowerDecodeSubset):
         m.submodules.dec_cr_in = self.dec_cr_in = DecodeCRIn(self.dec, op)
         m.submodules.dec_cr_out = self.dec_cr_out = DecodeCROut(self.dec, op)
         comb += dec_a.sv_nz.eq(self.sv_a_nz)
+        comb += self.crout_5bit.eq(self.dec_cr_out.cr_5bit)
 
         if self.svp64_en:
             # and SVP64 Extra decoders
@@ -1517,6 +1524,10 @@ class PowerDecode2(PowerDecodeSubset):
 
         if self.svp64_en:
             comb += self.rm_dec.ldst_ra_vec.eq(self.in1_isvec)  # RA is vector
+            comb += self.rm_dec.cr_5bit_in.eq(self.crout_5bit)  # CR is 5-bit
+            # take bottom 2 bits of CR out (CR field selector)
+            with m.If(self.crout_5bit):
+                comb += self.rm_dec.cr_2bit_in.eq(self.dec_cr_out.cr_2bit)
 
         # SPRs out
         comb += e.read_spr1.eq(dec_a.spr_out)

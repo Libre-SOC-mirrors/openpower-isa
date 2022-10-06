@@ -1089,6 +1089,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # create CR then allow portions of it to be "selectable" (below)
         self.cr_fields = CRFields(initial_cr)
         self.cr = self.cr_fields.cr
+        self.cr_backup = 0 # sigh, dreadful hack: for fail-first (VLi)
 
         # "undefined", just set to variable-bit-width int (use exts "max")
         # self.undefined = SelectableInt(0, 256)  # TODO, not hard-code 256!
@@ -1229,6 +1230,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         srcstep = self.svstate.srcstep
         self.namespace['VL'] = vl
         self.namespace['srcstep'] = srcstep
+
+        # take a copy of the CR field value: if non-VLi fail-first fails
+        # this is because the pseudocode writes *directly* to CR. sigh
+        self.cr_backup = self.cr.value
 
         # sv.bc* need some extra fields
         if self.is_svp64_mode and insn_name.startswith("sv.bc"):
@@ -1851,7 +1856,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             yield from self.do_rc_ov(ins_name, results[0], overflow, cr0)
 
         # check failfirst
-        ffirst_hit = False
+        ffirst_hit = False, False
         if self.is_svp64_mode:
             sv_mode = yield self.dec2.rm_dec.sv_mode
             is_cr = sv_mode == SVMode.CROP.value
@@ -1869,15 +1874,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         ff_inv = yield self.dec2.rm_dec.inv
         cr_bit = yield self.dec2.rm_dec.cr_sel
         RC1 = yield self.dec2.rm_dec.RC1
-        vli = yield self.dec2.rm_dec.vli # VL inclusive if truncated
+        vli_ = yield self.dec2.rm_dec.vli # VL inclusive if truncated
         log(" ff rm_mode", rc_en, rm_mode, SVP64RMMode.FFIRST.value)
         log("        inv", ff_inv)
         log("        RC1", RC1)
-        log("        vli", vli)
+        log("        vli", vli_)
         log("     cr_bit", cr_bit)
         log("      rc_en", rc_en)
         if not rc_en or rm_mode != SVP64RMMode.FFIRST.value:
-            return False
+            return False, False
         # get the CR vevtor, do BO-test
         crf = "CR0"
         log("asmregs", info.asmregs[0], info.write_regs)
@@ -1889,13 +1894,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("cr test", crf, regnum, int(crtest), crtest, cr_bit, ff_inv)
         log("cr test?", ffirst_hit)
         if not ffirst_hit:
-            return False
+            return False, False
         # Fail-first activated, truncate VL
-        vli = SelectableInt(int(vli), 7)
+        vli = SelectableInt(int(vli_), 7)
         self.svstate.vl = srcstep + vli
         yield self.dec2.state.svstate.eq(self.svstate.value)
         yield Settle()  # let decoder update
-        return True
+        return True, vli_
 
     def do_rc_ov(self, ins_name, result, overflow, cr0):
         if ins_name.startswith("f"):
@@ -1920,9 +1925,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
     def do_outregs_nia(self, asmop, ins_name, info, outs,
                        carry_en, rc_en, ffirst_hit):
-        # write out any regs for this instruction
-        for name, output in outs.items():
-            yield from self.check_write(info, name, output, carry_en)
+        ffirst_hit, vli = ffirst_hit
+        if not ffirst_hit or vli:
+            # write out any regs for this instruction
+            for name, output in outs.items():
+                yield from self.check_write(info, name, output, carry_en)
+        # restore the CR value on non-VLI failfirst (from sv.cmp and others
+        # which write directly to CR in the pseudocode (gah, what a mess)
+        if ffirst_hit and not vli:
+            self.cr.value = self.cr_backup
 
         if ffirst_hit:
             self.svp64_reset_loop()

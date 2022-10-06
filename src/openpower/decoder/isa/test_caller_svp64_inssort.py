@@ -33,6 +33,120 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
+    def test_sv_cmp_ff_vli(self):
+        lst = SVP64Asm(["sv.cmp/ff=eq/vli *0, 1, *16, 0",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE vl=10
+        svstate = SVP64State()
+        svstate.vl = 3 # VL
+        svstate.maxvl = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        gprs = [0] * 64
+        vec = [1, 2, 3]
+        crs_expected = [8, 2, 0] # LT EQ GT
+
+        res = []
+        # store GPRs
+        for i, x in enumerate(vec):
+            gprs[i+16] = x
+
+        gprs[0] = 2 # middle value of vec
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=gprs,
+                                                svstate=svstate)
+            print ("spr svstate ", sim.svstate)
+            print ("          vl", sim.svstate.vl)
+            for i in range(len(vec)):
+                val = sim.gpr(16+i).value
+                res.append(val)
+                crf = sim.crl[i].get_range().value
+                print ("i", i, val, crf)
+            for i in range(len(vec)):
+                crf = sim.crl[i].get_range().value
+                assert crf == crs_expected[i], "cr %d %s expect %s" % \
+                        (i, crf, crs_expected[i])
+            assert sim.svstate.vl == 2
+
+    def test_sv_cmp_ff(self):
+        lst = SVP64Asm(["sv.cmp/ff=eq *0, 1, *16, 0",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE vl=10
+        svstate = SVP64State()
+        svstate.vl = 3 # VL
+        svstate.maxvl = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        gprs = [0] * 64
+        vec = [1, 2, 3]
+        crs_expected = [8, 0, 0] # LT EQ GT
+
+        res = []
+        # store GPRs
+        for i, x in enumerate(vec):
+            gprs[i+16] = x
+
+        gprs[0] = 2 # middle value of vec
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=gprs,
+                                                svstate=svstate)
+            print ("spr svstate ", sim.svstate)
+            print ("          vl", sim.svstate.vl)
+            for i in range(len(vec)):
+                val = sim.gpr(16+i).value
+                res.append(val)
+                crf = sim.crl[i].get_range().value
+                print ("i", i, val, crf)
+            for i in range(len(vec)):
+                crf = sim.crl[i].get_range().value
+                assert crf == crs_expected[i], "cr %d %s expect %s" % \
+                        (i, crf, crs_expected[i])
+            assert sim.svstate.vl == 1
+
+    def test_sv_cmp_ff_lt(self):
+        lst = SVP64Asm(["sv.cmp/ff=gt *0, 1, *16, 0",
+                        ])
+        lst = list(lst)
+
+        # SVSTATE vl=10
+        svstate = SVP64State()
+        svstate.vl = 3 # VL
+        svstate.maxvl = 3 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        gprs = [0] * 64
+        vec = [1, 2, 3]
+        crs_expected = [8, 2, 0] # LT EQ GT
+
+        res = []
+        # store GPRs
+        for i, x in enumerate(vec):
+            gprs[i+16] = x
+
+        gprs[0] = 2 # middle value of vec
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=gprs,
+                                                svstate=svstate)
+            print ("spr svstate ", sim.svstate)
+            print ("          vl", sim.svstate.vl)
+            for i in range(len(vec)):
+                val = sim.gpr(16+i).value
+                res.append(val)
+                crf = sim.crl[i].get_range().value
+                print ("i", i, val, crf)
+            for i in range(len(vec)):
+                crf = sim.crl[i].get_range().value
+                assert crf == crs_expected[i], "cr %d %s expect %s" % \
+                        (i, crf, crs_expected[i])
+            assert sim.svstate.vl == 2
+
     def test_sv_cmp(self):
         lst = SVP64Asm(["sv.cmp *0, 1, *16, 0",
                         ])
@@ -125,7 +239,7 @@ class DecoderTestCase(FHDLTestCase):
                 crf = sim.crl[i].get_range().value
                 print ("i", i, val, crf)
             # confirm that the results are as expected
-            expected = reversed(sorted(vec))
+            expected = list(reversed(sorted(vec)))
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
