@@ -740,6 +740,7 @@ class DecodeCROut(Elaboratable):
 record_names = {'insn_type': 'internal_op',
                 'fn_unit': 'function_unit',
                 'SV_Ptype': 'SV_Ptype',
+                'SV_mode': 'SV_mode',
                 'rc': 'rc_sel',
                 'oe': 'rc_sel',
                 'zero_a': 'in1_sel',
@@ -1008,7 +1009,10 @@ class PowerDecodeSubset(Elaboratable):
             # quickly determined, and the Decoder result MUXed over to
             # the alternative decoder, svdecldst. what a mess... *sigh*
             sv_ptype = self.op_get("SV_Ptype")
+            sv_mode = self.op_get("SV_mode")
             fn = self.op_get("function_unit")
+            print ("sv_mode n", sv_mode)
+            comb += rm_dec.sv_mode.eq(sv_mode)  # BRANCH/CROP/LDST_IMM etc.
             comb += rm_dec.fn_in.eq(fn)  # decode needs to know Fn type
             comb += rm_dec.ptype_in.eq(sv_ptype)  # Single/Twin predicated
             comb += rm_dec.rc_in.eq(rc_out)  # Rc=1
@@ -1191,6 +1195,7 @@ class PowerDecode2(PowerDecodeSubset):
             subset.add("sv_cr_out")
             subset.add("SV_Etype")
             subset.add("SV_Ptype")
+            subset.add("SV_mode")
             # from SVP64RMModeDecode
             for (field, _) in sv_input_record_layout:
                 subset.add(field)

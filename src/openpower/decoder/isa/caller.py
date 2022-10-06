@@ -28,6 +28,7 @@ from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
                                            insns, MicrOp,
                                            In1Sel, In2Sel, In3Sel,
                                            OutSel, CRInSel, CROutSel, LDSTMode,
+                                           SVMode,
                                            SVP64RMMode, SVP64PredMode,
                                            SVP64PredInt, SVP64PredCR,
                                            SVP64LDSTmode, FPTRANS_INSNS)
@@ -1844,7 +1845,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # check failfirst
         ffirst_hit = False
         if self.is_svp64_mode:
-            ffirst_hit = (yield from self.check_ffirst(rc_en, srcstep))
+            sv_mode = yield self.dec2.rm_dec.sv_mode
+            is_cr = sv_mode == SVMode.CROP.value
+            ffirst_hit = (yield from self.check_ffirst(rc_en or is_cr, srcstep))
 
         # any modified return results?
         yield from self.do_outregs_nia(asmop, ins_name, info, outs,
@@ -1863,6 +1866,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("        RC1", RC1)
         log("        vli", vli)
         log("     cr_bit", cr_bit)
+        log("      rc_en", rc_en)
         if not rc_en or rm_mode != SVP64RMMode.FFIRST.value:
             return False
         # get the CR vevtor, do BO-test
@@ -2223,6 +2227,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         pack = self.svstate.pack
         unpack = self.svstate.unpack
         vl = self.svstate.vl
+        sv_mode = yield self.dec2.rm_dec.sv_mode
         subvl = yield self.dec2.rm_dec.rm_in.subvl
         rm_mode = yield self.dec2.rm_dec.mode
         ff_inv = yield self.dec2.rm_dec.inv
@@ -2236,6 +2241,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("         vl", vl)
         log("      subvl", subvl)
         log("    rm_mode", rm_mode)
+        log("    sv_mode", sv_mode)
         log("        inv", ff_inv)
         log("     cr_bit", cr_bit)
 

@@ -175,6 +175,7 @@ class Form(Enum):
 
 
 class SVMode(Enum):
+    NONE = 0          # for non-SV instructions only
     NORMAL = auto()
     LDST_IDX = auto()
     LDST_IMM = auto()

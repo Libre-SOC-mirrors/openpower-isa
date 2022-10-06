@@ -105,6 +105,7 @@ class SVP64RM:
             # dummy (blank) fields, first
             entry.update({'EXTRA0': '0', 'EXTRA1': '0', 'EXTRA2': '0',
                           'EXTRA3': '0',
+                          'SV_mode': 'NONE',
                           'SV_Ptype': 'NONE', 'SV_Etype': 'NONE',
                           'sv_cr_in': 'NONE', 'sv_cr_out': 'NONE'})
             for fname in ['in1', 'in2', 'in3', 'out', 'out2']:
@@ -119,6 +120,7 @@ class SVP64RM:
             svp64 = self.instrs[asmcode]
             for k, v in {'EXTRA0': '0', 'EXTRA1': '1', 'EXTRA2': '2',
                           'EXTRA3': '3',
+                          'SV_mode': 'mode',
                           'SV_Ptype': 'Ptype', 'SV_Etype': 'Etype'}.items():
                 entry[k] = svp64[v]
 
@@ -182,4 +184,5 @@ if __name__ == '__main__':
             print (entry)
     minor_31 = isa.get_svp64_csv("minor_31.csv")
     for entry in minor_31:
-        print (entry)
+        if entry['comment'].startswith('cmp'):
+            print ("cmp", entry)

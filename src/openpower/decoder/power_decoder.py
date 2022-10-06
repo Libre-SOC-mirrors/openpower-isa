@@ -93,7 +93,8 @@ from nmigen import Module, Elaboratable, Signal, Cat, Mux, Const
 from nmigen.cli import rtlil, verilog
 from openpower.decoder.power_enums import (Function, Form, MicrOp,
                                            In1Sel, In2Sel, In3Sel, OutSel,
-                                           SVEXTRA, SVEtype, SVPtype, # Simple-V
+                                           SVEXTRA, SVMode, # Simple-V
+                                           SVEtype, SVPtype, # Simple-V
                                            RCOE, LdstLen, LDSTMode, CryIn,
                                            single_bit_flags, CRInSel,
                                            CROutSel, get_signal_name,
@@ -125,6 +126,7 @@ power_op_types = {'function_unit': Function,
                   'asmcode': asmlen,
                   'SV_Etype': SVEtype,
                   'SV_Ptype': SVPtype,
+                  'SV_mode': SVMode,
                   'in1_sel': In1Sel,
                   'in2_sel': In2Sel,
                   'in3_sel': In3Sel,
@@ -160,6 +162,7 @@ power_op_csvmap = {'function_unit': 'unit',
                    'sv_cr_out': 'sv_cr_out',
                    'SV_Etype': 'SV_Etype',
                    'SV_Ptype': 'SV_Ptype',
+                   'SV_mode': 'SV_mode',
                    'cr_in': 'CR in',
                    'cr_out': 'CR out',
                    'ldst_len': 'ldst len',
@@ -248,7 +251,7 @@ class PowerOp:
             if field not in power_op_csvmap:
                 continue
             csvname = power_op_csvmap[field]
-            # log(field, ptype, csvname, row)
+            log("_eq", field, ptype, csvname, row)
             val = row[csvname]
             if csvname == 'upd' and isinstance(val, int):  # LDSTMode different
                 val = ptype(val)

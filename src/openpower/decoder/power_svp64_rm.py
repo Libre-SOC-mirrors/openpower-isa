@@ -18,6 +18,7 @@ https://libre-soc.org/openpower/sv/svp64/
 
 from nmigen import Elaboratable, Module, Signal, Const
 from openpower.decoder.power_enums import (SVP64RMMode, Function, SVPtype,
+                                    SVMode,
                                     SVP64PredMode, SVP64sat, SVP64LDSTmode,
                                     SVP64BCPredMode, SVP64BCVLSETMode,
                                     SVP64BCGate, SVP64BCCTRMode,
@@ -37,6 +38,7 @@ sv_input_record_layout = [
         ('sv_saturate', SVP64sat),
         ('sv_ldstmode', SVP64LDSTmode),
         ('SV_Ptype', SVPtype),
+        ('SV_mode', SVMode),
         #('sv_RC1', 1),
     ]
 
@@ -97,6 +99,7 @@ class SVP64RMModeDecode(Elaboratable):
         ##### inputs #####
         self.rm_in = SVP64Rec(name=name)
         self.fn_in = Signal(Function) # LD/ST and Branch is different
+        self.sv_mode = Signal(SVMode) # BRANCH/LDST_IMM/CROP etc.
         self.svp64_vf_in = Signal()  # Vertical-First Mode
         self.ptype_in = Signal(SVPtype)
         self.rc_in = Signal()
@@ -145,8 +148,10 @@ class SVP64RMModeDecode(Elaboratable):
         # decode pieces of mode
         is_ldst = Signal()
         is_bc = Signal()
+        is_cr = Signal()
         comb += is_ldst.eq(self.fn_in == Function.LDST)
-        comb += is_bc.eq(self.fn_in == Function.BRANCH)
+        comb += is_bc.eq(self.fn_in == Function.BRANCH) # XXX TODO use SV Mode
+        comb += is_cr.eq(self.sv_mode == SVMode.CROP.value)
         mode2 = sel(m, mode, SVP64MODE.MOD2)
         cr = sel(m, mode, SVP64MODE.CR)
 
@@ -164,6 +169,16 @@ class SVP64RMModeDecode(Elaboratable):
             # Link-Register Update
             comb += self.bc_lru.eq(self.rm_in.elwidth[0])
             comb += self.bc_vsb.eq(self.rm_in.ewsrc[0])
+
+        with m.Elif(is_cr):
+            with m.Switch(mode2):
+                with m.Case(0, 1): # needs further decoding (LDST no mapreduce)
+                    with m.If(mode[SVP64MODE.REDUCE]):
+                        comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
+                    with m.Else():
+                        comb += self.mode.eq(SVP64RMMode.NORMAL)
+                with m.Case(2,3):
+                    comb += self.mode.eq(SVP64RMMode.FFIRST) # fail-first
 
         with m.Else():
             # combined arith / ldst decoding due to similarity
