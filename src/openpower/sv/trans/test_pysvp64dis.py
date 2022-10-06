@@ -308,6 +308,7 @@ class SVSTATETestCase(unittest.TestCase):
         expected = [
                     "sv.cmp *4,1,*0,1",
                     "sv.cmp/ff=RC1 *4,1,*0,1",
+                    "sv.cmp/ff=RC1/vli *4,1,*0,1",
                     "sv.cmp/ff=~RC1 *4,1,*0,1",
                     "sv.cmp/ff=RC1/m=r3/sz *4,1,*0,1",
                     "sv.cmp/dz/ff=RC1/m=r3 *4,1,*0,1",

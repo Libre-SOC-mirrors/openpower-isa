@@ -1386,6 +1386,9 @@ class SVP64Asm:
                     assert dst_zero == src_zero, "dz must equal sz in ffirst BO"
                     mode |= (failfirst << SVP64MODE.BO_LSB)  # set BO
                     svp64_rm.crops.zz = dst_zero
+                if vli:
+                    sv_mode |= 1 # set VLI in LSB of 2-bit mode
+                    #svp64_rm.cr_op.vli = 1
 
             ######################################
             # "saturation" modes
@@ -1422,17 +1425,19 @@ class SVP64Asm:
         if sea:
             mode |= (0b1 << SVP64MODE.SEA)
 
+        # this is a mess. really look forward to replacing it with Insn DB
         if not is_bc:
             svp64_rm.mode = mode      # mode: bits 19-23
-            if vli:
+            if vli and not is_cr:
                 svp64_rm.normal.ffrc0.VLi = 1
 
             # put in predicate masks into svp64_rm
             if ptype == '2P':
                 svp64_rm.smask = smask  # source pred: bits 16-18
 
-            # put in elwidths unless bc
-            svp64_rm.ewsrc = srcwid    # srcwid: bits 6-7
+            # put in elwidths unless cr
+            if not is_cr:
+                svp64_rm.ewsrc = srcwid    # srcwid: bits 6-7
             svp64_rm.elwidth = destwid  # destwid: bits 4-5
 
         svp64_rm.mmode = mmode         # mask mode: bit 0
