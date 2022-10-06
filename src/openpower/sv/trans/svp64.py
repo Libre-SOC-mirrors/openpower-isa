@@ -1153,7 +1153,10 @@ class SVP64Asm:
             # failfirst
             elif encmode.startswith("ff="):
                 assert sv_mode is None
-                sv_mode = 0b01
+                if is_cr: # sigh, CROPs is different
+                    sv_mode = 0b10
+                else:
+                    sv_mode = 0b01
                 failfirst = decode_ffirst(encmode[3:])
                 assert sea is False, "cannot use failfirst with signed-address"
             # predicate-result, interestingly same as fail-first
@@ -1177,7 +1180,7 @@ class SVP64Asm:
                 sv_mode = 0b00
                 mapreduce_crm = True
             elif encmode == 'vli':
-                assert sv_mode == 0b01  # only allow ff mode
+                assert failfirst is not False, "VLi only allowed in failfirst"
                 vli = True
             elif encmode == 'sea':
                 assert is_ldst_idx
@@ -1356,7 +1359,7 @@ class SVP64Asm:
 
             ######################################
             # "failfirst" modes
-            elif sv_mode == 0b01:
+            elif failfirst is not False: # sv_mode == 0b01:
                 assert src_zero == 0, "dest-zero not allowed in failfirst mode"
                 if failfirst == 'RC1':
                     mode |= (0b1 << SVP64MODE.RC1)  # sets RC1 mode
