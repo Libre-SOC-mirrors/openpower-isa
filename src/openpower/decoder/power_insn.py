@@ -1747,7 +1747,7 @@ class CROpFF3RM(VLiBaseRM, ZZBaseRM, CROpBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class CROpFF5RM(FFPRRc0BaseRM, PredicateWidthBaseRM,
+class CROpFF5RM(FFPRRc0BaseRM, PredicateBaseRM,
                 VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
     VLi: BaseRM[20]
