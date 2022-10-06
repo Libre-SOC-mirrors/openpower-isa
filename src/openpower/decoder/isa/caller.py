@@ -1855,13 +1855,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.is_svp64_mode:
             sv_mode = yield self.dec2.rm_dec.sv_mode
             is_cr = sv_mode == SVMode.CROP.value
-            ffirst_hit = (yield from self.check_ffirst(rc_en or is_cr, srcstep))
+            chk = rc_en or is_cr
+            ffirst_hit = (yield from self.check_ffirst(info, chk, srcstep))
 
         # any modified return results?
         yield from self.do_outregs_nia(asmop, ins_name, info, outs,
                                        carry_en, rc_en, ffirst_hit)
 
-    def check_ffirst(self, rc_en, srcstep):
+    def check_ffirst(self, info, rc_en, srcstep):
         """fail-first mode: checks a bit of Rc Vector, truncates VL
         """
         rm_mode = yield self.dec2.rm_dec.mode
@@ -1878,10 +1879,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if not rc_en or rm_mode != SVP64RMMode.FFIRST.value:
             return False
         # get the CR vevtor, do BO-test
-        regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "CR0")
+        crf = "CR0"
+        log("asmregs", info.asmregs[0], info.write_regs)
+        if 'CR' in info.write_regs and 'BF' in info.asmregs[0]:
+            crf = 'BF'
+        regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, crf)
         crtest = self.crl[regnum]
         ffirst_hit = crtest[cr_bit] != ff_inv
-        log("cr test", regnum, int(crtest), crtest, cr_bit, ff_inv)
+        log("cr test", crf, regnum, int(crtest), crtest, cr_bit, ff_inv)
         log("cr test?", ffirst_hit)
         if not ffirst_hit:
             return False

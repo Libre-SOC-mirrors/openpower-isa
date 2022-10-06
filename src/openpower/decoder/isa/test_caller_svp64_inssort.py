@@ -67,25 +67,21 @@ class DecoderTestCase(FHDLTestCase):
                 assert crf == crs_expected[i]
 
     def tst_sv_insert_sort(self):
-        """>>> lst = ["svshape 7, 0, 0, 7, 0",
-                        "svremap 31, 0, 1, 0, 0, 0, 0",
-                       "sv.add *0, *8, *16"
-                        ]
-                REMAP add RT,RA,RB
-    ctr = alen-1
-    li r10, 1 # prepare mask
-    sld r10, alen, r10
-    addi r10, r10, -1 # all 1s. must be better way
-loop:
-    setvl r3, ctr
-    sv.mv/m=1<<r3 key, *array   # get key item
-    sld r10, 1  # shift in another zero MSB
-    sv.cmp/ff=GT/m=~r10 *0, *array, key # stop cmp at 1st GT fail
-    sv.mv/m=GT *array-1, *array    # after cmp and ffirst
-    getvl r3
-    sub r3, 1                   # reduce by one
-    sv.mv/m=1<<r3 *array, key   # put key into array
-    bc 16, loop                 # dec CTR, back around
+        """
+                ctr = alen-1
+                li r10, 1 # prepare mask
+                sld r10, alen, r10
+                addi r10, r10, -1 # all 1s. must be better way
+            loop:
+                setvl r3, ctr
+                sv.mv/m=1<<r3 key, *array   # get key item
+                sld r10, 1  # shift in another zero MSB
+                sv.cmp/ff=GT/m=~r10 *0, *array, key # stop cmp at 1st GT fail
+                sv.mv/m=GT *array-1, *array    # after cmp and ffirst
+                getvl r3
+                sub r3, 1                   # reduce by one
+                sv.mv/m=1<<r3 *array, key   # put key into array
+                bc 16, loop                 # dec CTR, back around
 
         """
         lst = SVP64Asm(["addi 10, 0, 1",
@@ -95,13 +91,16 @@ loop:
                         "mtspr 9, 11",
                         "setvl 3, 0, 10, 0, 1, 1",
                         "addi 3, 3, -1",
-                        "sv.addi/m=1<<r3 12, *16, 0",
-                        "sv.cmp/ff=gt/m=~r10 0, 1, *16, 0",
+                        "sv.addi/m=1<<r3 12, *16, 0",  # VEXTRACT to 12
+                        "sv.cmp/ff=le/m=~r10 *0, 1, *16, 12",
+                        "slw 10, 10, 9",
+                        "bc 16, 0, -28",  # decrement CTR, repeat
                         ])
         lst = list(lst)
 
         gprs = [0] * 64
-        vec = [1, 2, 3, 4, 9, 5, 6]
+        #vec = [1, 2, 3, 4, 9, 5, 6]
+        vec = [9, 5, 6]
 
         res = []
         # store GPRs
