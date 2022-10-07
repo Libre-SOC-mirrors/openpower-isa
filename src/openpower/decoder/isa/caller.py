@@ -1475,6 +1475,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # not supported yet:
             raise e                          # ... re-raise
 
+        log("gprs after code", code)
+        self.gpr.dump()
+        crs = []
+        for i in range(len(self.crl)):
+            crs.append(bin(self.crl[i].asint()))
+        log("crs", " ".join(crs))
+        log("vl,maxvl", self.svstate.vl, self.svstate.maxvl)
+
         # don't use this except in special circumstances
         if not self.respect_pc:
             self.fake_pc += 4

@@ -180,7 +180,7 @@ class DecoderTestCase(FHDLTestCase):
                 print ("i", i, val, crf)
                 assert crf == crs_expected[i]
 
-    def tst_sv_insert_sort(self):
+    def test_sv_insert_sort(self):
         """
                 ctr = alen-1
                 li r10, 1 # prepare mask
@@ -197,18 +197,33 @@ class DecoderTestCase(FHDLTestCase):
                 sv.mv/m=1<<r3 *array, key   # put key into array
                 bc 16, loop                 # dec CTR, back around
 
+            def insertion_sort(array):
+                lim = len(array)-1
+                for i in range(lim,-1,-1):
+                    key_item = array[i]
+                    j = i + 1
+                    while j <= lim and array[j] > key_item:
+                        array[j - 1] = array[j]
+                        j += 1
+                    array[j - 1] = key_item
+                return array
         """
         lst = SVP64Asm(["addi 10, 0, 1",
-                        "addi 9, 11, -1",
+                        "addi 9, 11, 0",
                         "slw 10, 10, 9",
                         "addi 10, 10, -1",
                         "mtspr 9, 11",
                         "setvl 3, 0, 10, 0, 1, 1",
                         "addi 3, 3, -1",
-                        "sv.addi/m=1<<r3 12, *16, 0",  # VEXTRACT to 12
-                        "sv.cmp/ff=le/m=~r10 *0, 1, *16, 12",
-                        "slw 10, 10, 9",
-                        "bc 16, 0, -28",  # decrement CTR, repeat
+                        "sv.addi/m=1<<r3 12, *16, 0",  # key item to 12
+                        "sv.cmp/ff=lt/m=~r10 *0, 1, *16, 12",
+                        "sv.addi/m=ge *16, *17, 0",  # move down
+                        "setvl 3, 0, 0, 0, 0, 0",  # get VL into r3
+                        "addi 3, 3, -1",
+                        "setvl 13, 0, 10, 0, 1, 1",  # put VL back from CTR
+                        "sv.addi/m=1<<r3 *16, 12, 0",  # restore key
+                        "slw 10, 10, 9",  # shift up start-mask ("inc" j)
+                        "bc 16, 0, -52",  # decrement CTR, repeat
                         ])
         lst = list(lst)
 
@@ -238,6 +253,7 @@ class DecoderTestCase(FHDLTestCase):
                 res.append(val)
                 crf = sim.crl[i].get_range().value
                 print ("i", i, val, crf)
+            return
             # confirm that the results are as expected
             expected = list(reversed(sorted(vec)))
             for i, v in enumerate(res):
