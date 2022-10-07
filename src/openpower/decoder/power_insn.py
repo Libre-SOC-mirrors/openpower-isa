@@ -2220,7 +2220,7 @@ class PPCDatabase:
                 return None
             alias = LK_match(name[:-1])
             if alias is None:
-                return None
+                alias = name[:-1]
             record = records[alias]
             if record.intop not in {_MicrOp.OP_B, _MicrOp.OP_BC}:
                 raise ValueError(record)
