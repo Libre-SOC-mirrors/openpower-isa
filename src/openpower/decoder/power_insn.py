@@ -2193,9 +2193,10 @@ class PPCDatabase:
                             records[name].add(insn)
                             sections[name] = section
 
-        for (name, multirecord) in sorted(records.items()):
-            multirecord = PPCMultiRecord(sorted(multirecord))
-            records[name] = multirecord
+        items = sorted(records.items())
+        records = {}
+        for (name, multirecord) in items:
+            records[name] = PPCMultiRecord(sorted(multirecord))
 
         def exact_match(name):
             record = records.get(name)
