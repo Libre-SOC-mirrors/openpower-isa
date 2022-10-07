@@ -2306,6 +2306,8 @@ class Database:
         opcodes = _collections.defaultdict(set)
 
         for (name, mdwn) in mdwndb:
+            if name.startswith("sv."):
+                continue
             (section, ppc) = ppcdb[name]
             if ppc is None:
                 continue
