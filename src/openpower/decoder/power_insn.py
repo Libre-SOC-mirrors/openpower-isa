@@ -750,6 +750,7 @@ class CR5Operand(RegisterOperand):
 class EXTSOperand(RegisterOperand):
     n_zeros: int  # number of zeros - set through constructor override
     d_field: str  # field name to report - ditto
+    hex_out: bool # set to indicate whether format is 0xNNN or decimal NNN
 
     def span(self, record):
         return record.fields[self.d_field]
@@ -765,11 +766,15 @@ class EXTSOperand(RegisterOperand):
             z = "0" * self.n_zeros
             yield indent + "%s = EXTS(%s || 0b%s)" % (self.name, self.d_field, z)
             yield indent * 2 + self.d_field
-            yield indent * 3 + f"{int(value):0{value.bits}b}00"
+            yield indent * 3 + f"{int(value):0{value.bits}b}" + z
             yield indent * 3 + ', '.join(span)
         else:
-            yield hex(_selectconcat(value,
-                _SelectableInt(value=0, bits=self.n_zeros)).to_signed_int())
+            value = _selectconcat(value,
+                _SelectableInt(value=0, bits=self.n_zeros)).to_signed_int()
+            if self.hex_out:
+                yield hex(value)
+            else:
+                yield str(value)
 
 
 class TargetAddrOperand(EXTSOperand):
@@ -777,6 +782,7 @@ class TargetAddrOperand(EXTSOperand):
     """
     def __init__(self, *args, **kwargs): # no idea what the args are
         self.n_zeros = 2
+        self.hex_out = True
         super().__init__(*args, **kwargs)
 
 
@@ -789,6 +795,24 @@ class TargetAddrOperandLI(TargetAddrOperand):
 class TargetAddrOperandBD(TargetAddrOperand):
     def __init__(self, *args, **kwargs): # no idea what the args are
         self.d_field = 'BD'
+        super().__init__(*args, **kwargs)
+
+
+# inherit from ImmediateOperand as well in order to pass "isinstance" test
+class EXTSOperandDS(EXTSOperand, ImmediateOperand):
+    def __init__(self, *args, **kwargs): # no idea what the args are
+        self.n_zeros = 2
+        self.d_field = 'DS'
+        self.hex_out = False
+        super().__init__(*args, **kwargs)
+
+
+# inherit from ImmediateOperand as well in order to pass "isinstance" test
+class EXTSOperandDQ(EXTSOperand, ImmediateOperand):
+    def __init__(self, *args, **kwargs): # no idea what the args are
+        self.n_zeros = 4
+        self.d_field = 'DQ'
+        self.hex_out = False
         super().__init__(*args, **kwargs)
 
 
@@ -849,8 +873,8 @@ class Operands(tuple):
             "SVzd": NonZeroOperand,
             "BD": SignedOperand,
             "D": SignedOperand,
-            "DQ": SignedOperand,
-            "DS": SignedOperand,
+            "DQ": EXTSOperandDQ,
+            "DS": EXTSOperandDS,
             "SI": SignedOperand,
             "IB": SignedOperand,
             "LI": SignedOperand,
@@ -876,7 +900,11 @@ class Operands(tuple):
                     immediate = None
 
                 if immediate is not None:
-                    operands.append(ImmediateOperand(name=immediate))
+                    if immediate in custom_fields:
+                        dynamic_cls = custom_fields[immediate]
+                        operands.append(dynamic_cls(name=immediate))
+                    else:
+                        operands.append(ImmediateOperand(name=immediate))
 
                 if operand in custom_fields:
                     dynamic_cls = custom_fields[operand]
