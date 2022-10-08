@@ -358,7 +358,13 @@ class SVSTATETestCase(unittest.TestCase):
                     "stq 4,0(5)",
                     "stq 4,8(5)",
                     "stq 4,16(5)",
-                    "sv.stq *4,16(*5)",
+                    "sv.stq 4,16(*5)",
+                        ]
+        self._do_tst(expected)
+
+    def test_26_sv_stq_vector_name(self):
+        expected = [
+                    "sv.stq *4,16(*5)", # RSp not recognised as "vector" name
                         ]
         self._do_tst(expected)
 
