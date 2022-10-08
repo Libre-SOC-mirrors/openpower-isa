@@ -872,15 +872,17 @@ class Operands(tuple):
             "SVyd": NonZeroOperand,
             "SVzd": NonZeroOperand,
             "BD": SignedOperand,
-            "D": SignedOperand,
-            "DQ": EXTSOperandDQ,
-            "DS": EXTSOperandDS,
+            "D": SignedOperand, # TODO, make a SignedImmediate class?
             "SI": SignedOperand,
             "IB": SignedOperand,
             "LI": SignedOperand,
             "SIM": SignedOperand,
             "SVD": SignedOperand,
             "SVDS": SignedOperand,
+        }
+        custom_immediates = {
+            "DQ": EXTSOperandDQ,
+            "DS": EXTSOperandDS,
         }
 
         operands = []
@@ -900,8 +902,8 @@ class Operands(tuple):
                     immediate = None
 
                 if immediate is not None:
-                    if immediate in custom_fields:
-                        dynamic_cls = custom_fields[immediate]
+                    if immediate in custom_immediates:
+                        dynamic_cls = custom_immediates[immediate]
                         operands.append(dynamic_cls(name=immediate))
                     else:
                         operands.append(ImmediateOperand(name=immediate))
