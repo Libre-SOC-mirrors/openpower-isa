@@ -2185,8 +2185,6 @@ class PPCDatabase:
                         for name in insn.names:
                             records[name].add(insn)
                             sections[name] = section
-                            if str(path).endswith("extra.csv"):
-                                print ("extra", name, section)
 
         for (name, multirecord) in sorted(records.items()):
             multirecord = PPCMultiRecord(sorted(multirecord))
@@ -2318,9 +2316,6 @@ class Database:
         self.__db = sorted(db)
         self.__names = dict(sorted(names.items()))
         self.__opcodes = dict(sorted(opcodes.items()))
-        print ("opcodes")
-        for k, v in self.__opcodes.items():
-            print ("    ", bin(k), v)
 
         return super().__init__()
 
@@ -2339,7 +2334,6 @@ class Database:
         # specific hunt for all "extra.csv" matches. TODO: separate db of extras
         if isinstance(key, Instruction):
             ki = int(key)
-            print ("key", bin(ki))
             for k, records in self.__opcodes.items():
                 for record in records:
                     if str(record.section.path).endswith("extra.csv"):
