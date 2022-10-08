@@ -145,7 +145,7 @@ Special Registers Altered:
 
 X-Form
 
-* lfiwix FRT,RA,RB
+* lfiwzx FRT,RA,RB
 
 Pseudo-code:
 
