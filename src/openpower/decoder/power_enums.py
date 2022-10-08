@@ -414,6 +414,13 @@ class RegType(Enum):
     BI = CR_BIT
     BT = CR_BIT
 
+    XER_BIT = 4   # XER bits, includes OV, OV32, SO, CA, CA32
+    OV = XER_BIT
+    OV32 = XER_BIT
+    CA = XER_BIT
+    CA32 = XER_BIT
+    SO = XER_BIT
+
     @classmethod
     def _missing_(cls, value):
         if isinstance(value, SVExtraReg):
