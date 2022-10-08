@@ -2201,7 +2201,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             reg_prefix = 'r'
         # check zeroing due to predicate bit being zero
         if self.is_svp64_mode and self.pred_dst_zero:
-            log('zeroing reg %d %s' % (regnum, str(output)), is_vec)
+            log('zeroing reg %s %s' % (str(regnum), str(output)), is_vec)
             output = SelectableInt(0, 256)
         log("write reg %s%s 0x%x ew %d" % (reg_prefix, str(regnum),
                                            output.value, ew_dst),
