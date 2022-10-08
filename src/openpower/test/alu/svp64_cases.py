@@ -34,6 +34,41 @@ class SVP64ALUElwidthTestCase(TestAccumulatorBase):
                       initial_svstate=svstate, expected=e)
 
 
+    def case_2_sv_add_ew32(self):
+        """>>> lst = ['sv.add/w=32 *1, *5, *9']
+        """
+        isa = SVP64Asm(['sv.add/w=32 *1, *5, *9'])
+        lst = list(isa)
+        print("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[9] = 0x1000_1000_f000_1220
+        initial_regs[10] = 0x2000_2000_8000_1111
+        initial_regs[5] = 0x8000_43ff
+        initial_regs[6] = 0x9000_0000_0000_2223
+        initial_regs[2] = 0x0000_0001_0000_0002
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
+
+        # expected: each 32-bit add is completely independent
+        gprs = deepcopy(initial_regs)
+        mask = 0xffff_ffff
+        # GPR(1) gets overwritten completely, lo-32 element 0, hi-32 element 1
+        gprs[1] = ((initial_regs[9]&mask) + (initial_regs[5]&mask)) & mask
+        gprs[1] += (((initial_regs[9]>>32) + (initial_regs[5]>>32)) & mask)<<32
+        # GPR(2) is only overwritten in the lo-32 (element 2). hi-32 untouched
+        gprs[2] &= ~mask
+        gprs[2] += ((initial_regs[10]&mask) + (initial_regs[6]&mask)) & mask
+        e = ExpectedState(pc=8, int_regs=gprs)
+
+        self.add_case(Program(lst, bigendian), initial_regs,
+                      initial_svstate=svstate, expected=e)
+
+
 class SVP64ALUTestCase(TestAccumulatorBase):
 
     def case_1_sv_add(self):

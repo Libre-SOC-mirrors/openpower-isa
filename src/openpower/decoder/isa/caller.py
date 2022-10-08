@@ -125,11 +125,51 @@ class GPR(dict):
     def __call__(self, ridx, is_vec=False, offs=0, elwidth=64):
         if isinstance(ridx, SelectableInt):
             ridx = ridx.value
-        log("GPR call", ridx, "isvec", is_vec, "offs", offs, "elwid", elwidth)
-        return self[ridx]
+        if elwidth == 64:
+            return self[ridx]
+        # rrrright.  start by breaking down into row/col, based on elwidth
+        gpr_offs = offs // (64//elwidth)
+        gpr_col = offs % (64//elwidth)
+        # now select the 64-bit register, but get its value (easier)
+        val = self[ridx+gpr_offs].value
+        # now shift down and mask out
+        val = val >> (gpr_col*elwidth) & ((1<<elwidth)-1)
+        # finally, return a SelectableInt at the required elwidth
+        log("GPR call", ridx, "isvec", is_vec, "offs", offs,
+             "elwid", elwidth, "offs/col", gpr_offs, gpr_col, "val", hex(val))
+        return SelectableInt(val, elwidth)
 
     def set_form(self, form):
         self.form = form
+
+    def write(self, rnum, value, is_vec=False, elwidth=64):
+        # get internal value
+        if isinstance(rnum, SelectableInt):
+            rnum = rnum.value
+        if isinstance(value, SelectableInt):
+            value = value.value
+        # compatibility...
+        if isinstance(rnum, tuple):
+            rnum, base, offs = rnum
+        else:
+            base, offs = rnum, 0
+        # rrrright.  start by breaking down into row/col, based on elwidth
+        gpr_offs = offs // (64//elwidth)
+        gpr_col = offs % (64//elwidth)
+        # compute the mask based on elwidth
+        mask = (1<<elwidth)-1
+        # now select the 64-bit register, but get its value (easier)
+        val = self[base+gpr_offs].value
+        # now mask out the bit we don't want
+        val = val & ~(mask << (gpr_col*elwidth))
+        # then wipe the bit we don't want from the value
+        value = value & mask
+        # OR the new value in, shifted up
+        val |= value << (gpr_col*elwidth)
+        # finally put the damn value into the regfile
+        log("GPR write", base, "isvec", is_vec, "offs", offs,
+             "elwid", elwidth, "offs/col", gpr_offs, gpr_col, "val", hex(val))
+        self[base+gpr_offs].value = val
 
     def __setitem__(self, rnum, value):
         # rnum = rnum.value # only SelectableInt allowed
@@ -342,7 +382,7 @@ def get_predcr(crl, mask, vl):
 
 
 # TODO, really should just be using PowerDecoder2
-def get_pdecode_idx_in(dec2, name):
+def get_idx_in(dec2, name, ewmode=False):
     op = dec2.dec.op
     in1_sel = yield op.in1_sel
     in2_sel = yield op.in2_sel
@@ -351,20 +391,31 @@ def get_pdecode_idx_in(dec2, name):
     in1 = yield dec2.e.read_reg1.data
     in2 = yield dec2.e.read_reg2.data
     in3 = yield dec2.e.read_reg3.data
+    if ewmode:
+        in1_base = yield dec2.e.read_reg1.base
+        in2_base = yield dec2.e.read_reg2.base
+        in3_base  = yield dec2.e.read_reg3.base
+        in1_offs = yield dec2.e.read_reg1.offs
+        in2_offs = yield dec2.e.read_reg2.offs
+        in3_offs  = yield dec2.e.read_reg3.offs
+        in1 = (in1, in1_base, in1_offs)
+        in2 = (in2, in2_base, in2_offs)
+        in3 = (in3, in3_base, in3_offs)
+
     in1_isvec = yield dec2.in1_isvec
     in2_isvec = yield dec2.in2_isvec
     in3_isvec = yield dec2.in3_isvec
-    log("get_pdecode_idx_in in1", name, in1_sel, In1Sel.RA.value,
+    log("get_idx_in in1", name, in1_sel, In1Sel.RA.value,
         in1, in1_isvec)
-    log("get_pdecode_idx_in in2", name, in2_sel, In2Sel.RB.value,
+    log("get_idx_in in2", name, in2_sel, In2Sel.RB.value,
         in2, in2_isvec)
-    log("get_pdecode_idx_in in3", name, in3_sel, In3Sel.RS.value,
+    log("get_idx_in in3", name, in3_sel, In3Sel.RS.value,
         in3, in3_isvec)
-    log("get_pdecode_idx_in FRS in3", name, in3_sel, In3Sel.FRS.value,
+    log("get_idx_in FRS in3", name, in3_sel, In3Sel.FRS.value,
         in3, in3_isvec)
-    log("get_pdecode_idx_in FRB in2", name, in2_sel, In2Sel.FRB.value,
+    log("get_idx_in FRB in2", name, in2_sel, In2Sel.FRB.value,
         in2, in2_isvec)
-    log("get_pdecode_idx_in FRC in3", name, in3_sel, In3Sel.FRC.value,
+    log("get_idx_in FRC in3", name, in3_sel, In3Sel.FRC.value,
         in3, in3_isvec)
     # identify which regnames map to in1/2/3
     if name == 'RA' or name == 'RA_OR_ZERO':
@@ -408,7 +459,7 @@ def get_pdecode_idx_in(dec2, name):
 
 
 # TODO, really should just be using PowerDecoder2
-def get_pdecode_cr_in(dec2, name):
+def get_cr_in(dec2, name):
     op = dec2.dec.op
     in_sel = yield op.cr_in
     in_bitfield = yield dec2.dec_cr_in.cr_bitfield.data
@@ -418,7 +469,7 @@ def get_pdecode_cr_in(dec2, name):
     # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
     in1 = yield dec2.e.read_cr1.data
     cr_isvec = yield dec2.cr_in_isvec
-    log("get_pdecode_cr_in", in_sel, CROutSel.CR0.value, in1, cr_isvec)
+    log("get_cr_in", in_sel, CROutSel.CR0.value, in1, cr_isvec)
     log("    sv_cr_in", sv_cr_in)
     log("    cr_bf", in_bitfield)
     log("    spec", spec)
@@ -427,12 +478,12 @@ def get_pdecode_cr_in(dec2, name):
     if name == 'BI':
         if in_sel == CRInSel.BI.value:
             return in1, cr_isvec
-    log("get_pdecode_cr_in not found", name)
+    log("get_cr_in not found", name)
     return None, False
 
 
 # TODO, really should just be using PowerDecoder2
-def get_pdecode_cr_out(dec2, name):
+def get_cr_out(dec2, name):
     op = dec2.dec.op
     out_sel = yield op.cr_out
     out_bitfield = yield dec2.dec_cr_out.cr_bitfield.data
@@ -442,7 +493,7 @@ def get_pdecode_cr_out(dec2, name):
     # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
     out = yield dec2.e.write_cr.data
     o_isvec = yield dec2.cr_out_isvec
-    log("get_pdecode_cr_out", out_sel, CROutSel.CR0.value, out, o_isvec)
+    log("get_cr_out", out_sel, CROutSel.CR0.value, out, o_isvec)
     log("    sv_cr_out", sv_cr_out)
     log("    cr_bf", out_bitfield)
     log("    spec", spec)
@@ -457,26 +508,30 @@ def get_pdecode_cr_out(dec2, name):
     if name == 'CR1':  # these are not actually calculated correctly
         if out_sel == CROutSel.CR1.value:
             return out, o_isvec
-    log("get_pdecode_cr_out not found", name)
+    log("get_cr_out not found", name)
     return None, False
 
 
 # TODO, really should just be using PowerDecoder2
-def get_pdecode_idx_out(dec2, name):
+def get_idx_out(dec2, name, ewmode=False):
     op = dec2.dec.op
     out_sel = yield op.out_sel
     # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
     out = yield dec2.e.write_reg.data
     o_isvec = yield dec2.o_isvec
+    if ewmode:
+        offs = yield dec2.e.write_reg.offs
+        base = yield dec2.e.write_reg.base
+        out = (out, base, offs)
     # identify which regnames map to out / o2
     if name == 'BF':
-        log("get_pdecode_idx_out", out_sel, out, o_isvec)
+        log("get_idx_out", out_sel, out, o_isvec)
     if name == 'RA':
-        log("get_pdecode_idx_out", out_sel, OutSel.RA.value, out, o_isvec)
+        log("get_idx_out", out_sel, OutSel.RA.value, out, o_isvec)
         if out_sel == OutSel.RA.value:
             return out, o_isvec
     elif name == 'RT':
-        log("get_pdecode_idx_out", out_sel, OutSel.RT.value,
+        log("get_idx_out", out_sel, OutSel.RT.value,
             OutSel.RT_OR_ZERO.value, out, o_isvec,
             dec2.dec.RT)
         if out_sel == OutSel.RT.value:
@@ -484,33 +539,33 @@ def get_pdecode_idx_out(dec2, name):
         if out_sel == OutSel.RT_OR_ZERO.value and out != 0:
             return out, o_isvec
     elif name == 'RT_OR_ZERO':
-        log("get_pdecode_idx_out", out_sel, OutSel.RT.value,
+        log("get_idx_out", out_sel, OutSel.RT.value,
             OutSel.RT_OR_ZERO.value, out, o_isvec,
             dec2.dec.RT)
         if out_sel == OutSel.RT_OR_ZERO.value:
             return out, o_isvec
     elif name == 'FRA':
-        log("get_pdecode_idx_out", out_sel, OutSel.FRA.value, out, o_isvec)
+        log("get_idx_out", out_sel, OutSel.FRA.value, out, o_isvec)
         if out_sel == OutSel.FRA.value:
             return out, o_isvec
     elif name == 'FRT':
-        log("get_pdecode_idx_out", out_sel, OutSel.FRT.value,
+        log("get_idx_out", out_sel, OutSel.FRT.value,
             OutSel.FRT.value, out, o_isvec)
         if out_sel == OutSel.FRT.value:
             return out, o_isvec
-    log("get_pdecode_idx_out not found", name, out_sel, out, o_isvec)
+    log("get_idx_out not found", name, out_sel, out, o_isvec)
     return None, False
 
 
 # TODO, really should just be using PowerDecoder2
-def get_pdecode_idx_out2(dec2, name):
+def get_idx_out2(dec2, name):
     # check first if register is activated for write
     op = dec2.dec.op
     out_sel = yield op.out_sel
     out = yield dec2.e.write_ea.data
     o_isvec = yield dec2.o2_isvec
     out_ok = yield dec2.e.write_ea.ok
-    log("get_pdecode_idx_out2", name, out_sel, out, out_ok, o_isvec)
+    log("get_idx_out2", name, out_sel, out, out_ok, o_isvec)
     if not out_ok:
         return None, False
 
@@ -518,7 +573,7 @@ def get_pdecode_idx_out2(dec2, name):
         if hasattr(op, "upd"):
             # update mode LD/ST uses read-reg A also as an output
             upd = yield op.upd
-            log("get_pdecode_idx_out2", upd, LDSTMode.update.value,
+            log("get_idx_out2", upd, LDSTMode.update.value,
                 out_sel, OutSel.RA.value,
                 out, o_isvec)
             if upd == LDSTMode.update.value:
@@ -526,13 +581,13 @@ def get_pdecode_idx_out2(dec2, name):
     if name == 'RS':
         fft_en = yield dec2.implicit_rs
         if fft_en:
-            log("get_pdecode_idx_out2", out_sel, OutSel.RS.value,
+            log("get_idx_out2", out_sel, OutSel.RS.value,
                 out, o_isvec)
             return out, o_isvec
     if name == 'FRS':
         fft_en = yield dec2.implicit_rs
         if fft_en:
-            log("get_pdecode_idx_out2", out_sel, OutSel.FRS.value,
+            log("get_idx_out2", out_sel, OutSel.FRS.value,
                 out, o_isvec)
             return out, o_isvec
     return None, False
@@ -556,7 +611,7 @@ class StepLoop:
         self.new_dsubstep = 0
         self.pred_dst_zero = 0
         self.pred_src_zero = 0
- 
+
     def src_iterator(self):
         """source-stepping iterator
         """
@@ -1201,14 +1256,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # pseudocode
             if self.is_svp64_mode and name in ['BI']:  # TODO, more CRs
                 # BI is a 5-bit, must reconstruct the value
-                regnum, is_vec = yield from get_pdecode_cr_in(self.dec2, name)
+                regnum, is_vec = yield from get_cr_in(self.dec2, name)
                 sig = getattr(fields, name)
                 val = yield sig
                 # low 2 LSBs (CR field selector) remain same, CR num extended
                 assert regnum <= 7, "sigh, TODO, 128 CR fields"
                 val = (val & 0b11) | (regnum << 2)
             elif self.is_svp64_mode and name in ['BF']:  # TODO, more CRs
-                regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, "BF")
+                regnum, is_vec = yield from get_cr_out(self.dec2, "BF")
                 log('hack %s' % name, regnum, is_vec)
                 val = regnum
             else:
@@ -1793,7 +1848,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.namespace[regname] = SelectableInt(RT, 5)
             if RT == 0:
                 self.namespace["RT"] = SelectableInt(0, 5)
-            regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, "RT")
+            regnum, is_vec = yield from get_idx_out(self.dec2, "RT")
             log('hack input reg %s %s' % (name, str(regnum)), is_vec)
 
         # in SVP64 mode for LD/ST work out immediate
@@ -1889,7 +1944,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # any modified return results?
         yield from self.do_outregs_nia(asmop, ins_name, info, outs,
-                                       carry_en, rc_en, ffirst_hit)
+                                       carry_en, rc_en, ffirst_hit, ew_dst)
 
     def check_ffirst(self, info, rc_en, srcstep):
         """fail-first mode: checks a bit of Rc Vector, truncates VL
@@ -1912,7 +1967,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("asmregs", info.asmregs[0], info.write_regs)
         if 'CR' in info.write_regs and 'BF' in info.asmregs[0]:
             crf = 'BF'
-        regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, crf)
+        regnum, is_vec = yield from get_cr_out(self.dec2, crf)
         crtest = self.crl[regnum]
         ffirst_hit = crtest[cr_bit] != ff_inv
         log("cr test", crf, regnum, int(crtest), crtest, cr_bit, ff_inv)
@@ -1931,7 +1986,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             rc_reg = "CR1"  # not calculated correctly yet (not FP compares)
         else:
             rc_reg = "CR0"
-        regnum, is_vec = yield from get_pdecode_cr_out(self.dec2, rc_reg)
+        regnum, is_vec = yield from get_cr_out(self.dec2, rc_reg)
         # hang on... for `setvl` actually you want to test SVSTATE.VL
         is_setvl = ins_name in ('svstep', 'setvl')
         if is_setvl:
@@ -1948,11 +2003,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.crl[regnum].eq(cr0)
 
     def do_outregs_nia(self, asmop, ins_name, info, outs,
-                       carry_en, rc_en, ffirst_hit):
+                       carry_en, rc_en, ffirst_hit, ew_dst):
         ffirst_hit, vli = ffirst_hit
         # write out any regs for this instruction
         for name, output in outs.items():
-            yield from self.check_write(info, name, output, carry_en)
+            yield from self.check_write(info, name, output, carry_en, ew_dst)
         # restore the CR value on non-VLI failfirst (from sv.cmp and others
         # which write directly to CR in the pseudocode (gah, what a mess)
         #if ffirst_hit and not vli:
@@ -2022,25 +2077,35 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def get_input(self, name, ew_src):
         # using PowerDecoder2, first, find the decoder index.
         # (mapping name RA RB RC RS to in1, in2, in3)
-        regnum, is_vec = yield from get_pdecode_idx_in(self.dec2, name)
+        regnum, is_vec = yield from get_idx_in(self.dec2, name, True)
         if regnum is None:
             # doing this is not part of svp64, it's because output
             # registers, to be modified, need to be in the namespace.
-            regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
+            regnum, is_vec = yield from get_idx_out(self.dec2, name, True)
         if regnum is None:
-            regnum, is_vec = yield from get_pdecode_idx_out2(self.dec2, name)
+            regnum, is_vec = yield from get_idx_out2(self.dec2, name)
+
+        if isinstance(regnum, tuple):
+            (regnum, base, offs) = regnum
+        else:
+            base, offs = regnum, 0 # temporary HACK
 
         # in case getting the register number is needed, _RA, _RB
+        # (HACK: only in straight non-svp64-mode for now, or elwidth == 64)
         regname = "_" + name
-        self.namespace[regname] = regnum
+        if not self.is_svp64_mode or ew_src == 64:
+            self.namespace[regname] = regnum
+        elif regname in self.namespace:
+            del self.namespace[regname]
+
         if not self.is_svp64_mode or not self.pred_src_zero:
             log('reading reg %s %s' % (name, str(regnum)), is_vec)
             if name in fregs:
-                reg_val = SelectableInt(self.fpr(regnum, is_vec, ew_src))
-                log("read reg %d: 0x%x" % (regnum, reg_val.value))
+                reg_val = SelectableInt(self.fpr(base, is_vec, offs, ew_src))
+                log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
             elif name is not None:
-                reg_val = SelectableInt(self.gpr(regnum, is_vec, ew_src))
-                log("read reg %d: 0x%x" % (regnum, reg_val.value))
+                reg_val = SelectableInt(self.gpr(base, is_vec, offs, ew_src))
+                log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)
             reg_val = 0
@@ -2093,7 +2158,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         for x in rremaps:
             log("shape remap", x)
 
-    def check_write(self, info, name, output, carry_en):
+    def check_write(self, info, name, output, carry_en, ew_dst):
         if name == 'overflow':  # ignore, done already (above)
             return
         if name == 'CR0':  # ignore, done already (above)
@@ -2121,9 +2186,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 log('msr written', hex(self.msr.value))
             return
         # find out1/out2 PR/FPR
-        regnum, is_vec = yield from get_pdecode_idx_out(self.dec2, name)
+        regnum, is_vec = yield from get_idx_out(self.dec2, name, True)
         if regnum is None:
-            regnum, is_vec = yield from get_pdecode_idx_out2(self.dec2, name)
+            regnum, is_vec = yield from get_idx_out2(self.dec2, name)
         if regnum is None:
             # temporary hack for not having 2nd output
             regnum = yield getattr(self.decoder, name)
@@ -2137,15 +2202,16 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.is_svp64_mode and self.pred_dst_zero:
             log('zeroing reg %d %s' % (regnum, str(output)), is_vec)
             output = SelectableInt(0, 256)
-        log("write reg %s%d 0x%x" % (reg_prefix, regnum, output.value),
+        log("write reg %s%s 0x%x ew %d" % (reg_prefix, str(regnum),
+                                           output.value, ew_dst),
             kind=LogKind.InstrInOuts)
         # zero-extend tov64 bit begore storing (should use EXT oh well)
         if output.bits > 64:
             output = SelectableInt(output.value, 64)
         if name in fregs:
-            self.fpr[regnum] = output
+            self.fpr.write(regnum, output, is_vec, ew_dst)
         else:
-            self.gpr[regnum] = output
+            self.gpr.write(regnum, output, is_vec, ew_dst)
 
     def check_step_increment(self, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
