@@ -329,6 +329,23 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_22_ld(self):
+        expected = [
+                    "ld 4,0(5)",
+                    "ld 4,16(5)",       # sigh, needs magic-shift (D||0b00)
+                    "sv.ld 4,16(5)",    # ditto
+                        ]
+        self._do_tst(expected)
+
+    def test_23_lq(self):
+        expected = [
+                    "lq 4,0(5)",
+                    "lq 4,16(5)",      # ditto, magic-shift (DQ||0b0000)
+                    "lq 4,32(5)",      # ditto
+                    "sv.lq 4,16(5)",   # ditto
+                        ]
+        self._do_tst(expected)
+
 
 if __name__ == "__main__":
     unittest.main()

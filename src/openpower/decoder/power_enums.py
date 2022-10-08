@@ -745,6 +745,7 @@ class In2Sel(Enum):
     CONST_SVDS = 16  # for SVDS-Form
     CONST_XBI = 17
     CONST_DXHI4 = 18 # for addpcis
+    CONST_DQ = 19 # for ld/st-quad
 
 
 @unique
