@@ -353,6 +353,15 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_25_stq(self):
+        expected = [
+                    "stq 4,0(5)",
+                    "stq 4,8(5)",
+                    "stq 4,16(5)",
+                    "sv.stq *4,16(*5)",
+                        ]
+        self._do_tst(expected)
+
 
 if __name__ == "__main__":
     unittest.main()
