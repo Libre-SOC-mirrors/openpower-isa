@@ -30,6 +30,26 @@ class Data(Record):
         return [self.data, self.ok]
 
 
+class SVP64Reg(Record):
+
+    def __init__(self, width, name):
+        name_ok = "%s_ok" % name
+        name_offs = "%s_offs" % name
+        name_base = "%s_base" % name
+        layout = ((name, width), (name_offs, width),
+                  (name_base, width), (name_ok, 1))
+        Record.__init__(self, layout)
+        self.data = getattr(self, name) # convenience
+        self.base = getattr(self, name_base) # convenience
+        self.offs = getattr(self, name_offs) # convenience
+        self.ok = getattr(self, name_ok) # convenience
+        self.data.reset_less = True # grrr
+        self.reset_less = True # grrr
+
+    def ports(self):
+        return [self.data, self.ok]
+
+
 class IssuerDecode2ToOperand(RecordObject):
     """IssuerDecode2ToOperand
 
@@ -107,11 +127,11 @@ class Decode2ToExecute1Type(RecordObject):
 
         if asmcode:
             self.asmcode = Signal(asmlen, reset_less=True) # only for simulator
-        self.write_reg = Data(7, name="rego")
-        self.write_ea = Data(7, name="ea") # for LD/ST in update mode
-        self.read_reg1 = Data(7, name="reg1")
-        self.read_reg2 = Data(7, name="reg2")
-        self.read_reg3 = Data(7, name="reg3")
+        self.write_reg = SVP64Reg(7, name="rego")
+        self.write_ea = SVP64Reg(7, name="ea") # for LD/ST in update mode
+        self.read_reg1 = SVP64Reg(7, name="reg1")
+        self.read_reg2 = SVP64Reg(7, name="reg2")
+        self.read_reg3 = SVP64Reg(7, name="reg3")
         self.write_spr = Data(SPR, name="spro")
         self.read_spr1 = Data(SPR, name="spr1")
         #self.read_spr2 = Data(SPR, name="spr2") # only one needed

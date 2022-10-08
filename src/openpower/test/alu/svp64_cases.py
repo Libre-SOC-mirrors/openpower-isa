@@ -9,9 +9,9 @@ from copy import deepcopy
 class SVP64ALUElwidthTestCase(TestAccumulatorBase):
 
     def case_1_sv_add_ew8(self):
-        """>>> lst = ['sv.add/ew=8 *1, *5, *9']
+        """>>> lst = ['sv.add/w=8 *1, *5, *9']
         """
-        isa = SVP64Asm(['sv.add *1, *5, *9'])
+        isa = SVP64Asm(['sv.add/w=8 *1, *5, *9'])
         lst = list(isa)
         print("listing", lst)
 

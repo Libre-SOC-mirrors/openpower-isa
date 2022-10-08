@@ -122,9 +122,10 @@ class GPR(dict):
         for i in range(len(regfile)):
             self[i] = SelectableInt(regfile[i], 64)
 
-    def __call__(self, ridx):
+    def __call__(self, ridx, is_vec=False, offs=0, elwidth=64):
         if isinstance(ridx, SelectableInt):
             ridx = ridx.value
+        log("GPR call", ridx, "isvec", is_vec, "offs", offs, "elwid", elwidth)
         return self[ridx]
 
     def set_form(self, form):
@@ -1113,7 +1114,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                                'undefined': undefined,
                                'mode_is_64bit': True,
                                'SO': XER_bits['SO'],
-                               'XLEN': 64  # elwidth overrides, later
+                               'XLEN': 64  # elwidth overrides
                                })
 
         # update pc to requested start point
@@ -1187,7 +1188,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def memassign(self, ea, sz, val):
         self.mem.memassign(ea, sz, val)
 
-    def prep_namespace(self, insn_name, formname, op_fields):
+    def prep_namespace(self, insn_name, formname, op_fields, xlen):
         # TODO: get field names from form in decoder*1* (not decoder2)
         # decoder2 is hand-created, and decoder1.sigform is auto-generated
         # from spec
@@ -1224,6 +1225,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.namespace['XER'] = self.spr['XER']
         self.namespace['CA'] = self.spr['XER'][XER_bits['CA']].value
         self.namespace['CA32'] = self.spr['XER'][XER_bits['CA32']].value
+        self.namespace['XLEN'] = xlen
 
         # add some SVSTATE convenience variables
         vl = self.svstate.vl
@@ -1693,12 +1695,26 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.update_pc_next()
             return
 
+        # get elwidths, defaults to 64
+        xlen = 64
+        ew_src = 64
+        ew_dst = 64
+        if self.is_svp64_mode:
+            ew_src = yield self.dec2.rm_dec.ew_src
+            ew_dst = yield self.dec2.rm_dec.ew_dst
+            ew_src = 8 << (3-int(ew_src)) # convert to bitlength
+            ew_dst = 8 << (3-int(ew_dst)) # convert to bitlength
+            xlen = max(ew_src, ew_dst)
+            log("elwdith", ew_src, ew_dst)
+        log("XLEN:", self.is_svp64_mode, xlen)
+
         # look up instruction in ISA.instrs, prepare namespace
         if ins_name == 'pcdec': # grrrr yes there are others ("stbcx." etc.)
             info = self.instrs[ins_name+"."]
         else:
             info = self.instrs[ins_name]
-        yield from self.prep_namespace(ins_name, info.form, info.op_fields)
+        yield from self.prep_namespace(ins_name, info.form, info.op_fields,
+                                       xlen)
 
         # preserve order of register names
         input_names = create_args(list(info.read_regs) +
@@ -1766,7 +1782,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # main input registers (RT, RA ...)
         inputs = []
         for name in input_names:
-            regval = (yield from self.get_input(name))
+            regval = (yield from self.get_input(name, ew_src))
             log("regval name", name, regval)
             inputs.append(regval)
 
@@ -2003,7 +2019,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             else:
                 self.namespace['D'] = imm
 
-    def get_input(self, name):
+    def get_input(self, name, ew_src):
         # using PowerDecoder2, first, find the decoder index.
         # (mapping name RA RB RC RS to in1, in2, in3)
         regnum, is_vec = yield from get_pdecode_idx_in(self.dec2, name)
@@ -2020,10 +2036,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if not self.is_svp64_mode or not self.pred_src_zero:
             log('reading reg %s %s' % (name, str(regnum)), is_vec)
             if name in fregs:
-                reg_val = SelectableInt(self.fpr(regnum))
+                reg_val = SelectableInt(self.fpr(regnum, is_vec, ew_src))
                 log("read reg %d: 0x%x" % (regnum, reg_val.value))
             elif name is not None:
-                reg_val = SelectableInt(self.gpr(regnum))
+                reg_val = SelectableInt(self.gpr(regnum, is_vec, ew_src))
                 log("read reg %d: 0x%x" % (regnum, reg_val.value))
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)

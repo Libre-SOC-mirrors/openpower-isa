@@ -1379,11 +1379,13 @@ class PowerDecode2(PowerDecodeSubset):
                         comb += step.eq((selectstep*(subvl+1))+subselect)
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
-                        comb += to_reg.data.eq(offs+svdec.reg_out+(vmax-1-step))
+                        comb += to_reg.offs.eq(offs+(vmax-1-step))
                     with m.Else():
-                        comb += to_reg.data.eq(offs+step+svdec.reg_out)
+                        comb += to_reg.offs.eq(offs+step)
                 with m.Else():
-                    comb += to_reg.data.eq(offs+svdec.reg_out)
+                    comb += to_reg.offs.eq(offs)
+                comb += to_reg.base.eq(svdec.reg_out)
+                comb += to_reg.data.eq(to_reg.base + to_reg.offs)
 
             # SVP64 in/out fields
             comb += in1_svdec.idx.eq(self.op_get("sv_in1"))  # reg #1 (in1_sel)
@@ -1436,11 +1438,13 @@ class PowerDecode2(PowerDecodeSubset):
                     # reverse gear goes the opposite way
                     with m.If(self.rm_dec.reverse_gear):
                         roffs = offs+(vl-1-step)
-                        comb += to_reg.data.eq(roffs+imp_reg_out)
+                        comb += e.write_ea.data.eq(roffs)
                     with m.Else():
-                        comb += to_reg.data.eq(offs+step+imp_reg_out)
+                        comb += e.write_ea.data.eq(offs+step)
                 with m.Else():
-                    comb += to_reg.data.eq(offs+imp_reg_out)
+                    comb += e.write_ea.offs.eq(offs)
+                comb += e.write_ea.base.eq(imp_reg_out)
+                comb += e.write_ea.data.eq(e.write_ea.base + e.write_ea.offs)
                 # ... but write to *second* output
                 comb += self.o2_isvec.eq(imp_isvec)
                 comb += o2_svdec.idx.eq(self.op_get("sv_out"))
