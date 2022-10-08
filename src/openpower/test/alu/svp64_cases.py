@@ -3,6 +3,35 @@ from openpower.endian import bigendian
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State, CRFields
 from openpower.sv.trans.svp64 import SVP64Asm
+from openpower.test.state import ExpectedState
+from copy import deepcopy
+
+class SVP64ALUElwidthTestCase(TestAccumulatorBase):
+
+    def case_1_sv_add_ew8(self):
+        """>>> lst = ['sv.add/ew=8 *1, *5, *9']
+        """
+        isa = SVP64Asm(['sv.add *1, *5, *9'])
+        lst = list(isa)
+        print("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[9] = 0x1220
+        initial_regs[5] = 0x43ff
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
+
+        # expected: each 8-bit add is completely independent
+        gprs = deepcopy(initial_regs)
+        gprs[1] = 0x551f # 0x12+0x43 = 0x55, 0x20+0xff = 0x1f (8-bit)
+        e = ExpectedState(pc=8, int_regs=gprs)
+
+        self.add_case(Program(lst, bigendian), initial_regs,
+                      initial_svstate=svstate, expected=e)
 
 
 class SVP64ALUTestCase(TestAccumulatorBase):
