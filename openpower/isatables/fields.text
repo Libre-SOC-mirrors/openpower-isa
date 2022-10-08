@@ -272,6 +272,7 @@
     | PO   |  FRTp|    TE    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRT |   FRA    |   FRB |RMC|   XO |Rc |
     | PO   |  RT  |   RA     |   RB  |sm |   XO |Rc |
+    | PO   |  RT  |   RA     |   RB  |CY |   XO |Rc |
     | PO   |  FRTp|   FRA    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRTp|  FRAp    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRT |  /// | R | FRB   |RMC|   XO |Rc |
@@ -426,6 +427,9 @@
         Fields that are concatenated to specify a VSR to
         be used as a source.
         Formats: XX4
+    CY (21:22)
+        Immediate field used for addex instruction
+        Formats: Z23
     D (16:31)
         Immediate field used to specify a 16-bit signed
         two's complement integer which is sign-extended
