@@ -346,6 +346,13 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_24_bc(self):
+        expected = [
+                    "b 0x28",
+                    "bc 16,0,-0xb4",
+                        ]
+        self._do_tst(expected)
+
 
 if __name__ == "__main__":
     unittest.main()

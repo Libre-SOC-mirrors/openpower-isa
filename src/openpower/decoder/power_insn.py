@@ -747,45 +747,49 @@ class CR5Operand(RegisterOperand):
         return (value, span)
 
 
-class TargetAddrOperand(RegisterOperand):
-    def disassemble(self, insn, record, field,
-            verbosity=Verbosity.NORMAL, indent=""):
+class EXTSOperand(RegisterOperand):
+    n_zeros: int  # number of zeros - set through constructor override
+    d_field: str  # field name to report - ditto
+
+    def span(self, record):
+        return record.fields[self.d_field]
+
+    def disassemble(self, insn, record, verbosity=Verbosity.NORMAL, indent=""):
         span = self.span(record=record)
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
-            span = (tuple(map(str, span)) + ("{0}", "{0}"))
-            yield f"{indent}{self.name} = EXTS({field} || 0b00))"
-            yield f"{indent}{indent}{field}"
-            yield f"{indent}{indent}{indent}{int(value):0{value.bits}b}00"
-            yield f"{indent}{indent}{indent}{', '.join(span)}"
+            span = (tuple(map(str, span)) + ("{0}",)*self.n_zeros)
+            z = "0" * self.n_zeros
+            yield indent + "%s = EXTS(%s || 0b%s)" % (self.name, self.d_field, z)
+            yield indent * 2 + self.d_field
+            yield indent * 3 + f"{int(value):0{value.bits}b}00"
+            yield indent * 3 + ', '.join(span)
         else:
             yield hex(_selectconcat(value,
-                _SelectableInt(value=0b00, bits=2)).to_signed_int())
+                _SelectableInt(value=0, bits=self.n_zeros)).to_signed_int())
+
+
+class TargetAddrOperand(EXTSOperand):
+    """set up TargetAddrOperand as an EXTSOperand with 2 leading zeros
+    """
+    def __init__(self, *args, **kwargs): # no idea what the args are
+        self.n_zeros = 2
+        super().__init__(*args, **kwargs)
 
 
 class TargetAddrOperandLI(TargetAddrOperand):
-    def span(self, record):
-        return record.fields["LI"]
-
-    def disassemble(self, insn, record,
-            verbosity=Verbosity.NORMAL, indent=""):
-        return super().disassemble(field="LI",
-            insn=insn, record=record,
-            verbosity=verbosity, indent=indent)
+    def __init__(self, *args, **kwargs): # no idea what the args are
+        self.d_field = 'LI'
+        super().__init__(*args, **kwargs)
 
 
 class TargetAddrOperandBD(TargetAddrOperand):
-    def span(self, record):
-        return record.fields["BD"]
-
-    def disassemble(self, insn, record,
-            verbosity=Verbosity.NORMAL, indent=""):
-        return super().disassemble(field="BD",
-            insn=insn, record=record,
-            verbosity=verbosity, indent=indent)
+    def __init__(self, *args, **kwargs): # no idea what the args are
+        self.d_field = 'BD'
+        super().__init__(*args, **kwargs)
 
 
 class DOperandDX(SignedOperand):
