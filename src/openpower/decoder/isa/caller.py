@@ -126,7 +126,7 @@ class GPR(dict):
         if isinstance(ridx, SelectableInt):
             ridx = ridx.value
         if elwidth == 64:
-            return self[ridx]
+            return self[ridx+offs]
         # rrrright.  start by breaking down into row/col, based on elwidth
         gpr_offs = offs // (64//elwidth)
         gpr_col = offs % (64//elwidth)
@@ -168,8 +168,9 @@ class GPR(dict):
         val |= value << (gpr_col*elwidth)
         # finally put the damn value into the regfile
         log("GPR write", base, "isvec", is_vec, "offs", offs,
-             "elwid", elwidth, "offs/col", gpr_offs, gpr_col, "val", hex(val))
-        self[base+gpr_offs].value = val
+             "elwid", elwidth, "offs/col", gpr_offs, gpr_col, "val", hex(val),
+             "@", base+gpr_offs)
+        dict.__setitem__(self, base+gpr_offs, SelectableInt(val, 64))
 
     def __setitem__(self, rnum, value):
         # rnum = rnum.value # only SelectableInt allowed
