@@ -2,3 +2,5 @@ opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry ou
 000000---------------0100000000-,NONE,OP_ATTN,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,1,attn,NONE,,0,"service processor ""attention"""
 01100000000000000000000000000000,NONE,OP_NOP,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,nop,D,,0,
 000001---------------0000000011-,NONE,OP_SIM_CONFIG,NONE,NONE,NONE,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,1,sim_cfg,NONE,,1,should be removed--conflicts with ISA v3.1 prefix and SVP64 prefix
+010001------------------------1-,TRAP,OP_SC,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,sc,SC,
+010001------------------------01,TRAP,OP_SC,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,scv,SC,

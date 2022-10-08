@@ -2185,6 +2185,8 @@ class PPCDatabase:
                         for name in insn.names:
                             records[name].add(insn)
                             sections[name] = section
+                            if str(path).endswith("extra.csv"):
+                                print ("extra", name, section)
 
         for (name, multirecord) in sorted(records.items()):
             multirecord = PPCMultiRecord(sorted(multirecord))
@@ -2316,6 +2318,9 @@ class Database:
         self.__db = sorted(db)
         self.__names = dict(sorted(names.items()))
         self.__opcodes = dict(sorted(opcodes.items()))
+        print ("opcodes")
+        for k, v in self.__opcodes.items():
+            print ("    ", bin(k), v)
 
         return super().__init__()
 
@@ -2331,13 +2336,25 @@ class Database:
 
     @_functools.lru_cache(maxsize=None)
     def __getitem__(self, key):
+        # specific hunt for all "extra.csv" matches. TODO: separate db of extras
+        if isinstance(key, Instruction):
+            ki = int(key)
+            print ("key", bin(ki))
+            for k, records in self.__opcodes.items():
+                for record in records:
+                    if str(record.section.path).endswith("extra.csv"):
+                        if record.match(key=ki):
+                           return record
+        # now look by XO-match, first, which is much better sorted.
+        # not in major.csv (e.g. 17 which is in extra.csv) already done above
         if isinstance(key, (int, Instruction)):
             key = int(key)
             XO = int(_SelectableInt(value=int(key), bits=32)[0:6])
+            assert XO in self.__opcodes # should have been caught by extra.csv
             for record in self.__opcodes[XO]:
                 if record.match(key=key):
                    return record
-
+        # hunt by string instead
         elif isinstance(key, str):
             return self.__names[key]
 
