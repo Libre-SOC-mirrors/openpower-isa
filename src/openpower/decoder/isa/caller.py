@@ -559,11 +559,15 @@ def get_idx_out(dec2, name, ewmode=False):
 
 
 # TODO, really should just be using PowerDecoder2
-def get_idx_out2(dec2, name):
+def get_idx_out2(dec2, name, ewmode=False):
     # check first if register is activated for write
     op = dec2.dec.op
     out_sel = yield op.out_sel
     out = yield dec2.e.write_ea.data
+    if ewmode:
+        offs = yield dec2.e.write_ea.offs
+        base = yield dec2.e.write_ea.base
+        out = (out, base, offs)
     o_isvec = yield dec2.o2_isvec
     out_ok = yield dec2.e.write_ea.ok
     log("get_idx_out2", name, out_sel, out, out_ok, o_isvec)
@@ -2084,7 +2088,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # registers, to be modified, need to be in the namespace.
             regnum, is_vec = yield from get_idx_out(self.dec2, name, True)
         if regnum is None:
-            regnum, is_vec = yield from get_idx_out2(self.dec2, name)
+            regnum, is_vec = yield from get_idx_out2(self.dec2, name, True)
 
         if isinstance(regnum, tuple):
             (regnum, base, offs) = regnum
@@ -2189,7 +2193,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # find out1/out2 PR/FPR
         regnum, is_vec = yield from get_idx_out(self.dec2, name, True)
         if regnum is None:
-            regnum, is_vec = yield from get_idx_out2(self.dec2, name)
+            regnum, is_vec = yield from get_idx_out2(self.dec2, name, True)
         if regnum is None:
             # temporary hack for not having 2nd output
             regnum = yield getattr(self.decoder, name)
