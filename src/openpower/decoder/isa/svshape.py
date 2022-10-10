@@ -140,6 +140,7 @@ class SVSHAPE(SelectableInt):
 
     @skip.setter
     def skip(self, value):
+        assert not self.is_indexed() # TODO
         self.fsi['skip'].eq(value)
 
     @property
@@ -156,9 +157,10 @@ class SVSHAPE(SelectableInt):
         if self.gpr is None:
             return idx
         if self.xdimsz == 1 and self.ydimsz == 1:
-            idx = step # no Index remapping
-        remap = self.gpr(self.svgpr+idx).value # TODO: elwidths
-        log ("indexed_iterator", self.svgpr, idx, remap)
+            idx = step # no Index 1/2D reshaping, only Indexing
+        ew_src = 8 << (3-int(self.elwid)) # convert to bitlength
+        remap = self.gpr(self.svgpr, True, idx, ew_src).value
+        log ("indexed_iterator", self.svgpr, idx, remap, ew_src)
         return remap
 
     def get_iterator(self):

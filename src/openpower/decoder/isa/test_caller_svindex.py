@@ -19,6 +19,23 @@ from openpower.consts import SVP64CROffs
 from copy import deepcopy
 
 
+def set_masked_reg(regs, base, offs, ew_bits, value):
+    # rrrright.  start by breaking down into row/col, based on elwidth
+    gpr_offs = offs // (64//ew_bits)
+    gpr_col = offs % (64//ew_bits)
+    # compute the mask based on ew_bits
+    mask = (1<<ew_bits)-1
+    # now select the 64-bit register, but get its value (easier)
+    val = regs[base+gpr_offs]
+    # now mask out the bit we don't want
+    val = val & ~(mask << (gpr_col*ew_bits))
+    # then wipe the bit we don't want from the value
+    value = value & mask
+    # OR the new value in, shifted up
+    val |= value << (gpr_col*ew_bits)
+    regs[base+gpr_offs] = val
+
+
 class SVSTATETestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
@@ -220,7 +237,7 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(SVSHAPE0.svgpr, 16) # SVG is shifted up by 1
             for i in range(1,4):
                 shape = sim.spr['SVSHAPE%d' % i]
-                self.assertEqual(shape.svgpr, 0) 
+                self.assertEqual(shape.svgpr, 0)
             self._check_regs(sim, expected_regs)
 
     def test_1_sv_index_add(self):
@@ -290,7 +307,7 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(SVSHAPE0.svgpr, 16) # SVG is shifted up by 1
             for i in range(1,4):
                 shape = sim.spr['SVSHAPE%d' % i]
-                self.assertEqual(shape.svgpr, 0) 
+                self.assertEqual(shape.svgpr, 0)
             self._check_regs(sim, expected_regs)
 
     def test_2_sv_index_add(self):
@@ -364,7 +381,73 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(SVSHAPE0.svgpr, 16) # SVG is shifted up by 1
             for i in range(1,4):
                 shape = sim.spr['SVSHAPE%d' % i]
-                self.assertEqual(shape.svgpr, 0) 
+                self.assertEqual(shape.svgpr, 0)
+            self._check_regs(sim, expected_regs)
+
+    def test_3_sv_index_add_elwidth(self):
+        """sets VL=6 (via SVSTATE) then does svindex with elwidth=8, and an add.
+
+        only RA is re-mapped via Indexing, not RB or RT
+        """
+        isa = SVP64Asm(['svindex 8, 1, 1, 3, 0, 0, 0',
+                        'sv.add *8, *0, *0',
+                       ])
+        lst = list(isa)
+        print ("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        idxs = [1, 0, 5, 2, 4, 3] # random enough
+        for i in range(6):
+            # 8-bit indices starting at reg 16
+            set_masked_reg(initial_regs, 16, i, ew_bits=8, value=idxs[i])
+            initial_regs[i] = i
+
+        # SVSTATE vl=10
+        svstate = SVP64State()
+        svstate.vl = 6 # VL
+        svstate.maxvl = 6 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        # copy before running
+        expected_regs = deepcopy(initial_regs)
+        for i in range(6):
+            RA = initial_regs[0+idxs[i]]
+            RB = initial_regs[0+i]
+            expected_regs[i+8] = RA+RB
+            print ("expected", i, expected_regs[i+8])
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs, svstate=svstate)
+
+            print (sim.spr)
+            SVSHAPE0 = sim.spr['SVSHAPE0']
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("      RMpst", bin(sim.svstate.RMpst))
+            print ("       SVme", bin(sim.svstate.SVme))
+            print ("        mo0", bin(sim.svstate.mo0))
+            print ("        mo1", bin(sim.svstate.mo1))
+            print ("        mi0", bin(sim.svstate.mi0))
+            print ("        mi1", bin(sim.svstate.mi1))
+            print ("        mi2", bin(sim.svstate.mi2))
+            print ("STATE0svgpr", hex(SVSHAPE0.svgpr))
+            print (sim.gpr.dump())
+            self.assertEqual(sim.svstate.RMpst, 0) # mm=0 so persist=0
+            self.assertEqual(sim.svstate.SVme, 0b00001) # same as rmm
+            # rmm is 0b00001 which means mi0=0 and all others inactive (0)
+            self.assertEqual(sim.svstate.mi0, 0)
+            self.assertEqual(sim.svstate.mi1, 0)
+            self.assertEqual(sim.svstate.mi2, 0)
+            self.assertEqual(sim.svstate.mo0, 0)
+            self.assertEqual(sim.svstate.mo1, 0)
+            self.assertEqual(SVSHAPE0.svgpr, 16) # SVG is shifted up by 1
+            for i in range(1,4):
+                shape = sim.spr['SVSHAPE%d' % i]
+                self.assertEqual(shape.svgpr, 0)
             self._check_regs(sim, expected_regs)
 
     def run_tst_program(self, prog, initial_regs=None,

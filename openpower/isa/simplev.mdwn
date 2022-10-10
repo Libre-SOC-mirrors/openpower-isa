@@ -347,8 +347,7 @@ Pseudo-code:
         shape[0:5] <- (0b0 || SVd) # ydim
     shape[12:17] <- (0b0 || SVG)        # SVGPR
     shape[28:29] <- ew                  # element-width override
-    if sk = 1 then shape[28:29] <- 0b01 # skip 1st dimension
-    else           shape[28:29] <- 0b00 # no skipping
+    shape[21] <- sk                     # skip 1st dimension
     # select the mode for updating SVSHAPEs
     SVSTATE[62] <- mm # set or clear persistence
     if mm = 0 then
