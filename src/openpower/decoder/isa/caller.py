@@ -2113,7 +2113,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)
-            reg_val = 0
+            reg_val = SelectableInt(0, ew_src)
         return reg_val
 
     def remap_set_steps(self, remaps):
