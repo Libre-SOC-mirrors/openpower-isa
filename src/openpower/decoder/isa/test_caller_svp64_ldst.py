@@ -56,12 +56,6 @@ class DecoderTestCase(FHDLTestCase):
             )
         lst = list(lst)
 
-        # SVSTATE (in this case, VL=2)
-        svstate = SVP64State()
-        svstate.vl = 4 # VL
-        svstate.maxvl = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
-
         tst_string = "hello\x00bye\x00"
         initial_regs = [0] * 32
         initial_regs[3] = len(tst_string) # including the zero
@@ -90,8 +84,7 @@ class DecoderTestCase(FHDLTestCase):
                 break
 
         with Program(lst, bigendian=False) as program:
-            sim = self.run_tst_program(program, svstate=svstate,
-                                                initial_mem=initial_mem,
+            sim = self.run_tst_program(program, initial_mem=initial_mem,
                                                 initial_regs=initial_regs)
             mem = sim.mem.dump(printout=True, asciidump=True)
             #print (mem)
