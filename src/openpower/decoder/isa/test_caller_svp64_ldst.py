@@ -18,6 +18,13 @@ from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
                                                   )
 from copy import deepcopy
 
+def write_byte(mem, addr, val):
+    addr, offs = (addr // 8)*8, (addr % 8)*8
+    mask = (0xff << offs)
+    value = mem.get(addr, 0) & ~mask
+    value = value | (val << offs)
+    mem[addr] = value & 0xffff_ffff_ffff_ffff
+
 
 class DecoderTestCase(FHDLTestCase):
 
@@ -28,6 +35,81 @@ class DecoderTestCase(FHDLTestCase):
     def _check_fpregs(self, sim, expected):
         for i in range(32):
             self.assertEqual(sim.fpr(i), SelectableInt(expected[i], 64))
+
+    def test_sv_load_store_strncpy(self):
+        """>>> lst = [
+                    ]
+
+        strncpy using post-increment ld/st, sv.bc, and data-dependent ffirst
+        """
+        maxvl = 4
+        lst = SVP64Asm(
+            [
+            "mtspr 9, 3",                   # move r3 to CTR
+            # loop starts here
+            "setvl 1,0,%d,0,1,1" % maxvl,   # VL (and r1) = MIN(CTR,MAXVL=4)
+            "sv.lbzu/pi *16, 1(10)",        # load VL bytes (update r10 addr)
+            "sv.cmpi/ff=eq/vli *0,1,*16,0", # compare against zero, truncate VL
+            "sv.stbu/pi *16, 1(12)",        # store VL bytes (update r12 addr)
+            "sv.bc/all 0, *2, -0x1c",       # test CTR, stop if cmpi failed
+            ]
+            )
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl = 4 # VL
+        svstate.maxvl = 4 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        tst_string = "hello\x00bye\x00"
+        initial_regs = [0] * 32
+        initial_regs[3] = len(tst_string) # including the zero
+        initial_regs[10] = 16 # load address
+        initial_regs[12] = 40 # store address
+
+        # some memory with identifying garbage in it
+        initial_mem = {16: 0xf0f1_f2f3_f4f5_f6f7,
+                       24: 0x4041_4243_4445_4647,
+                       40: 0x8081_8283_8485_8687,
+                       48: 0x9091_9293_9495_9697,
+                      }
+
+        for i, c in enumerate(tst_string):
+            write_byte(initial_mem, 16+i, ord(c))
+
+        # now get the expected results: copy the string to the other address,
+        # but terminate at first zero (strncpy, duh)
+        expected_mem = deepcopy(initial_mem)
+        strlen = 0
+        for i, c in enumerate(tst_string):
+            strlen = i+1
+            c = ord(c)
+            write_byte(expected_mem, 40+i, c)
+            if c == 0:
+                break
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                                initial_mem=initial_mem,
+                                                initial_regs=initial_regs)
+            mem = sim.mem.dump(printout=True, asciidump=True)
+            #print (mem)
+            # contents of memory expected at:
+            #    element 0:   r1=0x10, D=24, => EA = 0x10+24*0 = 16 (0x10)
+            #    element 1:   r1=0x10, D=24, => EA = 0x10+24*1 = 40 (0x28)
+            # therefore, at address 0x10 ==> 0x1234
+            # therefore, at address 0x28 ==> 0x1235
+            for (k, val) in expected_mem.items():
+                print ("mem, val", k, hex(val))
+            self.assertEqual(mem, list(expected_mem.items()))
+            print(sim.gpr(1))
+            # reg 10 (the LD EA) is expected to be nearest
+            # 16 + strlen, rounded up
+            rounded = ((strlen+maxvl-1) // maxvl) * maxvl
+            self.assertEqual(sim.gpr(10), SelectableInt(16+rounded, 64))
+            # whereas reg 10 (the ST EA) is expected to be 40+strlen
+            self.assertEqual(sim.gpr(12), SelectableInt(40+strlen, 64))
 
     def test_sv_load_store_postinc(self):
         """>>> lst = ["addi 20, 0, 0x0010",
@@ -614,13 +696,15 @@ class DecoderTestCase(FHDLTestCase):
                 self.assertEqual(sim.gpr(i+12), av[i])
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None, initial_fprs=None):
+                              svstate=None, initial_fprs=None,
+                              initial_mem=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         if initial_fprs is None:
             initial_fprs = [0] * 32
         simulator = run_tst(prog, initial_regs, svstate=svstate,
-                                  initial_fprs=initial_fprs)
+                                  initial_fprs=initial_fprs,
+                                  mem=initial_mem)
         print ("GPRs")
         simulator.gpr.dump()
         print ("FPRs")
