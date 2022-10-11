@@ -1615,9 +1615,16 @@ class LDSTImmSimpleRM(ElsBaseRM, ZZBaseRM, LDSTImmBaseRM):
     sz: BaseRM.mode[3]
 
 
-class LDSTImmRsvdRM(LDSTImmBaseRM):
-    """ld/st immediate: rsvd"""
-    pass
+class LDSTImmPostRM(LDSTImmBaseRM):
+    """ld/st immediate: postinc mode (and load-fault)"""
+    pi: BaseRM.mode[3]  # Post-Increment Mode
+    lf: BaseRM.mode[4]  # Fault-First Mode (not *Data-Dependent* Fail-First)
+
+    def specifiers(self, record):
+        if self.pi:
+            yield "pi"
+        if self.lf:
+            yield "lf"
 
 
 class LDSTImmFFRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
@@ -1669,7 +1676,7 @@ class LDSTImmPRRc0RM(FFPRRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
 
 class LDSTImmRM(LDSTImmBaseRM):
     simple: LDSTImmSimpleRM
-    rsvd: LDSTImmRsvdRM
+    post: LDSTImmPostRM
     ffrc1: LDSTImmFFRc1RM
     ffrc0: LDSTImmFFRc0RM
     sat: LDSTImmSatRM
@@ -1935,7 +1942,7 @@ class RM(BaseRM):
             # mode except reserved in place of mr
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
-                (0b001000, 0b111000, "rsvd"),   # rsvd       (no Rc)
+                (0b001000, 0b111000, "post"),   # post       (no Rc)
                 (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
                 (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)

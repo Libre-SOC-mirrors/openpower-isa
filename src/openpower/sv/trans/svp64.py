@@ -1056,6 +1056,7 @@ class SVP64Asm:
         # see https://libre-soc.org/openpower/sv/ldst/
         is_ldst = rm['mode'] in ['LDST_IDX', 'LDST_IMM']
         is_ldst_idx = rm['mode'] == 'LDST_IDX'
+        is_ldst_imm = rm['mode'] == 'LDST_IMM'
         is_ld = v30b_op.startswith("l") and is_ldst
         is_st = v30b_op.startswith("s") and is_ldst
 
@@ -1088,6 +1089,7 @@ class SVP64Asm:
         predresult = False
         failfirst = False
         ldst_elstride = 0
+        ldst_postinc = 0
         sea = False
 
         vli = False
@@ -1127,6 +1129,12 @@ class SVP64Asm:
             # just src width
             elif encmode.startswith("sw="):
                 srcwid = decode_elwidth(encmode[3:])
+            # post-increment
+            elif encmode == 'pi':
+                ldst_postinc = 1
+                # in indexed mode, set sv_mode=0b00
+                assert is_ldst_imm is True
+                sv_mode = 0b00
             # element-strided LD/ST
             elif encmode == 'els':
                 ldst_elstride = 1
@@ -1220,6 +1228,10 @@ class SVP64Asm:
             else:
                 raise AssertionError("unknown encmode %s" % encmode)
 
+        # post-inc only available on ld-with-update
+        if ldst_postinc:
+            assert "u" in opcode, "/pi only available on ld/st-update"
+
         # sanity check if dz/zz used in branch-mode
         if is_bc and dst_zero:
             raise AssertionError("dz/zz not supported in branch, use 'sz'")
@@ -1290,7 +1302,7 @@ class SVP64Asm:
             | 0-1 |  2  |  3   4  |  description               |
             | --- | --- |---------|--------------------------- |
             | 00  | 0   |  zz els | normal mode                |
-            | 00  | 1   |  /  /   | reserved                   |
+            | 00  | 1   | pi  lf  | post-inc, LD-fault-first   |
             | 01  | inv | CR-bit  | Rc=1: ffirst CR sel        |
             | 01  | inv | els RC1 |  Rc=0: ffirst z/nonz       |
             | 10  |   N | zz  els |  sat mode: N=0/1 u/s       |
@@ -1341,6 +1353,12 @@ class SVP64Asm:
                     # 00  1   SVM CRM subvector reduce mode, SUBVL>1
                     pass
                 sv_mode = 0b00
+
+            ######################################
+            # ldst-immediate "post" (and "load-fault-first" modes)
+            elif sv_mode == 0b00 and ldst_postinc == 1: # (or ldst_ld_ffirst)
+                mode |= (0b1 << SVP64MODE.LDI_POST)         # sets bit 2
+                mode |= (ldst_postinc << SVP64MODE.LDI_PI)  # sets post-inc
 
             ######################################
             # "mapreduce" modes

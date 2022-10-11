@@ -384,6 +384,12 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_29_postinc(self):
+        expected = [
+                    "sv.ldu/pi 5,8(2)",
+                        ]
+        self._do_tst(expected)
+
 
 if __name__ == "__main__":
     unittest.main()
