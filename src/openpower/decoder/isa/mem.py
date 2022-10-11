@@ -141,7 +141,7 @@ class Mem:
         log("memassign", addr, sz, val)
         self.st(addr.value, val.value, sz, swap=False)
 
-    def dump(self, printout=True):
+    def dump(self, printout=True, asciidump=False):
         keys = list(self.mem.keys())
         keys.sort()
         res = []
@@ -149,7 +149,15 @@ class Mem:
             res.append(((k*8), self.mem[k]))
             if not printout:
                 continue
-            print ("%016x: %016x" % ((k*8) & 0xffffffffffffffff, self.mem[k]))
+            s = ""
+            if asciidump:
+                for i in range(8):
+                    c = chr(self.mem[k]>>(i*8) & 0xff)
+                    if not c.isprintable():
+                        c = "."
+                    s += c
+            print ("%016x: %016x" % ((k*8) & 0xffffffffffffffff,
+                                     self.mem[k]), s)
         return res
 
     def log_fancy(self, *, kind=LogKind.Default, name="Memory",
