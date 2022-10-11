@@ -1733,6 +1733,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if asmop.startswith('bc') and self.is_svp64_mode:
             ins_name = 'sv.%s' % ins_name
 
+        # ld-immediate-with-pi mode redirects to ld-with-postinc
+        sv_mode = yield self.dec2.rm_dec.sv_mode
+        is_ldst_imm = sv_mode == SVMode.LDST_IMM.value
+        ldst_imm_postinc = False
+        if is_ldst_imm and 'u' in ins_name and self.is_svp64_mode:
+            ins_name = ins_name.replace("u", "up")
+            ldst_imm_postinc = True
+            log("   enable ld/st postinc", ins_name)
+
         log("   post-processed name", dotstrp, ins_name, asmop)
 
         # illegal instructions call TRAP at 0x700
@@ -1859,7 +1868,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # in SVP64 mode for LD/ST work out immediate
         # XXX TODO: replace_ds for DS-Form rather than D-Form.
         # use info.form to detect
-        if self.is_svp64_mode:
+        if self.is_svp64_mode and not ldst_imm_postinc:
             yield from self.check_replace_d(info, remap_active)
 
         # "special" registers

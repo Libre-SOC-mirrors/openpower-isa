@@ -29,6 +29,66 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.fpr(i), SelectableInt(expected[i], 64))
 
+    def test_sv_load_store_postinc(self):
+        """>>> lst = ["addi 2, 0, 0x0010",
+                        "addi 3, 0, 0x0008",
+                        "addi 4, 0, 0x1234",
+                        "addi 5, 0, 0x1235",
+                        "sv.stw/els *4, 24(2)",
+                        "addi 2, 2, 24",   # add on the 24
+                        "sv.lwu/pi *8, 8(2)"]
+
+        element stride is computed as:
+        for i in range(VL):
+            EA = (RA|0) + EXTS(D) * i
+
+        load-update with post-increment will do this however:
+        for i in range(VL):
+            *vector = MEM(RA)
+            EA = (RA|0) + EXTS(D)
+            RA = EA # update RA *after*
+
+        whereas without post-increment it would be:
+        for i in range(VL):
+            EA = (RA|0) + EXTS(D) # EA calculated (and used) *BEFORE* load
+            *vector = MEM(EA)
+            RA = EA # still updated after but it's used before
+        """
+        lst = SVP64Asm(["addi 2, 0, 0x0010",
+                        "addi 3, 0, 0x0008",
+                        "addi 4, 0, 0x1234",
+                        "addi 5, 0, 0x1235",
+                        "sv.stw/els *4, 24(2)",  # scalar r1 + 16 + 24*offs
+                        "addi 20, 2, 0",   # copy 2 to 20
+                        "sv.lwzu/pi *8, 24(20)"
+                        ]) # scalar r1 + 24*offs
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl = 2 # VL
+        svstate.maxvl = 2 # MAXVL
+        print ("SVSTATE", bin(svstate.asint()))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate)
+            mem = sim.mem.dump(printout=False)
+            print (mem)
+            # contents of memory expected at:
+            #    element 0:   r1=0x10, D=24, => EA = 0x10+24*0 = 16 (0x10)
+            #    element 1:   r1=0x10, D=24, => EA = 0x10+24*1 = 40 (0x28)
+            # therefore, at address 0x10 ==> 0x1234
+            # therefore, at address 0x28 ==> 0x1235
+            expected_mem = [(16, 0x1234),
+                            (40, 0x1235)]
+            self.assertEqual(mem, expected_mem)
+            print(sim.gpr(1))
+            self.assertEqual(sim.gpr(8), SelectableInt(0x1234, 64))
+            self.assertEqual(sim.gpr(9), SelectableInt(0x1235, 64))
+            # reg 20 (the EA) is expected to be the initial 16,
+            # plus 2x24 (2 lots of immediates).  16+2*24=64
+            self.assertEqual(sim.gpr(20), SelectableInt(64, 64))
+
     def test_sv_load_store_elementstride(self):
         """>>> lst = ["addi 2, 0, 0x0010",
                         "addi 3, 0, 0x0008",
