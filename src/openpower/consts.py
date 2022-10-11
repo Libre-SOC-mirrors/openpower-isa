@@ -268,6 +268,9 @@ class SVP64MODEb(_Const):
     ELS_NORMAL = 4
     ELS_FFIRST_PRED = 3
     ELS_SAT = 4
+    LDI_POST = 2 # LD-Immediate Post/FF Mode
+    LDI_PI = 3 # LD-Immediate Post-Increment
+    LDI_FF = 4 # LD-Immediate Fault-First
     # BO bits
     BO_MSB = 2
     BO_LSB = 4
