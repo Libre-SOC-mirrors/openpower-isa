@@ -30,13 +30,12 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_load_store_postinc(self):
-        """>>> lst = ["addi 2, 0, 0x0010",
+        """>>> lst = ["addi 20, 0, 0x0010",
                         "addi 3, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw/els *4, 24(2)",
-                        "addi 2, 2, 24",   # add on the 24
-                        "sv.lwu/pi *8, 8(2)"]
+                        "sv.stwu/pi *4, 24(20)",
+                        "sv.lwu/pi *8, 24(20)"]
 
         element stride is computed as:
         for i in range(VL):
@@ -54,14 +53,14 @@ class DecoderTestCase(FHDLTestCase):
             *vector = MEM(EA)
             RA = EA # still updated after but it's used before
         """
-        lst = SVP64Asm(["addi 2, 0, 0x0010",
+        lst = SVP64Asm(["addi 20, 0, 0x0010",
+                        "addi 22, 0, 0x0010",
                         "addi 3, 0, 0x0008",
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
-                        "sv.stw/els *4, 24(2)",  # scalar r1 + 16 + 24*offs
-                        "addi 20, 2, 0",   # copy 2 to 20
-                        "sv.lwzu/pi *8, 24(20)"
-                        ]) # scalar r1 + 24*offs
+                        "sv.stwu/pi *4, 24(22)",  # scalar r22 += 24 on update
+                        "sv.lwzu/pi *8, 24(20)"   # scalar r20 += 24 on update
+                        ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
@@ -88,6 +87,8 @@ class DecoderTestCase(FHDLTestCase):
             # reg 20 (the EA) is expected to be the initial 16,
             # plus 2x24 (2 lots of immediates).  16+2*24=64
             self.assertEqual(sim.gpr(20), SelectableInt(64, 64))
+            # likewise, reg 22 - for the store - also 16+2*24.
+            self.assertEqual(sim.gpr(22), SelectableInt(64, 64))
 
     def test_sv_load_store_elementstride(self):
         """>>> lst = ["addi 2, 0, 0x0010",

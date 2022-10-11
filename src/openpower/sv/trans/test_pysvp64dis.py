@@ -389,6 +389,7 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.ldu/pi 5,8(2)",
                     "sv.lwzu/pi *6,8(2)",
                     "sv.lwzu/pi *6,24(2)",
+                    "sv.stwu/pi *6,24(2)",
                         ]
         self._do_tst(expected)
 

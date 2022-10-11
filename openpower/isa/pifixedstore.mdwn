@@ -7,7 +7,7 @@
 
 D-Form
 
-* stbu RS,D(RA)
+* stbup RS,D(RA)
 
 Pseudo-code:
 
@@ -24,7 +24,7 @@ Special Registers Altered:
 
 X-Form
 
-* stbux RS,RA,RB
+* stbupx RS,RA,RB
 
 Pseudo-code:
 
@@ -41,7 +41,7 @@ Special Registers Altered:
 
 D-Form
 
-* sthu RS,D(RA)
+* sthup RS,D(RA)
 
 Pseudo-code:
 
@@ -58,7 +58,7 @@ Special Registers Altered:
 
 X-Form
 
-* sthux RS,RA,RB
+* sthupx RS,RA,RB
 
 Pseudo-code:
 
@@ -75,7 +75,7 @@ Special Registers Altered:
 
 D-Form
 
-* stwu RS,D(RA)
+* stwup RS,D(RA)
 
 Pseudo-code:
 
@@ -92,7 +92,7 @@ Special Registers Altered:
 
 X-Form
 
-* stwux RS,RA,RB
+* stwupx RS,RA,RB
 
 Pseudo-code:
 
@@ -109,13 +109,13 @@ Special Registers Altered:
 
 DS-Form
 
-* stdu RS,DS(RA)
+* stdup RS,DS(RA)
 
 Pseudo-code:
 
     EA <- (RA) + EXTS(DS || 0b00)
     ea <- (RA)
-    MEM(ea, 8) <- (RS)
+    MEM(EA, 8) <- (RS)
     RA <- EA
 
 Special Registers Altered:
@@ -126,7 +126,7 @@ Special Registers Altered:
 
 X-Form
 
-* stdux RS,RA,RB
+* stdupx RS,RA,RB
 
 Pseudo-code:
 
