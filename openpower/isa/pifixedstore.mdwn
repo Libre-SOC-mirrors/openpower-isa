@@ -13,7 +13,7 @@ Pseudo-code:
 
     EA <- (RA) + EXTS(D)
     ea <- (RA)
-    MEM(ra, 1) <- (RS)[XLEN-8:XLEN-1]
+    MEM(ea, 1) <- (RS)[XLEN-8:XLEN-1]
     RA <- EA
 
 Special Registers Altered:
