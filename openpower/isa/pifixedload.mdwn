@@ -4,7 +4,7 @@
 <!-- Effective Address is always RA, and the usual EA is stored late in RA -->
 
 <!-- Note that these pages also define equivalent store instructions, -->
-<!-- these are described in fixedstore.mdwn -->
+<!-- these are described in pifixedstore.mdwn -->
 
 
 

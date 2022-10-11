@@ -1,0 +1,141 @@
+<!-- This defines DRAFT instructions described in SV -->
+
+<!-- This defines instructions that store from a register to RAM -->
+<!-- Effective Address is always RA, and the usual EA is stored late in RA -->
+
+# Store Byte with Update
+
+D-Form
+
+* stbu RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    ea <- (RA)
+    MEM(ra, 1) <- (RS)[XLEN-8:XLEN-1]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Byte with Update Indexed
+
+X-Form
+
+* stbux RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    ea <- (RA)
+    MEM(ea, 1) <- (RS)[XLEN-8:XLEN-1]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword with Update
+
+D-Form
+
+* sthu RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    ea <- (RA)
+    MEM(ea, 2) <- (RS)[XLEN-16:XLEN-1]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword with Update Indexed
+
+X-Form
+
+* sthux RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    ea <- (RA)
+    MEM(ea, 2) <- (RS)[XLEN-16:XLEN-1]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Word with Update
+
+D-Form
+
+* stwu RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    ea <- (RA)
+    MEM(ea, 4) <- (RS)[XLEN-32:XLEN-1]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Word with Update Indexed
+
+X-Form
+
+* stwux RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    ea <- (RA)
+    MEM(ea, 4) <- (RS)[XLEN-32:XLEN-1]
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Doubleword with Update
+
+DS-Form
+
+* stdu RS,DS(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(DS || 0b00)
+    ea <- (RA)
+    MEM(ea, 8) <- (RS)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
+# Store Doubleword with Update Indexed
+
+X-Form
+
+* stdux RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    ea <- (RA)
+    MEM(ea, 8) <- (RS)
+    RA <- EA
+
+Special Registers Altered:
+
+    None
+
