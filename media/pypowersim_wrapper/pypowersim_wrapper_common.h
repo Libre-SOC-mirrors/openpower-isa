@@ -25,7 +25,7 @@ typedef struct pypowersim_state {
     PyObject *result_obj;
 } pypowersim_state_t;
 
-pypowersim_state_t *pypowersim_prepare(void) {
+static pypowersim_state_t *pypowersim_prepare(void) {
     // Allocate memory for state
     pypowersim_state_t *state = malloc(sizeof(pypowersim_state_t));
     if (!state) {
@@ -95,7 +95,7 @@ pypowersim_state_t *pypowersim_prepare(void) {
     return state;
 }
 
-void pypowersim_prepareargs(pypowersim_state_t *state) {
+static void pypowersim_prepareargs(pypowersim_state_t *state) {
     // Set the tuple with the state objects
     state->args = PyTuple_Pack(12, state->binary, state->bigendian, state->prog, state->qemu_cosim,
 		                  state->initial_regs, state->initial_sprs, state->svstate, state->mmu,
@@ -108,7 +108,7 @@ void pypowersim_prepareargs(pypowersim_state_t *state) {
     }
 }
 
-void pypowersim_finalize(pypowersim_state_t *state) {
+static void pypowersim_finalize(pypowersim_state_t *state) {
     if (state->simulator) Py_DECREF(state->simulator);
     if (state->binary) Py_DECREF(state->binary);
     if (state->bigendian) Py_DECREF(state->bigendian);

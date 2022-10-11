@@ -1,12 +1,11 @@
 VPXTARGET=libvpx_variance_test
 VP8TARGET=vp8_dct_test
-EXAMPLE=pypowersim_wrapper_example
 
 CC=gcc
 CXX=g++
 AS=powerpc64le-linux-gnu-as
 OBJCOPY=powerpc64le-linux-gnu-objcopy
-CFLAGS= -Iinclude -O -g3 -I/usr/include/python3.7m
+CFLAGS= -Iinclude -I../../pypowersim_wrapper -O -g3 -I/usr/include/python3.7m
 CXXFLAGS= -Iinclude -O -g3
 ASFLAGS= -mlibresoc -mregnames
 LDFLAGS=-lgtest -pthread -lpython3.7m
@@ -18,8 +17,6 @@ VP8_CFILES   = vp8_dct4x4_ref.c vp8_dct4x4_wrappers.c
 VPX_CFILES   = variance_ref.c  variancefuncs_svp64.c  variance_svp64_wrappers.c  vpx_mem.c
 VP8_CPPFILES = test_libvpx.cc  vp8_fdct4x4_test.cc
 VPX_CPPFILES = test_libvpx.cc  variance_test.cc
-EXAMPLEC     = pypowersim_wrapper_example.c
-EXAMPLEOBJ   = ${EXAMPLEC:.c=.o}
 VP8_OBJFILES = $(VP8_ASFILES:.s=.o) $(VP8_CFILES:.c=.o) $(VP8_CPPFILES:.cc=.o)
 VPX_OBJFILES = $(VPX_ASFILES:.s=.o) $(VPX_CFILES:.c=.o) $(VPX_CPPFILES:.cc=.o)
 
@@ -32,10 +29,8 @@ ${VP8TARGET}: ${VP8_OBJFILES}
 ${VPXTARGET}: ${VPX_OBJFILES}
 	${CXX} -o ${VPXTARGET} ${VPX_OBJFILES} ${LDFLAGS}
 
-${EXAMPLE}: ${EXAMPLEOBJ}
-
-all: ${VP8TARGET} ${VPXTARGET} ${EXAMPLE} ${BINFILES}
+all: ${VP8TARGET} ${VPXTARGET} ${BINFILES}
 
 .PHONY: clean
 clean:
-	rm -f ${VP8TARGET} ${VPXTARGET} ${VP8_OBJFILES} ${VPX_OBJFILES} ${BINFILES} ${EXAMPLE} ${EXAMPLEOBJ}
+	rm -f ${VP8TARGET} ${VPXTARGET} ${VP8_OBJFILES} ${VPX_OBJFILES} ${BINFILES}
