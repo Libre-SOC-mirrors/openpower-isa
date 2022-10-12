@@ -46,12 +46,21 @@ class DecoderTestCase(FHDLTestCase):
         lst = SVP64Asm(
             [
             "mtspr 9, 3",                   # move r3 to CTR
-            # loop starts here
+            "addi 0,0,0",                   # initialise r0 to zero
+            # chr-copy loop starts here:
+            #   for (i = 0; i < n && src[i] != '\0'; i++)
+            #        dest[i] = src[i];
             "setvl 1,0,%d,0,1,1" % maxvl,   # VL (and r1) = MIN(CTR,MAXVL=4)
             "sv.lbzu/pi *16, 1(10)",        # load VL bytes (update r10 addr)
             "sv.cmpi/ff=eq/vli *0,1,*16,0", # compare against zero, truncate VL
             "sv.stbu/pi *16, 1(12)",        # store VL bytes (update r12 addr)
             "sv.bc/all 0, *2, -0x1c",       # test CTR, stop if cmpi failed
+            # zeroing loop starts here:
+            #   for ( ; i < n; i++)
+            #       dest[i] = '\0';
+            "setvl 1,0,%d,0,1,1" % maxvl,   # VL (and r1) = MIN(CTR,MAXVL=4)
+            "sv.stbu/pi 0, 1(12)",          # store VL zeros (update r12 addr)
+            "sv.bc 16, *0, -0xc",           # test CTR, stop if cmpi failed
             ]
             )
         lst = list(lst)
@@ -75,13 +84,17 @@ class DecoderTestCase(FHDLTestCase):
         # now get the expected results: copy the string to the other address,
         # but terminate at first zero (strncpy, duh)
         expected_mem = deepcopy(initial_mem)
+        copyzeros = False
         strlen = 0
         for i, c in enumerate(tst_string):
-            strlen = i+1
             c = ord(c)
-            write_byte(expected_mem, 40+i, c)
+            if not copyzeros:
+                write_byte(expected_mem, 40+i, c)
+                strlen = i+1
+            else:
+                write_byte(expected_mem, 40+i, 0)
             if c == 0:
-                break
+                copyzeros = True
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=initial_mem,
@@ -102,7 +115,7 @@ class DecoderTestCase(FHDLTestCase):
             rounded = ((strlen+maxvl-1) // maxvl) * maxvl
             self.assertEqual(sim.gpr(10), SelectableInt(16+rounded, 64))
             # whereas reg 10 (the ST EA) is expected to be 40+strlen
-            self.assertEqual(sim.gpr(12), SelectableInt(40+strlen, 64))
+            self.assertEqual(sim.gpr(12), SelectableInt(40+len(tst_string), 64))
 
     def test_sv_load_store_postinc(self):
         """>>> lst = ["addi 20, 0, 0x0010",
