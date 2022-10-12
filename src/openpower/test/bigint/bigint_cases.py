@@ -228,28 +228,25 @@ class SVP64BigIntCases(TestAccumulatorBase):
 
         r18                   r17                   r16
         0x1234_0000_5678_0000 0x9ABC_0000_DEF0_0000 0x1357_0000_9BDF_0000 *
-                                                    r3 (scalar factor)
-                                                                 0x1_0001 +
-                                                    r4 (carry in)
-        r10 (scalar-add-in)                                        0xFEDC =
+        r3 (scalar factor)                                       0x1_0001 +
+        r4 (carry in)                                              0xFEDC =
         r18                   r17                   r16
         0x1234_5678_5678_9ABC 0x9ABC_DEF0_DEF0_1357 0x1357_9BDF_9BDF_FEDC
-        r4 (carry out)
-                       0x1234
+        r4 (carry out)                                             0x1234
         """
         prog = Program(list(SVP64Asm(["sv.maddedu *16,*16,3,4"])), False)
         gprs = [0] * 32
-        gprs[16] = 0x1357_0000_9BDF_0000
-        gprs[17] = 0x9ABC_0000_DEF0_0000
-        gprs[18] = 0x1234_0000_5678_0000
-        gprs[3] = 0x1_0001
-        gprs[4] = 0xFEDC
+        gprs[16] = 0x1357_0000_9BDF_0000        # vector...
+        gprs[17] = 0x9ABC_0000_DEF0_0000        # ...
+        gprs[18] = 0x1234_0000_5678_0000        # ... input
+        gprs[3] = 0x1_0001                      # scalar multiplier
+        gprs[4] = 0xFEDC                        # 64-bit carry-in
         svstate = SVP64State()
         svstate.vl = 3
         svstate.maxvl = 3
         e = ExpectedState(pc=8, int_regs=gprs)
-        e.intregs[16] = 0x1357_9BDF_9BDF_FEDC
-        e.intregs[17] = 0x9ABC_DEF0_DEF0_1357
-        e.intregs[18] = 0x1234_5678_5678_9ABC
-        e.intregs[4] = 0x1234
+        e.intregs[16] = 0x1357_9BDF_9BDF_FEDC  # vector...
+        e.intregs[17] = 0x9ABC_DEF0_DEF0_1357  # ...
+        e.intregs[18] = 0x1234_5678_5678_9ABC  # ... result
+        e.intregs[4] = 0x1234                  # 64-bit carry-out
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
