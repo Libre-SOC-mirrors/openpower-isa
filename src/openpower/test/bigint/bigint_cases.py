@@ -172,7 +172,7 @@ class SVP64BigIntCases(TestAccumulatorBase):
         e.intregs[17] = 0x8000_0000_0000_0002
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
-    def test_sv_bigint_shift_right_by_scalar(self):
+    def case_sv_bigint_shift_right_by_scalar(self):
         """performs a bigint shift-right by scalar.
 
         r18                   r17                   r16                      r3
@@ -194,7 +194,7 @@ class SVP64BigIntCases(TestAccumulatorBase):
         e.intregs[18] = 0x0000_0000_0500_0000
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
-    def test_sv_bigint_shift_left_by_scalar(self):
+    def case_sv_bigint_shift_left_by_scalar(self):
         """performs a bigint shift-left by scalar.
 
         because the result is moved down by one register there is no need
@@ -222,9 +222,10 @@ class SVP64BigIntCases(TestAccumulatorBase):
         e.intregs[17] = 0x0000_0000_0010_0023
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
-    def test_sv_bigint_mul_by_scalar(self):
+    def case_sv_bigint_mul_by_scalar(self):
         """performs a carry-rollover-vector-mul-with-add with a scalar,
-        using "RC" as a 64-bit carry
+        using "RC" as a 64-bit carry in/out.  matched with the
+        sv.divmod2du below
 
         r18                   r17                   r16
         0x1234_0000_5678_0000 0x9ABC_0000_DEF0_0000 0x1357_0000_9BDF_0000 *
@@ -249,4 +250,34 @@ class SVP64BigIntCases(TestAccumulatorBase):
         e.intregs[17] = 0x9ABC_DEF0_DEF0_1357  # ...
         e.intregs[18] = 0x1234_5678_5678_9ABC  # ... result
         e.intregs[4] = 0x1234                  # 64-bit carry-out
+        self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def case_sv_bigint_div_by_scalar(self):
+        """performs a carry-rollover-vector-divmod with a scalar,
+        using "RC" as a 64-bit carry.  matched with the sv.maddedu
+        above it is effectively the scalar-vector inverse
+
+        r18                   r17                   r16
+        0x1234_5678_5678_9ABC 0x9ABC_DEF0_DEF0_1357 0x1357_9BDF_9BDF_FEDC /
+        r3 (scalar factor)                                       0x1_0001 +
+        r4 (carry in at top-end)                            0x1234 << 192 =
+        r18                   r17                   r16
+        0x1234_0000_5678_0000 0x9ABC_0000_DEF0_0000 0x1357_0000_9BDF_0000 *
+        r4 (carry out i.e. scalar remainder)                       0xFEDC 
+        """
+        prog = Program(list(SVP64Asm(["sv.divmod2du/mrr *16,*16,3,4"])), False)
+        gprs = [0] * 32
+        gprs[16] = 0x1357_9BDF_9BDF_FEDC  # vector...
+        gprs[17] = 0x9ABC_DEF0_DEF0_1357  # ...
+        gprs[18] = 0x1234_5678_5678_9ABC  # ... input
+        gprs[3] = 0x1_0001                      # scalar multiplier
+        gprs[4] = 0x1234                  # 64-bit carry-in
+        svstate = SVP64State()
+        svstate.vl = 3
+        svstate.maxvl = 3
+        e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[16] = 0x1357_0000_9BDF_0000        # vector...
+        e.intregs[17] = 0x9ABC_0000_DEF0_0000        # ...
+        e.intregs[18] = 0x1234_0000_5678_0000        # ... result
+        e.intregs[4] = 0xFEDC                        # 64-bit carry-out
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
