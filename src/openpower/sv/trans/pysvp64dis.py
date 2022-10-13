@@ -1,7 +1,7 @@
 import argparse as _argparse
 import enum as _enum
 import sys as _sys
-import os
+import os as _os
 from io import BytesIO
 
 from openpower.decoder.power_enums import (
@@ -87,7 +87,7 @@ def main():
 
     # if logging requested do not disable it.
     if not args['log']:
-        os.environ['SILENCELOG'] = '1'
+        _os.environ['SILENCELOG'] = '1'
 
     # load instructions and dump them
     insns = load(**args)
