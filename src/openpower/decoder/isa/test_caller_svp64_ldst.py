@@ -60,7 +60,7 @@ class DecoderTestCase(FHDLTestCase):
             #       dest[i] = '\0';
             "setvl 1,0,%d,0,1,1" % maxvl,   # VL (and r1) = MIN(CTR,MAXVL=4)
             "sv.stbu/pi 0, 1(12)",          # store VL zeros (update r12 addr)
-            "sv.bc 16, *0, -0xc",           # test CTR, stop if cmpi failed
+            "sv.bc 16, *0, -0xc",           # decrement CTR by VL, stop at zero
             ]
             )
         lst = list(lst)
