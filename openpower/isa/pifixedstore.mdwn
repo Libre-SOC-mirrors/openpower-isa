@@ -115,7 +115,7 @@ Pseudo-code:
 
     EA <- (RA) + EXTS(DS || 0b00)
     ea <- (RA)
-    MEM(EA, 8) <- (RS)
+    MEM(ea, 8) <- (RS)
     RA <- EA
 
 Special Registers Altered:
