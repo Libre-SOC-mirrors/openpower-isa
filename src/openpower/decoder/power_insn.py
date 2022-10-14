@@ -2243,6 +2243,8 @@ class PPCDatabase:
         db = {}
         matches = (exact_match, LK_match, AA_match, Rc_match)
         for (name, _) in mdwndb:
+            if name.startswith("sv."):
+                continue
             alias = None
             for match in matches:
                 alias = match(name)
