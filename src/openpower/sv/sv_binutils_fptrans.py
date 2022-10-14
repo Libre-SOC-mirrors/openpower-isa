@@ -205,6 +205,10 @@ if __name__ == "__main__":
         print("Disassembly of section \\.text:")
         print("0+ <\.text>:")
 
-    for subgenerator in map(generator, entries):
-        for line in subgenerator:
+    if mode in {Mode.ASM, Mode.DIS}:
+        for subgenerator in map(generator, entries):
+            for line in subgenerator:
+                print(line)
+    else:
+        for line in map(generator, entries):
             print(line)
