@@ -52,7 +52,7 @@ int cdef_find_dir_svp64(const pixel *img, const ptrdiff_t stride,
     pypowersim_state_t *state = pypowersim_prepare();
 
     // Change the relevant elements, mandatory: body
-    state->binary = PyBytes_FromStringAndSize((const char *)&cdef_find_dir_svp64_real, 1000);
+    state->binary = PyBytes_FromStringAndSize((const char *)&cdef_find_dir_svp64_real, 100000);
 
     // Set GPR #3 to the img pointer
     PyObject *img_address = PyLong_FromUnsignedLongLong(img_svp64);
@@ -70,8 +70,8 @@ int cdef_find_dir_svp64(const pixel *img, const ptrdiff_t stride,
         val |= ((uint64_t)(img[j + 1]) & 0xffff) << 16;
         val |= ((uint64_t)(img[j + 2]) & 0xffff) << 32;
         val |= ((uint64_t)(img[j + 3]) & 0xffff) << 48;
-        printf("img: %p -> %04x %04x %04x %04x\t val: %016lx -> %p\n", img + j, (uint16_t)img[j + 0], (uint16_t)img[j + 1], (uint16_t)img[j + 2], (uint16_t)img[j + 3], val, img_svp64 + j*2);
-/*
+/*        printf("img: %p -> %04x %04x %04x %04x\t val: %016lx -> %p\n", img + j, (uint16_t)img[j + 0], (uint16_t)img[j + 1], (uint16_t)img[j + 2], (uint16_t)img[j + 3], val, img_svp64 + j*2);
+
         uint64_t val = (uint64_t)(img[0]) & 0xff;
         val |= ((uint64_t)(img[1]) & 0xff) << 8;
         val |= ((uint64_t)(img[2]) & 0xff) << 16;
@@ -90,7 +90,7 @@ int cdef_find_dir_svp64(const pixel *img, const ptrdiff_t stride,
 
     // Set GPR #5 to the var pointer, and clear the address
     PyObject *var_address = PyLong_FromUnsignedLongLong(var_svp64);
-    PyList_SetItem(state->initial_regs, 5, img_address);
+    PyList_SetItem(state->initial_regs, 5, var_address);
     {
       PyObject *svp64_address = PyLong_FromUnsignedLongLong(var_svp64);
       PyObject *word = PyLong_FromUnsignedLongLong(0);
