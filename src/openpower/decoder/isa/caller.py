@@ -1734,13 +1734,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             ins_name = 'sv.%s' % ins_name
 
         # ld-immediate-with-pi mode redirects to ld-with-postinc
-        sv_mode = yield self.dec2.rm_dec.sv_mode
-        is_ldst_imm = sv_mode == SVMode.LDST_IMM.value
         ldst_imm_postinc = False
-        if is_ldst_imm and 'u' in ins_name and self.is_svp64_mode:
-            ins_name = ins_name.replace("u", "up")
-            ldst_imm_postinc = True
-            log("   enable ld/st postinc", ins_name)
+        if 'u' in ins_name and self.is_svp64_mode:
+            ldst_pi = yield self.dec2.rm_dec.ldst_postinc
+            if ldst_pi:
+                ins_name = ins_name.replace("u", "up")
+                ldst_imm_postinc = True
+                log("   enable ld/st postinc", ins_name)
 
         log("   post-processed name", dotstrp, ins_name, asmop)
 

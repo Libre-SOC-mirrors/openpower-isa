@@ -107,6 +107,8 @@ class SVP64RMModeDecode(Elaboratable):
         self.cr_2bit_in = Signal()  # bottom 2 bits of CR field
         self.ldst_ra_vec = Signal() # set when RA is vec, indicate Index mode
         self.ldst_imz_in = Signal() # set when LD/ST immediate is zero
+        self.ldst_postinc = Signal() # set when LD/ST immediate post-inc set
+        self.ldst_ffirst = Signal() # set when LD/ST immediate fail-first set
 
         ##### outputs #####
 
@@ -151,9 +153,11 @@ class SVP64RMModeDecode(Elaboratable):
         is_ldst = Signal()
         is_bc = Signal()
         is_cr = Signal()
+        is_ldstimm = Signal()
         comb += is_ldst.eq(self.fn_in == Function.LDST)
         comb += is_bc.eq(self.fn_in == Function.BRANCH) # XXX TODO use SV Mode
         comb += is_cr.eq(self.sv_mode == SVMode.CROP.value)
+        comb += is_ldstimm.eq(self.sv_mode == SVMode.LDST_IMM.value)
         mode2 = sel(m, mode, SVP64MODE.MOD2)
         cr = sel(m, mode, SVP64MODE.CR)
 
@@ -195,7 +199,11 @@ class SVP64RMModeDecode(Elaboratable):
             # combined arith / ldst decoding due to similarity
             with m.Switch(mode2):
                 with m.Case(0): # needs further decoding (LDST no mapreduce)
-                    with m.If(is_ldst):
+                    with m.If(is_ldstimm & mode[SVP64MODE.LDI_POST]):
+                        comb += self.mode.eq(SVP64RMMode.NORMAL)
+                        comb += self.ldst_postinc.eq(mode[SVP64MODE.LDI_PI])
+                        comb += self.ldst_ffirst.eq(mode[SVP64MODE.LDI_FF])
+                    with m.Elif(is_ldst):
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
                     with m.Elif(mode[SVP64MODE.REDUCE]):
                         comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
@@ -218,6 +226,10 @@ class SVP64RMModeDecode(Elaboratable):
             # extract zeroing
             with m.Switch(mode2):
                 with m.Case(0): # needs further decoding (LDST no mapreduce)
+                    with m.If(is_ldstimm &
+                                ~(self.ldst_postinc | self.ldst_ffirst)):
+                        # no predicate-zeroing in fail-first or postinc
+                        pass
                     with m.If(is_ldst):
                         # XXX TODO, work out which of these is most
                         # appropriate set both? or just the one?
