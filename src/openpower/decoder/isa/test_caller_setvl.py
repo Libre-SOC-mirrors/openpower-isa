@@ -977,6 +977,64 @@ class DecoderTestCase(FHDLTestCase):
             # check registers as expected
             self._check_regs(sim, expected_regs)
 
+    def test_svstep_max_idx(self):
+        """tests svstep with a branch, get the index of the greatest element.
+        uses sv.cmp and sv.isel as a temporary substitute for sv.max,
+        but also uses the same trick when getting the srcstep.
+        """
+        lst = SVP64Asm(["setvl 0, 0, 5, 1, 1, 1",
+                        'sv.cmp 0, 1, *4, 14', # r8 contains the temp
+                        'sv.isel 14,*4,14,1', # copy if cmp was greater
+                        "svstep. 12, 6, 0", # get srcstep
+                        'sv.isel 10,12,10,1', # copy if cmp was greater
+                        "svstep. 0, 1, 0", # svstep (Rc=1)
+                        "bc 6, 3, -0x24" # branch to cmp
+                        ])
+        lst = list(lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[4] = 0x2
+        initial_regs[5] = 0x1
+        initial_regs[6] = 0x7
+        initial_regs[7] = 0x9
+        initial_regs[8] = 0x3
+
+        # copy before running
+        expected_regs = deepcopy(initial_regs)
+        idx = -1
+        maxval = -1
+        for i in range(5):
+            if initial_regs[4+i] > maxval:
+                maxval = initial_regs[4+i]
+                idx = i
+        expected_regs[14] = maxval  # largest number
+        expected_regs[12] = idx     # index of largest
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs)
+            print ("SVSTATE after", bin(sim.svstate.asint()))
+            print ("        vl", bin(sim.svstate.vl))
+            print ("        mvl", bin(sim.svstate.maxvl))
+            print ("    srcstep", bin(sim.svstate.srcstep))
+            print ("    dststep", bin(sim.svstate.dststep))
+            print ("     vfirst", bin(sim.svstate. vfirst))
+            self.assertEqual(sim.svstate.vl, 5)
+            self.assertEqual(sim.svstate.maxvl, 5)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+            # when end reached, vertical mode is exited
+            self.assertEqual(sim.svstate.vfirst, 0)
+            CR0 = sim.crl[0]
+            print("      CR0", bin(CR0.get_range().value))
+            self.assertEqual(CR0[CRFields.EQ], 0)
+            self.assertEqual(CR0[CRFields.LT], 0)
+            self.assertEqual(CR0[CRFields.GT], 0)
+            self.assertEqual(CR0[CRFields.SO], 1)
+
+            # check registers as expected
+            self._check_regs(sim, expected_regs)
+
     def test_svremap(self):
         """svremap, see if values get set
         """
