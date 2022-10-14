@@ -134,31 +134,30 @@ def opcodes(entry):
     return f"{{{string}}},"
 
 
-def asm(entry, binutils=True, regex=False):
+def asm(entry, binutils=False, regex=False):
     operands = tuple(entry.dynamic_operands)
     for (idx, operand) in enumerate(operands):
         values = []
         for each in operands:
-            if binutils and each.name in ("FRT", "FRA", "FRB"):
-                values.append("f0")
-            elif binutils and each.name in ("RB"):
+            if binutils and each.name in ("RT", "RA", "RB"):
                 values.append("r0")
             else:
                 values.append("0")
         value = str((1 << len(operand.span)) - 1)
-        if binutils and operand.name in ("FRT", "FRA", "FRB"):
-            value = f"f{value}"
-        elif binutils and operand.name in ("RB"):
+        if binutils and operand.name in ("RT", "RA", "RB"):
             value = f"r{value}"
         values[idx] = value
-        return f"{entry.name} {'+' if regex else ''}{','.join(values)}"
+        sep = "\s+" if regex else " "
+        yield f"{entry.name}{sep}{','.join(values)}"
 
 
 def dis(entry, binutils=True):
     def objdump(byte):
         return f"{byte:02x}"
 
-    for dynamic_operand in entry.dynamic_operands:
+    asm_plain = tuple(asm(entry, binutils=binutils, regex=False))
+    asm_regex = tuple(asm(entry, binutils=binutils, regex=True))
+    for (idx, dynamic_operand) in enumerate(entry.dynamic_operands):
         insn = _WordInstruction.integer(value=0)
         for static_operand in entry.static_operands:
             span = static_operand.span
@@ -168,10 +167,9 @@ def dis(entry, binutils=True):
         if binutils:
             big = " ".join(map(objdump, insn.bytes(byteorder="big")))
             little = " ".join(map(objdump, insn.bytes(byteorder="little")))
-            desc = asm(entry, binutils=binutils, regex=True)
-            return f".*:\t({big}|{little}) \t{desc}"
+            yield f".*:\s+({big}|{little})\s+{asm_regex[idx]}"
         else:
-            return asm(entry, binutils=binutils, regex=False)
+            yield asm_plain[idx]
 
 
 class Mode(_enum.Enum):
@@ -207,5 +205,6 @@ if __name__ == "__main__":
         print("Disassembly of section \\.text:")
         print("0+ <\.text>:")
 
-    for line in map(generator, entries):
-        print(line)
+    for subgenerator in map(generator, entries):
+        for line in subgenerator:
+            print(line)

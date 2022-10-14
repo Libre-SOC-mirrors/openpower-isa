@@ -177,7 +177,11 @@ class SVSTATETestCase(unittest.TestCase):
         db = Database(find_wiki_dir())
         entries = sorted(sv_binutils_fptrans.collect(db))
         dis = lambda entry: sv_binutils_fptrans.dis(entry, binutils=False)
-        self._do_tst(list(map(dis, entries)))
+        lst = []
+        for generator in map(dis, entries):
+            for line in generator:
+                lst.append(line)
+        self._do_tst(lst)
 
     def test_10_vec(self):
         expected = [
