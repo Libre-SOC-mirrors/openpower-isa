@@ -626,7 +626,7 @@ def get_idx_out2(dec2, name, ewmode=False):
     o_isvec = yield dec2.o2_isvec
     ismap = yield from get_out2_map(dec2, name)
     if ismap:
-        log("get_idx_out2", name, out_sel, out, out_ok, o_isvec)
+        log("get_idx_out2", name, out_sel, out, o_isvec)
         return out, o_isvec
     return None, False
 
