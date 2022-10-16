@@ -383,7 +383,58 @@ def get_predcr(crl, mask, vl):
 
 
 # TODO, really should just be using PowerDecoder2
+def get_idx_map(dec2, name):
+    op = dec2.dec.op
+    in1_sel = yield op.in1_sel
+    in2_sel = yield op.in2_sel
+    in3_sel = yield op.in3_sel
+    in1 = yield dec2.e.read_reg1.data
+    # identify which regnames map to in1/2/3
+    if name == 'RA' or name == 'RA_OR_ZERO':
+        if (in1_sel == In1Sel.RA.value or
+                (in1_sel == In1Sel.RA_OR_ZERO.value and in1 != 0)):
+            return 1
+        if in1_sel == In1Sel.RA_OR_ZERO.value:
+            return 1
+    elif name == 'RB':
+        if in2_sel == In2Sel.RB.value:
+            return 2
+        if in3_sel == In3Sel.RB.value:
+            return 3
+    # XXX TODO, RC doesn't exist yet!
+    elif name == 'RC':
+        if in3_sel == In3Sel.RC.value:
+            return 3
+        assert False, "RC does not exist yet"
+    elif name in ['EA', 'RS']:
+        if in1_sel == In1Sel.RS.value:
+            return 1
+        if in2_sel == In2Sel.RS.value:
+            return 2
+        if in3_sel == In3Sel.RS.value:
+            return 3
+    elif name == 'FRA':
+        if in1_sel == In1Sel.FRA.value:
+            return 1
+    elif name == 'FRB':
+        if in2_sel == In2Sel.FRB.value:
+            return 2
+    elif name == 'FRC':
+        if in3_sel == In3Sel.FRC.value:
+            return 3
+    elif name == 'FRS':
+        if in1_sel == In1Sel.FRS.value:
+            return 1
+        if in3_sel == In3Sel.FRS.value:
+            return 3
+    return None
+
+
+# TODO, really should just be using PowerDecoder2
 def get_idx_in(dec2, name, ewmode=False):
+    idx = yield from get_idx_map(dec2, name)
+    if idx is None:
+        return None, False
     op = dec2.dec.op
     in1_sel = yield op.in1_sel
     in2_sel = yield op.in2_sel
@@ -418,44 +469,12 @@ def get_idx_in(dec2, name, ewmode=False):
         in2, in2_isvec)
     log("get_idx_in FRC in3", name, in3_sel, In3Sel.FRC.value,
         in3, in3_isvec)
-    # identify which regnames map to in1/2/3
-    if name == 'RA' or name == 'RA_OR_ZERO':
-        if (in1_sel == In1Sel.RA.value or
-                (in1_sel == In1Sel.RA_OR_ZERO.value and in1 != 0)):
-            return in1, in1_isvec
-        if in1_sel == In1Sel.RA_OR_ZERO.value:
-            return in1, in1_isvec
-    elif name == 'RB':
-        if in2_sel == In2Sel.RB.value:
-            return in2, in2_isvec
-        if in3_sel == In3Sel.RB.value:
-            return in3, in3_isvec
-    # XXX TODO, RC doesn't exist yet!
-    elif name == 'RC':
-        if in3_sel == In3Sel.RC.value:
-            return in3, in3_isvec
-        assert False, "RC does not exist yet"
-    elif name == 'RS':
-        if in1_sel == In1Sel.RS.value:
-            return in1, in1_isvec
-        if in2_sel == In2Sel.RS.value:
-            return in2, in2_isvec
-        if in3_sel == In3Sel.RS.value:
-            return in3, in3_isvec
-    elif name == 'FRA':
-        if in1_sel == In1Sel.FRA.value:
-            return in1, in1_isvec
-    elif name == 'FRB':
-        if in2_sel == In2Sel.FRB.value:
-            return in2, in2_isvec
-    elif name == 'FRC':
-        if in3_sel == In3Sel.FRC.value:
-            return in3, in3_isvec
-    elif name == 'FRS':
-        if in1_sel == In1Sel.FRS.value:
-            return in1, in1_isvec
-        if in3_sel == In3Sel.FRS.value:
-            return in3, in3_isvec
+    if idx == 1:
+        return in1, in1_isvec
+    if idx == 2:
+        return in2, in2_isvec
+    if idx == 3:
+        return in3, in3_isvec
     return None, False
 
 
@@ -2168,7 +2187,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             yield dstep.eq(remap_idx)
 
             # debug printout info
-            rremaps.append((shape.mode, i, rnames[i], shape_idx, remap_idx))
+            rremaps.append((shape.mode, hex(shape.value),
+                            i, rnames[i], shape_idx, remap_idx))
         for x in rremaps:
             log("shape remap", x)
 
