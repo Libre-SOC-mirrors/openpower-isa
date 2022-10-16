@@ -579,6 +579,40 @@ def get_idx_out(dec2, name, ewmode=False):
 
 
 # TODO, really should just be using PowerDecoder2
+def get_out2_map(dec2, name):
+    # check first if register is activated for write
+    op = dec2.dec.op
+    out_sel = yield op.out_sel
+    out = yield dec2.e.write_ea.data
+    out_ok = yield dec2.e.write_ea.ok
+    if not out_ok:
+        return False
+
+    if name in ['EA', 'RA']:
+        if hasattr(op, "upd"):
+            # update mode LD/ST uses read-reg A also as an output
+            upd = yield op.upd
+            log("get_idx_out2", upd, LDSTMode.update.value,
+                out_sel, OutSel.RA.value,
+                out)
+            if upd == LDSTMode.update.value:
+                return True
+    if name == 'RS':
+        fft_en = yield dec2.implicit_rs
+        if fft_en:
+            log("get_idx_out2", out_sel, OutSel.RS.value,
+                out)
+            return True
+    if name == 'FRS':
+        fft_en = yield dec2.implicit_rs
+        if fft_en:
+            log("get_idx_out2", out_sel, OutSel.FRS.value,
+                out)
+            return True
+    return False
+
+
+# TODO, really should just be using PowerDecoder2
 def get_idx_out2(dec2, name, ewmode=False):
     # check first if register is activated for write
     op = dec2.dec.op
@@ -589,32 +623,9 @@ def get_idx_out2(dec2, name, ewmode=False):
         base = yield dec2.e.write_ea.base
         out = (out, base, offs)
     o_isvec = yield dec2.o2_isvec
-    out_ok = yield dec2.e.write_ea.ok
-    log("get_idx_out2", name, out_sel, out, out_ok, o_isvec)
-    if not out_ok:
-        return None, False
-
-    if name == 'RA':
-        if hasattr(op, "upd"):
-            # update mode LD/ST uses read-reg A also as an output
-            upd = yield op.upd
-            log("get_idx_out2", upd, LDSTMode.update.value,
-                out_sel, OutSel.RA.value,
-                out, o_isvec)
-            if upd == LDSTMode.update.value:
-                return out, o_isvec
-    if name == 'RS':
-        fft_en = yield dec2.implicit_rs
-        if fft_en:
-            log("get_idx_out2", out_sel, OutSel.RS.value,
-                out, o_isvec)
-            return out, o_isvec
-    if name == 'FRS':
-        fft_en = yield dec2.implicit_rs
-        if fft_en:
-            log("get_idx_out2", out_sel, OutSel.FRS.value,
-                out, o_isvec)
-            return out, o_isvec
+    if get_out2_map(dec2, name):
+        log("get_idx_out2", name, out_sel, out, out_ok, o_isvec)
+        return out, o_isvec
     return None, False
 
 
