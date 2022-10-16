@@ -533,6 +533,33 @@ def get_cr_out(dec2, name):
 
 
 # TODO, really should just be using PowerDecoder2
+def get_out_map(dec2, name):
+    op = dec2.dec.op
+    out_sel = yield op.out_sel
+    # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
+    out = yield dec2.e.write_reg.data
+    # identify which regnames map to out / o2
+    if name == 'RA':
+        if out_sel == OutSel.RA.value:
+            return True
+    elif name == 'RT':
+        if out_sel == OutSel.RT.value:
+            return True
+        if out_sel == OutSel.RT_OR_ZERO.value and out != 0:
+            return True
+    elif name == 'RT_OR_ZERO':
+        if out_sel == OutSel.RT_OR_ZERO.value:
+            return True
+    elif name == 'FRA':
+        if out_sel == OutSel.FRA.value:
+            return True
+    elif name == 'FRT':
+        if out_sel == OutSel.FRT.value:
+            return True
+    return False
+
+
+# TODO, really should just be using PowerDecoder2
 def get_idx_out(dec2, name, ewmode=False):
     op = dec2.dec.op
     out_sel = yield op.out_sel
@@ -544,35 +571,9 @@ def get_idx_out(dec2, name, ewmode=False):
         base = yield dec2.e.write_reg.base
         out = (out, base, offs)
     # identify which regnames map to out / o2
-    if name == 'BF':
-        log("get_idx_out", out_sel, out, o_isvec)
-    if name == 'RA':
-        log("get_idx_out", out_sel, OutSel.RA.value, out, o_isvec)
-        if out_sel == OutSel.RA.value:
-            return out, o_isvec
-    elif name == 'RT':
-        log("get_idx_out", out_sel, OutSel.RT.value,
-            OutSel.RT_OR_ZERO.value, out, o_isvec,
-            dec2.dec.RT)
-        if out_sel == OutSel.RT.value:
-            return out, o_isvec
-        if out_sel == OutSel.RT_OR_ZERO.value and out != 0:
-            return out, o_isvec
-    elif name == 'RT_OR_ZERO':
-        log("get_idx_out", out_sel, OutSel.RT.value,
-            OutSel.RT_OR_ZERO.value, out, o_isvec,
-            dec2.dec.RT)
-        if out_sel == OutSel.RT_OR_ZERO.value:
-            return out, o_isvec
-    elif name == 'FRA':
-        log("get_idx_out", out_sel, OutSel.FRA.value, out, o_isvec)
-        if out_sel == OutSel.FRA.value:
-            return out, o_isvec
-    elif name == 'FRT':
-        log("get_idx_out", out_sel, OutSel.FRT.value,
-            OutSel.FRT.value, out, o_isvec)
-        if out_sel == OutSel.FRT.value:
-            return out, o_isvec
+    if get_out_map(dec2, name):
+        log("get_idx_out", name, out_sel, out, o_isvec)
+        return out, o_isvec
     log("get_idx_out not found", name, out_sel, out, o_isvec)
     return None, False
 
