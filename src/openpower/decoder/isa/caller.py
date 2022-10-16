@@ -571,7 +571,8 @@ def get_idx_out(dec2, name, ewmode=False):
         base = yield dec2.e.write_reg.base
         out = (out, base, offs)
     # identify which regnames map to out / o2
-    if get_out_map(dec2, name):
+    ismap = yield from get_out_map(dec2, name)
+    if ismap:
         log("get_idx_out", name, out_sel, out, o_isvec)
         return out, o_isvec
     log("get_idx_out not found", name, out_sel, out, o_isvec)
@@ -623,7 +624,8 @@ def get_idx_out2(dec2, name, ewmode=False):
         base = yield dec2.e.write_ea.base
         out = (out, base, offs)
     o_isvec = yield dec2.o2_isvec
-    if get_out2_map(dec2, name):
+    ismap = yield from get_out2_map(dec2, name)
+    if ismap:
         log("get_idx_out2", name, out_sel, out, out_ok, o_isvec)
         return out, o_isvec
     return None, False
