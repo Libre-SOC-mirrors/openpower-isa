@@ -157,7 +157,7 @@ Special Registers Altered:
 X-Form
 
 * cprop RT,RA,RB (Rc=0)
-* cprop RT,RA,RB (Rc=1)
+* cprop. RT,RA,RB (Rc=1)
 
 Pseudo-code:
 
