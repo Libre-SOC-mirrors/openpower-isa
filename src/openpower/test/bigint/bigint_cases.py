@@ -252,6 +252,20 @@ class SVP64BigIntCases(TestAccumulatorBase):
         e.intregs[4] = 0x1234                  # 64-bit carry-out
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
+    def case_sv_bigint_scalar_maddedu(self):
+        prog = Program(list(SVP64Asm(["sv.maddedu 6,5,3,4"])), False)
+        gprs = [0] * 32
+        gprs[5] = 0x1357_0000_9BDF_0000        # scalar input
+        gprs[3] = 0x1_0001                      # scalar multiplier
+        gprs[4] = 0xFEDC                        # 64-bit carry-in
+        svstate = SVP64State()
+        svstate.vl = 16  # detect writing to RT+MAXVL or RT+1 rather than RC
+        svstate.maxvl = 16
+        e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[6] = 0x1357_9BDF_9BDF_FEDC  # scalar output
+        e.intregs[4] = 0x1357                  # 64-bit carry-out
+        self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
     def case_sv_bigint_div_by_scalar(self):
         """performs a carry-rollover-vector-divmod with a scalar,
         using "RC" as a 64-bit carry.  matched with the sv.maddedu
