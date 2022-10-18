@@ -19,6 +19,8 @@
 /fpmove.py
 /fpstore.py
 /fptrans.py
+/pifixedload.py
+/pifixedstore.py
 /sprset.py
 /stringldst.py
 /system.py
