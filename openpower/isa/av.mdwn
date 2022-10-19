@@ -174,7 +174,7 @@ Special Registers Altered:
 
 BM2-Form
 
-* bmask  RT,RA,RB,bm
+* bmask  RT,RA,RB,bm,L
 
 Pseudo-code:
 
