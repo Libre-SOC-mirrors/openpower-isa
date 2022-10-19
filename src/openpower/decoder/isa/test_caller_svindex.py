@@ -526,7 +526,7 @@ class SVSTATETestCase(FHDLTestCase):
             print (sim.gpr.dump())
             self._check_regs(sim, expected_regs)
             self.assertEqual(sim.svstate.RMpst, 1) # mm=1 so persist=1
-            self.assertEqual(sim.svstate.SVme, 0b10010) # RS and RB active
+            self.assertEqual(sim.svstate.SVme, 0b00110) # RS and RB active
             # rmm is 0b00001 which means mi0=0 and all others inactive (0)
             self.assertEqual(sim.svstate.mi0, 0) # RS
             self.assertEqual(sim.svstate.mi1, 1) # RB

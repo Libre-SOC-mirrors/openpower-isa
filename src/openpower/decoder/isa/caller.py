@@ -405,7 +405,6 @@ def get_idx_map(dec2, name):
     elif name == 'RC':
         if in3_sel == In3Sel.RC.value:
             return 3
-        assert False, "RC does not exist yet"
     elif name in ['EA', 'RS']:
         if in1_sel == In1Sel.RS.value:
             return 1
@@ -2181,12 +2180,25 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         mi2 = self.svstate.mi2
         mo0 = self.svstate.mo0
         mo1 = self.svstate.mo1
-        steps = [(self.dec2.in1_step, mi0),  # RA
-                 (self.dec2.in2_step, mi1),  # RB
-                 (self.dec2.in3_step, mi2),  # RC
-                 (self.dec2.o_step, mo0),   # RT
-                 (self.dec2.o2_step, mo1),   # EA
+        steps = [[self.dec2.in1_step,  mi0],  # RA
+                 [self.dec2.in2_step,  mi1],  # RB
+                 [self.dec2.in3_step,  mi2],  # RC
+                 [self.dec2.o_step,  mo0],   # RT
+                 [self.dec2.o2_step,  mo1],   # EA
                  ]
+        if False: # TODO
+            rnames = ['RA', 'RB', 'RC', 'RT', 'RS']
+            for i, reg in enumerate(rnames):
+                idx = yield from get_idx_map(self.dec2, reg)
+                if idx is None:
+                    idx = yield from get_idx_map(self.dec2, "F"+reg)
+                if idx == 1:  # RA
+                    steps[i][0] = self.dec2.in1_step
+                elif idx == 2: # RB
+                    steps[i][0] = self.dec2.in2_step
+                elif idx == 3: # RC
+                    steps[i][0] = self.dec2.in3_step
+                log("remap step", i, reg, idx, steps[i][1])
         remap_idxs = self.remap_idxs
         rremaps = []
         # now cross-index the required SHAPE for each of 3-in 2-out regs
@@ -2198,10 +2210,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             if shape.value == 0x0:
                 continue
             # now set the actual requested step to the current index
-            yield dstep.eq(remap_idx)
+            if dstep is not None:
+                yield dstep.eq(remap_idx)
 
             # debug printout info
-            rremaps.append((shape.mode, hex(shape.value),
+            rremaps.append((shape.mode, hex(shape.value), dstep,
                             i, rnames[i], shape_idx, remap_idx))
         for x in rremaps:
             log("shape remap", x)
