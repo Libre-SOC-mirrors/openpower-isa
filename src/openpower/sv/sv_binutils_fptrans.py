@@ -139,12 +139,16 @@ def asm(entry, binutils=False, regex=False):
     for (idx, operand) in enumerate(operands):
         values = []
         for each in operands:
-            if binutils and each.name in ("RT", "RA", "RB"):
+            if binutils and each.name in ("FRT", "FRA", "FRB"):
+                values.append("f0")
+            elif binutils and each.name in ("RT", "RA", "RB"):
                 values.append("r0")
             else:
                 values.append("0")
         value = str((1 << len(operand.span)) - 1)
-        if binutils and operand.name in ("RT", "RA", "RB"):
+        if binutils and operand.name in ("FRT", "FRA", "FRB"):
+            value = f"f{value}"
+        elif binutils and operand.name in ("RT", "RA", "RB"):
             value = f"r{value}"
         values[idx] = value
         sep = "\s+" if regex else " "
