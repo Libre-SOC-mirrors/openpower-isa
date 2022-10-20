@@ -546,11 +546,13 @@ class SVSTATETestCase(FHDLTestCase):
         rlwnm r2, r2, r3, 0, 31   rlwnm RA,RS,RB,MB,ME (Rc=0)
         """
         isa = SVP64Asm([
+            # set up VL=32 vertical-first, and SVSHAPEs 0-2
             'setvl 17, 17, 32, 1, 1, 1',     # vertical-first
             'svindex 11, 0, 1, 3, 0, 1, 0', # SVSHAPE0, a
             'svindex 15, 1, 1, 3, 0, 1, 0', # SVSHAPE1, b
             'svindex 19, 2, 1, 3, 0, 1, 0', # SVSHAPE2, c
             'svindex 21, 3, 4, 3, 0, 1, 0', # SVSHAPE3, shift amount, mod 4
+            # inner loop begins here. add-xor-rotl32 with remap, step, branch
             'svremap 31, 1, 0, 0, 0, 0, 0', # RA=1, RB=0, RT=0 (0b01011)
             'sv.add/w=32 *0, *0, *0',
             'svremap 31, 2, 0, 2, 2, 0, 0', # RA=2, RB=0, RS=2 (0b00111)
