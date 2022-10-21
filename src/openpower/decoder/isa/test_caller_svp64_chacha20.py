@@ -102,6 +102,14 @@ class SVSTATETestCase(FHDLTestCase):
 
         RA, RB, RS and RT are set up via Indexing to perform the *individual*
         add/xor/rotl32 operations (with elwidth=32)
+
+        the inner loop uses "svstep." which detects src/dst-step reaching
+        the end of the loop, setting CR0.eq=1.  no need for an additional
+        counter-register-with-a-decrement.  this has the side-effect of
+        freeing up CTR for use as a straight decrement-counter.
+
+        both loops are 100% deterministic meaning that there should be
+        *ZERO* branch-prediction misses, obviating a need for loop-unrolling.
         """
 
         nrounds = 2 # should be 10 for full algorithm
@@ -127,7 +135,8 @@ class SVSTATETestCase(FHDLTestCase):
             'sv.rldcl/w=32 *0, *0, *18, 0',
             'svstep. 16, 1, 0',              # step to next in-regs element
             'bc 6, 3, -0x28',               # svstep. Rc=1 loop-end-condition?
-            'bc 16, 0, -0x30',              # bdnz to the outer loop setvl
+            # inner-loop done: outer loop standard CTR-decrement to setvl again
+            'bc 16, 0, -0x30',
                        ])
         lst = list(isa)
         print ("listing", lst)
