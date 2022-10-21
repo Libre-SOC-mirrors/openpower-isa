@@ -105,6 +105,38 @@ REG_SORT_ORDER = {
 fregs = ['FRA', 'FRB', 'FRC', 'FRS', 'FRT']
 
 
+def get_masked_reg(regs, base, offs, ew_bits):
+    # rrrright.  start by breaking down into row/col, based on elwidth
+    gpr_offs = offs // (64//ew_bits)
+    gpr_col = offs % (64//ew_bits)
+    # compute the mask based on ew_bits
+    mask = (1<<ew_bits)-1
+    # now select the 64-bit register, but get its value (easier)
+    val = regs[base+gpr_offs]
+    # now mask out the bit we don't want
+    val = val & ~(mask << (gpr_col*ew_bits))
+    # then return the bits we want, shifted down
+    return val >> (gpr_col*ew_bits)
+
+
+def set_masked_reg(regs, base, offs, ew_bits, value):
+    # rrrright.  start by breaking down into row/col, based on elwidth
+    gpr_offs = offs // (64//ew_bits)
+    gpr_col = offs % (64//ew_bits)
+    # compute the mask based on ew_bits
+    mask = (1<<ew_bits)-1
+    # now select the 64-bit register, but get its value (easier)
+    val = regs[base+gpr_offs]
+    # now mask out the bit we don't want
+    val = val & ~(mask << (gpr_col*ew_bits))
+    # then wipe the bit we don't want from the value
+    value = value & mask
+    # OR the new value in, shifted up
+    val |= value << (gpr_col*ew_bits)
+    regs[base+gpr_offs] = val
+
+
+
 def create_args(reglist, extra=None):
     retval = list(OrderedSet(reglist))
     retval.sort(key=lambda reg: REG_SORT_ORDER.get(reg, 0))
