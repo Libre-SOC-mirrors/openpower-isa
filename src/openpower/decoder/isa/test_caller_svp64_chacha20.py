@@ -97,25 +97,26 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64),
             "GPR %d %x expected %x" % (i, sim.gpr(i).value, expected[i]))
 
-    def test_1_sv_index_rot32(self):
-        """sets VL=8 (via SVSTATE) then does modulo 4 svindex, and a rotate.
-        RA is re-mapped via Indexing,
-        RB is re-mapped via different Indexing,
+    def test_1_sv_chacha20_main_rounds(self):
+        """chacha20 main rounds
 
-        svremap RT=0,RA=1,RB=0
-        add r0, r1, r0            RT, RA, RB
-        svremap RS=2,RA=2,RB=0    # RB stays = 0
-        xor r2, r2, r0            RA, RS, RB
-        svremap RS=2,RA=2,RB=3    # RA stays = 2
-        rlwnm r2, r2, r3, 0, 31   rlwnm RA,RS,RB,MB,ME (Rc=0)
+        RA, RB, RS and RT are set up via Indexing to perform the *individual*
+        add/xor/rotl32 operations (with elwidth=32)
         """
+
+        nrounds = 2 # should be 10 for full algorithm
+
         isa = SVP64Asm([
             # set up VL=32 vertical-first, and SVSHAPEs 0-2
-            'setvl 0, 0, 32, 1, 0, 1',      # vertical-first, set MAXVL
+            'setvl 17, 0, 32, 1, 0, 1',    # vertical-first, set MAXVL (and r17)
             'svindex 11, 0, 1, 3, 0, 1, 0', # SVSHAPE0, a
             'svindex 15, 1, 1, 3, 0, 1, 0', # SVSHAPE1, b
             'svindex 19, 2, 1, 3, 0, 1, 0', # SVSHAPE2, c
             'svindex 21, 3, 4, 3, 0, 1, 0', # SVSHAPE3, shift amount, mod 4
+            # establish CTR for outer round count
+            'addi 16, 0, %d' % nrounds,     # set number of rounds
+            'mtspr 9, 16',                  # set CTR to number of rounds
+            # outer loop begins here (standard CTR loop)
             'setvl 17, 17, 32, 1, 1, 0',    # vertical-first, set VL from r17
             # inner loop begins here. add-xor-rotl32 with remap, step, branch
             'svremap 31, 1, 0, 0, 0, 0, 0', # RA=1, RB=0, RT=0 (0b01011)
@@ -124,8 +125,9 @@ class SVSTATETestCase(FHDLTestCase):
             'sv.xor/w=32 *0, *0, *0',
             'svremap 31, 0, 3, 2, 2, 0, 0', # RA=2, RB=3, RS=2 (0b01110)
             'sv.rldcl/w=32 *0, *0, *18, 0',
-            'svstep. 17, 1, 0',              # step to next
-            'bc 6, 3, -0x28',               # VF loop
+            'svstep. 16, 1, 0',              # step to next in-regs element
+            'bc 6, 3, -0x28',               # svstep. Rc=1 loop-end-condition?
+            'bc 16, 0, -0x30',              # bdnz to the outer loop setvl
                        ])
         lst = list(isa)
         print ("listing", lst)
@@ -149,7 +151,6 @@ class SVSTATETestCase(FHDLTestCase):
             set_masked_reg(initial_regs, 42, i, ew_bits=8, value=idxs2[i])
             set_masked_reg(initial_regs, 18, i, ew_bits=32, value=shifts[i])
 
-        initial_regs[17] = 32 # VL=2
         x = [0] * 16
         for i in range(16):
             x[i] = i<<1
@@ -164,9 +165,11 @@ class SVSTATETestCase(FHDLTestCase):
 
         # copy before running, compute expected results
         expected_regs = deepcopy(initial_regs)
-        expected_regs[17] = 0 # reaches zero
+        expected_regs[16] = 0  # reaches zero
+        expected_regs[17] = 32 # gets set to MAXVL
         expected = deepcopy(x)
-        chacha_idx_schedule(expected, fn=quarter_round)
+        for i in range(nrounds):
+            chacha_idx_schedule(expected, fn=quarter_round)
         for i in range(16):
             set_masked_reg(expected_regs, 0, i, ew_bits=32, value=expected[i])
 
