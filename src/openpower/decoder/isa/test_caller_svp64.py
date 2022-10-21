@@ -1,19 +1,13 @@
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
 from copy import deepcopy
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.consts import SVP64CROffs
+from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
 
 
 class DecoderTestCase(FHDLTestCase):
@@ -40,9 +34,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
@@ -58,9 +52,9 @@ class DecoderTestCase(FHDLTestCase):
             * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111
         """
         isa = SVP64Asm(['sv.add *1, *5, *9'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -70,13 +64,13 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = initial_regs[5] + initial_regs[9]  # 0x5555
-        expected_regs[2] = initial_regs[6] + initial_regs[10] # 0x3334
+        expected_regs[2] = initial_regs[6] + initial_regs[10]  # 0x3334
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate)
@@ -89,9 +83,9 @@ class DecoderTestCase(FHDLTestCase):
             * r1 is scalar so ENDS EARLY
         """
         isa = SVP64Asm(['sv.add 1, *5, *9'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -101,12 +95,12 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
-        expected_regs[1] = initial_regs[5] + initial_regs[9] # 0x5555
+        expected_regs[1] = initial_regs[5] + initial_regs[9]  # 0x5555
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate)
@@ -120,9 +114,9 @@ class DecoderTestCase(FHDLTestCase):
             * 2 = 5 + 10  => 0x5432 = 0x4321+0x1111
         """
         isa = SVP64Asm(['sv.add *1, 5, *9'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -132,9 +126,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = initial_regs[5] + initial_regs[9]   # 0x5555
@@ -151,9 +145,9 @@ class DecoderTestCase(FHDLTestCase):
             * none because VL is zero
         """
         isa = SVP64Asm(['sv.add 1, *5, *9'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -163,9 +157,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=0)
         svstate = SVP64State()
-        svstate.vl = 0 # VL
-        svstate.maxvl = 0 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 0  # VL
+        svstate.maxvl = 0  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
 
@@ -182,9 +176,9 @@ class DecoderTestCase(FHDLTestCase):
             * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111   CR1=0b010
         """
         isa = SVP64Asm(['sv.add. *1, *5, *9'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -194,13 +188,13 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = initial_regs[5] + initial_regs[9]  # 0x0
-        expected_regs[2] = initial_regs[6] + initial_regs[10] # 0x3334
+        expected_regs[2] = initial_regs[6] + initial_regs[10]  # 0x3334
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate)
@@ -209,14 +203,14 @@ class DecoderTestCase(FHDLTestCase):
             cr1_idx = SVP64CROffs.CR1
             CR0 = sim.crl[cr0_idx].get_range().value
             CR1 = sim.crl[cr1_idx].get_range().value
-            print ("CR0", CR0)
-            print ("CR1", CR1)
+            print("CR0", CR0)
+            print("CR1", CR1)
             self._check_regs(sim, expected_regs)
             self.assertEqual(CR0, SelectableInt(2, 4))
             self.assertEqual(CR1, SelectableInt(4, 4))
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None):
+                        svstate=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, svstate=svstate)

@@ -1,22 +1,17 @@
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import SVP64State
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.isa.test_caller import run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from copy import deepcopy
-from openpower.decoder.helpers import fp64toselectable, SINGLE
-from openpower.decoder.isafunctions.double2single import ISACallerFnHelper
-from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
-                                         iterate_dct_inner_butterfly_indices,
-                                         iterate_dct_outer_butterfly_indices,
-                                         transform2, inverse_transform2)
-from openpower.decoder.isa.fastdctlee import inverse_transform_iter
-import unittest
 import math
+import unittest
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.helpers import SINGLE, fp64toselectable
+from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.remap_dct_yield import (
+    halfrev2, inverse_transform2, iterate_dct_inner_butterfly_indices,
+    iterate_dct_outer_butterfly_indices, reverse_bits, transform2)
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.isafunctions.double2single import ISACallerFnHelper
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
 
 # really bad hack.  need to access the DOUBLE2SINGLE function auto-generated
 # from pseudo-code.
@@ -27,8 +22,8 @@ def transform_inner_radix2_dct(vec, ctable):
 
     # Initialization
     n = len(vec)
-    print ()
-    print ("transform2", n)
+    print()
+    print("transform2", n)
     levels = n.bit_length() - 1
 
     # reference (read/write) the in-place data in *reverse-bit-order*
@@ -57,7 +52,7 @@ def transform_inner_radix2_dct(vec, ctable):
     SVSHAPE0.submode2 = 0b01
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
-    SVSHAPE0.invxyz = [1,0,0] # inversion if desired
+    SVSHAPE0.invxyz = [1, 0, 0]  # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, 2, zdim]
@@ -65,7 +60,7 @@ def transform_inner_radix2_dct(vec, ctable):
     SVSHAPE1.submode2 = 0b01
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
-    SVSHAPE1.invxyz = [1,0,0] # inversion if desired
+    SVSHAPE1.invxyz = [1, 0, 0]  # inversion if desired
 
     # enumerate over the iterator function, getting new indices
     i0 = iterate_dct_inner_butterfly_indices(SVSHAPE0)
@@ -75,12 +70,12 @@ def transform_inner_radix2_dct(vec, ctable):
         coeff = ctable[k]
         vec[jl] = t1 + t2
         vec[jh] = (t1 - t2) * (1.0/coeff)
-        print ("coeff", "ci", k,
-                "jl", jl, "jh", jh,
-               "i/n", (k+0.5), 1.0/coeff,
-                "t1, t2", t1, t2, "res", vec[jl], vec[jh],
-                "end", bin(jle), bin(jhe))
-        if jle == 0b111: # all loops end
+        print("coeff", "ci", k,
+              "jl", jl, "jh", jh,
+              "i/n", (k+0.5), 1.0/coeff,
+              "t1, t2", t1, t2, "res", vec[jl], vec[jh],
+              "end", bin(jle), bin(jhe))
+        if jle == 0b111:  # all loops end
             break
 
     return vec
@@ -90,8 +85,8 @@ def transform_outer_radix2_dct(vec):
 
     # Initialization
     n = len(vec)
-    print ()
-    print ("transform2", n)
+    print()
+    print("transform2", n)
     levels = n.bit_length() - 1
 
     # outer butterfly
@@ -108,7 +103,7 @@ def transform_outer_radix2_dct(vec):
     SVSHAPE0.mode = 0b01
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
-    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+    SVSHAPE0.invxyz = [0, 0, 0]  # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, 3, zdim]
@@ -116,16 +111,16 @@ def transform_outer_radix2_dct(vec):
     SVSHAPE1.submode2 = 0b100
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
-    SVSHAPE1.invxyz = [0,0,0] # inversion if desired
+    SVSHAPE1.invxyz = [0, 0, 0]  # inversion if desired
 
     # enumerate over the iterator function, getting new indices
     i0 = iterate_dct_outer_butterfly_indices(SVSHAPE0)
     i1 = iterate_dct_outer_butterfly_indices(SVSHAPE1)
     for k, ((jl, jle), (jh, jhe)) in enumerate(zip(i0, i1)):
-        print ("itersum    jr", jl, jh,
-                "end", bin(jle), bin(jhe))
+        print("itersum    jr", jl, jh,
+              "end", bin(jle), bin(jhe))
         vec[jl] += vec[jh]
-        if jle == 0b111: # all loops end
+        if jle == 0b111:  # all loops end
             break
 
     print("transform2 result", vec)
@@ -137,8 +132,8 @@ def transform_inner_radix2_idct(vec, ctable):
 
     # Initialization
     n = len(vec)
-    print ()
-    print ("transform2", n)
+    print()
+    print("transform2", n)
     levels = n.bit_length() - 1
 
     # pretend we LDed data in half-swapped order
@@ -161,7 +156,7 @@ def transform_inner_radix2_idct(vec, ctable):
     SVSHAPE0.submode2 = 0b11
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
-    SVSHAPE0.invxyz = [0,0,0] # inversion if desired
+    SVSHAPE0.invxyz = [0, 0, 0]  # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, 0b000001, 1]
@@ -169,7 +164,7 @@ def transform_inner_radix2_idct(vec, ctable):
     SVSHAPE1.submode2 = 0b11
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
-    SVSHAPE1.invxyz = [0,0,0] # inversion if desired
+    SVSHAPE1.invxyz = [0, 0, 0]  # inversion if desired
 
     # enumerate over the iterator function, getting new indices
     i0 = iterate_dct_inner_butterfly_indices(SVSHAPE0)
@@ -179,12 +174,12 @@ def transform_inner_radix2_idct(vec, ctable):
         coeff = ctable[k]
         vec[jl] = t1 + t2/coeff
         vec[jh] = t1 - t2/coeff
-        print ("coeff", "ci", k,
-                "jl", jl, "jh", jh,
-               "i/n", (k+0.5), 1.0/coeff,
-                "t1, t2", t1, t2, "res", vec[jl], vec[jh],
-                "end", bin(jle), bin(jhe))
-        if jle == 0b111: # all loops end
+        print("coeff", "ci", k,
+              "jl", jl, "jh", jh,
+              "i/n", (k+0.5), 1.0/coeff,
+              "t1, t2", t1, t2, "res", vec[jl], vec[jh],
+              "end", bin(jle), bin(jhe))
+        if jle == 0b111:  # all loops end
             break
 
     return vec
@@ -194,8 +189,8 @@ def transform_outer_radix2_idct(vec):
 
     # Initialization
     n = len(vec)
-    print ()
-    print ("transform2-inv", n)
+    print()
+    print("transform2-inv", n)
     levels = n.bit_length() - 1
 
     # outer butterfly
@@ -221,7 +216,7 @@ def transform_outer_radix2_idct(vec):
     SVSHAPE0.mode = 0b11
     SVSHAPE0.skip = 0b00
     SVSHAPE0.offset = 0       # experiment with different offset, here
-    SVSHAPE0.invxyz = [1,0,1] # inversion if desired
+    SVSHAPE0.invxyz = [1, 0, 1]  # inversion if desired
     # j+halfstep schedule
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, 2, zdim]
@@ -229,16 +224,16 @@ def transform_outer_radix2_idct(vec):
     SVSHAPE1.submode2 = 0b011
     SVSHAPE1.skip = 0b01
     SVSHAPE1.offset = 0       # experiment with different offset, here
-    SVSHAPE1.invxyz = [1,0,1] # inversion if desired
+    SVSHAPE1.invxyz = [1, 0, 1]  # inversion if desired
 
     # enumerate over the iterator function, getting new indices
     i0 = iterate_dct_outer_butterfly_indices(SVSHAPE0)
     i1 = iterate_dct_outer_butterfly_indices(SVSHAPE1)
     for k, ((jl, jle), (jh, jhe)) in enumerate(zip(i0, i1)):
-        print ("itersum    jr", jl, jh,
-                "end", bin(jle), bin(jhe))
+        print("itersum    jr", jl, jh,
+              "end", bin(jle), bin(jhe))
         vec[jh] += vec[jl]
-        if jle == 0b111: # all loops end
+        if jle == 0b111:  # all loops end
             break
 
     print("transform2-inv result", vec)
@@ -271,8 +266,8 @@ class DCTTestCase(FHDLTestCase):
         # cheat here with these values, they're selected so that
         # rounding errors do not occur. sigh.
         fprs = [0] * 32
-        av = [7.0, -0.8, 2.0, -2.3] # first half of array 0..3
-        bv = [-2.0, 2.0, -0.8, 1.4] # second half of array 4..7
+        av = [7.0, -0.8, 2.0, -2.3]  # first half of array 0..3
+        bv = [-2.0, 2.0, -0.8, 1.4]  # second half of array 4..7
         cv = [-1.0, 0.5, 2.5, -0.25]  # coefficients
         res = []
         # work out the results with the twin add-sub
@@ -285,19 +280,19 @@ class DCTTestCase(FHDLTestCase):
             # and FPSUB32 directly to be honest.
             t = a + b
             diff = (a - b)
-            diff = fph.DOUBLE2SINGLE(fp64toselectable(diff)) # FP32 round
+            diff = fph.DOUBLE2SINGLE(fp64toselectable(diff))  # FP32 round
             diff = float(diff)
             u = diff * c
-            tc = fph.DOUBLE2SINGLE(fp64toselectable(t)) # cvt to Power single
-            uc = fph.DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            tc = fph.DOUBLE2SINGLE(fp64toselectable(t))  # cvt to Power single
+            uc = fph.DOUBLE2SINGLE(fp64toselectable(u))  # from double
             res.append((uc, tc))
-            print ("DCT", i, "in", a, b, "c", c, "res", t, u)
+            print("DCT", i, "in", a, b, "c", c, "res", t, u)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 4 # VL
-        svstate.maxvl = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -308,7 +303,7 @@ class DCTTestCase(FHDLTestCase):
                 b = float(sim.fpr(i+4))
                 t = float(t)
                 u = float(u)
-                print ("DCT", i, "in", a, b, "res", t, u)
+                print("DCT", i, "in", a, b, "res", t, u)
             for i, (t, u) in enumerate(res):
                 self.assertEqual(sim.fpr(i+0), t)
                 self.assertEqual(sim.fpr(i+4), u)
@@ -334,47 +329,47 @@ class DCTTestCase(FHDLTestCase):
             is straight Vectorised (0123...) because DCT coefficients
             cannot be shared between butterfly layers (due to +0.5)
         """
-        lst = SVP64Asm( ["svshape 4, 1, %d, 2, 0" % stride,
-                         "svremap 27, 1, 0, 2, 0, 1, 0",
-                         "sv.fdmadds *0, *0, *0, *16"
+        lst = SVP64Asm(["svshape 4, 1, %d, 2, 0" % stride,
+                        "svremap 27, 1, 0, 2, 0, 1, 0",
+                        "sv.fdmadds *0, *0, *0, *16"
                         ])
         lst = list(lst)
 
         # array and coefficients to test
         n = 4
         av = [7.0, -9.8, 3.0, -32.3]
-        coe = [-0.25, 0.5, 3.1, 6.2] # 4 coefficients
+        coe = [-0.25, 0.5, 3.1, 6.2]  # 4 coefficients
 
         levels = n.bit_length() - 1
         ri = list(range(n))
         ri = [ri[reverse_bits(i, levels)] for i in range(n)]
-        avi = [7.0, -0.8, 2.0, -2.3] # first half of array 0..3
+        avi = [7.0, -0.8, 2.0, -2.3]  # first half of array 0..3
         av = halfrev2(avi, False)
         av = [av[ri[i]] for i in range(n)]
 
         # store in regfile
         fprs = [0] * 64
         for i, c in enumerate(coe):
-            fprs[i+16] = fp64toselectable(1.0 / c) # invert
+            fprs[i+16] = fp64toselectable(1.0 / c)  # invert
         for i, a in enumerate(av):
             fprs[i*stride+0] = fp64toselectable(a)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # work out the results with the twin mul/add-sub
             res = transform_inner_radix2_dct(avi, coe)
 
             for i, expected in enumerate(res):
-                print ("i", i*stride, float(sim.fpr(i*stride)),
-                       "expected", expected)
+                print("i", i*stride, float(sim.fpr(i*stride)),
+                      "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
@@ -384,7 +379,7 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print("err", i, err)
                 self.assertTrue(err < 1e-6)
 
     def test_sv_remap_fpmadds_idct_inner_4_stride_1(self):
@@ -408,42 +403,42 @@ class DCTTestCase(FHDLTestCase):
             is straight Vectorised (0123...) because DCT coefficients
             cannot be shared between butterfly layers (due to +0.5)
         """
-        lst = SVP64Asm( ["svshape 4, 1, %d, 10, 0" % stride,
-                         "svremap 27, 0, 1, 2, 1, 0, 0",
-                         "sv.ffmadds *0, *0, *0, *16"
+        lst = SVP64Asm(["svshape 4, 1, %d, 10, 0" % stride,
+                        "svremap 27, 0, 1, 2, 1, 0, 0",
+                        "sv.ffmadds *0, *0, *0, *16"
                         ])
         lst = list(lst)
 
         # array and coefficients to test
         n = 4
         levels = n.bit_length() - 1
-        coe = [-0.25, 0.5, 3.1, 6.2] # 4 coefficients
-        avi = [7.0, -0.8, 2.0, -2.3] # first half of array 0..3
+        coe = [-0.25, 0.5, 3.1, 6.2]  # 4 coefficients
+        avi = [7.0, -0.8, 2.0, -2.3]  # first half of array 0..3
         av = halfrev2(avi, False)
 
         # store in regfile
         fprs = [0] * 64
         for i, c in enumerate(coe):
-            fprs[i+16] = fp64toselectable(1.0 / c) # invert
+            fprs[i+16] = fp64toselectable(1.0 / c)  # invert
         for i, a in enumerate(av):
             fprs[i*stride+0] = fp64toselectable(a)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # work out the results with the twin mul/add-sub
             res = transform_inner_radix2_idct(avi, coe)
 
             for i, expected in enumerate(res):
-                print ("i", i*stride, float(sim.fpr(i*stride)),
-                       "expected", expected)
+                print("i", i*stride, float(sim.fpr(i*stride)),
+                      "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
@@ -453,7 +448,7 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print("err", i, err)
                 self.assertTrue(err < 1e-6)
 
     def test_sv_remap_fpmadds_idct_outer_8(self, stride=2):
@@ -466,9 +461,9 @@ class DCTTestCase(FHDLTestCase):
 
             SVP64 "REMAP" in Butterfly Mode.
         """
-        lst = SVP64Asm( ["svshape 8, 1, %d, 11, 0" % stride, # outer butterfly
-                         "svremap 27, 0, 1, 2, 1, 0, 0",
-                         "sv.fadds *0, *0, *0"
+        lst = SVP64Asm(["svshape 8, 1, %d, 11, 0" % stride,  # outer butterfly
+                        "svremap 27, 0, 1, 2, 1, 0, 0",
+                        "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -489,20 +484,20 @@ class DCTTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # outer iterative sum
             res = transform_outer_radix2_idct(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i*stride, float(sim.fpr(i*stride)),
-                       "expected", expected)
+                print("i", i*stride, float(sim.fpr(i*stride)),
+                      "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
@@ -512,7 +507,7 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print("err", i, err)
                 self.assertTrue(err < 1e-6)
 
     def test_sv_remap_fpmadds_dct_outer_8(self, stride=2):
@@ -525,9 +520,9 @@ class DCTTestCase(FHDLTestCase):
 
             SVP64 "REMAP" in Butterfly Mode.
         """
-        lst = SVP64Asm( ["svshape 8, 1, %d, 3, 0" % stride,
-                         "svremap 27, 1, 0, 2, 0, 1, 0",
-                         "sv.fadds *0, *0, *0"
+        lst = SVP64Asm(["svshape 8, 1, %d, 3, 0" % stride,
+                        "svremap 27, 1, 0, 2, 0, 1, 0",
+                        "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -541,20 +536,20 @@ class DCTTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # outer iterative sum
             res = transform_outer_radix2_dct(av)
 
             for i, expected in enumerate(res):
-                print ("i", i*stride, float(sim.fpr(i*stride)),
-                       "expected", expected)
+                print("i", i*stride, float(sim.fpr(i*stride)),
+                      "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
@@ -564,7 +559,7 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print("err", i, err)
                 self.assertTrue(err < 1e-6)
 
     def test_sv_remap_fpmadds_idct_8(self, stride=2):
@@ -577,11 +572,11 @@ class DCTTestCase(FHDLTestCase):
             runs a full in-place 8-long O(N log2 N) inverse-DCT, both
             inner and outer butterfly "REMAP" schedules.
         """
-        lst = SVP64Asm( ["svremap 27, 0, 1, 2, 1, 0, 1",
-                         "svshape 8, 1, %d, 11, 0" % stride,
-                         "sv.fadds *0, *0, *0",
-                         "svshape 8, 1, %d, 10, 0" % stride,
-                         "sv.ffmadds *0, *0, *0, *16"
+        lst = SVP64Asm(["svremap 27, 0, 1, 2, 1, 0, 1",
+                        "svshape 8, 1, %d, 11, 0" % stride,
+                        "sv.fadds *0, *0, *0",
+                        "svshape 8, 1, %d, 10, 0" % stride,
+                        "sv.ffmadds *0, *0, *0, *16"
                         ])
         lst = list(lst)
 
@@ -599,7 +594,7 @@ class DCTTestCase(FHDLTestCase):
         av[0] /= 2.0
         #avi[0] /= 2.0
 
-        print ("input data pre idct", av)
+        print("input data pre idct", av)
 
         ctable = []
         size = 2
@@ -615,17 +610,17 @@ class DCTTestCase(FHDLTestCase):
         for i, a in enumerate(av):
             fprs[i*stride+0] = fp64toselectable(a)
         for i, c in enumerate(ctable):
-            fprs[i+16] = fp64toselectable(1.0 / c) # invert
+            fprs[i+16] = fp64toselectable(1.0 / c)  # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # inverse DCT
             expected = [-15.793373940443367, 27.46969091937703,
@@ -636,8 +631,8 @@ class DCTTestCase(FHDLTestCase):
             #res = transform_outer_radix2_idct(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i*stride, float(sim.fpr(i*stride)),
-                       "expected", expected)
+                print("i", i*stride, float(sim.fpr(i*stride)),
+                      "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
@@ -647,7 +642,7 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i*stride, err)
+                print("err", i*stride, err)
                 self.assertTrue(err < 1e-5)
 
     def test_sv_remap_fpmadds_dct_8(self, stride=2):
@@ -660,11 +655,11 @@ class DCTTestCase(FHDLTestCase):
             runs a full in-place 8-long O(N log2 N) DCT, both
             inner and outer butterfly "REMAP" schedules.
         """
-        lst = SVP64Asm( ["svremap 27, 1, 0, 2, 0, 1, 1",
-                         "svshape 8, 1, %d, 2, 0" % stride,
-                         "sv.fdmadds *0, *0, *0, *16",
-                         "svshape 8, 1, %d, 3, 0" % stride,
-                         "sv.fadds *0, *0, *0"
+        lst = SVP64Asm(["svremap 27, 1, 0, 2, 0, 1, 1",
+                        "svshape 8, 1, %d, 2, 0" % stride,
+                        "sv.fdmadds *0, *0, *0, *16",
+                        "svshape 8, 1, %d, 3, 0" % stride,
+                        "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -690,24 +685,24 @@ class DCTTestCase(FHDLTestCase):
         for i, a in enumerate(av):
             fprs[i*stride+0] = fp64toselectable(a)
         for i, c in enumerate(ctable):
-            fprs[i+16] = fp64toselectable(1.0 / c) # invert
+            fprs[i+16] = fp64toselectable(1.0 / c)  # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # outer iterative sum
             res = transform2(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i*stride, float(sim.fpr(i*stride)),
-                       "expected", expected)
+                print("i", i*stride, float(sim.fpr(i*stride)),
+                      "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
@@ -717,7 +712,7 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print("err", i, err)
                 self.assertTrue(err < 1e-5)
 
     def test_sv_remap_dct_cos_precompute_8(self):
@@ -732,8 +727,8 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["svshape 8, 1, 1, 2, 0",
                         "svremap 0, 0, 0, 2, 0, 1, 1",
-                        "sv.svstep *4, 4, 1", # svstep get vector of ci
-                        "sv.svstep *16, 3, 1", # svstep get vector of step
+                        "sv.svstep *4, 4, 1",  # svstep get vector of ci
+                        "sv.svstep *16, 3, 1",  # svstep get vector of step
                         "addi 1, 0, 0x0000",
                         "setvl 0, 0, 12, 0, 1, 1",
                         "sv.std *4, 0(1)",
@@ -743,19 +738,19 @@ class DCTTestCase(FHDLTestCase):
                         "sv.std *16, 0(1)",
                         "sv.lfd  *12, 0(1)",
                         "sv.fcfids *24, *12",
-                        "sv.fadds *0, *24, 43", # plus 0.5
-                        "sv.fmuls *0, *0, 41", # times PI
-                        "sv.fdivs *0, *0, *48", # div size
+                        "sv.fadds *0, *24, 43",  # plus 0.5
+                        "sv.fmuls *0, *0, 41",  # times PI
+                        "sv.fdivs *0, *0, *48",  # div size
                         "sv.fcoss *80, *0",
-                        "sv.fdivs *80, 43, *80", # div 0.5 / x
-                     ])
+                        "sv.fdivs *80, 43, *80",  # div 0.5 / x
+                        ])
         lst = list(lst)
 
         gprs = [0] * 32
         fprs = [0] * 128
         # constants
         fprs[43] = fp64toselectable(0.5)         # 0.5
-        fprs[41] = fp64toselectable(math.pi) # pi
+        fprs[41] = fp64toselectable(math.pi)  # pi
         fprs[44] = fp64toselectable(2.0)     # 2.0
 
         n = 8
@@ -771,27 +766,27 @@ class DCTTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, gprs, initial_fprs=fprs)
-            print ("MEM")
+            print("MEM")
             sim.mem.dump()
-            print ("ci FP")
+            print("ci FP")
             for i in range(len(ctable)):
                 actual = float(sim.fpr(i+24))
-                print ("i", i, actual)
-            print ("size FP")
+                print("i", i, actual)
+            print("size FP")
             for i in range(len(ctable)):
                 actual = float(sim.fpr(i+48))
-                print ("i", i, actual)
-            print ("temps")
+                print("i", i, actual)
+            print("temps")
             for i in range(len(ctable)):
                 actual = float(sim.fpr(i))
-                print ("i", i, actual)
+                print("i", i, actual)
             for i in range(len(ctable)):
                 expected = 1.0/ctable[i]
                 actual = float(sim.fpr(i+80))
                 err = abs((actual - expected) / expected)
-                print ("i", i, actual, "1/expect", 1/expected,
-                                        "expected", expected,
-                                        "err", err)
+                print("i", i, actual, "1/expect", 1/expected,
+                      "expected", expected,
+                      "err", err)
                 self.assertTrue(err < 1e-6)
 
     def test_sv_remap_dct_cos_precompute_inner_8(self):
@@ -806,8 +801,8 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["svshape 8, 1, 1, 5, 0",
                         "svremap 0, 0, 0, 2, 0, 1, 1",
-                        "sv.svstep *4, 3, 1", # svstep get vector of ci
-                        "sv.svstep *16, 2, 1", # svstep get vector of step
+                        "sv.svstep *4, 3, 1",  # svstep get vector of ci
+                        "sv.svstep *16, 2, 1",  # svstep get vector of step
                         "addi 1, 0, 0x0000",
                         "setvl 0, 0, 7, 0, 1, 1",
                         "sv.std *4, 0(1)",
@@ -817,19 +812,19 @@ class DCTTestCase(FHDLTestCase):
                         "sv.std *16, 0(1)",
                         "sv.lfd  *12, 0(1)",
                         "sv.fcfids *24, *12",
-                        "sv.fadds *0, *24, 43", # plus 0.5
-                        "sv.fmuls *0, *0, 41", # times PI
-                        "sv.fdivs *0, *0, *48", # div size
+                        "sv.fadds *0, *24, 43",  # plus 0.5
+                        "sv.fmuls *0, *0, 41",  # times PI
+                        "sv.fdivs *0, *0, *48",  # div size
                         "sv.fcoss *80, *0",
-                        "sv.fdivs *80, 43, *80", # div 0.5 / x
-                     ])
+                        "sv.fdivs *80, 43, *80",  # div 0.5 / x
+                        ])
         lst = list(lst)
 
         gprs = [0] * 32
         fprs = [0] * 128
         # constants
         fprs[43] = fp64toselectable(0.5)         # 0.5
-        fprs[41] = fp64toselectable(math.pi) # pi
+        fprs[41] = fp64toselectable(math.pi)  # pi
         fprs[44] = fp64toselectable(2.0)     # 2.0
 
         n = 8
@@ -841,33 +836,33 @@ class DCTTestCase(FHDLTestCase):
             for ci in range(halfsize):
                 coeff = math.cos((ci + 0.5) * math.pi / size) * 2.0
                 ctable.append(coeff)
-                print ("coeff", "ci", ci, "size", size,
-                   "i/n", (ci+0.5), 1.0/coeff)
+                print("coeff", "ci", ci, "size", size,
+                      "i/n", (ci+0.5), 1.0/coeff)
             size //= 2
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, gprs, initial_fprs=fprs)
-            print ("MEM")
+            print("MEM")
             sim.mem.dump()
-            print ("ci FP")
+            print("ci FP")
             for i in range(len(ctable)):
                 actual = float(sim.fpr(i+24))
-                print ("i", i, actual)
-            print ("size FP")
+                print("i", i, actual)
+            print("size FP")
             for i in range(len(ctable)):
                 actual = float(sim.fpr(i+48))
-                print ("i", i, actual)
-            print ("temps")
+                print("i", i, actual)
+            print("temps")
             for i in range(len(ctable)):
                 actual = float(sim.fpr(i))
-                print ("i", i, actual)
+                print("i", i, actual)
             for i in range(len(ctable)):
                 expected = 1.0/ctable[i]
                 actual = float(sim.fpr(i+80))
                 err = abs((actual - expected) / expected)
-                print ("i", i, actual, "1/expect", 1/expected,
-                                        "expected", expected,
-                                        "err", err)
+                print("i", i, actual, "1/expect", 1/expected,
+                      "expected", expected,
+                      "err", err)
                 self.assertTrue(err < 1e-6)
 
     def test_sv_remap_fpmadds_dct_8_mode_4(self, stride=2):
@@ -881,11 +876,11 @@ class DCTTestCase(FHDLTestCase):
             inner and outer butterfly "REMAP" schedules.
             uses shorter tables: FRC also needs to be on a Schedule
         """
-        lst = SVP64Asm( ["svremap 31, 1, 0, 2, 0, 1, 1",
-                         "svshape 8, 1, %d, 4, 0" % stride,
-                         "sv.fdmadds *0, *0, *0, *16",
-                         "svshape 8, 1, %d, 3, 0" % stride,
-                         "sv.fadds *0, *0, *0"
+        lst = SVP64Asm(["svremap 31, 1, 0, 2, 0, 1, 1",
+                        "svshape 8, 1, %d, 4, 0" % stride,
+                        "sv.fdmadds *0, *0, *0, *16",
+                        "svshape 8, 1, %d, 3, 0" % stride,
+                        "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -910,24 +905,24 @@ class DCTTestCase(FHDLTestCase):
         for i, a in enumerate(av):
             fprs[i*stride+0] = fp64toselectable(a)
         for i, c in enumerate(ctable):
-            fprs[i+16] = fp64toselectable(1.0 / c) # invert
+            fprs[i+16] = fp64toselectable(1.0 / c)  # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # outer iterative sum
             res = transform2(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i*stride, float(sim.fpr(i*stride)),
-                       "expected", expected)
+                print("i", i*stride, float(sim.fpr(i*stride)),
+                      "expected", expected)
             for i, expected in enumerate(res):
                 # convert to Power single
                 expected = fph.DOUBLE2SINGLE(fp64toselectable(expected))
@@ -937,7 +932,7 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print("err", i, err)
                 self.assertTrue(err < 1e-5)
 
     def test_sv_remap_fpmadds_ldbrev_dct_8_mode_4(self, stride=1):
@@ -959,15 +954,15 @@ class DCTTestCase(FHDLTestCase):
             uses shorter pre-loaded COS tables: FRC also needs to be on a
             Schedule
         """
-        lst = SVP64Asm( ["addi 1, 0, 0x000",
-                         "svshape 8, 1, %d, 6, 0" % stride,
-                         "svremap 1, 0, 0, 0, 0, 0, 0",
-                         "sv.lfs/els *0, 4(1)",
-                         "svremap 31, 1, 0, 2, 0, 1, 1",
-                         "svshape 8, 1, %d, 4, 0" % stride,
-                         "sv.fdmadds *0, *0, *0, *32",
-                         "svshape 8, 1, %d, 3, 0" % stride,
-                         "sv.fadds *0, *0, *0"
+        lst = SVP64Asm(["addi 1, 0, 0x000",
+                        "svshape 8, 1, %d, 6, 0" % stride,
+                        "svremap 1, 0, 0, 0, 0, 0, 0",
+                        "sv.lfs/els *0, 4(1)",
+                        "svremap 31, 1, 0, 2, 0, 1, 1",
+                        "svshape 8, 1, %d, 4, 0" % stride,
+                        "sv.fdmadds *0, *0, *0, *32",
+                        "svshape 8, 1, %d, 3, 0" % stride,
+                        "sv.fadds *0, *0, *0"
                         ])
         lst = list(lst)
 
@@ -984,7 +979,8 @@ class DCTTestCase(FHDLTestCase):
             if shift == 0:
                 val = a                         # accumulate for next iteration
             else:
-                mem[(i//2)*8] = val | (a << 32) # even and odd 4-byte in same 8
+                # even and odd 4-byte in same 8
+                mem[(i//2)*8] = val | (a << 32)
 
         # calculate the (shortened) COS tables, 4 2 1 not 4 2+2 1+1+1+1
         n = len(avi)
@@ -999,25 +995,25 @@ class DCTTestCase(FHDLTestCase):
         # store in regfile
         fprs = [0] * 64
         for i, c in enumerate(ctable):
-            fprs[i+32] = fp64toselectable(1.0 / c) # invert
+            fprs[i+32] = fp64toselectable(1.0 / c)  # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs,
-                                                initial_mem=mem)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+                                       initial_mem=mem)
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # outer iterative sum
             res = transform2(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i*stride, float(sim.fpr(i*stride)),
-                       "expected", expected)
+                print("i", i*stride, float(sim.fpr(i*stride)),
+                      "expected", expected)
 
             for i, expected in enumerate(res):
                 # convert to Power single
@@ -1028,7 +1024,7 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print("err", i, err)
                 self.assertTrue(err < 1e-5)
 
     def test_sv_remap_fpmadds_ldbrev_idct_8_mode_4(self):
@@ -1050,15 +1046,15 @@ class DCTTestCase(FHDLTestCase):
             uses shorter pre-loaded COS tables: FRC also needs to be on a
             Schedule in the sv.ffmadds instruction
         """
-        lst = SVP64Asm( ["addi 1, 0, 0x000",
-                         "svshape 8, 1, 1, 14, 0",
-                         "svremap 1, 0, 0, 0, 0, 0, 0",
-                         "sv.lfs/els *0, 4(1)",
-                         "svremap 31, 0, 1, 2, 1, 0, 1",
-                         "svshape 8, 1, 1, 11, 0",
-                         "sv.fadds *0, *0, *0",
-                         "svshape 8, 1, 1, 12, 0",
-                         "sv.ffmadds *0, *0, *0, *8"
+        lst = SVP64Asm(["addi 1, 0, 0x000",
+                        "svshape 8, 1, 1, 14, 0",
+                        "svremap 1, 0, 0, 0, 0, 0, 0",
+                        "sv.lfs/els *0, 4(1)",
+                        "svremap 31, 0, 1, 2, 1, 0, 1",
+                        "svshape 8, 1, 1, 11, 0",
+                        "sv.fadds *0, *0, *0",
+                        "svshape 8, 1, 1, 12, 0",
+                        "sv.ffmadds *0, *0, *0, *8"
                         ])
         lst = list(lst)
 
@@ -1070,14 +1066,15 @@ class DCTTestCase(FHDLTestCase):
         mem = {}
         val = 0
         for i, a in enumerate(avi):
-            if i == 0: # first element, divide by 2
+            if i == 0:  # first element, divide by 2
                 a /= 2.0
             a = SINGLE(fp64toselectable(a)).value
             shift = (i % 2) == 1
             if shift == 0:
                 val = a                         # accumulate for next iteration
             else:
-                mem[(i//2)*8] = val | (a << 32) # even and odd 4-byte in same 8
+                # even and odd 4-byte in same 8
+                mem[(i//2)*8] = val | (a << 32)
 
         # calculate the (shortened) COS tables, 4 2 1 not 4 2+2 1+1+1+1
         n = len(avi)
@@ -1092,24 +1089,24 @@ class DCTTestCase(FHDLTestCase):
         # store in regfile
         fprs = [0] * 32
         for i, c in enumerate(ctable):
-            fprs[i+8] = fp64toselectable(1.0 / c) # invert
+            fprs[i+8] = fp64toselectable(1.0 / c)  # invert
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs,
-                                                initial_mem=mem)
-            print ("spr svshape0", sim.spr['SVSHAPE0'])
-            print ("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
-            print ("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
-            print ("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
-            print ("spr svshape1", sim.spr['SVSHAPE1'])
-            print ("spr svshape2", sim.spr['SVSHAPE2'])
-            print ("spr svshape3", sim.spr['SVSHAPE3'])
+                                       initial_mem=mem)
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
 
             # outer iterative sum
             res = inverse_transform2(avi)
 
             for i, expected in enumerate(res):
-                print ("i", i, float(sim.fpr(i)), "expected", expected)
+                print("i", i, float(sim.fpr(i)), "expected", expected)
 
             for i, expected in enumerate(res):
                 # convert to Power single
@@ -1120,22 +1117,22 @@ class DCTTestCase(FHDLTestCase):
                 # reason: we are comparing FMAC against FMUL-plus-FADD-or-FSUB
                 # and the rounding is different
                 err = abs((actual - expected) / expected)
-                print ("err", i, err)
+                print("err", i, err)
                 self.assertTrue(err < 1e-5)
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None,
-                              initial_mem=None,
-                              initial_fprs=None):
+                        svstate=None,
+                        initial_mem=None,
+                        initial_fprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, mem=initial_mem,
-                                                initial_fprs=initial_fprs,
-                                                svstate=svstate)
+                            initial_fprs=initial_fprs,
+                            svstate=svstate)
 
-        print ("GPRs")
+        print("GPRs")
         simulator.gpr.dump()
-        print ("FPRs")
+        print("FPRs")
         simulator.fpr.dump()
 
         return simulator

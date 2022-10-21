@@ -1,22 +1,15 @@
 """SVP64 unit test for svindex
 svindex SVG,rmm,SVd,ew,yx,mm,sk
 """
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import (ISACaller, set_masked_reg,)
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State, CRFields
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
 from copy import deepcopy
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.caller import SVP64State, set_masked_reg
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
 
 
 # originally from https://github.com/pts/chacha20
@@ -47,19 +40,19 @@ def quarter_round_schedule(x, a, b, c, d):
 def rotl32(v, c):
     c = c & 0x1f
     res = ((v << c) & 0xffffffff) | v >> (32 - c)
-    print ("op rotl32", hex(res), hex(v), hex(c))
+    print("op rotl32", hex(res), hex(v), hex(c))
     return res
 
 
 def add(a, b):
     res = (a + b) & 0xffffffff
-    print ("op add", hex(res), hex(a), hex(b))
+    print("op add", hex(res), hex(a), hex(b))
     return res
 
 
 def xor(a, b):
     res = a ^ b
-    print ("op xor", hex(res), hex(a), hex(b))
+    print("op xor", hex(res), hex(a), hex(b))
     return res
 
 
@@ -67,6 +60,7 @@ def sthth_round(x, a, b, d, rot):
     x[a] = add(x[a], x[b])
     x[d] = xor(x[d], x[a])
     x[d] = rotl32(x[d], rot)
+
 
 def quarter_round(x, a, b, c, d):
     """collate list of reg-offsets for use with svindex/svremap
@@ -91,11 +85,11 @@ def chacha_idx_schedule(x, fn=quarter_round_schedule):
 class SVSTATETestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
-        print ("GPR")
+        print("GPR")
         sim.gpr.dump()
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64),
-            "GPR %d %x expected %x" % (i, sim.gpr(i).value, expected[i]))
+                             "GPR %d %x expected %x" % (i, sim.gpr(i).value, expected[i]))
 
     def test_1_sv_chacha20_main_rounds(self):
         """chacha20 main rounds
@@ -112,34 +106,35 @@ class SVSTATETestCase(FHDLTestCase):
         *ZERO* branch-prediction misses, obviating a need for loop-unrolling.
         """
 
-        nrounds = 2 # should be 10 for full algorithm
+        nrounds = 2  # should be 10 for full algorithm
 
         isa = SVP64Asm([
             # set up VL=32 vertical-first, and SVSHAPEs 0-2
-            'setvl 17, 0, 32, 1, 0, 1',    # vertical-first, set MAXVL (and r17)
-            'svindex 11, 0, 1, 3, 0, 1, 0', # SVSHAPE0, a
-            'svindex 15, 1, 1, 3, 0, 1, 0', # SVSHAPE1, b
-            'svindex 19, 2, 1, 3, 0, 1, 0', # SVSHAPE2, c
-            'svindex 21, 3, 4, 3, 0, 1, 0', # SVSHAPE3, shift amount, mod 4
+            # vertical-first, set MAXVL (and r17)
+            'setvl 17, 0, 32, 1, 0, 1',
+            'svindex 11, 0, 1, 3, 0, 1, 0',  # SVSHAPE0, a
+            'svindex 15, 1, 1, 3, 0, 1, 0',  # SVSHAPE1, b
+            'svindex 19, 2, 1, 3, 0, 1, 0',  # SVSHAPE2, c
+            'svindex 21, 3, 4, 3, 0, 1, 0',  # SVSHAPE3, shift amount, mod 4
             # establish CTR for outer round count
             'addi 16, 0, %d' % nrounds,     # set number of rounds
             'mtspr 9, 16',                  # set CTR to number of rounds
             # outer loop begins here (standard CTR loop)
             'setvl 17, 17, 32, 1, 1, 0',    # vertical-first, set VL from r17
             # inner loop begins here. add-xor-rotl32 with remap, step, branch
-            'svremap 31, 1, 0, 0, 0, 0, 0', # RA=1, RB=0, RT=0 (0b01011)
+            'svremap 31, 1, 0, 0, 0, 0, 0',  # RA=1, RB=0, RT=0 (0b01011)
             'sv.add/w=32 *0, *0, *0',
-            'svremap 31, 2, 0, 2, 2, 0, 0', # RA=2, RB=0, RS=2 (0b00111)
+            'svremap 31, 2, 0, 2, 2, 0, 0',  # RA=2, RB=0, RS=2 (0b00111)
             'sv.xor/w=32 *0, *0, *0',
-            'svremap 31, 0, 3, 2, 2, 0, 0', # RA=2, RB=3, RS=2 (0b01110)
+            'svremap 31, 0, 3, 2, 2, 0, 0',  # RA=2, RB=3, RS=2 (0b01110)
             'sv.rldcl/w=32 *0, *0, *18, 0',
             'svstep. 16, 1, 0',              # step to next in-regs element
             'bc 6, 3, -0x28',               # svstep. Rc=1 loop-end-condition?
             # inner-loop done: outer loop standard CTR-decrement to setvl again
             'bc 16, 0, -0x30',
-                       ])
+        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         schedule = []
         chacha_idx_schedule(schedule, fn=quarter_round_schedule)
@@ -148,34 +143,34 @@ class SVSTATETestCase(FHDLTestCase):
         initial_regs = [0] * 128
 
         # offsets for a b c
-        for i, (a,b,c,d) in enumerate(schedule):
+        for i, (a, b, c, d) in enumerate(schedule):
             set_masked_reg(initial_regs, 22, i, ew_bits=8, value=a)
             set_masked_reg(initial_regs, 30, i, ew_bits=8, value=b)
             set_masked_reg(initial_regs, 38, i, ew_bits=8, value=c)
 
         # offsets for d (modulo 4 shift amount)
-        shifts = [16, 12, 8, 7] # chacha20 shifts
-        idxs2 = [0, 1, 2, 3] # cycle order (for fun)
+        shifts = [16, 12, 8, 7]  # chacha20 shifts
+        idxs2 = [0, 1, 2, 3]  # cycle order (for fun)
         for i in range(4):
             set_masked_reg(initial_regs, 42, i, ew_bits=8, value=idxs2[i])
             set_masked_reg(initial_regs, 18, i, ew_bits=32, value=shifts[i])
 
         x = [0] * 16
         for i in range(16):
-            x[i] = i<<1
+            x[i] = i << 1
         for i in range(16):
             set_masked_reg(initial_regs, 0, i, ew_bits=32, value=x[i])
 
         # SVSTATE vl=32
         svstate = SVP64State()
-        svstate.vl = 32 # VL
-        svstate.maxvl = 32 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 32  # VL
+        svstate.maxvl = 32  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         # copy before running, compute expected results
         expected_regs = deepcopy(initial_regs)
         expected_regs[16] = 0  # reaches zero
-        expected_regs[17] = 32 # gets set to MAXVL
+        expected_regs[17] = 32  # gets set to MAXVL
         expected = deepcopy(x)
         for i in range(nrounds):
             chacha_idx_schedule(expected, fn=quarter_round)
@@ -188,30 +183,30 @@ class SVSTATETestCase(FHDLTestCase):
             # print out expected regs
             for i in range(8):
                 RS = sim.gpr(i).value
-                print ("expected", i, hex(RS), hex(expected_regs[i]))
+                print("expected", i, hex(RS), hex(expected_regs[i]))
 
-            print (sim.spr)
+            print(sim.spr)
             SVSHAPE0 = sim.spr['SVSHAPE0']
             SVSHAPE1 = sim.spr['SVSHAPE1']
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("      RMpst", bin(sim.svstate.RMpst))
-            print ("       SVme", bin(sim.svstate.SVme))
-            print ("        mo0", bin(sim.svstate.mo0))
-            print ("        mo1", bin(sim.svstate.mo1))
-            print ("        mi0", bin(sim.svstate.mi0))
-            print ("        mi1", bin(sim.svstate.mi1))
-            print ("        mi2", bin(sim.svstate.mi2))
-            print ("STATE0svgpr", hex(SVSHAPE0.svgpr))
-            print ("STATE0 xdim", SVSHAPE0.xdimsz)
-            print ("STATE0 ydim", SVSHAPE0.ydimsz)
-            print ("STATE0 skip", bin(SVSHAPE0.skip))
-            print ("STATE0  inv", SVSHAPE0.invxyz)
-            print ("STATE0order", SVSHAPE0.order)
-            print (sim.gpr.dump())
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("      RMpst", bin(sim.svstate.RMpst))
+            print("       SVme", bin(sim.svstate.SVme))
+            print("        mo0", bin(sim.svstate.mo0))
+            print("        mo1", bin(sim.svstate.mo1))
+            print("        mi0", bin(sim.svstate.mi0))
+            print("        mi1", bin(sim.svstate.mi1))
+            print("        mi2", bin(sim.svstate.mi2))
+            print("STATE0svgpr", hex(SVSHAPE0.svgpr))
+            print("STATE0 xdim", SVSHAPE0.xdimsz)
+            print("STATE0 ydim", SVSHAPE0.ydimsz)
+            print("STATE0 skip", bin(SVSHAPE0.skip))
+            print("STATE0  inv", SVSHAPE0.invxyz)
+            print("STATE0order", SVSHAPE0.order)
+            print(sim.gpr.dump())
             self._check_regs(sim, expected_regs)
             self.assertEqual(sim.svstate.RMpst, 0)
             self.assertEqual(sim.svstate.SVme, 0b11111)
@@ -224,7 +219,7 @@ class SVSTATETestCase(FHDLTestCase):
             self.assertEqual(SVSHAPE1.svgpr, 30)
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None):
+                        svstate=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, svstate=svstate)
@@ -234,4 +229,3 @@ class SVSTATETestCase(FHDLTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

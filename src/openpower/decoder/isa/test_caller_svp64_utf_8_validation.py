@@ -2,10 +2,11 @@
 # Copyright 2022 Jacob Lifshay
 
 import unittest
+from functools import lru_cache
+
 from openpower.test.algorithms.svp64_utf_8_validation import \
     SVP64UTF8ValidationTestCase
 from openpower.test.runner import TestRunnerBase
-from functools import lru_cache
 
 # writing the test_caller invocation this way makes it work with pytest
 

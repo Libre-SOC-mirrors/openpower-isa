@@ -6,8 +6,9 @@ related bugs:
 """
 
 import unittest
-from openpower.test.runner import TestRunnerBase
+
 from openpower.test.alu.alu_cases import ALUTestCase
+from openpower.test.runner import TestRunnerBase
 
 # writing the test_caller invocation this way makes it work with pytest
 

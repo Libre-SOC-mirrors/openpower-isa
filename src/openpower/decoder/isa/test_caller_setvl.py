@@ -1,24 +1,18 @@
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State, CRFields
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
 from copy import deepcopy
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.caller import CRFields, SVP64State
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
+
 
 class DecoderTestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
-        print ("GPR")
+        print("GPR")
         sim.gpr.dump()
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
@@ -31,17 +25,17 @@ class DecoderTestCase(FHDLTestCase):
         # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
         # but, ha! r4 (RA) is zero. and Rc=1. therefore, CR0 should be set EQ
         svstate = SVP64State()
-        svstate.maxvl = 5 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.maxvl = 5  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 0)
             self.assertEqual(sim.svstate.maxvl, 5)
             self.assertEqual(sim.svstate.srcstep, 0)
@@ -66,8 +60,8 @@ class DecoderTestCase(FHDLTestCase):
         # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
         # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
         svstate = SVP64State()
-        svstate.maxvl = 5 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.maxvl = 5  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         initial_regs = [0] * 32
         initial_regs[4] = 4
@@ -75,12 +69,12 @@ class DecoderTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_regs=initial_regs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 4)
             self.assertEqual(sim.svstate.maxvl, 5)
             self.assertEqual(sim.svstate.srcstep, 0)
@@ -105,30 +99,31 @@ class DecoderTestCase(FHDLTestCase):
         # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
         # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
         svstate = SVP64State()
-        svstate.maxvl = 5 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.maxvl = 5  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         initial_regs = [0] * 32
-        initial_regs[4] = 1000 # much greater than MAXVL
+        initial_regs[4] = 1000  # much greater than MAXVL
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_regs=initial_regs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 5)
             self.assertEqual(sim.svstate.maxvl, 5)
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             self.assertEqual(sim.svstate.vfirst, 0)
             print("      gpr4", sim.gpr(4))
-            self.assertEqual(sim.gpr(4), SelectableInt(1000, 64)) # unmodified
+            self.assertEqual(sim.gpr(4), SelectableInt(1000, 64))  # unmodified
             print("      gpr5", sim.gpr(5))
-            self.assertEqual(sim.gpr(5), SelectableInt(5, 64)) # equal to MAXVL
+            self.assertEqual(sim.gpr(5), SelectableInt(5, 64)
+                             )  # equal to MAXVL
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 0)
@@ -147,30 +142,30 @@ class DecoderTestCase(FHDLTestCase):
         # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
         # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
         svstate = SVP64State()
-        svstate.maxvl = 5 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.maxvl = 5  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         initial_regs = [0] * 32
-        initial_regs[4] = 1000 # much greater than MAXVL
+        initial_regs[4] = 1000  # much greater than MAXVL
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_regs=initial_regs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 127)
             self.assertEqual(sim.svstate.maxvl, 127)
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             self.assertEqual(sim.svstate.vfirst, 0)
             print("      gpr4", sim.gpr(4))
-            self.assertEqual(sim.gpr(4), SelectableInt(1000, 64)) # unmodified
+            self.assertEqual(sim.gpr(4), SelectableInt(1000, 64))  # unmodified
             print("      gpr5", sim.gpr(5))
-            self.assertEqual(sim.gpr(5), SelectableInt(127, 64)) # eq. MAXVL
+            self.assertEqual(sim.gpr(5), SelectableInt(127, 64))  # eq. MAXVL
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 0)
@@ -189,30 +184,30 @@ class DecoderTestCase(FHDLTestCase):
         # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
         # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
         svstate = SVP64State()
-        svstate.maxvl = 5 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.maxvl = 5  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         initial_regs = [0] * 32
-        initial_regs[4] = 127 # exactly equal to MAXVL
+        initial_regs[4] = 127  # exactly equal to MAXVL
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_regs=initial_regs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 127)
             self.assertEqual(sim.svstate.maxvl, 127)
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             self.assertEqual(sim.svstate.vfirst, 0)
             print("      gpr4", sim.gpr(4))
-            self.assertEqual(sim.gpr(4), SelectableInt(127, 64)) # unmodified
+            self.assertEqual(sim.gpr(4), SelectableInt(127, 64))  # unmodified
             print("      gpr5", sim.gpr(5))
-            self.assertEqual(sim.gpr(5), SelectableInt(127, 64)) # eq. MAXVL
+            self.assertEqual(sim.gpr(5), SelectableInt(127, 64))  # eq. MAXVL
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 0)
@@ -231,30 +226,30 @@ class DecoderTestCase(FHDLTestCase):
         # SVSTATE (in this case, MAXVL=5) which is going to get erased by setvl
         # r4 (RA) is 4. and Rc=1. therefore, CR0 should be set to GT
         svstate = SVP64State()
-        svstate.maxvl = 5 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.maxvl = 5  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         initial_regs = [0] * 32
-        initial_regs[4] = 127 # overlimit, should set CR0.SO=1, and CR0.GT=1
+        initial_regs[4] = 127  # overlimit, should set CR0.SO=1, and CR0.GT=1
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_regs=initial_regs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 5)
             self.assertEqual(sim.svstate.maxvl, 5)
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             self.assertEqual(sim.svstate.vfirst, 0)
             print("      gpr0", sim.gpr(0))
-            self.assertEqual(sim.gpr(0), SelectableInt(0, 64)) # unmodified
+            self.assertEqual(sim.gpr(0), SelectableInt(0, 64))  # unmodified
             print("      gpr4", sim.gpr(4))
-            self.assertEqual(sim.gpr(4), SelectableInt(127, 64)) # unmodified
+            self.assertEqual(sim.gpr(4), SelectableInt(127, 64))  # unmodified
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 0)
@@ -268,28 +263,28 @@ class DecoderTestCase(FHDLTestCase):
         related to RT_OR_ZERO and to simplev.mdwn pseudocode having
         _RT not be EXTRA-extended properly
         """
-        lst = SVP64Asm(["sv.setvl 8, 31, 10, 0, 1, 1", # setvl into RT=8
+        lst = SVP64Asm(["sv.setvl 8, 31, 10, 0, 1, 1",  # setvl into RT=8
                         ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4) which is going to get erased by setvl
         svstate = SVP64State()
-        svstate.vl = 4 # VL
-        svstate.maxvl = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         initial_regs = [0] * 64
         initial_regs[31] = 200
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs=initial_regs,
-                                                svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+                                       svstate=svstate)
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 10)
             self.assertEqual(sim.svstate.maxvl, 10)
             self.assertEqual(sim.svstate.srcstep, 0)
@@ -300,26 +295,26 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(8), SelectableInt(10, 64))
 
     def test_svstep_1(self):
-        lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1", # actual setvl (VF mode)
-                        "svstep 0, 1, 0", # svstep
-                        "svstep 0, 1, 0", # svstep
+        lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1",  # actual setvl (VF mode)
+                        "svstep 0, 1, 0",  # svstep
+                        "svstep 0, 1, 0",  # svstep
                         ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4) which is going to get erased by setvl
         svstate = SVP64State()
-        svstate.vl = 4 # VL
-        svstate.maxvl = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 10)
             self.assertEqual(sim.svstate.maxvl, 10)
             self.assertEqual(sim.svstate.srcstep, 2)
@@ -332,25 +327,25 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep when it reaches VL
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",  # actual setvl (VF mode)
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
+                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 1, 0",  # svstep (Rc=1)
                         ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate.vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate.vfirst))
             self.assertEqual(sim.svstate.vl, 2)
             self.assertEqual(sim.svstate.maxvl, 2)
             self.assertEqual(sim.svstate.srcstep, 0)
@@ -370,25 +365,25 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep when it *doesn't* reach VL
         """
         lst = SVP64Asm(["setvl 0, 0, 3, 1, 1, 1",  # actual setvl (VF mode)
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
+                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 1, 0",  # svstep (Rc=1)
                         ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 3)
             self.assertEqual(sim.svstate.maxvl, 3)
             # svstep called twice, didn't reach VL, so srcstep/dststep both 2
@@ -414,18 +409,18 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2), want to see if these get changed
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         sprs = {'CTR': 5,
-               }
+                }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_sprs=sprs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
             self.assertEqual(sim.svstate.vl, 5)
             self.assertEqual(sim.svstate.maxvl, 10)
             print("      gpr1", sim.gpr(1))
@@ -447,18 +442,18 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2), want to see if these get changed
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         sprs = {'CTR': 5,
-               }
+                }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_sprs=sprs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
             self.assertEqual(sim.svstate.vl, 5)
             self.assertEqual(sim.svstate.maxvl, 10)
             print("      gpr1", sim.gpr(1))
@@ -481,18 +476,18 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2), want to see if these get changed
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         sprs = {'CTR': 0x1000000000,
-               }
+                }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_sprs=sprs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
             self.assertEqual(sim.svstate.vl, 10)
             self.assertEqual(sim.svstate.maxvl, 10)
             print("      gpr1", sim.gpr(1))
@@ -514,18 +509,18 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2), want to see if these get changed
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         sprs = {'CTR': 0x1000000000,
-               }
+                }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_sprs=sprs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
             self.assertEqual(sim.svstate.vl, 10)
             self.assertEqual(sim.svstate.maxvl, 10)
             print("      gpr1", sim.gpr(1))
@@ -540,15 +535,15 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2), want to see if these get changed
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
             self.assertEqual(sim.svstate.vl, 10)
             self.assertEqual(sim.svstate.maxvl, 10)
             print("      gpr1", sim.gpr(1))
@@ -563,15 +558,15 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2), want to see if these get changed
         svstate = SVP64State()
-        svstate.vl = 10 # VL
-        svstate.maxvl = 10 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 10  # VL
+        svstate.maxvl = 10  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
             self.assertEqual(sim.svstate.maxvl, 2)
             self.assertEqual(sim.svstate.vl, 2)
             print("      gpr1", sim.gpr(1))
@@ -582,32 +577,32 @@ class DecoderTestCase(FHDLTestCase):
         also sees if k is actually output into reg 2 (RT=2)
         """
         lst = SVP64Asm([
-                        # set triple butterfly mode with persistent "REMAP"
-                        "svshape 8, 1, 1, 1, 1",
-                        "svremap 31, 1, 0, 2, 0, 1, 1",
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 2, 2, 0", # svstep (Rc=1)
-                        ])
+            # set triple butterfly mode with persistent "REMAP"
+            "svshape 8, 1, 1, 1, 1",
+            "svremap 31, 1, 0, 2, 0, 1, 1",
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 2, 2, 0",  # svstep (Rc=1)
+        ])
         lst = list(lst)
 
         # SVSTATE
         svstate = SVP64State()
-        #svstate.vl = 2 # VL
-        #svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        # svstate.vl = 2 # VL
+        # svstate.maxvl = 2 # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 12)
             self.assertEqual(sim.svstate.maxvl, 12)
             # svstep called twice, didn't reach VL, so srcstep/dststep both 2
@@ -626,29 +621,29 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep inner loop, running 3 times
         """
         lst = SVP64Asm([
-                        # set triple butterfly mode with persistent "REMAP"
-                        "svshape 8, 1, 1, 1, 1",
-                        "svremap 31, 1, 0, 2, 0, 1, 1",
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        ])
+            # set triple butterfly mode with persistent "REMAP"
+            "svshape 8, 1, 1, 1, 1",
+            "svremap 31, 1, 0, 2, 0, 1, 1",
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+        ])
         lst = list(lst)
 
         # SVSTATE
         svstate = SVP64State()
-        #svstate.vl = 2 # VL
-        #svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        # svstate.vl = 2 # VL
+        # svstate.maxvl = 2 # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 12)
             self.assertEqual(sim.svstate.maxvl, 12)
             # svstep called twice, didn't reach VL, so srcstep/dststep both 2
@@ -667,30 +662,30 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep inner loop, running 4 times
         """
         lst = SVP64Asm([
-                        # set triple butterfly mode with persistent "REMAP"
-                        "svshape 8, 1, 1, 1, 1",
-                        "svremap 31, 1, 0, 2, 0, 1, 1",
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        ])
+            # set triple butterfly mode with persistent "REMAP"
+            "svshape 8, 1, 1, 1, 1",
+            "svremap 31, 1, 0, 2, 0, 1, 1",
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+        ])
         lst = list(lst)
 
         # SVSTATE
         svstate = SVP64State()
-        #svstate.vl = 2 # VL
-        #svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        # svstate.vl = 2 # VL
+        # svstate.maxvl = 2 # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 12)
             self.assertEqual(sim.svstate.maxvl, 12)
             # svstep called twice, didn't reach VL, so srcstep/dststep both 2
@@ -710,30 +705,30 @@ class DecoderTestCase(FHDLTestCase):
            "jl" is returned after 4th iteration
         """
         lst = SVP64Asm([
-                        # set triple butterfly mode with persistent "REMAP"
-                        "svshape 8, 1, 1, 1, 1",
-                        "svremap 31, 1, 0, 2, 0, 1, 1",
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 0, 2, 0", # svstep (Rc=1)
-                        "svstep. 2, 2, 0", # svstep (Rc=1)
-                        ])
+            # set triple butterfly mode with persistent "REMAP"
+            "svshape 8, 1, 1, 1, 1",
+            "svremap 31, 1, 0, 2, 0, 1, 1",
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 2, 2, 0",  # svstep (Rc=1)
+        ])
         lst = list(lst)
 
         # SVSTATE
         svstate = SVP64State()
-        #svstate.vl = 2 # VL
-        #svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        # svstate.vl = 2 # VL
+        # svstate.maxvl = 2 # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 12)
             self.assertEqual(sim.svstate.maxvl, 12)
             # svstep called twice, didn't reach VL, so srcstep/dststep both 2
@@ -755,28 +750,28 @@ class DecoderTestCase(FHDLTestCase):
             fuuun...
         """
         lst = SVP64Asm([
-                        # set DCT triple butterfly mode with persistent "REMAP"
-                        "svshape 8, 1, 1, 2, 0",
-                        "svremap 0, 0, 0, 2, 0, 1, 1",
-                        "sv.svstep *2, 4, 1", # svstep get vector of ci
-                        "sv.svstep *16, 3, 1", # svstep get vector of step
-                        ])
+            # set DCT triple butterfly mode with persistent "REMAP"
+            "svshape 8, 1, 1, 2, 0",
+            "svremap 0, 0, 0, 2, 0, 1, 1",
+            "sv.svstep *2, 4, 1",  # svstep get vector of ci
+            "sv.svstep *16, 3, 1",  # svstep get vector of step
+        ])
         lst = list(lst)
 
         # SVSTATE
         svstate = SVP64State()
-        #svstate.vl = 2 # VL
-        #svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        # svstate.vl = 2 # VL
+        # svstate.maxvl = 2 # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 12)
             self.assertEqual(sim.svstate.maxvl, 12)
             # svstep called four times, reset occurs, srcstep zero
@@ -807,9 +802,9 @@ class DecoderTestCase(FHDLTestCase):
         isa = SVP64Asm(["setvl 0, 0, 2, 0, 1, 1",
                         'sv.add *1, *5, *9',
                         "setvl 3, 0, 0, 0, 0, 0",
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -850,18 +845,18 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add *1, *5, *9',
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
+                        "svstep. 0, 1, 0",  # svstep (Rc=1)
                         'sv.add *1, *5, *9',
-                        "svstep. 3, 1, 0", # svstep (Rc=1)
-                        "setvl 4, 0, 0, 0, 0, 0", # getvl
+                        "svstep. 3, 1, 0",  # svstep (Rc=1)
+                        "setvl 4, 0, 0, 0, 0, 0",  # getvl
                         ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -878,12 +873,12 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 2)
             self.assertEqual(sim.svstate.maxvl, 2)
             self.assertEqual(sim.svstate.srcstep, 0)
@@ -930,16 +925,16 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add *1, *5, *9',
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
-                        "bc 6, 3, -0xc" # branch to add (64-bit op so -0xc!)
+                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "bc 6, 3, -0xc"  # branch to add (64-bit op so -0xc!)
                         ])
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -955,12 +950,12 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 2)
             self.assertEqual(sim.svstate.maxvl, 2)
             self.assertEqual(sim.svstate.srcstep, 0)
@@ -983,12 +978,12 @@ class DecoderTestCase(FHDLTestCase):
         but also uses the same trick when getting the srcstep.
         """
         lst = SVP64Asm(["setvl 0, 0, 5, 1, 1, 1",
-                        'sv.cmp 0, 1, *4, 14', # r8 contains the temp
-                        'sv.isel 14,*4,14,1', # copy if cmp was greater
-                        "svstep. 12, 6, 0", # get srcstep
-                        'sv.isel 10,12,10,1', # copy if cmp was greater
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
-                        "bc 6, 3, -0x24" # branch to cmp
+                        'sv.cmp 0, 1, *4, 14',  # r8 contains the temp
+                        'sv.isel 14,*4,14,1',  # copy if cmp was greater
+                        "svstep. 12, 6, 0",  # get srcstep
+                        'sv.isel 10,12,10,1',  # copy if cmp was greater
+                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "bc 6, 3, -0x24"  # branch to cmp
                         ])
         lst = list(lst)
 
@@ -1013,12 +1008,12 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 5)
             self.assertEqual(sim.svstate.maxvl, 5)
             self.assertEqual(sim.svstate.srcstep, 0)
@@ -1045,14 +1040,14 @@ class DecoderTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program)
             svstate = sim.svstate
-            print ("SVREMAP after", bin(svstate.value))
-            print ("        men", bin(svstate.SVme))
-            print ("        mi0", bin(svstate.mi0))
-            print ("        mi1", bin(svstate.mi1))
-            print ("        mi2", bin(svstate.mi2))
-            print ("        mo0", bin(svstate.mo0))
-            print ("        mo1", bin(svstate.mo1))
-            print ("    persist", bin(svstate.RMpst))
+            print("SVREMAP after", bin(svstate.value))
+            print("        men", bin(svstate.SVme))
+            print("        mi0", bin(svstate.mi0))
+            print("        mi1", bin(svstate.mi1))
+            print("        mi2", bin(svstate.mi2))
+            print("        mo0", bin(svstate.mo0))
+            print("        mo1", bin(svstate.mo1))
+            print("    persist", bin(svstate.RMpst))
             self.assertEqual(svstate.SVme, 11)
             self.assertEqual(svstate.mi0, 0)
             self.assertEqual(svstate.mi1, 1)
@@ -1065,25 +1060,25 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep "straight", placing srcstep, dststep into vector
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
-                        "sv.svstep *0, 5, 1", # svstep get vector srcstep
-                        "sv.svstep. *4, 6, 1", # svstep get vector dststep
+                        "sv.svstep *0, 5, 1",  # svstep get vector srcstep
+                        "sv.svstep. *4, 6, 1",  # svstep get vector dststep
                         ])
         lst = list(lst)
 
         # SVSTATE
         svstate = SVP64State()
-        #svstate.vl = 2 # VL
-        #svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        # svstate.vl = 2 # VL
+        # svstate.maxvl = 2 # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 4)
             self.assertEqual(sim.svstate.maxvl, 4)
             # svstep called four times, reset occurs, srcstep zero
@@ -1104,16 +1099,16 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep "straight", placing srcstep, dststep into vector
         """
         lst = SVP64Asm(["setvl 0, 0, 5, 0, 1, 1",
-                        "sv.svstep/m=r30 *0, 5, 1", # svstep get vector srcstep
-                        "sv.svstep./m=r30 *8, 6, 1", # svstep get vector dststep
+                        "sv.svstep/m=r30 *0, 5, 1",  # svstep get vector srcstep
+                        "sv.svstep./m=r30 *8, 6, 1",  # svstep get vector dststep
                         ])
         lst = list(lst)
 
         # SVSTATE
         svstate = SVP64State()
-        #svstate.vl = 2 # VL
-        #svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        # svstate.vl = 2 # VL
+        # svstate.maxvl = 2 # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         mask = 0b10101
         initial_regs = [0] * 32
@@ -1122,12 +1117,12 @@ class DecoderTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
                                        initial_regs=initial_regs)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
-            print ("     vfirst", bin(sim.svstate. vfirst))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
+            print("     vfirst", bin(sim.svstate. vfirst))
             self.assertEqual(sim.svstate.vl, 5)
             self.assertEqual(sim.svstate.maxvl, 5)
             # svstep called four times, reset occurs, srcstep zero
@@ -1135,7 +1130,7 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.dststep, 0)
             sim.gpr.dump()
             for i in range(5):
-                if mask & (1<<i):
+                if mask & (1 << i):
                     tst = i
                 else:
                     tst = 0
@@ -1150,16 +1145,15 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR4[CRFields.SO], 0)
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None,
-                              initial_sprs=None):
+                        svstate=None,
+                        initial_sprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, svstate=svstate,
-                              initial_sprs=initial_sprs)
+                            initial_sprs=initial_sprs)
         simulator.gpr.dump()
         return simulator
 
 
 if __name__ == "__main__":
     unittest.main()
-

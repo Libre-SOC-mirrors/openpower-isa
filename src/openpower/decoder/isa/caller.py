@@ -13,47 +13,32 @@ related bugs:
 * https://bugs.libre-soc.org/show_bug.cgi?id=424
 """
 
-import re
-from nmigen.sim import Settle, Delay
+from collections import namedtuple
+from copy import deepcopy
 from functools import wraps
-from copy import copy, deepcopy
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.selectable_int import (
-    FieldSelectableInt,
-    SelectableInt,
-    selectconcat,
-)
-from openpower.decoder.power_insn import SVP64Instruction
-from openpower.decoder.power_enums import (spr_dict, spr_byname, XER_bits,
-                                           insns, MicrOp,
-                                           In1Sel, In2Sel, In3Sel,
-                                           OutSel, CRInSel, CROutSel, LDSTMode,
-                                           SVMode,
-                                           SVP64RMMode, SVP64PredMode,
-                                           SVP64PredInt, SVP64PredCR,
-                                           SVP64LDSTmode, FPTRANS_INSNS)
 
-from openpower.decoder.power_enums import SVPtype
-
-from openpower.decoder.helpers import (exts, gtu, ltu, undefined,
-                                       ISACallerHelper, ISAFPHelpers)
-from openpower.consts import PIb, MSRb  # big-endian (PowerISA versions)
-from openpower.consts import (SVP64MODE, SVP64MODEb,
-                              SVP64CROffs,
-                              )
-from openpower.decoder.power_svp64 import SVP64RM, decode_extra
-
+from nmigen.sim import Settle
+from openpower.consts import (MSRb, PIb,  # big-endian (PowerISA versions)
+                              SVP64CROffs, SVP64MODEb)
+from openpower.decoder.helpers import (ISACallerHelper, ISAFPHelpers, exts,
+                                       gtu, undefined)
+from openpower.decoder.isa.mem import Mem, MemException
 from openpower.decoder.isa.radixmmu import RADIX
-from openpower.decoder.isa.mem import Mem, swap_order, MemException
 from openpower.decoder.isa.svshape import SVSHAPE
 from openpower.decoder.isa.svstate import SVP64State
-
-
+from openpower.decoder.orderedset import OrderedSet
+from openpower.decoder.power_enums import (FPTRANS_INSNS, CRInSel, CROutSel,
+                                           In1Sel, In2Sel, In3Sel, LDSTMode,
+                                           MicrOp, OutSel, SVMode,
+                                           SVP64LDSTmode, SVP64PredCR,
+                                           SVP64PredInt, SVP64PredMode,
+                                           SVP64RMMode, SVPtype, XER_bits,
+                                           insns, spr_byname, spr_dict)
+from openpower.decoder.power_insn import SVP64Instruction
+from openpower.decoder.power_svp64 import SVP64RM, decode_extra
+from openpower.decoder.selectable_int import (FieldSelectableInt,
+                                              SelectableInt, selectconcat)
 from openpower.util import LogKind, log
-
-from collections import namedtuple
-import math
-import sys
 
 instruction_info = namedtuple('instruction_info',
                               'func read_regs uninit_regs write_regs ' +
@@ -110,7 +95,7 @@ def get_masked_reg(regs, base, offs, ew_bits):
     gpr_offs = offs // (64//ew_bits)
     gpr_col = offs % (64//ew_bits)
     # compute the mask based on ew_bits
-    mask = (1<<ew_bits)-1
+    mask = (1 << ew_bits)-1
     # now select the 64-bit register, but get its value (easier)
     val = regs[base+gpr_offs]
     # now mask out the bit we don't want
@@ -124,7 +109,7 @@ def set_masked_reg(regs, base, offs, ew_bits, value):
     gpr_offs = offs // (64//ew_bits)
     gpr_col = offs % (64//ew_bits)
     # compute the mask based on ew_bits
-    mask = (1<<ew_bits)-1
+    mask = (1 << ew_bits)-1
     # now select the 64-bit register, but get its value (easier)
     val = regs[base+gpr_offs]
     # now mask out the bit we don't want
@@ -134,7 +119,6 @@ def set_masked_reg(regs, base, offs, ew_bits, value):
     # OR the new value in, shifted up
     val |= value << (gpr_col*ew_bits)
     regs[base+gpr_offs] = val
-
 
 
 def create_args(reglist, extra=None):
@@ -165,10 +149,10 @@ class GPR(dict):
         # now select the 64-bit register, but get its value (easier)
         val = self[ridx+gpr_offs].value
         # now shift down and mask out
-        val = val >> (gpr_col*elwidth) & ((1<<elwidth)-1)
+        val = val >> (gpr_col*elwidth) & ((1 << elwidth)-1)
         # finally, return a SelectableInt at the required elwidth
         log("GPR call", ridx, "isvec", is_vec, "offs", offs,
-             "elwid", elwidth, "offs/col", gpr_offs, gpr_col, "val", hex(val))
+            "elwid", elwidth, "offs/col", gpr_offs, gpr_col, "val", hex(val))
         return SelectableInt(val, elwidth)
 
     def set_form(self, form):
@@ -189,7 +173,7 @@ class GPR(dict):
         gpr_offs = offs // (64//elwidth)
         gpr_col = offs % (64//elwidth)
         # compute the mask based on elwidth
-        mask = (1<<elwidth)-1
+        mask = (1 << elwidth)-1
         # now select the 64-bit register, but get its value (easier)
         val = self[base+gpr_offs].value
         # now mask out the bit we don't want
@@ -200,8 +184,8 @@ class GPR(dict):
         val |= value << (gpr_col*elwidth)
         # finally put the damn value into the regfile
         log("GPR write", base, "isvec", is_vec, "offs", offs,
-             "elwid", elwidth, "offs/col", gpr_offs, gpr_col, "val", hex(val),
-             "@", base+gpr_offs)
+            "elwid", elwidth, "offs/col", gpr_offs, gpr_col, "val", hex(val),
+            "@", base+gpr_offs)
         dict.__setitem__(self, base+gpr_offs, SelectableInt(val, 64))
 
     def __setitem__(self, rnum, value):
@@ -477,10 +461,10 @@ def get_idx_in(dec2, name, ewmode=False):
     if ewmode:
         in1_base = yield dec2.e.read_reg1.base
         in2_base = yield dec2.e.read_reg2.base
-        in3_base  = yield dec2.e.read_reg3.base
+        in3_base = yield dec2.e.read_reg3.base
         in1_offs = yield dec2.e.read_reg1.offs
         in2_offs = yield dec2.e.read_reg2.offs
-        in3_offs  = yield dec2.e.read_reg3.offs
+        in3_offs = yield dec2.e.read_reg3.offs
         in1 = (in1, in1_base, in1_offs)
         in2 = (in2, in2_base, in2_offs)
         in3 = (in3, in3_base, in3_offs)
@@ -714,7 +698,7 @@ class StepLoop:
                         if self.svstate.ssubstep == subvl:  # end-point
                             log("    advance pack stop")
                             return
-                        break # exit inner loop
+                        break  # exit inner loop
                     self.svstate.srcstep += SelectableInt(1, 7)  # advance ss
                 subvl = self.subvl
                 if self.svstate.ssubstep == subvl:  # end-point
@@ -743,7 +727,7 @@ class StepLoop:
                         yield (self.svstate.ssubstep, srcstep)
                     if self.svstate.ssubstep == subvl:  # end-point
                         self.svstate.ssubstep = SelectableInt(0, 2)  # reset
-                        break # exit inner loop
+                        break  # exit inner loop
                     self.svstate.ssubstep += SelectableInt(1, 2)
                 vl = self.svstate.vl
                 if srcstep == vl-1:  # end-point
@@ -880,7 +864,7 @@ class StepLoop:
 
         self.svstate.srcstep = SelectableInt(srcstep, 7)
         log("    advance src", self.svstate.srcstep, self.svstate.ssubstep,
-                               self.loopend)
+            self.loopend)
 
     def dst_iterate(self):
         """dest step iterator
@@ -943,7 +927,7 @@ class StepLoop:
 
         self.svstate.dststep = SelectableInt(dststep, 7)
         log("    advance dst", self.svstate.dststep, self.svstate.dsubstep,
-                               self.loopend)
+            self.loopend)
 
     def at_loopend(self):
         """tells if this is the last possible element.  uses the cached values
@@ -966,7 +950,7 @@ class StepLoop:
         TODO when Pack/Unpack is set, substep becomes the *outer* loop
         """
         self.subvl = yield self.dec2.rm_dec.rm_in.subvl
-        if self.loopend: # huhn??
+        if self.loopend:  # huhn??
             return
         self.src_iterate()
         self.dst_iterate()
@@ -1214,7 +1198,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # create CR then allow portions of it to be "selectable" (below)
         self.cr_fields = CRFields(initial_cr)
         self.cr = self.cr_fields.cr
-        self.cr_backup = 0 # sigh, dreadful hack: for fail-first (VLi)
+        self.cr_backup = 0  # sigh, dreadful hack: for fail-first (VLi)
 
         # "undefined", just set to variable-bit-width int (use exts "max")
         # self.undefined = SelectableInt(0, 256)  # TODO, not hard-code 256!
@@ -1365,7 +1349,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.is_svp64_mode and insn_name.startswith("sv.bc"):
             # blegh grab bits manually
             mode = yield self.dec2.rm_dec.rm_in.mode
-            mode = SelectableInt(mode, 5) # convert to SelectableInt before test
+            # convert to SelectableInt before test
+            mode = SelectableInt(mode, 5)
             bc_vlset = mode[SVP64MODEb.BC_VLSET] != 0
             bc_vli = mode[SVP64MODEb.BC_VLI] != 0
             bc_snz = mode[SVP64MODEb.BC_SNZ] != 0
@@ -1399,7 +1384,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log(gts)
         cy = 1 if any(gts) else 0
         log("CA", cy, gts)
-        if ca is None: # already written
+        if ca is None:  # already written
             self.spr['XER'][XER_bits['CA']] = cy
 
         # 32 bit carry
@@ -1424,7 +1409,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 gts.append(gt)
             cy32 = 1 if any(gts) else 0
             log("CA32", cy32, gts)
-        if ca32 is None: # already written
+        if ca32 is None:  # already written
             self.spr['XER'][XER_bits['CA32']] = cy32
 
     def handle_overflow(self, inputs, output, div_overflow):
@@ -1567,7 +1552,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         else:
             offs, dbg = 0, ""
             if self.is_svp64_mode:
-               offs, dbg = 4, "svp64 "
+                offs, dbg = 4, "svp64 "
             code = self.disassembly[self._pc+offs]
             log("    %s sim-execute" % dbg, hex(self._pc), code)
         opname = code.split(' ')[0]
@@ -1575,13 +1560,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             yield from self.call(opname)         # execute the instruction
         except MemException as e:                # check for memory errors
             if e.args[0] == 'unaligned':         # alignment error
-               # run a Trap but set DAR first
+                # run a Trap but set DAR first
                 print("memory unaligned exception, DAR", e.dar)
                 self.spr['DAR'] = SelectableInt(e.dar, 64)
                 self.call_trap(0x600, PIb.PRIV)    # 0x600, privileged
                 return
             elif e.args[0] == 'invalid':         # invalid
-               # run a Trap but set DAR first
+                # run a Trap but set DAR first
                 log("RADIX MMU memory invalid error, mode %s" % e.mode)
                 if e.mode == 'EXECUTE':
                     # XXX TODO: must set a few bits in SRR1,
@@ -1835,14 +1820,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.is_svp64_mode:
             ew_src = yield self.dec2.rm_dec.ew_src
             ew_dst = yield self.dec2.rm_dec.ew_dst
-            ew_src = 8 << (3-int(ew_src)) # convert to bitlength
-            ew_dst = 8 << (3-int(ew_dst)) # convert to bitlength
+            ew_src = 8 << (3-int(ew_src))  # convert to bitlength
+            ew_dst = 8 << (3-int(ew_dst))  # convert to bitlength
             xlen = max(ew_src, ew_dst)
             log("elwdith", ew_src, ew_dst)
         log("XLEN:", self.is_svp64_mode, xlen)
 
         # look up instruction in ISA.instrs, prepare namespace
-        if ins_name == 'pcdec': # grrrr yes there are others ("stbcx." etc.)
+        if ins_name == 'pcdec':  # grrrr yes there are others ("stbcx." etc.)
             info = self.instrs[ins_name+"."]
         else:
             info = self.instrs[ins_name]
@@ -2031,7 +2016,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         ff_inv = yield self.dec2.rm_dec.inv
         cr_bit = yield self.dec2.rm_dec.cr_sel
         RC1 = yield self.dec2.rm_dec.RC1
-        vli_ = yield self.dec2.rm_dec.vli # VL inclusive if truncated
+        vli_ = yield self.dec2.rm_dec.vli  # VL inclusive if truncated
         log(" ff rm_mode", rc_en, rm_mode, SVP64RMMode.FFIRST.value)
         log("        inv", ff_inv)
         log("        RC1", RC1)
@@ -2088,7 +2073,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             yield from self.check_write(info, name, output, carry_en, ew_dst)
         # restore the CR value on non-VLI failfirst (from sv.cmp and others
         # which write directly to CR in the pseudocode (gah, what a mess)
-        #if ffirst_hit and not vli:
+        # if ffirst_hit and not vli:
         #    self.cr.value = self.cr_backup
 
         if ffirst_hit:
@@ -2097,7 +2082,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         else:
             # check advancement of src/dst/sub-steps and if PC needs updating
             nia_update = (yield from self.check_step_increment(rc_en,
-                                                           asmop, ins_name))
+                                                               asmop, ins_name))
         if nia_update:
             self.update_pc_next()
 
@@ -2166,7 +2151,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if isinstance(regnum, tuple):
             (regnum, base, offs) = regnum
         else:
-            base, offs = regnum, 0 # temporary HACK
+            base, offs = regnum, 0  # temporary HACK
 
         # in case getting the register number is needed, _RA, _RB
         # (HACK: only in straight non-svp64-mode for now, or elwidth == 64)
@@ -2218,7 +2203,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  [self.dec2.o_step,  mo0],   # RT
                  [self.dec2.o2_step,  mo1],   # EA
                  ]
-        if False: # TODO
+        if False:  # TODO
             rnames = ['RA', 'RB', 'RC', 'RT', 'RS']
             for i, reg in enumerate(rnames):
                 idx = yield from get_idx_map(self.dec2, reg)
@@ -2226,9 +2211,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                     idx = yield from get_idx_map(self.dec2, "F"+reg)
                 if idx == 1:  # RA
                     steps[i][0] = self.dec2.in1_step
-                elif idx == 2: # RB
+                elif idx == 2:  # RB
                     steps[i][0] = self.dec2.in2_step
-                elif idx == 3: # RC
+                elif idx == 3:  # RC
                     steps[i][0] = self.dec2.in3_step
                 log("remap step", i, reg, idx, steps[i][1])
         remap_idxs = self.remap_idxs

@@ -1,19 +1,12 @@
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
 from copy import deepcopy
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
 
 
 class DecoderTestCase(FHDLTestCase):
@@ -32,9 +25,9 @@ class DecoderTestCase(FHDLTestCase):
             * 1 = 6 + 1  => 0x303 + 0x404 => 0x707
         """
         isa = SVP64Asm(['sv.add/mr 1, *5, 1'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -43,9 +36,9 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x0404
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
         # r1 = r1 + r5 + r6
@@ -54,7 +47,7 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs,
-                                                svstate=svstate)
+                                       svstate=svstate)
             self._check_regs(sim, expected_regs)
 
     def test_sv_add_prefix_sum(self):
@@ -68,9 +61,9 @@ class DecoderTestCase(FHDLTestCase):
             pascal's triangle!
         """
         isa = SVP64Asm(['sv.add/mr *2, *2, *1'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -80,20 +73,20 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[4] = 0x4
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 3 # VL
-        svstate.maxvl = 3 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
         for i in range(3):
-            print ("%d += %d" % (2+i, 1+i))
+            print("%d += %d" % (2+i, 1+i))
             expected_regs[2+i] += expected_regs[1+i]
         for i in range(5):
-            print ("expected", i, expected_regs[i])
+            print("expected", i, expected_regs[i])
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs,
-                                                svstate=svstate)
+                                       svstate=svstate)
             self._check_regs(sim, expected_regs)
 
     def test_sv_add_prefix_sum_reverse(self):
@@ -105,9 +98,9 @@ class DecoderTestCase(FHDLTestCase):
             * 2 = 2 + 1  => 3 + 4  =>  7
         """
         isa = SVP64Asm(['sv.add/mrr *2, *2, *1'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -117,21 +110,21 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[4] = 0x1
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 3 # VL
-        svstate.maxvl = 3 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running, then compute answers
         expected_regs = deepcopy(initial_regs)
         for i in range(3):
             j = 2-i
-            print ("%d += %d" % (2+j, 1+j))
+            print("%d += %d" % (2+j, 1+j))
             expected_regs[2+j] += expected_regs[1+j]
         for i in range(5):
-            print ("expected", i, expected_regs[i])
+            print("expected", i, expected_regs[i])
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs,
-                                                svstate=svstate)
+                                       svstate=svstate)
             self._check_regs(sim, expected_regs)
 
     def test_fp_muls_reduce(self):
@@ -146,9 +139,9 @@ class DecoderTestCase(FHDLTestCase):
         * FPR 1 multiplied by FPR 4, 2.0
         """
         isa = SVP64Asm(["sv.fmuls/mr 1, *2, 1",
-                     ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         fprs = [0] * 32
         fprs[1] = 0x401C000000000000  # 7.0
@@ -158,13 +151,13 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 3 # VL
-        svstate.maxvl = 3 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 3  # VL
+        svstate.maxvl = 3  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
-                                                initial_fprs=fprs)
+                                       initial_fprs=fprs)
             # answer should be 7.0 * -9.8 * -9.8 * 2.0 = 1344.56
             self.assertEqual(sim.fpr(1), SelectableInt(0x4095023d20000000, 64))
             # these should not have been changed
@@ -185,14 +178,14 @@ class DecoderTestCase(FHDLTestCase):
         fprs[2] = 0x401C000000000000  # 7.0
         fprs[3] = 0xC02399999999999A  # -9.8
         fprs[4] = 0x4000000000000000  # 2.0
-        fprs[5] = 0xC040266660000000 # -32.3
+        fprs[5] = 0xC040266660000000  # -32.3
         fprs[6] = 0x4000000000000000  # 2.0
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -200,16 +193,16 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(6), SelectableInt(0x4074c8a3c0000000, 64))
 
     def run_tst_program(self, prog, initial_regs=None, svstate=None,
-                              initial_mem=None,
-                              initial_fprs=None):
+                        initial_mem=None,
+                        initial_fprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, mem=initial_mem,
-                                  initial_fprs=initial_fprs,
-                                  svstate=svstate)
-        print ("GPRs")
+                            initial_fprs=initial_fprs,
+                            svstate=svstate)
+        print("GPRs")
         simulator.gpr.dump()
-        print ("FPRs")
+        print("FPRs")
         simulator.fpr.dump()
         return simulator
 

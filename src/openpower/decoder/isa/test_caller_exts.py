@@ -6,13 +6,11 @@ import re
 import unittest
 
 from nmutil.formaltest import FHDLTestCase
-
-from openpower.decoder.power_decoder import create_pdecode
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.selectable_int import SelectableInt
-
 from openpower.decoder.isa.test_runner import run_tst
+from openpower.decoder.power_decoder import create_pdecode
+from openpower.decoder.power_decoder2 import PowerDecode2
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
 
 
 def tstgen(mapping):
@@ -33,7 +31,7 @@ def tstgen(mapping):
 class EXTSTestCase(FHDLTestCase):
     CWD = os.path.dirname(os.path.realpath(__file__))
     ISAFN = os.path.normpath(os.path.join(CWD,
-        "..", "..", "..", "..", "openpower", "isafunctions"))
+                                          "..", "..", "..", "..", "openpower", "isafunctions"))
     REGEX = re.compile(r"extsxl_(0x[0-9A-Fa-f]{16}).csv")
     XLENS = (64, 32, 16, 8)
 
@@ -49,12 +47,13 @@ class EXTSTestCase(FHDLTestCase):
                 with Program(instrs, bigendian=False) as program:
                     sim = self.run_tst_program(program, iregs)
                     for (idx, gpr) in enumerate(range(nr)):
-                        print(f"{instrs[idx]} {iregs[idx]:016x} {oregs[idx]:016x}")
+                        print(
+                            f"{instrs[idx]} {iregs[idx]:016x} {oregs[idx]:016x}")
                         self.assertEqual(sim.gpr(gpr),
-                                        SelectableInt(oregs[gpr], xlen))
+                                         SelectableInt(oregs[gpr], xlen))
 
     def test(self):
-        data = {xlen:[] for xlen in EXTSTestCase.XLENS}
+        data = {xlen: [] for xlen in EXTSTestCase.XLENS}
         wildcard = os.path.join(EXTSTestCase.ISAFN, "extsxl_*.csv")
         for path in glob.glob(wildcard):
             name = path[len(EXTSTestCase.ISAFN + os.path.sep):]
@@ -64,7 +63,7 @@ class EXTSTestCase(FHDLTestCase):
             ireg = int(match[1], 16)
             with codecs.open(path, "rb", "UTF-8") as stream:
                 csv_reader = csv.reader(stream, delimiter=",")
-                _ = stream.readline() # we already know the format
+                _ = stream.readline()  # we already know the format
                 for row in csv_reader:
                     assert len(row) == len(("instr",) + EXTSTestCase.XLENS)
                     row = tuple(map(lambda s: s.strip(), row))
@@ -83,6 +82,7 @@ class EXTSTestCase(FHDLTestCase):
         simulator = run_tst(prog, initial_regs, pdecode2=self.pdecode2)
         simulator.gpr.dump()
         return simulator
+
 
 if __name__ == "__main__":
     unittest.main()

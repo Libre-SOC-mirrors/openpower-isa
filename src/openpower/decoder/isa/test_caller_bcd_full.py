@@ -1,12 +1,13 @@
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.power_decoder import create_pdecode
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.isa.test_runner import run_tst
 from hashlib import sha256
 from textwrap import dedent
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.test_runner import run_tst
+from openpower.decoder.power_decoder import create_pdecode
+from openpower.decoder.power_decoder2 import PowerDecode2
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
 
 
 def mock_pia():

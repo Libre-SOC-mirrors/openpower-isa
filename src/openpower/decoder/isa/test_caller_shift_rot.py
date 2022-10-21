@@ -6,6 +6,7 @@ related bugs:
 """
 
 import unittest
+
 from openpower.test.runner import TestRunnerBase
 from openpower.test.shift_rot.shift_rot_cases2 import ShiftRotTestCase2
 

@@ -1,17 +1,9 @@
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.test_caller import run_tst
 from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from copy import deepcopy
+from openpower.simulator.program import Program
 
 
 class DecoderTestCase(FHDLTestCase):
@@ -27,11 +19,11 @@ class DecoderTestCase(FHDLTestCase):
                      ]
         """
         lst = ["lfsx 1, 0, 0",
-                     ]
+               ]
         initial_mem = {0x0000: (0x42013333, 8),
                        0x0008: (0x42026666, 8),
                        0x0020: (0x1828384822324252, 8),
-                        }
+                       }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=initial_mem)
@@ -43,11 +35,11 @@ class DecoderTestCase(FHDLTestCase):
                      ]
         """
         lst = ["lfs 1, 8(1)",
-                     ]
+               ]
         initial_mem = {0x0000: (0x42013333, 8),
                        0x0008: (0x42026666, 8),
                        0x0020: (0x1828384822324252, 8),
-                        }
+                       }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=initial_mem)
@@ -59,10 +51,10 @@ class DecoderTestCase(FHDLTestCase):
                      ]
         """
         lst = ["lfsx 1, 0, 0",
-                     ]
+               ]
         initial_mem = {0x0000: (0xac000000, 8),
                        0x0020: (0x1828384822324252, 8),
-                        }
+                       }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=initial_mem)
@@ -78,17 +70,17 @@ class DecoderTestCase(FHDLTestCase):
         lst = ["lfsx 1, 1, 0",
                "stfsu 1, 16(1)",
                "lfs 2, 0(1)",
-                     ]
+               ]
         initial_mem = {0x0000: (0x42013333, 8),
                        0x0008: (0x42026666, 8),
                        0x0020: (0x1828384822324252, 8),
-                        }
+                       }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=initial_mem)
             print("FPR 1", sim.fpr(1))
             print("FPR 2", sim.fpr(2))
-            print("GPR 1", sim.gpr(1)) # should be 0x10 due to update
+            print("GPR 1", sim.gpr(1))  # should be 0x10 due to update
             self.assertEqual(sim.gpr(1), SelectableInt(0x10, 64))
             self.assertEqual(sim.fpr(1), SelectableInt(0x4040266660000000, 64))
             self.assertEqual(sim.fpr(2), SelectableInt(0x4040266660000000, 64))
@@ -102,11 +94,11 @@ class DecoderTestCase(FHDLTestCase):
         lst = ["lfsx 1, 0, 0",
                "stfsux 1, 2, 1",
                "lfs 2, 0(2)",
-                     ]
+               ]
         initial_mem = {0x0000: (0x42013333, 8),
                        0x0008: (0x42026666, 8),
                        0x0020: (0x1828384822324252, 8),
-                        }
+                       }
         # create an offset of 0x10 (2+3)
         initial_regs = [0]*32
         initial_regs[1] = 0x4
@@ -114,11 +106,11 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs=initial_regs,
-                                                initial_mem=initial_mem)
+                                       initial_mem=initial_mem)
             print("FPR 1", sim.fpr(1))
             print("FPR 2", sim.fpr(2))
-            print("GPR 1", sim.gpr(1)) # should be 0x4
-            print("GPR 2", sim.gpr(2)) # should be 0x10 due to update
+            print("GPR 1", sim.gpr(1))  # should be 0x4
+            print("GPR 2", sim.gpr(2))  # should be 0x10 due to update
             print("mem dump")
             print(sim.mem.dump())
             self.assertEqual(sim.gpr(1), SelectableInt(0x4, 64))
@@ -135,11 +127,11 @@ class DecoderTestCase(FHDLTestCase):
         lst = ["lfsx 1, 0, 0",
                "stfsx 1, 2, 1",
                "lfs 2, 4(2)",
-                     ]
+               ]
         initial_mem = {0x0000: (0x42013333, 8),
                        0x0008: (0x42026666, 8),
                        0x0020: (0x1828384822324252, 8),
-                        }
+                       }
         # create an offset of 0x10 (2+3)
         initial_regs = [0]*32
         initial_regs[1] = 0x4
@@ -147,11 +139,11 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs=initial_regs,
-                                                initial_mem=initial_mem)
+                                       initial_mem=initial_mem)
             print("FPR 1", sim.fpr(1))
             print("FPR 2", sim.fpr(2))
-            print("GPR 1", sim.gpr(1)) # should be 0x4
-            print("GPR 2", sim.gpr(2)) # should be 0xc (no update)
+            print("GPR 1", sim.gpr(1))  # should be 0x4
+            print("GPR 2", sim.gpr(2))  # should be 0xc (no update)
             print("mem dump")
             print(sim.mem.dump())
             self.assertEqual(sim.gpr(1), SelectableInt(0x4, 64))
@@ -168,11 +160,11 @@ class DecoderTestCase(FHDLTestCase):
         lst = ["lfsx 1, 0, 0",
                "stfs 1, 4(2)",
                "lfs 2, 4(2)",
-                     ]
+               ]
         initial_mem = {0x0000: (0x42013333, 8),
                        0x0008: (0x42026666, 8),
                        0x0020: (0x1828384822324252, 8),
-                        }
+                       }
         # create an offset of 0x10 (2+3)
         initial_regs = [0]*32
         initial_regs[1] = 0x4
@@ -180,11 +172,11 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs=initial_regs,
-                                                initial_mem=initial_mem)
+                                       initial_mem=initial_mem)
             print("FPR 1", sim.fpr(1))
             print("FPR 2", sim.fpr(2))
-            print("GPR 1", sim.gpr(1)) # should be 0x4
-            print("GPR 2", sim.gpr(2)) # should be 0xc (no update)
+            print("GPR 1", sim.gpr(1))  # should be 0x4
+            print("GPR 2", sim.gpr(2))  # should be 0xc (no update)
             print("mem dump")
             print(sim.mem.dump())
             self.assertEqual(sim.gpr(1), SelectableInt(0x4, 64))
@@ -197,7 +189,7 @@ class DecoderTestCase(FHDLTestCase):
                      ]
         """
         lst = ["fmr 1, 2",
-                     ]
+               ]
 
         fprs = [0] * 32
         fprs[2] = 0x4040266660000000
@@ -214,7 +206,7 @@ class DecoderTestCase(FHDLTestCase):
                      ]
         """
         lst = ["fneg 1, 2",
-                     ]
+               ]
 
         fprs = [0] * 32
         fprs[2] = 0x4040266660000000
@@ -237,7 +229,7 @@ class DecoderTestCase(FHDLTestCase):
                "fabs 4, 2",
                "fnabs 5, 1",
                "fnabs 6, 2",
-                     ]
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0xC040266660000000
@@ -259,11 +251,11 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = ["fcpsgn 3, 1, 2",
                "fcpsgn 4, 2, 1",
-                     ]
+               ]
 
         fprs = [0] * 32
-        fprs[1] = 0xC040266660000001 # 1 in LSB, 1 in MSB
-        fprs[2] = 0x4040266660000000 # 0 in LSB, 0 in MSB
+        fprs[1] = 0xC040266660000001  # 1 in LSB, 1 in MSB
+        fprs[2] = 0x4040266660000000  # 0 in LSB, 0 in MSB
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_fprs=fprs)
@@ -278,8 +270,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fadds 3, 1, 2",
                      ]
         """
-        lst = ["fadds 3, 1, 2", # -32.3 + 32.3 = 0
-                     ]
+        lst = ["fadds 3, 1, 2",  # -32.3 + 32.3 = 0
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0xC040266660000000
@@ -295,8 +287,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fsubs 3, 1, 2",
                      ]
         """
-        lst = ["fsubs 3, 1, 2", # 0 - -32.3 = 32.3
-                     ]
+        lst = ["fsubs 3, 1, 2",  # 0 - -32.3 = 32.3
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0x0
@@ -312,8 +304,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fadd 3, 1, 2",
                      ]
         """
-        lst = ["fadd 3, 1, 2", # 7.0 + -9.8 = -2.8
-                     ]
+        lst = ["fadd 3, 1, 2",  # 7.0 + -9.8 = -2.8
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0x401C000000000000  # 7.0
@@ -329,9 +321,9 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fmuls 3, 1, 2",
                      ]
         """
-        lst = ["fmuls 3, 1, 2", # 7.0 * -9.8 = -68.6
-               "fmuls 29,12,8", # test
-                     ]
+        lst = ["fmuls 3, 1, 2",  # 7.0 * -9.8 = -68.6
+               "fmuls 29,12,8",  # test
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0x401C000000000000  # 7.0
@@ -347,8 +339,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fmuls 3, 1, 2",
                      ]
         """
-        lst = ["fmuls 3, 1, 2", #
-                     ]
+        lst = ["fmuls 3, 1, 2",
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0xbfb0ab5100000000
@@ -362,11 +354,11 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fmuls 3, 1, 2",
                      ]
         """
-        lst = ["fmuls 3, 1, 2", #
-                     ]
+        lst = ["fmuls 3, 1, 2",
+               ]
 
         fprs = [0] * 32
-        fprs[1] = 0xbe724e2000000000 # negative number
+        fprs[1] = 0xbe724e2000000000  # negative number
         fprs[2] = 0x0                # times zero
 
         with Program(lst, bigendian=False) as program:
@@ -378,8 +370,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fmuls 3, 1, 2",
                      ]
         """
-        lst = ["fmuls 3, 1, 2", #
-                     ]
+        lst = ["fmuls 3, 1, 2",
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0xbfb0ab5100000000
@@ -393,8 +385,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fmul 3, 1, 2",
                      ]
         """
-        lst = ["fmul 3, 1, 2", # 7.0 * -9.8 = -68.6
-                     ]
+        lst = ["fmul 3, 1, 2",  # 7.0 * -9.8 = -68.6
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0x401C000000000000  # 7.0
@@ -410,8 +402,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fmadds 3, 1, 2, 4",
                      ]
         """
-        lst = ["fmadds 3, 1, 2, 4", # 7.0 * -9.8 + 2 = -66.6
-                     ]
+        lst = ["fmadds 3, 1, 2, 4",  # 7.0 * -9.8 + 2 = -66.6
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0x401C000000000000  # 7.0
@@ -426,8 +418,8 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = ["fmsubs 3, 1, 2, 4",
                      ]
         """
-        lst = ["fmsubs 3, 1, 2, 4", # 7.0 * -9.8 + 2 = -70.6
-                     ]
+        lst = ["fmsubs 3, 1, 2, 4",  # 7.0 * -9.8 + 2 = -70.6
+               ]
 
         fprs = [0] * 32
         fprs[1] = 0x401C000000000000  # 7.0
@@ -445,7 +437,7 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = ["fcfids 1, 2",
                "fcfids 3, 4",
-                     ]
+               ]
 
         fprs = [0] * 32
         fprs[2] = 7
@@ -459,15 +451,15 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.fpr(4), SelectableInt(-32, 64))
 
     def run_tst_program(self, prog, initial_regs=None,
-                              initial_mem=None,
-                              initial_fprs=None):
+                        initial_mem=None,
+                        initial_fprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, mem=initial_mem,
-                                  initial_fprs=initial_fprs)
-        print ("GPRs")
+                            initial_fprs=initial_fprs)
+        print("GPRs")
         simulator.gpr.dump()
-        print ("FPRs")
+        print("FPRs")
         simulator.fpr.dump()
         return simulator
 

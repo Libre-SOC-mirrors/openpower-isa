@@ -2,8 +2,9 @@
 """
 
 import unittest
-from openpower.test.runner import TestRunnerBase
+
 from openpower.test.fptrans.fptrans_cases import SVP64FPTransCases
+from openpower.test.runner import TestRunnerBase
 
 # writing the test_caller invocation this way makes it work with pytest
 

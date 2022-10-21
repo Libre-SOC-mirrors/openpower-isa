@@ -1,27 +1,19 @@
 """SVP64 unit test for doing strange things to SVSTATE, manually.
 """
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State, CRFields
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
 from copy import deepcopy
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.caller import CRFields, SVP64State
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
 
 
 class SVSTATETestCase(FHDLTestCase):
-
     def _check_regs(self, sim, expected):
-        print ("GPR")
+        print("GPR")
         sim.gpr.dump()
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
@@ -36,9 +28,9 @@ class SVSTATETestCase(FHDLTestCase):
             the Scalar one is NOT moved on.
         """
         isa = SVP64Asm(['sv.add 1, *5, *9'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -49,11 +41,11 @@ class SVSTATETestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=3, and src/dststep set ALREADY to 1)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        svstate.srcstep = 1 # srcstep
-        svstate.dststep = 1 # srcstep
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        svstate.srcstep = 1  # srcstep
+        svstate.dststep = 1  # srcstep
+        print("SVSTATE", bin(svstate.asint()))
 
         # copy before running
         expected_regs = deepcopy(initial_regs)
@@ -109,9 +101,9 @@ class SVSTATETestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -128,18 +120,18 @@ class SVSTATETestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
-            print ("SVSTATE after", bin(sim.svstate.asint()))
-            print ("        vl", bin(sim.svstate.vl))
-            print ("        mvl", bin(sim.svstate.maxvl))
-            print ("    srcstep", bin(sim.svstate.srcstep))
-            print ("    dststep", bin(sim.svstate.dststep))
+            print("SVSTATE after", bin(sim.svstate.asint()))
+            print("        vl", bin(sim.svstate.vl))
+            print("        mvl", bin(sim.svstate.maxvl))
+            print("    srcstep", bin(sim.svstate.srcstep))
+            print("    dststep", bin(sim.svstate.dststep))
             self.assertEqual(sim.svstate.vl, 2)
             self.assertEqual(sim.svstate.maxvl, 2)
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
             # when end reached, vertical mode is exited
-            print("      msr", bin(sim.msr.value)) # should be zero
-            self.assertEqual(sim.msr, SelectableInt(0<<(63-6), 64))
+            print("      msr", bin(sim.msr.value))  # should be zero
+            self.assertEqual(sim.msr, SelectableInt(0 << (63-6), 64))
             CR0 = sim.crl[0]
             print("      CR0", bin(CR0.get_range().value))
             self.assertEqual(CR0[CRFields.EQ], 0)
@@ -151,7 +143,7 @@ class SVSTATETestCase(FHDLTestCase):
             self._check_regs(sim, expected_regs)
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None):
+                        svstate=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, svstate=svstate)
@@ -161,4 +153,3 @@ class SVSTATETestCase(FHDLTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

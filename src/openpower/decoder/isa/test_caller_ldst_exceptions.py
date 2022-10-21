@@ -1,24 +1,23 @@
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, inject
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
+
+from nmigen import Module, Signal
+from nmigen.sim import Settle, Simulator
+from nmutil.formaltest import FHDLTestCase
 from openpower.consts import PIb
+from openpower.decoder.isa.all import ISA
+from openpower.decoder.power_decoder import create_pdecode
+from openpower.decoder.power_decoder2 import PowerDecode2
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
 
 
 class Register:
     def __init__(self, num):
         self.num = num
 
+
 def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
-                                     initial_cr=0,mem=None):
+            initial_cr=0, mem=None):
     if initial_sprs is None:
         initial_sprs = {}
     m = Module()
@@ -41,7 +40,6 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
                     mmu=mmu)
     comb += pdecode2.dec.raw_opcode_in.eq(instruction)
     sim = Simulator(m)
-
 
     def process():
 
@@ -76,7 +74,7 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
 class DecoderTestCase(FHDLTestCase):
 
     def test_load_misalign(self):
-        lst = ["addi 2, 0, 0x0010", # get PC off of zero
+        lst = ["addi 2, 0, 0x0010",  # get PC off of zero
                "ldx 3, 0, 1",
                ]
         initial_regs = [0] * 32
@@ -86,20 +84,20 @@ class DecoderTestCase(FHDLTestCase):
         initial_mem = {0x0000: (0x5432123412345678, 8),
                        0x0008: (0xabcdef0187654321, 8),
                        0x0020: (0x1828384822324252, 8),
-                        }
+                       }
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, initial_mem)
             self.assertEqual(sim.gpr(1), SelectableInt(all1s, 64))
             self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
-            print ("DAR", hex(sim.spr['DAR'].value))
-            print ("PC", hex(sim.pc.CIA.value))
+            print("DAR", hex(sim.spr['DAR'].value))
+            print("PC", hex(sim.pc.CIA.value))
             # TODO get MSR, test that.
             # TODO, test rest of SRR1 equal to zero
-            self.assertEqual(sim.spr['SRR1'][PIb.PRIV], 0x1) # expect priv bit
+            self.assertEqual(sim.spr['SRR1'][PIb.PRIV], 0x1)  # expect priv bit
             self.assertEqual(sim.spr['SRR0'], 0x4)   # expect to be 2nd op
             self.assertEqual(sim.spr['DAR'], all1s)   # expect failed LD addr
-            self.assertEqual(sim.pc.CIA.value, 0x600) # align exception
+            self.assertEqual(sim.pc.CIA.value, 0x600)  # align exception
 
     def run_tst_program(self, prog, initial_regs=[0] * 32, initial_mem=None):
         simulator = run_tst(prog, initial_regs, mem=initial_mem)

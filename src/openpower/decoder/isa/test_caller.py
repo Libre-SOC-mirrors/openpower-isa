@@ -1,13 +1,12 @@
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.simulator.program import Program
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.test_runner import run_tst
 from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.isa.test_runner import (Register, ISATestRunner,
-                                              run_tst)
+from openpower.simulator.program import Program
 
 
 class DecoderTestCase(FHDLTestCase):
-
     def test_add(self):
         lst = ["add 1, 3, 2"]
         initial_regs = [0] * 32
@@ -84,11 +83,11 @@ class DecoderTestCase(FHDLTestCase):
     def test_branch_cond(self):
         for i in [0, 10]:
             lst = [f"addi 1, 0, {i}",  # set r1 to i
-                "cmpi cr0, 1, 1, 10",  # compare r1 with 10 and store to cr0
-                "bc 12, 2, 0x8",       # beq 0x8 -
+                   "cmpi cr0, 1, 1, 10",  # compare r1 with 10 and store to cr0
+                   "bc 12, 2, 0x8",       # beq 0x8 -
                                        # branch if r1 equals 10 to the nop below
-                "addi 2, 0, 0x1234",   # if r1 == 10 this shouldn't execute
-                "or 0, 0, 0"]          # branch target
+                   "addi 2, 0, 0x1234",   # if r1 == 10 this shouldn't execute
+                   "or 0, 0, 0"]          # branch target
             with Program(lst, bigendian=False) as program:
                 sim = self.run_tst_program(program)
                 if i == 10:
@@ -118,8 +117,6 @@ class DecoderTestCase(FHDLTestCase):
             sim = self.run_tst_program(program)
             # Verified with qemu
             self.assertEqual(sim.gpr(1), SelectableInt(0x23, 64))
-
-
 
     def test_add_compare(self):
         lst = ["addis 1, 0, 0xffff",
@@ -195,7 +192,7 @@ class DecoderTestCase(FHDLTestCase):
         lst = ["popcntb 2, 1",
                "popcntw 3, 1",
                "popcntd 4, 1"
-        ]
+               ]
         initial_regs = [0] * 32
         initial_regs[1] = 0xdeadbeefcafec0de
         with Program(lst, bigendian=False) as program:
@@ -231,8 +228,6 @@ class DecoderTestCase(FHDLTestCase):
                              SelectableInt(4, 4))
             self.assertEqual(sim.crl[1].get_range().value,
                              SelectableInt(0, 4))
-        
-        
 
     def test_mtcrf(self):
         for i in range(4):

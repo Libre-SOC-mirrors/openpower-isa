@@ -1,22 +1,15 @@
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
-from openpower.decoder.helpers import fp64toselectable
-from openpower.decoder.isa.remap_dct_yield import (halfrev2, reverse_bits,
-                                                  )
 from copy import deepcopy
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.helpers import fp64toselectable
+from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.remap_dct_yield import halfrev2, reverse_bits
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
+
 
 def write_byte(mem, addr, val):
     addr, offs = (addr // 8)*8, (addr % 8)*8
@@ -45,38 +38,43 @@ class DecoderTestCase(FHDLTestCase):
         maxvl = 4
         lst = SVP64Asm(
             [
-            "mtspr 9, 3",                   # move r3 to CTR
-            "addi 0,0,0",                   # initialise r0 to zero
-            # chr-copy loop starts here:
-            #   for (i = 0; i < n && src[i] != '\0'; i++)
-            #        dest[i] = src[i];
-            "setvl 1,0,%d,0,1,1" % maxvl,   # VL (and r1) = MIN(CTR,MAXVL=4)
-            "sv.lbzu/pi *16, 1(10)",        # load VL bytes (update r10 addr)
-            "sv.cmpi/ff=eq/vli *0,1,*16,0", # compare against zero, truncate VL
-            "sv.stbu/pi *16, 1(12)",        # store VL bytes (update r12 addr)
-            "sv.bc/all 0, *2, -0x1c",       # test CTR, stop if cmpi failed
-            # zeroing loop starts here:
-            #   for ( ; i < n; i++)
-            #       dest[i] = '\0';
-            "setvl 1,0,%d,0,1,1" % maxvl,   # VL (and r1) = MIN(CTR,MAXVL=4)
-            "sv.stbu/pi 0, 1(12)",          # store VL zeros (update r12 addr)
-            "sv.bc 16, *0, -0xc",           # decrement CTR by VL, stop at zero
+                "mtspr 9, 3",                   # move r3 to CTR
+                "addi 0,0,0",                   # initialise r0 to zero
+                # chr-copy loop starts here:
+                #   for (i = 0; i < n && src[i] != '\0'; i++)
+                #        dest[i] = src[i];
+                # VL (and r1) = MIN(CTR,MAXVL=4)
+                "setvl 1,0,%d,0,1,1" % maxvl,
+                # load VL bytes (update r10 addr)
+                "sv.lbzu/pi *16, 1(10)",
+                "sv.cmpi/ff=eq/vli *0,1,*16,0",  # compare against zero, truncate VL
+                # store VL bytes (update r12 addr)
+                "sv.stbu/pi *16, 1(12)",
+                "sv.bc/all 0, *2, -0x1c",       # test CTR, stop if cmpi failed
+                # zeroing loop starts here:
+                #   for ( ; i < n; i++)
+                #       dest[i] = '\0';
+                # VL (and r1) = MIN(CTR,MAXVL=4)
+                "setvl 1,0,%d,0,1,1" % maxvl,
+                # store VL zeros (update r12 addr)
+                "sv.stbu/pi 0, 1(12)",
+                "sv.bc 16, *0, -0xc",           # decrement CTR by VL, stop at zero
             ]
-            )
+        )
         lst = list(lst)
 
         tst_string = "hello\x00bye\x00"
         initial_regs = [0] * 32
-        initial_regs[3] = len(tst_string) # including the zero
-        initial_regs[10] = 16 # load address
-        initial_regs[12] = 40 # store address
+        initial_regs[3] = len(tst_string)  # including the zero
+        initial_regs[10] = 16  # load address
+        initial_regs[12] = 40  # store address
 
         # some memory with identifying garbage in it
         initial_mem = {16: 0xf0f1_f2f3_f4f5_f6f7,
                        24: 0x4041_4243_4445_4647,
                        40: 0x8081_8283_8485_8687,
                        48: 0x9091_9293_9495_9697,
-                      }
+                       }
 
         for i, c in enumerate(tst_string):
             write_byte(initial_mem, 16+i, ord(c))
@@ -98,7 +96,7 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=initial_mem,
-                                                initial_regs=initial_regs)
+                                       initial_regs=initial_regs)
             mem = sim.mem.dump(printout=True, asciidump=True)
             #print (mem)
             # contents of memory expected at:
@@ -107,7 +105,7 @@ class DecoderTestCase(FHDLTestCase):
             # therefore, at address 0x10 ==> 0x1234
             # therefore, at address 0x28 ==> 0x1235
             for (k, val) in expected_mem.items():
-                print ("mem, val", k, hex(val))
+                print("mem, val", k, hex(val))
             self.assertEqual(mem, list(expected_mem.items()))
             print(sim.gpr(1))
             # reg 10 (the LD EA) is expected to be nearest
@@ -115,7 +113,8 @@ class DecoderTestCase(FHDLTestCase):
             rounded = ((strlen+maxvl-1) // maxvl) * maxvl
             self.assertEqual(sim.gpr(10), SelectableInt(16+rounded, 64))
             # whereas reg 10 (the ST EA) is expected to be 40+strlen
-            self.assertEqual(sim.gpr(12), SelectableInt(40+len(tst_string), 64))
+            self.assertEqual(sim.gpr(12), SelectableInt(
+                40+len(tst_string), 64))
 
     def test_sv_load_store_postinc(self):
         """>>> lst = ["addi 20, 0, 0x0010",
@@ -153,14 +152,14 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
             mem = sim.mem.dump(printout=False)
-            print (mem)
+            print(mem)
             # contents of memory expected at:
             #    element 0:   r1=0x10, D=24, => EA = 0x10+24*0 = 16 (0x10)
             #    element 1:   r1=0x10, D=24, => EA = 0x10+24*1 = 40 (0x28)
@@ -198,19 +197,19 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 4, 0, 0x1234",
                         "addi 5, 0, 0x1235",
                         "sv.stw/els *4, 24(2)",  # scalar r1 + 16 + 24*offs
-                        "sv.lwz/els *8, 24(2)"]) # scalar r1 + 16 + 24*offs
+                        "sv.lwz/els *8, 24(2)"])  # scalar r1 + 16 + 24*offs
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
             mem = sim.mem.dump(printout=False)
-            print (mem)
+            print(mem)
             # contents of memory expected at:
             #    element 0:   r1=0x10, D=24, => EA = 0x10+24*0 = 16 (0x10)
             #    element 1:   r1=0x10, D=24, => EA = 0x10+24*1 = 40 (0x28)
@@ -243,20 +242,20 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 8, 0, 0x1234",
                         "addi 9, 0, 0x1235",
                         "sv.stw *8, 8(1)",  # scalar r1 + 8 + wordlen*offs
-                        "sv.lwz *12, 8(1)"]) # scalar r1 + 8 + wordlen*offs
+                        "sv.lwz *12, 8(1)"])  # scalar r1 + 8 + wordlen*offs
         lst = list(lst)
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
             mem = sim.mem.dump(printout=False)
-            print ("Mem")
-            print (mem)
+            print("Mem")
+            print(mem)
             # contents of memory expected at:
             #    element 0:   r1=0x10, D=8, wordlen=4 => EA = 0x10+8+4*0 = 0x24
             #    element 1:   r1=0x10, D=8, wordlen=4 => EA = 0x10+8+4*8 = 0x28
@@ -290,19 +289,19 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 6, 0, 0x303",
                         "addi 7, 0, 0x404",
                         "sv.stw *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
-                        "sv.lwzsh *12, 4(1), 2"]) # bit-reversed
+                        "sv.lwzsh *12, 4(1), 2"])  # bit-reversed
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl = 4 # VL
-        svstate.maxvl = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
             mem = sim.mem.dump(printout=False)
-            print (mem)
+            print(mem)
 
             self.assertEqual(mem, [(16, 0x020200000101),
                                    (24, 0x040400000303)])
@@ -349,29 +348,29 @@ class DecoderTestCase(FHDLTestCase):
                         "addi 5, 0, 0x202",
                         "addi 6, 0, 0x303",
                         "addi 7, 0, 0x404",
-                        "sv.std *4, 0(1)", # scalar r1 + 0 + wordlen*offs
-                        "sv.lfdsh *12, 8(1), 2"]) # shifted
+                        "sv.std *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
+                        "sv.lfdsh *12, 8(1), 2"])  # shifted
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl = 4 # VL
-        svstate.maxvl = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         fprs = [0] * 32
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
-                                                initial_fprs=fprs)
+                                       initial_fprs=fprs)
             mem = sim.mem.dump(printout=False)
-            print (mem)
+            print(mem)
 
             self.assertEqual(mem, [(16, 0x101),
                                    (24, 0x202),
                                    (32, 0x303),
                                    (40, 0x404),
-                                  ])
+                                   ])
             print(sim.gpr(1))
             # from STs
             self.assertEqual(sim.gpr(4), SelectableInt(0x101, 64))
@@ -409,14 +408,14 @@ class DecoderTestCase(FHDLTestCase):
         lst = SVP64Asm(["addi 1, 0, 0x0010",
                         "addi 2, 0, 0x0000",
                         "sv.stfs *4, 0(1)",  # scalar r1 + 0 + wordlen*offs
-                        "sv.lfssh *12, 4(1), 2"]) # shifted (by zero, but hey)
+                        "sv.lfssh *12, 4(1), 2"])  # shifted (by zero, but hey)
         lst = list(lst)
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl = 4 # VL
-        svstate.maxvl = 4 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         fprs = [0] * 32
         scalar_a = 1.3
@@ -428,22 +427,22 @@ class DecoderTestCase(FHDLTestCase):
 
         # expected results, remember that bit-reversed load has been done
         expected_fprs = deepcopy(fprs)
-        expected_fprs[12] = fprs[4] # 0b00 -> 0b00
-        expected_fprs[13] = fprs[5] # 0b10 -> 0b01
-        expected_fprs[14] = fprs[6] # 0b01 -> 0b10
-        expected_fprs[15] = fprs[7] # 0b11 -> 0b11
+        expected_fprs[12] = fprs[4]  # 0b00 -> 0b00
+        expected_fprs[13] = fprs[5]  # 0b10 -> 0b01
+        expected_fprs[14] = fprs[6]  # 0b01 -> 0b10
+        expected_fprs[15] = fprs[7]  # 0b11 -> 0b11
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
-                                                initial_fprs=fprs)
+                                       initial_fprs=fprs)
             mem = sim.mem.dump(printout=False)
-            print ("mem dump")
-            print (mem)
+            print("mem dump")
+            print(mem)
 
-            print ("FPRs")
+            print("FPRs")
             sim.fpr.dump()
 
-            #self.assertEqual(mem, [(16, 0x020200000101),
+            # self.assertEqual(mem, [(16, 0x020200000101),
             #                       (24, 0x040400000303)])
             self._check_fpregs(sim, expected_fprs)
 
@@ -490,18 +489,18 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl = 12 # VL
-        svstate.maxvl = 12 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 12  # VL
+        svstate.maxvl = 12  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         regs = [0] * 64
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
-                                                initial_regs=regs)
+                                       initial_regs=regs)
             mem = sim.mem.dump(printout=False)
-            print ("Mem")
-            print (mem)
+            print("Mem")
+            print(mem)
 
             self.assertEqual(mem, [(16, 0x020200000101),
                                    (24, 0x040400000303),
@@ -577,9 +576,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl = 8 # VL
-        svstate.maxvl = 8 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 8  # VL
+        svstate.maxvl = 8  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         regs = [0] * 64
 
@@ -593,10 +592,10 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
-                                                initial_regs=regs)
+                                       initial_regs=regs)
             mem = sim.mem.dump(printout=False)
-            print ("Mem")
-            print (mem)
+            print("Mem")
+            print(mem)
 
             self.assertEqual(mem, [(16, 0x010200000001),
                                    (24, 0x030400000203),
@@ -604,13 +603,13 @@ class DecoderTestCase(FHDLTestCase):
                                    (40, 0x070800000607)])
             # from STs
             for i in range(len(avi)):
-                print ("st gpr", i, sim.gpr(i+4), hex(avi[i]))
+                print("st gpr", i, sim.gpr(i+4), hex(avi[i]))
             for i in range(len(avi)):
                 self.assertEqual(sim.gpr(i+4), avi[i])
             # combination of bit-reversed load with a DCT half-swap REMAP
             # schedule
             for i in range(len(avi)):
-                print ("ld gpr", i, sim.gpr(i+12), hex(av[i]))
+                print("ld gpr", i, sim.gpr(i+12), hex(av[i]))
             for i in range(len(avi)):
                 self.assertEqual(sim.gpr(i+12), av[i])
 
@@ -664,9 +663,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=4)
         svstate = SVP64State()
-        svstate.vl = 8 # VL
-        svstate.maxvl = 8 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 8  # VL
+        svstate.maxvl = 8  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         regs = [0] * 64
 
@@ -680,10 +679,10 @@ class DecoderTestCase(FHDLTestCase):
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
-                                                initial_regs=regs)
+                                       initial_regs=regs)
             mem = sim.mem.dump(printout=False)
-            print ("Mem")
-            print (mem)
+            print("Mem")
+            print(mem)
 
             self.assertEqual(mem, [(16, 0x010200000001),
                                    (24, 0x030400000203),
@@ -691,29 +690,29 @@ class DecoderTestCase(FHDLTestCase):
                                    (40, 0x070800000607)])
             # from STs
             for i in range(len(avi)):
-                print ("st gpr", i, sim.gpr(i+4), hex(avi[i]))
+                print("st gpr", i, sim.gpr(i+4), hex(avi[i]))
             for i in range(len(avi)):
                 self.assertEqual(sim.gpr(i+4), avi[i])
             # combination of bit-reversed load with a DCT half-swap REMAP
             # schedule
             for i in range(len(avi)):
-                print ("ld gpr", i, sim.gpr(i+12), hex(av[i]))
+                print("ld gpr", i, sim.gpr(i+12), hex(av[i]))
             for i in range(len(avi)):
                 self.assertEqual(sim.gpr(i+12), av[i])
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None, initial_fprs=None,
-                              initial_mem=None):
+                        svstate=None, initial_fprs=None,
+                        initial_mem=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         if initial_fprs is None:
             initial_fprs = [0] * 32
         simulator = run_tst(prog, initial_regs, svstate=svstate,
-                                  initial_fprs=initial_fprs,
-                                  mem=initial_mem)
-        print ("GPRs")
+                            initial_fprs=initial_fprs,
+                            mem=initial_mem)
+        print("GPRs")
         simulator.gpr.dump()
-        print ("FPRs")
+        print("FPRs")
         simulator.fpr.dump()
         return simulator
 

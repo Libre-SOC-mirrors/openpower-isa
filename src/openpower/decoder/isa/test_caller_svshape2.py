@@ -1,22 +1,15 @@
 """SVP64 unit test for svshape2
 svshape2 SVo,yx,rmm,SVd,sk,mm
 """
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State, CRFields
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
 from copy import deepcopy
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
 
 
 class SVSTATETestCase(FHDLTestCase):
@@ -106,7 +99,7 @@ class SVSTATETestCase(FHDLTestCase):
         set the offset to compensate for EXTRA2 being so restricted.
         """
         # set some parameters here with comments
-        offs = 1 # an offset of 1
+        offs = 1  # an offset of 1
         mod = 3  # modulo 3 on the range
         VL = 6   # RB will go 0..5 but RA will go 1 2 3 1 2 3
         isa = SVP64Asm(['svshape2 %d, 0, 1, %d, 0, 0' % (offs, mod),

@@ -1,19 +1,13 @@
-from nmigen import Module, Signal
-from nmigen.sim import Simulator, Delay, Settle
-from nmutil.formaltest import FHDLTestCase
 import unittest
-from openpower.decoder.isa.caller import ISACaller
-from openpower.decoder.power_decoder import (create_pdecode)
-from openpower.decoder.power_decoder2 import (PowerDecode2)
-from openpower.simulator.program import Program
-from openpower.decoder.isa.caller import ISACaller, SVP64State
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.all import ISA
-from openpower.decoder.isa.test_caller import Register, run_tst
-from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.consts import SVP64CROffs
 from copy import deepcopy
+
+from nmutil.formaltest import FHDLTestCase
+from openpower.consts import SVP64CROffs
+from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.test_caller import run_tst
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.simulator.program import Program
+from openpower.sv.trans.svp64 import SVP64Asm
 
 
 class DecoderTestCase(FHDLTestCase):
@@ -40,9 +34,9 @@ class DecoderTestCase(FHDLTestCase):
 
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate)
@@ -51,24 +45,24 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(9), SelectableInt(0x1235, 64))
 
     def test_sv_branch_cond(self):
-        for i in [0, 10]: #, 10]: #[0, 10]:
+        for i in [0, 10]:  # , 10]: #[0, 10]:
             lst = SVP64Asm(
                 [f"addi 1, 0, {i}",  # set r1 to i
                  f"addi 2, 0, {i}",  # set r2 to i
-                "cmpi cr0, 1, 1, 10",  # compare r1 with 10 and store to cr0
-                "cmpi cr1, 1, 2, 10",  # compare r2 with 10 and store to cr1
-                "sv.bc 12, *2, 0xc",    # beq 0xc -
-                                       # branch if r1 equals 10 to the nop below
-                "addi 3, 0, 0x1234",   # if r1 == 10 this shouldn't execute
-                "or 0, 0, 0"]          # branch target
-                )
+                 "cmpi cr0, 1, 1, 10",  # compare r1 with 10 and store to cr0
+                 "cmpi cr1, 1, 2, 10",  # compare r2 with 10 and store to cr1
+                 "sv.bc 12, *2, 0xc",    # beq 0xc -
+                 # branch if r1 equals 10 to the nop below
+                 "addi 3, 0, 0x1234",   # if r1 == 10 this shouldn't execute
+                 "or 0, 0, 0"]          # branch target
+            )
             lst = list(lst)
 
             # SVSTATE (in this case, VL=2)
             svstate = SVP64State()
-            svstate.vl = 2 # VL
-            svstate.maxvl = 2 # MAXVL
-            print ("SVSTATE", bin(svstate.asint()))
+            svstate.vl = 2  # VL
+            svstate.maxvl = 2  # MAXVL
+            print("SVSTATE", bin(svstate.asint()))
 
             with Program(lst, bigendian=False) as program:
                 sim = self.run_tst_program(program, svstate=svstate)
@@ -82,20 +76,20 @@ class DecoderTestCase(FHDLTestCase):
             lst = SVP64Asm(
                 [f"addi 1, 0, {i+1}",  # set r1 to i
                  f"addi 2, 0, {i}",  # set r2 to i
-                "cmpi cr0, 1, 1, 8",  # compare r1 with 10 and store to cr0
-                "cmpi cr1, 1, 2, 8",  # compare r2 with 10 and store to cr1
-                "sv.bc/all 12, *1, 0xc",    # bgt 0xc - branch if BOTH
+                 "cmpi cr0, 1, 1, 8",  # compare r1 with 10 and store to cr0
+                 "cmpi cr1, 1, 2, 8",  # compare r2 with 10 and store to cr1
+                 "sv.bc/all 12, *1, 0xc",    # bgt 0xc - branch if BOTH
                                        # r1 AND r2 greater 8 to the nop below
-                "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
-                "or 0, 0, 0"]          # branch target
-                )
+                 "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
+                 "or 0, 0, 0"]          # branch target
+            )
             lst = list(lst)
 
             # SVSTATE (in this case, VL=2)
             svstate = SVP64State()
-            svstate.vl = 2 # VL
-            svstate.maxvl = 2 # MAXVL
-            print ("SVSTATE", bin(svstate.asint()))
+            svstate.vl = 2  # VL
+            svstate.maxvl = 2  # MAXVL
+            print("SVSTATE", bin(svstate.asint()))
 
             with Program(lst, bigendian=False) as program:
                 sim = self.run_tst_program(program, svstate=svstate)
@@ -109,21 +103,21 @@ class DecoderTestCase(FHDLTestCase):
             lst = SVP64Asm(
                 [f"addi 1, 0, {i+1}",  # set r1 to i
                  f"addi 2, 0, {i}",  # set r2 to i
-                "cmpi cr0, 1, 1, 8",  # compare r1 with 10 and store to cr0
-                "cmpi cr1, 1, 2, 8",  # compare r2 with 10 and store to cr1
-                "sv.bc/all/vs 12, *1, 0xc", # bgt 0xc - branch if BOTH
+                 "cmpi cr0, 1, 1, 8",  # compare r1 with 10 and store to cr0
+                 "cmpi cr1, 1, 2, 8",  # compare r2 with 10 and store to cr1
+                 "sv.bc/all/vs 12, *1, 0xc",  # bgt 0xc - branch if BOTH
                                        # r1 AND r2 greater 8 to the nop below
                                        # also truncate VL at the fail-point
-                "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
-                "or 0, 0, 0"]          # branch target
-                )
+                 "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
+                 "or 0, 0, 0"]          # branch target
+            )
             lst = list(lst)
 
             # SVSTATE (in this case, VL=2)
             svstate = SVP64State()
-            svstate.vl = 2 # VL
-            svstate.maxvl = 2 # MAXVL
-            print ("SVSTATE", bin(svstate.asint()))
+            svstate.vl = 2  # VL
+            svstate.maxvl = 2  # MAXVL
+            print("SVSTATE", bin(svstate.asint()))
 
             with Program(lst, bigendian=False) as program:
                 sim = self.run_tst_program(program, svstate=svstate)
@@ -131,7 +125,7 @@ class DecoderTestCase(FHDLTestCase):
                     self.assertEqual(sim.gpr(3), SelectableInt(0, 64))
                 else:
                     self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
-                print ("SVSTATE.vl", bin(svstate.vl))
+                print("SVSTATE.vl", bin(svstate.vl))
                 self.assertEqual(svstate.vl, i-7)
 
     def test_sv_branch_cond_vlset_inv(self):
@@ -139,26 +133,26 @@ class DecoderTestCase(FHDLTestCase):
             lst = SVP64Asm(
                 [f"addi 1, 0, {i+1}",  # set r1 to i
                  f"addi 2, 0, {i}",  # set r2 to i
-                "cmpi cr0, 1, 1, 8",  # compare r1 with 8 and store to cr0
-                "cmpi cr1, 1, 2, 8",  # compare r2 with 8 and store to cr1
-                "sv.bc/vsb 4, *1, 0xc", # bgt 0xc - branch if BOTH
+                 "cmpi cr0, 1, 1, 8",  # compare r1 with 8 and store to cr0
+                 "cmpi cr1, 1, 2, 8",  # compare r2 with 8 and store to cr1
+                 "sv.bc/vsb 4, *1, 0xc",  # bgt 0xc - branch if BOTH
                                        # r1 AND r2 greater 8 to the nop below
                                        # also truncate VL at the fail-point
-                "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
-                "or 0, 0, 0"]          # branch target
-                )
+                 "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
+                 "or 0, 0, 0"]          # branch target
+            )
             lst = list(lst)
 
             # SVSTATE (in this case, VL=2)
             svstate = SVP64State()
-            svstate.vl = 2 # VL
-            svstate.maxvl = 2 # MAXVL
-            print ("SVSTATE", bin(svstate.asint()))
+            svstate.vl = 2  # VL
+            svstate.maxvl = 2  # MAXVL
+            print("SVSTATE", bin(svstate.asint()))
 
             with self.subTest("vlset_inv %d" % i):
                 with Program(lst, bigendian=False) as program:
                     sim = self.run_tst_program(program, svstate=svstate)
-                    print ("SVSTATE.vl", bin(svstate.vl))
+                    print("SVSTATE.vl", bin(svstate.vl))
                     if i == 9:
                         self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
                     else:
@@ -170,29 +164,29 @@ class DecoderTestCase(FHDLTestCase):
             lst = SVP64Asm(
                 [f"addi 1, 0, {i+1}",  # set r1 to i
                  f"addi 2, 0, {i}",  # set r2 to i
-                "cmpi cr0, 1, 1, 8",  # compare r1 with 8 and store to cr0
-                "cmpi cr1, 1, 2, 8",  # compare r2 with 8 and store to cr1
-                "sv.bc/vsb 0, *1, 0xc", # bgt 0xc - branch if BOTH
+                 "cmpi cr0, 1, 1, 8",  # compare r1 with 8 and store to cr0
+                 "cmpi cr1, 1, 2, 8",  # compare r2 with 8 and store to cr1
+                 "sv.bc/vsb 0, *1, 0xc",  # bgt 0xc - branch if BOTH
                                        # r1 AND r2 greater 8 to the nop below
                                        # also truncate VL at the fail-point
-                "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
-                "or 0, 0, 0"]          # branch target
-                )
+                 "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
+                 "or 0, 0, 0"]          # branch target
+            )
             lst = list(lst)
 
             # SVSTATE (in this case, VL=2)
             svstate = SVP64State()
-            svstate.vl = 2 # VL
-            svstate.maxvl = 2 # MAXVL
-            print ("SVSTATE", bin(svstate.asint()))
+            svstate.vl = 2  # VL
+            svstate.maxvl = 2  # MAXVL
+            print("SVSTATE", bin(svstate.asint()))
             sprs = {'CTR': i}
 
             with self.subTest("vlset_ctr_inv %d" % i):
                 with Program(lst, bigendian=False) as program:
                     sim = self.run_tst_program(program, svstate=svstate,
                                                initial_sprs=sprs)
-                    print ("SVSTATE.vl", bin(svstate.vl))
-                    print ("CTR", sim.spr('CTR').value)
+                    print("SVSTATE.vl", bin(svstate.vl))
+                    print("CTR", sim.spr('CTR').value)
                     if i == 9:
                         self.assertEqual(sim.gpr(3), SelectableInt(0x1234, 64))
                     else:
@@ -209,20 +203,20 @@ class DecoderTestCase(FHDLTestCase):
         however this is not necessarily so useful, but at least the branch
         occurs with CTR being reduced *at least* by VL.
         """
-        for i in [1,2,3]:
+        for i in [1, 2, 3]:
             lst = SVP64Asm(
                 [
-                "sv.bc/ctr/all 16, *0, 0xc", # branch, test CTR, reducing by VL
-                "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
-                "or 0, 0, 0"]          # branch target
-                )
+                    "sv.bc/ctr/all 16, *0, 0xc",  # branch, test CTR, reducing by VL
+                    "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
+                    "or 0, 0, 0"]          # branch target
+            )
             lst = list(lst)
 
             # SVSTATE (in this case, VL=2)
             svstate = SVP64State()
-            svstate.vl = 2 # VL
-            svstate.maxvl = 2 # MAXVL
-            print ("SVSTATE", bin(svstate.asint()))
+            svstate.vl = 2  # VL
+            svstate.maxvl = 2  # MAXVL
+            print("SVSTATE", bin(svstate.asint()))
             sprs = {'CTR': i}
 
             with Program(lst, bigendian=False) as program:
@@ -245,18 +239,19 @@ class DecoderTestCase(FHDLTestCase):
         maxvl = 4
         lst = SVP64Asm(
             [
-            "setvl 1, 0, %d, 0, 1, 1" % maxvl, # VL (and r1) = MIN(CTR,MAXVL=4)
-            "add 2, 2, 1",            # for fun accumulate r1 (VL) into r2
-            "sv.bc/all 16, *0, -0x8", # branch, test CTR, reducing by VL
+                # VL (and r1) = MIN(CTR,MAXVL=4)
+                "setvl 1, 0, %d, 0, 1, 1" % maxvl,
+                "add 2, 2, 1",            # for fun accumulate r1 (VL) into r2
+                "sv.bc/all 16, *0, -0x8",  # branch, test CTR, reducing by VL
             ]
-            )
+        )
         lst = list(lst)
 
         # SVSTATE - set vl and maxvl to 2, they get overridden with setvl
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         target = 15
         sprs = {'CTR': target}
 
@@ -279,9 +274,9 @@ class DecoderTestCase(FHDLTestCase):
             * 2 = 6 + 10  => 0x3334 = 0x2223+0x1111   CR1=0b010
         """
         isa = SVP64Asm(['sv.add. *1, *5, *9'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
@@ -291,13 +286,13 @@ class DecoderTestCase(FHDLTestCase):
         initial_regs[6] = 0x2223
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
         # copy before running
         expected_regs = deepcopy(initial_regs)
         expected_regs[1] = initial_regs[5] + initial_regs[9]  # 0x0
-        expected_regs[2] = initial_regs[6] + initial_regs[10] # 0x3334
+        expected_regs[2] = initial_regs[6] + initial_regs[10]  # 0x3334
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate)
@@ -306,15 +301,15 @@ class DecoderTestCase(FHDLTestCase):
             cr1_idx = SVP64CROffs.CR1
             CR0 = sim.crl[cr0_idx].get_range().value
             CR1 = sim.crl[cr1_idx].get_range().value
-            print ("CR0", CR0)
-            print ("CR1", CR1)
+            print("CR0", CR0)
+            print("CR1", CR1)
             self._check_regs(sim, expected_regs)
             self.assertEqual(CR0, SelectableInt(2, 4))
             self.assertEqual(CR1, SelectableInt(4, 4))
 
     def run_tst_program(self, prog, initial_regs=None,
-                              svstate=None,
-                              initial_sprs=None):
+                        svstate=None,
+                        initial_sprs=None):
         if initial_regs is None:
             initial_regs = [0] * 32
         simulator = run_tst(prog, initial_regs, svstate=svstate,
