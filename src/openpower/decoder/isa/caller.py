@@ -92,16 +92,16 @@ fregs = ['FRA', 'FRB', 'FRC', 'FRS', 'FRT']
 
 def get_masked_reg(regs, base, offs, ew_bits):
     # rrrright.  start by breaking down into row/col, based on elwidth
-    gpr_offs = offs // (64//ew_bits)
-    gpr_col = offs % (64//ew_bits)
+    gpr_offs = offs // (64 // ew_bits)
+    gpr_col = offs % (64 // ew_bits)
     # compute the mask based on ew_bits
-    mask = (1 << ew_bits)-1
+    mask = (1 << ew_bits) - 1
     # now select the 64-bit register, but get its value (easier)
-    val = regs[base+gpr_offs]
-    # now mask out the bit we don't want
-    val = val & ~(mask << (gpr_col*ew_bits))
-    # then return the bits we want, shifted down
-    return val >> (gpr_col*ew_bits)
+    val = regs[base + gpr_offs]
+    # shift down so element we want is at LSB
+    val >>= gpr_col * ew_bits
+    # mask so we only return the LSB element
+    return val & mask
 
 
 def set_masked_reg(regs, base, offs, ew_bits, value):

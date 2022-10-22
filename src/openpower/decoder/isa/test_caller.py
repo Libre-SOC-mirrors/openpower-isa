@@ -1,6 +1,7 @@
 import unittest
 
 from nmutil.formaltest import FHDLTestCase
+from openpower.decoder.isa.caller import get_masked_reg, set_masked_reg
 from openpower.decoder.isa.test_runner import run_tst
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
@@ -252,6 +253,20 @@ class DecoderTestCase(FHDLTestCase):
         simulator = run_tst(prog, initial_regs)
         simulator.gpr.dump()
         return simulator
+
+
+class TestGetSetMaskedReg(FHDLTestCase):
+    def test_get_set_masked_reg(self):
+        regs = [0x123456789abcdef, 0xfedcba9876543210,
+                0x2468ace13579bdf, 0xfdb975310eca8642]
+        set_masked_reg(regs, base=2, offs=5, ew_bits=16, value=0x369c)
+        self.assertEqual(list(map(hex, regs)), [
+            "0x123456789abcdef", "0xfedcba9876543210",
+            "0x2468ace13579bdf", "0xfdb97531369c8642"])
+        self.assertEqual(hex(get_masked_reg(regs, base=2, offs=5, ew_bits=16)),
+                         "0x369c")
+        self.assertEqual(hex(get_masked_reg(regs, base=2, offs=0, ew_bits=16)),
+                         "0x9bdf")
 
 
 if __name__ == "__main__":
