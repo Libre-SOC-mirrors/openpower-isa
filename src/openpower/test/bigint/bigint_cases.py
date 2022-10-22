@@ -117,20 +117,6 @@ class BigIntCases(TestAccumulatorBase):
                 e.intregs[3] = v % 2 ** 64
                 self.add_case(prog, gprs, expected=e)
 
-    def case_dsrd3(self):
-        prog = Program(list(SVP64Asm(["dsrd 3,4,5,3"])), False)
-        for sh in _SHIFT_TEST_RANGE:
-            with self.subTest(sh=sh):
-                gprs = [0] * 32
-                gprs[3] = 0x123456789ABCDEF
-                gprs[4] = 0xFEDCBA9876543210
-                gprs[5] = sh % 2 ** 64
-                e = ExpectedState(pc=4, int_regs=gprs)
-                v = gprs[4] << 64
-                v >>= sh % 64
-                e.intregs[3] = v % 2 ** 64
-                self.add_case(prog, gprs, expected=e)
-
 
 class SVP64BigIntCases(TestAccumulatorBase):
     def case_sv_bigint_add(self):
