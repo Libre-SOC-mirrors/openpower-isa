@@ -413,6 +413,11 @@ class SVSTATETestCase(unittest.TestCase):
     def test_30_divmod2du(self):
         expected = [
                     "divmod2du 5,4,5,3",
+                    "maddedu 5,4,5,3",
+                    "sv.divmod2du 5,4,5,3",
+                    "sv.divmod2du *6,4,*0,3",
+                    "sv.maddedu 5,4,5,3",
+                    "sv.maddedu *6,4,5,3",
                         ]
         self._do_tst(expected)
 
