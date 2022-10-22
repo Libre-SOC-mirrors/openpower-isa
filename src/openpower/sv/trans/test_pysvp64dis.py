@@ -397,6 +397,25 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_29_dsld_dsrd(self):
+        expected = [
+                    "dsld 5,4,5,3",
+                    "dsrd 5,4,5,3",
+                    "dsld. 5,4,5,3",
+                    "dsrd. 5,4,5,3",
+                    "sv.dsld *6,4,5,3",
+                    "sv.dsrd *6,4,5,3",
+                    "sv.dsld. *6,4,5,3",
+                    "sv.dsrd. *6,4,5,3",
+                        ]
+        self._do_tst(expected)
+
+    def test_30_divmod2du(self):
+        expected = [
+                    "divmod2du 5,4,5,3",
+                        ]
+        self._do_tst(expected)
+
 
 if __name__ == "__main__":
     unittest.main()

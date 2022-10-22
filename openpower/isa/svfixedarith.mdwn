@@ -48,30 +48,16 @@ Special Registers Altered:
 
 # [DRAFT] Double-width Shift Left Doubleword
 
-Z23-Form
+VA2-Form
 
-* dsld    RT,RA,RB,sm  (Rc=0)
-* dsld.   RT,RA,RB,sm  (Rc=1)
+* dsld    RT,RA,RB,RC  (Rc=0)
+* dsld.   RT,RA,RB,RC  (Rc=1)
 
 Pseudo-code:
 
-    switch(sm)
-        case(0):
-            hi <- (RT)
-            lo <- (RA)
-            sh <- (RB)
-        case(1):
-            hi <- (RA)
-            lo <- (RT)
-            sh <- (RB)
-        case(2):
-            hi <- (RA)
-            lo <- (RB)
-            sh <- (RT)
-        default:
-            hi <- [0] * 64
-            lo <- (RA)
-            sh <- (RB)
+    hi <- (RC)
+    lo <- (RA)
+    sh <- (RB)
     n <- sh[58:63]
     mask[0:63] <- MASK(n, 63)
     v[0:63] <- (hi & mask) | (lo & ¬mask)
@@ -83,30 +69,16 @@ Special Registers Altered:
 
 # [DRAFT] Double-width Shift Right Doubleword
 
-Z23-Form
+VA2-Form
 
-* dsrd    RT,RA,RB,sm  (Rc=0)
-* dsrd.   RT,RA,RB,sm  (Rc=1)
+* dsrd    RT,RA,RB,RC  (Rc=0)
+* dsrd.   RT,RA,RB,RC  (Rc=1)
 
 Pseudo-code:
 
-    switch(sm)
-        case(0):
-            hi <- (RT)
-            lo <- (RA)
-            sh <- (RB)
-        case(1):
-            hi <- (RA)
-            lo <- (RT)
-            sh <- (RB)
-        case(2):
-            hi <- (RA)
-            lo <- (RB)
-            sh <- (RT)
-        default:
-            hi <- (RA)
-            lo <- [0] * 64
-            sh <- (RB)
+    hi <- (RC)
+    lo <- (RA)
+    sh <- (RB)
     n <- sh[58:63]
     mask[0:63] <- MASK(0, 63 - n)
     v[0:63] <- (hi & ¬mask) | (lo & mask)
