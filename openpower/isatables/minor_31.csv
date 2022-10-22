@@ -208,3 +208,11 @@ opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry ou
 0b1000110110,ALU,OP_NOP,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,1,tlbsync,X,,,
 0b0000011110,ALU,OP_NOP,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,1,wait,X,,,
 0b0100111100,LOGICAL,OP_XOR,RS,RB,NONE,RA,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC,0,0,xor,X,,,
+0b0000111001,SHIFT_ROT,OP_DSHL,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,dsld,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b0100111001,SHIFT_ROT,OP_DSHL,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,dsld,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b1000111001,SHIFT_ROT,OP_DSHL,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,dsld,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b1100111001,SHIFT_ROT,OP_DSHL,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,dsld,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b0010111001,SHIFT_ROT,OP_DSHR,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,dsrd,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b0110111001,SHIFT_ROT,OP_DSHR,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,dsrd,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b1010111001,SHIFT_ROT,OP_DSHR,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,dsrd,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+0b1110111001,SHIFT_ROT,OP_DSHR,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,dsrd,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg

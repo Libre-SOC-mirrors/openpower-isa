@@ -587,25 +587,25 @@ def va_form(fields, XO):
 
 
 @_custom_insns(
-    _insn("dsld",  XO=26, Rc=0), # minor_4=52 (26<<1 | Rc=0)
-    _insn("dsld.", XO=26, Rc=1), # minor_4=53 (26<<1 | Rc=1)
-    _insn("dsrd",  XO=27, Rc=0), # minor_4=54 (27<<1 | Rc=0)
-    _insn("dsrd.", XO=27, Rc=1), # minor_4=55 (27<<1 | Rc=1)
+    _insn("dsld",  XO=0b00111001, Rc=0),
+    _insn("dsld.", XO=0b00111001, Rc=1),
+    _insn("dsrd",  XO=0b10111001, Rc=0),
+    _insn("dsrd.", XO=0b10111001, Rc=1),
 )
 def dsld_dsrd(fields, XO, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
-    # 1.6.21.1 VA2-FORM
-    #    |0   |6   |11   |16   |21  |26  |31|
-    #    | PO | RT |  RA |  RB | RC | XO |Rc|
-    PO = 4
-    (RT, RA, RB, RC) = fields
+    # 1.6.27 Z23-FORM
+    #   |0     |6     |11    |15 |16     |21 |23    |31 |
+    #   | PO   |  RT  |   RA     |   RB  |sm |   XO |Rc |
+    PO = 31
+    (RT, RA, RB, sm) = fields
     return instruction(
         (PO, 0, 5),
         (RT, 6, 10),
         (RA, 11, 15),
         (RB, 16, 20),
-        (RC, 21, 25),
-        (XO, 26, 30),
+        (sm, 21, 22),
+        (XO, 23, 30),
         (Rc, 31, 31),
     )
 
