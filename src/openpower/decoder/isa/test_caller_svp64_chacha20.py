@@ -115,7 +115,7 @@ class SVSTATETestCase(FHDLTestCase):
             'svindex 11, 0, 1, 3, 0, 1, 0',  # SVSHAPE0, a
             'svindex 15, 1, 1, 3, 0, 1, 0',  # SVSHAPE1, b
             'svindex 19, 2, 1, 3, 0, 1, 0',  # SVSHAPE2, c
-            'svindex 21, 3, 4, 3, 0, 1, 0',  # SVSHAPE3, shift amount, mod 4
+            'svshape2 0, 0, 3, 4, 0, 1',  # SVSHAPE3, shift amount, mod 4
             # establish CTR for outer round count
             'addi 16, 0, %d' % nrounds,     # set number of rounds
             'mtspr 9, 16',                  # set CTR to number of rounds
@@ -150,11 +150,10 @@ class SVSTATETestCase(FHDLTestCase):
 
         # offsets for d (modulo 4 shift amount)
         shifts = [16, 12, 8, 7]  # chacha20 shifts
-        idxs2 = [0, 1, 2, 3]  # cycle order (for fun)
         for i in range(4):
-            set_masked_reg(initial_regs, 42, i, ew_bits=8, value=idxs2[i])
             set_masked_reg(initial_regs, 18, i, ew_bits=32, value=shifts[i])
 
+        # set up input test vector then pack it into regs
         x = [0] * 16
         for i in range(16):
             x[i] = i << 1
