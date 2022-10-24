@@ -64,7 +64,7 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[1] = 0xc523e996a8ff6215
         e.intregs[2] = 0
         e.intregs[3] = 0
-        e.crregs[0] = 0x2 # RT is zero
+        e.crregs[0] = 0x8 # RB greater (arithmeticslly)
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_4_maxs_(self):
@@ -95,6 +95,20 @@ class AVTestCase(TestAccumulatorBase):
         e.intregs[2] = 0x8000_0000_0000_0000
         e.intregs[3] = 1
         e.crregs[0] = 0x4 # RT is +ve
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_6_maxs_(self):
+        lst = [f"maxs. 3, 1, 2"]
+        lst = list(SVP64Asm(lst, bigendian))
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x8000_0000_0000_0000
+        initial_regs[2] = 0x8000_0000_0000_0000
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0x8000_0000_0000_0000
+        e.intregs[2] = 0x8000_0000_0000_0000
+        e.intregs[3] = 0x8000_0000_0000_0000
+        e.crregs[0] = 0x2 # values are equal
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_0_mins(self):

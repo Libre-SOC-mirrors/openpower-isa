@@ -2,12 +2,32 @@
 <!-- https://libre-soc.org/openpower/sv/bitmanip/ -->
 <!-- https://libre-soc.org/openpower/sv/av_opcodes/ -->
 
+# DRAFT Fixed Point Signed Max (Rc=1)
+
+X-Form
+
+* maxs. RT,RA,RB (Rc=1)
+
+Pseudo-code:
+
+    a <- (RA)
+    b <- (RB)
+    if   a > b then RT <- a
+    else            RT <- b
+    if      a < b then c <-  0b100
+    else if a > b then c <-  0b010
+    else               c <-  0b001
+    CR0 <-  c || XER[SO]
+
+Special Registers Altered:
+
+    CR0                     (if Rc=1)
+
 # DRAFT Fixed Point Signed Max
 
 X-Form
 
 * maxs  RT,RA,RB (Rc=0)
-* maxs. RT,RA,RB (Rc=1)
 
 Pseudo-code:
 
@@ -16,7 +36,7 @@ Pseudo-code:
 
 Special Registers Altered:
 
-    CR0                     (if Rc=1)
+    None
 
 # DRAFT Fixed Point Unsigned Max
 

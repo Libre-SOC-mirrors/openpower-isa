@@ -1829,6 +1829,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # look up instruction in ISA.instrs, prepare namespace
         if ins_name == 'pcdec':  # grrrr yes there are others ("stbcx." etc.)
             info = self.instrs[ins_name+"."]
+        elif asmop[-1] == '.' and asmop in self.instrs:
+            info = self.instrs[asmop]
         else:
             info = self.instrs[ins_name]
         yield from self.prep_namespace(ins_name, info.form, info.op_fields,
