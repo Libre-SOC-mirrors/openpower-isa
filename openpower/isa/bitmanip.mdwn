@@ -99,3 +99,52 @@ Pseudo-code:
 Special Registers Altered:
 
     CR0                    (if Rc=1)
+
+# Add With Shift By Immediate
+
+Z23-Form
+
+* shadd RT,RA,RB,sm (Rc=0)
+* shadd. RT,RA,RB,sm (Rc=1)
+
+Pseudo-code:
+
+    switch (sm)
+        case (0):
+            sum[0:XLEN-1] <- (((RB)[0:XLEN-1-1] || [0]*1) + (RA))
+        case (1):
+            sum[0:XLEN-1] <- (((RB)[0:XLEN-2-1] || [0]*2) + (RA))
+        case (2):
+            sum[0:XLEN-1] <- (((RB)[0:XLEN-3-1] || [0]*3) + (RA))
+        default:
+            sum[0:XLEN-1] <- (((RB)[0:XLEN-4-1] || [0]*4) + (RA))
+    RT <- sum
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
+# Add With Shift By Immediate Unsinged Word
+
+Z23-Form
+
+* shadduw RT,RA,RB,sm (Rc=0)
+* shadduw. RT,RA,RB,sm (Rc=1)
+
+Pseudo-code:
+
+    n <- (([0]*(XLEN/2)) || (RB)[XLEN/2:XLEN-1])
+    switch (sm)
+        case (0):
+            sum[0:XLEN-1] = ((n[0:XLEN-1-1] || [0]*1) + (RA))
+        case (1):
+            sum[0:XLEN-1] = ((n[0:XLEN-2-1] || [0]*2) + (RA))
+        case (2):
+            sum[0:XLEN-1] = ((n[0:XLEN-3-1] || [0]*3) + (RA))
+        default:
+            sum[0:XLEN-1] = ((n[0:XLEN-4-1] || [0]*4) + (RA))
+    RT <- sum
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
