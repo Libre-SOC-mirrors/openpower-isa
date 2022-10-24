@@ -710,6 +710,7 @@ class MicrOp(Enum):
     OP_DIVMOD2DU = 100
     OP_DSHL = 101
     OP_DSHR = 102
+    OP_SHADD = 103
 
 
 @unique
