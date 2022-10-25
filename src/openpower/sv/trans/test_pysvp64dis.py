@@ -421,6 +421,26 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_31_shadd_shadduw(self):
+        expected = [
+                    "shadd 31,0,0,0",
+                    "shadd 0,31,0,0",
+                    "shadd 0,0,31,0",
+                    "shadd 0,0,0,3",
+                    "shadd. 31,0,0,0",
+                    "shadd. 0,31,0,0",
+                    "shadd. 0,0,31,0",
+                    "shadd. 0,0,0,3",
+                    "shadduw 31,0,0,0",
+                    "shadduw 0,31,0,0",
+                    "shadduw 0,0,31,0",
+                    "shadduw 0,0,0,3",
+                    "shadduw. 31,0,0,0",
+                    "shadduw. 0,31,0,0",
+                    "shadduw. 0,0,31,0",
+                    "shadduw. 0,0,0,3",
+                        ]
+        self._do_tst(expected)
 
 if __name__ == "__main__":
     unittest.main()
