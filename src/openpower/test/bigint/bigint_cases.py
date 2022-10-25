@@ -34,7 +34,7 @@ class BigIntCases(TestAccumulatorBase):
     # FIXME: test more divmod2du special cases
 
     def case_dsld0(self):
-        prog = Program(list(SVP64Asm(["dsld 3,4,5,0"])), False)
+        prog = Program(list(SVP64Asm(["dsld 3,4,5,3"])), False)
         for sh in _SHIFT_TEST_RANGE:
             with self.subTest(sh=sh):
                 gprs = [0] * 32
@@ -48,7 +48,7 @@ class BigIntCases(TestAccumulatorBase):
                 self.add_case(prog, gprs, expected=e)
 
     def case_dsld1(self):
-        prog = Program(list(SVP64Asm(["dsld 3,4,5,1"])), False)
+        prog = Program(list(SVP64Asm(["dsld 3,3,5,4"])), False)
         for sh in _SHIFT_TEST_RANGE:
             with self.subTest(sh=sh):
                 gprs = [0] * 32
@@ -62,7 +62,7 @@ class BigIntCases(TestAccumulatorBase):
                 self.add_case(prog, gprs, expected=e)
 
     def case_dsld2(self):
-        prog = Program(list(SVP64Asm(["dsld 3,4,5,2"])), False)
+        prog = Program(list(SVP64Asm(["dsld 3,5,3,4"])), False)
         for sh in _SHIFT_TEST_RANGE:
             with self.subTest(sh=sh):
                 gprs = [0] * 32
@@ -75,22 +75,8 @@ class BigIntCases(TestAccumulatorBase):
                 e.intregs[3] = (v >> 64) % 2 ** 64
                 self.add_case(prog, gprs, expected=e)
 
-    def case_dsld3(self):
-        prog = Program(list(SVP64Asm(["dsld 3,4,5,3"])), False)
-        for sh in _SHIFT_TEST_RANGE:
-            with self.subTest(sh=sh):
-                gprs = [0] * 32
-                gprs[3] = 0x123456789ABCDEF
-                gprs[4] = 0xFEDCBA9876543210
-                gprs[5] = sh % 2 ** 64
-                e = ExpectedState(pc=4, int_regs=gprs)
-                v = gprs[4]
-                v <<= sh % 64
-                e.intregs[3] = (v >> 64) % 2 ** 64
-                self.add_case(prog, gprs, expected=e)
-
     def case_dsrd0(self):
-        prog = Program(list(SVP64Asm(["dsrd 3,4,5,0"])), False)
+        prog = Program(list(SVP64Asm(["dsrd 3,4,5,3"])), False)
         for sh in _SHIFT_TEST_RANGE:
             with self.subTest(sh=sh):
                 gprs = [0] * 32
@@ -104,7 +90,7 @@ class BigIntCases(TestAccumulatorBase):
                 self.add_case(prog, gprs, expected=e)
 
     def case_dsrd1(self):
-        prog = Program(list(SVP64Asm(["dsrd 3,4,5,1"])), False)
+        prog = Program(list(SVP64Asm(["dsrd 3,3,5,4"])), False)
         for sh in _SHIFT_TEST_RANGE:
             with self.subTest(sh=sh):
                 gprs = [0] * 32
@@ -118,7 +104,7 @@ class BigIntCases(TestAccumulatorBase):
                 self.add_case(prog, gprs, expected=e)
 
     def case_dsrd2(self):
-        prog = Program(list(SVP64Asm(["dsrd 3,4,5,2"])), False)
+        prog = Program(list(SVP64Asm(["dsrd 3,5,3,4"])), False)
         for sh in _SHIFT_TEST_RANGE:
             with self.subTest(sh=sh):
                 gprs = [0] * 32
@@ -127,20 +113,6 @@ class BigIntCases(TestAccumulatorBase):
                 gprs[5] = 0x02468ACE13579BDF
                 e = ExpectedState(pc=4, int_regs=gprs)
                 v = (gprs[4] << 64) | gprs[5]
-                v >>= sh % 64
-                e.intregs[3] = v % 2 ** 64
-                self.add_case(prog, gprs, expected=e)
-
-    def case_dsrd3(self):
-        prog = Program(list(SVP64Asm(["dsrd 3,4,5,3"])), False)
-        for sh in _SHIFT_TEST_RANGE:
-            with self.subTest(sh=sh):
-                gprs = [0] * 32
-                gprs[3] = 0x123456789ABCDEF
-                gprs[4] = 0xFEDCBA9876543210
-                gprs[5] = sh % 2 ** 64
-                e = ExpectedState(pc=4, int_regs=gprs)
-                v = gprs[4] << 64
                 v >>= sh % 64
                 e.intregs[3] = v % 2 ** 64
                 self.add_case(prog, gprs, expected=e)
