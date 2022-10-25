@@ -587,17 +587,16 @@ def va_form(fields, XO):
 
 
 @_custom_insns(
-    _insn("dsld",  XO=0b00111001, Rc=0),
-    _insn("dsld.", XO=0b00111001, Rc=1),
-    _insn("dsrd",  XO=0b10111001, Rc=0),
-    _insn("dsrd.", XO=0b10111001, Rc=1),
+    _insn("dsld",  PO=31, XO=0b00111001, Rc=0),
+    _insn("dsld.", PO=31, XO=0b00111001, Rc=1),
+    _insn("dsrd",  PO=31, XO=0b10111001, Rc=0),
+    _insn("dsrd.", PO=31, XO=0b10111001, Rc=1),
 )
-def dsld_dsrd(fields, XO, Rc):
+def Z23(fields, PO, XO, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
     # 1.6.27 Z23-FORM
     #   |0     |6     |11    |15 |16     |21 |23    |31 |
     #   | PO   |  RT  |   RA     |   RB  |sm |   XO |Rc |
-    PO = 31
     (RT, RA, RB, sm) = fields
     return instruction(
         (PO, 0, 5),
