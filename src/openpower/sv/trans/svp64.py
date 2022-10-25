@@ -591,6 +591,10 @@ def va_form(fields, XO):
     _insn("dsld.", PO=31, XO=0b00111001, Rc=1),
     _insn("dsrd",  PO=31, XO=0b10111001, Rc=0),
     _insn("dsrd.", PO=31, XO=0b10111001, Rc=1),
+    _insn("shadd",  PO=22, XO=0b01101110, Rc=0),
+    _insn("shadd.", PO=22, XO=0b01101110, Rc=1),
+    _insn("shadduw",  PO=22, XO=0b11101110, Rc=0),
+    _insn("shadduw.", PO=22, XO=0b11101110, Rc=1),
 )
 def Z23(fields, PO, XO, Rc):
     # XXX WARNING THESE ARE NOT APPROVED BY OPF ISA WG
