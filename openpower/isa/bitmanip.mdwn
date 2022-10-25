@@ -1,4 +1,5 @@
-<!-- Draft Instructions here described in https://libre-soc.org/openpower/sv/bitmanip/ -->
+<!-- Draft Instructions here described in -->
+<!-- https://libre-soc.org/openpower/sv/bitmanip/ -->
 <!-- These instructions are *not yet official* -->
 
 # Ternary Bitwise Logic Immediate
