@@ -843,6 +843,9 @@ class ISACallerHelper:
         value = rotl(value, bits, self.XLEN)
         return value
 
+    def ROTL128(self, value, bits):
+        return rotl(value, bits, self.XLEN*2)
+
     def ROTL64(self, value, bits):
         return rotl(value, bits, self.XLEN)
 
