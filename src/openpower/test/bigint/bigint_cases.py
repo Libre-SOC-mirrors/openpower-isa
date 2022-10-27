@@ -98,23 +98,30 @@ class SVP64BigIntCases(TestAccumulatorBase):
     def case_sv_bigint_shift_right_by_scalar(self):
         """performs a bigint shift-right by scalar.
 
-        r18                   r17                   r16                      r3
+        r0 starts off (as the carry-in) at 0x9000_0000_0000_0000
+
+        r18                   r17                   r16                      r4
         0x0000_0000_5000_0002 0x8000_8000_8000_8001 0xffff_ffff_ffff_ffff >> 4
         0x0000_0000_0500_0000 0x2800_0800_0800_0800 0x1fff_ffff_ffff_ffff
+
+        with the 4-bit part that drops out of the 4 LSBs of r16 ending up
+        in r0
         """
-        prog = Program(list(SVP64Asm(["sv.dsrd *16,*17,3,1"])), False)
+        prog = Program(list(SVP64Asm(["sv.dsrd/mrr *16,*16,4,0"])), False)
         gprs = [0] * 32
+        gprs[0]  = 0x9000_0000_0000_0000
         gprs[16] = 0xffff_ffff_ffff_ffff
         gprs[17] = 0x8000_8000_8000_8001
         gprs[18] = 0x0000_0000_5000_0002
-        gprs[3] = 4
+        gprs[4] = 4
         svstate = SVP64State()
         svstate.vl = 3
         svstate.maxvl = 3
         e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[0] = 0xf000_0000_0000_0000   # remainder (shifted out of 16)
         e.intregs[16] = 0x1fff_ffff_ffff_ffff
         e.intregs[17] = 0x2800_0800_0800_0800
-        e.intregs[18] = 0x0000_0000_0500_0000
+        e.intregs[18] = 0x9000_0000_0500_0000  # initial r0 into top
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
     def case_sv_bigint_shift_left_by_scalar(self):
@@ -123,26 +130,30 @@ class SVP64BigIntCases(TestAccumulatorBase):
         because the result is moved down by one register there is no need
         for reverse-gear.
 
-        r18 is *not* modified (contains its original value).
-        r18                   r17                   r16                      r3
-        0x0000_0000_0001_0002 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001 << 4
-        r17                   r16                   r15
+        r14 starts off as the carry-in: 0xa000_0000_0000_0000
+
+        r18                   r17                   r16                      r4
+        0x9000_0000_0001_0002 0x3fff_ffff_ffff_ffff 0x4000_0000_0000_0001 << 4
+        r18                   r17                   r16
         0x0000_0000_0010_0023 0xffff_ffff_ffff_fff4 0x0000_0000_0000_0010
+
+        with the top 4 bits of r18 being pushed into the LSBs of r14
         """
-        prog = Program(list(SVP64Asm(["sv.dsld *15,*16,3,1"])), False)
+        prog = Program(list(SVP64Asm(["sv.dsld *16,*16,4,14"])), False)
         gprs = [0] * 32
-        gprs[15] = 0
+        gprs[14] = 0x0000_0000_0000_000a
         gprs[16] = 0x4000_0000_0000_0001
         gprs[17] = 0x3fff_ffff_ffff_ffff
-        gprs[18] = 0x0000_0000_0001_0002
-        gprs[3] = 4
+        gprs[18] = 0x9000_0000_0001_0002
+        gprs[4] = 4
         svstate = SVP64State()
         svstate.vl = 3
         svstate.maxvl = 3
         e = ExpectedState(pc=8, int_regs=gprs)
-        e.intregs[15] = 0x0000_0000_0000_0010
-        e.intregs[16] = 0xffff_ffff_ffff_fff4
-        e.intregs[17] = 0x0000_0000_0010_0023
+        e.intregs[14] = 9
+        e.intregs[16] = 0x0000_0000_0000_001a
+        e.intregs[17] = 0xffff_ffff_ffff_fff4
+        e.intregs[18] = 0x0000_0000_0010_0023
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
     def case_sv_bigint_mul_by_scalar(self):

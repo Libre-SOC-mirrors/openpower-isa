@@ -75,7 +75,7 @@ VA2-Form
 Pseudo-code:
 
     n <- (RB)[58:63]
-    v <- ROTL128((RA) || [0]*64, 64-n)
+    v <- ROTL128((RA) || [0]*64, 128-n)
     mask <- ¬MASK(n, 63)
     RT <- v[0:63] | ((RC) & mask)
     RS <- v[64:127]
