@@ -4,7 +4,7 @@ from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State
 
-_SHIFT_TEST_RANGE = range(-64, 128, 16)
+_SHIFT_TEST_RANGE = list(range(-64, 128, 16)) + [1, 63]
 
 
 class BigIntCases(TestAccumulatorBase):
@@ -34,45 +34,20 @@ class BigIntCases(TestAccumulatorBase):
     # FIXME: test more divmod2du special cases
 
     def case_dsld0(self):
-        prog = Program(list(SVP64Asm(["dsld 3,4,5,3"])), False)
+        prog = Program(list(SVP64Asm(["dsld 3,4,5,6"])), False)
         for sh in _SHIFT_TEST_RANGE:
             with self.subTest(sh=sh):
                 gprs = [0] * 32
-                gprs[3] = 0x123456789ABCDEF
+                gprs[6] = 0x123456789ABCDEF
                 gprs[4] = 0xFEDCBA9876543210
                 gprs[5] = sh % 2 ** 64
                 e = ExpectedState(pc=4, int_regs=gprs)
-                v = (gprs[3] << 64) | gprs[4]
+                v = gprs[4]
                 v <<= sh % 64
-                e.intregs[3] = (v >> 64) % 2 ** 64
-                self.add_case(prog, gprs, expected=e)
-
-    def case_dsld1(self):
-        prog = Program(list(SVP64Asm(["dsld 3,3,5,4"])), False)
-        for sh in _SHIFT_TEST_RANGE:
-            with self.subTest(sh=sh):
-                gprs = [0] * 32
-                gprs[3] = 0x123456789ABCDEF
-                gprs[4] = 0xFEDCBA9876543210
-                gprs[5] = sh % 2 ** 64
-                e = ExpectedState(pc=4, int_regs=gprs)
-                v = (gprs[4] << 64) | gprs[3]
-                v <<= sh % 64
-                e.intregs[3] = (v >> 64) % 2 ** 64
-                self.add_case(prog, gprs, expected=e)
-
-    def case_dsld2(self):
-        prog = Program(list(SVP64Asm(["dsld 3,5,3,4"])), False)
-        for sh in _SHIFT_TEST_RANGE:
-            with self.subTest(sh=sh):
-                gprs = [0] * 32
-                gprs[3] = sh % 2 ** 64
-                gprs[4] = 0xFEDCBA9876543210
-                gprs[5] = 0x02468ACE13579BDF
-                e = ExpectedState(pc=4, int_regs=gprs)
-                v = (gprs[4] << 64) | gprs[5]
-                v <<= sh % 64
-                e.intregs[3] = (v >> 64) % 2 ** 64
+                mask = (1<<(sh%64))-1
+                v |= gprs[6] & mask
+                e.intregs[3] = v         % 2 ** 64
+                e.intregs[6] = (v >> 64) % 2 ** 64
                 self.add_case(prog, gprs, expected=e)
 
     def case_dsrd0(self):

@@ -1042,6 +1042,7 @@ class PowerDecodeSubset(Elaboratable):
             comb += self.implicit_rs.eq(0)
             comb += self.extend_rb_maxvl.eq(0)
             comb += self.extend_rc_maxvl.eq(0)
+            # implicit RS for major 59
             with m.If((major == 59) & xo.matches(
                     '-----00100',  # ffmsubs
                     '-----00101',  # ffmadds
@@ -1054,10 +1055,13 @@ class PowerDecodeSubset(Elaboratable):
                 comb += self.extend_rb_maxvl.eq(1) # extend RB
             xo6 = Signal(6)
             comb += xo6.eq(self.dec.opcode_in[0:6])
+            # implicit RS for major 4
             with m.If((major == 4) & xo6.matches(
                     '111000',  # pcdec
                     '110010',  # maddedu
                     '111010',  # divmod2du
+                    '11010-',  # dsld
+                    '11011-',  # dsrd
                 )):
                 comb += self.implicit_rs.eq(1)
                 comb += self.extend_rc_maxvl.eq(1) # RS=RT+MAXVL or RS=RC
