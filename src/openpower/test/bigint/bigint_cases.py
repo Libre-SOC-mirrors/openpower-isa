@@ -51,45 +51,21 @@ class BigIntCases(TestAccumulatorBase):
                 self.add_case(prog, gprs, expected=e)
 
     def case_dsrd0(self):
-        prog = Program(list(SVP64Asm(["dsrd 3,4,5,3"])), False)
+        prog = Program(list(SVP64Asm(["dsrd 3,4,5,6"])), False)
         for sh in _SHIFT_TEST_RANGE:
             with self.subTest(sh=sh):
                 gprs = [0] * 32
-                gprs[3] = 0x123456789ABCDEF
+                gprs[6] = 0x123456789ABCDEF
                 gprs[4] = 0xFEDCBA9876543210
                 gprs[5] = sh % 2 ** 64
                 e = ExpectedState(pc=4, int_regs=gprs)
-                v = (gprs[3] << 64) | gprs[4]
+                v = (gprs[4] << 64)
                 v >>= sh % 64
-                e.intregs[3] = v % 2 ** 64
-                self.add_case(prog, gprs, expected=e)
-
-    def case_dsrd1(self):
-        prog = Program(list(SVP64Asm(["dsrd 3,3,5,4"])), False)
-        for sh in _SHIFT_TEST_RANGE:
-            with self.subTest(sh=sh):
-                gprs = [0] * 32
-                gprs[3] = 0x123456789ABCDEF
-                gprs[4] = 0xFEDCBA9876543210
-                gprs[5] = sh % 2 ** 64
-                e = ExpectedState(pc=4, int_regs=gprs)
-                v = (gprs[4] << 64) | gprs[3]
-                v >>= sh % 64
-                e.intregs[3] = v % 2 ** 64
-                self.add_case(prog, gprs, expected=e)
-
-    def case_dsrd2(self):
-        prog = Program(list(SVP64Asm(["dsrd 3,5,3,4"])), False)
-        for sh in _SHIFT_TEST_RANGE:
-            with self.subTest(sh=sh):
-                gprs = [0] * 32
-                gprs[3] = sh % 2 ** 64
-                gprs[4] = 0xFEDCBA9876543210
-                gprs[5] = 0x02468ACE13579BDF
-                e = ExpectedState(pc=4, int_regs=gprs)
-                v = (gprs[4] << 64) | gprs[5]
-                v >>= sh % 64
-                e.intregs[3] = v % 2 ** 64
+                mask = ~((2 ** 64 - 1) >> (sh%64))
+                v |= (gprs[6] & mask)
+                print ("case_dsrd0", hex(mask), sh, hex(v))
+                e.intregs[3] = v         % 2 ** 64
+                e.intregs[6] = (v >> 64) % 2 ** 64
                 self.add_case(prog, gprs, expected=e)
 
 
@@ -224,7 +200,7 @@ class SVP64BigIntCases(TestAccumulatorBase):
         r4 (carry in at top-end)                            0x1234 << 192 =
         r18                   r17                   r16
         0x1234_0000_5678_0000 0x9ABC_0000_DEF0_0000 0x1357_0000_9BDF_0000 *
-        r4 (carry out i.e. scalar remainder)                       0xFEDC 
+        r4 (carry out i.e. scalar remainder)                       0xFEDC
         """
         prog = Program(list(SVP64Asm(["sv.divmod2du/mrr *16,*16,3,4"])), False)
         gprs = [0] * 32

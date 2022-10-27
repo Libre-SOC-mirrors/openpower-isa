@@ -74,13 +74,11 @@ VA2-Form
 
 Pseudo-code:
 
-    hi <- (RC)
-    lo <- (RA)
-    sh <- (RB)
-    n <- sh[58:63]
-    mask[0:63] <- MASK(0, 63 - n)
-    v[0:63] <- (hi & ¬mask) | (lo & mask)
-    RT <- ROTL64(v, 64 - n)
+    n <- (RB)[58:63]
+    v <- ROTL128((RA) || [0]*64, 64-n)
+    mask <- ¬MASK(n, 63)
+    RT <- v[0:63] | ((RC) & mask)
+    RS <- v[64:127]
 
 Special Registers Altered:
 
