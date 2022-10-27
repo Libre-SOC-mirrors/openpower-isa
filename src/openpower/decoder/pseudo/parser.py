@@ -195,7 +195,8 @@ def identify_sint_mul_pattern(p):
         return False
     if (not isinstance(p[3], ast.Constant) and  # rhs = Num
         not isinstance(p[3], ast.BinOp) and     # rhs = (XLEN-something)
-            not isinstance(p[3], ast.Attribute)):   # rhs = XLEN
+            (not isinstance(p[3], ast.Name) and  # rhs = {a variable}
+            not isinstance(p[3], ast.Attribute))):   # rhs = XLEN
         return False
     if not isinstance(p[1], ast.List):  # lhs is a list
         return False
