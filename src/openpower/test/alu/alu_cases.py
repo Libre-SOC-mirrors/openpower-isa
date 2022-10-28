@@ -92,13 +92,13 @@ class ALUTestCase(TestAccumulatorBase):
                 eq = 0
                 gt = 0
                 le = 0
-                if (e.intregs[3] & (1<<63)) != 0:
+                if (e.intregs[3] & (1 << 63)) != 0:
                     le = 1
                 elif e.intregs[3] == 0:
                     eq = 1
                 else:
                     gt = 1
-                e.crregs[0] = (eq<<1) | (gt<<2) | (le<<3)
+                e.crregs[0] = (eq << 1) | (gt << 2) | (le << 3)
             elif choice == "subf":
                 result = ~initial_regs[1] + initial_regs[2] + 1
                 e.intregs[3] = result & ((2**64)-1)
@@ -140,13 +140,14 @@ class ALUTestCase(TestAccumulatorBase):
         insns = ["addme", "addme.", "addmeo", "addmeo."]
         for choice in insns:
             lst = [f"{choice} 6, 16"]
-            for value in [0x7ffffffff, # fails, bug #476
+            for value in [0x7ffffffff,  # fails, bug #476
                           0xffff80000]:
                 initial_regs = [0] * 32
                 initial_regs[16] = value
                 initial_sprs = {}
                 xer = SelectableInt(0, 64)
-                xer[XER_bits['CA']] = 1 # input carry is 1 (differs from above)
+                # input carry is 1 (differs from above)
+                xer[XER_bits['CA']] = 1
                 initial_sprs[special_sprs['XER']] = xer
                 e = ExpectedState(pc=4)
                 e.intregs[16] = value
@@ -229,7 +230,7 @@ class ALUTestCase(TestAccumulatorBase):
             initial_regs[0] = random.randint(0, (1 << 64)-1)
             e = ExpectedState(pc=4)
             e.intregs[0] = initial_regs[0]
-            e.intregs[3] = (imm << 16) & ((1<<64)-1)
+            e.intregs[3] = (imm << 16) & ((1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_rand_imm(self):
@@ -248,20 +249,20 @@ class ALUTestCase(TestAccumulatorBase):
                 result = initial_regs[1] + imm
                 e.intregs[3] = result & ((2**64)-1)
             elif choice == "addis":
-                result = initial_regs[1] + (imm<<16)
+                result = initial_regs[1] + (imm << 16)
                 e.intregs[3] = result & ((2**64)-1)
             elif choice == "subfic":
                 result = ~initial_regs[1] + imm + 1
                 value = (~initial_regs[1]+2**64) + (imm) + 1
                 if imm < 0:
                     value += 2**64
-                carry_out = value & (1<<64) != 0
+                carry_out = value & (1 << 64) != 0
                 value = (~initial_regs[1]+2**64 & 0xffff_ffff) + imm + 1
                 if imm < 0:
                     value += 2**32
-                carry_out32 = value & (1<<32) != 0
+                carry_out32 = value & (1 << 32) != 0
                 e.intregs[3] = result & ((2**64)-1)
-                e.ca = carry_out | (carry_out32<<1)
+                e.ca = carry_out | (carry_out32 << 1)
 
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
@@ -278,14 +279,15 @@ class ALUTestCase(TestAccumulatorBase):
             # calculate result *including carry* and mask it to 64-bit
             # (if it overflows, we don't care, because this is not addeo)
             result = 1 + initial_regs[6] + initial_regs[7]
-            carry_out = result & (1<<64) != 0 # detect 65th bit as carry-out?
+            # detect 65th bit as carry-out?
+            carry_out = result & (1 << 64) != 0
             carry_out32 = (initial_regs[6] & 0xffff_ffff) + \
-                    (initial_regs[7] & 0xffff_ffff) & (1<<32) != 0
-            result = result & ((1<<64)-1) # round
+                (initial_regs[7] & 0xffff_ffff) & (1 << 32) != 0
+            result = result & ((1 << 64)-1)  # round
             eq = 0
             gt = 0
             le = 0
-            if (result & (1<<63)) != 0:
+            if (result & (1 << 63)) != 0:
                 le = 1
             elif result == 0:
                 eq = 1
@@ -293,14 +295,14 @@ class ALUTestCase(TestAccumulatorBase):
                 gt = 1
             # now construct the state
             e = ExpectedState(pc=4)
-            e.intregs[6] = initial_regs[6] # should be same as initial
-            e.intregs[7] = initial_regs[7] # should be same as initial
+            e.intregs[6] = initial_regs[6]  # should be same as initial
+            e.intregs[7] = initial_regs[7]  # should be same as initial
             e.intregs[5] = result
             # carry_out goes into bit 0 of ca, carry_out32 into bit 1
-            e.ca = carry_out | (carry_out32<<1)
+            e.ca = carry_out | (carry_out32 << 1)
             # eq goes into bit 1 of CR0, gt into bit 2, le into bit 3.
             # SO goes into bit 0 but overflow doesn't occur here [we hope]
-            e.crregs[0] = (eq<<1) | (gt<<2) | (le<<3)
+            e.crregs[0] = (eq << 1) | (gt << 2) | (le << 3)
 
             self.add_case(Program(lst, bigendian),
                           initial_regs, initial_sprs, expected=e)
@@ -373,7 +375,7 @@ class ALUTestCase(TestAccumulatorBase):
         lst = ["cmpl 6, 0, 17, 10"]
         initial_regs = [0] * 32
         initial_regs[0x11] = 0x1c026
-        initial_regs[0xa] =  0xFEDF3FFF0001C025
+        initial_regs[0xa] = 0xFEDF3FFF0001C025
         XER = 0xe00c0000
         CR = 0x35055050
 
@@ -390,8 +392,8 @@ class ALUTestCase(TestAccumulatorBase):
         e.ca = 0x3
 
         self.add_case(Program(lst, bigendian), initial_regs,
-                                initial_sprs = {'XER': XER},
-                                initial_cr = CR, expected=e)
+                      initial_sprs={'XER': XER},
+                      initial_cr=CR, expected=e)
 
     def case_cmpl_microwatt_0_disasm(self):
         """microwatt 1.bin: disassembled version
@@ -403,10 +405,10 @@ class ALUTestCase(TestAccumulatorBase):
         """
 
         dis = ["cmpl 6, 0, 17, 10"]
-        lst = bytes([0x40, 0x50, 0xd1, 0x7c]) # 0x7cd15040
+        lst = bytes([0x40, 0x50, 0xd1, 0x7c])  # 0x7cd15040
         initial_regs = [0] * 32
         initial_regs[0x11] = 0x1c026
-        initial_regs[0xa] =  0xFEDF3FFF0001C025
+        initial_regs[0xa] = 0xFEDF3FFF0001C025
         XER = 0xe00c0000
         CR = 0x35055050
 
@@ -425,8 +427,8 @@ class ALUTestCase(TestAccumulatorBase):
         p = Program(lst, bigendian)
         p.assembly = '\n'.join(dis)+'\n'
         self.add_case(p, initial_regs,
-                                initial_sprs = {'XER': XER},
-                                initial_cr = CR, expected=e)
+                      initial_sprs={'XER': XER},
+                      initial_cr=CR, expected=e)
 
     def case_cmplw_microwatt_1(self):
         """microwatt 1.bin:
@@ -457,8 +459,8 @@ class ALUTestCase(TestAccumulatorBase):
         e.ca = 0x3
 
         self.add_case(Program(lst, bigendian), initial_regs,
-                                initial_sprs = {'XER': XER},
-                                initial_cr = CR, expected=e)
+                      initial_sprs={'XER': XER},
+                      initial_cr=CR, expected=e)
 
     def case_cmpli_microwatt(self):
         """microwatt 1.bin: cmpli
@@ -489,8 +491,8 @@ class ALUTestCase(TestAccumulatorBase):
         e.ca = 0x3
 
         self.add_case(Program(lst, bigendian), initial_regs,
-                                initial_sprs = {'XER': XER},
-                                initial_cr = CR, expected=e)
+                      initial_sprs={'XER': XER},
+                      initial_cr=CR, expected=e)
 
     def case_extsb(self):
         insns = ["extsb", "extsh", "extsw"]
@@ -504,11 +506,11 @@ class ALUTestCase(TestAccumulatorBase):
             e = ExpectedState(pc=4)
             e.intregs[1] = initial_regs[1]
             if choice == "extsb":
-                e.intregs[3] = exts(initial_regs[1], 8) & ((1<<64)-1)
+                e.intregs[3] = exts(initial_regs[1], 8) & ((1 << 64)-1)
             elif choice == "extsh":
-                e.intregs[3] = exts(initial_regs[1], 16) & ((1<<64)-1)
+                e.intregs[3] = exts(initial_regs[1], 16) & ((1 << 64)-1)
             else:
-                e.intregs[3] = exts(initial_regs[1], 32) & ((1<<64)-1)
+                e.intregs[3] = exts(initial_regs[1], 32) & ((1 << 64)-1)
 
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
@@ -522,10 +524,9 @@ class ALUTestCase(TestAccumulatorBase):
             e = ExpectedState(pc=4)
             e.intregs[1] = i
             e.intregs[2] = 0x1030507090b0f
-            matlst = [ 0x00, 0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0f ]
+            matlst = [0x00, 0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0f]
             for j in matlst:
                 if j == i:
                     e.crregs[1] = 0x4
 
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
-
