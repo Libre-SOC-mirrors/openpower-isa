@@ -60,6 +60,9 @@ Pseudo-code:
     mask <- MASK(64, 63-n)
     RT <- (v[0:63] & mask) | ((RC) & ¬mask)
     RS <- v[0:63] & ¬mask
+    overflow = 0
+    if RS != [0]*64:
+        overflow = 1
 
 Special Registers Altered:
 
@@ -79,6 +82,9 @@ Pseudo-code:
     mask <- MASK(n, 63)
     RT <- (v[0:63] & mask) | ((RC) & ¬mask)
     RS <- v[0:63] & ¬mask
+    overflow = 0
+    if RS != [0]*64:
+        overflow = 1
 
 Special Registers Altered:
 
