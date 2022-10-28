@@ -156,6 +156,26 @@ class SVP64BigIntCases(TestAccumulatorBase):
         e.intregs[18] = 0x0000_0000_0010_0023
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
+    def case_sv_bigint_shift_left_then_back(self):
+        """performs a bigint shift-right then a shift-left, should
+        get the same results... but doesn't.  reason: the carry-in
+        compared to carry-out is shifted to the opposite end
+        """
+        prog = Program(list(SVP64Asm(["sv.dsrd/mrr *16,*16,3,5",
+                                      "sv.dsld *16,*16,3,5"])), False)
+        gprs = [0] * 32
+        gprs[5] = 0x0000_0000_0000_0009
+        gprs[16] = 0xffff_ffff_ffff_ffff
+        gprs[17] = 0x8000_8000_8000_8001
+        gprs[18] = 0x0000_0000_5000_0002
+        gprs[3] = 4
+        svstate = SVP64State()
+        svstate.vl = 3
+        svstate.maxvl = 3
+        e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[5] = 0x0000_0000_0000_0000     # it's down the other end...
+        self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
     def case_sv_bigint_mul_by_scalar(self):
         """performs a carry-rollover-vector-mul-with-add with a scalar,
         using "RC" as a 64-bit carry in/out.  matched with the
