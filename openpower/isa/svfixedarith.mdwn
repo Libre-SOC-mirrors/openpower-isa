@@ -57,12 +57,12 @@ Pseudo-code:
 
     n <- (RB)[58:63]
     v <- ROTL64((RA), n)
-    mask <- MASK(64, 63-n)
+    mask <- MASK(0, 63-n)
     RT <- (v[0:63] & mask) | ((RC) & ¬mask)
     RS <- v[0:63] & ¬mask
-    overflow = 0
-    if RS != [0]*64:
-        overflow = 1
+    overflow <- 0
+    if RS != [0]*64 then
+        overflow <- 1
 
 Special Registers Altered:
 
@@ -82,9 +82,9 @@ Pseudo-code:
     mask <- MASK(n, 63)
     RT <- (v[0:63] & mask) | ((RC) & ¬mask)
     RS <- v[0:63] & ¬mask
-    overflow = 0
-    if RS != [0]*64:
-        overflow = 1
+    overflow <- 0
+    if RS != [0]*64 then
+        overflow <- 1
 
 Special Registers Altered:
 
