@@ -199,6 +199,49 @@ class ALUTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs, expected=e)
 
+    def case_addme_subfme_ca_propagation(self):
+        for flags in range(1 << 2):
+            ca = flags & 1
+            is_sub = (flags >> 1) & 1
+            if is_sub:
+                prog = Program(["subfmeo 3, 4"], bigendian)
+            else:
+                prog = Program(["addmeo 3, 4"], bigendian)
+            for i in range(-2, 3):
+                ra = i % 2 ** 64
+                with self.subTest(ra=hex(ra), ca=ca, is_sub=is_sub):
+                    initial_regs = [0] * 32
+                    initial_regs[4] = ra
+                    initial_sprs = {}
+                    xer = SelectableInt(0, 64)
+                    xer[XER_bits['CA']] = ca
+                    initial_sprs[special_sprs['XER']] = xer
+                    e = ExpectedState(pc=4)
+                    e.intregs[4] = ra
+                    rb = 2 ** 64 - 1  # add 0xfff...fff *not* -1
+                    expected = ca + rb
+                    expected32 = ca + (rb % 2 ** 32)
+                    inv_ra = ra
+                    if is_sub:
+                        # 64-bit bitwise not
+                        inv_ra = ~ra % 2 ** 64
+                    expected += inv_ra
+                    expected32 += inv_ra % 2 ** 32
+                    e.intregs[3] = expected % 2 ** 64
+                    ca = bool(expected >> 64)
+                    ca32 = bool(expected32 >> 32)
+                    e.ca = (ca32 << 1) | ca
+                    # use algorithm from microwatt's calc_ov
+                    # https://github.com/antonblanchard/microwatt/blob/5c6d57de3056bd08fdc1f656bc8656635a77512b/execute1.vhdl#L284
+                    axb = inv_ra ^ rb
+                    emsb = (expected >> 63) & 1
+                    ov = ca ^ emsb and not (axb >> 63) & 1
+                    e32msb = (expected32 >> 31) & 1
+                    ov32 = ca32 ^ e32msb and not (axb >> 31) & 1
+                    e.ov = (ov32 << 1) | ov
+                    self.add_case(prog, initial_regs, initial_sprs,
+                                  expected=e)
+
     def case_addze(self):
         insns = ["addze", "addze.", "addzeo", "addzeo."]
         for choice in insns:
