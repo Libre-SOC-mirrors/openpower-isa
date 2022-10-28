@@ -173,7 +173,6 @@ class SVP64BigIntCases(TestAccumulatorBase):
         svstate.vl = 3
         svstate.maxvl = 3
         e = ExpectedState(pc=8, int_regs=gprs)
-        e.intregs[5] = 0x0000_0000_0000_0000     # it's down the other end...
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
     def case_sv_bigint_mul_by_scalar(self):

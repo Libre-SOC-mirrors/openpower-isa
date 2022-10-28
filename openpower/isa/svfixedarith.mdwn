@@ -56,10 +56,10 @@ VA2-Form
 Pseudo-code:
 
     n <- (RB)[58:63]
-    v <- ROTL128([0]*64 || (RA), n)
-    mask <- ¬MASK(64, 63-n)
-    RT <- v[64:127] | ((RC) & mask)
-    RS <- v[0:63]
+    v <- ROTL64((RA), n)
+    mask <- MASK(64, 63-n)
+    RT <- (v[0:63] & mask) | ((RC) & ¬mask)
+    RS <- v[0:63] & ¬mask
 
 Special Registers Altered:
 
