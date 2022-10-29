@@ -6,6 +6,21 @@ from openpower.decoder.isa.caller import SVP64State
 
 _SHIFT_TEST_RANGE = list(range(-64, 128, 16)) + [1, 63]
 
+def cr_calc(val, ov):
+    XLEN=64
+    msb = (val & (1<<(XLEN-1))) != 0
+    lsbs = (val & ~(1<<(XLEN-1))) != 0
+    crf = 0
+    if val == 0:           # zero
+        crf |= 0b010
+    elif lsbs and not msb: # positive
+        crf |= 0b100
+    elif lsbs and msb: # negative
+        crf |= 0b1000
+    if ov:
+        crf |= 0b0001
+    return crf
+
 
 class BigIntCases(TestAccumulatorBase):
     def case_maddedu(self):
@@ -32,6 +47,30 @@ class BigIntCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, expected=e)
 
     # FIXME: test more divmod2du special cases
+
+    def case_dsld0_(self):
+        prog = Program(list(SVP64Asm(["dsld. 3,4,5,6"])), False)
+        for vals in [(0x0000_0000_0000_0000, 0, 0x0000_0000_0000_0000),
+                     (0x8000_0000_0000_0000, 1, 0x0000_0000_0000_0000),
+                     (0xffff_ffff_ffff_ffff, 1, 0x0000_0000_0000_0001),
+                     (0x0fff_ffff_ffff_fff0, 1, 0x8000_0000_0000_0001),
+                     (0xdfff_ffff_ffff_ffff, 1, 0x8000_0000_0000_0000),
+                    ]:
+            (ra, rb, rc) = vals
+            with self.subTest(ra=ra, rb=rb, rc=rc):
+                gprs = [0] * 32
+                gprs[4] = ra
+                gprs[5] = rb
+                gprs[6] = rc
+                e = ExpectedState(pc=4, int_regs=gprs, crregs=8)
+                v = ra
+                v <<= rb % 64
+                mask = (1 << (rb % 64))-1
+                v |= rc & mask
+                e.intregs[3] = v % 2 ** 64
+                e.intregs[6] = (v >> 64) % 2 ** 64
+                e.crregs[0] = cr_calc(e.intregs[3], ov=e.intregs[6] != 0)
+                self.add_case(prog, gprs, expected=e)
 
     def case_dsld0(self):
         prog = Program(list(SVP64Asm(["dsld 3,4,5,6"])), False)

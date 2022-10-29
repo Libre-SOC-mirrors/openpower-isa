@@ -1472,7 +1472,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             SO = SelectableInt(1, 0)
         else:
             SO = self.spr['XER'][XER_bits['SO']]
-        log("handle_comparison SO overflow", SO, overflow)
+        log("handle_comparison SO", SO.value,
+                    "overflow", overflow,
+                    "zero", zero.value,
+                    "+ve", positive.value,
+                     "-ve", negative.value)
         # alternative overflow checking (setvl mainly at the moment)
         if overflow is not None and overflow == 1:
             SO = SelectableInt(1, 1)
@@ -2057,8 +2061,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         is_setvl = ins_name in ('svstep', 'setvl')
         if is_setvl:
             result = SelectableInt(result.vl, 64)
-        else:
-            overflow = None  # do not override overflow except in setvl
+        #else:
+        #    overflow = None  # do not override overflow except in setvl
 
         # if there was not an explicit CR0 in the pseudocode, do implicit Rc=1
         if cr0 is None:
