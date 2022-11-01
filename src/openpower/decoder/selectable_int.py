@@ -371,14 +371,25 @@ class SelectableInt:
             #log("getitem", key, self.bits, hex(self.value), value)
             return SelectableInt(value, 1)
         elif isinstance(key, slice):
-            assert key.step is None or key.step == 1
-            assert key.start < key.stop
-            assert key.start >= 0
-            assert key.stop <= self.bits
+            start = key.start
+            if isinstance(start, SelectableInt):
+                start = start.value
+            stop = key.stop
+            if isinstance(stop, SelectableInt):
+                stop = stop.value
+            step = key.step
+            if isinstance(step, SelectableInt):
+                step = step.value
 
-            stop = self.bits - key.start
-            start = self.bits - key.stop
+            assert step is None or step == 1
+            assert start < stop
+            assert start >= 0
+            assert stop <= self.bits
 
+            (start, stop) = (
+                (self.bits - stop),
+                (self.bits - start),
+            )
             bits = stop - start
             #log ("__getitem__ slice num bits", start, stop, bits)
             mask = (1 << bits) - 1
@@ -548,7 +559,9 @@ def selectassign(lhs, idx, rhs):
 
 
 def selectconcat(*args, repeat=1):
-    if repeat != 1 and len(args) == 1 and isinstance(args[0], int):
+    if isinstance(repeat, SelectableInt):
+        repeat = repeat.value
+    if len(args) == 1 and isinstance(args[0], int) and args[0] in (0, 1):
         args = [SelectableInt(args[0], 1)]
     if repeat != 1:  # multiplies the incoming arguments
         tmp = []
