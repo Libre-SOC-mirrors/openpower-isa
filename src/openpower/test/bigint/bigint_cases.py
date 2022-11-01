@@ -5,6 +5,9 @@ from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State
 
 _SHIFT_TEST_RANGE = list(range(-64, 128, 16)) + [1, 63]
+_MASK32 = ((2 ** 32) - 1)
+_MASK64 = ((2 ** 64) - 1)
+
 
 def cr_calc(val, ov):
     XLEN=64
@@ -105,6 +108,34 @@ class BigIntCases(TestAccumulatorBase):
                 print("case_dsrd0", hex(mask), sh, hex(v))
                 e.intregs[3] = (v >> 64) % 2 ** 64
                 e.intregs[6] = v % 2 ** 64
+                self.add_case(prog, gprs, expected=e)
+
+    def case_shadd(self):
+        for sm in range(4):
+            with self.subTest(sm=sm):
+                insn = ("shadd 3,4,5,%d" % sm)
+                prog = Program(list(SVP64Asm([insn])), False)
+                gprs = [0] * 32
+                gprs[3] = 0x01234567890abcde
+                RA = gprs[4] = 0xf00dcafedeadbeef
+                RB = gprs[5] = 0xabadbabedefec8ed
+                RT = ((((RB << (sm+1)) & _MASK64) + RA) & _MASK64)
+                e = ExpectedState(pc=4, int_regs=gprs)
+                e.intregs[3] = RT
+                self.add_case(prog, gprs, expected=e)
+
+    def case_shadduw(self):
+        for sm in range(4):
+            with self.subTest(sm=sm):
+                insn = ("shadduw 3,4,5,%d" % sm)
+                prog = Program(list(SVP64Asm([insn])), False)
+                gprs = [0] * 32
+                gprs[3] = 0x01234567890abcde
+                RA = gprs[4] = 0xf00dcafedeadbeef
+                RB = gprs[5] = 0xabadbabedefec8ed
+                RT = (((((RB & _MASK32) << (sm+1)) & _MASK64) + RA) & _MASK64)
+                e = ExpectedState(pc=4, int_regs=gprs)
+                e.intregs[3] = RT
                 self.add_case(prog, gprs, expected=e)
 
 
