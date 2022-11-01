@@ -111,8 +111,12 @@ Z23-Form
 Pseudo-code:
 
     n <- (RB)
-    m <- sm + 1
-    RT <- (n[m:XLEN-1] || [0]*m) + (RA)
+    switch (sm)
+        case (0): sum[0:XLEN-1] = (n[0:XLEN-1-1] || [0]*1) + (RA)
+        case (1): sum[0:XLEN-1] = (n[0:XLEN-2-1] || [0]*2) + (RA)
+        case (2): sum[0:XLEN-1] = (n[0:XLEN-3-1] || [0]*3) + (RA)
+        default:  sum[0:XLEN-1] = (n[0:XLEN-4-1] || [0]*4) + (RA)
+    RT <- sum
 
 Special Registers Altered:
 
@@ -128,8 +132,12 @@ Z23-Form
 Pseudo-code:
 
     n <- ([0]*(XLEN/2)) || (RB)[XLEN/2:XLEN-1]
-    m <- sm + 1
-    RT <- (n[m:XLEN-1] || [0]*m) + (RA)
+    switch (sm)
+        case (0): sum[0:XLEN-1] = (n[0:XLEN-1-1] || [0]*1) + (RA)
+        case (1): sum[0:XLEN-1] = (n[0:XLEN-2-1] || [0]*2) + (RA)
+        case (2): sum[0:XLEN-1] = (n[0:XLEN-3-1] || [0]*3) + (RA)
+        default:  sum[0:XLEN-1] = (n[0:XLEN-4-1] || [0]*4) + (RA)
+    RT <- sum
 
 Special Registers Altered:
 
