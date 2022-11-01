@@ -111,7 +111,7 @@ Z23-Form
 Pseudo-code:
 
     n <- (RB)
-    m <- sm + 1
+    m <- ((0b0 || sm) + 1)
     RT <- (n[m:XLEN-1] || [0]*m) + (RA)
 
 Special Registers Altered:
@@ -128,7 +128,7 @@ Z23-Form
 Pseudo-code:
 
     n <- ([0]*(XLEN/2)) || (RB)[XLEN/2:XLEN-1]
-    m <- sm + 1
+    m <- ((0b0 || sm) + 1)
     RT <- (n[m:XLEN-1] || [0]*m) + (RA)
 
 Special Registers Altered:
