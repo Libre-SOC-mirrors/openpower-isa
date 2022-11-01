@@ -112,10 +112,11 @@ Pseudo-code:
 
     n <- (RB)
     switch (sm)
-        case (0): RT <- (n[1:XLEN-1] || [0]*1) + (RA)
-        case (1): RT <- (n[2:XLEN-1] || [0]*2) + (RA)
-        case (2): RT <- (n[3:XLEN-1] || [0]*3) + (RA)
-        case (3): RT <- (n[4:XLEN-1] || [0]*4) + (RA)
+        case (0): sum[0:XLEN-1] = (n[0:XLEN-1-1] || [0]*1) + (RA)
+        case (1): sum[0:XLEN-1] = (n[0:XLEN-2-1] || [0]*2) + (RA)
+        case (2): sum[0:XLEN-1] = (n[0:XLEN-3-1] || [0]*3) + (RA)
+        default:  sum[0:XLEN-1] = (n[0:XLEN-4-1] || [0]*4) + (RA)
+    RT <- sum
 
 Special Registers Altered:
 
@@ -132,10 +133,11 @@ Pseudo-code:
 
     n <- ([0]*(XLEN/2)) || (RB)[XLEN/2:XLEN-1]
     switch (sm)
-        case (0): RT <- (n[1:XLEN-1] || [0]*1) + (RA)
-        case (1): RT <- (n[2:XLEN-1] || [0]*2) + (RA)
-        case (2): RT <- (n[3:XLEN-1] || [0]*3) + (RA)
-        case (3): RT <- (n[4:XLEN-1] || [0]*4) + (RA)
+        case (0): sum[0:XLEN-1] = (n[0:XLEN-1-1] || [0]*1) + (RA)
+        case (1): sum[0:XLEN-1] = (n[0:XLEN-2-1] || [0]*2) + (RA)
+        case (2): sum[0:XLEN-1] = (n[0:XLEN-3-1] || [0]*3) + (RA)
+        default:  sum[0:XLEN-1] = (n[0:XLEN-4-1] || [0]*4) + (RA)
+    RT <- sum
 
 Special Registers Altered:
 
