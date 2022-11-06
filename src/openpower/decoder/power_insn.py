@@ -838,8 +838,8 @@ class Record:
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Operand:
-    record: Record
     name: str
+    record: Record = _dataclasses.field(repr=False)
 
     def __post_init__(self):
         pass
