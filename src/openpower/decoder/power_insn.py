@@ -670,6 +670,16 @@ class Record:
         return (lhs < rhs)
 
     @property
+    def static_operands(self):
+        for (cls, kwargs) in self.mdwn.operands.static:
+            yield cls(record=self, **kwargs)
+
+    @property
+    def dynamic_operands(self):
+        for (cls, kwargs) in self.mdwn.operands.dynamic:
+            yield cls(record=self, **kwargs)
+
+    @property
     def opcodes(self):
         def opcode(ppc):
             value = ([0] * 32)
@@ -686,8 +696,7 @@ class Record:
                 value[dst] = int((XO.value & (1 << src)) != 0)
                 mask[dst] = int((XO.mask & (1 << src)) != 0)
 
-            for (cls, kwargs) in self.mdwn.operands.static:
-                operand = cls(record=self, **kwargs)
+            for operand in self.static_operands:
                 for (src, dst) in enumerate(reversed(operand.span)):
                     value[dst] = int((operand.value & (1 << src)) != 0)
                     mask[dst] = 1
@@ -1220,8 +1229,7 @@ class Instruction(_Mapping):
         imm = False
         imm_name = ""
         imm_value = ""
-        for (cls, kwargs) in record.mdwn.operands.dynamic:
-            operand = cls(record=record, **kwargs)
+        for operand in record.dynamic_operands:
             name = operand.name
             value = " ".join(operand.disassemble(insn=self,
                 record=record, verbosity=min(verbosity, Verbosity.NORMAL)))
@@ -1238,8 +1246,7 @@ class Instruction(_Mapping):
 
     def static_operands(self, db):
         record = self.record(db=db)
-        for (cls, kwargs) in record.mdwn.operands.static:
-            operand = cls(record=record, **kwargs)
+        for operand in record.static_operands:
             yield (operand.name, operand.value)
 
     @classmethod
