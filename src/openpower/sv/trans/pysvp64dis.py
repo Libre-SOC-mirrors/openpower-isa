@@ -40,7 +40,7 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
         elif length < 4:
             raise IOError(insn)
         insn = _WordInstruction.integer(value=insn, byteorder=byteorder)
-        if insn.po == 0x1:
+        if insn.PO == 0x1:
             suffix = cpfile.read(4)
             length = len(suffix)
             if length == 0:

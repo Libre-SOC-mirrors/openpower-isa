@@ -1352,7 +1352,7 @@ class Instruction(_Mapping):
 
 class WordInstruction(Instruction):
     _: _Field = range(0, 32)
-    po: _Field = range(0, 6)
+    PO: _Field = range(0, 6)
 
     @classmethod
     def assemble(cls, db, opcode, arguments):
@@ -1439,7 +1439,7 @@ class PrefixedInstruction(Instruction):
     _: _Field = range(64)
     prefix: Prefix
     suffix: Suffix
-    po: Suffix.po
+    PO: Suffix.PO
 
     @classmethod
     def integer(cls, value, byteorder="little"):
@@ -2489,7 +2489,8 @@ class Database:
 
         db = set()
         names = {}
-        opcodes = _collections.defaultdict(set)
+        opcodes = _collections.defaultdict(
+            lambda: _collections.defaultdict(set))
 
         for (name, mdwn) in mdwndb:
             if name.startswith("sv."):
@@ -2507,7 +2508,7 @@ class Database:
             PO = section.opcode
             if PO is None:
                 PO = ppc[0].opcode
-            opcodes[PO.value].add(record)
+            opcodes[section][PO.value].add(record)
 
         self.__db = sorted(db)
         self.__names = dict(sorted(names.items()))
@@ -2527,25 +2528,16 @@ class Database:
 
     @_functools.lru_cache(maxsize=None)
     def __getitem__(self, key):
-        # specific hunt for all "extra.csv" matches. TODO: separate db of extras
-        if isinstance(key, Instruction):
-            ki = int(key)
-            for k, records in self.__opcodes.items():
-                for record in records:
-                    if str(record.section.path).endswith("extra.csv"):
-                        if record.match(key=ki):
-                           return record
-        # now look by XO-match, first, which is much better sorted.
-        # not in major.csv (e.g. 17 which is in extra.csv) already done above
-        if isinstance(key, (int, Instruction)):
-            key = int(key)
-            XO = int(_SelectableInt(value=int(key), bits=32)[0:6])
-            assert XO in self.__opcodes # should have been caught by extra.csv
-            for record in self.__opcodes[XO]:
-                if record.match(key=key):
-                   return record
-        # hunt by string instead
+        if isinstance(key, WordInstruction):
+            PO = int(key.PO)
+            for (section, group) in self.__opcodes.items():
+                for record in group[PO]:
+                    if record.match(key=key):
+                        return record
+
+            return None
+
         elif isinstance(key, str):
             return self.__names.get(key)
 
-        return None
+        raise ValueError("instruction or name expected")
