@@ -2423,6 +2423,6 @@ class Database:
                    return record
         # hunt by string instead
         elif isinstance(key, str):
-            return self.__names[key]
+            return self.__names.get(key)
 
         return None
