@@ -1392,6 +1392,18 @@ class WordInstruction(Instruction):
     PO: _Field = range(0, 6)
 
     @classmethod
+    def integer(cls, value, byteorder="little"):
+        return super().integer(bits=32, value=value, byteorder=byteorder)
+
+    @property
+    def binary(self):
+        bits = []
+        for idx in range(32):
+            bit = int(self[idx])
+            bits.append(bit)
+        return "".join(map(str, bits))
+
+    @classmethod
     def assemble(cls, db, opcode, arguments):
         record = db[opcode]
         insn = cls.integer(value=0)
@@ -1405,18 +1417,6 @@ class WordInstruction(Instruction):
             operand.assemble(value=value, insn=insn)
 
         return insn
-
-    @classmethod
-    def integer(cls, value, byteorder="little"):
-        return super().integer(bits=32, value=value, byteorder=byteorder)
-
-    @property
-    def binary(self):
-        bits = []
-        for idx in range(32):
-            bit = int(self[idx])
-            bits.append(bit)
-        return "".join(map(str, bits))
 
     def disassemble(self, db,
             byteorder="little",
@@ -2260,6 +2260,24 @@ class SVP64Instruction(PrefixedInstruction):
             bit = int(self[idx])
             bits.append(bit)
         return "".join(map(str, bits))
+
+    @classmethod
+    def assemble(cls, db, opcode, arguments):
+        record = db[opcode]
+        insn = cls.integer(value=0)
+        for operand in record.static_operands:
+            operand.assemble(insn=insn)
+
+        dynamic_operands = tuple(record.dynamic_operands)
+        if len(dynamic_operands) != len(arguments):
+            raise ValueError("operands count mismatch")
+        for (value, operand) in zip(arguments, dynamic_operands):
+            operand.assemble(value=value, insn=insn)
+
+        insn.prefix.PO = 0x1
+        insn.prefix.id = 0x3
+
+        return insn
 
     def disassemble(self, db,
             byteorder="little",
