@@ -538,6 +538,8 @@ class Operand:
             span = tuple(map(lambda bit: (bit + 32), span))
         if isinstance(value, str):
             value = int(value, 0)
+            if value < 0:
+                raise ValueError("signed operands not allowed")
         insn[span] = value
 
     def disassemble(self, insn, record,
@@ -563,6 +565,11 @@ class DynamicOperand(Operand):
 
 
 class SignedOperand(DynamicOperand):
+    def assemble(self, value, insn, record):
+        if isinstance(value, str):
+            value = int(value, 0)
+        return super().assemble(value=value, insn=insn, record=record)
+
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span(record=record)
