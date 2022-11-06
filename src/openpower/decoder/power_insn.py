@@ -615,6 +615,14 @@ class ImmediateOperand(DynamicOperand):
 
 
 class NonZeroOperand(DynamicOperand):
+    def assemble(self, value, insn, record):
+        if isinstance(value, str):
+            value = int(value, 0)
+        if not isinstance(value, int):
+            raise ValueError("non-integer operand")
+        value -= 1
+        return super().assemble(value=value, insn=insn, record=record)
+
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span(record=record)
