@@ -1249,7 +1249,7 @@ class EXTSOperandDQ(EXTSOperand, ImmediateOperand):
 class DOperandDX(SignedOperand):
     @cached_property
     def span(self):
-        cls = lambda name: DynamicOperand(name=name)
+        cls = lambda name: DynamicOperand(record=self.record, name=name)
         operands = map(cls, ("d0", "d1", "d2"))
         spans = map(lambda operand: operand.span, operands)
         return sum(spans, tuple())
