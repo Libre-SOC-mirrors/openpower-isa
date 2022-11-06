@@ -532,6 +532,14 @@ class Operand:
     def span(self, record):
         return record.fields[self.name]
 
+    def assemble(self, value, insn, record):
+        span = self.span(record=record)
+        if isinstance(insn, SVP64Instruction):
+            span = tuple(map(lambda bit: (bit + 32), span))
+        if isinstance(value, str):
+            value = int(value, 0)
+        insn[span] = value
+
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         raise NotImplementedError
@@ -574,6 +582,10 @@ class SignedOperand(DynamicOperand):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class StaticOperand(Operand):
     value: int
+
+    def assemble(self, insn, record):
+        return super().assemble(value=self.value,
+            insn=insn, record=record)
 
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
@@ -1176,6 +1188,10 @@ class Instruction(_Mapping):
         for operand in record.mdwn.operands.static:
             yield (operand.name, operand.value)
 
+    @classmethod
+    def assemble(cls, db, opcode, arguments):
+        raise NotImplementedError(f"{cls.__name__}.assemble")
+
     def disassemble(self, db,
             byteorder="little",
             verbosity=Verbosity.NORMAL):
@@ -1185,6 +1201,25 @@ class Instruction(_Mapping):
 class WordInstruction(Instruction):
     _: _Field = range(0, 32)
     po: _Field = range(0, 6)
+
+    @classmethod
+    def assemble(cls, db, opcode, arguments):
+        value = 0
+        mask = 0
+        record = db[opcode]
+        for opcode in record.opcodes:
+            value |= int(opcode.value)
+            mask |= int(opcode.mask)
+        insn = cls.integer(value=(value & mask))
+
+        operands = tuple(record.mdwn.operands.dynamic)
+        if len(operands) != len(arguments):
+            raise ValueError("operands count mismatch")
+        for (index, operand) in enumerate(operands):
+            value = arguments[index]
+            operand.assemble(value=value, insn=insn, record=record)
+
+        return insn
 
     @classmethod
     def integer(cls, value, byteorder="little"):
