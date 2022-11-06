@@ -614,6 +614,10 @@ class ImmediateOperand(DynamicOperand):
     pass
 
 
+class SignedImmediateOperand(SignedOperand, ImmediateOperand):
+    pass
+
+
 class NonZeroOperand(DynamicOperand):
     def assemble(self, value, insn, record):
         if isinstance(value, str):
@@ -907,7 +911,7 @@ class Operands(tuple):
             "SVyd": NonZeroOperand,
             "SVzd": NonZeroOperand,
             "BD": SignedOperand,
-            "D": SignedOperand, # TODO, make a SignedImmediate class?
+            "D": SignedImmediateOperand,
             "SI": SignedOperand,
             "IB": SignedOperand,
             "LI": SignedOperand,
