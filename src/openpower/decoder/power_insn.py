@@ -691,21 +691,29 @@ class Record:
     def XO(self):
         return self.PO_XO[1]
 
-    @property
+    @cached_property
     def static_operands(self):
+        operands = []
         (PO, XO) = self.PO_XO
-        yield POStaticOperand(record=self,
-            name="PO", value=(PO.value & PO.mask))
-        if XO is not None:
-            yield XOStaticOperand(record=self,
-                name="XO", value=(XO.value & XO.mask))
-        for (cls, kwargs) in self.mdwn.operands.static:
-            yield cls(record=self, **kwargs)
 
-    @property
+        operands.append(POStaticOperand(record=self,
+            name="PO", value=(PO.value & PO.mask)))
+        if XO is not None:
+            operands.append(XOStaticOperand(record=self,
+                name="XO", value=(XO.value & XO.mask)))
+        for (cls, kwargs) in self.mdwn.operands.static:
+            operands.append(cls(record=self, **kwargs))
+
+        return tuple(operands)
+
+    @cached_property
     def dynamic_operands(self):
+        operands = []
+
         for (cls, kwargs) in self.mdwn.operands.dynamic:
-            yield cls(record=self, **kwargs)
+            operands.append(cls(record=self, **kwargs))
+
+        return tuple(operands)
 
     @property
     def opcodes(self):
