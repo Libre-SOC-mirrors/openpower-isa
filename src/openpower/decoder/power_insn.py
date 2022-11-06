@@ -806,7 +806,7 @@ class Operand:
     def span(self):
         return self.record.fields[self.name]
 
-    def assemble(self, value, insn, record):
+    def assemble(self, value, insn):
         span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
@@ -816,14 +816,14 @@ class Operand:
                 raise ValueError("signed operands not allowed")
         insn[span] = value
 
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         raise NotImplementedError
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
         if isinstance(insn, SVP64Instruction):
@@ -841,12 +841,12 @@ class DynamicOperand(Operand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class SignedOperand(DynamicOperand):
-    def assemble(self, value, insn, record):
+    def assemble(self, value, insn):
         if isinstance(value, str):
             value = int(value, 0)
-        return super().assemble(value=value, insn=insn, record=record)
+        return super().assemble(value=value, insn=insn)
 
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
         if isinstance(insn, SVP64Instruction):
@@ -866,11 +866,10 @@ class SignedOperand(DynamicOperand):
 class StaticOperand(Operand):
     value: int
 
-    def assemble(self, insn, record):
-        return super().assemble(value=self.value,
-            insn=insn, record=record)
+    def assemble(self, insn):
+        return super().assemble(value=self.value, insn=insn)
 
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
         if isinstance(insn, SVP64Instruction):
@@ -928,15 +927,15 @@ class SignedImmediateOperand(SignedOperand, ImmediateOperand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class NonZeroOperand(DynamicOperand):
-    def assemble(self, value, insn, record):
+    def assemble(self, value, insn):
         if isinstance(value, str):
             value = int(value, 0)
         if not isinstance(value, int):
             raise ValueError("non-integer operand")
         value -= 1
-        return super().assemble(value=value, insn=insn, record=record)
+        return super().assemble(value=value, insn=insn)
 
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
         if isinstance(insn, SVP64Instruction):
@@ -960,7 +959,7 @@ class ExtendableOperand(DynamicOperand):
     def sv_spec_leave(self, value, span, origin_value, origin_span):
         return (value, span)
 
-    def spec(self, insn, record):
+    def spec(self, insn):
         vector = False
         span = self.span
         if isinstance(insn, SVP64Instruction):
@@ -972,24 +971,24 @@ class ExtendableOperand(DynamicOperand):
             (origin_value, origin_span) = (value, span)
             (value, span) = self.sv_spec_enter(value=value, span=span)
 
-            extra_idx = self.extra_idx(record=record)
+            extra_idx = self.extra_idx
             if extra_idx is _SVExtra.NONE:
                 return (vector, value, span)
 
-            if record.etype is _SVEtype.EXTRA3:
+            if self.record.etype is _SVEtype.EXTRA3:
                 spec = insn.prefix.rm.extra3[extra_idx]
-            elif record.etype is _SVEtype.EXTRA2:
+            elif self.record.etype is _SVEtype.EXTRA2:
                 spec = insn.prefix.rm.extra2[extra_idx]
             else:
-                raise ValueError(record.etype)
+                raise ValueError(self.record.etype)
 
             if spec != 0:
                 vector = bool(spec[0])
                 spec_span = spec.__class__
-                if record.etype is _SVEtype.EXTRA3:
+                if self.record.etype is _SVEtype.EXTRA3:
                     spec_span = tuple(map(str, spec_span[1, 2]))
                     spec = spec[1, 2]
-                elif record.etype is _SVEtype.EXTRA2:
+                elif self.record.etype is _SVEtype.EXTRA2:
                     spec_span = tuple(map(str, spec_span[1,]))
                     spec = _SelectableInt(value=spec[1].value, bits=2)
                     if vector:
@@ -998,7 +997,7 @@ class ExtendableOperand(DynamicOperand):
                     else:
                         spec_span = (("{0}",) + spec_span)
                 else:
-                    raise ValueError(record.etype)
+                    raise ValueError(self.record.etype)
 
                 vector_shift = (2 + (5 - value.bits))
                 scalar_shift = value.bits
@@ -1023,20 +1022,21 @@ class ExtendableOperand(DynamicOperand):
     def extra_reg(self):
         return _SVExtraReg(self.name)
 
-    def extra_idx(self, record):
+    @property
+    def extra_idx(self):
         for key in frozenset({
                     "in1", "in2", "in3", "cr_in", "cr_in2",
                     "out", "out2", "cr_out",
                 }):
-            extra_reg = record.svp64.extra_reg(key=key)
+            extra_reg = self.record.svp64.extra_reg(key=key)
             if extra_reg is self.extra_reg:
-                return record.extra_idx(key=key)
+                return self.record.extra_idx(key=key)
 
         return _SVExtra.NONE
 
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, prefix="", indent=""):
-        (vector, value, span) = self.spec(insn=insn, record=record)
+        (vector, value, span) = self.spec(insn=insn)
 
         if verbosity >= Verbosity.VERBOSE:
             mode = "vector" if vector else "scalar"
@@ -1044,11 +1044,11 @@ class ExtendableOperand(DynamicOperand):
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
             yield f"{indent}{indent}{', '.join(span)}"
             if isinstance(insn, SVP64Instruction):
-                extra_idx = self.extra_idx(record)
-                if record.etype is _SVEtype.NONE:
+                extra_idx = self.extra_idx
+                if self.record.etype is _SVEtype.NONE:
                     yield f"{indent}{indent}extra[none]"
                 else:
-                    etype = repr(record.etype).lower()
+                    etype = repr(self.record.etype).lower()
                     yield f"{indent}{indent}{etype}{extra_idx!r}"
         else:
             vector = "*" if vector else ""
@@ -1057,37 +1057,35 @@ class ExtendableOperand(DynamicOperand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class GPROperand(ExtendableOperand):
-    def assemble(self, value, insn, record):
+    def assemble(self, value, insn):
         if isinstance(value, str):
             value = value.lower()
             if value.startswith("r"):
                 value = value[1:]
             value = int(value, 0)
-        return super().assemble(value=value, insn=insn, record=record)
+        return super().assemble(value=value, insn=insn)
 
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
-        yield from super().disassemble(prefix=prefix,
-            insn=insn, record=record,
+        yield from super().disassemble(prefix=prefix, insn=insn,
             verbosity=verbosity, indent=indent)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class FPROperand(ExtendableOperand):
-    def assemble(self, value, insn, record):
+    def assemble(self, value, insn):
         if isinstance(value, str):
             value = value.lower()
             if value.startswith("f"):
                 value = value[1:]
             value = int(value, 0)
-        return super().assemble(value=value, insn=insn, record=record)
+        return super().assemble(value=value, insn=insn)
 
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
-        yield from super().disassemble(prefix=prefix,
-            insn=insn, record=record,
+        yield from super().disassemble(prefix=prefix, insn=insn,
             verbosity=verbosity, indent=indent)
 
 
@@ -1122,7 +1120,8 @@ class EXTSOperand(DynamicOperand):
     def span(self):
         return self.record.fields[self.field]
 
-    def disassemble(self, insn, record, verbosity=Verbosity.NORMAL, indent=""):
+    def disassemble(self, insn,
+            verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
@@ -1179,7 +1178,7 @@ class DOperandDX(SignedOperand):
         spans = map(lambda operand: operand.span, operands)
         return sum(spans, tuple())
 
-    def disassemble(self, insn, record,
+    def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
         if isinstance(insn, SVP64Instruction):
@@ -1282,7 +1281,7 @@ class Instruction(_Mapping):
         for operand in record.dynamic_operands:
             name = operand.name
             value = " ".join(operand.disassemble(insn=self,
-                record=record, verbosity=min(verbosity, Verbosity.NORMAL)))
+                verbosity=min(verbosity, Verbosity.NORMAL)))
             if imm:
                 name = f"{imm_name}({name})"
                 value = f"{imm_value}({value})"
@@ -1318,13 +1317,13 @@ class WordInstruction(Instruction):
         record = db[opcode]
         insn = cls.integer(value=0)
         for operand in record.static_operands:
-            operand.assemble(insn=insn, record=record)
+            operand.assemble(insn=insn)
 
         dynamic_operands = tuple(record.dynamic_operands)
         if len(dynamic_operands) != len(arguments):
             raise ValueError("operands count mismatch")
         for (value, operand) in zip(arguments, dynamic_operands):
-            operand.assemble(value=value, insn=insn, record=record)
+            operand.assemble(value=value, insn=insn)
 
         return insn
 
@@ -1383,7 +1382,7 @@ class WordInstruction(Instruction):
                 yield f"{indent}{indent}{opcode!r}"
             for (cls, kwargs) in record.mdwn.operands:
                 operand = cls(record=record, **kwargs)
-                yield from operand.disassemble(insn=self, record=record,
+                yield from operand.disassemble(insn=self,
                     verbosity=verbosity, indent=indent)
             yield ""
 
