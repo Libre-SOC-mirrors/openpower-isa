@@ -547,6 +547,7 @@ class Operand:
         raise NotImplementedError
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
@@ -564,6 +565,7 @@ class DynamicOperand(Operand):
             yield str(int(value))
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class SignedOperand(DynamicOperand):
     def assemble(self, value, insn, record):
         if isinstance(value, str):
@@ -610,14 +612,17 @@ class StaticOperand(Operand):
             yield str(int(value))
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class ImmediateOperand(DynamicOperand):
     pass
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class SignedImmediateOperand(SignedOperand, ImmediateOperand):
     pass
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class NonZeroOperand(DynamicOperand):
     def assemble(self, value, insn, record):
         if isinstance(value, str):
@@ -643,6 +648,7 @@ class NonZeroOperand(DynamicOperand):
             yield str(int(value) + 1)
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class ExtendableOperand(DynamicOperand):
     def sv_spec_enter(self, value, span):
         return (value, span)
@@ -745,6 +751,7 @@ class ExtendableOperand(DynamicOperand):
             yield f"{vector}{prefix}{int(value)}"
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class GPROperand(ExtendableOperand):
     def assemble(self, value, insn, record):
         if isinstance(value, str):
@@ -762,6 +769,7 @@ class GPROperand(ExtendableOperand):
             verbosity=verbosity, indent=indent)
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class FPROperand(ExtendableOperand):
     def assemble(self, value, insn, record):
         if isinstance(value, str):
@@ -779,10 +787,12 @@ class FPROperand(ExtendableOperand):
             verbosity=verbosity, indent=indent)
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class CR3Operand(ExtendableOperand):
     pass
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class CR5Operand(ExtendableOperand):
     def sv_spec_enter(self, value, span):
         value = _SelectableInt(value=(value.value >> 2), bits=3)
@@ -855,6 +865,7 @@ class EXTSOperandDQ(EXTSOperand, ImmediateOperand):
     nz: int = 4
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class DOperandDX(SignedOperand):
     def span(self, record):
         operands = map(DynamicOperand, ("d0", "d1", "d2"))
