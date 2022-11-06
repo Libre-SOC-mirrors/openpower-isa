@@ -1315,20 +1315,15 @@ class WordInstruction(Instruction):
 
     @classmethod
     def assemble(cls, db, opcode, arguments):
-        value = 0
-        mask = 0
         record = db[opcode]
-        for opcode in record.opcodes:
-            value |= int(opcode.value)
-            mask |= int(opcode.mask)
-        insn = cls.integer(value=(value & mask))
+        insn = cls.integer(value=0)
+        for operand in record.static_operands:
+            operand.assemble(insn=insn, record=record)
 
-        operands = tuple(record.mdwn.operands.dynamic)
-        if len(operands) != len(arguments):
+        dynamic_operands = tuple(record.dynamic_operands)
+        if len(dynamic_operands) != len(arguments):
             raise ValueError("operands count mismatch")
-        for (index, (cls, kwargs)) in enumerate(operands):
-            operand = cls(record=record, **kwargs)
-            value = arguments[index]
+        for (value, operand) in zip(arguments, dynamic_operands):
             operand.assemble(value=value, insn=insn, record=record)
 
         return insn
