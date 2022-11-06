@@ -790,13 +790,18 @@ class CR5Operand(RegisterOperand):
         return (value, span)
 
 
-class EXTSOperand(RegisterOperand):
-    n_zeros: int  # number of zeros - set through constructor override
-    d_field: str  # field name to report - ditto
-    hex_out: bool # set to indicate whether format is 0xNNN or decimal NNN
+@_dataclasses.dataclass(eq=True, frozen=True)
+class EXTSOperand(DynamicOperand):
+    field: str # real name to report
+    nz: int = 0 # number of zeros
+    fmt: str = "d" # integer formatter
+
+    def __post_init__(self):
+        if not self.field:
+            object.__setattr__(self, "field", self.name)
 
     def span(self, record):
-        return record.fields[self.d_field]
+        return record.fields[self.field]
 
     def disassemble(self, insn, record, verbosity=Verbosity.NORMAL, indent=""):
         span = self.span(record=record)
@@ -805,58 +810,45 @@ class EXTSOperand(RegisterOperand):
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
-            span = (tuple(map(str, span)) + ("{0}",)*self.n_zeros)
-            z = "0" * self.n_zeros
-            yield indent + "%s = EXTS(%s || 0b%s)" % (self.name, self.d_field, z)
-            yield indent * 2 + self.d_field
-            yield indent * 3 + f"{int(value):0{value.bits}b}" + z
-            yield indent * 3 + ', '.join(span)
+            span = (tuple(map(str, span)) + (("{0}",) * self.nz))
+            zeros = ("0" * self.nz)
+            hint = f"{self.name} = EXTS({self.field} || {zeros})"
+            yield f"{indent * 1}{hint}"
+            yield f"{indent * 2}{self.field}"
+            yield f"{indent * 3}{int(value):0{value.bits}b}{zeros}"
+            yield f"{indent * 3}{', '.join(span)}"
         else:
             value = _selectconcat(value,
-                _SelectableInt(value=0, bits=self.n_zeros)).to_signed_int()
-            if self.hex_out:
-                yield hex(value)
-            else:
-                yield str(value)
+                _SelectableInt(value=0, bits=self.nz)).to_signed_int()
+            yield f"{value:{self.fmt}}"
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class TargetAddrOperand(EXTSOperand):
-    """set up TargetAddrOperand as an EXTSOperand with 2 leading zeros
-    """
-    def __init__(self, *args, **kwargs): # no idea what the args are
-        self.n_zeros = 2
-        self.hex_out = True
-        super().__init__(*args, **kwargs)
+    nz: int = 2
+    fmt: str = "#x"
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class TargetAddrOperandLI(TargetAddrOperand):
-    def __init__(self, *args, **kwargs): # no idea what the args are
-        self.d_field = 'LI'
-        super().__init__(*args, **kwargs)
+    field: str = "LI"
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
 class TargetAddrOperandBD(TargetAddrOperand):
-    def __init__(self, *args, **kwargs): # no idea what the args are
-        self.d_field = 'BD'
-        super().__init__(*args, **kwargs)
+    field: str = "BD"
 
 
-# inherit from ImmediateOperand as well in order to pass "isinstance" test
+@_dataclasses.dataclass(eq=True, frozen=True)
 class EXTSOperandDS(EXTSOperand, ImmediateOperand):
-    def __init__(self, *args, **kwargs): # no idea what the args are
-        self.n_zeros = 2
-        self.d_field = 'DS'
-        self.hex_out = False
-        super().__init__(*args, **kwargs)
+    field: str = "DS"
+    nz: int = 2
 
 
-# inherit from ImmediateOperand as well in order to pass "isinstance" test
+@_dataclasses.dataclass(eq=True, frozen=True)
 class EXTSOperandDQ(EXTSOperand, ImmediateOperand):
-    def __init__(self, *args, **kwargs): # no idea what the args are
-        self.n_zeros = 4
-        self.d_field = 'DQ'
-        self.hex_out = False
-        super().__init__(*args, **kwargs)
+    field: str = "DQ"
+    nz: int = 4
 
 
 class DOperandDX(SignedOperand):
@@ -1200,9 +1192,8 @@ class Instruction(_Mapping):
         imm_value = ""
         for operand in record.mdwn.operands.dynamic:
             name = operand.name
-            dis = operand.disassemble(insn=self, record=record,
-                verbosity=min(verbosity, Verbosity.NORMAL))
-            value = " ".join(dis)
+            value = " ".join(operand.disassemble(insn=self,
+                record=record, verbosity=min(verbosity, Verbosity.NORMAL)))
             if imm:
                 name = f"{imm_name}({name})"
                 value = f"{imm_value}({value})"
