@@ -30,6 +30,7 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.consts import SVP64MODE
 from openpower.decoder.power_insn import SVP64Instruction
 from openpower.decoder.power_insn import Database
+from openpower.decoder.power_insn import WordInstruction
 from openpower.decoder.power_enums import find_wiki_dir
 
 # for debug logging
@@ -821,7 +822,7 @@ def to_number(field):
     return int(field)
 
 
-db = Database(find_wiki_dir())
+DB = Database(find_wiki_dir())
 
 
 # decodes svp64 assembly listings and creates EXT001 svp64 prefixes
@@ -859,7 +860,19 @@ class SVP64Asm:
             fields.append(macro_subst(macros, field))
         log("opcode, fields substed", ls, opcode, fields)
 
-        # identify if it is a special instruction
+        # identify if it is a word instruction
+        record = DB[opcode]
+        if record is not None:
+            insn = WordInstruction.assemble(db=DB,
+                opcode=opcode, arguments=fields)
+            yield " ".join((
+                f".long 0x{int(insn):08X}",
+                "#",
+                opcode,
+                ",".join(fields),
+            ))
+            return
+
         custom_insn_hook = CUSTOM_INSNS.get(opcode)
         if custom_insn_hook is not None:
             fields = tuple(map(to_number, fields))
