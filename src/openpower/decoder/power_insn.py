@@ -125,7 +125,7 @@ class Opcode:
             return super().__new__(cls, value)
 
         def __str__(self):
-            return super().__repr__()
+            return self.__repr__()
 
         def __repr__(self):
             return f"{self:0{self.bit_length()}b}"
