@@ -1135,14 +1135,30 @@ class ExtendableOperand(DynamicOperand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class GPROperand(ExtendableOperand):
-    def assemble(self, value, insn):
+class SimpleRegisterOperand(ExtendableOperand):
+    def assemble(self, value, insn, prefix):
+        vector = False
+
         if isinstance(value, str):
             value = value.lower()
-            if value.startswith("r"):
+            if value.startswith("%"):
                 value = value[1:]
+            if value.startswith("*"):
+                if not isinstance(insn, SVP64Instruction):
+                    raise ValueError(value)
+                value = value[1:]
+                vector = True
+            if value.startswith(prefix):
+                value = value[len(prefix):]
             value = int(value, 0)
+
         return super().assemble(value=value, insn=insn)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class GPROperand(SimpleRegisterOperand):
+    def assemble(self, value, insn):
+        return super().assemble(value=value, insn=insn, prefix="r")
 
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
@@ -1152,14 +1168,9 @@ class GPROperand(ExtendableOperand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class FPROperand(ExtendableOperand):
+class FPROperand(SimpleRegisterOperand):
     def assemble(self, value, insn):
-        if isinstance(value, str):
-            value = value.lower()
-            if value.startswith("f"):
-                value = value[1:]
-            value = int(value, 0)
-        return super().assemble(value=value, insn=insn)
+        return super().assemble(value=value, insn=insn, prefix="f")
 
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
