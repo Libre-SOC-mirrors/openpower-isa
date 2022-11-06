@@ -82,33 +82,36 @@ def collect(db):
 
         @_dataclasses.dataclass(eq=True, frozen=True)
         class POStaticOperand(_StaticOperand):
-            def __init__(self, PO):
-                value = (PO.value & PO.mask)
-                return super().__init__(name="PO", value=value)
-
             def span(self, record):
                 return tuple(range(0, 6))
 
         @_dataclasses.dataclass(eq=True, frozen=True)
         class XOStaticOperand(_StaticOperand):
-            def __init__(self, XO):
-                value = (XO.value & XO.mask)
-                return super().__init__(name="XO", value=value)
-
             def span(self, record):
                 return tuple(record.section.bitsel)
 
-        static_operands = [POStaticOperand(PO=PO)]
+        static_operands = [(POStaticOperand, {
+            "name": "PO",
+            "value": (PO.value & PO.mask)
+        })]
         if XO is not None:
-            static_operands.append(XOStaticOperand(XO=XO))
+            static_operands.append((XOStaticOperand, {
+                "name": "XO",
+                "value": (XO.value & XO.mask)
+            }))
+
         static_operands.extend(record.mdwn.operands.static)
         dynamic_operands = record.mdwn.operands.dynamic
 
         def static_operand(operand):
+            (cls, kwargs) = operand
+            operand = cls(**kwargs)
             return StaticOperand(name=operand.name,
                 value=operand.value, span=operand.span(record=record))
 
         def dynamic_operand(operand):
+            (cls, kwargs) = operand
+            operand = cls(**kwargs)
             return DynamicOperand(name=operand.name,
                 span=operand.span(record=record))
 

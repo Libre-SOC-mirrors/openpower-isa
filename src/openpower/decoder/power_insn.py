@@ -900,8 +900,8 @@ class DOperandDX(SignedOperand):
             yield str(value.to_signed_int())
 
 
-class Operands(tuple):
-    def __new__(cls, insn, iterable):
+class Operands:
+    def __init__(self, insn, iterable):
         custom_insns = {
             "b": {"target_addr": TargetAddrOperandLI},
             "ba": {"target_addr": TargetAddrOperandLI},
@@ -935,71 +935,78 @@ class Operands(tuple):
             "DS": EXTSOperandDS,
         }
 
-        operands = []
+        mapping = {}
         for operand in iterable:
-            dynamic_cls = DynamicOperand
-            static_cls = StaticOperand
+            cls = DynamicOperand
 
             if "=" in operand:
                 (name, value) = operand.split("=")
-                operand = static_cls(name=name, value=int(value))
-                operands.append(operand)
+                mapping[name] = (StaticOperand, {"value": int(value)})
             else:
-                if operand.endswith(")"):
-                    operand = operand.replace("(", " ").replace(")", "")
-                    (immediate, _, operand) = operand.partition(" ")
+                name = operand
+                if name.endswith(")"):
+                    name = name.replace("(", " ").replace(")", "")
+                    (immediate, _, name) = name.partition(" ")
                 else:
                     immediate = None
 
                 if immediate is not None:
-                    if immediate in custom_immediates:
-                        dynamic_cls = custom_immediates[immediate]
-                        operands.append(dynamic_cls(name=immediate))
-                    else:
-                        operands.append(ImmediateOperand(name=immediate))
+                    cls = custom_immediates.get(immediate, ImmediateOperand)
+                    mapping[name] = (cls, {})
 
-                if operand in custom_fields:
-                    dynamic_cls = custom_fields[operand]
-                if insn in custom_insns and operand in custom_insns[insn]:
-                    dynamic_cls = custom_insns[insn][operand]
+                if insn in custom_insns and name in custom_insns[insn]:
+                    cls = custom_insns[insn][name]
+                elif name in custom_fields:
+                    cls = custom_fields[name]
 
-                if operand in _RegType.__members__:
-                    regtype = _RegType[operand]
+                if name in _RegType.__members__:
+                    regtype = _RegType[name]
                     if regtype is _RegType.GPR:
-                        dynamic_cls = GPROperand
+                        cls = GPROperand
                     elif regtype is _RegType.FPR:
-                        dynamic_cls = FPROperand
+                        cls = FPROperand
                     if regtype is _RegType.CR_BIT: # 5-bit
-                        dynamic_cls = CR5Operand
+                        cls = CR5Operand
                     if regtype is _RegType.CR_REG: # actually CR Field, 3-bit
-                        dynamic_cls = CR3Operand
+                        cls = CR3Operand
 
-                operand = dynamic_cls(name=operand)
-                operands.append(operand)
+                mapping[name] = (cls, {})
 
-        return super().__new__(cls, operands)
+        static = []
+        dynamic = []
+        for (name, (cls, kwargs)) in mapping.items():
+            kwargs = dict(kwargs)
+            kwargs["name"] = name
+            if issubclass(cls, StaticOperand):
+                static.append((cls, kwargs))
+            elif issubclass(cls, DynamicOperand):
+                dynamic.append((cls, kwargs))
+            else:
+                raise ValueError(name)
+
+        self.__mapping = mapping
+        self.__static = tuple(static)
+        self.__dynamic = tuple(dynamic)
+
+        return super().__init__()
 
     def __contains__(self, key):
-        return self.__getitem__(key) is not None
+        return self.__mapping.__contains__(key)
 
     def __getitem__(self, key):
-        for operand in self:
-            if operand.name == key:
-                return operand
+        (cls, kwargs) = self.__mapping.__getitem__(key)
+        kwargs = dict(kwargs)
+        kwargs["name"] = key
 
-        return None
-
-    @property
-    def dynamic(self):
-        for operand in self:
-            if isinstance(operand, DynamicOperand):
-                yield operand
+        return (cls, kwargs)
 
     @property
     def static(self):
-        for operand in self:
-            if isinstance(operand, StaticOperand):
-                yield operand
+        return self.__static
+
+    @property
+    def dynamic(self):
+        return self.__dynamic
 
 
 class PCode:
@@ -1054,7 +1061,8 @@ class Record:
                 value[dst] = int((XO.value & (1 << src)) != 0)
                 mask[dst] = int((XO.mask & (1 << src)) != 0)
 
-            for operand in self.mdwn.operands.static:
+            for (cls, kwargs) in self.mdwn.operands.static:
+                operand = cls(**kwargs)
                 for (src, dst) in enumerate(reversed(operand.span(record=self))):
                     value[dst] = int((operand.value & (1 << src)) != 0)
                     mask[dst] = 1
@@ -1128,7 +1136,8 @@ class Record:
 
     @cached_property
     def Rc(self):
-        Rc = self.mdwn.operands["Rc"]
+        (cls, kwargs) = self.mdwn.operands["Rc"]
+        Rc = cls(**kwargs)
         if Rc is None:
             return False
         return bool(Rc.value)
@@ -1205,7 +1214,8 @@ class Instruction(_Mapping):
         imm = False
         imm_name = ""
         imm_value = ""
-        for operand in record.mdwn.operands.dynamic:
+        for (cls, kwargs) in record.mdwn.operands.dynamic:
+            operand = cls(**kwargs)
             name = operand.name
             value = " ".join(operand.disassemble(insn=self,
                 record=record, verbosity=min(verbosity, Verbosity.NORMAL)))
@@ -1222,7 +1232,8 @@ class Instruction(_Mapping):
 
     def static_operands(self, db):
         record = self.record(db=db)
-        for operand in record.mdwn.operands.static:
+        for (cls, kwargs) in record.mdwn.operands.static:
+            operand = cls(**kwargs)
             yield (operand.name, operand.value)
 
     @classmethod
@@ -1252,7 +1263,8 @@ class WordInstruction(Instruction):
         operands = tuple(record.mdwn.operands.dynamic)
         if len(operands) != len(arguments):
             raise ValueError("operands count mismatch")
-        for (index, operand) in enumerate(operands):
+        for (index, (cls, kwargs)) in enumerate(operands):
+            operand = cls(**kwargs)
             value = arguments[index]
             operand.assemble(value=value, insn=insn, record=record)
 
@@ -1311,7 +1323,8 @@ class WordInstruction(Instruction):
             yield f"{indent}opcodes"
             for opcode in record.opcodes:
                 yield f"{indent}{indent}{opcode!r}"
-            for operand in record.mdwn.operands:
+            for (cls, kwargs) in record.mdwn.operands:
+                operand = cls(**kwargs)
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
             yield ""
@@ -2174,7 +2187,8 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{indent}opcodes"
             for opcode in record.opcodes:
                 yield f"{indent}{indent}{opcode!r}"
-            for operand in record.mdwn.operands:
+            for (cls, kwargs) in record.mdwn.operands:
+                operand = cls(**kwargs)
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
             yield f"{indent}RM"
@@ -2296,8 +2310,7 @@ class PPCDatabase:
             record = records[alias]
             if record.intop not in {_MicrOp.OP_B, _MicrOp.OP_BC}:
                 raise ValueError(record)
-            operands = mdwndb[name].operands["AA"]
-            if operands is None:
+            if "AA" not in mdwndb[name].operands:
                 raise ValueError(record)
             return alias
 
