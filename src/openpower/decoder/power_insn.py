@@ -793,13 +793,18 @@ class Record:
     extra_idx_cr_in2 = property(lambda self: self.svp64.extra_idx_cr_in2)
     extra_idx_cr_out = property(lambda self: self.svp64.extra_idx_cr_out)
 
+    def __contains__(self, key):
+        return self.mdwn.operands.__contains__(key)
+
+    def __getitem__(self, key):
+        (cls, kwargs) = self.mdwn.operands.__getitem__(key)
+        return cls(record=self, **kwargs)
+
     @cached_property
     def Rc(self):
-        (cls, kwargs) = self.mdwn.operands["Rc"]
-        Rc = cls(record=self, **kwargs)
-        if Rc is None:
+        if "Rc" not in self:
             return False
-        return bool(Rc.value)
+        return bool(self["Rc"])
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
