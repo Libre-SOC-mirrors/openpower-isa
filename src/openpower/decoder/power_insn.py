@@ -126,10 +126,6 @@ class Opcode:
             return NotImplemented
         return ((self.value, self.mask) < (other.value, other.mask))
 
-    def __post_init__(self):
-        if self.value.bit_length() != self.mask.bit_length():
-            raise ValueError("bit length mismatch")
-
     def __repr__(self):
         def pattern(value, mask, bit_length):
             for bit in range(bit_length):
@@ -436,6 +432,9 @@ class BitSel:
 
         return super().__init__()
 
+    def __len__(self):
+        return (self.__end - self.__start + 1)
+
     def __repr__(self):
         return f"[{self.__start}:{self.__end}]"
 
@@ -669,8 +668,37 @@ class Record:
         rhs = (min(other.opcodes), other.name)
         return (lhs < rhs)
 
+    @cached_property
+    def PO_XO(self):
+        value = 0
+        mask = 0
+        for ppc in self.ppc:
+            opcode = ppc.opcode
+            value |= opcode.value
+            mask |= opcode.mask
+        XO = Opcode(value=value, mask=mask)
+        PO = self.section.opcode
+        if PO is None:
+            PO = XO
+            XO = None
+        return (PO, XO)
+
+    @cached_property
+    def PO(self):
+        return self.PO_XO[0]
+
+    @cached_property
+    def XO(self):
+        return self.PO_XO[1]
+
     @property
     def static_operands(self):
+        (PO, XO) = self.PO_XO
+        yield POStaticOperand(record=self,
+            name="PO", value=(PO.value & PO.mask))
+        if XO is not None:
+            yield XOStaticOperand(record=self,
+                name="XO", value=(XO.value & XO.mask))
         for (cls, kwargs) in self.mdwn.operands.static:
             yield cls(record=self, **kwargs)
 
@@ -684,17 +712,6 @@ class Record:
         def opcode(ppc):
             value = ([0] * 32)
             mask = ([0] * 32)
-
-            PO = self.section.opcode
-            if PO is not None:
-                for (src, dst) in enumerate(reversed(BitSel((0, 5)))):
-                    value[dst] = int((PO.value & (1 << src)) != 0)
-                    mask[dst] = int((PO.mask & (1 << src)) != 0)
-
-            XO = ppc.opcode
-            for (src, dst) in enumerate(reversed(self.section.bitsel)):
-                value[dst] = int((XO.value & (1 << src)) != 0)
-                mask[dst] = int((XO.mask & (1 << src)) != 0)
 
             for operand in self.static_operands:
                 for (src, dst) in enumerate(reversed(operand.span)):
@@ -782,6 +799,9 @@ class Operand:
     record: Record
     name: str
 
+    def __post_init__(self):
+        pass
+
     @cached_property
     def span(self):
         return self.record.fields[self.name]
@@ -864,6 +884,36 @@ class StaticOperand(Operand):
             yield f"{indent}{indent}{', '.join(span)}"
         else:
             yield str(int(value))
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class POStaticOperand(StaticOperand):
+    @cached_property
+    def span(self):
+        return tuple(range(0, 6))
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class XOStaticOperand(StaticOperand):
+    def __post_init__(self):
+        assert self.record.section.opcode is not None
+        bits = self.record.section.bitsel
+        value = _SelectableInt(value=self.value, bits=len(bits))
+        span = dict(zip(bits, range(len(bits))))
+        # This part is tricky: we could have used self.record.static_operands,
+        # but this would cause an infinite recursion, since this code is called
+        # from the self.record.static_operands method already.
+        for (cls, kwargs) in self.record.mdwn.operands.static:
+            operand = cls(record=self.record, **kwargs)
+            for idx in operand.span:
+                span.pop(idx, None)
+
+        value = int(_selectconcat(*(value[bit] for bit in span.values())))
+        span = tuple(span.keys())
+        object.__setattr__(self, "value", value)
+        object.__setattr__(self, "span", span)
+
+        return super().__post_init__()
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
