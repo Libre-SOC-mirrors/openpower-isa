@@ -639,7 +639,7 @@ class NonZeroOperand(DynamicOperand):
             yield str(int(value) + 1)
 
 
-class RegisterOperand(DynamicOperand):
+class ExtendableOperand(DynamicOperand):
     def sv_spec_enter(self, value, span):
         return (value, span)
 
@@ -741,7 +741,7 @@ class RegisterOperand(DynamicOperand):
             yield f"{vector}{prefix}{int(value)}"
 
 
-class GPROperand(RegisterOperand):
+class GPROperand(ExtendableOperand):
     def assemble(self, value, insn, record):
         if isinstance(value, str):
             value = value.lower()
@@ -758,7 +758,7 @@ class GPROperand(RegisterOperand):
             verbosity=verbosity, indent=indent)
 
 
-class FPROperand(RegisterOperand):
+class FPROperand(ExtendableOperand):
     def assemble(self, value, insn, record):
         if isinstance(value, str):
             value = value.lower()
@@ -775,11 +775,11 @@ class FPROperand(RegisterOperand):
             verbosity=verbosity, indent=indent)
 
 
-class CR3Operand(RegisterOperand):
+class CR3Operand(ExtendableOperand):
     pass
 
 
-class CR5Operand(RegisterOperand):
+class CR5Operand(ExtendableOperand):
     def sv_spec_enter(self, value, span):
         value = _SelectableInt(value=(value.value >> 2), bits=3)
         return (value, span)
