@@ -968,7 +968,10 @@ class XOStaticOperand(StaticOperand):
         # This part is tricky: we could have used self.record.static_operands,
         # but this would cause an infinite recursion, since this code is called
         # from the self.record.static_operands method already.
-        for (cls, kwargs) in self.record.mdwn.operands.static:
+        operands = []
+        operands.extend(self.record.mdwn.operands.static)
+        operands.extend(self.record.mdwn.operands.dynamic)
+        for (cls, kwargs) in operands:
             operand = cls(record=self.record, **kwargs)
             for idx in operand.span:
                 rev = span.pop(idx, None)
