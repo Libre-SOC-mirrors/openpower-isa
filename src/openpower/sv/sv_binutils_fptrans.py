@@ -105,13 +105,13 @@ def collect(db):
 
         def static_operand(operand):
             (cls, kwargs) = operand
-            operand = cls(**kwargs)
+            operand = cls(record=record, **kwargs)
             return StaticOperand(name=operand.name,
                 value=operand.value, span=operand.span(record=record))
 
         def dynamic_operand(operand):
             (cls, kwargs) = operand
-            operand = cls(**kwargs)
+            operand = cls(record=record, **kwargs)
             return DynamicOperand(name=operand.name,
                 span=operand.span(record=record))
 

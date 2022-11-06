@@ -525,8 +525,252 @@ class Fields:
         return self.__mapping.get(key, None)
 
 
+class Operands:
+    def __init__(self, insn, iterable):
+        custom_insns = {
+            "b": {"target_addr": TargetAddrOperandLI},
+            "ba": {"target_addr": TargetAddrOperandLI},
+            "bl": {"target_addr": TargetAddrOperandLI},
+            "bla": {"target_addr": TargetAddrOperandLI},
+            "bc": {"target_addr": TargetAddrOperandBD},
+            "bca": {"target_addr": TargetAddrOperandBD},
+            "bcl": {"target_addr": TargetAddrOperandBD},
+            "bcla": {"target_addr": TargetAddrOperandBD},
+            "addpcis": {"D": DOperandDX},
+            "fishmv": {"D": DOperandDX},
+            "fmvis": {"D": DOperandDX},
+        }
+        custom_fields = {
+            "SVi": NonZeroOperand,
+            "SVd": NonZeroOperand,
+            "SVxd": NonZeroOperand,
+            "SVyd": NonZeroOperand,
+            "SVzd": NonZeroOperand,
+            "BD": SignedOperand,
+            "D": SignedImmediateOperand,
+            "SI": SignedOperand,
+            "IB": SignedOperand,
+            "LI": SignedOperand,
+            "SIM": SignedOperand,
+            "SVD": SignedOperand,
+            "SVDS": SignedOperand,
+        }
+        custom_immediates = {
+            "DQ": EXTSOperandDQ,
+            "DS": EXTSOperandDS,
+        }
+
+        mapping = {}
+        for operand in iterable:
+            cls = DynamicOperand
+
+            if "=" in operand:
+                (name, value) = operand.split("=")
+                mapping[name] = (StaticOperand, {"value": int(value)})
+            else:
+                name = operand
+                if name.endswith(")"):
+                    name = name.replace("(", " ").replace(")", "")
+                    (immediate, _, name) = name.partition(" ")
+                else:
+                    immediate = None
+
+                if immediate is not None:
+                    cls = custom_immediates.get(immediate, ImmediateOperand)
+                    mapping[name] = (cls, {})
+
+                if insn in custom_insns and name in custom_insns[insn]:
+                    cls = custom_insns[insn][name]
+                elif name in custom_fields:
+                    cls = custom_fields[name]
+
+                if name in _RegType.__members__:
+                    regtype = _RegType[name]
+                    if regtype is _RegType.GPR:
+                        cls = GPROperand
+                    elif regtype is _RegType.FPR:
+                        cls = FPROperand
+                    if regtype is _RegType.CR_BIT: # 5-bit
+                        cls = CR5Operand
+                    if regtype is _RegType.CR_REG: # actually CR Field, 3-bit
+                        cls = CR3Operand
+
+                mapping[name] = (cls, {})
+
+        static = []
+        dynamic = []
+        for (name, (cls, kwargs)) in mapping.items():
+            kwargs = dict(kwargs)
+            kwargs["name"] = name
+            if issubclass(cls, StaticOperand):
+                static.append((cls, kwargs))
+            elif issubclass(cls, DynamicOperand):
+                dynamic.append((cls, kwargs))
+            else:
+                raise ValueError(name)
+
+        self.__mapping = mapping
+        self.__static = tuple(static)
+        self.__dynamic = tuple(dynamic)
+
+        return super().__init__()
+
+    def __contains__(self, key):
+        return self.__mapping.__contains__(key)
+
+    def __getitem__(self, key):
+        (cls, kwargs) = self.__mapping.__getitem__(key)
+        kwargs = dict(kwargs)
+        kwargs["name"] = key
+
+        return (cls, kwargs)
+
+    @property
+    def static(self):
+        return self.__static
+
+    @property
+    def dynamic(self):
+        return self.__dynamic
+
+
+class PCode:
+    def __init__(self, iterable):
+        self.__pcode = tuple(iterable)
+        return super().__init__()
+
+    def __iter__(self):
+        yield from self.__pcode
+
+    def __repr__(self):
+        return self.__pcode.__repr__()
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class MarkdownRecord:
+    pcode: PCode
+    operands: Operands
+
+
+@_functools.total_ordering
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Record:
+    name: str
+    section: Section
+    ppc: PPCRecord
+    fields: Fields
+    mdwn: MarkdownRecord
+    svp64: SVP64Record = None
+
+    def __lt__(self, other):
+        if not isinstance(other, Record):
+            return NotImplemented
+        lhs = (min(self.opcodes), self.name)
+        rhs = (min(other.opcodes), other.name)
+        return (lhs < rhs)
+
+    @property
+    def opcodes(self):
+        def opcode(ppc):
+            value = ([0] * 32)
+            mask = ([0] * 32)
+
+            PO = self.section.opcode
+            if PO is not None:
+                for (src, dst) in enumerate(reversed(BitSel((0, 5)))):
+                    value[dst] = int((PO.value & (1 << src)) != 0)
+                    mask[dst] = int((PO.mask & (1 << src)) != 0)
+
+            XO = ppc.opcode
+            for (src, dst) in enumerate(reversed(self.section.bitsel)):
+                value[dst] = int((XO.value & (1 << src)) != 0)
+                mask[dst] = int((XO.mask & (1 << src)) != 0)
+
+            for (cls, kwargs) in self.mdwn.operands.static:
+                operand = cls(record=self, **kwargs)
+                for (src, dst) in enumerate(reversed(operand.span(record=self))):
+                    value[dst] = int((operand.value & (1 << src)) != 0)
+                    mask[dst] = 1
+
+            value = Opcode.Value(int(("".join(map(str, value))), 2))
+            mask = Opcode.Mask(int(("".join(map(str, mask))), 2))
+
+            return Opcode(value=value, mask=mask)
+
+        return tuple(sorted(map(opcode, self.ppc)))
+
+    def match(self, key):
+        for opcode in self.opcodes:
+            if ((opcode.value & opcode.mask) ==
+                    (key & opcode.mask)):
+                return True
+        return False
+
+    @property
+    def mode(self):
+        return self.svp64.mode
+
+    @property
+    def in1(self):
+        return self.ppc.in1
+
+    @property
+    def in2(self):
+        return self.ppc.in2
+
+    @property
+    def in3(self):
+        return self.ppc.in3
+
+    @property
+    def out(self):
+        return self.ppc.out
+
+    @property
+    def out2(self):
+        if self.svp64 is None:
+            return _OutSel.NONE
+        return self.ppc.out
+
+    @property
+    def cr_in(self):
+        return self.ppc.cr_in
+
+    @property
+    def cr_in2(self):
+        return self.ppc.cr_in2
+
+    @property
+    def cr_out(self):
+        return self.ppc.cr_out
+
+    ptype = property(lambda self: self.svp64.ptype)
+    etype = property(lambda self: self.svp64.etype)
+
+    def extra_idx(self, key):
+        return self.svp64.extra_idx(key)
+
+    extra_idx_in1 = property(lambda self: self.svp64.extra_idx_in1)
+    extra_idx_in2 = property(lambda self: self.svp64.extra_idx_in2)
+    extra_idx_in3 = property(lambda self: self.svp64.extra_idx_in3)
+    extra_idx_out = property(lambda self: self.svp64.extra_idx_out)
+    extra_idx_out2 = property(lambda self: self.svp64.extra_idx_out2)
+    extra_idx_cr_in = property(lambda self: self.svp64.extra_idx_cr_in)
+    extra_idx_cr_in2 = property(lambda self: self.svp64.extra_idx_cr_in2)
+    extra_idx_cr_out = property(lambda self: self.svp64.extra_idx_cr_out)
+
+    @cached_property
+    def Rc(self):
+        (cls, kwargs) = self.mdwn.operands["Rc"]
+        Rc = cls(record=self, **kwargs)
+        if Rc is None:
+            return False
+        return bool(Rc.value)
+
+
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Operand:
+    record: Record
     name: str
 
     def span(self, record):
@@ -900,248 +1144,6 @@ class DOperandDX(SignedOperand):
             yield str(value.to_signed_int())
 
 
-class Operands:
-    def __init__(self, insn, iterable):
-        custom_insns = {
-            "b": {"target_addr": TargetAddrOperandLI},
-            "ba": {"target_addr": TargetAddrOperandLI},
-            "bl": {"target_addr": TargetAddrOperandLI},
-            "bla": {"target_addr": TargetAddrOperandLI},
-            "bc": {"target_addr": TargetAddrOperandBD},
-            "bca": {"target_addr": TargetAddrOperandBD},
-            "bcl": {"target_addr": TargetAddrOperandBD},
-            "bcla": {"target_addr": TargetAddrOperandBD},
-            "addpcis": {"D": DOperandDX},
-            "fishmv": {"D": DOperandDX},
-            "fmvis": {"D": DOperandDX},
-        }
-        custom_fields = {
-            "SVi": NonZeroOperand,
-            "SVd": NonZeroOperand,
-            "SVxd": NonZeroOperand,
-            "SVyd": NonZeroOperand,
-            "SVzd": NonZeroOperand,
-            "BD": SignedOperand,
-            "D": SignedImmediateOperand,
-            "SI": SignedOperand,
-            "IB": SignedOperand,
-            "LI": SignedOperand,
-            "SIM": SignedOperand,
-            "SVD": SignedOperand,
-            "SVDS": SignedOperand,
-        }
-        custom_immediates = {
-            "DQ": EXTSOperandDQ,
-            "DS": EXTSOperandDS,
-        }
-
-        mapping = {}
-        for operand in iterable:
-            cls = DynamicOperand
-
-            if "=" in operand:
-                (name, value) = operand.split("=")
-                mapping[name] = (StaticOperand, {"value": int(value)})
-            else:
-                name = operand
-                if name.endswith(")"):
-                    name = name.replace("(", " ").replace(")", "")
-                    (immediate, _, name) = name.partition(" ")
-                else:
-                    immediate = None
-
-                if immediate is not None:
-                    cls = custom_immediates.get(immediate, ImmediateOperand)
-                    mapping[name] = (cls, {})
-
-                if insn in custom_insns and name in custom_insns[insn]:
-                    cls = custom_insns[insn][name]
-                elif name in custom_fields:
-                    cls = custom_fields[name]
-
-                if name in _RegType.__members__:
-                    regtype = _RegType[name]
-                    if regtype is _RegType.GPR:
-                        cls = GPROperand
-                    elif regtype is _RegType.FPR:
-                        cls = FPROperand
-                    if regtype is _RegType.CR_BIT: # 5-bit
-                        cls = CR5Operand
-                    if regtype is _RegType.CR_REG: # actually CR Field, 3-bit
-                        cls = CR3Operand
-
-                mapping[name] = (cls, {})
-
-        static = []
-        dynamic = []
-        for (name, (cls, kwargs)) in mapping.items():
-            kwargs = dict(kwargs)
-            kwargs["name"] = name
-            if issubclass(cls, StaticOperand):
-                static.append((cls, kwargs))
-            elif issubclass(cls, DynamicOperand):
-                dynamic.append((cls, kwargs))
-            else:
-                raise ValueError(name)
-
-        self.__mapping = mapping
-        self.__static = tuple(static)
-        self.__dynamic = tuple(dynamic)
-
-        return super().__init__()
-
-    def __contains__(self, key):
-        return self.__mapping.__contains__(key)
-
-    def __getitem__(self, key):
-        (cls, kwargs) = self.__mapping.__getitem__(key)
-        kwargs = dict(kwargs)
-        kwargs["name"] = key
-
-        return (cls, kwargs)
-
-    @property
-    def static(self):
-        return self.__static
-
-    @property
-    def dynamic(self):
-        return self.__dynamic
-
-
-class PCode:
-    def __init__(self, iterable):
-        self.__pcode = tuple(iterable)
-        return super().__init__()
-
-    def __iter__(self):
-        yield from self.__pcode
-
-    def __repr__(self):
-        return self.__pcode.__repr__()
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class MarkdownRecord:
-    pcode: PCode
-    operands: Operands
-
-
-@_functools.total_ordering
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Record:
-    name: str
-    section: Section
-    ppc: PPCRecord
-    fields: Fields
-    mdwn: MarkdownRecord
-    svp64: SVP64Record = None
-
-    def __lt__(self, other):
-        if not isinstance(other, Record):
-            return NotImplemented
-        lhs = (min(self.opcodes), self.name)
-        rhs = (min(other.opcodes), other.name)
-        return (lhs < rhs)
-
-    @property
-    def opcodes(self):
-        def opcode(ppc):
-            value = ([0] * 32)
-            mask = ([0] * 32)
-
-            PO = self.section.opcode
-            if PO is not None:
-                for (src, dst) in enumerate(reversed(BitSel((0, 5)))):
-                    value[dst] = int((PO.value & (1 << src)) != 0)
-                    mask[dst] = int((PO.mask & (1 << src)) != 0)
-
-            XO = ppc.opcode
-            for (src, dst) in enumerate(reversed(self.section.bitsel)):
-                value[dst] = int((XO.value & (1 << src)) != 0)
-                mask[dst] = int((XO.mask & (1 << src)) != 0)
-
-            for (cls, kwargs) in self.mdwn.operands.static:
-                operand = cls(**kwargs)
-                for (src, dst) in enumerate(reversed(operand.span(record=self))):
-                    value[dst] = int((operand.value & (1 << src)) != 0)
-                    mask[dst] = 1
-
-            value = Opcode.Value(int(("".join(map(str, value))), 2))
-            mask = Opcode.Mask(int(("".join(map(str, mask))), 2))
-
-            return Opcode(value=value, mask=mask)
-
-        return tuple(sorted(map(opcode, self.ppc)))
-
-    def match(self, key):
-        for opcode in self.opcodes:
-            if ((opcode.value & opcode.mask) ==
-                    (key & opcode.mask)):
-                return True
-        return False
-
-    @property
-    def mode(self):
-        return self.svp64.mode
-
-    @property
-    def in1(self):
-        return self.ppc.in1
-
-    @property
-    def in2(self):
-        return self.ppc.in2
-
-    @property
-    def in3(self):
-        return self.ppc.in3
-
-    @property
-    def out(self):
-        return self.ppc.out
-
-    @property
-    def out2(self):
-        if self.svp64 is None:
-            return _OutSel.NONE
-        return self.ppc.out
-
-    @property
-    def cr_in(self):
-        return self.ppc.cr_in
-
-    @property
-    def cr_in2(self):
-        return self.ppc.cr_in2
-
-    @property
-    def cr_out(self):
-        return self.ppc.cr_out
-
-    ptype = property(lambda self: self.svp64.ptype)
-    etype = property(lambda self: self.svp64.etype)
-
-    def extra_idx(self, key):
-        return self.svp64.extra_idx(key)
-
-    extra_idx_in1 = property(lambda self: self.svp64.extra_idx_in1)
-    extra_idx_in2 = property(lambda self: self.svp64.extra_idx_in2)
-    extra_idx_in3 = property(lambda self: self.svp64.extra_idx_in3)
-    extra_idx_out = property(lambda self: self.svp64.extra_idx_out)
-    extra_idx_out2 = property(lambda self: self.svp64.extra_idx_out2)
-    extra_idx_cr_in = property(lambda self: self.svp64.extra_idx_cr_in)
-    extra_idx_cr_in2 = property(lambda self: self.svp64.extra_idx_cr_in2)
-    extra_idx_cr_out = property(lambda self: self.svp64.extra_idx_cr_out)
-
-    @cached_property
-    def Rc(self):
-        (cls, kwargs) = self.mdwn.operands["Rc"]
-        Rc = cls(**kwargs)
-        if Rc is None:
-            return False
-        return bool(Rc.value)
-
 class Instruction(_Mapping):
     @classmethod
     def integer(cls, value=0, bits=None, byteorder="little"):
@@ -1215,7 +1217,7 @@ class Instruction(_Mapping):
         imm_name = ""
         imm_value = ""
         for (cls, kwargs) in record.mdwn.operands.dynamic:
-            operand = cls(**kwargs)
+            operand = cls(record=record, **kwargs)
             name = operand.name
             value = " ".join(operand.disassemble(insn=self,
                 record=record, verbosity=min(verbosity, Verbosity.NORMAL)))
@@ -1233,7 +1235,7 @@ class Instruction(_Mapping):
     def static_operands(self, db):
         record = self.record(db=db)
         for (cls, kwargs) in record.mdwn.operands.static:
-            operand = cls(**kwargs)
+            operand = cls(record=record, **kwargs)
             yield (operand.name, operand.value)
 
     @classmethod
@@ -1264,7 +1266,7 @@ class WordInstruction(Instruction):
         if len(operands) != len(arguments):
             raise ValueError("operands count mismatch")
         for (index, (cls, kwargs)) in enumerate(operands):
-            operand = cls(**kwargs)
+            operand = cls(record=record, **kwargs)
             value = arguments[index]
             operand.assemble(value=value, insn=insn, record=record)
 
@@ -1324,7 +1326,7 @@ class WordInstruction(Instruction):
             for opcode in record.opcodes:
                 yield f"{indent}{indent}{opcode!r}"
             for (cls, kwargs) in record.mdwn.operands:
-                operand = cls(**kwargs)
+                operand = cls(record=record, **kwargs)
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
             yield ""
@@ -2188,7 +2190,7 @@ class SVP64Instruction(PrefixedInstruction):
             for opcode in record.opcodes:
                 yield f"{indent}{indent}{opcode!r}"
             for (cls, kwargs) in record.mdwn.operands:
-                operand = cls(**kwargs)
+                operand = cls(record=record, **kwargs)
                 yield from operand.disassemble(insn=self, record=record,
                     verbosity=verbosity, indent=indent)
             yield f"{indent}RM"
