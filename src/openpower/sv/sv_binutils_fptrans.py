@@ -82,13 +82,15 @@ def collect(db):
 
         @_dataclasses.dataclass(eq=True, frozen=True)
         class POStaticOperand(_StaticOperand):
-            def span(self, record):
+            @property
+            def span(self):
                 return tuple(range(0, 6))
 
         @_dataclasses.dataclass(eq=True, frozen=True)
         class XOStaticOperand(_StaticOperand):
-            def span(self, record):
-                return tuple(record.section.bitsel)
+            @property
+            def span(self):
+                return tuple(self.record.section.bitsel)
 
         static_operands = [(POStaticOperand, {
             "name": "PO",
@@ -107,13 +109,13 @@ def collect(db):
             (cls, kwargs) = operand
             operand = cls(record=record, **kwargs)
             return StaticOperand(name=operand.name,
-                value=operand.value, span=operand.span(record=record))
+                value=operand.value, span=operand.span)
 
         def dynamic_operand(operand):
             (cls, kwargs) = operand
             operand = cls(record=record, **kwargs)
             return DynamicOperand(name=operand.name,
-                span=operand.span(record=record))
+                span=operand.span)
 
         static_operands = tuple(map(static_operand, static_operands))
         dynamic_operands = tuple(map(dynamic_operand, dynamic_operands))

@@ -688,7 +688,7 @@ class Record:
 
             for (cls, kwargs) in self.mdwn.operands.static:
                 operand = cls(record=self, **kwargs)
-                for (src, dst) in enumerate(reversed(operand.span(record=self))):
+                for (src, dst) in enumerate(reversed(operand.span)):
                     value[dst] = int((operand.value & (1 << src)) != 0)
                     mask[dst] = 1
 
@@ -773,11 +773,12 @@ class Operand:
     record: Record
     name: str
 
-    def span(self, record):
-        return record.fields[self.name]
+    @cached_property
+    def span(self):
+        return self.record.fields[self.name]
 
     def assemble(self, value, insn, record):
-        span = self.span(record=record)
+        span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         if isinstance(value, str):
@@ -795,7 +796,7 @@ class Operand:
 class DynamicOperand(Operand):
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = self.span(record=record)
+        span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -818,7 +819,7 @@ class SignedOperand(DynamicOperand):
 
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = self.span(record=record)
+        span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -842,7 +843,7 @@ class StaticOperand(Operand):
 
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = self.span(record=record)
+        span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -878,7 +879,7 @@ class NonZeroOperand(DynamicOperand):
 
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = self.span(record=record)
+        span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -902,7 +903,7 @@ class ExtendableOperand(DynamicOperand):
 
     def spec(self, insn, record):
         vector = False
-        span = self.span(record=record)
+        span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -1058,11 +1059,12 @@ class EXTSOperand(DynamicOperand):
         if not self.field:
             object.__setattr__(self, "field", self.name)
 
-    def span(self, record):
-        return record.fields[self.field]
+    @cached_property
+    def span(self):
+        return self.record.fields[self.field]
 
     def disassemble(self, insn, record, verbosity=Verbosity.NORMAL, indent=""):
-        span = self.span(record=record)
+        span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -1111,14 +1113,16 @@ class EXTSOperandDQ(EXTSOperand, ImmediateOperand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class DOperandDX(SignedOperand):
-    def span(self, record):
-        operands = map(DynamicOperand, ("d0", "d1", "d2"))
-        spans = map(lambda operand: operand.span(record=record), operands)
+    @cached_property
+    def span(self):
+        cls = lambda name: DynamicOperand(name=name)
+        operands = map(cls, ("d0", "d1", "d2"))
+        spans = map(lambda operand: operand.span, operands)
         return sum(spans, tuple())
 
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
-        span = self.span(record=record)
+        span = self.span
         if isinstance(insn, SVP64Instruction):
             span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
@@ -1132,7 +1136,7 @@ class DOperandDX(SignedOperand):
             }
             for (subname, subspan) in mapping.items():
                 operand = DynamicOperand(name=subname)
-                span = operand.span(record=record)
+                span = operand.span
                 if isinstance(insn, SVP64Instruction):
                     span = tuple(map(lambda bit: (bit + 32), span))
                 value = insn[span]
