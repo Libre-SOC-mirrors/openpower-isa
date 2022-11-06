@@ -742,6 +742,14 @@ class RegisterOperand(DynamicOperand):
 
 
 class GPROperand(RegisterOperand):
+    def assemble(self, value, insn, record):
+        if isinstance(value, str):
+            value = value.lower()
+            if value.startswith("r"):
+                value = value[1:]
+            value = int(value, 0)
+        return super().assemble(value=value, insn=insn, record=record)
+
     def disassemble(self, insn, record,
             verbosity=Verbosity.NORMAL, indent=""):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
