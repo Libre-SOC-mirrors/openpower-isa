@@ -161,6 +161,11 @@ class Opcode:
 
         return "".join(pattern(self.value, self.mask, self.value.bit_length()))
 
+    def match(self, key):
+        if isinstance(key, Instruction):
+            key = int(key)
+        return ((self.value & self.mask) == (key & self.mask))
+
 
 class IntegerOpcode(Opcode):
     def __init__(self, value):
@@ -643,6 +648,9 @@ class Operands:
 
         return super().__init__()
 
+    def __repr__(self):
+        return self.__mapping.__repr__()
+
     def __contains__(self, key):
         return self.__mapping.__contains__(key)
 
@@ -705,11 +713,24 @@ class Record:
             opcode = ppc.opcode
             value |= opcode.value
             mask |= opcode.mask
+        value = Opcode.Value(value)
+        mask = Opcode.Mask(mask)
         XO = Opcode(value=value, mask=mask)
+
         PO = self.section.opcode
         if PO is None:
             PO = XO
             XO = None
+
+        PO = POStaticOperand(record=self,
+            name="PO", value=int(PO.value), mask=int(PO.mask))
+        if XO is None:
+            XO = XOStaticOperand(record=self,
+                name="XO", value=0, mask=0)
+        else:
+            XO = XOStaticOperand(record=self,
+                name="XO", value=int(XO.value), mask=int(XO.mask))
+
         return (PO, XO)
 
     @cached_property
@@ -720,20 +741,12 @@ class Record:
     def XO(self):
         return self.PO_XO[1]
 
-    @cached_property
+    @property
     def static_operands(self):
-        operands = []
-        (PO, XO) = self.PO_XO
+        yield from self.PO_XO
 
-        operands.append(POStaticOperand(record=self,
-            name="PO", value=(PO.value & PO.mask)))
-        if XO is not None:
-            operands.append(XOStaticOperand(record=self,
-                name="XO", value=(XO.value & XO.mask)))
         for (cls, kwargs) in self.mdwn.operands.static:
-            operands.append(cls(record=self, **kwargs))
-
-        return tuple(operands)
+            yield cls(record=self, **kwargs)
 
     @cached_property
     def dynamic_operands(self):
@@ -764,9 +777,9 @@ class Record:
 
     def match(self, key):
         for opcode in self.opcodes:
-            if ((opcode.value & opcode.mask) ==
-                    (key & opcode.mask)):
+            if opcode.match(key):
                 return True
+
         return False
 
     @property
@@ -929,6 +942,8 @@ class StaticOperand(Operand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class POStaticOperand(StaticOperand):
+    mask: int
+
     @cached_property
     def span(self):
         return tuple(range(0, 6))
@@ -936,18 +951,37 @@ class POStaticOperand(StaticOperand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class XOStaticOperand(StaticOperand):
+    mask: int
+
     def __post_init__(self):
-        assert self.record.section.opcode is not None
+        if self.record.section.opcode is None:
+            assert self.value == 0
+            assert self.mask == 0
+            object.__setattr__(self, "span", ())
+            return
+
         bits = self.record.section.bitsel
         value = _SelectableInt(value=self.value, bits=len(bits))
         span = dict(zip(bits, range(len(bits))))
+        span_rev = {value:key for (key, value) in span.items()}
+
         # This part is tricky: we could have used self.record.static_operands,
         # but this would cause an infinite recursion, since this code is called
         # from the self.record.static_operands method already.
         for (cls, kwargs) in self.record.mdwn.operands.static:
             operand = cls(record=self.record, **kwargs)
             for idx in operand.span:
-                span.pop(idx, None)
+                rev = span.pop(idx, None)
+                if rev is not None:
+                    span_rev.pop(rev, None)
+
+        # This part is simpler: we drop bits which are not in the mask.
+        for bit in tuple(span.values()):
+            rev = (len(bits) - bit - 1)
+            if ((self.mask & (1 << bit)) == 0):
+                idx = span_rev.pop(rev, None)
+                if idx is not None:
+                    span.pop(idx, None)
 
         value = int(_selectconcat(*(value[bit] for bit in span.values())))
         span = tuple(span.keys())
