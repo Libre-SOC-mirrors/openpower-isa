@@ -1136,6 +1136,47 @@ class ExtendableOperand(DynamicOperand):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class SimpleRegisterOperand(ExtendableOperand):
+    def assemble_svp64(self, value, insn, vector):
+        if vector:
+            sv_extra = (value & 0b11)
+            field = (value >> 2)
+        else:
+            sv_extra = (value >> 5)
+            field = (value & 0b11111)
+
+        # now sanity-check. EXTRA3 is ok, EXTRA2 has limits
+        # (and shrink to a single bit if ok)
+        if self.record.etype is _SVEtype.EXTRA2:
+            if vector:
+                # range is r0-r127 in increments of 2 (r0 r2 ... r126)
+                assert (sv_extra & 0b01) == 0, \
+                    ("vector field %s cannot fit into EXTRA2" % value)
+                sv_extra = (0b10 | (sv_extra >> 1))
+            else:
+                # range is r0-r63 in increments of 1
+                assert (sv_extra >> 1) == 0, \
+                    ("scalar GPR %d cannot fit into EXTRA2" % value)
+                sv_extra &= 0b01
+        elif self.record.etype is _SVEtype.EXTRA3:
+            if vector:
+                # EXTRA3 vector bit needs marking
+                sv_extra |= 0b100
+        else:
+            raise ValueError(self.record.etype)
+
+        extra_idx = self.extra_idx
+        if extra_idx is _SVExtra.NONE:
+            raise ValueError(self.record)
+
+        if self.record.etype is _SVEtype.EXTRA3:
+            insn.prefix.rm.extra3[extra_idx] = sv_extra
+        elif self.record.etype is _SVEtype.EXTRA2:
+            insn.prefix.rm.extra2[extra_idx] = sv_extra
+        else:
+            raise ValueError(self.record.etype)
+
+        return super().assemble(value=field, insn=insn)
+
     def assemble(self, value, insn, prefix):
         vector = False
 
@@ -1151,6 +1192,9 @@ class SimpleRegisterOperand(ExtendableOperand):
             if value.startswith(prefix):
                 value = value[len(prefix):]
             value = int(value, 0)
+
+        if isinstance(insn, SVP64Instruction):
+            return self.assemble_svp64(value=value, insn=insn, vector=vector)
 
         return super().assemble(value=value, insn=insn)
 
