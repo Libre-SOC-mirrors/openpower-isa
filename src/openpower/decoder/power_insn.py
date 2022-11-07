@@ -763,8 +763,11 @@ class Record:
     @property
     def opcodes(self):
         def opcode(ppc):
-            value = ([0] * 32)
-            mask = ([0] * 32)
+            bits = 32
+            if self.svp64 is not None:
+                bits = 64
+            value = ([0] * bits)
+            mask = ([0] * bits)
 
             for operand in self.static_operands:
                 for (src, dst) in enumerate(reversed(operand.span)):
@@ -862,12 +865,13 @@ class Operand:
 
     @cached_property
     def span(self):
-        return self.record.fields[self.name]
+        span = self.record.fields[self.name]
+        if self.record.svp64 is not None:
+            span = tuple(map(lambda bit: (bit + 32), span))
+        return span
 
     def assemble(self, value, insn):
         span = self.span
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
         if isinstance(value, str):
             value = int(value, 0)
             if value < 0:
@@ -884,8 +888,6 @@ class DynamicOperand(Operand):
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
@@ -907,8 +909,6 @@ class SignedOperand(DynamicOperand):
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
@@ -930,8 +930,6 @@ class StaticOperand(Operand):
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
@@ -949,7 +947,10 @@ class POStaticOperand(StaticOperand):
 
     @cached_property
     def span(self):
-        return tuple(range(0, 6))
+        span = tuple(range(0, 6))
+        if self.record.svp64 is not None:
+            span = tuple(map(lambda bit: (bit + 32), span))
+        return span
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -991,6 +992,8 @@ class XOStaticOperand(StaticOperand):
 
         value = int(_selectconcat(*(value[bit] for bit in span.values())))
         span = tuple(span.keys())
+        if self.record.svp64 is not None:
+            span = tuple(map(lambda bit: (bit + 32), span))
         object.__setattr__(self, "value", value)
         object.__setattr__(self, "span", span)
 
@@ -1020,8 +1023,6 @@ class NonZeroOperand(DynamicOperand):
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
@@ -1044,8 +1045,6 @@ class ExtendableOperand(DynamicOperand):
     def spec(self, insn):
         vector = False
         span = self.span
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
         span = tuple(map(str, span))
 
@@ -1364,13 +1363,14 @@ class EXTSOperand(DynamicOperand):
 
     @cached_property
     def span(self):
-        return self.record.fields[self.field]
+        span = self.record.fields[self.field]
+        if self.record.svp64 is not None:
+            span = tuple(map(lambda bit: (bit + 32), span))
+        return span
 
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
@@ -1422,13 +1422,14 @@ class DOperandDX(SignedOperand):
         cls = lambda name: DynamicOperand(record=self.record, name=name)
         operands = map(cls, ("d0", "d1", "d2"))
         spans = map(lambda operand: operand.span, operands)
-        return sum(spans, tuple())
+        span = sum(spans, tuple())
+        if self.record.svp64 is not None:
+            span = tuple(map(lambda bit: (bit + 32), span))
+        return span
 
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        if isinstance(insn, SVP64Instruction):
-            span = tuple(map(lambda bit: (bit + 32), span))
         value = insn[span]
 
         if verbosity >= Verbosity.VERBOSE:
@@ -1441,8 +1442,6 @@ class DOperandDX(SignedOperand):
             for (subname, subspan) in mapping.items():
                 operand = DynamicOperand(name=subname)
                 span = operand.span
-                if isinstance(insn, SVP64Instruction):
-                    span = tuple(map(lambda bit: (bit + 32), span))
                 value = insn[span]
                 span = map(str, span)
                 yield f"{indent}{indent}{operand.name} = D{subspan}"
@@ -1489,7 +1488,7 @@ class Instruction(_Mapping):
         return self.storage.__setitem__(key, value)
 
     def bytes(self, byteorder="little"):
-        nr_bytes = (self.storage.bits // 8)
+        nr_bytes = (len(self.__class__) // 8)
         return int(self).to_bytes(nr_bytes, byteorder=byteorder)
 
     def record(self, db):
@@ -1588,17 +1587,16 @@ class WordInstruction(Instruction):
     def disassemble(self, db,
             byteorder="little",
             verbosity=Verbosity.NORMAL):
-        integer = int(self)
         if verbosity <= Verbosity.SHORT:
             blob = ""
         else:
-            blob = integer.to_bytes(length=4, byteorder=byteorder)
+            blob = self.bytes(byteorder=byteorder)
             blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
             blob += "    "
 
         record = db[self]
         if record is None:
-            yield f"{blob}.long 0x{integer:08x}"
+            yield f"{blob}.long 0x{int(self):08x}"
             return
 
         operands = tuple(map(_operator.itemgetter(1),
@@ -2432,6 +2430,7 @@ class SVP64Instruction(PrefixedInstruction):
     def assemble(cls, db, opcode, arguments):
         record = db[opcode]
         insn = cls.integer(value=0)
+
         for operand in record.static_operands:
             operand.assemble(insn=insn)
 
@@ -2449,17 +2448,17 @@ class SVP64Instruction(PrefixedInstruction):
     def disassemble(self, db,
             byteorder="little",
             verbosity=Verbosity.NORMAL):
-        def blob(integer):
+        def blob(insn):
             if verbosity <= Verbosity.SHORT:
                 return ""
             else:
-                blob = integer.to_bytes(length=4, byteorder=byteorder)
+                blob = insn.bytes(byteorder=byteorder)
                 blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
                 return f"{blob}    "
 
         record = self.record(db=db)
-        blob_prefix = blob(int(self.prefix))
-        blob_suffix = blob(int(self.suffix))
+        blob_prefix = blob(self.prefix)
+        blob_suffix = blob(self.suffix)
         if record is None or record.svp64 is None:
             yield f"{blob_prefix}.long 0x{int(self.prefix):08x}"
             yield f"{blob_suffix}.long 0x{int(self.suffix):08x}"
@@ -2510,7 +2509,7 @@ class SVP64Instruction(PrefixedInstruction):
                 yield f"{indent}{indent}{opcode!r}"
             for (cls, kwargs) in record.mdwn.operands:
                 operand = cls(record=record, **kwargs)
-                yield from operand.disassemble(insn=self, record=record,
+                yield from operand.disassemble(insn=self,
                     verbosity=verbosity, indent=indent)
             yield f"{indent}RM"
             yield f"{indent}{indent}{rm.__doc__}"
