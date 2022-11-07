@@ -599,7 +599,10 @@ class Operands:
 
             if "=" in operand:
                 (name, value) = operand.split("=")
-                mapping[name] = (StaticOperand, {"value": int(value)})
+                mapping[name] = (StaticOperand, {
+                    "name": name,
+                    "value": int(value),
+                })
             else:
                 name = operand
                 if name.endswith(")"):
@@ -610,7 +613,6 @@ class Operands:
 
                 if immediate is not None:
                     cls = custom_immediates.get(immediate, ImmediateOperand)
-                    mapping[name] = (cls, {})
 
                 if insn in custom_insns and name in custom_insns[insn]:
                     cls = custom_insns[insn][name]
@@ -628,7 +630,7 @@ class Operands:
                     if regtype is _RegType.CR_REG: # actually CR Field, 3-bit
                         cls = CR3Operand
 
-                mapping[name] = (cls, {})
+                mapping[name] = (cls, {"name": name})
 
         static = []
         dynamic = []
@@ -648,6 +650,11 @@ class Operands:
 
         return super().__init__()
 
+    def __iter__(self):
+        for (_, items) in self.__mapping.items():
+            (cls, kwargs) = items
+            yield (cls, kwargs)
+
     def __repr__(self):
         return self.__mapping.__repr__()
 
@@ -655,11 +662,7 @@ class Operands:
         return self.__mapping.__contains__(key)
 
     def __getitem__(self, key):
-        (cls, kwargs) = self.__mapping.__getitem__(key)
-        kwargs = dict(kwargs)
-        kwargs["name"] = key
-
-        return (cls, kwargs)
+        return self.__mapping.__getitem__(key)
 
     @property
     def static(self):
