@@ -1229,12 +1229,116 @@ class FPROperand(SimpleRegisterOperand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class CR3Operand(ExtendableOperand):
-    pass
+class ConditionRegisterFieldOperand(ExtendableOperand):
+    def pattern(name_pattern):
+        (name, pattern) = name_pattern
+        return (name, _re.compile(f"^{pattern}$", _re.S))
+
+    CONDS = {
+        "lt": 0,
+        "gt": 1,
+        "eq": 2,
+        "so": 3,
+        "un": 3,
+    }
+    CR = r"(?:CR|cr)([0-9]+)"
+    N = r"([0-9]+)"
+    BIT = rf"({'|'.join(CONDS.keys())})"
+    LBIT = fr"{BIT}\s*\+\s*"  # BIT+
+    RBIT = fr"\s*\+\s*{BIT}"  # +BIT
+    CRN = fr"{CR}\s*\*\s*{N}" # CR*N
+    NCR = fr"{N}\s*\*\s*{CR}" # N*CR
+    XCR = fr"{CR}\.{BIT}"
+    PATTERNS = tuple(map(pattern, (
+        ("CR", CR),
+        ("CR_BIT", XCR),
+        ("CR*N", CRN),
+        ("N*CR", NCR),
+        ("BIT+CR", (LBIT + CR)),
+        ("CR+BIT", (CR + RBIT)),
+        ("BIT+CR*N", (LBIT + CRN)),
+        ("CR*N+BIT", (CRN + RBIT)),
+        ("BIT+N*CR", (LBIT + NCR)),
+        ("N*CR+BIT", (NCR + RBIT)),
+    )))
+
+    def remap(self, value, vector, regtype):
+        if regtype is _RegType.CR_BIT:
+            subvalue = (value & 0x3)
+            value >>= 2
+
+        if vector:
+            extra = (value & 0xf)
+            value >>= 4
+        else:
+            extra = (value >> 3)
+            value &= 0x7
+
+        if self.record.etype is _SVEtype.EXTRA2:
+            if vector:
+                assert (extra & 0x7) == 0, \
+                    "vector CR cannot fit into EXTRA2"
+                extra = (0x2 | (extra >> 3))
+            else:
+                assert (extra >> 1) == 0, \
+                    "scalar CR cannot fit into EXTRA2"
+                extra &= 0x1
+        elif self.record.etype is _SVEtype.EXTRA3:
+            if vector:
+                assert (extra & 0x3) == 0, \
+                    "vector CR cannot fit into EXTRA3"
+                extra = (0x4 | (extra >> 2))
+            else:
+                assert (extra >> 2) == 0, \
+                    "scalar CR cannot fit into EXTRA3"
+                extra &= 0x3
+
+        if regtype is _RegType.CR_BIT:
+            value = ((value << 2) | subvalue)
+
+        return (value, extra)
+
+    def assemble(self, value, insn):
+        if isinstance(value, str):
+            vector = False
+
+            if value.startswith("*"):
+                if not isinstance(insn, SVP64Instruction):
+                    raise ValueError(value)
+                value = value[1:]
+                vector = True
+
+            for (name, pattern) in reversed(self.__class__.PATTERNS):
+                match = pattern.match(value)
+                if match is not None:
+                    keys = name.replace("+", "_").replace("*", "_").split("_")
+                    values = match.groups()
+                    match = dict(zip(keys, values))
+                    CR = int(match["CR"])
+                    if name == "CR_BIT":
+                        N = 4
+                    else:
+                        N = int(match.get("N", "1"))
+                    BIT = self.__class__.CONDS[match.get("BIT", "lt")]
+                    value = ((CR * N) + BIT)
+                    break
+
+        return super().assemble(value=value, insn=insn, prefix="cr")
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class CR5Operand(ExtendableOperand):
+class CR3Operand(ConditionRegisterFieldOperand):
+    def remap(self, value, vector):
+        return super().remap(value=value, vector=vector,
+            regtype=_RegType.CR_REG)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class CR5Operand(ConditionRegisterFieldOperand):
+    def remap(self, value, vector):
+        return super().remap(value=value, vector=vector,
+            regtype=_RegType.CR_BIT)
+
     def sv_spec_enter(self, value, span):
         value = _SelectableInt(value=(value.value >> 2), bits=3)
         return (value, span)
