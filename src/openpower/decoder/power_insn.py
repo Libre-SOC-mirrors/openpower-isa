@@ -162,8 +162,6 @@ class Opcode:
         return "".join(pattern(self.value, self.mask, self.value.bit_length()))
 
     def match(self, key):
-        if isinstance(key, Instruction):
-            key = int(key)
         return ((self.value & self.mask) == (key & self.mask))
 
 
@@ -709,47 +707,44 @@ class Record:
         return (lhs < rhs)
 
     @cached_property
-    def PO_XO(self):
-        value = 0
-        mask = 0
-        for ppc in self.ppc:
-            opcode = ppc.opcode
-            value |= opcode.value
-            mask |= opcode.mask
-        value = Opcode.Value(value)
-        mask = Opcode.Mask(mask)
-        XO = Opcode(value=value, mask=mask)
-
+    def PO(self):
         PO = self.section.opcode
         if PO is None:
-            PO = XO
-            XO = None
+            assert len(self.ppc) == 1
+            PO = self.ppc[0].opcode
 
-        PO = POStaticOperand(record=self,
+        return POStaticOperand(record=self,
             name="PO", value=int(PO.value), mask=int(PO.mask))
-        if XO is None:
-            XO = XOStaticOperand(record=self,
-                name="XO", value=0, mask=0)
-        else:
-            XO = XOStaticOperand(record=self,
-                name="XO", value=int(XO.value), mask=int(XO.mask))
-
-        return (PO, XO)
-
-    @cached_property
-    def PO(self):
-        return self.PO_XO[0]
 
     @cached_property
     def XO(self):
-        return self.PO_XO[1]
+        def XO(ppc):
+            XO = ppc.opcode
+            PO = self.section.opcode
+            if PO is None:
+                PO = XO
+                XO = None
 
-    @property
+            if XO is None:
+                return XOStaticOperand(record=self,
+                    name="XO", value=0, mask=0)
+            else:
+                return XOStaticOperand(record=self,
+                    name="XO", value=int(XO.value), mask=int(XO.mask))
+
+        return tuple(dict.fromkeys(map(XO, self.ppc)))
+
+    @cached_property
     def static_operands(self):
-        yield from self.PO_XO
+        operands = []
+
+        operands.append(self.PO)
+        operands.extend(self.XO)
 
         for (cls, kwargs) in self.mdwn.operands.static:
-            yield cls(record=self, **kwargs)
+            operands.append(cls(record=self, **kwargs))
+
+        return tuple(operands)
 
     @cached_property
     def dynamic_operands(self):
@@ -762,24 +757,30 @@ class Record:
 
     @property
     def opcodes(self):
-        def opcode(ppc):
-            bits = 32
-            if self.svp64 is not None:
-                bits = 64
-            value = ([0] * bits)
-            mask = ([0] * bits)
+        bits = 32
+        if self.svp64 is not None:
+            bits = 64
+        origin_value = ([0] * bits)
+        origin_mask = ([0] * bits)
 
-            for operand in self.static_operands:
-                for (src, dst) in enumerate(reversed(operand.span)):
-                    value[dst] = int((operand.value & (1 << src)) != 0)
-                    mask[dst] = 1
+        for operand in ((self.PO,) + tuple(self.static_operands)):
+            for (src, dst) in enumerate(reversed(operand.span)):
+                origin_value[dst] = int((operand.value & (1 << src)) != 0)
+                origin_mask[dst] = 1
+
+        def opcode(XO):
+            value = list(origin_value)
+            mask = list(origin_mask)
+            for (src, dst) in enumerate(reversed(XO.span)):
+                value[dst] = int((XO.value & (1 << src)) != 0)
+                mask[dst] = 1
 
             value = Opcode.Value(int(("".join(map(str, value))), 2))
             mask = Opcode.Mask(int(("".join(map(str, mask))), 2))
 
             return Opcode(value=value, mask=mask)
 
-        return tuple(sorted(map(opcode, self.ppc)))
+        return tuple(dict.fromkeys(map(opcode, self.XO)))
 
     def match(self, key):
         for opcode in self.opcodes:
@@ -994,6 +995,7 @@ class XOStaticOperand(StaticOperand):
         span = tuple(span.keys())
         if self.record.svp64 is not None:
             span = tuple(map(lambda bit: (bit + 32), span))
+
         object.__setattr__(self, "value", value)
         object.__setattr__(self, "span", span)
 
@@ -2749,8 +2751,9 @@ class Database:
 
     @_functools.lru_cache(maxsize=None)
     def __getitem__(self, key):
-        if isinstance(key, WordInstruction):
+        if isinstance(key, Instruction):
             PO = int(key.PO)
+            key = int(key)
             for (section, group) in self.__opcodes.items():
                 for record in group[PO]:
                     if record.match(key=key):
