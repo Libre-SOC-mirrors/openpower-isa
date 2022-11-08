@@ -1329,6 +1329,38 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
 
         return super().assemble(value=value, insn=insn, prefix="cr")
 
+    def disassemble(self, insn,
+            verbosity=Verbosity.NORMAL, prefix="", indent=""):
+        (vector, value, span) = self.spec(insn=insn)
+
+        if verbosity >= Verbosity.VERBOSE:
+            mode = "vector" if vector else "scalar"
+            yield f"{indent}{self.name} ({mode})"
+            yield f"{indent}{indent}{int(value):0{value.bits}b}"
+            yield f"{indent}{indent}{', '.join(span)}"
+            if isinstance(insn, SVP64Instruction):
+                extra_idx = self.extra_idx
+                if self.record.etype is _SVEtype.NONE:
+                    yield f"{indent}{indent}extra[none]"
+                else:
+                    etype = repr(self.record.etype).lower()
+                    yield f"{indent}{indent}{etype}{extra_idx!r}"
+        else:
+            vector = "*" if vector else ""
+            cr = int(value >> 2)
+            cc = int(value & 3)
+            cond = ("lt", "gt", "eq", "so")[cc]
+            if verbosity >= Verbosity.NORMAL:
+                if cr != 0:
+                    if isinstance(insn, SVP64Instruction):
+                        yield f"{vector}cr{cr}.{cond}"
+                    else:
+                        yield f"4*cr{cr}+{cond}"
+                else:
+                    yield cond
+            else:
+                yield f"{vector}{prefix}{int(value)}"
+
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class CR3Operand(ConditionRegisterFieldOperand):
