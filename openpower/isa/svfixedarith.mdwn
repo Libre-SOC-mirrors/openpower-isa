@@ -1,4 +1,4 @@
-# [DRAFT] Multiply and Add Extended Doubleword
+# [DRAFT] Multiply and Add Extended Doubleword Unsigned
 
 VA-Form
 
