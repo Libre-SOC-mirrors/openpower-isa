@@ -170,8 +170,9 @@ def check_concat(node):  # checks if the comparison is already a concat
     print("check concat", node)
     if not isinstance(node, ast.Call):
         return [node]
-    print("func", node.func.id)
-    if node.func.id != 'concat':
+    node_func_id = getattr(node.func, "id", None)
+    print("func", node_func_id)
+    if node_func_id != 'concat':
         return [node]
     if node.keywords:  # a repeated list-constant, don't optimise
         return [node]
