@@ -234,7 +234,7 @@ class SVP64BigIntCases(TestAccumulatorBase):
         prog = Program(list(SVP64Asm(["sv.dsrd/mrr *16,*16,3,5",
                                       "sv.dsld *16,*16,3,5"])), False)
         gprs = [0] * 32
-        gprs[5] = 0x0000_0000_0000_0009
+        gprs[5] = 0x9000_0000_0000_0000
         gprs[16] = 0xffff_ffff_ffff_ffff
         gprs[17] = 0x8000_8000_8000_8001
         gprs[18] = 0x0000_0000_5000_0002
@@ -242,7 +242,9 @@ class SVP64BigIntCases(TestAccumulatorBase):
         svstate = SVP64State()
         svstate.vl = 3
         svstate.maxvl = 3
-        e = ExpectedState(pc=8, int_regs=gprs)
+        e = ExpectedState(pc=16, int_regs=gprs)
+        e.intregs[5] = 0x0000_0000_0000_0009
+        e.intregs[16] = 0xffff_ffff_ffff_fff0
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
     def case_sv_bigint_mul_by_scalar(self):
