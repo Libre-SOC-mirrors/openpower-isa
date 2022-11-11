@@ -3,6 +3,7 @@ from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.helpers import exts
 
 _SHIFT_TEST_RANGE = list(range(-64, 128, 16)) + [1, 63]
 _MASK32 = ((2 ** 32) - 1)
@@ -35,6 +36,18 @@ class BigIntCases(TestAccumulatorBase):
         e = ExpectedState(pc=4, int_regs=gprs)
         e.intregs[3] = (gprs[5] * gprs[6] + gprs[7]) % 2 ** 64
         e.intregs[7] = (gprs[5] * gprs[6] + gprs[7]) >> 64
+        self.add_case(Program(lst, False), gprs, expected=e)
+
+    def case_maddedus(self):
+        lst = list(SVP64Asm(["maddedus 3,5,6,7"]))
+        gprs = [0] * 32
+        gprs[5] = 0x8123456789ABCDEF
+        gprs[6] = 0xFEDCBA9876543210
+        gprs[7] = 0x82468ACE13579BDF
+        e = ExpectedState(pc=4, int_regs=gprs)
+        v = gprs[5] * exts(gprs[6], 64) + exts(gprs[7], 64)
+        e.intregs[3] = v % 2 ** 64
+        e.intregs[7] = (v >> 64) % 2 ** 64
         self.add_case(Program(lst, False), gprs, expected=e)
 
     def case_divmod2du(self):
@@ -289,6 +302,37 @@ class SVP64BigIntCases(TestAccumulatorBase):
         e = ExpectedState(pc=8, int_regs=gprs)
         e.intregs[6] = 0x1357_9BDF_9BDF_FEDC  # scalar output
         e.intregs[4] = 0x1357                  # 64-bit carry-out
+        self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def case_sv_unsigned_bigint_mul_by_signed_scalar(self):
+        """performs a carry-rollover-vector-mul-with-add with a scalar,
+        using "RC" as a 64-bit carry in/out.
+        outputs are negative of sv.maddedu test.
+
+        r18                   r17                   r16
+        0x1234_0000_5678_0000 0x9ABC_0000_DEF0_0000 0x1357_0000_9BDF_0000 *
+        r3 (scalar factor)                                      -0x1_0001 +
+        r4 (carry in)                                             -0xFEDC =
+        -0x1234_1234_5678_5678_9ABC_9ABC_DEF0_DEF0_1357_1357_9BDF_9BDF_FEDC =
+        r18                   r17                   r16
+        0xEDCB_A987_A987_6543 0x6543_210F_210F_ECA8 0xECA8_6420_6420_0124
+        r4 (carry out)                              0xFFFF_FFFF_FFFF_EDCB
+        """
+        prog = Program(list(SVP64Asm(["sv.maddedus *16,*16,3,4"])), False)
+        gprs = [0] * 32
+        gprs[16] = 0x1357_0000_9BDF_0000        # vector...
+        gprs[17] = 0x9ABC_0000_DEF0_0000        # ...
+        gprs[18] = 0x1234_0000_5678_0000        # ... input
+        gprs[3] = -0x1_0001 % 2 ** 64           # scalar multiplier
+        gprs[4] = -0xFEDC % 2 ** 64             # 64-bit carry-in
+        svstate = SVP64State()
+        svstate.vl = 3
+        svstate.maxvl = 3
+        e = ExpectedState(pc=8, int_regs=gprs)
+        e.intregs[16] = 0xECA8_6420_6420_0124  # vector...
+        e.intregs[17] = 0x6543_210F_210F_ECA8  # ...
+        e.intregs[18] = 0xEDCB_A987_A987_6543  # ... result
+        e.intregs[4] = 0xFFFF_FFFF_FFFF_EDCB   # 64-bit carry-out
         self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
     def case_sv_bigint_div_by_scalar(self):

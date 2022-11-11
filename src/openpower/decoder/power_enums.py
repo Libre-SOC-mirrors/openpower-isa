@@ -549,7 +549,7 @@ _insns = [
     "lwz", "lwzcix", "lwzu", "lwzux", "lwzx",           # more load word
     # "lwabr",           # load word SVP64 bit-reversed
     # "lwzbr", "lwzubr", # more load word SVP64 bit-reversed
-    "maddedu",
+    "maddedu", "maddedus",
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",

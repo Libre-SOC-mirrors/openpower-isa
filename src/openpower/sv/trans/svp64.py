@@ -566,6 +566,7 @@ def fishmv(fields):
 
 @_custom_insns(
     _insn("maddedu", XO=50),
+    _insn("maddedus", XO=57),
     _insn("divmod2du", XO=58),
     _insn("pcdec.", XO=56),
 )

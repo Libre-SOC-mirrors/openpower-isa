@@ -1059,6 +1059,7 @@ class PowerDecodeSubset(Elaboratable):
             with m.If((major == 4) & xo6.matches(
                     '111000',  # pcdec
                     '110010',  # maddedu
+                    '111001',  # maddedus
                     '111010',  # divmod2du
                     '11010-',  # dsld
                     '11011-',  # dsrd

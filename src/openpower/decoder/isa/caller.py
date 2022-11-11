@@ -1777,7 +1777,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        'grev', 'ternlogi', 'bmask', 'cprop',
                        'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
                        'fmvis', 'fishmv', 'pcdec', "maddedu", "divmod2du",
-                       "dsld", "dsrd",
+                       "dsld", "dsrd", "maddedus",
                        "shadd", "shadduw",
                        ]:
             illegal = False
