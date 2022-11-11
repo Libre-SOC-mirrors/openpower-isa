@@ -2480,6 +2480,22 @@ class SpecifierWidth(Specifier):
             insn.prefix.rm.elwidth = self.value
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSubVL(Specifier):
+    value: int
+
+    @classmethod
+    def match(cls, desc, record):
+        value = {"vec2": 1, "vec3": 2, "vec4": 3}.get(desc)
+        if value is None:
+            return None
+
+        return cls(record=record, value=value)
+
+    def assemble(self, insn):
+        insn.prefix.rm.subvl = self.value
+
+
 class SVP64Instruction(PrefixedInstruction):
     """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
     class Prefix(PrefixedInstruction.Prefix):
@@ -2506,6 +2522,7 @@ class SVP64Instruction(PrefixedInstruction):
     def specifier(cls, desc, record):
         specifiers = (
             SpecifierWidth,
+            SpecifierSubVL,
         )
 
         for spec_cls in specifiers:
