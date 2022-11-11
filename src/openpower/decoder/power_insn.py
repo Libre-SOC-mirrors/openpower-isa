@@ -1578,7 +1578,7 @@ class Instruction(_Mapping):
             yield (operand.name, operand.value)
 
     @classmethod
-    def assemble(cls, db, opcode, arguments):
+    def assemble(cls, db, opcode, arguments=None):
         raise NotImplementedError(f"{cls.__name__}.assemble")
 
     def disassemble(self, db,
@@ -1604,7 +1604,10 @@ class WordInstruction(Instruction):
         return "".join(map(str, bits))
 
     @classmethod
-    def assemble(cls, db, opcode, arguments):
+    def assemble(cls, db, opcode, arguments=None):
+        if arguments is None:
+            arguments = ()
+
         record = db[opcode]
         insn = cls.integer(value=0)
         for operand in record.static_operands:
@@ -2461,7 +2464,10 @@ class SVP64Instruction(PrefixedInstruction):
         return "".join(map(str, bits))
 
     @classmethod
-    def assemble(cls, db, opcode, arguments):
+    def assemble(cls, db, opcode, arguments=None):
+        if arguments is None:
+            arguments = ()
+
         record = db[opcode]
         insn = cls.integer(value=0)
 
