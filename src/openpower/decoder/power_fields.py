@@ -92,16 +92,34 @@ class Reference:
 
         self.__storage = storage
 
-    def assign(self, value):
+    def assign(self, value, bits=None):
+        if bits is None:
+            bits = range(len(self.__class__))
+        elif isinstance(bits, int):
+            bits = (bits,)
+        elif isinstance(bits, slice):
+            assert bits.step is None or bits.step == 1
+            bits = range(bits.start, bits.stop)
+        bits = tuple(bits)
+
         if isinstance(value, int):
-            bits = len(self.__class__)
-            value = _SelectableInt(value=value, bits=bits)
+            if value.bit_length() > len(bits):
+                raise OverflowError(value)
+            value = _SelectableInt(value=value, bits=len(bits))
         if not isinstance(value, _SelectableInt):
             raise ValueError(value)
+        if value.bits != len(bits):
+            raise OverflowError(value)
 
-        span = frozenset(self.__class__.span)
-        for (src_bit, dst_bit) in enumerate(span):
-            self.storage[dst_bit] = value[src_bit]
+        span = tuple(self.__class__.span)
+        mapping = dict(enumerate(span))
+        for (src, bit) in enumerate(bits):
+            if src >= value.bits:
+                raise OverflowError(src)
+            dst = mapping.get(bit)
+            if dst is None:
+                raise OverflowError(bit)
+            self.storage[dst] = value[src]
 
 
 class FieldMeta(type):
@@ -183,7 +201,10 @@ class Field(Reference, metaclass=FieldMeta):
             assert key.step is None or key.step == 1
             key = range(key.start, key.stop)
 
-        return _selectconcat(*(self[bit] for bit in tuple(key)))
+        return _selectconcat(*(self[bit] for bit in key))
+
+    def __setitem__(self, key, value):
+        return self.assign(value=value, bits=key)
 
     @classmethod
     def traverse(cls, path):
@@ -270,9 +291,15 @@ class Mapping(Reference, metaclass=MappingMeta):
 
     def __getitem__(self, key):
         if isinstance(key, (int, slice, list, tuple, range)):
-            return self["_"][key]
+            return self["_"].__getitem__(key)
 
-        return self.__members[key]
+        return self.__members.__getitem__(key)
+
+    def __setitem__(self, key, value):
+        if isinstance(key, (int, slice, list, tuple, range)):
+            return self["_"].assign(value=value, bits=key)
+
+        return self.assign(value=value, bits=key)
 
     @classmethod
     def traverse(cls, path):
