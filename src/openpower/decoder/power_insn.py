@@ -35,8 +35,11 @@ from openpower.decoder.power_enums import (
     SVPtype as _SVPtype,
     SVExtra as _SVExtra,
     RegType as _RegType,
+    SVP64RMMode as _SVP64RMMode,
     SVExtraRegType as _SVExtraRegType,
     SVExtraReg as _SVExtraReg,
+    SVP64Predicate as _SVP64Predicate,
+    SVP64PredicateType as _SVP64PredicateType,
 )
 from openpower.decoder.selectable_int import (
     SelectableInt as _SelectableInt,
@@ -1711,6 +1714,7 @@ class PrefixedInstruction(Instruction):
 
 class Mode(_Mapping):
     _: _Field = range(0, 5)
+    sel: _Field = (0, 1)
 
 
 class Extra(_Mapping):
@@ -2225,7 +2229,7 @@ class CROpFF3RM(FFPRRc1BaseRM, VLiBaseRM, ZZBaseRM, PredicateBaseRM, CROpBaseRM)
 
 
 class CROpFF5RM(FFPRRc0BaseRM, PredicateBaseRM,
-                VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+        VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
     VLi: BaseRM[20]
     inv: BaseRM[21]
@@ -2424,7 +2428,7 @@ class RM(BaseRM):
             )
             # slightly weird: doesn't have a 5-bit "mode" field like others
             rm = rm.branch
-            search = int(rm.mode[0, 1])
+            search = int(rm.mode.sel)
 
         # look up in table
         if table is not None:
@@ -2496,6 +2500,94 @@ class SpecifierSubVL(Specifier):
         insn.prefix.rm.subvl = self.value
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierPredicate(Specifier):
+    mode: str
+    pred: _SVP64Predicate
+
+    @classmethod
+    def match(cls, desc, record, mode_match, pred_match):
+        (mode, _, pred) = desc.partition("=")
+
+        mode = mode.strip()
+        if not mode_match(mode):
+            return None
+
+        pred = _SVP64Predicate(pred.strip())
+        if not pred_match(pred):
+            raise ValueError(pred)
+
+        return cls(record=record, mode=mode, pred=pred)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierFFPR(SpecifierPredicate):
+    @classmethod
+    def match(cls, desc, record, mode):
+        return super().match(desc=desc, record=record,
+            mode_match=lambda mode_arg: mode_arg == mode,
+            pred_match=lambda pred_arg: _SVP64PredicateType(pred_arg) in (
+                _SVP64PredicateType.CR,
+                _SVP64PredicateType.RC1,
+            ))
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm
+        if rm.mode.sel != 0:
+            raise ValueError("cannot override mode")
+
+        if self.record.svp64.mode is _SVMode.CROP:
+            if self.mode == "pr":
+                raise ValueError("crop: 'pr' mode not supported")
+            rm.mode.sel = 0b10
+            if self.record.svp64.cr_3bit:
+                rm = rm.cr_op.ff3
+            else:
+                rm = rm.cr_op.ff5
+        else:
+            if self.record.svp64.mode is _SVMode.NORMAL:
+                rm = rm.normal
+            elif self.record.svp64.mode is _SVMode.LDST_IMM:
+                rm = rm.ldst_imm
+            elif self.record.svp64.mode is _SVMode.LDST_IDX:
+                rm = rm.ldst_idx
+                if self.mode == "ff":
+                    raise ValueError("ld/st idx: 'ff' mode not supported")
+            else:
+                raise ValueError(f"{self.mode!r} not supported")
+
+            # These 2-bit values should have bits swapped
+            def bitswap(value):
+                return (((value & 0b10) >> 1) | ((value & 0b01) << 1))
+
+            rm.mode.sel = {
+                "ff": bitswap(_SVP64RMMode.FFIRST.value),
+                "pr": bitswap(_SVP64RMMode.PREDRES.value),
+            }[self.mode]
+
+            Rc = int(self.record.Rc)
+            rm = getattr(rm, f"{self.mode}rc{Rc}")
+            rm.inv = self.pred.inv
+            if Rc:
+                rm.CR = self.pred.state
+            else:
+                rm.RC1 = self.pred.state
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierFF(SpecifierFFPR):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, mode="ff")
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierPR(SpecifierFFPR):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, mode="pr")
+
+
 class SVP64Instruction(PrefixedInstruction):
     """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
     class Prefix(PrefixedInstruction.Prefix):
@@ -2523,6 +2615,8 @@ class SVP64Instruction(PrefixedInstruction):
         specifiers = (
             SpecifierWidth,
             SpecifierSubVL,
+            SpecifierFF,
+            SpecifierPR,
         )
 
         for spec_cls in specifiers:
