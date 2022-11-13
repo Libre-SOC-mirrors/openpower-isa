@@ -293,6 +293,25 @@ class SVP64Asm:
         else:
             v30b_op = v30b_op_orig
 
+        record = None
+        if os.environ.get("INSNDB"):
+            record = DB[v30b_op]
+        if record is not None:
+            insn = SVP64Instruction.assemble(db=DB,
+                opcode=v30b_op_orig,
+                arguments=fields,
+                specifiers=opmodes)
+            prefix = int(insn.prefix)
+            suffix = int(insn.suffix)
+            yield " ".join((
+                f".long 0x{prefix:08X};",
+                f".long 0x{suffix:08X};",
+                "#",
+                opcode,
+                ",".join(fields),
+            ))
+            return
+
         # look up the 32-bit op (original, with "." if it has it)
         if v30b_op_orig in isa.instr:
             isa_instr = isa.instr[v30b_op_orig]
