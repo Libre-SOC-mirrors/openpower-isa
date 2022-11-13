@@ -443,6 +443,19 @@ class SVP64Record:
     extra_reg_cr_in2 = property(_functools.partial(extra_reg, key="cr_in2"))
     extra_reg_cr_out = property(_functools.partial(extra_reg, key="cr_out"))
 
+    @property
+    def cr_3bit(self):
+        regtype = None
+        for idx in range(0, 4):
+            for entry in self.svp64.extra[idx]:
+                if entry.regtype is _SVExtraRegType.DST:
+                    if regtype is not None:
+                        raise ValueError(self.svp64)
+                    regtype = _RegType(entry.reg)
+        if regtype not in (_RegType.CR_5BIT, _RegType.CR_3BIT):
+            raise ValueError(self.svp64)
+        return (regtype is _RegType.CR_3BIT)
+
 
 class BitSel:
     def __init__(self, value=(0, 32)):
@@ -623,9 +636,9 @@ class Operands:
                         cls = GPROperand
                     elif regtype is _RegType.FPR:
                         cls = FPROperand
-                    if regtype is _RegType.CR_BIT: # 5-bit
+                    if regtype is _RegType.CR_5BIT:
                         cls = CR5Operand
-                    if regtype is _RegType.CR_REG: # actually CR Field, 3-bit
+                    if regtype is _RegType.CR_3BIT:
                         cls = CR3Operand
 
                 mapping[name] = (cls, {"name": name})
@@ -1255,7 +1268,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
     XCR = fr"{CR}\.{BIT}"
     PATTERNS = tuple(map(pattern, (
         ("CR", CR),
-        ("CR_BIT", XCR),
+        ("XCR", XCR),
         ("CR*N", CRN),
         ("N*CR", NCR),
         ("BIT+CR", (LBIT + CR)),
@@ -1267,7 +1280,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
     )))
 
     def remap(self, value, vector, regtype):
-        if regtype is _RegType.CR_BIT:
+        if regtype is _RegType.CR_5BIT:
             subvalue = (value & 0x3)
             value >>= 2
 
@@ -1297,7 +1310,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
                     "scalar CR cannot fit into EXTRA3"
                 extra &= 0x3
 
-        if regtype is _RegType.CR_BIT:
+        if regtype is _RegType.CR_5BIT:
             value = ((value << 2) | subvalue)
 
         return (value, extra)
@@ -1319,7 +1332,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
                     values = match.groups()
                     match = dict(zip(keys, values))
                     CR = int(match["CR"])
-                    if name == "CR_BIT":
+                    if name == "XCR":
                         N = 4
                     else:
                         N = int(match.get("N", "1"))
@@ -1366,14 +1379,14 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
 class CR3Operand(ConditionRegisterFieldOperand):
     def remap(self, value, vector):
         return super().remap(value=value, vector=vector,
-            regtype=_RegType.CR_REG)
+            regtype=_RegType.CR_3BIT)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class CR5Operand(ConditionRegisterFieldOperand):
     def remap(self, value, vector):
         return super().remap(value=value, vector=vector,
-            regtype=_RegType.CR_BIT)
+            regtype=_RegType.CR_5BIT)
 
     def sv_spec_enter(self, value, span):
         value = _SelectableInt(value=(value.value >> 2), bits=3)
@@ -2394,26 +2407,11 @@ class RM(BaseRM):
             table = (
                 (0b000000, 0b111000, "simple"), # simple
                 (0b001000, 0b111000, "mr"),     # mapreduce
-                (0b100001, 0b100001, "ff3"),    # failfirst, 3-bit CR
-                (0b100000, 0b100000, "ff5"),    # failfirst, 5-bit CR
+                (0b100001, 0b100001, "ff3"),    # ffirst, 3-bit CR
+                (0b100000, 0b100000, "ff5"),    # ffirst, 5-bit CR
             )
-            # determine CR type, 5-bit (BA/BB/BT) or 3-bit Field (BF/BFA)
-            regtype = None
-            for idx in range(0, 4):
-                for entry in record.svp64.extra[idx]:
-                    if entry.regtype is _SVExtraRegType.DST:
-                        if regtype is not None:
-                            raise ValueError(record.svp64)
-                        regtype = _RegType(entry.reg)
-            if regtype is _RegType.CR_REG:
-                regtype = 0 # 5-bit
-            elif regtype is _RegType.CR_BIT:
-                regtype = 1 # 3-bit
-            else:
-                raise ValueError(record.svp64)
-            # finally provide info for search
             rm = rm.cr_op
-            search = ((int(rm.mode) << 1) | (regtype or 0))
+            search = ((int(rm.mode) << 1) | int(record.svp64.cr_3bit))
 
         elif record.svp64.mode is _SVMode.BRANCH:
             # just mode 2-bit

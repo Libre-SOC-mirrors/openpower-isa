@@ -403,16 +403,16 @@ class RegType(Enum):
     FRS = FPR
     FRT = FPR
 
-    CR_REG = 2  # actually CR Field. the CR register is 32-bit.
-    BF = CR_REG
-    BFA = CR_REG
+    CR_5BIT = 2 # CR field; the CR register is 32-bit
+    BF = CR_5BIT
+    BFA = CR_5BIT
 
-    CR_BIT = 3 # refers to one bit of the 32-bit CR register
-    BA = CR_BIT
-    BB = CR_BIT
-    BC = CR_BIT
-    BI = CR_BIT
-    BT = CR_BIT
+    CR_3BIT = 3 # bit of the 32-bit CR register
+    BA = CR_3BIT
+    BB = CR_3BIT
+    BC = CR_3BIT
+    BI = CR_3BIT
+    BT = CR_3BIT
 
     XER_BIT = 4   # XER bits, includes OV, OV32, SO, CA, CA32
     OV = XER_BIT
@@ -426,6 +426,11 @@ class RegType(Enum):
         if isinstance(value, SVExtraReg):
             return cls.__members__[value.name]
         return super()._missing_(value)
+
+
+class CRType(Enum):
+    CR5BIT = 0
+    CR3BIT = 1
 
 
 FPTRANS_INSNS = (
