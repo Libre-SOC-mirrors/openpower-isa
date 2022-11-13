@@ -866,7 +866,7 @@ class Record:
     def Rc(self):
         if "Rc" not in self:
             return False
-        return bool(self["Rc"])
+        return self["Rc"].value
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
