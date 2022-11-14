@@ -337,6 +337,110 @@ class SVP64BCPredMode(Enum):
 
 
 @unique
+class SVP64Predicate(Enum):
+    # Integer
+    BITSEL_R3 = ("^r3", True, 0b00)
+    R3 = ("r3", False, 0b01)
+    R3_INV = ("~r3", True, 0b01)
+    R10 = ("r10", False, 0b10)
+    R10_INV = ("~r10", True, 0b10)
+    R30 = ("r30", False, 0b11)
+    R30_INV = ("~r30", True, 0b11)
+
+    # CR
+    LT = ("lt", False, 0b00)
+    NL = ("nl", True, 0b00)
+    GE = ("ge", True, 0b00)
+    GT = ("gt", False, 0b01)
+    NG = ("ng", True, 0b01)
+    LE = ("le", True, 0b01)
+    EQ = ("eq", False, 0b10)
+    NE = ("ne", True, 0b10)
+    SO = ("so", False, 0b11)
+    UN = ("un", False, 0b11)
+    NS = ("ns", True, 0b11)
+    NU = ("nu", True, 0b11)
+
+    # RC1
+    RC1 = ("RC1", False, 0b1)
+    RC1_INV = ("~RC1", True, 0b1)
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            members = {}
+            for (name, member) in cls.__members__.items():
+                members[str(member)] = member.name
+
+            member = value
+            if "RC1" not in member:
+                member = member.lower()
+
+            if member.startswith("~"):
+                member = f"~{member[1:].strip()}"
+            elif "<<" in member:
+                # 1 << r3
+                (lhs, _, rhs) = member.partition("<<")
+                lhs = lhs.strip().lower()
+                rhs = rhs.strip().lower()
+                if (lhs == "1") and (rhs in ("r3", "%r3")):
+                    member = "^r3"
+            member = members.get(member, member)
+            return cls[member]
+
+        return super()._missing_(value)
+
+    def __str__(self):
+        return self.value[0]
+
+    @property
+    def inv(self):
+        return self.value[1]
+
+    @property
+    def state(self):
+        return self.value[2]
+
+    @property
+    def mask(self):
+        return ((int(self.state) << 1) | (int(self.inv) << 0))
+
+
+class SVP64PredicateType(Enum):
+    INTEGER = auto()
+    BITSEL_R3 = INTEGER
+    R3 = INTEGER
+    R3_INV = INTEGER
+    R10 = INTEGER
+    R10_INV = INTEGER
+    R30 = INTEGER
+    R30_INV = INTEGER
+
+    CR = auto()
+    LT = CR
+    NL = CR
+    GE = CR
+    GT = CR
+    NG = CR
+    LE = CR
+    EQ = CR
+    NE = CR
+    SO = CR
+    UN = CR
+    NS = CR
+    NU = CR
+
+    RC1 = auto()
+    RC1_INV = RC1
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, SVP64Predicate):
+            return cls.__members__[value.name]
+        return super()._missing_(value)
+
+
+@unique
 class SVP64BCVLSETMode(Enum):
     NONE = 0
     VL_INCL = 1
