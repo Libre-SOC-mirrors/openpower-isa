@@ -480,6 +480,18 @@ class SVP64subvl(Enum):
     VEC3 = 2
     VEC4 = 3
 
+    @classmethod
+    def _missing_(cls, desc):
+        if isinstance(desc, str):
+            name = desc.upper()
+            value = cls.__members__.get(name)
+            if value is None:
+                raise ValueError(desc)
+            return value
+        return super()._missing_(desc)
+
+SVP64SubVL = SVP64subvl
+
 
 @unique
 class SVP64sat(Enum):
