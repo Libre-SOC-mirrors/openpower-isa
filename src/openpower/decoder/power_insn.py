@@ -2451,6 +2451,9 @@ class Specifier:
     def match(cls, desc, record):
         raise NotImplementedError
 
+    def validate(self, others):
+        pass
+
     def assemble(self, insn):
         raise NotImplementedError
 
@@ -2633,6 +2636,33 @@ class SpecifierDM(SpecifierMask):
         insn.prefix.rm.mask = self.pred.mask
 
 
+class Specifiers(tuple):
+    SPECS = (
+        SpecifierWidth,
+        SpecifierSubVL,
+        SpecifierFF,
+        SpecifierPR,
+        SpecifierM,
+        SpecifierSM,
+        SpecifierDM,
+    )
+
+    def __new__(cls, items, record):
+        def transform(item):
+            for spec_cls in cls.SPECS:
+                spec = spec_cls.match(item, record=record)
+                if spec is not None:
+                    return spec
+            raise ValueError(item)
+
+        specs = tuple(map(transform, items))
+        items = list(specs)
+        while items:
+            items.pop().validate(others=items)
+
+        return super().__new__(cls, specs)
+
+
 class SVP64Instruction(PrefixedInstruction):
     """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
     class Prefix(PrefixedInstruction.Prefix):
@@ -2655,26 +2685,6 @@ class SVP64Instruction(PrefixedInstruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
-    @classmethod
-    def specifier(cls, desc, record):
-        specifiers = (
-            SpecifierWidth,
-            SpecifierSubVL,
-            SpecifierFF,
-            SpecifierPR,
-            SpecifierMask,
-            SpecifierSM,
-            SpecifierDM,
-        )
-
-        for spec_cls in specifiers:
-            match = spec_cls.match(desc, record=record)
-            if match is not None:
-                return match
-
-        raise ValueError(desc)
-
-    @classmethod
     def assemble(cls, db, opcode, arguments=None, specifiers=None):
         if arguments is None:
             arguments = ()
@@ -2684,9 +2694,9 @@ class SVP64Instruction(PrefixedInstruction):
         record = db[opcode]
         insn = cls.integer(value=0)
 
-        specifier = lambda desc: cls.specifier(desc=desc, record=record)
-        for spec in map(specifier, specifiers):
-            spec.assemble(insn=insn)
+        specifiers = Specifiers(items=specifiers, record=record)
+        for specifier in specifiers:
+            specifier.assemble(insn=insn)
 
         for operand in record.static_operands:
             operand.assemble(insn=insn)
