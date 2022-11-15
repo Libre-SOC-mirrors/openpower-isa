@@ -2612,6 +2612,16 @@ class SpecifierM(SpecifierMask):
     def match(cls, desc, record):
         return super().match(desc=desc, record=record, mode="m")
 
+    def validate(self, others):
+        items = list(others)
+        while items:
+            spec = items.pop()
+            if isinstance(spec, SpecifierSM):
+                raise ValueError("source-mask and predicate mask conflict")
+            elif isinstance(spec, SpecifierDM):
+                raise ValueError("dest-mask and predicate mask conflict")
+            spec.validate(others=items)
+
     def assemble(self, insn):
         insn.prefix.rm.mask = self.pred.mask
 
@@ -2622,6 +2632,24 @@ class SpecifierSM(SpecifierMask):
     def match(cls, desc, record):
         return super().match(desc=desc, record=record, mode="sm")
 
+    def validate(self, others):
+        if self.record.svp64.ptype is _SVPtype.P1:
+            raise ValueError("source-mask on non-twin predicate")
+
+        if self.pred.type is _SVP64PredicateType.CR:
+            twin = None
+            items = list(others)
+            while items:
+                spec = items.pop()
+                if isinstance(spec, SpecifierDM):
+                    twin = spec
+                spec.validate(others=items)
+
+            if twin is None:
+                raise ValueError("missing dest-mask in CR twin predication")
+            if self.pred != twin.pred:
+                raise ValueError(f"predicate masks mismatch: {self!r} vs {twin!r}")
+
     def assemble(self, insn):
         insn.prefix.rm.smask = self.pred.mask
 
@@ -2631,6 +2659,24 @@ class SpecifierDM(SpecifierMask):
     @classmethod
     def match(cls, desc, record):
         return super().match(desc=desc, record=record, mode="dm")
+
+    def validate(self, others):
+        if self.record.svp64.ptype is _SVPtype.P1:
+            raise ValueError("dest-mask on non-twin predicate")
+
+        if self.pred.type is _SVP64PredicateType.CR:
+            twin = None
+            items = list(others)
+            while items:
+                spec = items.pop()
+                if isinstance(spec, SpecifierSM):
+                    twin = spec
+                spec.validate(others=items)
+
+            if twin is None:
+                raise ValueError("missing source-mask in CR twin predication")
+            if self.pred != twin.pred:
+                raise ValueError(f"predicate masks mismatch: {self!r} vs {twin!r}")
 
     def assemble(self, insn):
         insn.prefix.rm.mask = self.pred.mask
@@ -2658,7 +2704,8 @@ class Specifiers(tuple):
         specs = tuple(map(transform, items))
         items = list(specs)
         while items:
-            items.pop().validate(others=items)
+            spec = items.pop()
+            spec.validate(others=items)
 
         return super().__new__(cls, specs)
 
@@ -2685,6 +2732,7 @@ class SVP64Instruction(PrefixedInstruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
+    @classmethod
     def assemble(cls, db, opcode, arguments=None, specifiers=None):
         if arguments is None:
             arguments = ()
