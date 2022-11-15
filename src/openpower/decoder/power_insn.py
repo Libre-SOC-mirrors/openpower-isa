@@ -2588,6 +2588,51 @@ class SpecifierPR(SpecifierFFPR):
         return super().match(desc=desc, record=record, mode="pr")
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierMask(SpecifierPredicate):
+    @classmethod
+    def match(cls, desc, record, mode):
+        return super().match(desc=desc, record=record,
+            mode_match=lambda mode_arg: mode_arg == mode,
+            pred_match=lambda pred_arg: _SVP64PredicateType(pred_arg) in (
+                _SVP64PredicateType.INTEGER,
+                _SVP64PredicateType.CR,
+            ))
+
+    def assemble(self, insn):
+        raise NotImplementedError
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierM(SpecifierMask):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, mode="m")
+
+    def assemble(self, insn):
+        insn.prefix.rm.mask = self.pred.mask
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSM(SpecifierMask):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, mode="sm")
+
+    def assemble(self, insn):
+        insn.prefix.rm.smask = self.pred.mask
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierDM(SpecifierMask):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, mode="dm")
+
+    def assemble(self, insn):
+        insn.prefix.rm.mask = self.pred.mask
+
+
 class SVP64Instruction(PrefixedInstruction):
     """SVP64 instruction: https://libre-soc.org/openpower/sv/svp64/"""
     class Prefix(PrefixedInstruction.Prefix):
@@ -2617,6 +2662,9 @@ class SVP64Instruction(PrefixedInstruction):
             SpecifierSubVL,
             SpecifierFF,
             SpecifierPR,
+            SpecifierMask,
+            SpecifierSM,
+            SpecifierDM,
         )
 
         for spec_cls in specifiers:
