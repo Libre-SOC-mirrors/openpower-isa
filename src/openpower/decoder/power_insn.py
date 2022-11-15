@@ -40,6 +40,7 @@ from openpower.decoder.power_enums import (
     SVExtraReg as _SVExtraReg,
     SVP64Predicate as _SVP64Predicate,
     SVP64PredicateType as _SVP64PredicateType,
+    SVP64SubVL as _SVP64SubVL,
 )
 from openpower.decoder.selectable_int import (
     SelectableInt as _SelectableInt,
@@ -2489,18 +2490,19 @@ class SpecifierWidth(Specifier):
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class SpecifierSubVL(Specifier):
-    value: int
+    value: _SVP64SubVL
 
     @classmethod
     def match(cls, desc, record):
-        value = {"vec2": 1, "vec3": 2, "vec4": 3}.get(desc)
-        if value is None:
+        try:
+            value = _SVP64SubVL(desc)
+        except ValueError:
             return None
 
         return cls(record=record, value=value)
 
     def assemble(self, insn):
-        insn.prefix.rm.subvl = self.value
+        insn.prefix.rm.subvl = int(self.value.value)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
