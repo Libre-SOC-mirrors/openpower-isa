@@ -394,6 +394,10 @@ class SVP64Predicate(Enum):
         return self.value[0]
 
     @property
+    def type(self):
+        return SVP64PredicateType(self)
+
+    @property
     def inv(self):
         return self.value[1]
 

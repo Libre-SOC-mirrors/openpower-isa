@@ -2529,7 +2529,7 @@ class SpecifierFFPR(SpecifierPredicate):
     def match(cls, desc, record, mode):
         return super().match(desc=desc, record=record,
             mode_match=lambda mode_arg: mode_arg == mode,
-            pred_match=lambda pred_arg: _SVP64PredicateType(pred_arg) in (
+            pred_match=lambda pred_arg: pred_arg.type in (
                 _SVP64PredicateType.CR,
                 _SVP64PredicateType.RC1,
             ))
@@ -2597,7 +2597,7 @@ class SpecifierMask(SpecifierPredicate):
     def match(cls, desc, record, mode):
         return super().match(desc=desc, record=record,
             mode_match=lambda mode_arg: mode_arg == mode,
-            pred_match=lambda pred_arg: _SVP64PredicateType(pred_arg) in (
+            pred_match=lambda pred_arg: pred_arg.type in (
                 _SVP64PredicateType.INTEGER,
                 _SVP64PredicateType.CR,
             ))
