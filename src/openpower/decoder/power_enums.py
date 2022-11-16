@@ -555,11 +555,6 @@ class RegType(Enum):
         return super()._missing_(value)
 
 
-class CRType(Enum):
-    CR5BIT = 0
-    CR3BIT = 1
-
-
 FPTRANS_INSNS = (
     "fatan2", "fatan2s",
     "fatan2pi", "fatan2pis",
