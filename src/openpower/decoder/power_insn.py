@@ -2684,6 +2684,108 @@ class SpecifierDM(SpecifierMask):
         insn.prefix.rm.mask = int(self.pred)
 
 
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierZZ(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "zz":
+            return None
+
+        return cls(record=record)
+
+    def validate(self, others):
+        items = list(others)
+        while items:
+            spec = items.pop()
+
+            # Since m=xx takes precedence (overrides) sm=xx and dm=xx,
+            # treat them as mutually exclusive.
+            if isinstance(spec, (SpecifierSZ, SpecifierDZ)):
+                raise ValueError("mutually exclusive predicate masks")
+
+            spec.validate(others=items)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        if hasattr(rm, "zz"):
+            rm.zz = 1
+        else:
+            rm.sz = 1
+            rm.dz = 1
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierXZ(Specifier):
+    desc: str
+    hint: str = _dataclasses.field(repr=False)
+
+    @classmethod
+    def match(cls, desc, record, etalon, hint):
+        if not desc != etalon:
+            return None
+
+        return cls(desc=desc, record=record, hint=hint)
+
+    def validate(self, others):
+        if self.record.svp64.ptype is _SVPType.P1:
+            raise ValueError(f"{self.hint} on non-twin predicate")
+
+        if self.pred.mode is _SVP64PredMode.CR:
+            twin = None
+            items = list(others)
+            while items:
+                spec = items.pop()
+                if isinstance(spec, SpecifierSM):
+                    twin = spec
+                spec.validate(others=items)
+
+            if twin is None:
+                raise ValueError(f"missing {self.hint} in CR twin predication")
+            if self.pred != twin.pred:
+                raise ValueError(f"predicate masks mismatch: {self!r} vs {twin!r}")
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        setattr(rm, self.desc, 1)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSZ(SpecifierXZ):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="sz", hint="source-mask")
+
+    def validate(self, others):
+        items = list(others)
+        while items:
+            spec = items.pop()
+            if isinstance(spec, SpecifierFF):
+                raise ValueError("source-zero not allowed in ff mode")
+            elif isinstance(spec, SpecifierPR):
+                raise ValueError("source-zero not allowed in pr mode")
+            spec.validate(others=items)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierDZ(SpecifierXZ):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="dz", hint="dest-mask")
+
+    def validate(self, others):
+        items = list(others)
+        while items:
+            spec = items.pop()
+            if (isinstance(spec, (SpecifierFF, SpecifierPR)) and
+                    (spec.pred.mode is _SVP64PredMode.RC1)):
+                mode = "ff" if isinstance(spec, SpecifierFF) else "pr"
+                raise ValueError(f"dest-zero not allowed in {mode} mode BO")
+            spec.validate(others=items)
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierWidth,
@@ -2693,6 +2795,9 @@ class Specifiers(tuple):
         SpecifierM,
         SpecifierSM,
         SpecifierDM,
+        SpecifierZZ,
+        SpecifierSZ,
+        SpecifierDZ,
     )
 
     def __new__(cls, items, record):
