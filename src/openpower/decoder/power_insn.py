@@ -41,6 +41,7 @@ from openpower.decoder.power_enums import (
     SVP64SubVL as _SVP64SubVL,
     SVP64Pred as _SVP64Pred,
     SVP64PredMode as _SVP64PredMode,
+    SVP64Width as _SVP64Width,
 )
 from openpower.decoder.selectable_int import (
     SelectableInt as _SelectableInt,
@@ -2461,31 +2462,49 @@ class Specifier:
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class SpecifierWidth(Specifier):
-    mode: str
-    value: int
+    value: _SVP64Width
 
     @classmethod
-    def match(cls, desc, record):
+    def match(cls, desc, record, etalon):
         (mode, _, value) = desc.partition("=")
         mode = mode.strip()
         value = value.strip()
-        if mode not in ("w", "sw", "dw"):
+        if mode != etalon:
             return None
-        if value not in ("8", "16", "32"):
-            raise ValueError(value)
-
-        value = {"8": 3, "16": 2, "32": 1}[value]
+        value = _SVP64Width(value)
 
         return cls(record=record, mode=mode, value=value)
 
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierW(SpecifierWidth):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="w")
+
     def assemble(self, insn):
-        if self.mode == "sw":
-            insn.prefix.rm.ewsrc = self.value
-        elif self.mode == "dw":
-            insn.prefix.rm.elwidth = self.value
-        else:
-            insn.prefix.rm.ewsrc = self.value
-            insn.prefix.rm.elwidth = self.value
+        insn.prefix.rm.ewsrc = int(self.value)
+        insn.prefix.rm.elwidth = int(self.value)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSW(SpecifierWidth):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="sw")
+
+    def assemble(self, insn):
+        insn.prefix.rm.ewsrc = int(self.value)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierDW(SpecifierWidth):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="dw")
+
+    def assemble(self, insn):
+        insn.prefix.rm.elwidth = int(self.value)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2788,7 +2807,9 @@ class SpecifierDZ(SpecifierXZ):
 
 class Specifiers(tuple):
     SPECS = (
-        SpecifierWidth,
+        SpecifierW,
+        SpecifierSW,
+        SpecifierDW,
         SpecifierSubVL,
         SpecifierFF,
         SpecifierPR,
