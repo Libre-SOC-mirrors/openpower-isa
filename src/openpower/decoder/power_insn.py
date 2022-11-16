@@ -38,9 +38,9 @@ from openpower.decoder.power_enums import (
     SVP64RMMode as _SVP64RMMode,
     SVExtraRegType as _SVExtraRegType,
     SVExtraReg as _SVExtraReg,
-    SVP64Predicate as _SVP64Predicate,
-    SVP64PredicateType as _SVP64PredicateType,
     SVP64SubVL as _SVP64SubVL,
+    SVP64Pred as _SVP64Pred,
+    SVP64PredMode as _SVP64PredMode,
 )
 from openpower.decoder.selectable_int import (
     SelectableInt as _SelectableInt,
@@ -2508,7 +2508,7 @@ class SpecifierSubVL(Specifier):
 @_dataclasses.dataclass(eq=True, frozen=True)
 class SpecifierPredicate(Specifier):
     mode: str
-    pred: _SVP64Predicate
+    pred: _SVP64Pred
 
     @classmethod
     def match(cls, desc, record, mode_match, pred_match):
@@ -2518,7 +2518,7 @@ class SpecifierPredicate(Specifier):
         if not mode_match(mode):
             return None
 
-        pred = _SVP64Predicate(pred.strip())
+        pred = _SVP64Pred(pred.strip())
         if not pred_match(pred):
             raise ValueError(pred)
 
@@ -2531,9 +2531,9 @@ class SpecifierFFPR(SpecifierPredicate):
     def match(cls, desc, record, mode):
         return super().match(desc=desc, record=record,
             mode_match=lambda mode_arg: mode_arg == mode,
-            pred_match=lambda pred_arg: pred_arg.type in (
-                _SVP64PredicateType.CR,
-                _SVP64PredicateType.RC1,
+            pred_match=lambda pred_arg: pred_arg.mode in (
+                _SVP64PredMode.CR,
+                _SVP64PredMode.RC1,
             ))
 
     def assemble(self, insn):
@@ -2599,9 +2599,9 @@ class SpecifierMask(SpecifierPredicate):
     def match(cls, desc, record, mode):
         return super().match(desc=desc, record=record,
             mode_match=lambda mode_arg: mode_arg == mode,
-            pred_match=lambda pred_arg: pred_arg.type in (
-                _SVP64PredicateType.INTEGER,
-                _SVP64PredicateType.CR,
+            pred_match=lambda pred_arg: pred_arg.mode in (
+                _SVP64PredMode.INT,
+                _SVP64PredMode.CR,
             ))
 
     def assemble(self, insn):
@@ -2625,7 +2625,7 @@ class SpecifierM(SpecifierMask):
             spec.validate(others=items)
 
     def assemble(self, insn):
-        insn.prefix.rm.mask = self.pred.mask
+        insn.prefix.rm.mask = int(self.pred)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2638,7 +2638,7 @@ class SpecifierSM(SpecifierMask):
         if self.record.svp64.ptype is _SVPType.P1:
             raise ValueError("source-mask on non-twin predicate")
 
-        if self.pred.type is _SVP64PredicateType.CR:
+        if self.pred.mode is _SVP64PredMode.CR:
             twin = None
             items = list(others)
             while items:
@@ -2653,7 +2653,7 @@ class SpecifierSM(SpecifierMask):
                 raise ValueError(f"predicate masks mismatch: {self!r} vs {twin!r}")
 
     def assemble(self, insn):
-        insn.prefix.rm.smask = self.pred.mask
+        insn.prefix.rm.smask = int(self.pred)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2666,7 +2666,7 @@ class SpecifierDM(SpecifierMask):
         if self.record.svp64.ptype is _SVPType.P1:
             raise ValueError("dest-mask on non-twin predicate")
 
-        if self.pred.type is _SVP64PredicateType.CR:
+        if self.pred.mode is _SVP64PredMode.CR:
             twin = None
             items = list(others)
             while items:
@@ -2681,7 +2681,7 @@ class SpecifierDM(SpecifierMask):
                 raise ValueError(f"predicate masks mismatch: {self!r} vs {twin!r}")
 
     def assemble(self, insn):
-        insn.prefix.rm.mask = self.pred.mask
+        insn.prefix.rm.mask = int(self.pred)
 
 
 class Specifiers(tuple):
