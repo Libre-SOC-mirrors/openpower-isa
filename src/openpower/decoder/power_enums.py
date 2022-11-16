@@ -472,6 +472,19 @@ class SVP64width(Enum):
     EW_16 = 2
     EW_8 = 3
 
+    @classmethod
+    def _missing_(cls, desc):
+        if isinstance(desc, str):
+            return {
+                "32": SVP64width.EW_32,
+                "16": SVP64width.EW_16,
+                "8": SVP64width.EW_8,
+            }.get(desc)
+
+        return super()._missing_(desc)
+
+SVP64Width = SVP64width
+
 
 @unique
 class SVP64subvl(Enum):
