@@ -17,12 +17,12 @@ https://libre-soc.org/openpower/sv/svp64/
 """
 
 from nmigen import Elaboratable, Module, Signal, Const
-from openpower.decoder.power_enums import (SVP64RMMode, Function, SVPtype,
+from openpower.decoder.power_enums import (SVP64RMMode, Function, SVPType,
                                     SVMode,
-                                    SVP64PredMode, SVP64sat, SVP64LDSTmode,
+                                    SVP64PredMode, SVP64Sat, SVP64LDSTmode,
                                     SVP64BCPredMode, SVP64BCVLSETMode,
                                     SVP64BCGate, SVP64BCCTRMode,
-                                    SVP64width
+                                    SVP64Width
                                     )
 from openpower.consts import EXTRA3, SVP64MODE
 from openpower.sv.svp64 import SVP64Rec
@@ -35,9 +35,9 @@ from nmutil.util import sel
 sv_input_record_layout = [
         ('sv_pred_sz', 1), # predicate source zeroing
         ('sv_pred_dz', 1), # predicate dest zeroing
-        ('sv_saturate', SVP64sat),
+        ('sv_saturate', SVP64Sat),
         ('sv_ldstmode', SVP64LDSTmode),
-        ('SV_Ptype', SVPtype),
+        ('SV_Ptype', SVPType),
         ('SV_mode', SVMode),
         #('sv_RC1', 1),
     ]
@@ -101,7 +101,7 @@ class SVP64RMModeDecode(Elaboratable):
         self.fn_in = Signal(Function) # LD/ST and Branch is different
         self.sv_mode = Signal(SVMode) # BRANCH/LDST_IMM/CROP etc.
         self.svp64_vf_in = Signal()  # Vertical-First Mode
-        self.ptype_in = Signal(SVPtype)
+        self.ptype_in = Signal(SVPType)
         self.rc_in = Signal()
         self.cr_5bit_in = Signal()  # if CR field was 5-bit
         self.cr_2bit_in = Signal()  # bottom 2 bits of CR field
@@ -131,10 +131,10 @@ class SVP64RMModeDecode(Elaboratable):
         self.pred_dz = Signal(1) # predicate dest zeroing
 
         # Modes n stuff
-        self.ew_src = Signal(SVP64width) # source elwidth
-        self.ew_dst = Signal(SVP64width) # dest elwidth
+        self.ew_src = Signal(SVP64Width) # source elwidth
+        self.ew_dst = Signal(SVP64Width) # dest elwidth
         self.subvl= Signal(2) # subvl
-        self.saturate = Signal(SVP64sat)
+        self.saturate = Signal(SVP64Sat)
         self.RC1 = Signal()
         self.vli = Signal()
         self.cr_sel = Signal(2)  # bit of CR to test (index 0-3)
@@ -270,11 +270,11 @@ class SVP64RMModeDecode(Elaboratable):
             with m.Switch(mode2):
                 with m.Case(2):
                     with m.If(mode[SVP64MODE.N]):
-                        comb += self.saturate.eq(SVP64sat.UNSIGNED)
+                        comb += self.saturate.eq(SVP64Sat.UNSIGNED)
                     with m.Else():
-                        comb += self.saturate.eq(SVP64sat.SIGNED)
+                        comb += self.saturate.eq(SVP64Sat.SIGNED)
                 with m.Default():
-                    comb += self.saturate.eq(SVP64sat.NONE)
+                    comb += self.saturate.eq(SVP64Sat.NONE)
 
             # do elwidth/elwidth_src extract
             comb += self.ew_src.eq(self.rm_in.ewsrc)
@@ -309,7 +309,7 @@ class SVP64RMModeDecode(Elaboratable):
         # is in exactly the same bits
         srcmask = sel(m, self.rm_in.extra, EXTRA3.MASK)
         dstmask = self.rm_in.mask
-        with m.If(self.ptype_in == SVPtype.P2):
+        with m.If(self.ptype_in == SVPType.P2):
             comb += self.srcpred.eq(srcmask)
         with m.Else():
             comb += self.srcpred.eq(dstmask)

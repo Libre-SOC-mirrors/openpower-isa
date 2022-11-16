@@ -15,8 +15,8 @@ from openpower.decoder.power_enums import (
     CRInSel as _CRInSel,
     CRIn2Sel as _CRIn2Sel,
     CROutSel as _CROutSel,
-    SVPtype as _SVPtype,
-    SVEtype as _SVEtype,
+    SVPType as _SVPType,
+    SVEType as _SVEType,
     SVExtra as _SVExtra,
     SVMode as _SVMode,
     find_wiki_dir as _find_wiki_dir,
@@ -181,8 +181,8 @@ OutSel = Enum("OutSel", _OutSel, c_tag="svp64_out_sel")
 CRInSel = Enum("CRInSel", _CRInSel, c_tag="svp64_cr_in_sel")
 CRIn2Sel = Enum("CRIn2Sel", _CRIn2Sel, c_tag="svp64_cr_in2_sel")
 CROutSel = Enum("CROutSel", _CROutSel, c_tag="svp64_cr_out_sel")
-PType = Enum("PType", _SVPtype, c_tag="svp64_ptype")
-EType = Enum("EType", _SVEtype, c_tag="svp64_etype", exclude="NONE")
+PType = Enum("PType", _SVPType, c_tag="svp64_ptype")
+EType = Enum("EType", _SVEType, c_tag="svp64_etype", exclude="NONE")
 Extra = Enum("Extra", _SVExtra, c_tag="svp64_extra", exclude="Idx_1_2")
 Mode = Enum("Mode", _SVMode, c_tag="svp64_mode")
 
@@ -657,7 +657,7 @@ def collect(db):
         for (key, cls) in fields.items():
             value = getattr(insn, key)
 
-            if (((cls is EType) and (value is _SVEtype.NONE)) or
+            if (((cls is EType) and (value is _SVEType.NONE)) or
                     ((cls is Extra) and (value is _SVExtra.Idx_1_2))):
                 desc = None
                 break

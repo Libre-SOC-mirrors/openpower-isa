@@ -94,7 +94,7 @@ from nmigen.cli import rtlil, verilog
 from openpower.decoder.power_enums import (Function, Form, MicrOp,
                                            In1Sel, In2Sel, In3Sel, OutSel,
                                            SVEXTRA, SVMode, # Simple-V
-                                           SVEtype, SVPtype, # Simple-V
+                                           SVEType, SVPType, # Simple-V
                                            RCOE, LdstLen, LDSTMode, CryIn,
                                            single_bit_flags, CRInSel,
                                            CROutSel, get_signal_name,
@@ -124,8 +124,8 @@ power_op_types = {'function_unit': Function,
                   'internal_op': MicrOp,
                   'form': Form,
                   'asmcode': asmlen,
-                  'SV_Etype': SVEtype,
-                  'SV_Ptype': SVPtype,
+                  'SV_Etype': SVEType,
+                  'SV_Ptype': SVPType,
                   'SV_mode': SVMode,
                   'in1_sel': In1Sel,
                   'in2_sel': In2Sel,

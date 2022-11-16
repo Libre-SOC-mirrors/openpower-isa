@@ -29,10 +29,10 @@ from openpower.decoder.power_enums import (
     RCOE as _RCOE,
     CryIn as _CryIn,
     Form as _Form,
-    SVEtype as _SVEtype,
-    SVmask_src as _SVmask_src,
+    SVEType as _SVEType,
+    SVMaskSrc as _SVMaskSrc,
     SVMode as _SVMode,
-    SVPtype as _SVPtype,
+    SVPType as _SVPType,
     SVExtra as _SVExtra,
     RegType as _RegType,
     SVP64RMMode as _SVP64RMMode,
@@ -340,9 +340,9 @@ class SVP64Record:
             return repr({index:self[index] for index in range(0, 4)})
 
     name: str
-    ptype: _SVPtype = _SVPtype.NONE
-    etype: _SVEtype = _SVEtype.NONE
-    msrc: _SVmask_src = _SVmask_src.NO # MASK_SRC is active
+    ptype: _SVPType = _SVPType.NONE
+    etype: _SVEType = _SVEType.NONE
+    msrc: _SVMaskSrc = _SVMaskSrc.NO # MASK_SRC is active
     in1: _In1Sel = _In1Sel.NONE
     in2: _In2Sel = _In2Sel.NONE
     in3: _In3Sel = _In3Sel.NONE
@@ -1075,9 +1075,9 @@ class ExtendableOperand(DynamicOperand):
             if extra_idx is _SVExtra.NONE:
                 return (vector, value, span)
 
-            if self.record.etype is _SVEtype.EXTRA3:
+            if self.record.etype is _SVEType.EXTRA3:
                 spec = insn.prefix.rm.extra3[extra_idx]
-            elif self.record.etype is _SVEtype.EXTRA2:
+            elif self.record.etype is _SVEType.EXTRA2:
                 spec = insn.prefix.rm.extra2[extra_idx]
             else:
                 raise ValueError(self.record.etype)
@@ -1085,10 +1085,10 @@ class ExtendableOperand(DynamicOperand):
             if spec != 0:
                 vector = bool(spec[0])
                 spec_span = spec.__class__
-                if self.record.etype is _SVEtype.EXTRA3:
+                if self.record.etype is _SVEType.EXTRA3:
                     spec_span = tuple(map(str, spec_span[1, 2]))
                     spec = spec[1, 2]
-                elif self.record.etype is _SVEtype.EXTRA2:
+                elif self.record.etype is _SVEType.EXTRA2:
                     spec_span = tuple(map(str, spec_span[1,]))
                     spec = _SelectableInt(value=spec[1].value, bits=2)
                     if vector:
@@ -1160,9 +1160,9 @@ class ExtendableOperand(DynamicOperand):
             if extra_idx is _SVExtra.NONE:
                 raise ValueError(self.record)
 
-            if self.record.etype is _SVEtype.EXTRA3:
+            if self.record.etype is _SVEType.EXTRA3:
                 insn.prefix.rm.extra3[extra_idx] = extra
-            elif self.record.etype is _SVEtype.EXTRA2:
+            elif self.record.etype is _SVEType.EXTRA2:
                 insn.prefix.rm.extra2[extra_idx] = extra
             else:
                 raise ValueError(self.record.etype)
@@ -1182,7 +1182,7 @@ class ExtendableOperand(DynamicOperand):
             yield f"{indent}{indent}{', '.join(span)}"
             if isinstance(insn, SVP64Instruction):
                 extra_idx = self.extra_idx
-                if self.record.etype is _SVEtype.NONE:
+                if self.record.etype is _SVEType.NONE:
                     yield f"{indent}{indent}extra[none]"
                 else:
                     etype = repr(self.record.etype).lower()
@@ -1204,7 +1204,7 @@ class SimpleRegisterOperand(ExtendableOperand):
 
         # now sanity-check. EXTRA3 is ok, EXTRA2 has limits
         # (and shrink to a single bit if ok)
-        if self.record.etype is _SVEtype.EXTRA2:
+        if self.record.etype is _SVEType.EXTRA2:
             if vector:
                 # range is r0-r127 in increments of 2 (r0 r2 ... r126)
                 assert (extra & 0b01) == 0, \
@@ -1215,7 +1215,7 @@ class SimpleRegisterOperand(ExtendableOperand):
                 assert (extra >> 1) == 0, \
                     ("scalar GPR %d cannot fit into EXTRA2" % value)
                 extra &= 0b01
-        elif self.record.etype is _SVEtype.EXTRA3:
+        elif self.record.etype is _SVEType.EXTRA3:
             if vector:
                 # EXTRA3 vector bit needs marking
                 extra |= 0b100
@@ -1295,7 +1295,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
             extra = (value >> 3)
             value &= 0x7
 
-        if self.record.etype is _SVEtype.EXTRA2:
+        if self.record.etype is _SVEType.EXTRA2:
             if vector:
                 assert (extra & 0x7) == 0, \
                     "vector CR cannot fit into EXTRA2"
@@ -1304,7 +1304,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
                 assert (extra >> 1) == 0, \
                     "scalar CR cannot fit into EXTRA2"
                 extra &= 0x1
-        elif self.record.etype is _SVEtype.EXTRA3:
+        elif self.record.etype is _SVEType.EXTRA3:
             if vector:
                 assert (extra & 0x3) == 0, \
                     "vector CR cannot fit into EXTRA3"
@@ -1357,7 +1357,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
             yield f"{indent}{indent}{', '.join(span)}"
             if isinstance(insn, SVP64Instruction):
                 extra_idx = self.extra_idx
-                if self.record.etype is _SVEtype.NONE:
+                if self.record.etype is _SVEType.NONE:
                     yield f"{indent}{indent}extra[none]"
                 else:
                     etype = repr(self.record.etype).lower()
@@ -1927,7 +1927,7 @@ class PredicateBaseRM(BaseRM):
         CR = (int(self.mmode) == 1)
         mask = int(self.mask)
         sm = dm = PredicateBaseRM.predicate(CR, mask)
-        if record.svp64.ptype is _SVPtype.P2:
+        if record.svp64.ptype is _SVPType.P2:
             smask = int(self.smask)
             sm = PredicateBaseRM.predicate(CR, smask)
         if sm == dm and dm:
@@ -2635,7 +2635,7 @@ class SpecifierSM(SpecifierMask):
         return super().match(desc=desc, record=record, mode="sm")
 
     def validate(self, others):
-        if self.record.svp64.ptype is _SVPtype.P1:
+        if self.record.svp64.ptype is _SVPType.P1:
             raise ValueError("source-mask on non-twin predicate")
 
         if self.pred.type is _SVP64PredicateType.CR:
@@ -2663,7 +2663,7 @@ class SpecifierDM(SpecifierMask):
         return super().match(desc=desc, record=record, mode="dm")
 
     def validate(self, others):
-        if self.record.svp64.ptype is _SVPtype.P1:
+        if self.record.svp64.ptype is _SVPType.P1:
             raise ValueError("dest-mask on non-twin predicate")
 
         if self.pred.type is _SVP64PredicateType.CR:

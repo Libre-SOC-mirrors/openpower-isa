@@ -71,21 +71,18 @@ def get_signal_name(name):
 
 class Enum(_Enum):
     @classmethod
-    def _missing_(cls, value):
-        if isinstance(value, str):
+    def _missing_(cls, desc):
+        if isinstance(desc, str):
             try:
-                if value == "":
-                    value = 0
+                if desc == "":
+                    desc = 0
                 else:
-                    value = int(value, 0)
+                    desc = int(desc, 0)
             except ValueError:
                 pass
         keys = {item.name:item for item in cls}
-        values = {item.value:item for item in cls}
-        item = keys.get(value, values.get(value))
-        if item is None:
-            raise ValueError(value)
-        return item
+        descs = {item.value:item for item in cls}
+        return keys.get(desc, descs.get(desc))
 
 
 # this corresponds to which Function Unit (pipeline-with-Reservation-Stations)
@@ -184,25 +181,25 @@ class SVMode(Enum):
 
 
 @unique
-class SVPtype(Enum):
+class SVPType(Enum):
     NONE = 0
     P1 = 1
     P2 = 2
 
     @classmethod
-    def _missing_(cls, value):
-        return {"1P": SVPtype.P1, "2P": SVPtype.P2}[value]
+    def _missing_(cls, desc):
+        return {"1P": SVPType.P1, "2P": SVPType.P2}.get(desc)
 
     def __repr__(self):
         return {
-            SVPtype.NONE: "NONE",
-            SVPtype.P1: "1P",
-            SVPtype.P2: "2P",
+            SVPType.NONE: "NONE",
+            SVPType.P1: "1P",
+            SVPType.P2: "2P",
         }[self]
 
 
 @unique
-class SVEtype(Enum):
+class SVEType(Enum):
     NONE = 0
     EXTRA2 = 1
     EXTRA3 = 2
@@ -212,7 +209,7 @@ class SVEtype(Enum):
 
 
 @unique
-class SVmask_src(Enum):
+class SVMaskSrc(Enum):
     NO = 0
     EN = 1
 
@@ -278,14 +275,15 @@ class SVExtraReg(Enum):
     SPR = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, desc):
         selectors = (
             In1Sel, In2Sel, In3Sel, CRInSel, CRIn2Sel,
             OutSel, CROutSel,
         )
-        if isinstance(value, selectors):
-            return cls.__members__[value.name]
-        return super()._missing_(value)
+        if isinstance(desc, selectors):
+            return cls.__members__.get(desc.name)
+
+        return super()._missing_(desc)
 
 
 @unique
@@ -366,13 +364,13 @@ class SVP64Predicate(Enum):
     RC1_INV = ("~RC1", True, 0b1)
 
     @classmethod
-    def _missing_(cls, value):
-        if isinstance(value, str):
+    def _missing_(cls, desc):
+        if isinstance(desc, str):
             members = {}
             for (name, member) in cls.__members__.items():
                 members[str(member)] = member.name
 
-            member = value
+            member = desc
             if "RC1" not in member:
                 member = member.lower()
 
@@ -388,7 +386,7 @@ class SVP64Predicate(Enum):
             member = members.get(member, member)
             return cls[member]
 
-        return super()._missing_(value)
+        return super()._missing_(desc)
 
     def __str__(self):
         return self.value[0]
@@ -438,10 +436,11 @@ class SVP64PredicateType(Enum):
     RC1_INV = RC1
 
     @classmethod
-    def _missing_(cls, value):
-        if isinstance(value, SVP64Predicate):
-            return cls.__members__[value.name]
-        return super()._missing_(value)
+    def _missing_(cls, desc):
+        if isinstance(desc, SVP64Predicate):
+            return cls.__members__.get(desc.name)
+
+        return super()._missing_(desc)
 
 
 @unique
@@ -466,7 +465,7 @@ class SVP64BCCTRMode(Enum):
 
 
 @unique
-class SVP64width(Enum):
+class SVP64Width(Enum):
     DEFAULT = 0
     EW_32 = 1
     EW_16 = 2
@@ -476,18 +475,16 @@ class SVP64width(Enum):
     def _missing_(cls, desc):
         if isinstance(desc, str):
             return {
-                "32": SVP64width.EW_32,
-                "16": SVP64width.EW_16,
-                "8": SVP64width.EW_8,
+                "32": SVP64Width.EW_32,
+                "16": SVP64Width.EW_16,
+                "8": SVP64Width.EW_8,
             }.get(desc)
 
         return super()._missing_(desc)
 
-SVP64Width = SVP64width
-
 
 @unique
-class SVP64subvl(Enum):
+class SVP64SubVL(Enum):
     VEC1 = 0
     VEC2 = 1
     VEC3 = 2
@@ -497,17 +494,13 @@ class SVP64subvl(Enum):
     def _missing_(cls, desc):
         if isinstance(desc, str):
             name = desc.upper()
-            value = cls.__members__.get(name)
-            if value is None:
-                raise ValueError(desc)
-            return value
-        return super()._missing_(desc)
+            return cls.__members__.get(name)
 
-SVP64SubVL = SVP64subvl
+        return super()._missing_(desc)
 
 
 @unique
-class SVP64sat(Enum):
+class SVP64Sat(Enum):
     NONE = 0
     SIGNED = 1
     UNSIGNED = 2
@@ -557,7 +550,8 @@ class RegType(Enum):
     @classmethod
     def _missing_(cls, value):
         if isinstance(value, SVExtraReg):
-            return cls.__members__[value.name]
+            return cls.__members__.get(value.name)
+
         return super()._missing_(value)
 
 

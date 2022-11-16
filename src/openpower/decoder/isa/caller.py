@@ -32,7 +32,7 @@ from openpower.decoder.power_enums import (FPTRANS_INSNS, CRInSel, CROutSel,
                                            MicrOp, OutSel, SVMode,
                                            SVP64LDSTmode, SVP64PredCR,
                                            SVP64PredInt, SVP64PredMode,
-                                           SVP64RMMode, SVPtype, XER_bits,
+                                           SVP64RMMode, SVPType, XER_bits,
                                            insns, spr_byname, spr_dict)
 from openpower.decoder.power_insn import SVP64Instruction
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
@@ -973,11 +973,11 @@ class StepLoop:
         pred_sz = yield self.dec2.rm_dec.pred_sz
         if pmode == SVP64PredMode.INT.value:
             srcmask = dstmask = get_predint(self.gpr, dstpred)
-            if sv_ptype == SVPtype.P2.value:
+            if sv_ptype == SVPType.P2.value:
                 srcmask = get_predint(self.gpr, srcpred)
         elif pmode == SVP64PredMode.CR.value:
             srcmask = dstmask = get_predcr(self.crl, dstpred, vl)
-            if sv_ptype == SVPtype.P2.value:
+            if sv_ptype == SVPType.P2.value:
                 srcmask = get_predcr(self.crl, srcpred, vl)
         # work out if the ssubsteps are completed
         ssubstart = ssubstep == 0
@@ -2488,7 +2488,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("    reverse", reverse_gear)
         log("    out_vec", out_vec)
         log("    in_vec", in_vec)
-        log("    sv_ptype", sv_ptype, sv_ptype == SVPtype.P2.value)
+        log("    sv_ptype", sv_ptype, sv_ptype == SVPType.P2.value)
         # check if this was an sv.bc* and if so did it succeed
         if self.is_svp64_mode and insn_name.startswith("sv.bc"):
             end_loop = self.namespace['end_loop']
@@ -2500,7 +2500,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # check if srcstep needs incrementing by one, stop PC advancing
         # but for 2-pred both src/dest have to be checked.
         # XXX this might not be true! it may just be LD/ST
-        if sv_ptype == SVPtype.P2.value:
+        if sv_ptype == SVPType.P2.value:
             svp64_is_vector = (out_vec or in_vec)
         else:
             svp64_is_vector = out_vec

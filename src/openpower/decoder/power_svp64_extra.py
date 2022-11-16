@@ -6,7 +6,7 @@ from nmigen.cli import rtlil
 from nmutil.util import sel
 
 
-from openpower.decoder.power_enums import (SVEXTRA, SVEtype)
+from openpower.decoder.power_enums import (SVEXTRA, SVEType)
 from openpower.consts import (SPEC, EXTRA2, EXTRA3, SVP64P, field,
                         SPEC_SIZE, SPECb, SPEC_AUG_SIZE, SVP64CROffs)
 
@@ -20,7 +20,7 @@ class SVP64ExtraSpec(Elaboratable):
     """
     def __init__(self):
         self.extra   = Signal(9, reset_less=True)
-        self.etype   = Signal(SVEtype, reset_less=True) # 2 or 3 bits
+        self.etype   = Signal(SVEType, reset_less=True) # 2 or 3 bits
         self.idx     = Signal(SVEXTRA, reset_less=True) # which part of extra
         self.spec  = Signal(3) # EXTRA spec for the register
 
@@ -36,7 +36,7 @@ class SVP64ExtraSpec(Elaboratable):
         # the register-extension information.  extract those now
         with m.Switch(self.etype):
             # 2-bit index selection mode
-            with m.Case(SVEtype.EXTRA2):
+            with m.Case(SVEType.EXTRA2):
                 with m.Switch(self.idx):
                     with m.Case(SVEXTRA.Idx0):  # 1st 2 bits [0:1]
                         comb += spec[SPEC.VEC].eq(extra[EXTRA2.IDX0_VEC])
@@ -51,7 +51,7 @@ class SVP64ExtraSpec(Elaboratable):
                         comb += spec[SPEC.VEC].eq(extra[EXTRA2.IDX3_VEC])
                         comb += spec[SPEC.MSB].eq(extra[EXTRA2.IDX3_MSB])
             # 3-bit index selection mode
-            with m.Case(SVEtype.EXTRA3):
+            with m.Case(SVEType.EXTRA3):
                 with m.Switch(self.idx):
                     with m.Case(SVEXTRA.Idx0):  # 1st 3 bits [0:2]
                         extra3_idx0 = sel(m, extra, EXTRA3.IDX0)

@@ -32,7 +32,7 @@ from openpower.decoder.power_enums import (MicrOp, CryIn, Function,
                                            LdstLen, In1Sel, In2Sel, In3Sel,
                                            OutSel, SPRfull, SPRreduced,
                                            RCOE, SVP64LDSTmode, LDSTMode,
-                                           SVEXTRA, SVEtype, SVPtype)
+                                           SVEXTRA, SVEType, SVPType)
 from openpower.decoder.decode2execute1 import (Decode2ToExecute1Type, Data,
                                                Decode2ToOperand)
 
@@ -1471,11 +1471,11 @@ class PowerDecode2(PowerDecodeSubset):
             # should continue.  this doesn't include predication bit-tests
             loop = self.loop_continue
             with m.Switch(self.op_get("SV_Ptype")):
-                with m.Case(SVPtype.P2.value):
+                with m.Case(SVPType.P2.value):
                     # twin-predication
                     # TODO: *and cache-inhibited LD/ST!*
                     comb += loop.eq(~(self.no_in_vec | self.no_out_vec))
-                with m.Case(SVPtype.P1.value):
+                with m.Case(SVPType.P1.value):
                     # single-predication, test relies on dest only
                     comb += loop.eq(~self.no_out_vec)
                 with m.Default():
