@@ -1834,6 +1834,18 @@ class ZZBaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
+class ZZCombinedBaseRM(BaseRM):
+    def specifiers(self, record):
+        if self.sz and self.dz:
+            yield "zz"
+        elif self.sz:
+            yield "sz"
+        elif self.dz:
+            yield "dz"
+
+        yield from super().specifiers(record=record)
+
+
 class DZBaseRM(BaseRM):
     def specifiers(self, record):
         if self.dz:
@@ -1970,7 +1982,7 @@ class NormalBaseRM(PredicateWidthBaseRM):
     pass
 
 
-class NormalSimpleRM(DZBaseRM, SZBaseRM, NormalBaseRM):
+class NormalSimpleRM(ZZCombinedBaseRM, NormalBaseRM):
     """normal: simple mode"""
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
@@ -2003,7 +2015,7 @@ class NormalFFRc0RM(FFPRRc0BaseRM, VLiBaseRM, NormalBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class NormalSatRM(SatBaseRM, DZBaseRM, SZBaseRM, NormalBaseRM):
+class NormalSatRM(SatBaseRM, ZZCombinedBaseRM, NormalBaseRM):
     """normal: sat mode: N=0/1 u/s, SUBVL=1"""
     N: BaseRM.mode[2]
     dz: BaseRM.mode[3]
@@ -2134,14 +2146,14 @@ class LDSTIdxBaseRM(PredicateWidthBaseRM):
     pass
 
 
-class LDSTIdxSimpleRM(SEABaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
+class LDSTIdxSimpleRM(SEABaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
     """ld/st index: simple mode"""
     SEA: BaseRM.mode[2]
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
 
-class LDSTIdxStrideRM(SEABaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
+class LDSTIdxStrideRM(SEABaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
     """ld/st index: strided (scalar only source)"""
     SEA: BaseRM.mode[2]
     dz: BaseRM.mode[3]
@@ -2153,7 +2165,7 @@ class LDSTIdxStrideRM(SEABaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
         yield from super().specifiers(record=record)
 
 
-class LDSTIdxSatRM(SatBaseRM, DZBaseRM, SZBaseRM, LDSTIdxBaseRM):
+class LDSTIdxSatRM(SatBaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
     """ld/st index: sat mode: N=0/1 u/s"""
     N: BaseRM.mode[2]
     dz: BaseRM.mode[3]
@@ -2198,7 +2210,7 @@ class CROpBaseRM(BaseRM):
     SNZ: BaseRM[7]
 
 
-class CROpSimpleRM(PredicateBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpSimpleRM(PredicateBaseRM, ZZCombinedBaseRM, CROpBaseRM):
     """cr_op: simple mode"""
     RG: BaseRM[20]
     dz: BaseRM[22]
@@ -2210,7 +2222,7 @@ class CROpSimpleRM(PredicateBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
 
         yield from super().specifiers(record=record)
 
-class CROpMRRM(MRBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpMRRM(MRBaseRM, ZZCombinedBaseRM, CROpBaseRM):
     """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM[20]
     dz: BaseRM[22]
@@ -2231,7 +2243,7 @@ class CROpFF3RM(FFPRRc1BaseRM, VLiBaseRM, ZZBaseRM, PredicateBaseRM, CROpBaseRM)
 
 
 class CROpFF5RM(FFPRRc0BaseRM, PredicateBaseRM,
-        VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+        VLiBaseRM, ZZCombinedBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
     VLi: BaseRM[20]
     inv: BaseRM[21]
