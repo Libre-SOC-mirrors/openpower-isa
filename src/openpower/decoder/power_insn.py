@@ -2833,6 +2833,33 @@ class SpecifierEls(Specifier):
             rm.mode.sel = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSEA(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "els":
+            return None
+
+        return cls(record=record)
+
+    def validate(self, others):
+        if self.record.svp64.mode is not _SVMode.LDST_IDX:
+            raise ValueError("sea is only valid in ld/st modes")
+
+        items = list(others)
+        while items:
+            spec = items.pop()
+            if isinstance(spec, SpecifierFF):
+                raise ValueError(f"sea cannot be used in ff mode")
+            spec.validate(others=items)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        if rm.mode.sel not in (0b00, 0b01):
+            raise ValueError("sea is only valid for normal and els modes")
+        rm.sea = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
