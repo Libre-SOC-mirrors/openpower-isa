@@ -2817,6 +2817,22 @@ class SpecifierDZ(SpecifierXZ):
             spec.validate(others=items)
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierEls(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "els":
+            return None
+
+        return cls(record=record)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.els = 1
+        if self.record.svp64.mode is _SVMode.LDST_IDX:
+            rm.mode.sel = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -2831,6 +2847,7 @@ class Specifiers(tuple):
         SpecifierZZ,
         SpecifierSZ,
         SpecifierDZ,
+        SpecifierEls,
     )
 
     def __new__(cls, items, record):
