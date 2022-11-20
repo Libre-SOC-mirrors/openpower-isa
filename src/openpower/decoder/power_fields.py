@@ -301,6 +301,9 @@ class Mapping(Reference, metaclass=MappingMeta):
 
         return self.assign(value=value, bits=key)
 
+    def __getattr__(self, key):
+        raise AttributeError(key)
+
     @classmethod
     def traverse(cls, path):
         for (name, member) in cls.__members__.items():
