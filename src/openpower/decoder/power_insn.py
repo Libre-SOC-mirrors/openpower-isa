@@ -3037,6 +3037,35 @@ class SpecifierVSbi(SpecifierVS):
         rm.VSb = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierCTR(SpecifierVS):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "ctr":
+            return None
+
+        return cls(record=record)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.CTR = 1
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierCTi(SpecifierVS):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "cti":
+            return None
+
+        return cls(record=record)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.CTR = 1
+        rm.CTi = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -3066,6 +3095,8 @@ class Specifiers(tuple):
         SpecifierVSi,
         SpecifierVSb,
         SpecifierVSbi,
+        SpecifierCTR,
+        SpecifierCTi,
     )
 
     def __new__(cls, items, record):
