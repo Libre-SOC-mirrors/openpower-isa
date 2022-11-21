@@ -2900,6 +2900,21 @@ class SpecifierMRR(Specifier):
         rm.RG = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierCRM(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "crm":
+            return None
+
+        return cls(record=record)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.mode.sel = 0
+        rm.crm = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -2919,6 +2934,7 @@ class Specifiers(tuple):
         SpecifierSatU,
         SpecifierMR,
         SpecifierMRR,
+        SpecifierCRM,
     )
 
     def __new__(cls, items, record):
