@@ -2974,6 +2974,17 @@ class SpecifierSLu(SpecifierBranch):
         rm.SLu = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierLRu(SpecifierBranch):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="lru")
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.LRu = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -2998,6 +3009,7 @@ class Specifiers(tuple):
         SpecifierSNZ,
         SpecifierSL,
         SpecifierSLu,
+        SpecifierLRu,
     )
 
     def __new__(cls, items, record):
