@@ -2834,6 +2834,40 @@ class SpecifierSEA(Specifier):
         rm.sea = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSat(Specifier):
+    desc: str
+    sign: bool
+
+    @classmethod
+    def match(cls, desc, record, etalon, sign):
+        if desc != etalon:
+            return None
+
+        return cls(record=record, desc=desc, sign=sign)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.mode.sel = 2
+        rm.sat = 1 if self.sign else 0
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSatS(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="sats", sign=True)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSatU(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="satu", sign=False)
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -2849,6 +2883,8 @@ class Specifiers(tuple):
         SpecifierSZ,
         SpecifierDZ,
         SpecifierEls,
+        SpecifierSatS,
+        SpecifierSatU,
     )
 
     def __new__(cls, items, record):
