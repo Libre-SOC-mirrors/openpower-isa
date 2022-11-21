@@ -2868,6 +2868,38 @@ class SpecifierSatU(Specifier):
             etalon="satu", sign=False)
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierMR(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "mr":
+            return None
+
+        return cls(record=record)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.mode.sel = 0
+        rm.mr = 1
+        rm.RG = 0
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierMRR(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "mr":
+            return None
+
+        return cls(record=record)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.mode.sel = 0
+        rm.mr = 1
+        rm.RG = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -2885,6 +2917,8 @@ class Specifiers(tuple):
         SpecifierEls,
         SpecifierSatS,
         SpecifierSatU,
+        SpecifierMR,
+        SpecifierMRR,
     )
 
     def __new__(cls, items, record):
