@@ -2915,6 +2915,31 @@ class SpecifierCRM(Specifier):
         rm.crm = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierBranch(Specifier):
+    @classmethod
+    def match(cls, desc, record, etalon):
+        if desc != etalon:
+            return None
+
+        return cls(record=record)
+
+    def validate(self, others):
+        if self.record.svp64.mode != _SVMode.BRANCH:
+            raise ValueError("only branch modes supported")
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierAll(SpecifierBranch):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="all")
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.ALL = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -2935,6 +2960,7 @@ class Specifiers(tuple):
         SpecifierMR,
         SpecifierMRR,
         SpecifierCRM,
+        SpecifierAll,
     )
 
     def __new__(cls, items, record):
