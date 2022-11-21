@@ -2985,6 +2985,58 @@ class SpecifierLRu(SpecifierBranch):
         rm.LRu = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierVS(SpecifierBranch):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="vs")
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.VLS = 1
+        rm.VLi = 0
+        rm.VSb = 0
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierVSi(SpecifierVS):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="vsi")
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.VLS = 1
+        rm.VLi = 1
+        rm.VSb = 0
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierVSb(SpecifierVS):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="vsb")
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.VLS = 1
+        rm.VLi = 0
+        rm.VSb = 1
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierVSbi(SpecifierVS):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="vsbi")
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.VLS = 1
+        rm.VLi = 1
+        rm.VSb = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -3010,6 +3062,10 @@ class Specifiers(tuple):
         SpecifierSL,
         SpecifierSLu,
         SpecifierLRu,
+        SpecifierVS,
+        SpecifierVSi,
+        SpecifierVSb,
+        SpecifierVSbi,
     )
 
     def __new__(cls, items, record):
