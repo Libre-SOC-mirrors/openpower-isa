@@ -2940,6 +2940,18 @@ class SpecifierAll(SpecifierBranch):
         rm.ALL = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierSNZ(SpecifierBranch):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record, etalon="snz")
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.sz = 1
+        rm.SNZ = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -2961,6 +2973,7 @@ class Specifiers(tuple):
         SpecifierMRR,
         SpecifierCRM,
         SpecifierAll,
+        SpecifierSNZ,
     )
 
     def __new__(cls, items, record):
