@@ -2646,14 +2646,11 @@ class SpecifierM(SpecifierMask):
         return super().match(desc=desc, record=record, mode="m")
 
     def validate(self, others):
-        items = list(others)
-        while items:
-            spec = items.pop()
+        for spec in others:
             if isinstance(spec, SpecifierSM):
                 raise ValueError("source-mask and predicate mask conflict")
             elif isinstance(spec, SpecifierDM):
                 raise ValueError("dest-mask and predicate mask conflict")
-            spec.validate(others=items)
 
     def assemble(self, insn):
         insn.prefix.rm.mask = int(self.pred)
@@ -2671,12 +2668,9 @@ class SpecifierSM(SpecifierMask):
 
         if self.pred.mode is _SVP64PredMode.CR:
             twin = None
-            items = list(others)
-            while items:
-                spec = items.pop()
+            for spec in others:
                 if isinstance(spec, SpecifierDM):
                     twin = spec
-                spec.validate(others=items)
 
             if twin is None:
                 raise ValueError("missing dest-mask in CR twin predication")
@@ -2699,12 +2693,9 @@ class SpecifierDM(SpecifierMask):
 
         if self.pred.mode is _SVP64PredMode.CR:
             twin = None
-            items = list(others)
-            while items:
-                spec = items.pop()
+            for spec in others:
                 if isinstance(spec, SpecifierSM):
                     twin = spec
-                spec.validate(others=items)
 
             if twin is None:
                 raise ValueError("missing source-mask in CR twin predication")
@@ -2726,16 +2717,11 @@ class SpecifierZZ(Specifier):
         return cls(record=record)
 
     def validate(self, others):
-        items = list(others)
-        while items:
-            spec = items.pop()
-
+        for spec in others:
             # Since m=xx takes precedence (overrides) sm=xx and dm=xx,
             # treat them as mutually exclusive.
             if isinstance(spec, (SpecifierSZ, SpecifierDZ)):
                 raise ValueError("mutually exclusive predicate masks")
-
-            spec.validate(others=items)
 
     def assemble(self, insn):
         rm = insn.prefix.rm.select(record=self.record)
@@ -2764,12 +2750,9 @@ class SpecifierXZ(Specifier):
 
         if self.pred.mode is _SVP64PredMode.CR:
             twin = None
-            items = list(others)
-            while items:
-                spec = items.pop()
+            for spec in others:
                 if isinstance(spec, SpecifierSM):
                     twin = spec
-                spec.validate(others=items)
 
             if twin is None:
                 raise ValueError(f"missing {self.hint} in CR twin predication")
@@ -2789,14 +2772,11 @@ class SpecifierSZ(SpecifierXZ):
             etalon="sz", hint="source-mask")
 
     def validate(self, others):
-        items = list(others)
-        while items:
-            spec = items.pop()
+        for spec in others:
             if isinstance(spec, SpecifierFF):
                 raise ValueError("source-zero not allowed in ff mode")
             elif isinstance(spec, SpecifierPR):
                 raise ValueError("source-zero not allowed in pr mode")
-            spec.validate(others=items)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2807,14 +2787,11 @@ class SpecifierDZ(SpecifierXZ):
             etalon="dz", hint="dest-mask")
 
     def validate(self, others):
-        items = list(others)
-        while items:
-            spec = items.pop()
+        for spec in others:
             if (isinstance(spec, (SpecifierFF, SpecifierPR)) and
                     (spec.pred.mode is _SVP64PredMode.RC1)):
                 mode = "ff" if isinstance(spec, SpecifierFF) else "pr"
                 raise ValueError(f"dest-zero not allowed in {mode} mode BO")
-            spec.validate(others=items)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2846,12 +2823,9 @@ class SpecifierSEA(Specifier):
         if self.record.svp64.mode is not _SVMode.LDST_IDX:
             raise ValueError("sea is only valid in ld/st modes")
 
-        items = list(others)
-        while items:
-            spec = items.pop()
+        for spec in others:
             if isinstance(spec, SpecifierFF):
                 raise ValueError(f"sea cannot be used in ff mode")
-            spec.validate(others=items)
 
     def assemble(self, insn):
         rm = insn.prefix.rm.select(record=self.record)
@@ -2886,10 +2860,10 @@ class Specifiers(tuple):
             raise ValueError(item)
 
         specs = tuple(map(transform, items))
-        items = list(specs)
-        while items:
-            spec = items.pop()
-            spec.validate(others=items)
+        for (index, spec) in enumerate(specs):
+            head = specs[:index]
+            tail = specs[index + 1:]
+            spec.validate(others=(head + tail))
 
         return super().__new__(cls, specs)
 
