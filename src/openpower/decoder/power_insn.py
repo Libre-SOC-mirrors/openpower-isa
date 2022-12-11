@@ -3066,6 +3066,34 @@ class SpecifierCTi(SpecifierVS):
         rm.CTi = 1
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierPI(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "pi":
+            return None
+
+        return cls(record=record)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.pi = 1
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierLF(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "lf":
+            return None
+
+        return cls(record=record)
+
+    def assemble(self, insn):
+        rm = insn.prefix.rm.select(record=self.record)
+        rm.lf = 1
+
+
 class Specifiers(tuple):
     SPECS = (
         SpecifierW,
@@ -3097,6 +3125,8 @@ class Specifiers(tuple):
         SpecifierVSbi,
         SpecifierCTR,
         SpecifierCTi,
+        SpecifierPI,
+        SpecifierLF,
     )
 
     def __new__(cls, items, record):
