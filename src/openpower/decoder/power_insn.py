@@ -925,6 +925,12 @@ class SignedOperand(DynamicOperand):
             value = int(value, 0)
         return super().assemble(value=value, insn=insn)
 
+    def assemble(self, value, insn):
+        span = self.span
+        if isinstance(value, str):
+            value = int(value, 0)
+        insn[span] = value
+
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
@@ -1404,7 +1410,7 @@ class CR5Operand(ConditionRegisterFieldOperand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class EXTSOperand(DynamicOperand):
+class EXTSOperand(SignedOperand):
     field: str # real name to report
     nz: int = 0 # number of zeros
     fmt: str = "d" # integer formatter
