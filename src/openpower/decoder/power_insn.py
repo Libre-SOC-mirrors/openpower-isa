@@ -1627,6 +1627,7 @@ class WordInstruction(Instruction):
             arguments = ()
 
         record = db[opcode]
+        record = _dataclasses.replace(record, svp64=None)
         insn = cls.integer(value=0)
         for operand in record.static_operands:
             operand.assemble(insn=insn)
