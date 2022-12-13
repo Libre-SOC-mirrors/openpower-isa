@@ -1549,14 +1549,15 @@ class Instruction(_Mapping):
         nr_bytes = (len(self.__class__) // 8)
         return int(self).to_bytes(nr_bytes, byteorder=byteorder)
 
-    def record(self, db):
-        record = db[self]
+    @classmethod
+    def record(cls, db, entry):
+        record = db[entry]
         if record is None:
-            raise KeyError(self)
+            raise KeyError(entry)
         return record
 
     def spec(self, db, prefix):
-        record = self.record(db=db)
+        record = self.record(db=db, entry=self)
 
         dynamic_operands = tuple(map(_operator.itemgetter(0),
             self.dynamic_operands(db=db)))
@@ -1576,7 +1577,7 @@ class Instruction(_Mapping):
         return f"{prefix}{record.name}{operands}"
 
     def dynamic_operands(self, db, verbosity=Verbosity.NORMAL):
-        record = self.record(db=db)
+        record = self.record(db=db, entry=self)
 
         imm = False
         imm_name = ""
@@ -1597,7 +1598,7 @@ class Instruction(_Mapping):
                 yield (name, value)
 
     def static_operands(self, db):
-        record = self.record(db=db)
+        record = self.record(db=db, entry=self)
         for operand in record.static_operands:
             yield (operand.name, operand.value)
 
@@ -1616,6 +1617,11 @@ class WordInstruction(Instruction):
     PO: _Field = range(0, 6)
 
     @classmethod
+    def record(cls, db, entry):
+        record = super().record(db=db, entry=entry)
+        return _dataclasses.replace(record, svp64=None)
+
+    @classmethod
     def integer(cls, value, byteorder="little"):
         return super().integer(bits=32, value=value, byteorder=byteorder)
 
@@ -1632,8 +1638,7 @@ class WordInstruction(Instruction):
         if arguments is None:
             arguments = ()
 
-        record = db[opcode]
-        record = _dataclasses.replace(record, svp64=None)
+        record = cls.record(db=db, entry=opcode)
         insn = cls.integer(value=0)
         for operand in record.static_operands:
             operand.assemble(insn=insn)
@@ -1656,7 +1661,7 @@ class WordInstruction(Instruction):
             blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
             blob += "    "
 
-        record = db[self]
+        record = self.record(db=db, entry=self)
         if record is None:
             yield f"{blob}.long 0x{int(self):08x}"
             return
@@ -3161,11 +3166,11 @@ class SVP64Instruction(PrefixedInstruction):
 
     prefix: Prefix
 
-    def record(self, db):
-        record = db[self.suffix]
-        if record is None:
-            raise KeyError(self)
-        return record
+    @classmethod
+    def record(cls, db, entry):
+        if isinstance(entry, SVP64Instruction):
+            entry = entry.suffix
+        return super().record(db=db, entry=entry)
 
     @property
     def binary(self):
@@ -3182,7 +3187,7 @@ class SVP64Instruction(PrefixedInstruction):
         if specifiers is None:
             specifiers = ()
 
-        record = db[opcode]
+        record = cls.record(db=db, entry=opcode)
         insn = cls.integer(value=0)
 
         specifiers = Specifiers(items=specifiers, record=record)
@@ -3214,7 +3219,7 @@ class SVP64Instruction(PrefixedInstruction):
                 blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
                 return f"{blob}    "
 
-        record = self.record(db=db)
+        record = self.record(db=db, entry=self)
         blob_prefix = blob(self.prefix)
         blob_suffix = blob(self.suffix)
         if record is None or record.svp64 is None:
