@@ -623,12 +623,12 @@ class Operands:
                 name = operand
                 if name.endswith(")"):
                     name = name.replace("(", " ").replace(")", "")
-                    (immediate, _, name) = name.partition(" ")
+                    (imm_name, _, name) = name.partition(" ")
                 else:
-                    immediate = None
+                    imm_name = None
 
-                if immediate is not None:
-                    cls = custom_immediates.get(immediate, ImmediateOperand)
+                if imm_name is not None:
+                    imm_cls = custom_immediates.get(imm_name, ImmediateOperand)
 
                 if insn in custom_insns and name in custom_insns[insn]:
                     cls = custom_insns[insn][name]
@@ -646,6 +646,8 @@ class Operands:
                     if regtype is _RegType.CR_3BIT:
                         cls = CR3Operand
 
+                if imm_name is not None:
+                    mapping[imm_name] = (imm_cls, {"name": imm_name})
                 mapping[name] = (cls, {"name": name})
 
         static = []
@@ -687,6 +689,43 @@ class Operands:
     @property
     def dynamic(self):
         return self.__dynamic
+
+
+class Arguments(tuple):
+    def __new__(cls, arguments, operands):
+        iterable = iter(tuple(arguments))
+        operands = iter(tuple(operands))
+        arguments = []
+
+        while True:
+            try:
+                operand = next(operands)
+            except StopIteration:
+                break
+
+            try:
+                argument = next(iterable)
+            except StopIteration:
+                raise ValueError("operands count mismatch")
+
+            if isinstance(operand, ImmediateOperand):
+                argument = argument.replace("(", " ").replace(")", "")
+                (imm_argument, _, argument) = argument.partition(" ")
+                try:
+                    (imm_operand, operand) = (operand, next(operands))
+                except StopIteration:
+                    raise ValueError("operands count mismatch")
+                arguments.append((imm_argument, imm_operand))
+            arguments.append((argument, operand))
+
+        try:
+            next(iterable)
+        except StopIteration:
+            pass
+        else:
+            raise ValueError("operands count mismatch")
+
+        return super().__new__(cls, arguments)
 
 
 class PCode:
@@ -1644,9 +1683,7 @@ class WordInstruction(Instruction):
             operand.assemble(insn=insn)
 
         dynamic_operands = tuple(record.dynamic_operands)
-        if len(dynamic_operands) != len(arguments):
-            raise ValueError("operands count mismatch")
-        for (value, operand) in zip(arguments, dynamic_operands):
+        for (value, operand) in Arguments(arguments, dynamic_operands):
             operand.assemble(value=value, insn=insn)
 
         return insn
@@ -3199,9 +3236,7 @@ class SVP64Instruction(PrefixedInstruction):
             operand.assemble(insn=insn)
 
         dynamic_operands = tuple(record.dynamic_operands)
-        if len(dynamic_operands) != len(arguments):
-            raise ValueError("operands count mismatch")
-        for (value, operand) in zip(arguments, dynamic_operands):
+        for (value, operand) in Arguments(arguments, dynamic_operands):
             operand.assemble(value=value, insn=insn)
 
         insn.prefix.PO = 0x1
