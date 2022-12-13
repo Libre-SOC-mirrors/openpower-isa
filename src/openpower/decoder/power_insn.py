@@ -973,15 +973,17 @@ class SignedOperand(DynamicOperand):
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        value = insn[span]
+        value = insn[span].to_signed_int()
+        sign = "-" if (value < 0) else ""
+        value = abs(value)
 
         if verbosity >= Verbosity.VERBOSE:
             span = map(str, span)
             yield f"{indent}{self.name}"
-            yield f"{indent}{indent}{int(value):0{value.bits}b}"
+            yield f"{indent}{indent}{sign}{value}"
             yield f"{indent}{indent}{', '.join(span)}"
         else:
-            yield str(value.to_signed_int())
+            yield f"{sign}{value}"
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -1465,10 +1467,18 @@ class EXTSOperand(SignedOperand):
             span = tuple(map(lambda bit: (bit + 32), span))
         return span
 
+    def assemble(self, value, insn):
+        span = self.span
+        if isinstance(value, str):
+            value = int(value, 0)
+        insn[span] = (value >> self.nz)
+
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        value = insn[span]
+        value = insn[span].to_signed_int()
+        sign = "-" if (value < 0) else ""
+        value = (abs(value) << self.nz)
 
         if verbosity >= Verbosity.VERBOSE:
             span = (tuple(map(str, span)) + (("{0}",) * self.nz))
@@ -1476,12 +1486,10 @@ class EXTSOperand(SignedOperand):
             hint = f"{self.name} = EXTS({self.field} || {zeros})"
             yield f"{indent * 1}{hint}"
             yield f"{indent * 2}{self.field}"
-            yield f"{indent * 3}{int(value):0{value.bits}b}{zeros}"
+            yield f"{indent * 3}{sign}{value:{self.fmt}}"
             yield f"{indent * 3}{', '.join(span)}"
         else:
-            value = _selectconcat(value,
-                _SelectableInt(value=0, bits=self.nz)).to_signed_int()
-            yield f"{value:{self.fmt}}"
+            yield f"{sign}{value:{self.fmt}}"
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -1527,7 +1535,9 @@ class DOperandDX(SignedOperand):
     def disassemble(self, insn,
             verbosity=Verbosity.NORMAL, indent=""):
         span = self.span
-        value = insn[span]
+        value = insn[span].to_signed_int()
+        sign = "-" if (value < 0) else ""
+        value = abs(value)
 
         if verbosity >= Verbosity.VERBOSE:
             yield f"{indent}D"
@@ -1539,13 +1549,12 @@ class DOperandDX(SignedOperand):
             for (subname, subspan) in mapping.items():
                 operand = DynamicOperand(name=subname)
                 span = operand.span
-                value = insn[span]
                 span = map(str, span)
                 yield f"{indent}{indent}{operand.name} = D{subspan}"
-                yield f"{indent}{indent}{indent}{int(value):0{value.bits}b}"
+                yield f"{indent}{indent}{indent}{sign}{value}"
                 yield f"{indent}{indent}{indent}{', '.join(span)}"
         else:
-            yield str(value.to_signed_int())
+            yield f"{sign}{value}"
 
 
 class Instruction(_Mapping):
