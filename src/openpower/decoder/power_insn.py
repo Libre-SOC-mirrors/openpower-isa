@@ -2751,7 +2751,7 @@ class SpecifierXZ(Specifier):
 
     @classmethod
     def match(cls, desc, record, etalon, hint):
-        if not desc != etalon:
+        if desc != etalon:
             return None
 
         return cls(desc=desc, record=record, hint=hint)
@@ -2826,7 +2826,7 @@ class SpecifierEls(Specifier):
 class SpecifierSEA(Specifier):
     @classmethod
     def match(cls, desc, record):
-        if desc != "els":
+        if desc != "sea":
             return None
 
         return cls(record=record)
@@ -2843,7 +2843,7 @@ class SpecifierSEA(Specifier):
         rm = insn.prefix.rm.select(record=self.record)
         if rm.mode.sel not in (0b00, 0b01):
             raise ValueError("sea is only valid for normal and els modes")
-        rm.sea = 1
+        rm.SEA = 1
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2865,7 +2865,7 @@ class SpecifierSat(Specifier):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierSatS(Specifier):
+class SpecifierSatS(SpecifierSat):
     @classmethod
     def match(cls, desc, record):
         return super().match(desc=desc, record=record,
@@ -2873,7 +2873,7 @@ class SpecifierSatS(Specifier):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierSatU(Specifier):
+class SpecifierSatU(SpecifierSat):
     @classmethod
     def match(cls, desc, record):
         return super().match(desc=desc, record=record,
@@ -3011,7 +3011,7 @@ class SpecifierVS(SpecifierBranch):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierVSi(SpecifierVS):
+class SpecifierVSi(SpecifierBranch):
     @classmethod
     def match(cls, desc, record):
         return super().match(desc=desc, record=record, etalon="vsi")
@@ -3024,7 +3024,7 @@ class SpecifierVSi(SpecifierVS):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierVSb(SpecifierVS):
+class SpecifierVSb(SpecifierBranch):
     @classmethod
     def match(cls, desc, record):
         return super().match(desc=desc, record=record, etalon="vsb")
@@ -3037,7 +3037,7 @@ class SpecifierVSb(SpecifierVS):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierVSbi(SpecifierVS):
+class SpecifierVSbi(SpecifierBranch):
     @classmethod
     def match(cls, desc, record):
         return super().match(desc=desc, record=record, etalon="vsbi")
@@ -3050,7 +3050,7 @@ class SpecifierVSbi(SpecifierVS):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierCTR(SpecifierVS):
+class SpecifierCTR(SpecifierBranch):
     @classmethod
     def match(cls, desc, record):
         if desc != "ctr":
@@ -3064,7 +3064,7 @@ class SpecifierCTR(SpecifierVS):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierCTi(SpecifierVS):
+class SpecifierCTi(SpecifierBranch):
     @classmethod
     def match(cls, desc, record):
         if desc != "cti":
@@ -3121,6 +3121,7 @@ class Specifiers(tuple):
         SpecifierSZ,
         SpecifierDZ,
         SpecifierEls,
+        SpecifierSEA,
         SpecifierSatS,
         SpecifierSatU,
         SpecifierMR,
