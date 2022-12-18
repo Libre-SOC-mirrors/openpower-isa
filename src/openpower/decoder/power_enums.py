@@ -407,14 +407,10 @@ class SVP64PredRC1(Enum):
 
     @classmethod
     def _missing_(cls, desc):
-        if isinstance(desc, str):
-            value = desc.upper()
-            if value.startswith("~"):
-                value = f"~{value[1:].strip()}"
-
-            return cls.__members__.get(value)
-
-        return super()._missing_(desc)
+        return {
+            "RC1": SVP64PredRC1.RC1,
+            "~RC1": SVP64PredRC1.RC1_N,
+        }.get(desc)
 
     def __int__(self):
         return 1
