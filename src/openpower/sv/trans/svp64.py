@@ -254,7 +254,7 @@ class SVP64Asm:
         opcode = ls[0]
         # now find opcode fields
         fields = ''.join(ls[1:]).split(',')
-        mfields = list(map(str.strip, fields))
+        mfields = list(filter(bool, map(str.strip, fields)))
         log("opcode, fields", ls, opcode, mfields)
         fields = []
         # macro substitution
