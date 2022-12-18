@@ -582,16 +582,16 @@ class RegType(Enum):
     FRS = FPR
     FRT = FPR
 
-    CR_5BIT = 2 # CR field; the CR register is 32-bit
-    BF = CR_5BIT
-    BFA = CR_5BIT
+    CR_3BIT = 2 # CR field; the CR register is 32-bit
+    BF = CR_3BIT
+    BFA = CR_3BIT
 
-    CR_3BIT = 3 # bit of the 32-bit CR register
-    BA = CR_3BIT
-    BB = CR_3BIT
-    BC = CR_3BIT
-    BI = CR_3BIT
-    BT = CR_3BIT
+    CR_5BIT = 3 # bit of the 32-bit CR register
+    BA = CR_5BIT
+    BB = CR_5BIT
+    BC = CR_5BIT
+    BI = CR_5BIT
+    BT = CR_5BIT
 
     XER_BIT = 4   # XER bits, includes OV, OV32, SO, CA, CA32
     OV = XER_BIT
