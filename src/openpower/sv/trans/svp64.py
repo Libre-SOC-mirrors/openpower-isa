@@ -30,6 +30,7 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.consts import SVP64MODE
 from openpower.decoder.power_insn import SVP64Instruction
 from openpower.decoder.power_insn import Database
+from openpower.decoder.power_insn import Style
 from openpower.decoder.power_insn import WordInstruction
 from openpower.decoder.power_enums import find_wiki_dir
 
@@ -248,7 +249,10 @@ class SVP64Asm:
         macros.update(self.macros)
         isa = self.isa
         svp64 = self.svp64
-        insn_no_comments = insn.partition('#')[0]
+        insn_no_comments = insn.partition('#')[0].strip()
+        if not insn_no_comments:
+            return
+
         # find first space, to get opcode
         ls = insn_no_comments.split()
         opcode = ls[0]
@@ -268,7 +272,7 @@ class SVP64Asm:
             record = DB[opcode]
         if record is not None:
             insn = WordInstruction.assemble(db=DB,
-                opcode=opcode, arguments=fields)
+                entry=opcode, arguments=fields)
             yield " ".join((
                 f".long 0x{int(insn):08X}",
                 "#",
@@ -298,18 +302,13 @@ class SVP64Asm:
             record = DB[v30b_op]
         if record is not None:
             insn = SVP64Instruction.assemble(db=DB,
-                opcode=v30b_op_orig,
+                entry=v30b_op_orig,
                 arguments=fields,
                 specifiers=opmodes)
             prefix = int(insn.prefix)
             suffix = int(insn.suffix)
-            yield " ".join((
-                f".long 0x{prefix:08X};",
-                f".long 0x{suffix:08X};",
-                "#",
-                opcode,
-                ",".join(fields),
-            ))
+            yield f".long 0x{prefix:08X}"
+            yield from insn.suffix.disassemble(db=DB, style=Style.SHORT)
             return
 
         # look up the 32-bit op (original, with "." if it has it)
@@ -957,7 +956,7 @@ class SVP64Asm:
             record = DB[opcode]
         if record is not None:
             insn = WordInstruction.assemble(db=DB,
-                opcode=opcode, arguments=fields)
+                entry=opcode, arguments=fields)
             yield " ".join((
                 f".long 0x{int(insn):08X}",
                 "#",
@@ -1067,11 +1066,10 @@ def asm_process():
             macro = op[4:].split(",")
             (macro, value) = map(str.strip, macro)
             macros[macro] = value
-        record = DB[op]
-        if not op.startswith('sv.') and record is None:
+
+        if not op or op.startswith("#"):
             outfile.write(line)
             continue
-
         (ws, line) = get_ws(line)
         lst = isa.translate_one(op, macros)
         lst = '; '.join(lst)

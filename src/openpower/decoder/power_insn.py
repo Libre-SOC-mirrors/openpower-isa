@@ -3,7 +3,6 @@ import csv as _csv
 import dataclasses as _dataclasses
 import enum as _enum
 import functools as _functools
-import itertools as _itertools
 import os as _os
 import operator as _operator
 import pathlib as _pathlib
@@ -56,7 +55,7 @@ from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 
 @_functools.total_ordering
-class Verbosity(_enum.Enum):
+class Style(_enum.Enum):
     SHORT = _enum.auto()
     NORMAL = _enum.auto()
     VERBOSE = _enum.auto()
@@ -170,6 +169,8 @@ class Opcode:
         return ((self.value & self.mask) == (key & self.mask))
 
 
+@_functools.total_ordering
+@_dataclasses.dataclass(eq=True, frozen=True)
 class IntegerOpcode(Opcode):
     def __init__(self, value):
         if value.startswith("0b"):
@@ -183,6 +184,8 @@ class IntegerOpcode(Opcode):
         return super().__init__(value=value, mask=mask)
 
 
+@_functools.total_ordering
+@_dataclasses.dataclass(eq=True, frozen=True)
 class PatternOpcode(Opcode):
     def __init__(self, pattern):
         if not isinstance(pattern, str):
@@ -222,13 +225,13 @@ class PPCRecord:
                 "sgl pipe",
             )
 
-    class Flags(frozenset, metaclass=FlagsMeta):
+    class Flags(tuple, metaclass=FlagsMeta):
         def __new__(cls, flags=frozenset()):
             flags = frozenset(flags)
             diff = (flags - frozenset(cls))
             if diff:
                 raise ValueError(flags)
-            return super().__new__(cls, flags)
+            return super().__new__(cls, sorted(flags))
 
     opcode: Opcode
     comment: str
@@ -297,7 +300,8 @@ class PPCRecord:
 class PPCMultiRecord(tuple):
     def __getattr__(self, attr):
         if attr == "opcode":
-            raise AttributeError(attr)
+            if len(self) != 1:
+                raise AttributeError(attr)
         return getattr(self[0], attr)
 
 
@@ -448,18 +452,25 @@ class SVP64Record:
     extra_reg_cr_in2 = property(_functools.partial(extra_reg, key="cr_in2"))
     extra_reg_cr_out = property(_functools.partial(extra_reg, key="cr_out"))
 
-    @property
-    def cr_3bit(self):
-        regtype = None
+    @cached_property
+    def extra_CR(self):
+        extra = None
         for idx in range(0, 4):
-            for entry in self.svp64.extra[idx]:
+            for entry in self.extra[idx]:
                 if entry.regtype is _SVExtraRegType.DST:
-                    if regtype is not None:
+                    if extra is not None:
                         raise ValueError(self.svp64)
-                    regtype = _RegType(entry.reg)
-        if regtype not in (_RegType.CR_5BIT, _RegType.CR_3BIT):
+                    extra = entry
+                    break
+
+        if _RegType(extra.reg) not in (_RegType.CR_3BIT, _RegType.CR_5BIT):
             raise ValueError(self.svp64)
-        return (regtype is _RegType.CR_3BIT)
+
+        return extra
+
+    @cached_property
+    def extra_CR_3bit(self):
+        return (_RegType(self.extra_CR.reg) is _RegType.CR_3BIT)
 
 
 class BitSel:
@@ -664,10 +675,10 @@ class Operands:
                             cls = GPROperand
                         elif regtype is _RegType.FPR:
                             cls = FPROperand
-                        elif regtype is _RegType.CR_5BIT:
-                            cls = CR5Operand
                         elif regtype is _RegType.CR_3BIT:
                             cls = CR3Operand
+                        elif regtype is _RegType.CR_5BIT:
+                            cls = CR5Operand
 
                 if imm_name is not None:
                     mapping[imm_name] = (imm_cls, {"name": imm_name})
@@ -715,8 +726,8 @@ class Operands:
 
 
 class Arguments(tuple):
-    def __new__(cls, arguments, operands):
-        iterable = iter(tuple(arguments))
+    def __new__(cls, fields, operands):
+        iterable = iter(tuple(fields))
         operands = iter(tuple(operands))
         arguments = []
 
@@ -731,7 +742,8 @@ class Arguments(tuple):
             except StopIteration:
                 raise ValueError("operands count mismatch")
 
-            if isinstance(operand, ImmediateOperand):
+            (op_cls, _) = operand
+            if issubclass(op_cls, ImmediateOperand):
                 argument = argument.replace("(", " ").replace(")", "")
                 (imm_argument, _, argument) = argument.partition(" ")
                 try:
@@ -786,81 +798,76 @@ class Record:
         rhs = (min(other.opcodes), other.name)
         return (lhs < rhs)
 
-    @cached_property
-    def PO(self):
-        PO = self.section.opcode
-        if PO is None:
-            assert len(self.ppc) == 1
-            PO = self.ppc[0].opcode
-
-        return POStaticOperand(record=self,
-            name="PO", value=int(PO.value), mask=int(PO.mask))
-
-    @cached_property
-    def XO(self):
-        def XO(ppc):
-            XO = ppc.opcode
-            PO = self.section.opcode
-            if PO is None:
-                PO = XO
-                XO = None
-
-            if XO is None:
-                return XOStaticOperand(record=self,
-                    name="XO", value=0, mask=0)
-            else:
-                return XOStaticOperand(record=self,
-                    name="XO", value=int(XO.value), mask=int(XO.mask))
-
-        return tuple(dict.fromkeys(map(XO, self.ppc)))
-
-    @cached_property
+    @property
     def static_operands(self):
-        operands = []
+        def XO(ppc):
+            return (XOStaticOperand, {
+                "span": self.section.bitsel,
+                "value": ppc.opcode.value,
+            })
 
-        operands.append(self.PO)
-        operands.extend(self.XO)
-
-        for (cls, kwargs) in self.mdwn.operands.static:
-            operands.append(cls(record=self, **kwargs))
-
-        return tuple(operands)
-
-    @cached_property
-    def dynamic_operands(self):
-        operands = []
-
-        for (cls, kwargs) in self.mdwn.operands.dynamic:
-            operands.append(cls(record=self, **kwargs))
-
-        return tuple(operands)
+        yield (POStaticOperand, {"value": self.PO})
+        yield from map(XO, self.ppc)
+        yield from self.mdwn.operands.static
 
     @property
+    def dynamic_operands(self):
+        yield from self.mdwn.operands.dynamic
+
+    @cached_property
     def opcodes(self):
-        bits = 32
-        if self.svp64 is not None:
-            bits = 64
-        origin_value = ([0] * bits)
-        origin_mask = ([0] * bits)
+        def binary(mapping):
+            return int("".join(str(int(mapping[bit])) for bit in sorted(mapping)), 2)
 
-        for operand in ((self.PO,) + tuple(self.static_operands)):
-            for (src, dst) in enumerate(reversed(operand.span)):
-                origin_value[dst] = int((operand.value & (1 << src)) != 0)
-                origin_mask[dst] = 1
+        def PO_XO(value, mask, opcode, bits):
+            value = dict(value)
+            mask = dict(mask)
+            for (src, dst) in enumerate(reversed(bits)):
+                value[dst] = ((opcode.value & (1 << src)) != 0)
+                mask[dst] = ((opcode.mask & (1 << src)) != 0)
+            return (value, mask)
 
-        def opcode(XO):
-            value = list(origin_value)
-            mask = list(origin_mask)
-            for (src, dst) in enumerate(reversed(XO.span)):
-                value[dst] = int((XO.value & (1 << src)) != 0)
-                mask[dst] = 1
+        def PO(value, mask, opcode, bits):
+            return PO_XO(value=value, mask=mask, opcode=opcode, bits=bits)
 
-            value = Opcode.Value(int(("".join(map(str, value))), 2))
-            mask = Opcode.Mask(int(("".join(map(str, mask))), 2))
+        def XO(value, mask, opcode, bits):
+            (value, mask) = PO_XO(value=value, mask=mask, opcode=opcode, bits=bits)
+            for (op_cls, op_kwargs) in self.mdwn.operands.static:
+                operand = op_cls(record=self, **op_kwargs)
+                for (src, dst) in enumerate(reversed(operand.span)):
+                    value[dst] = ((operand.value & (1 << src)) != 0)
+                    mask[dst] = True
+            return (value, mask)
 
-            return Opcode(value=value, mask=mask)
+        pairs = []
+        value = {bit:False for bit in range(32)}
+        mask = {bit:False for bit in range(32)}
+        if self.section.opcode is not None:
+            (value, mask) = PO(value=value, mask=mask,
+                opcode=self.section.opcode, bits=range(0, 6))
+        for ppc in self.ppc:
+            pairs.append(XO(value=value, mask=mask,
+                opcode=ppc.opcode, bits=self.section.bitsel))
 
-        return tuple(dict.fromkeys(map(opcode, self.XO)))
+        result = []
+        for (value, mask) in pairs:
+            value = Opcode.Value(binary(value))
+            mask = Opcode.Mask(binary(mask))
+            result.append(Opcode(value=value, mask=mask))
+
+        return tuple(result)
+
+    @cached_property
+    def PO(self):
+        opcode = self.section.opcode
+        if opcode is None:
+            opcode = self.ppc[0].opcode
+            if isinstance(opcode, PatternOpcode):
+                value = int(opcode.value)
+                bits = opcode.value.bit_length()
+                return int(_SelectableInt(value=value, bits=bits)[0:6])
+
+        return int(opcode.value)
 
     def match(self, key):
         for opcode in self.opcodes:
@@ -936,20 +943,25 @@ class Record:
         return self["Rc"].value
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class Operand:
-    name: str
-    record: Record = _dataclasses.field(repr=False)
+    def __init__(self, record, name):
+        self.__record = record
+        self.__name = name
 
-    def __post_init__(self):
-        pass
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.name})"
+
+    @property
+    def name(self):
+        return self.__name
+
+    @property
+    def record(self):
+        return self.__record
 
     @cached_property
     def span(self):
-        span = self.record.fields[self.name]
-        if self.record.svp64 is not None:
-            span = tuple(map(lambda bit: (bit + 32), span))
-        return span
+        return self.record.fields[self.name]
 
     def assemble(self, value, insn):
         span = self.span
@@ -960,18 +972,17 @@ class Operand:
         insn[span] = value
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
-        raise NotImplementedError
+            style=Style.NORMAL, indent=""):
+        raise NotImplementedError()
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class DynamicOperand(Operand):
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
+            style=Style.NORMAL, indent=""):
         span = self.span
         value = insn[span]
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             span = map(str, span)
             yield f"{indent}{self.name}"
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
@@ -980,7 +991,6 @@ class DynamicOperand(Operand):
             yield str(int(value))
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class SignedOperand(DynamicOperand):
     def assemble(self, value, insn):
         if isinstance(value, str):
@@ -994,13 +1004,13 @@ class SignedOperand(DynamicOperand):
         insn[span] = value
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
+            style=Style.NORMAL, indent=""):
         span = self.span
         value = insn[span].to_signed_int()
         sign = "-" if (value < 0) else ""
         value = abs(value)
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             span = map(str, span)
             yield f"{indent}{self.name}"
             yield f"{indent}{indent}{sign}{value}"
@@ -1009,19 +1019,27 @@ class SignedOperand(DynamicOperand):
             yield f"{sign}{value}"
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class StaticOperand(Operand):
-    value: int
+    def __init__(self, record, name, value):
+        self.__value = value
+        return super().__init__(record=record, name=name)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.name}, value={self.value})"
+
+    @property
+    def value(self):
+        return self.__value
 
     def assemble(self, insn):
         return super().assemble(value=self.value, insn=insn)
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
+            style=Style.NORMAL, indent=""):
         span = self.span
         value = insn[span]
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             span = map(str, span)
             yield f"{indent}{self.name}"
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
@@ -1030,77 +1048,55 @@ class StaticOperand(Operand):
             yield str(int(value))
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class POStaticOperand(StaticOperand):
-    mask: int
+class SpanStaticOperand(StaticOperand):
+    def __init__(self, record, name, value, span):
+        self.__span = span
+        return super().__init__(record=record, name=name, value=value)
 
-    @cached_property
+    @property
     def span(self):
-        span = tuple(range(0, 6))
-        if self.record.svp64 is not None:
-            span = tuple(map(lambda bit: (bit + 32), span))
-        return span
+        return self.__span
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class XOStaticOperand(StaticOperand):
-    mask: int
+class POStaticOperand(SpanStaticOperand):
+    def __init__(self, record, value):
+        return super().__init__(record=record, name="PO", value=value, span=range(0, 6))
 
-    def __post_init__(self):
-        if self.record.section.opcode is None:
-            assert self.value == 0
-            assert self.mask == 0
-            object.__setattr__(self, "span", ())
-            return
 
-        bits = self.record.section.bitsel
-        value = _SelectableInt(value=self.value, bits=len(bits))
+class XOStaticOperand(SpanStaticOperand):
+    def __init__(self, record, value, span):
+        bits = record.section.bitsel
+        value = _SelectableInt(value=value, bits=len(bits))
         span = dict(zip(bits, range(len(bits))))
         span_rev = {value:key for (key, value) in span.items()}
 
-        # This part is tricky: we could have used self.record.static_operands,
+        # This part is tricky: we could have used record.static_operands,
         # but this would cause an infinite recursion, since this code is called
-        # from the self.record.static_operands method already.
+        # from the record.static_operands method already.
         operands = []
-        operands.extend(self.record.mdwn.operands.static)
-        operands.extend(self.record.mdwn.operands.dynamic)
+        operands.extend(record.mdwn.operands.static)
+        operands.extend(record.mdwn.operands.dynamic)
         for (cls, kwargs) in operands:
-            operand = cls(record=self.record, **kwargs)
+            operand = cls(record=record, **kwargs)
             for idx in operand.span:
                 rev = span.pop(idx, None)
                 if rev is not None:
                     span_rev.pop(rev, None)
 
-        # This part is simpler: we drop bits which are not in the mask.
-        for bit in tuple(span.values()):
-            rev = (len(bits) - bit - 1)
-            if ((self.mask & (1 << bit)) == 0):
-                idx = span_rev.pop(rev, None)
-                if idx is not None:
-                    span.pop(idx, None)
-
         value = int(_selectconcat(*(value[bit] for bit in span.values())))
         span = tuple(span.keys())
-        if self.record.svp64 is not None:
-            span = tuple(map(lambda bit: (bit + 32), span))
 
-        object.__setattr__(self, "value", value)
-        object.__setattr__(self, "span", span)
-
-        return super().__post_init__()
+        return super().__init__(record=record, name="XO", value=value, span=span)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class ImmediateOperand(DynamicOperand):
     pass
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class SignedImmediateOperand(SignedOperand, ImmediateOperand):
     pass
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class NonZeroOperand(DynamicOperand):
     def assemble(self, value, insn):
         if isinstance(value, str):
@@ -1111,11 +1107,11 @@ class NonZeroOperand(DynamicOperand):
         return super().assemble(value=value, insn=insn)
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
+            style=Style.NORMAL, indent=""):
         span = self.span
         value = insn[span]
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             span = map(str, span)
             yield f"{indent}{self.name}"
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
@@ -1124,7 +1120,6 @@ class NonZeroOperand(DynamicOperand):
             yield str(int(value) + 1)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class ExtendableOperand(DynamicOperand):
     def sv_spec_enter(self, value, span):
         return (value, span)
@@ -1215,7 +1210,7 @@ class ExtendableOperand(DynamicOperand):
         return _SVExtra.NONE
 
     def remap(self, value, vector):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def assemble(self, value, insn, prefix):
         vector = False
@@ -1252,10 +1247,10 @@ class ExtendableOperand(DynamicOperand):
         return super().assemble(value=value, insn=insn)
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, prefix="", indent=""):
+            style=Style.NORMAL, prefix="", indent=""):
         (vector, value, span) = self.spec(insn=insn)
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             mode = "vector" if vector else "scalar"
             yield f"{indent}{self.name} ({mode})"
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
@@ -1272,7 +1267,6 @@ class ExtendableOperand(DynamicOperand):
             yield f"{vector}{prefix}{int(value)}"
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class SimpleRegisterOperand(ExtendableOperand):
     def remap(self, value, vector):
         if vector:
@@ -1305,41 +1299,36 @@ class SimpleRegisterOperand(ExtendableOperand):
         return (value, extra)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class GPROperand(SimpleRegisterOperand):
     def assemble(self, value, insn):
         return super().assemble(value=value, insn=insn, prefix="r")
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
-        prefix = "" if (verbosity <= Verbosity.SHORT) else "r"
+            style=Style.NORMAL, indent=""):
+        prefix = "" if (style <= Style.SHORT) else "r"
         yield from super().disassemble(prefix=prefix, insn=insn,
-            verbosity=verbosity, indent=indent)
+            style=style, indent=indent)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class GPRPairOperand(GPROperand):
     pass
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class FPROperand(SimpleRegisterOperand):
     def assemble(self, value, insn):
         return super().assemble(value=value, insn=insn, prefix="f")
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
-        prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
+            style=Style.NORMAL, indent=""):
+        prefix = "" if (style <= Style.SHORT) else "f"
         yield from super().disassemble(prefix=prefix, insn=insn,
-            verbosity=verbosity, indent=indent)
+            style=style, indent=indent)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class FPRPairOperand(FPROperand):
     pass
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class ConditionRegisterFieldOperand(ExtendableOperand):
     def pattern(name_pattern):
         (name, pattern) = name_pattern
@@ -1375,34 +1364,34 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
 
     def remap(self, value, vector, regtype):
         if regtype is _RegType.CR_5BIT:
-            subvalue = (value & 0x3)
+            subvalue = (value & 0b11)
             value >>= 2
 
         if vector:
-            extra = (value & 0xf)
+            extra = (value & 0b1111)
             value >>= 4
         else:
             extra = (value >> 3)
-            value &= 0x7
+            value &= 0b111
 
         if self.record.etype is _SVEType.EXTRA2:
             if vector:
-                assert (extra & 0x7) == 0, \
+                assert (extra & 0b111) == 0, \
                     "vector CR cannot fit into EXTRA2"
-                extra = (0x2 | (extra >> 3))
+                extra = (0b10 | (extra >> 3))
             else:
                 assert (extra >> 1) == 0, \
                     "scalar CR cannot fit into EXTRA2"
-                extra &= 0x1
+                extra &= 0b01
         elif self.record.etype is _SVEType.EXTRA3:
             if vector:
-                assert (extra & 0x3) == 0, \
+                assert (extra & 0b11) == 0, \
                     "vector CR cannot fit into EXTRA3"
-                extra = (0x4 | (extra >> 2))
+                extra = (0b100 | (extra >> 2))
             else:
                 assert (extra >> 2) == 0, \
                     "scalar CR cannot fit into EXTRA3"
-                extra &= 0x3
+                extra &= 0b11
 
         if regtype is _RegType.CR_5BIT:
             value = ((value << 2) | subvalue)
@@ -1434,13 +1423,17 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
                     value = ((CR * N) + BIT)
                     break
 
+            value = str(value)
+            if vector:
+                value = f"*{value}"
+
         return super().assemble(value=value, insn=insn, prefix="cr")
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, prefix="", indent=""):
+            style=Style.NORMAL, prefix="", indent=""):
         (vector, value, span) = self.spec(insn=insn)
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             mode = "vector" if vector else "scalar"
             yield f"{indent}{self.name} ({mode})"
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
@@ -1454,29 +1447,27 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
                     yield f"{indent}{indent}{etype}{extra_idx!r}"
         else:
             vector = "*" if vector else ""
-            cr = int(value >> 2)
-            cc = int(value & 3)
-            cond = ("lt", "gt", "eq", "so")[cc]
-            if verbosity >= Verbosity.NORMAL:
-                if cr != 0:
+            CR = int(value >> 2)
+            CC = int(value & 3)
+            cond = ("lt", "gt", "eq", "so")[CC]
+            if style >= Style.NORMAL:
+                if CR != 0:
                     if isinstance(insn, SVP64Instruction):
-                        yield f"{vector}cr{cr}.{cond}"
+                        yield f"{vector}cr{CR}.{cond}"
                     else:
-                        yield f"4*cr{cr}+{cond}"
+                        yield f"4*cr{CR}+{cond}"
                 else:
                     yield cond
             else:
                 yield f"{vector}{prefix}{int(value)}"
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class CR3Operand(ConditionRegisterFieldOperand):
     def remap(self, value, vector):
         return super().remap(value=value, vector=vector,
             regtype=_RegType.CR_3BIT)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class CR5Operand(ConditionRegisterFieldOperand):
     def remap(self, value, vector):
         return super().remap(value=value, vector=vector,
@@ -1492,22 +1483,32 @@ class CR5Operand(ConditionRegisterFieldOperand):
         return (value, span)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class EXTSOperand(SignedOperand):
     field: str # real name to report
     nz: int = 0 # number of zeros
     fmt: str = "d" # integer formatter
 
-    def __post_init__(self):
-        if not self.field:
-            object.__setattr__(self, "field", self.name)
+    def __init__(self, record, name, field, nz=0, fmt="d"):
+        self.__field = field
+        self.__nz = nz
+        self.__fmt = fmt
+        return super().__init__(record=record, name=name)
+
+    @property
+    def field(self):
+        return self.__field
+
+    @property
+    def nz(self):
+        return self.__nz
+
+    @property
+    def fmt(self):
+        return self.__fmt
 
     @cached_property
     def span(self):
-        span = self.record.fields[self.field]
-        if self.record.svp64 is not None:
-            span = tuple(map(lambda bit: (bit + 32), span))
-        return span
+        return self.record.fields[self.field]
 
     def assemble(self, value, insn):
         span = self.span
@@ -1516,13 +1517,13 @@ class EXTSOperand(SignedOperand):
         insn[span] = (value >> self.nz)
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
+            style=Style.NORMAL, indent=""):
         span = self.span
         value = insn[span].to_signed_int()
         sign = "-" if (value < 0) else ""
         value = (abs(value) << self.nz)
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             span = (tuple(map(str, span)) + (("{0}",) * self.nz))
             zeros = ("0" * self.nz)
             hint = f"{self.name} = EXTS({self.field} || {zeros})"
@@ -1534,54 +1535,47 @@ class EXTSOperand(SignedOperand):
             yield f"{sign}{value:{self.fmt}}"
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class TargetAddrOperand(EXTSOperand):
-    nz: int = 2
-    fmt: str = "#x"
+    def __init__(self, record, name, field):
+        return super().__init__(record=record, name=name, field=field, nz=2, fmt="#x")
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class TargetAddrOperandLI(TargetAddrOperand):
-    field: str = "LI"
+    def __init__(self, record, name):
+        return super().__init__(record=record, name=name, field="LI")
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class TargetAddrOperandBD(TargetAddrOperand):
-    field: str = "BD"
+    def __init__(self, record, name):
+        return super().__init__(record=record, name=name, field="BD")
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class EXTSOperandDS(EXTSOperand, ImmediateOperand):
-    field: str = "DS"
-    nz: int = 2
+    def __init__(self, record, name):
+        return super().__init__(record=record, name=name, field="DS", nz=2)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class EXTSOperandDQ(EXTSOperand, ImmediateOperand):
-    field: str = "DQ"
-    nz: int = 4
+    def __init__(self, record, name):
+        return super().__init__(record=record, name=name, field="DQ", nz=4)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
 class DOperandDX(SignedOperand):
     @cached_property
     def span(self):
         cls = lambda name: DynamicOperand(record=self.record, name=name)
         operands = map(cls, ("d0", "d1", "d2"))
         spans = map(lambda operand: operand.span, operands)
-        span = sum(spans, tuple())
-        if self.record.svp64 is not None:
-            span = tuple(map(lambda bit: (bit + 32), span))
-        return span
+        return sum(spans, tuple())
 
     def disassemble(self, insn,
-            verbosity=Verbosity.NORMAL, indent=""):
+            style=Style.NORMAL, indent=""):
         span = self.span
         value = insn[span].to_signed_int()
         sign = "-" if (value < 0) else ""
         value = abs(value)
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             yield f"{indent}D"
             mapping = {
                 "d0": "[0:9]",
@@ -1653,7 +1647,7 @@ class Instruction(_Mapping):
             self.dynamic_operands(db=db)))
 
         static_operands = []
-        for (name, value) in self.static_operands(db=db):
+        for (name, value) in record.static_operands:
             static_operands.append(f"{name}={value}")
 
         operands = ""
@@ -1666,16 +1660,23 @@ class Instruction(_Mapping):
 
         return f"{prefix}{record.name}{operands}"
 
-    def dynamic_operands(self, db, verbosity=Verbosity.NORMAL):
+    def static_operands(self, db):
+        record = self.record(db=db, entry=self)
+        for (op_cls, op_kwargs) in record.static_operands:
+            operand = op_cls(record=record, **op_kwargs)
+            yield (operand.name, operand.value)
+
+    def dynamic_operands(self, db, style=Style.NORMAL):
         record = self.record(db=db, entry=self)
 
         imm = False
         imm_name = ""
         imm_value = ""
-        for operand in record.dynamic_operands:
+        for (op_cls, op_kwargs) in record.dynamic_operands:
+            operand = op_cls(record=record, **op_kwargs)
             name = operand.name
             value = " ".join(operand.disassemble(insn=self,
-                verbosity=min(verbosity, Verbosity.NORMAL)))
+                style=min(style, Style.NORMAL)))
             if imm:
                 name = f"{imm_name}({name})"
                 value = f"{imm_value}({value})"
@@ -1687,19 +1688,14 @@ class Instruction(_Mapping):
             if not imm:
                 yield (name, value)
 
-    def static_operands(self, db):
-        record = self.record(db=db, entry=self)
-        for operand in record.static_operands:
-            yield (operand.name, operand.value)
-
     @classmethod
-    def assemble(cls, db, opcode, arguments=None):
-        raise NotImplementedError(f"{cls.__name__}.assemble")
+    def assemble(cls, db, entry, arguments=None):
+        raise NotImplementedError()
 
     def disassemble(self, db,
             byteorder="little",
-            verbosity=Verbosity.NORMAL):
-        raise NotImplementedError
+            style=Style.NORMAL):
+        raise NotImplementedError()
 
 
 class WordInstruction(Instruction):
@@ -1724,25 +1720,38 @@ class WordInstruction(Instruction):
         return "".join(map(str, bits))
 
     @classmethod
-    def assemble(cls, db, opcode, arguments=None):
+    def assemble(cls, db, entry, arguments=None, specifiers=None):
         if arguments is None:
             arguments = ()
+        if specifiers is None:
+            specifiers = ()
 
-        record = cls.record(db=db, entry=opcode)
+        record = cls.record(db=db, entry=entry)
         insn = cls.integer(value=0)
-        for operand in record.static_operands:
+
+        opcode = record.section.opcode
+        if opcode is None:
+            opcode = record.ppc.opcode
+        bits = record.section.bitsel
+        for (src, dst) in enumerate(reversed(bits)):
+            insn[dst] = ((opcode.value & (1 << src)) != 0)
+
+        for (op_cls, op_kwargs) in record.static_operands:
+            operand = op_cls(record=record, **op_kwargs)
             operand.assemble(insn=insn)
 
         dynamic_operands = tuple(record.dynamic_operands)
-        for (value, operand) in Arguments(arguments, dynamic_operands):
+        for (value, (op_cls, op_kwargs)) in Arguments(arguments, dynamic_operands):
+            operand = op_cls(record=record, **op_kwargs)
             operand.assemble(value=value, insn=insn)
 
         return insn
 
     def disassemble(self, db,
             byteorder="little",
-            verbosity=Verbosity.NORMAL):
-        if verbosity <= Verbosity.SHORT:
+            style=Style.NORMAL,
+            compatibility=False):
+        if style <= Style.SHORT:
             blob = ""
         else:
             blob = self.bytes(byteorder=byteorder)
@@ -1755,14 +1764,14 @@ class WordInstruction(Instruction):
             return
 
         operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db, verbosity=verbosity)))
+            self.dynamic_operands(db=db, style=style)))
         if operands:
             operands = ",".join(operands)
             yield f"{blob}{record.name} {operands}"
         else:
             yield f"{blob}{record.name}"
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
             spec = self.spec(db=db, prefix="")
@@ -1782,7 +1791,7 @@ class WordInstruction(Instruction):
             for (cls, kwargs) in record.mdwn.operands:
                 operand = cls(record=record, **kwargs)
                 yield from operand.disassemble(insn=self,
-                    verbosity=verbosity, indent=indent)
+                    style=style, indent=indent)
             yield ""
 
 
@@ -1886,8 +1895,8 @@ class BaseRM(_Mapping):
                 3: "vec4",
             }[subvl]
 
-    def disassemble(self, verbosity=Verbosity.NORMAL):
-        if verbosity >= Verbosity.VERBOSE:
+    def disassemble(self, style=Style.NORMAL):
+        if style >= Style.VERBOSE:
             indent = (" " * 4)
             for (name, span) in self.traverse(path="RM"):
                 value = self.storage[span]
@@ -2311,7 +2320,7 @@ class CROpBaseRM(BaseRM):
 
 
 class CROpSimpleRM(PredicateBaseRM, ZZCombinedBaseRM, CROpBaseRM):
-    """cr_op: simple mode"""
+    """crop: simple mode"""
     RG: BaseRM[20]
     dz: BaseRM[22]
     sz: BaseRM[23]
@@ -2322,36 +2331,55 @@ class CROpSimpleRM(PredicateBaseRM, ZZCombinedBaseRM, CROpBaseRM):
 
         yield from super().specifiers(record=record)
 
+
 class CROpMRRM(MRBaseRM, ZZCombinedBaseRM, CROpBaseRM):
-    """cr_op: scalar reduce mode (mapreduce), SUBVL=1"""
+    """crop: scalar reduce mode (mapreduce), SUBVL=1"""
     RG: BaseRM[20]
     dz: BaseRM[22]
     sz: BaseRM[23]
 
 
-class CROpFF3RM(FFPRRc1BaseRM, VLiBaseRM, ZZBaseRM, PredicateBaseRM, CROpBaseRM):
-    """cr_op: ffirst 3-bit mode"""
+class CROpFF3RM(FFPRRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+    """crop: ffirst 3-bit mode"""
+    RC1: BaseRM[19]
     VLi: BaseRM[20]
     inv: BaseRM[21]
-    CR: BaseRM[22, 23]
-    zz: BaseRM[6]
-    sz: BaseRM[6]
-    dz: BaseRM[6]
+    dz: BaseRM[22]
+    sz: BaseRM[23]
 
     def specifiers(self, record):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class CROpFF5RM(FFPRRc0BaseRM, PredicateBaseRM,
-        VLiBaseRM, ZZCombinedBaseRM, CROpBaseRM):
+# FIXME: almost everything in this class contradicts the specs.
+# However, this is the direct translation of the pysvp64asm code.
+# Please revisit this code; there is an inactive sketch below.
+class CROpFF5RM(FFPRRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
     VLi: BaseRM[20]
     inv: BaseRM[21]
-    RC1: BaseRM[19] # cheat: set RC=1 based on ffirst mode being set
+    CR: BaseRM[22, 23]
     dz: BaseRM[22]
     sz: BaseRM[23]
 
     def specifiers(self, record):
+        # FIXME: this is a slightly hackish way.
+        # Ideally the class should be generated.
+        if False:
+            span = None
+            for (op_cls, op_kwargs) in record.dynamic_operands:
+                operand = op_cls(record=record, **op_kwargs)
+                if operand.name == record.svp64.extra_CR.reg.name:
+                    span = tuple(map(lambda bit: (bit + 32), operand.span))
+                    break
+
+            value = int(self.storage[span])
+            CR = int(value >> 2)
+            CC = int(value & 3)
+            if CR != 0:
+                cond = ("lt", "gt", "eq", "so")[CC]
+                yield f"ff={cond}"
+
         yield from super().specifiers(record=record, mode="ff")
 
 
@@ -2460,101 +2488,8 @@ class RM(BaseRM):
     normal: NormalRM
     ldst_imm: LDSTImmRM
     ldst_idx: LDSTIdxRM
-    cr_op: CROpRM
+    crop: CROpRM
     branch: BranchRM
-
-    def select(self, record):
-        rm = self
-        Rc = record.Rc
-
-        # the idea behind these tables is that they are now literally
-        # in identical format to insndb.csv and minor_xx.csv and can
-        # be done precisely as that.  the only thing to watch out for
-        # is the insertion of Rc=1 as a "mask/value" bit and likewise
-        # regtype detection (3-bit BF/BFA, 5-bit BA/BB/BT) also inserted
-        # as the LSB.
-        table = None
-        if record.svp64.mode is _SVMode.NORMAL:
-            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
-            #    mode  Rc  mask  Rc  member
-            table = (
-                (0b000000, 0b111000, "simple"), # simple     (no Rc)
-                (0b001000, 0b111000, "mr"),     # mapreduce  (no Rc)
-                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
-                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
-                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
-                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
-            )
-            rm = rm.normal
-            search = ((int(rm.mode) << 1) | Rc)
-
-        elif record.svp64.mode is _SVMode.LDST_IMM:
-            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
-            #    mode  Rc  mask  Rc  member
-            # ironically/coincidentally this table is identical to NORMAL
-            # mode except reserved in place of mr
-            table = (
-                (0b000000, 0b111000, "simple"), # simple     (no Rc)
-                (0b001000, 0b111000, "post"),   # post       (no Rc)
-                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
-                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
-                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
-            )
-            rm = rm.ldst_imm
-            search = ((int(rm.mode) << 1) | Rc)
-
-        elif record.svp64.mode is _SVMode.LDST_IDX:
-            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
-            #    mode  Rc  mask  Rc  member
-            table = (
-                (0b000000, 0b110000, "simple"), # simple     (no Rc)
-                (0b010000, 0b110000, "stride"), # strided,   (no Rc)
-                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
-            )
-            rm = rm.ldst_idx
-            search = ((int(rm.mode) << 1) | Rc)
-
-        elif record.svp64.mode is _SVMode.CROP:
-            # concatenate mode 5-bit with regtype (LSB) then do mask/map search
-            #    mode  3b  mask  3b  member
-            table = (
-                (0b000000, 0b111000, "simple"), # simple
-                (0b001000, 0b111000, "mr"),     # mapreduce
-                (0b100001, 0b100001, "ff3"),    # ffirst, 3-bit CR
-                (0b100000, 0b100000, "ff5"),    # ffirst, 5-bit CR
-            )
-            rm = rm.cr_op
-            search = ((int(rm.mode) << 1) | int(record.svp64.cr_3bit))
-
-        elif record.svp64.mode is _SVMode.BRANCH:
-            # just mode 2-bit
-            #    mode  mask  member
-            table = (
-                (0b00, 0b11, "simple"), # simple
-                (0b01, 0b11, "vls"),    # VLset
-                (0b10, 0b11, "ctr"),    # CTR mode
-                (0b11, 0b11, "ctrvls"), # CTR+VLset mode
-            )
-            # slightly weird: doesn't have a 5-bit "mode" field like others
-            rm = rm.branch
-            search = int(rm.mode.sel)
-
-        # look up in table
-        if table is not None:
-            for (value, mask, member) in table:
-                if ((value & mask) == (search & mask)):
-                    rm = getattr(rm, member)
-                    break
-
-        if rm.__class__ is self.__class__:
-            raise ValueError(self)
-
-        return rm
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2563,18 +2498,18 @@ class Specifier:
 
     @classmethod
     def match(cls, desc, record):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def validate(self, others):
         pass
 
     def assemble(self, insn):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class SpecifierWidth(Specifier):
-    value: _SVP64Width
+    width: _SVP64Width
 
     @classmethod
     def match(cls, desc, record, etalon):
@@ -2583,9 +2518,9 @@ class SpecifierWidth(Specifier):
         value = value.strip()
         if mode != etalon:
             return None
-        value = _SVP64Width(value)
+        width = _SVP64Width(value)
 
-        return cls(record=record, mode=mode, value=value)
+        return cls(record=record, width=width)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2595,8 +2530,9 @@ class SpecifierW(SpecifierWidth):
         return super().match(desc=desc, record=record, etalon="w")
 
     def assemble(self, insn):
-        insn.prefix.rm.ewsrc = int(self.value)
-        insn.prefix.rm.elwidth = int(self.value)
+        selector = insn.select(record=self.record)
+        selector.ewsrc = self.width.value
+        selector.elwidth = self.width.value
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2606,7 +2542,8 @@ class SpecifierSW(SpecifierWidth):
         return super().match(desc=desc, record=record, etalon="sw")
 
     def assemble(self, insn):
-        insn.prefix.rm.ewsrc = int(self.value)
+        selector = insn.select(record=self.record)
+        selector.ewsrc = self.width.value
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2616,7 +2553,8 @@ class SpecifierDW(SpecifierWidth):
         return super().match(desc=desc, record=record, etalon="dw")
 
     def assemble(self, insn):
-        insn.prefix.rm.elwidth = int(self.value)
+        selector = insn.select(record=self.record)
+        selector.elwidth = self.width.value
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2633,7 +2571,8 @@ class SpecifierSubVL(Specifier):
         return cls(record=record, value=value)
 
     def assemble(self, insn):
-        insn.prefix.rm.subvl = int(self.value.value)
+        selector = insn.select(record=self.record)
+        selector.subvl = int(self.value.value)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2667,47 +2606,30 @@ class SpecifierFFPR(SpecifierPredicate):
                 _SVP64PredMode.RC1,
             ))
 
-    def assemble(self, insn):
-        rm = insn.prefix.rm
-        if rm.mode.sel != 0:
-            raise ValueError("cannot override mode")
-
+    def validate(self, others):
         if self.record.svp64.mode is _SVMode.CROP:
             if self.mode == "pr":
                 raise ValueError("crop: 'pr' mode not supported")
-            rm.mode.sel = 0b10
-            if self.record.svp64.cr_3bit:
-                rm = rm.cr_op.ff3
-            else:
-                rm = rm.cr_op.ff5
+            if (self.record.svp64.extra_CR_3bit and
+                    (self.pred.mode is not _SVP64PredMode.RC1)):
+                raise ValueError("3-bit CRs only support RC1/~RC1 BO")
+
+    def assemble(self, insn):
+        selector = insn.select(record=self.record)
+        if selector.mode.sel != 0:
+            raise ValueError("cannot override mode")
+        if self.record.svp64.mode is _SVMode.CROP:
+            selector.mode.sel = 0b10
+            selector.inv = self.pred.inv
+            if not self.record.svp64.extra_CR_3bit:
+                selector.CR = self.pred.state
         else:
-            if self.record.svp64.mode is _SVMode.NORMAL:
-                rm = rm.normal
-            elif self.record.svp64.mode is _SVMode.LDST_IMM:
-                rm = rm.ldst_imm
-            elif self.record.svp64.mode is _SVMode.LDST_IDX:
-                rm = rm.ldst_idx
-                if self.mode == "ff":
-                    raise ValueError("ld/st idx: 'ff' mode not supported")
+            selector.mode.sel = 0b01 if self.mode == "ff" else 0b11
+            selector.inv = self.pred.inv
+            if self.record.Rc:
+                selector.CR = self.pred.state
             else:
-                raise ValueError(f"{self.mode!r} not supported")
-
-            # These 2-bit values should have bits swapped
-            def bitswap(value):
-                return (((value & 0b10) >> 1) | ((value & 0b01) << 1))
-
-            rm.mode.sel = {
-                "ff": bitswap(_SVP64RMMode.FFIRST.value),
-                "pr": bitswap(_SVP64RMMode.PREDRES.value),
-            }[self.mode]
-
-            Rc = int(self.record.Rc)
-            rm = getattr(rm, f"{self.mode}rc{Rc}")
-            rm.inv = self.pred.inv
-            if Rc:
-                rm.CR = self.pred.state
-            else:
-                rm.RC1 = self.pred.state
+                selector.RC1 = self.pred.state
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2736,7 +2658,7 @@ class SpecifierMask(SpecifierPredicate):
             ))
 
     def assemble(self, insn):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2753,7 +2675,12 @@ class SpecifierM(SpecifierMask):
                 raise ValueError("dest-mask and predicate mask conflict")
 
     def assemble(self, insn):
-        insn.prefix.rm.mask = int(self.pred)
+        selector = insn.select(record=self.record)
+        selector.mask = int(self.pred)
+        if ((self.record.ptype is _SVPType.P2) and
+                (self.record.svp64.mode is not _SVMode.BRANCH)):
+            selector.smask = int(self.pred)
+        selector.mmode = (self.pred.mode is _SVP64PredMode.CR)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2774,11 +2701,13 @@ class SpecifierSM(SpecifierMask):
 
             if twin is None:
                 raise ValueError("missing dest-mask in CR twin predication")
-            if self.pred != twin.pred:
-                raise ValueError(f"predicate masks mismatch: {self!r} vs {twin!r}")
+            if self.pred.mode != twin.pred.mode:
+                raise ValueError(f"predicate masks mismatch: {self.pred!r} vs {twin.pred!r}")
 
     def assemble(self, insn):
-        insn.prefix.rm.smask = int(self.pred)
+        selector = insn.select(record=self.record)
+        selector.smask = int(self.pred)
+        selector.mmode = (self.pred.mode is _SVP64PredMode.CR)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2799,12 +2728,13 @@ class SpecifierDM(SpecifierMask):
 
             if twin is None:
                 raise ValueError("missing source-mask in CR twin predication")
-            if self.pred != twin.pred:
-                raise ValueError(f"predicate masks mismatch: {self!r} vs {twin!r}")
+            if self.pred.mode != twin.pred.mode:
+                raise ValueError(f"predicate masks mismatch: {self.pred!r} vs {twin.pred!r}")
 
     def assemble(self, insn):
-        insn.prefix.rm.mask = int(self.pred)
-
+        selector = insn.select(record=self.record)
+        selector.mask = int(self.pred)
+        selector.mmode = (self.pred.mode is _SVP64PredMode.CR)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2818,18 +2748,18 @@ class SpecifierZZ(Specifier):
 
     def validate(self, others):
         for spec in others:
-            # Since m=xx takes precedence (overrides) sm=xx and dm=xx,
+            # Since zz takes precedence (overrides) sz and dz,
             # treat them as mutually exclusive.
             if isinstance(spec, (SpecifierSZ, SpecifierDZ)):
                 raise ValueError("mutually exclusive predicate masks")
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        if hasattr(rm, "zz"):
-            rm.zz = 1
+        selector = insn.select(record=self.record)
+        if hasattr(selector, "zz"): # this should be done in a different way
+            selector.zz = 1
         else:
-            rm.sz = 1
-            rm.dz = 1
+            selector.sz = 1
+            selector.dz = 1
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2851,17 +2781,17 @@ class SpecifierXZ(Specifier):
         if self.pred.mode is _SVP64PredMode.CR:
             twin = None
             for spec in others:
-                if isinstance(spec, SpecifierSM):
+                if isinstance(spec, SpecifierXZ):
                     twin = spec
 
             if twin is None:
                 raise ValueError(f"missing {self.hint} in CR twin predication")
             if self.pred != twin.pred:
-                raise ValueError(f"predicate masks mismatch: {self!r} vs {twin!r}")
+                raise ValueError(f"predicate masks mismatch: {self.pred!r} vs {twin.pred!r}")
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        setattr(rm, self.desc, 1)
+        selector = insn.select(record=self.record)
+        setattr(selector, self.desc, 1)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2873,10 +2803,11 @@ class SpecifierSZ(SpecifierXZ):
 
     def validate(self, others):
         for spec in others:
-            if isinstance(spec, SpecifierFF):
-                raise ValueError("source-zero not allowed in ff mode")
-            elif isinstance(spec, SpecifierPR):
-                raise ValueError("source-zero not allowed in pr mode")
+            if self.record.svp64.mode is not _SVMode.CROP:
+                if isinstance(spec, SpecifierFF):
+                    raise ValueError("source-zero not allowed in ff mode")
+                elif isinstance(spec, SpecifierPR):
+                    raise ValueError("source-zero not allowed in pr mode")
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2888,7 +2819,8 @@ class SpecifierDZ(SpecifierXZ):
 
     def validate(self, others):
         for spec in others:
-            if (isinstance(spec, (SpecifierFF, SpecifierPR)) and
+            if ((self.record.svp64.mode is not _SVMode.CROP) and
+                    isinstance(spec, (SpecifierFF, SpecifierPR)) and
                     (spec.pred.mode is _SVP64PredMode.RC1)):
                 mode = "ff" if isinstance(spec, SpecifierFF) else "pr"
                 raise ValueError(f"dest-zero not allowed in {mode} mode BO")
@@ -2901,13 +2833,20 @@ class SpecifierEls(Specifier):
         if desc != "els":
             return None
 
+        if record.svp64.mode not in (_SVMode.LDST_IMM, _SVMode.LDST_IDX):
+            raise ValueError("els is only valid in ld/st modes")
+
         return cls(record=record)
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.els = 1
-        if self.record.svp64.mode is _SVMode.LDST_IDX:
-            rm.mode.sel = 1
+        if self.record.svp64.mode is _SVMode.LDST_IDX: # stride mode
+            insn.prefix.rm.mode[0] = 0
+            insn.prefix.rm.mode[1] = 1
+
+        selector = insn.select(record=self.record)
+        if self.record.svp64.mode is not _SVMode.LDST_IDX: # stride mode
+            selector.els = 1
+
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2928,10 +2867,10 @@ class SpecifierSEA(Specifier):
                 raise ValueError(f"sea cannot be used in ff mode")
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        if rm.mode.sel not in (0b00, 0b01):
+        selector = insn.select(record=self.record)
+        if selector.mode.sel not in (0b00, 0b01):
             raise ValueError("sea is only valid for normal and els modes")
-        rm.SEA = 1
+        selector.SEA = 1
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2944,12 +2883,16 @@ class SpecifierSat(Specifier):
         if desc != etalon:
             return None
 
+        if record.svp64.mode not in (_SVMode.NORMAL, _SVMode.LDST_IMM, _SVMode.LDST_IDX):
+            raise ValueError("only normal, ld/st imm and ld/st idx modes supported")
+
         return cls(record=record, desc=desc, sign=sign)
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.mode.sel = 2
-        rm.sat = 1 if self.sign else 0
+        selector = insn.select(record=self.record)
+        selector.mode[0] = 0b1
+        selector.mode[1] = 0b0
+        selector.N = int(self.sign)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2969,50 +2912,44 @@ class SpecifierSatU(SpecifierSat):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierMR(Specifier):
+class SpecifierMapReduce(Specifier):
+    RG: bool
+
+    @classmethod
+    def match(cls, record, RG):
+        if record.svp64.mode not in (_SVMode.NORMAL, _SVMode.CROP):
+            raise ValueError("only normal and crop modes supported")
+
+        return cls(record=record, RG=RG)
+
+    def assemble(self, insn):
+        selector = insn.select(record=self.record)
+        if self.record.svp64.mode not in (_SVMode.NORMAL, _SVMode.CROP):
+            raise ValueError("only normal and crop modes supported")
+        selector.mode[0] = 0
+        selector.mode[1] = 0
+        selector.mode[2] = 1
+        selector.RG = self.RG
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierMR(SpecifierMapReduce):
     @classmethod
     def match(cls, desc, record):
         if desc != "mr":
             return None
 
-        return cls(record=record)
-
-    def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.mode.sel = 0
-        rm.mr = 1
-        rm.RG = 0
+        return super().match(record=record, RG=False)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierMRR(Specifier):
+class SpecifierMRR(SpecifierMapReduce):
     @classmethod
     def match(cls, desc, record):
-        if desc != "mr":
+        if desc != "mrr":
             return None
 
-        return cls(record=record)
-
-    def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.mode.sel = 0
-        rm.mr = 1
-        rm.RG = 1
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierCRM(Specifier):
-    @classmethod
-    def match(cls, desc, record):
-        if desc != "crm":
-            return None
-
-        return cls(record=record)
-
-    def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.mode.sel = 0
-        rm.crm = 1
+        return super().match(record=record, RG=True)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -3022,11 +2959,10 @@ class SpecifierBranch(Specifier):
         if desc != etalon:
             return None
 
-        return cls(record=record)
-
-    def validate(self, others):
-        if self.record.svp64.mode != _SVMode.BRANCH:
+        if record.svp64.mode is not _SVMode.BRANCH:
             raise ValueError("only branch modes supported")
+
+        return cls(record=record)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -3036,20 +2972,30 @@ class SpecifierAll(SpecifierBranch):
         return super().match(desc=desc, record=record, etalon="all")
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.ALL = 1
+        selector = insn.select(record=self.record)
+        selector.ALL = 1
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierSNZ(SpecifierBranch):
+class SpecifierSNZ(Specifier):
     @classmethod
     def match(cls, desc, record):
-        return super().match(desc=desc, record=record, etalon="snz")
+        if desc != "snz":
+            return None
+
+        if record.svp64.mode not in (_SVMode.BRANCH, _SVMode.CROP):
+            raise ValueError("only branch and crop modes supported")
+
+        return cls(record=record)
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.sz = 1
-        rm.SNZ = 1
+        selector = insn.select(record=self.record)
+        if self.record.svp64.mode in (_SVMode.CROP, _SVMode.BRANCH):
+            selector.SNZ = 1
+            if self.record.svp64.mode is _SVMode.BRANCH:
+                selector.sz = 1
+        else:
+            raise ValueError("only branch and crop modes supported")
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -3059,8 +3005,8 @@ class SpecifierSL(SpecifierBranch):
         return super().match(desc=desc, record=record, etalon="sl")
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.SL = 1
+        selector = insn.select(record=self.record)
+        selector.SL = 1
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -3070,8 +3016,8 @@ class SpecifierSLu(SpecifierBranch):
         return super().match(desc=desc, record=record, etalon="slu")
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.SLu = 1
+        selector = insn.select(record=self.record)
+        selector.SLu = 1
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -3081,89 +3027,98 @@ class SpecifierLRu(SpecifierBranch):
         return super().match(desc=desc, record=record, etalon="lru")
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.LRu = 1
+        selector = insn.select(record=self.record)
+        selector.LRu = 1
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierVS(SpecifierBranch):
+class SpecifierVSXX(SpecifierBranch):
+    VSb: bool
+    VLi: bool
+
     @classmethod
-    def match(cls, desc, record):
-        return super().match(desc=desc, record=record, etalon="vs")
-
-    def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.VLS = 1
-        rm.VLi = 0
-        rm.VSb = 0
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierVSi(SpecifierBranch):
-    @classmethod
-    def match(cls, desc, record):
-        return super().match(desc=desc, record=record, etalon="vsi")
-
-    def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.VLS = 1
-        rm.VLi = 1
-        rm.VSb = 0
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierVSb(SpecifierBranch):
-    @classmethod
-    def match(cls, desc, record):
-        return super().match(desc=desc, record=record, etalon="vsb")
-
-    def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.VLS = 1
-        rm.VLi = 0
-        rm.VSb = 1
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierVSbi(SpecifierBranch):
-    @classmethod
-    def match(cls, desc, record):
-        return super().match(desc=desc, record=record, etalon="vsbi")
-
-    def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.VLS = 1
-        rm.VLi = 1
-        rm.VSb = 1
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierCTR(SpecifierBranch):
-    @classmethod
-    def match(cls, desc, record):
-        if desc != "ctr":
+    def match(cls, desc, record, etalon, VSb, VLi):
+        if desc != etalon:
             return None
 
-        return cls(record=record)
+        if record.svp64.mode is not _SVMode.BRANCH:
+            raise ValueError("only branch modes supported")
+
+        return cls(record=record, VSb=VSb, VLi=VLi)
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.CTR = 1
+        selector = insn.select(record=self.record)
+        selector.VLS = 1
+        selector.VSb = int(self.VSb)
+        selector.VLi = int(self.VLi)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierCTi(SpecifierBranch):
+class SpecifierVS(SpecifierVSXX):
     @classmethod
     def match(cls, desc, record):
-        if desc != "cti":
+        return super().match(desc=desc, record=record,
+            etalon="vs", VSb=False, VLi=False)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierVSi(SpecifierVSXX):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="vsi", VSb=False, VLi=True)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierVSb(SpecifierVSXX):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="vsb", VSb=True, VLi=False)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierVSbi(SpecifierVSXX):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="vsbi", VSb=True, VLi=True)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierCTX(Specifier):
+    CTi: bool
+
+    @classmethod
+    def match(cls, desc, record, etalon, CTi):
+        if desc != etalon:
             return None
 
-        return cls(record=record)
+        if record.svp64.mode is not _SVMode.BRANCH:
+            raise ValueError("only branch modes supported")
+
+        return cls(record=record, CTi=CTi)
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.CTR = 1
-        rm.CTi = 1
+        selector = insn.select(record=self.record)
+        selector.CTR = 1
+        selector.CTi = int(self.CTi)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierCTR(SpecifierCTX):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="ctr", CTi=False)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierCTi(SpecifierCTX):
+    @classmethod
+    def match(cls, desc, record):
+        return super().match(desc=desc, record=record,
+            etalon="cti", CTi=True)
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -3173,11 +3128,17 @@ class SpecifierPI(Specifier):
         if desc != "pi":
             return None
 
+        if record.svp64.mode is not _SVMode.LDST_IMM:
+            raise ValueError("only ld/st imm mode supported")
+
         return cls(record=record)
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.pi = 1
+        selector = insn.select(record=self.record)
+        selector.mode[0] = 0b0
+        selector.mode[1] = 0b0
+        selector.mode[2] = 0b1
+        selector.pi = 0b1
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -3187,11 +3148,36 @@ class SpecifierLF(Specifier):
         if desc != "lf":
             return None
 
+        if record.svp64.mode is not _SVMode.LDST_IMM:
+            raise ValueError("only ld/st imm mode supported")
+
         return cls(record=record)
 
     def assemble(self, insn):
-        rm = insn.prefix.rm.select(record=self.record)
-        rm.lf = 1
+        selector = insn.select(record=self.record)
+        selector.mode[2] = 1
+        selector.lf = 0b1
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class SpecifierVLi(Specifier):
+    @classmethod
+    def match(cls, desc, record):
+        if desc != "vli":
+            return None
+
+        return cls(record=record)
+
+    def validate(self, others):
+        for spec in others:
+            if isinstance(spec, SpecifierFF):
+                return
+
+        raise ValueError("VLi only allowed in failfirst")
+
+    def assemble(self, insn):
+        selector = insn.select(record=self.record)
+        selector.VLi = 1
 
 
 class Specifiers(tuple):
@@ -3214,7 +3200,6 @@ class Specifiers(tuple):
         SpecifierSatU,
         SpecifierMR,
         SpecifierMRR,
-        SpecifierCRM,
         SpecifierAll,
         SpecifierSNZ,
         SpecifierSL,
@@ -3224,6 +3209,7 @@ class Specifiers(tuple):
         SpecifierVSi,
         SpecifierVSb,
         SpecifierVSbi,
+        SpecifierVLi,
         SpecifierCTR,
         SpecifierCTi,
         SpecifierPI,
@@ -3238,6 +3224,13 @@ class Specifiers(tuple):
                     return spec
             raise ValueError(item)
 
+        # TODO: remove this hack
+        items = dict.fromkeys(items)
+        if "vli" in items:
+            del items["vli"]
+            items["vli"] = None
+        items = tuple(items)
+
         specs = tuple(map(transform, items))
         for (index, spec) in enumerate(specs):
             head = specs[:index]
@@ -3245,6 +3238,163 @@ class Specifiers(tuple):
             spec.validate(others=(head + tail))
 
         return super().__new__(cls, specs)
+
+
+class SVP64OperandMeta(type):
+    class SVP64NonZeroOperand(NonZeroOperand):
+        def assemble(self, value, insn):
+            if isinstance(value, str):
+                value = int(value, 0)
+            if not isinstance(value, int):
+                raise ValueError("non-integer operand")
+
+            # FIXME: this is really weird
+            if self.record.name in ("svstep", "svstep."):
+                value += 1 # compensation
+
+            return super().assemble(value=value, insn=insn)
+
+    __TRANSFORM = {
+        NonZeroOperand: SVP64NonZeroOperand,
+    }
+
+    def __new__(metacls, name, bases, ns):
+        bases = list(bases)
+        for (origin_cls, target_cls) in metacls.__TRANSFORM.items():
+            for (index, base_cls) in enumerate(bases):
+                if base_cls is origin_cls:
+                    bases[index] = target_cls
+                    break
+        bases = tuple(bases)
+
+        return super().__new__(metacls, name, bases, ns)
+
+
+class SVP64Operand(Operand, metaclass=SVP64OperandMeta):
+    def __init__(self, record, *args, **kwargs):
+        return super().__init__(record=record, *args, **kwargs)
+
+    @property
+    def span(self):
+        return tuple(map(lambda bit: (bit + 32), super().span))
+
+
+class RMSelector:
+    def __init__(self, insn, record):
+        self.__insn = insn
+        self.__record = record
+        return super().__init__()
+
+    def __repr__(self):
+        return repr(self.rm)
+
+    @property
+    def insn(self):
+        return self.__insn
+
+    @property
+    def record(self):
+        return self.__record
+
+    @property
+    def rm(self):
+        rm = getattr(self.insn.prefix.rm, self.record.svp64.mode.name.lower())
+
+        # The idea behind these tables is that they are now literally
+        # in identical format to insndb.csv and minor_xx.csv and can
+        # be done precisely as that. The only thing to watch out for
+        # is the insertion of Rc=1 as a "mask/value" bit and likewise
+        # regtype detection (3-bit BF/BFA, 5-bit BA/BB/BT) also inserted
+        # as the LSB.
+        table = None
+        if self.record.svp64.mode is _SVMode.NORMAL:
+            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
+            #    mode  Rc  mask  Rc  member
+            table = (
+                (0b000000, 0b111000, "simple"), # simple     (no Rc)
+                (0b001000, 0b111000, "mr"),     # mapreduce  (no Rc)
+                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
+                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
+                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
+                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+            )
+            search = ((int(self.insn.prefix.rm.normal.mode) << 1) | self.record.Rc)
+
+        elif self.record.svp64.mode is _SVMode.LDST_IMM:
+            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
+            #    mode  Rc  mask  Rc  member
+            # ironically/coincidentally this table is identical to NORMAL
+            # mode except reserved in place of mr
+            table = (
+                (0b000000, 0b111000, "simple"), # simple     (no Rc)
+                (0b001000, 0b111000, "post"),   # post       (no Rc)
+                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
+                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
+                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
+                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
+            )
+            search = ((int(self.insn.prefix.rm.ldst_imm.mode) << 1) | self.record.Rc)
+
+        elif self.record.svp64.mode is _SVMode.LDST_IDX:
+            # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
+            #    mode  Rc  mask  Rc  member
+            table = (
+                (0b000000, 0b110000, "simple"), # simple     (no Rc)
+                (0b010000, 0b110000, "stride"), # strided,   (no Rc)
+                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
+                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
+            )
+            search = ((int(self.insn.prefix.rm.ldst_idx.mode) << 1) | self.record.Rc)
+
+        elif self.record.svp64.mode is _SVMode.CROP:
+            # concatenate mode 5-bit with regtype (LSB) then do mask/map search
+            #    mode  3b  mask  3b  member
+            table = (
+                (0b000000, 0b111000, "simple"), # simple
+                (0b001000, 0b111000, "mr"),     # mapreduce
+                (0b100001, 0b100001, "ff3"),    # ffirst, 3-bit CR
+                (0b100000, 0b100000, "ff5"),    # ffirst, 5-bit CR
+            )
+            search = ((int(self.insn.prefix.rm.crop.mode) << 1) | int(self.record.svp64.extra_CR_3bit))
+
+        elif self.record.svp64.mode is _SVMode.BRANCH:
+            # just mode 2-bit
+            #    mode  mask  member
+            table = (
+                (0b00, 0b11, "simple"), # simple
+                (0b01, 0b11, "vls"),    # VLset
+                (0b10, 0b11, "ctr"),    # CTR mode
+                (0b11, 0b11, "ctrvls"), # CTR+VLset mode
+            )
+            # slightly weird: doesn't have a 5-bit "mode" field like others
+            search = int(self.insn.prefix.rm.branch.mode.sel)
+
+        # look up in table
+        if table is not None:
+            for (value, mask, field) in table:
+                if ((value & mask) == (search & mask)):
+                    return getattr(rm, field)
+
+        return rm
+
+    def __getattr__(self, key):
+        if key.startswith(f"_{self.__class__.__name__}__"):
+            return super().__getattribute__(key)
+
+        return getattr(self.rm, key)
+
+    def __setattr__(self, key, value):
+        if key.startswith(f"_{self.__class__.__name__}__"):
+            return super().__setattr__(key, value)
+
+        rm = self.rm
+        if not hasattr(rm, key):
+            raise AttributeError(key)
+
+        return setattr(rm, key, value)
 
 
 class SVP64Instruction(PrefixedInstruction):
@@ -3255,9 +3405,12 @@ class SVP64Instruction(PrefixedInstruction):
 
     prefix: Prefix
 
+    def select(self, record):
+        return RMSelector(insn=self, record=record)
+
     @classmethod
     def record(cls, db, entry):
-        if isinstance(entry, SVP64Instruction):
+        if isinstance(entry, cls):
             entry = entry.suffix
         return super().record(db=db, entry=entry)
 
@@ -3270,24 +3423,28 @@ class SVP64Instruction(PrefixedInstruction):
         return "".join(map(str, bits))
 
     @classmethod
-    def assemble(cls, db, opcode, arguments=None, specifiers=None):
+    def assemble(cls, db, entry, arguments=None, specifiers=None):
         if arguments is None:
             arguments = ()
         if specifiers is None:
             specifiers = ()
 
-        record = cls.record(db=db, entry=opcode)
+        record = cls.record(db=db, entry=entry)
         insn = cls.integer(value=0)
+
+        for (op_cls, op_kwargs) in record.static_operands:
+            op_cls = type(f"SVP64{op_cls.__name__}", (SVP64Operand, op_cls), {})
+            operand = op_cls(record=record, **op_kwargs)
+            operand.assemble(insn=insn)
 
         specifiers = Specifiers(items=specifiers, record=record)
         for specifier in specifiers:
             specifier.assemble(insn=insn)
 
-        for operand in record.static_operands:
-            operand.assemble(insn=insn)
-
         dynamic_operands = tuple(record.dynamic_operands)
-        for (value, operand) in Arguments(arguments, dynamic_operands):
+        for (value, (op_cls, op_kwargs)) in Arguments(arguments, dynamic_operands):
+            op_cls = type(f"SVP64{op_cls.__name__}", (SVP64Operand, op_cls), {})
+            operand = op_cls(record=record, **op_kwargs)
             operand.assemble(value=value, insn=insn)
 
         insn.prefix.PO = 0x1
@@ -3297,9 +3454,9 @@ class SVP64Instruction(PrefixedInstruction):
 
     def disassemble(self, db,
             byteorder="little",
-            verbosity=Verbosity.NORMAL):
+            style=Style.NORMAL):
         def blob(insn):
-            if verbosity <= Verbosity.SHORT:
+            if style <= Style.SHORT:
                 return ""
             else:
                 blob = insn.bytes(byteorder=byteorder)
@@ -3316,7 +3473,7 @@ class SVP64Instruction(PrefixedInstruction):
 
         name = f"sv.{record.name}"
 
-        rm = self.prefix.rm.select(record=record)
+        rm = self.select(record=record)
 
         # convert specifiers to /x/y/z (sorted lexicographically)
         specifiers = sorted(rm.specifiers(record=record))
@@ -3326,7 +3483,7 @@ class SVP64Instruction(PrefixedInstruction):
 
         # convert operands to " ,x,y,z"
         operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db, verbosity=verbosity)))
+            self.dynamic_operands(db=db, style=style)))
         operands = ",".join(operands)
         if len(operands) > 0: # if any separate with a space
             operands = (" " + operands)
@@ -3335,7 +3492,7 @@ class SVP64Instruction(PrefixedInstruction):
         if blob_suffix:
             yield f"{blob_suffix}"
 
-        if verbosity >= Verbosity.VERBOSE:
+        if style >= Style.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
             spec = self.spec(db=db, prefix="sv.")
@@ -3360,12 +3517,42 @@ class SVP64Instruction(PrefixedInstruction):
             for (cls, kwargs) in record.mdwn.operands:
                 operand = cls(record=record, **kwargs)
                 yield from operand.disassemble(insn=self,
-                    verbosity=verbosity, indent=indent)
+                    style=style, indent=indent)
             yield f"{indent}RM"
             yield f"{indent}{indent}{rm.__doc__}"
-            for line in rm.disassemble(verbosity=verbosity):
+            for line in rm.disassemble(style=style):
                 yield f"{indent}{indent}{line}"
             yield ""
+
+    def static_operands(self, db):
+        record = self.record(db=db, entry=self)
+        for (op_cls, op_kwargs) in record.static_operands:
+            op_cls = type(f"SVP64{op_cls.__name__}", (SVP64Operand, op_cls), {})
+            operand = op_cls(record=record, **op_kwargs)
+            yield (operand.name, operand.value)
+
+    def dynamic_operands(self, db, style=Style.NORMAL):
+        record = self.record(db=db, entry=self)
+
+        imm = False
+        imm_name = ""
+        imm_value = ""
+        for (op_cls, op_kwargs) in record.dynamic_operands:
+            op_cls = type(f"SVP64{op_cls.__name__}", (SVP64Operand, op_cls), {})
+            operand = op_cls(record=record, **op_kwargs)
+            name = operand.name
+            value = " ".join(operand.disassemble(insn=self,
+                style=min(style, Style.NORMAL)))
+            if imm:
+                name = f"{imm_name}({name})"
+                value = f"{imm_value}({value})"
+                imm = False
+            if isinstance(operand, ImmediateOperand):
+                imm_name = name
+                imm_value = value
+                imm = True
+            if not imm:
+                yield (name, value)
 
 
 def parse(stream, factory):
@@ -3430,7 +3617,6 @@ class PPCDatabase:
         # The code below groups the instructions by name:section.
         # There can be multiple names for the same instruction.
         # The point is to capture different opcodes for the same instruction.
-        dd = _collections.defaultdict
         sections = {}
         records = _collections.defaultdict(set)
         path = (root / "insndb.csv")
@@ -3576,10 +3762,7 @@ class Database:
                 mdwn=mdwn, fields=fields)
             db.add(record)
             names[record.name] = record
-            PO = section.opcode
-            if PO is None:
-                PO = ppc[0].opcode
-            opcodes[section][PO.value].add(record)
+            opcodes[section][record.PO].add(record)
 
         self.__db = sorted(db)
         self.__names = dict(sorted(names.items()))
@@ -3602,7 +3785,9 @@ class Database:
         if isinstance(key, Instruction):
             PO = int(key.PO)
             key = int(key)
-            for (section, group) in self.__opcodes.items():
+            sections = sorted(self.__opcodes)
+            for section in sections:
+                group = self.__opcodes[section]
                 for record in group[PO]:
                     if record.match(key=key):
                         return record

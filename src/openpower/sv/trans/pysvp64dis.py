@@ -7,7 +7,7 @@ from openpower.decoder.power_enums import (
     find_wiki_dir as _find_wiki_dir,
 )
 from openpower.decoder.power_insn import (
-    Verbosity as _Verbosity,
+    Style as _Style,
     Database as _Database,
     WordInstruction as _WordInstruction,
     PrefixedInstruction as _PrefixedInstruction,
@@ -51,10 +51,10 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
         yield insn
 
 
-def dump(insns, verbosity, **_):
+def dump(insns, style, **_):
     db = _Database(_find_wiki_dir())
     for insn in insns:
-        yield from insn.disassemble(db=db, verbosity=verbosity)
+        yield from insn.disassemble(db=db, style=style)
 
 
 # this is the entry-point for the console-script pysvp64dis
@@ -67,11 +67,11 @@ def main():
     parser.add_argument("-b", "--byteorder",
         type=ByteOrder, default=ByteOrder.LITTLE)
     parser.add_argument("-s", "--short",
-        dest="verbosity", default=_Verbosity.NORMAL,
-        action="store_const", const=_Verbosity.SHORT)
+        dest="style", default=_Style.NORMAL,
+        action="store_const", const=_Style.SHORT)
     parser.add_argument("-v", "--verbose",
-        dest="verbosity", default=_Verbosity.NORMAL,
-        action="store_const", const=_Verbosity.VERBOSE)
+        dest="style", default=_Style.NORMAL,
+        action="store_const", const=_Style.VERBOSE)
     parser.add_argument("-l", "--log",
         action="store_true", default=False)
 

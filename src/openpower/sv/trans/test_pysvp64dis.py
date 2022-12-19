@@ -1,7 +1,7 @@
 from openpower.simulator.program import Program
 from openpower.sv.trans.pysvp64dis import load, dump
 from openpower.sv.trans.svp64 import SVP64Asm
-from openpower.decoder.power_insn import Database, Verbosity
+from openpower.decoder.power_insn import Database, Style
 from openpower.decoder.power_enums import find_wiki_dir
 from openpower.sv import sv_binutils_fptrans
 import unittest
@@ -26,7 +26,7 @@ class SVSTATETestCase(unittest.TestCase):
                 #print ("insn", insn)
             insns = list(insns)
             print ("insns", insns)
-            for i, line in enumerate(dump(insns, verbosity=Verbosity.SHORT)):
+            for i, line in enumerate(dump(insns, style=Style.SHORT)):
                 name = expected[i].split(" ")[0]
                 with self.subTest("%d:%s" % (i, name)):
                     print("instruction", repr(line), repr(expected[i]))
@@ -75,8 +75,6 @@ class SVSTATETestCase(unittest.TestCase):
                     'sv.crand/ff=eq/m=r10 12,2,33',
                     'sv.crand/m=r10 12,2,33',
                     'sv.crand/m=r10/sz 12,2,33',
-                    # XXX dz/sz is not the canonical way, must be zz
-                    'sv.crand/dz/m=r10/sz 12,2,33', # NOT OK
                     'sv.crand/m=r10/zz 12,2,33',    # SHOULD PASS
                         ]
         self._do_tst(expected)

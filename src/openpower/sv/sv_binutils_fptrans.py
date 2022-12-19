@@ -15,54 +15,6 @@ from openpower.decoder.power_insn import (
 )
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class StaticOperand:
-    name: str
-    value: int
-    span: tuple
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class DynamicOperand:
-    name: str
-    span: tuple
-
-
-@_functools.total_ordering
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Entry:
-    name: str
-    static_operands: tuple
-    dynamic_operands: tuple
-
-    def __lt__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return ((self.PO, self.XO, self.Rc) <
-            (other.PO, other.XO, other.Rc))
-
-    @property
-    def PO(self):
-        for operand in self.static_operands:
-            if operand.name == "PO":
-                return operand.value
-        raise ValueError(self)
-
-    @property
-    def XO(self):
-        for operand in self.static_operands:
-            if operand.name == "XO":
-                return operand.value
-        raise ValueError(self)
-
-    @property
-    def Rc(self):
-        for operand in self.static_operands:
-            if operand.name == "Rc":
-                return operand.value
-        raise ValueError(self)
-
-
 def collect(db):
     fptrans = tuple(_FPTRANS_INSNS)
     fptrans_Rc = tuple(map(lambda name: f"{name}.", fptrans))
@@ -73,56 +25,8 @@ def collect(db):
     for record in filter(fptrans_match, db):
         if len(record.opcodes) > 1:
             raise NotImplementedError(record.opcodes)
-        PO = record.section.opcode
-        if PO is None:
-            PO = tuple(record.ppc)[0].opcode
-            XO = None
-        else:
-            XO = tuple(record.ppc)[0].opcode
 
-        @_dataclasses.dataclass(eq=True, frozen=True)
-        class POStaticOperand(_StaticOperand):
-            @property
-            def span(self):
-                return tuple(range(0, 6))
-
-        @_dataclasses.dataclass(eq=True, frozen=True)
-        class XOStaticOperand(_StaticOperand):
-            @property
-            def span(self):
-                return tuple(self.record.section.bitsel)
-
-        static_operands = [(POStaticOperand, {
-            "name": "PO",
-            "value": (PO.value & PO.mask)
-        })]
-        if XO is not None:
-            static_operands.append((XOStaticOperand, {
-                "name": "XO",
-                "value": (XO.value & XO.mask)
-            }))
-
-        static_operands.extend(record.mdwn.operands.static)
-        dynamic_operands = record.mdwn.operands.dynamic
-
-        def static_operand(operand):
-            (cls, kwargs) = operand
-            operand = cls(record=record, **kwargs)
-            return StaticOperand(name=operand.name,
-                value=operand.value, span=operand.span)
-
-        def dynamic_operand(operand):
-            (cls, kwargs) = operand
-            operand = cls(record=record, **kwargs)
-            return DynamicOperand(name=operand.name,
-                span=operand.span)
-
-        static_operands = tuple(map(static_operand, static_operands))
-        dynamic_operands = tuple(map(dynamic_operand, dynamic_operands))
-
-        yield Entry(name=record.name,
-            static_operands=static_operands,
-            dynamic_operands=dynamic_operands)
+        yield record
 
 
 def opcodes(entry):
@@ -139,8 +43,8 @@ def opcodes(entry):
     return f"{{{string}}},"
 
 
-def asm(entry, binutils=False, regex=False):
-    operands = tuple(entry.dynamic_operands)
+def asm(record, binutils=False, regex=False):
+    operands = [op_cls(record=record, **op_kwargs) for (op_cls, op_kwargs) in record.dynamic_operands]
     for (idx, operand) in enumerate(operands):
         values = []
         for each in operands:
@@ -157,20 +61,21 @@ def asm(entry, binutils=False, regex=False):
             value = f"r{value}"
         values[idx] = value
         sep = "\s+" if regex else " "
-        yield f"{entry.name}{sep}{','.join(values)}"
+        yield f"{record.name}{sep}{','.join(values)}"
 
 
-def dis(entry, binutils=True):
+def dis(record, binutils=True):
     def objdump(byte):
         return f"{byte:02x}"
 
-    asm_plain = tuple(asm(entry, binutils=binutils, regex=False))
-    asm_regex = tuple(asm(entry, binutils=binutils, regex=True))
-    for (idx, dynamic_operand) in enumerate(entry.dynamic_operands):
+    asm_plain = tuple(asm(record, binutils=binutils, regex=False))
+    asm_regex = tuple(asm(record, binutils=binutils, regex=True))
+    for (idx, (op_cls, op_kwargs)) in enumerate(record.dynamic_operands):
+        dynamic_operand = op_cls(record=record, **op_kwargs)
         insn = _WordInstruction.integer(value=0)
-        for static_operand in entry.static_operands:
-            span = static_operand.span
-            insn[span] = static_operand.value
+        for (op_cls, op_kwargs) in record.static_operands:
+            static_operand = op_cls(record=record, **op_kwargs)
+            insn[static_operand.span] = static_operand.value
         span = dynamic_operand.span
         insn[span] = ((1 << len(span)) - 1)
         if binutils:

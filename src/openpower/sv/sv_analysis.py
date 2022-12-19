@@ -808,7 +808,7 @@ def process_csvs(format):
             extra_classifier(insn_name, value, name, res, regs)
 
             # source-mask is hard to detect, it's part of RM-nn-nn.
-            # to make disassembler easier, create a yes/no decision here
+            # to make style easier, create a yes/no decision here
             # see https://libre-soc.org/openpower/sv/svp64/#extra_remap
             # MASK_SRC
             vstripped = value.replace("LDST", "")
