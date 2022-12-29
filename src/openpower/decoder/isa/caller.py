@@ -1565,7 +1565,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         except MemException as e:                # check for memory errors
             if e.args[0] == 'unaligned':         # alignment error
                 # run a Trap but set DAR first
-                print("memory unaligned exception, DAR", e.dar)
+                print("memory unaligned exception, DAR", e.dar, repr(e))
                 self.spr['DAR'] = SelectableInt(e.dar, 64)
                 self.call_trap(0x600, PIb.PRIV)    # 0x600, privileged
                 return

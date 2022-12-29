@@ -85,7 +85,9 @@ class Mem:
         remainder = address & (self.bytes_per_word - 1)
         address = address >> self.word_log2
         if remainder & (width - 1) != 0:
-            exc = MemException("unaligned", "Unaligned access Error")
+            exc = MemException("unaligned",
+                  "Unaligned access: remainder %x width %d" % \
+                  (remainder, width))
             exc.dar = ldaddr
             raise exc
         if address in self.mem:
@@ -114,7 +116,9 @@ class Mem:
         log("Writing 0x%x to ST 0x%x memaddr 0x%x/%x swap %s" % \
             (v, staddr, addr, remainder, str(swap)))
         if remainder & (width - 1) != 0:
-            exc = MemException("unaligned", "Unaligned access Error")
+            exc = MemException("unaligned",
+                  "Unaligned access: remainder %x width %d" % \
+                  (remainder, width))
             exc.dar = staddr
             raise exc
         if swap:
