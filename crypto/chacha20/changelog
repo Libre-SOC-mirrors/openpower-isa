@@ -1,0 +1,33 @@
+xchacha20 (0.0.5) urgency=low;
+  * Corrected confusing comments in the source code.
+
+  -- Bryan Hawkins <spcnvdrr@protonmail.com> Wed, 17 Jul 2019 06:34:18 -0500
+
+xchacha20 (0.0.4) urgency=low;
+  * Added a new test vector from the latest version of the IETF draft.
+    Found here: https://tools.ietf.org/html/draft-arciszewski-xchacha-03
+  * Updated the README.md file.
+
+  -- Bryan Hawkins <spcnvdrr@protonmail.com> Mon, 17 Jun 2019 12:22:44 -0500
+
+xchacha20 (0.0.3) urgency=low;
+  * Fixed minor typos and errors throughout the project
+  * Corrected inconsistent use of tabs v.s. spaces
+  * Fixed a minor warning issued while compiling the library
+
+  -- Bryan Hawkins <spcnvdrr@protonmail.com> Mon, 03 Jun 2019 11:36:49 -0500
+
+xchacha20 (0.0.2) urgency=low;
+  * Added a program to calculate and compare this library's output with
+    known good test vectors.
+  * Fixed minor errors in the README.md file and xchacha.c
+
+  -- Bryan Hawkins <spcnvdrr@protonmail.com> Fri, 31 May 2019 12:49:28 -0500
+
+xchacha20 (0.0.1) urgency=low;
+  * Initial commit and now managing project with Git.
+
+  -- Bryan Hawkins <spcnvdrr@protonmail.com> Tue, 28 May 2019 18:11:11 -0500
+
+
+use the 'date -R' command to make the date string.
