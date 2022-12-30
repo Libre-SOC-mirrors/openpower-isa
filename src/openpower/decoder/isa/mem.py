@@ -115,7 +115,7 @@ class Mem:
         addr = addr >> self.word_log2
         log("Writing 0x%x to ST 0x%x memaddr 0x%x/%x swap %s" % \
             (v, staddr, addr, remainder, str(swap)))
-        if remainder & (width - 1) != 0:
+        if not self.misaligned_ok and remainder & (width - 1) != 0:
             exc = MemException("unaligned",
                   "Unaligned access: remainder %x width %d" % \
                   (remainder, width))
@@ -136,31 +136,29 @@ class Mem:
             self.mem[addr] = v
         log("mem @ 0x%x: 0x%x" % (staddr, self.mem[addr]))
 
-    def st(self, addr, v, width=8, swap=True):
-        staddr = addr
-        self.last_st_addr = addr # record last store
+    def st(self, st_addr, v, width=8, swap=True):
+        self.last_st_addr = st_addr # record last store
         # misaligned not allowed: pass straight to Mem._st
         if not self.misaligned_ok:
-            return self._st(addr, v, width, swap)
-        remainder = addr & (self.bytes_per_word - 1)
-        addr = addr >> self.word_log2
+            return self._st(st_addr, v, width, swap)
+        remainder = st_addr & (self.bytes_per_word - 1)
         if swap:
             v = swap_order(v, width)
         # not misaligned: pass through to Mem._st but we've swapped already
         misaligned = remainder & (width - 1)
-        if misaligned == 0:
-            return self._st(addr, v, width, swap=False)
+        if misaligned == 0 or (remainder + width <= self.bytes_per_word):
+            return self._st(st_addr, v, width, swap=False)
         shifter, mask = self._get_shifter_mask(width, remainder)
         # split into two halves. lower first
         maxmask = (1 << (self.bytes_per_word)*8) - 1
         val1 = ((v << shifter) & maxmask) >> shifter
-        self._st(addr+misaligned, val1,
-                 width=width-misaligned, swap=False)
-        # now upper
+        self._st(st_addr, val1, width=width-misaligned, swap=False)
+        # now upper.
         val2 = v >> ((width-misaligned)*8)
-        print ("v, val2", hex(v), hex(val2))
-        self._st(addr+self.bytes_per_word, val2,
-                 width=width-misaligned, swap=False)
+        addr2 = (st_addr >> self.word_log2) << self.word_log2
+        addr2 += self.bytes_per_word
+        print ("v, val2", hex(v), hex(val2), "ad", addr2)
+        self._st(addr2, val2, width=width-misaligned, swap=False)
 
     def __call__(self, addr, sz):
         val = self.ld(addr.value, sz, swap=False)

@@ -9,12 +9,19 @@ from openpower.util import log
 
 class TestMem(unittest.TestCase):
 
-    def test_mem_align_st(self):
+    def tst_mem_align_st(self):
         m = Mem(row_bytes=8, initial_mem={})
         m.st(4, 0x12345678, width=4, swap=False)
         d = m.dump()
         log ("dict", d)
         self.assertEqual(d, [(0, 0x1234567800000000)])
+
+    def test_mem_misalign_st(self):
+        m = Mem(row_bytes=8, initial_mem={}, misaligned_ok=True)
+        m.st(3, 0x12345678, width=4, swap=False)
+        d = m.dump()
+        log ("dict", d)
+        self.assertEqual(d, [(0, 0x0012345678000000)])
 
     def test_mem_misalign_st_rollover(self):
         m = Mem(row_bytes=8, initial_mem={}, misaligned_ok=True)
