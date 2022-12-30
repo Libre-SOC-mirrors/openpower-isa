@@ -5,13 +5,13 @@ AS = $(CROSS)as
 CC = $(CROSS)gcc
 LD = $(CROSS)ld
 OBJCOPY = $(CROSS)objcopy
-CFLAGS = -O3 -Wall -Wextra
+CFLAGS = -O3 -Wall -Wextra -mno-vsx
 
 AFLAGS ?= -mpwr9
 
 SRCDIR = src
 
-SOURCES := $(SRCDIR)/xchacha20.c $(SRCDIR)/svp64test.c
+SOURCES := $(SRCDIR)/svp64test.c $(SRCDIR)/xchacha20.c 
 OBJECTS := $(SOURCES:$(SRCDIR)/%.c=$(SRCDIR)/%.o)
 
 OBJ = chacha20test.bin
@@ -19,7 +19,7 @@ OBJ = chacha20test.bin
 export DUMP = /tmp/out
 
 # commented for luke's convenience
-#export SILENCELOG = 1
+# export SILENCELOG = 1
 
 all: tests
 

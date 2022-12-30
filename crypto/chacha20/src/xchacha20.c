@@ -130,6 +130,8 @@ void xchacha_encrypt_bytes(XChaCha_ctx *ctx, const uint8_t *m, uint8_t *c, uint3
 	uint8_t tmp[64];
 	uint32_t i;
 
+    return;
+
 	if (!bytes) return;
 
 	j0 = ctx->input[0];

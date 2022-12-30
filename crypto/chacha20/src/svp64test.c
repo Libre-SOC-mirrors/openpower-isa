@@ -75,6 +75,9 @@ int check_cpp(void){
 	return(0);
 }
 
-int main(void){
+#define LOCATE_FUNC  __attribute__((__section__(".fixedaddr")))
+
+int LOCATE_FUNC main(int argc, char **argv[]){
 	return check_cpp();
 }
+
