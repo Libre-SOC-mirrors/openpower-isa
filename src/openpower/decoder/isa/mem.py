@@ -147,10 +147,20 @@ class Mem:
         if swap:
             v = swap_order(v, width)
         # not misaligned: pass through to Mem._st but we've swapped already
-        if remainder & (width - 1) == 0:
+        misaligned = remainder & (width - 1)
+        if misaligned == 0:
             return self._st(addr, v, width, swap=False)
         shifter, mask = self._get_shifter_mask(width, remainder)
-        print ("mask", hex(shifter), hex(mask))
+        # split into two halves. lower first
+        maxmask = (1 << (self.bytes_per_word)*8) - 1
+        val1 = ((v << shifter) & maxmask) >> shifter
+        self._st(addr+misaligned, val1,
+                 width=width-misaligned, swap=False)
+        # now upper
+        val2 = v >> ((width-misaligned)*8)
+        print ("v, val2", hex(v), hex(val2))
+        self._st(addr+self.bytes_per_word, val2,
+                 width=width-misaligned, swap=False)
 
     def __call__(self, addr, sz):
         val = self.ld(addr.value, sz, swap=False)

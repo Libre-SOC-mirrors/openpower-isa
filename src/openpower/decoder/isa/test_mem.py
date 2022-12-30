@@ -16,13 +16,13 @@ class TestMem(unittest.TestCase):
         log ("dict", d)
         self.assertEqual(d, [(0, 0x1234567800000000)])
 
-    def test_mem_misalign_st(self):
+    def test_mem_misalign_st_rollover(self):
         m = Mem(row_bytes=8, initial_mem={}, misaligned_ok=True)
-        m.st(4, 0x912345678, width=8, swap=False)
+        m.st(6, 0x912345678, width=8, swap=False)
         d = m.dump()
         log ("dict", d)
-        self.assertEqual(d, [(0, 0x1234567800000000),
-                              8, 0x0000000000000009])
+        self.assertEqual(d, [(0, 0x5678000000000000),
+                             (8, 0x0000000000091234)])
 
 
 if __name__ == '__main__':
