@@ -51,12 +51,13 @@ def process_mem(initial_mem, row_bytes=8):
 
 class Mem:
 
-    def __init__(self, row_bytes=8, initial_mem=None):
+    def __init__(self, row_bytes=8, initial_mem=None, misaligned_ok=False):
         self.mem = {}
         self.bytes_per_word = row_bytes
         self.word_log2 = math.ceil(math.log2(row_bytes))
         self.last_ld_addr = None
         self.last_st_addr = None
+        self.misaligned_ok = misaligned_ok
         log("Sim-Mem", initial_mem, self.bytes_per_word, self.word_log2)
         if not initial_mem:
             return
@@ -108,9 +109,8 @@ class Mem:
         log("Read 0x%x from addr 0x%x" % (val, ldaddr))
         return val
 
-    def st(self, addr, v, width=8, swap=True):
+    def _st(self, addr, v, width=8, swap=True):
         staddr = addr
-        self.last_st_addr = addr # record last store
         remainder = addr & (self.bytes_per_word - 1)
         addr = addr >> self.word_log2
         log("Writing 0x%x to ST 0x%x memaddr 0x%x/%x swap %s" % \
@@ -135,6 +135,22 @@ class Mem:
         else:
             self.mem[addr] = v
         log("mem @ 0x%x: 0x%x" % (staddr, self.mem[addr]))
+
+    def st(self, addr, v, width=8, swap=True):
+        staddr = addr
+        self.last_st_addr = addr # record last store
+        # misaligned not allowed: pass straight to Mem._st
+        if not self.misaligned_ok:
+            return self._st(addr, v, width, swap)
+        remainder = addr & (self.bytes_per_word - 1)
+        addr = addr >> self.word_log2
+        if swap:
+            v = swap_order(v, width)
+        # not misaligned: pass through to Mem._st but we've swapped already
+        if remainder & (width - 1) == 0:
+            return self._st(addr, v, width, swap=False)
+        shifter, mask = self._get_shifter_mask(width, remainder)
+        print ("mask", hex(shifter), hex(mask))
 
     def __call__(self, addr, sz):
         val = self.ld(addr.value, sz, swap=False)
