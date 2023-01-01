@@ -1173,7 +1173,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.last_op_svshape = False
 
         # "raw" memory
-        self.mem = Mem(row_bytes=8, initial_mem=initial_mem)
+        self.mem = Mem(row_bytes=8, initial_mem=initial_mem, misaligned_ok=True)
         self.mem.log_fancy(kind=LogKind.InstrInOuts)
         self.imem = Mem(row_bytes=4, initial_mem=initial_insns)
         # MMU mode, redirect underlying Mem through RADIX
