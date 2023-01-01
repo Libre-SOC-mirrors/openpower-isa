@@ -1,12 +1,16 @@
 # A simple Makefile, to build run: make all
 TARGET	= test
 
-CC	= gcc
+CROSS ?= powerpc64le-linux-gnu-
+AS = $(CROSS)as
+CC = $(CROSS)gcc
+LD = $(CROSS)ld
+
 #compiler flags here
-CFLAGS = -O3 -Wall -Wextra
+CFLAGS = -O3 -Wall -Wextra -static -mno-vsx -mno-altivec
 
 #linker flags here
-LFLAGS = -Wall
+LDFLAGS = -Wall -static
 
 SRCDIR	= src
 
@@ -18,13 +22,13 @@ OBJECTS	:= $(SOURCES:$(SRCDIR)/%.c=$(SRCDIR)/%.o)
 all: ${TARGET}
 
 $(TARGET): $(OBJECTS)
-	@$(CC) -o $@ $(LFLAGS) $(OBJECTS)
+	$(CC) -o $@ $(LDFLAGS) $(OBJECTS)
 
 $(OBJECTS): $(SRCDIR)/%.o : $(SRCDIR)/%.c
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	@$ rm -f $(OBJECTS)
+	$ rm -f $(OBJECTS)
 
 remove: clean
-	@$ rm -f $(TARGET)
+	$ rm -f $(TARGET)
