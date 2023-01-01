@@ -9,7 +9,7 @@ from openpower.util import log
 
 class TestMem(unittest.TestCase):
 
-    def tst_mem_align_st(self):
+    def test_mem_align_st(self):
         m = Mem(row_bytes=8, initial_mem={})
         m.st(4, 0x12345678, width=4, swap=False)
         d = m.dump()
