@@ -405,7 +405,7 @@ def run_simulation():
         print ("SPRs")
         simulator.spr.dump()
         print ("Mem")
-        simulator.mem.dump()
+        simulator.mem.dump(asciidump=True)
 
         for fname, offs, length in write_to:
             write_data(simulator.mem, fname, offs, length)

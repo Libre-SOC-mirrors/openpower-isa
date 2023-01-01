@@ -10,7 +10,7 @@ LFLAGS = -Wall
 
 SRCDIR	= src
 
-SOURCES	:= $(wildcard $(SRCDIR)/*.c)
+SOURCES	:= $(SRCDIR)/xchacha20.c $(SRCDIR)/test.c
 INCLUDES	:= $(wildcard $(SRCDIR)/*.h))
 OBJECTS	:= $(SOURCES:$(SRCDIR)/%.c=$(SRCDIR)/%.o)
 

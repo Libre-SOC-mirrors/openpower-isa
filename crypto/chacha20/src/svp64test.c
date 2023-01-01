@@ -59,7 +59,9 @@ int check_cpp(void){
 	uint8_t plaintext[] = "My Plaintext!! My Dear plaintext!!!";
 	uint32_t msglen = strlen((char *)plaintext);
 
+    /* knock one byte off the end */
     plaintext[msglen-1] = 0;
+    msglen -= 1;
 
 	xchacha_keysetup(&ctx, key, iv);
 
