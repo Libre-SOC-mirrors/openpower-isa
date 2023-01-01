@@ -534,7 +534,7 @@ class TestRunnerBase(FHDLTestCase):
 
         write_gtkw("%s.gtkw" % gtkname,
                    "%s.vcd" % gtkname,
-                   traces, styles, module='top.issuer')
+                   traces, styles, module='bench.top.issuer')
 
         # add run of instructions
         sim.add_sync_process(process)
