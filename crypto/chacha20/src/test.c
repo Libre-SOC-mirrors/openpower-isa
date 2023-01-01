@@ -20,7 +20,7 @@
  */
 int check_cpp(void){
 	XChaCha_ctx ctx;
-	uint8_t *buffer;
+	uint8_t buffer[128];
 	uint8_t counter[8] = {0x1};
 
 	/* Test values from Crypto++ documentation */
@@ -45,18 +45,8 @@ int check_cpp(void){
 			0x6C, 0x72
 	};
 
-	uint8_t plaintext[] = "My Plaintext!! My Dear plaintext!!!";
+	uint8_t plaintext[] = "My Plaintext!! My Dear plaintext!!";
 	uint32_t msglen = strlen((char *)plaintext);
-
-    /* knock one byte off the end */
-    plaintext[msglen-1] = 0;
-    msglen -= 1;
-
-	/* Allocate a buffer to hold our calculated ciphertext */
-	if((buffer = malloc(50 * sizeof(uint8_t))) == NULL){
-		perror("malloc() error");
-		return(-1);
-	}
 
 	xchacha_keysetup(&ctx, key, iv);
 
@@ -66,11 +56,9 @@ int check_cpp(void){
 
 	/* Compare our ciphertext to the correct ciphertext */
 	if(memcmp(buffer, correct_ciphertext, msglen) != 0){
-		free(buffer);
 		return(-1);
 	}
 
-	free(buffer);
 	return(0);
 }
 

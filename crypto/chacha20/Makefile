@@ -7,7 +7,7 @@ CC = $(CROSS)gcc
 LD = $(CROSS)ld
 
 #compiler flags here
-CFLAGS = -O3 -Wall -Wextra -static -mno-vsx -mno-altivec
+CFLAGS = -O3 -Wall -Wextra -static -mno-vsx -mno-altivec -DDUMP
 
 #linker flags here
 LDFLAGS = -Wall -static

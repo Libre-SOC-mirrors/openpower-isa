@@ -11,6 +11,43 @@
 #include <stdint.h>
 #include "xchacha20.h"
 
+#include <stdio.h>
+
+#ifdef MEMDUMP
+/* dump to address that pypowersim picks up */
+uint32_t *memdump = (uint32_t*)0x6000;
+#endif
+
+#ifdef DUMP
+static void dump_hex(const void* data, size_t size) {
+	char ascii[17];
+	size_t i, j;
+	ascii[16] = '\0';
+	for (i = 0; i < size; ++i) {
+		printf("%02X ", ((unsigned char*)data)[i]);
+		if (((unsigned char*)data)[i] >= ' ' && ((unsigned char*)data)[i] <= '~') {
+			ascii[i % 16] = ((unsigned char*)data)[i];
+		} else {
+			ascii[i % 16] = '.';
+		}
+		if ((i+1) % 8 == 0 || i+1 == size) {
+			printf(" ");
+			if ((i+1) % 16 == 0) {
+				printf("|  %s \n", ascii);
+			} else if (i+1 == size) {
+				ascii[(i+1) % 16] = '\0';
+				if ((i+1) % 16 <= 8) {
+					printf(" ");
+				}
+				for (j = (i+1) % 16; j < 16; ++j) {
+					printf("   ");
+				}
+				printf("|  %s \n", ascii);
+			}
+		}
+	}
+}
+#endif
 
 /** hchacha an intermediary step towards XChaCha20 based on the
  * construction and security proof used to create XSalsa20.
@@ -99,6 +136,12 @@ void xchacha_keysetup(XChaCha_ctx *ctx, const uint8_t *k, uint8_t *iv){
 	ctx->input[13] = 0;         /* Internal counter */
 	ctx->input[14] = U8TO32_LITTLE(iv + 16);
 	ctx->input[15] = U8TO32_LITTLE(iv + 20);
+
+#ifdef MEMDUMP
+    memdump = (uint32_t*)0x6000;
+    *(memdump+40) = iv; /* 0x60a0 */
+    *(memdump+41) = k2; /* 0x60a4 */
+#endif
 }
 
 
@@ -131,6 +174,16 @@ void xchacha_encrypt_bytes(XChaCha_ctx *ctx, const uint8_t *m, uint8_t *c, uint3
 	uint32_t i;
 
 	if (!bytes) return;
+
+#ifdef DUMP
+    dump_hex(ctx->input, 16*4);
+#endif
+#ifdef MEMDUMP
+    memdump = (uint32_t*)0x6000; /* dump to address that pypowersim picks up */
+    for (i = 0; i < 16; i++) {
+        *(memdump+i)= ctx->input[i];
+    }
+#endif
 
 	j0 = ctx->input[0];
 	j1 = ctx->input[1];
@@ -175,7 +228,43 @@ void xchacha_encrypt_bytes(XChaCha_ctx *ctx, const uint8_t *m, uint8_t *c, uint3
 		x15 = j15;
 
 		/* Do 20 rounds instead of 8 */
-		for (i = 20;i > 0;i -= 2) {
+		for (i = 20; i > 0;i -= 2) {
+#ifdef DUMP
+            dump_hex(&x0, 4);
+            dump_hex(&x1, 4);
+            dump_hex(&x2, 4);
+            dump_hex(&x3, 4);
+            dump_hex(&x4, 4);
+            dump_hex(&x5, 4);
+            dump_hex(&x6, 4);
+            dump_hex(&x7, 4);
+            dump_hex(&x8, 4);
+            dump_hex(&x9, 4);
+            dump_hex(&x10, 4);
+            dump_hex(&x11, 4);
+            dump_hex(&x12, 4);
+            dump_hex(&x13, 4);
+            dump_hex(&x14, 4);
+            dump_hex(&x15, 4);
+#endif
+#ifdef MEMDUMP
+            *(memdump+16) = x0;
+            *(memdump+17) = x1;
+            *(memdump+18) = x2;
+            *(memdump+19) = x3;
+            *(memdump+20) = x4;
+            *(memdump+21) = x5;
+            *(memdump+22) = x6;
+            *(memdump+23) = x7;
+            *(memdump+24) = x8;
+            *(memdump+25) = x9;
+            *(memdump+26) = x10;
+            *(memdump+27) = x11;
+            *(memdump+28) = x12;
+            *(memdump+29) = x13;
+            *(memdump+30) = x14;
+            *(memdump+31) = x15;
+#endif
 			QUARTERROUND( x0, x4, x8,x12)
 			QUARTERROUND( x1, x5, x9,x13)
 			QUARTERROUND( x2, x6,x10,x14)
@@ -184,7 +273,7 @@ void xchacha_encrypt_bytes(XChaCha_ctx *ctx, const uint8_t *m, uint8_t *c, uint3
 			QUARTERROUND( x1, x6,x11,x12)
 			QUARTERROUND( x2, x7, x8,x13)
 			QUARTERROUND( x3, x4, x9,x14)
-		}
+            }
 		x0 = PLUS(x0,j0);
 		x1 = PLUS(x1,j1);
 		x2 = PLUS(x2,j2);

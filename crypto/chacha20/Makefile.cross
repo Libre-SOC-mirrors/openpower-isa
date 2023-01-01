@@ -5,7 +5,7 @@ AS = $(CROSS)as
 CC = $(CROSS)gcc
 LD = $(CROSS)ld
 OBJCOPY = $(CROSS)objcopy
-CFLAGS = -O3 -Wall -Wextra -mno-vsx -mno-altivec
+CFLAGS = -O3 -Wall -Wextra -mno-vsx -mno-altivec -static -DMEMDUMP
 
 AFLAGS ?= -mpwr9
 
@@ -28,8 +28,8 @@ $(OBJECTS): $(SRCDIR)/%.o : $(SRCDIR)/%.c
 
 #pysvp64asm $< $<.sv
 #$(AS) $(AFLAGS) -c $<.sv -le -o $<.o
-chacha20test.bin: $(OBJECTS)
-	$(LD) $(OBJECTS) -EL -o $<.elf -T memmap
+chacha20test.bin: $(OBJECTS) memmap
+	$(LD) $(OBJECTS) -static -EL -o $<.elf -T memmap
 	$(OBJCOPY) $<.elf -I elf64-little -O binary $@
 
 tests: $(OBJ) 
