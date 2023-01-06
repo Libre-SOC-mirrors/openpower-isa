@@ -102,7 +102,8 @@ class Reference:
             bits = range(bits.start, bits.stop)
         bits = tuple(bits)
 
-        if isinstance(value, int):
+        if isinstance(value, (int, self.__class__)):
+            value = int(value)
             if value.bit_length() > len(bits):
                 raise OverflowError(value)
             value = _SelectableInt(value=value, bits=len(bits))
