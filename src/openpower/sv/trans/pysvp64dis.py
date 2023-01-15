@@ -2,7 +2,6 @@ import argparse as _argparse
 import enum as _enum
 import sys as _sys
 import os as _os
-from io import BytesIO
 
 from openpower.decoder.power_enums import (
     find_wiki_dir as _find_wiki_dir,
@@ -27,13 +26,8 @@ class ByteOrder(_enum.Enum):
 def load(ifile, byteorder=ByteOrder.LITTLE, **_):
     byteorder = str(byteorder)
 
-    # copy over to persistent binfile (BytesIO)
-    cpfile = BytesIO()
-    cpfile.write(ifile.read())
-    cpfile.seek(0)
-
     while True:
-        insn = cpfile.read(4)
+        insn = ifile.read(4)
         length = len(insn)
         if length == 0:
             return
@@ -41,7 +35,7 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
             raise IOError(insn)
         insn = _WordInstruction.integer(value=insn, byteorder=byteorder)
         if insn.PO == 0x1:
-            suffix = cpfile.read(4)
+            suffix = ifile.read(4)
             length = len(suffix)
             if length == 0:
                 yield insn
@@ -55,8 +49,6 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
             if insn.prefix.id != 0b11:
                 insn = _PrefixedInstruction.pair(prefix=prefix, suffix=suffix)
         yield insn
-
-    cpfile.seek(0) # restore position so that generator can be reused
 
 
 def dump(insns, verbosity, **_):

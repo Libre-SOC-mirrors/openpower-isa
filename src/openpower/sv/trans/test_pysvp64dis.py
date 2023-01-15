@@ -5,6 +5,7 @@ from openpower.decoder.power_insn import Database, Verbosity
 from openpower.decoder.power_enums import find_wiki_dir
 from openpower.sv import sv_binutils_fptrans
 import unittest
+from io import BytesIO
 import itertools
 import sys
 
@@ -15,8 +16,12 @@ class SVSTATETestCase(unittest.TestCase):
         lst = list(isa)
         with Program(lst, bigendian=False) as program:
             print ("ops", program._instructions)
+            binfile = BytesIO()
             program.binfile.seek(0)
-            insns = load(program.binfile)
+            binfile.write(program.binfile.read())
+            program.binfile.seek(0)
+            binfile.seek(0)
+            insns = load(binfile)
             #for insn in insns:
                 #print ("insn", insn)
             insns = list(insns)
