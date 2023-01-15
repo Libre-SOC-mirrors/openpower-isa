@@ -575,6 +575,17 @@ class Fields:
 
 
 class Operands:
+    __GPR_PAIRS = (
+        _SVExtraReg.RTp,
+        _SVExtraReg.RSp,
+    )
+    __FPR_PAIRS = (
+        _SVExtraReg.FRAp,
+        _SVExtraReg.FRBp,
+        _SVExtraReg.FRSp,
+        _SVExtraReg.FRTp,
+    )
+
     def __init__(self, insn, iterable):
         custom_insns = {
             "b": {"target_addr": TargetAddrOperandLI},
@@ -603,6 +614,12 @@ class Operands:
             "SIM": SignedOperand,
             "SVD": SignedOperand,
             "SVDS": SignedOperand,
+            "RSp": GPRPairOperand,
+            "RTp": GPRPairOperand,
+            "FRAp": FPRPairOperand,
+            "FRBp": FPRPairOperand,
+            "FRSp": FPRPairOperand,
+            "FRTp": FPRPairOperand,
         }
         custom_immediates = {
             "DQ": EXTSOperandDQ,
@@ -635,16 +652,22 @@ class Operands:
                 elif name in custom_fields:
                     cls = custom_fields[name]
 
-                if name in _RegType.__members__:
-                    regtype = _RegType[name]
-                    if regtype is _RegType.GPR:
-                        cls = GPROperand
-                    elif regtype is _RegType.FPR:
-                        cls = FPROperand
-                    if regtype is _RegType.CR_5BIT:
-                        cls = CR5Operand
-                    if regtype is _RegType.CR_3BIT:
-                        cls = CR3Operand
+                if name in _SVExtraReg.__members__:
+                    reg = _SVExtraReg[name]
+                    if reg in self.__class__.__GPR_PAIRS:
+                        cls = GPRPairOperand
+                    elif reg in self.__class__.__FPR_PAIRS:
+                        cls = FPRPairOperand
+                    else:
+                        regtype = _RegType[name]
+                        if regtype is _RegType.GPR:
+                            cls = GPROperand
+                        elif regtype is _RegType.FPR:
+                            cls = FPROperand
+                        elif regtype is _RegType.CR_5BIT:
+                            cls = CR5Operand
+                        elif regtype is _RegType.CR_3BIT:
+                            cls = CR3Operand
 
                 if imm_name is not None:
                     mapping[imm_name] = (imm_cls, {"name": imm_name})
@@ -1172,12 +1195,21 @@ class ExtendableOperand(DynamicOperand):
 
     @property
     def extra_idx(self):
+        pairs = {
+            _SVExtraReg.RSp: _SVExtraReg.RS,
+            _SVExtraReg.RTp: _SVExtraReg.RT,
+            _SVExtraReg.FRAp: _SVExtraReg.FRA,
+            _SVExtraReg.FRBp: _SVExtraReg.FRB,
+            _SVExtraReg.FRSp: _SVExtraReg.FRS,
+            _SVExtraReg.FRTp: _SVExtraReg.FRT,
+        }
+
         for key in frozenset({
                     "in1", "in2", "in3", "cr_in", "cr_in2",
                     "out", "out2", "cr_out",
                 }):
             extra_reg = self.record.svp64.extra_reg(key=key)
-            if extra_reg is self.extra_reg:
+            if pairs.get(extra_reg, extra_reg) is pairs.get(self.extra_reg, self.extra_reg):
                 return self.record.extra_idx(key=key)
 
         return _SVExtra.NONE
@@ -1286,6 +1318,11 @@ class GPROperand(SimpleRegisterOperand):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
+class GPRPairOperand(GPROperand):
+    pass
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
 class FPROperand(SimpleRegisterOperand):
     def assemble(self, value, insn):
         return super().assemble(value=value, insn=insn, prefix="f")
@@ -1295,6 +1332,11 @@ class FPROperand(SimpleRegisterOperand):
         prefix = "" if (verbosity <= Verbosity.SHORT) else "f"
         yield from super().disassemble(prefix=prefix, insn=insn,
             verbosity=verbosity, indent=indent)
+
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class FPRPairOperand(FPROperand):
+    pass
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)

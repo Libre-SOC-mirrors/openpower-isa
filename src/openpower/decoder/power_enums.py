@@ -273,6 +273,12 @@ class SVExtraReg(Enum):
     BFT = auto()
     WHOLE_REG = auto()
     SPR = auto()
+    RSp = auto()
+    RTp = auto()
+    FRAp = auto()
+    FRBp = auto()
+    FRSp = auto()
+    FRTp = auto()
 
     @classmethod
     def _missing_(cls, desc):
@@ -283,7 +289,7 @@ class SVExtraReg(Enum):
         if isinstance(desc, selectors):
             return cls.__members__.get(desc.name)
 
-        return super()._missing_(desc)
+        return cls.__members__.get(desc)
 
 
 @unique
@@ -573,14 +579,20 @@ class RegType(Enum):
     RB = GPR
     RC = GPR
     RS = GPR
+    RSp = RS
     RT = GPR
+    RTp = RT
 
     FPR = 1
     FRA = FPR
+    FRAp = FRA
     FRB = FPR
+    FRBp = FRB
     FRC = FPR
     FRS = FPR
+    FRSp = FRS
     FRT = FPR
+    FRTp = FRT
 
     CR_3BIT = 2 # CR field; the CR register is 32-bit
     BF = CR_3BIT
@@ -894,19 +906,20 @@ class MicrOp(Enum):
     OP_SHADD = 103
 
 
-@unique
 class In1Sel(Enum):
     NONE = 0
     RA = 1
     RA_OR_ZERO = 2
     SPR = 3
     RS = 4  # for some ALU/Logical operations
+    RSp = RS
     FRA = 5
+    FRAp = FRA
     FRS = 6
+    FRSp = FRS
     CIA = 7 # for addpcis
 
 
-@unique
 class In2Sel(Enum):
     NONE = 0
     RB = 1
@@ -922,7 +935,9 @@ class In2Sel(Enum):
     CONST_SH32 = 11
     SPR = 12
     RS = 13  # for shiftrot (M-Form)
+    RSp = RS
     FRB = 14
+    FRBp = FRB
     CONST_SVD = 15  # for SVD-Form
     CONST_SVDS = 16  # for SVDS-Form
     CONST_XBI = 17
@@ -930,27 +945,32 @@ class In2Sel(Enum):
     CONST_DQ = 19 # for ld/st-quad
 
 
-@unique
 class In3Sel(Enum):
     NONE = 0
     RS = 1
+    RSp = RS
     RB = 2  # for shiftrot (M-Form)
     FRS = 3
+    FRSp = FRS
     FRC = 4
     RC = 5  # for SVP64 bit-reverse LD/ST
     RT = 6  # for ternlog[i]
+    RTp = RT
 
 
-@unique
 class OutSel(Enum):
     NONE = 0
     RT = 1
+    RTp = RT
     RA = 2
     SPR = 3
     RT_OR_ZERO = 4
     FRT = 5
+    FRTp = FRT
     FRS = 6
+    FRSp = FRS
     RS = 7
+    RSp = RS
 
 
 @unique
