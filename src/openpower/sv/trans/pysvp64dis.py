@@ -72,7 +72,10 @@ def main():
     parser.add_argument("-v", "--verbose",
         dest="style", default=_Style.NORMAL,
         action="store_const", const=_Style.VERBOSE)
-    parser.add_argument("-l", "--log",
+    parser.add_argument("-l", "--legacy",
+        dest="style", default=_Style.NORMAL,
+        action="store_const", const=_Style.LEGACY)
+    parser.add_argument("-L", "--log",
         action="store_true", default=False)
 
     args = dict(vars(parser.parse_args()))

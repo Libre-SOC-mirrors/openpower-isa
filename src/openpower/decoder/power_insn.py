@@ -56,6 +56,7 @@ from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 @_functools.total_ordering
 class Style(_enum.Enum):
+    LEGACY = _enum.auto()
     SHORT = _enum.auto()
     NORMAL = _enum.auto()
     VERBOSE = _enum.auto()
@@ -1729,13 +1730,6 @@ class WordInstruction(Instruction):
         record = cls.record(db=db, entry=entry)
         insn = cls.integer(value=0)
 
-        opcode = record.section.opcode
-        if opcode is None:
-            opcode = record.ppc.opcode
-        bits = record.section.bitsel
-        for (src, dst) in enumerate(reversed(bits)):
-            insn[dst] = ((opcode.value & (1 << src)) != 0)
-
         for (op_cls, op_kwargs) in record.static_operands:
             operand = op_cls(record=record, **op_kwargs)
             operand.assemble(insn=insn)
@@ -1749,8 +1743,7 @@ class WordInstruction(Instruction):
 
     def disassemble(self, db,
             byteorder="little",
-            style=Style.NORMAL,
-            compatibility=False):
+            style=Style.NORMAL):
         if style <= Style.SHORT:
             blob = ""
         else:
@@ -1763,13 +1756,16 @@ class WordInstruction(Instruction):
             yield f"{blob}.long 0x{int(self):08x}"
             return
 
-        operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db, style=style)))
-        if operands:
-            operands = ",".join(operands)
-            yield f"{blob}{record.name} {operands}"
+        if style <= Style.LEGACY and record.ppc.unofficial:
+            yield f"{blob}.long 0x{int(self):08x}"
         else:
-            yield f"{blob}{record.name}"
+            operands = tuple(map(_operator.itemgetter(1),
+                self.dynamic_operands(db=db, style=style)))
+            if operands:
+                operands = ",".join(operands)
+                yield f"{blob}{record.name} {operands}"
+            else:
+                yield f"{blob}{record.name}"
 
         if style >= Style.VERBOSE:
             indent = (" " * 4)
@@ -3450,11 +3446,13 @@ class SVP64Instruction(PrefixedInstruction):
         insn.prefix.PO = 0x1
         insn.prefix.id = 0x3
 
+
         return insn
 
     def disassemble(self, db,
             byteorder="little",
             style=Style.NORMAL):
+
         def blob(insn):
             if style <= Style.SHORT:
                 return ""
@@ -3488,9 +3486,15 @@ class SVP64Instruction(PrefixedInstruction):
         if len(operands) > 0: # if any separate with a space
             operands = (" " + operands)
 
-        yield f"{blob_prefix}{name}{specifiers}{operands}"
-        if blob_suffix:
-            yield f"{blob_suffix}"
+        if style <= Style.LEGACY:
+            yield f"{blob_prefix}.long 0x{int(self.prefix):08x}"
+            suffix = WordInstruction.integer(value=int(self.suffix))
+            yield from suffix.disassemble(db=db,
+                byteorder=byteorder, style=style)
+        else:
+            yield f"{blob_prefix}{name}{specifiers}{operands}"
+            if blob_suffix:
+                yield f"{blob_suffix}"
 
         if style >= Style.VERBOSE:
             indent = (" " * 4)

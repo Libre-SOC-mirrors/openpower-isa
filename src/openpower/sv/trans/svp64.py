@@ -273,12 +273,7 @@ class SVP64Asm:
         if record is not None:
             insn = WordInstruction.assemble(db=DB,
                 entry=opcode, arguments=fields)
-            yield " ".join((
-                f".long 0x{int(insn):08X}",
-                "#",
-                opcode,
-                ",".join(fields),
-            ))
+            yield from insn.disassemble(db=DB, style=Style.LEGACY)
             return
 
         # identify if is a svp64 mnemonic
@@ -305,10 +300,7 @@ class SVP64Asm:
                 entry=v30b_op_orig,
                 arguments=fields,
                 specifiers=opmodes)
-            prefix = int(insn.prefix)
-            suffix = int(insn.suffix)
-            yield f".long 0x{prefix:08X}"
-            yield from insn.suffix.disassemble(db=DB, style=Style.SHORT)
+            yield from insn.disassemble(db=DB, style=Style.LEGACY)
             return
 
         # look up the 32-bit op (original, with "." if it has it)
@@ -957,12 +949,7 @@ class SVP64Asm:
         if record is not None:
             insn = WordInstruction.assemble(db=DB,
                 entry=opcode, arguments=fields)
-            yield " ".join((
-                f".long 0x{int(insn):08X}",
-                "#",
-                opcode,
-                ",".join(fields),
-            ))
+            yield from insn.disassemble(db=DB, style=Style.LEGACY)
         else:
             if not v30b_op.endswith('.'):
                 v30b_op += rc
