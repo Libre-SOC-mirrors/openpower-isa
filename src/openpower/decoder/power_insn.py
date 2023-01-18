@@ -1756,7 +1756,14 @@ class WordInstruction(Instruction):
             yield f"{blob}.long 0x{int(self):08x}"
             return
 
-        if style <= Style.LEGACY and record.ppc.unofficial:
+        paired = False
+        if style is Style.LEGACY:
+            paired = False
+            for (op_cls, _) in record.dynamic_operands:
+                if issubclass(op_cls, (GPRPairOperand, FPRPairOperand)):
+                    paired = True
+
+        if style is Style.LEGACY and (paired or record.ppc.unofficial):
             yield f"{blob}.long 0x{int(self):08x}"
         else:
             operands = tuple(map(_operator.itemgetter(1),
