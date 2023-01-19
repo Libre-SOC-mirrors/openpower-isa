@@ -54,7 +54,8 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
 def dump(insns, style, **_):
     db = _Database(_find_wiki_dir())
     for insn in insns:
-        yield from insn.disassemble(db=db, style=style)
+        record = db[insn]
+        yield from insn.disassemble(record=record, style=style)
 
 
 # this is the entry-point for the console-script pysvp64dis

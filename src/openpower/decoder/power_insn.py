@@ -727,11 +727,11 @@ class Operands:
 
 
 class Arguments(tuple):
-    def __new__(cls, fields, operands):
-        iterable = iter(tuple(fields))
+    def __new__(cls, arguments, operands):
+        arguments = iter(tuple(arguments))
         operands = iter(tuple(operands))
-        arguments = []
 
+        items = []
         while True:
             try:
                 operand = next(operands)
@@ -739,29 +739,28 @@ class Arguments(tuple):
                 break
 
             try:
-                argument = next(iterable)
+                argument = next(arguments)
             except StopIteration:
                 raise ValueError("operands count mismatch")
 
-            (op_cls, _) = operand
-            if issubclass(op_cls, ImmediateOperand):
+            if isinstance(operand, ImmediateOperand):
                 argument = argument.replace("(", " ").replace(")", "")
                 (imm_argument, _, argument) = argument.partition(" ")
                 try:
                     (imm_operand, operand) = (operand, next(operands))
                 except StopIteration:
                     raise ValueError("operands count mismatch")
-                arguments.append((imm_argument, imm_operand))
-            arguments.append((argument, operand))
+                items.append((imm_argument, imm_operand))
+            items.append((argument, operand))
 
         try:
-            next(iterable)
+            next(arguments)
         except StopIteration:
             pass
         else:
             raise ValueError("operands count mismatch")
 
-        return super().__new__(cls, arguments)
+        return super().__new__(cls, items)
 
 
 class PCode:
@@ -799,21 +798,30 @@ class Record:
         rhs = (min(other.opcodes), other.name)
         return (lhs < rhs)
 
-    @property
+    @cached_property
+    def operands(self):
+        return (self.static_operands + self.dynamic_operands)
+
+    @cached_property
     def static_operands(self):
-        def XO(ppc):
-            return (XOStaticOperand, {
-                "span": self.section.bitsel,
-                "value": ppc.opcode.value,
-            })
+        operands = []
+        operands.append(POStaticOperand(record=self, value=self.PO))
+        for ppc in self.ppc:
+            operands.append(XOStaticOperand(
+                record=self,
+                value=ppc.opcode.value,
+                span=self.section.bitsel,
+            ))
+        for (cls, kwargs) in self.mdwn.operands.static:
+            operands.append(cls(record=self, **kwargs))
+        return tuple(operands)
 
-        yield (POStaticOperand, {"value": self.PO})
-        yield from map(XO, self.ppc)
-        yield from self.mdwn.operands.static
-
-    @property
+    @cached_property
     def dynamic_operands(self):
-        yield from self.mdwn.operands.dynamic
+        operands = []
+        for (cls, kwargs) in self.mdwn.operands.dynamic:
+            operands.append(cls(record=self, **kwargs))
+        return tuple(operands)
 
     @cached_property
     def opcodes(self):
@@ -869,6 +877,10 @@ class Record:
                 return int(_SelectableInt(value=value, bits=bits)[0:6])
 
         return int(opcode.value)
+
+    @cached_property
+    def XO(self):
+        return tuple(ppc.opcode for ppc in self.ppc)
 
     def match(self, key):
         for opcode in self.opcodes:
@@ -949,6 +961,10 @@ class Operand:
         self.__record = record
         self.__name = name
 
+    def __iter__(self):
+        yield ("record", self.record)
+        yield ("name", self.__name)
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.name})"
 
@@ -964,13 +980,8 @@ class Operand:
     def span(self):
         return self.record.fields[self.name]
 
-    def assemble(self, value, insn):
-        span = self.span
-        if isinstance(value, str):
-            value = int(value, 0)
-            if value < 0:
-                raise ValueError("signed operands not allowed")
-        insn[span] = value
+    def assemble(self, insn):
+        raise NotImplementedError()
 
     def disassemble(self, insn,
             style=Style.NORMAL, indent=""):
@@ -978,6 +989,14 @@ class Operand:
 
 
 class DynamicOperand(Operand):
+    def assemble(self, insn, value):
+        span = self.span
+        if isinstance(value, str):
+            value = int(value, 0)
+            if value < 0:
+                raise ValueError("signed operands not allowed")
+        insn[span] = value
+
     def disassemble(self, insn,
             style=Style.NORMAL, indent=""):
         span = self.span
@@ -993,12 +1012,12 @@ class DynamicOperand(Operand):
 
 
 class SignedOperand(DynamicOperand):
-    def assemble(self, value, insn):
+    def assemble(self, insn, value):
         if isinstance(value, str):
             value = int(value, 0)
         return super().assemble(value=value, insn=insn)
 
-    def assemble(self, value, insn):
+    def assemble(self, insn, value):
         span = self.span
         if isinstance(value, str):
             value = int(value, 0)
@@ -1025,6 +1044,10 @@ class StaticOperand(Operand):
         self.__value = value
         return super().__init__(record=record, name=name)
 
+    def __iter__(self):
+        yield ("value", self.__value)
+        yield from super().__iter__()
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.name}, value={self.value})"
 
@@ -1033,7 +1056,7 @@ class StaticOperand(Operand):
         return self.__value
 
     def assemble(self, insn):
-        return super().assemble(value=self.value, insn=insn)
+        insn[self.span] = self.value
 
     def disassemble(self, insn,
             style=Style.NORMAL, indent=""):
@@ -1051,8 +1074,12 @@ class StaticOperand(Operand):
 
 class SpanStaticOperand(StaticOperand):
     def __init__(self, record, name, value, span):
-        self.__span = span
+        self.__span = tuple(span)
         return super().__init__(record=record, name=name, value=value)
+
+    def __iter__(self):
+        yield ("span", self.__span)
+        yield from super().__iter__()
 
     @property
     def span(self):
@@ -1063,6 +1090,11 @@ class POStaticOperand(SpanStaticOperand):
     def __init__(self, record, value):
         return super().__init__(record=record, name="PO", value=value, span=range(0, 6))
 
+    def __iter__(self):
+        for (key, value) in super().__iter__():
+            if key not in {"name", "span"}:
+                yield (key, value)
+
 
 class XOStaticOperand(SpanStaticOperand):
     def __init__(self, record, value, span):
@@ -1071,13 +1103,9 @@ class XOStaticOperand(SpanStaticOperand):
         span = dict(zip(bits, range(len(bits))))
         span_rev = {value:key for (key, value) in span.items()}
 
-        # This part is tricky: we could have used record.static_operands,
-        # but this would cause an infinite recursion, since this code is called
-        # from the record.static_operands method already.
-        operands = []
-        operands.extend(record.mdwn.operands.static)
-        operands.extend(record.mdwn.operands.dynamic)
-        for (cls, kwargs) in operands:
+        # This part is tricky: we cannot use record.operands,
+        # as this code is called by record.static_operands method.
+        for (cls, kwargs) in record.mdwn.operands:
             operand = cls(record=record, **kwargs)
             for idx in operand.span:
                 rev = span.pop(idx, None)
@@ -1089,6 +1117,11 @@ class XOStaticOperand(SpanStaticOperand):
 
         return super().__init__(record=record, name="XO", value=value, span=span)
 
+    def __iter__(self):
+        for (key, value) in super().__iter__():
+            if key not in {"name"}:
+                yield (key, value)
+
 
 class ImmediateOperand(DynamicOperand):
     pass
@@ -1099,7 +1132,7 @@ class SignedImmediateOperand(SignedOperand, ImmediateOperand):
 
 
 class NonZeroOperand(DynamicOperand):
-    def assemble(self, value, insn):
+    def assemble(self, insn, value):
         if isinstance(value, str):
             value = int(value, 0)
         if not isinstance(value, int):
@@ -1243,8 +1276,6 @@ class ExtendableOperand(DynamicOperand):
             else:
                 raise ValueError(self.record.etype)
 
-            return super().assemble(value=value, insn=insn)
-
         return super().assemble(value=value, insn=insn)
 
     def disassemble(self, insn,
@@ -1301,7 +1332,7 @@ class SimpleRegisterOperand(ExtendableOperand):
 
 
 class GPROperand(SimpleRegisterOperand):
-    def assemble(self, value, insn):
+    def assemble(self, insn, value):
         return super().assemble(value=value, insn=insn, prefix="r")
 
     def disassemble(self, insn,
@@ -1316,7 +1347,7 @@ class GPRPairOperand(GPROperand):
 
 
 class FPROperand(SimpleRegisterOperand):
-    def assemble(self, value, insn):
+    def assemble(self, insn, value):
         return super().assemble(value=value, insn=insn, prefix="f")
 
     def disassemble(self, insn,
@@ -1399,7 +1430,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
 
         return (value, extra)
 
-    def assemble(self, value, insn):
+    def assemble(self, insn, value):
         if isinstance(value, str):
             vector = False
 
@@ -1511,7 +1542,7 @@ class EXTSOperand(SignedOperand):
     def span(self):
         return self.record.fields[self.field]
 
-    def assemble(self, value, insn):
+    def assemble(self, insn, value):
         span = self.span
         if isinstance(value, str):
             value = int(value, 0)
@@ -1641,14 +1672,26 @@ class Instruction(_Mapping):
             raise KeyError(entry)
         return record
 
-    def spec(self, db, prefix):
-        record = self.record(db=db, entry=self)
+    @classmethod
+    def operands(cls, record):
+        yield from record.operands
 
+    @classmethod
+    def static_operands(cls, record):
+        return filter(lambda operand: isinstance(operand, StaticOperand),
+            cls.operands(record=record))
+
+    @classmethod
+    def dynamic_operands(cls, record):
+        return filter(lambda operand: isinstance(operand, DynamicOperand),
+            cls.operands(record=record))
+
+    def spec(self, record, prefix):
         dynamic_operands = tuple(map(_operator.itemgetter(0),
-            self.dynamic_operands(db=db)))
+            self.spec_dynamic_operands(record=record)))
 
         static_operands = []
-        for (name, value) in record.static_operands:
+        for (name, value) in self.spec_static_operands(record=record):
             static_operands.append(f"{name}={value}")
 
         operands = ""
@@ -1661,20 +1704,16 @@ class Instruction(_Mapping):
 
         return f"{prefix}{record.name}{operands}"
 
-    def static_operands(self, db):
-        record = self.record(db=db, entry=self)
-        for (op_cls, op_kwargs) in record.static_operands:
-            operand = op_cls(record=record, **op_kwargs)
-            yield (operand.name, operand.value)
+    def spec_static_operands(self, record):
+        for operand in self.static_operands(record=record):
+            if not isinstance(operand, (POStaticOperand, XOStaticOperand)):
+                yield (operand.name, operand.value)
 
-    def dynamic_operands(self, db, style=Style.NORMAL):
-        record = self.record(db=db, entry=self)
-
+    def spec_dynamic_operands(self, record, style=Style.NORMAL):
         imm = False
         imm_name = ""
         imm_value = ""
-        for (op_cls, op_kwargs) in record.dynamic_operands:
-            operand = op_cls(record=record, **op_kwargs)
+        for operand in self.dynamic_operands(record=record):
             name = operand.name
             value = " ".join(operand.disassemble(insn=self,
                 style=min(style, Style.NORMAL)))
@@ -1690,10 +1729,22 @@ class Instruction(_Mapping):
                 yield (name, value)
 
     @classmethod
-    def assemble(cls, db, entry, arguments=None):
-        raise NotImplementedError()
+    def assemble(cls, record, arguments=None):
+        if arguments is None:
+            arguments = ()
 
-    def disassemble(self, db,
+        insn = cls.integer(value=0)
+
+        for operand in cls.static_operands(record=record):
+            operand.assemble(insn=insn)
+
+        dynamic_operands = tuple(cls.dynamic_operands(record=record))
+        for (value, operand) in Arguments(arguments, dynamic_operands):
+            operand.assemble(insn=insn, value=value)
+
+        return insn
+
+    def disassemble(self, record,
             byteorder="little",
             style=Style.NORMAL):
         raise NotImplementedError()
@@ -1702,11 +1753,6 @@ class Instruction(_Mapping):
 class WordInstruction(Instruction):
     _: _Field = range(0, 32)
     PO: _Field = range(0, 6)
-
-    @classmethod
-    def record(cls, db, entry):
-        record = super().record(db=db, entry=entry)
-        return _dataclasses.replace(record, svp64=None)
 
     @classmethod
     def integer(cls, value, byteorder="little"):
@@ -1720,28 +1766,7 @@ class WordInstruction(Instruction):
             bits.append(bit)
         return "".join(map(str, bits))
 
-    @classmethod
-    def assemble(cls, db, entry, arguments=None, specifiers=None):
-        if arguments is None:
-            arguments = ()
-        if specifiers is None:
-            specifiers = ()
-
-        record = cls.record(db=db, entry=entry)
-        insn = cls.integer(value=0)
-
-        for (op_cls, op_kwargs) in record.static_operands:
-            operand = op_cls(record=record, **op_kwargs)
-            operand.assemble(insn=insn)
-
-        dynamic_operands = tuple(record.dynamic_operands)
-        for (value, (op_cls, op_kwargs)) in Arguments(arguments, dynamic_operands):
-            operand = op_cls(record=record, **op_kwargs)
-            operand.assemble(value=value, insn=insn)
-
-        return insn
-
-    def disassemble(self, db,
+    def disassemble(self, record,
             byteorder="little",
             style=Style.NORMAL):
         if style <= Style.SHORT:
@@ -1751,7 +1776,6 @@ class WordInstruction(Instruction):
             blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
             blob += "    "
 
-        record = self.record(db=db, entry=self)
         if record is None:
             yield f"{blob}.long 0x{int(self):08x}"
             return
@@ -1759,15 +1783,15 @@ class WordInstruction(Instruction):
         paired = False
         if style is Style.LEGACY:
             paired = False
-            for (op_cls, _) in record.dynamic_operands:
-                if issubclass(op_cls, (GPRPairOperand, FPRPairOperand)):
+            for operand in self.dynamic_operands(record=record):
+                if isinstance(operand, (GPRPairOperand, FPRPairOperand)):
                     paired = True
 
         if style is Style.LEGACY and (paired or record.ppc.unofficial):
             yield f"{blob}.long 0x{int(self):08x}"
         else:
             operands = tuple(map(_operator.itemgetter(1),
-                self.dynamic_operands(db=db, style=style)))
+                self.spec_dynamic_operands(record=record, style=style)))
             if operands:
                 operands = ",".join(operands)
                 yield f"{blob}{record.name} {operands}"
@@ -1777,7 +1801,7 @@ class WordInstruction(Instruction):
         if style >= Style.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
-            spec = self.spec(db=db, prefix="")
+            spec = self.spec(record=record, prefix="")
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
             yield f"{indent}pcode"
@@ -1791,8 +1815,7 @@ class WordInstruction(Instruction):
             yield f"{indent}opcodes"
             for opcode in record.opcodes:
                 yield f"{indent}{indent}{opcode!r}"
-            for (cls, kwargs) in record.mdwn.operands:
-                operand = cls(record=record, **kwargs)
+            for operand in self.operands(record=record):
                 yield from operand.disassemble(insn=self,
                     style=style, indent=indent)
             yield ""
@@ -2366,23 +2389,6 @@ class CROpFF5RM(FFPRRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
     sz: BaseRM[23]
 
     def specifiers(self, record):
-        # FIXME: this is a slightly hackish way.
-        # Ideally the class should be generated.
-        if False:
-            span = None
-            for (op_cls, op_kwargs) in record.dynamic_operands:
-                operand = op_cls(record=record, **op_kwargs)
-                if operand.name == record.svp64.extra_CR.reg.name:
-                    span = tuple(map(lambda bit: (bit + 32), operand.span))
-                    break
-
-            value = int(self.storage[span])
-            CR = int(value >> 2)
-            CC = int(value & 3)
-            if CR != 0:
-                cond = ("lt", "gt", "eq", "so")[CC]
-                yield f"ff={cond}"
-
         yield from super().specifiers(record=record, mode="ff")
 
 
@@ -3245,7 +3251,7 @@ class Specifiers(tuple):
 
 class SVP64OperandMeta(type):
     class SVP64NonZeroOperand(NonZeroOperand):
-        def assemble(self, value, insn):
+        def assemble(self, insn, value):
             if isinstance(value, str):
                 value = int(value, 0)
             if not isinstance(value, int):
@@ -3257,26 +3263,26 @@ class SVP64OperandMeta(type):
 
             return super().assemble(value=value, insn=insn)
 
+    class SVP64XOStaticOperand(SpanStaticOperand):
+        def __init__(self, record, value, span):
+            return super().__init__(record=record, name="XO", value=value, span=span)
+
     __TRANSFORM = {
         NonZeroOperand: SVP64NonZeroOperand,
+        XOStaticOperand: SVP64XOStaticOperand,
     }
 
     def __new__(metacls, name, bases, ns):
         bases = list(bases)
-        for (origin_cls, target_cls) in metacls.__TRANSFORM.items():
-            for (index, base_cls) in enumerate(bases):
-                if base_cls is origin_cls:
-                    bases[index] = target_cls
-                    break
+        for (index, base_cls) in enumerate(bases):
+            bases[index] = metacls.__TRANSFORM.get(base_cls, base_cls)
+
         bases = tuple(bases)
 
         return super().__new__(metacls, name, bases, ns)
 
 
 class SVP64Operand(Operand, metaclass=SVP64OperandMeta):
-    def __init__(self, record, *args, **kwargs):
-        return super().__init__(record=record, *args, **kwargs)
-
     @property
     def span(self):
         return tuple(map(lambda bit: (bit + 32), super().span))
@@ -3287,6 +3293,9 @@ class RMSelector:
         self.__insn = insn
         self.__record = record
         return super().__init__()
+
+    def __str__(self):
+        return self.rm.__doc__
 
     def __repr__(self):
         return repr(self.rm)
@@ -3411,12 +3420,6 @@ class SVP64Instruction(PrefixedInstruction):
     def select(self, record):
         return RMSelector(insn=self, record=record)
 
-    @classmethod
-    def record(cls, db, entry):
-        if isinstance(entry, cls):
-            entry = entry.suffix
-        return super().record(db=db, entry=entry)
-
     @property
     def binary(self):
         bits = []
@@ -3426,40 +3429,21 @@ class SVP64Instruction(PrefixedInstruction):
         return "".join(map(str, bits))
 
     @classmethod
-    def assemble(cls, db, entry, arguments=None, specifiers=None):
-        if arguments is None:
-            arguments = ()
-        if specifiers is None:
-            specifiers = ()
-
-        record = cls.record(db=db, entry=entry)
-        insn = cls.integer(value=0)
-
-        for (op_cls, op_kwargs) in record.static_operands:
-            op_cls = type(f"SVP64{op_cls.__name__}", (SVP64Operand, op_cls), {})
-            operand = op_cls(record=record, **op_kwargs)
-            operand.assemble(insn=insn)
+    def assemble(cls, record, arguments=None, specifiers=None):
+        insn = super().assemble(record=record, arguments=arguments)
 
         specifiers = Specifiers(items=specifiers, record=record)
         for specifier in specifiers:
             specifier.assemble(insn=insn)
 
-        dynamic_operands = tuple(record.dynamic_operands)
-        for (value, (op_cls, op_kwargs)) in Arguments(arguments, dynamic_operands):
-            op_cls = type(f"SVP64{op_cls.__name__}", (SVP64Operand, op_cls), {})
-            operand = op_cls(record=record, **op_kwargs)
-            operand.assemble(value=value, insn=insn)
-
         insn.prefix.PO = 0x1
         insn.prefix.id = 0x3
 
-
         return insn
 
-    def disassemble(self, db,
+    def disassemble(self, record,
             byteorder="little",
             style=Style.NORMAL):
-
         def blob(insn):
             if style <= Style.SHORT:
                 return ""
@@ -3468,13 +3452,14 @@ class SVP64Instruction(PrefixedInstruction):
                 blob = " ".join(map(lambda byte: f"{byte:02x}", blob))
                 return f"{blob}    "
 
-        record = self.record(db=db, entry=self)
         blob_prefix = blob(self.prefix)
         blob_suffix = blob(self.suffix)
-        if record is None or record.svp64 is None:
+        if record is None:
             yield f"{blob_prefix}.long 0x{int(self.prefix):08x}"
             yield f"{blob_suffix}.long 0x{int(self.suffix):08x}"
             return
+
+        assert record.svp64 is not None
 
         name = f"sv.{record.name}"
 
@@ -3488,7 +3473,7 @@ class SVP64Instruction(PrefixedInstruction):
 
         # convert operands to " ,x,y,z"
         operands = tuple(map(_operator.itemgetter(1),
-            self.dynamic_operands(db=db, style=style)))
+            self.spec_dynamic_operands(record=record, style=style)))
         operands = ",".join(operands)
         if len(operands) > 0: # if any separate with a space
             operands = (" " + operands)
@@ -3496,7 +3481,7 @@ class SVP64Instruction(PrefixedInstruction):
         if style <= Style.LEGACY:
             yield f"{blob_prefix}.long 0x{int(self.prefix):08x}"
             suffix = WordInstruction.integer(value=int(self.suffix))
-            yield from suffix.disassemble(db=db,
+            yield from suffix.disassemble(record=record,
                 byteorder=byteorder, style=style)
         else:
             yield f"{blob_prefix}{name}{specifiers}{operands}"
@@ -3506,7 +3491,7 @@ class SVP64Instruction(PrefixedInstruction):
         if style >= Style.VERBOSE:
             indent = (" " * 4)
             binary = self.binary
-            spec = self.spec(db=db, prefix="sv.")
+            spec = self.spec(record=record, prefix="sv.")
 
             yield f"{indent}spec"
             yield f"{indent}{indent}{spec}"
@@ -3525,45 +3510,23 @@ class SVP64Instruction(PrefixedInstruction):
             yield f"{indent}opcodes"
             for opcode in record.opcodes:
                 yield f"{indent}{indent}{opcode!r}"
-            for (cls, kwargs) in record.mdwn.operands:
-                operand = cls(record=record, **kwargs)
+            for operand in self.operands(record=record):
                 yield from operand.disassemble(insn=self,
                     style=style, indent=indent)
             yield f"{indent}RM"
-            yield f"{indent}{indent}{rm.__doc__}"
+            yield f"{indent}{indent}{str(rm)}"
             for line in rm.disassemble(style=style):
                 yield f"{indent}{indent}{line}"
             yield ""
 
-    def static_operands(self, db):
-        record = self.record(db=db, entry=self)
-        for (op_cls, op_kwargs) in record.static_operands:
-            op_cls = type(f"SVP64{op_cls.__name__}", (SVP64Operand, op_cls), {})
-            operand = op_cls(record=record, **op_kwargs)
-            yield (operand.name, operand.value)
-
-    def dynamic_operands(self, db, style=Style.NORMAL):
-        record = self.record(db=db, entry=self)
-
-        imm = False
-        imm_name = ""
-        imm_value = ""
-        for (op_cls, op_kwargs) in record.dynamic_operands:
-            op_cls = type(f"SVP64{op_cls.__name__}", (SVP64Operand, op_cls), {})
-            operand = op_cls(record=record, **op_kwargs)
-            name = operand.name
-            value = " ".join(operand.disassemble(insn=self,
-                style=min(style, Style.NORMAL)))
-            if imm:
-                name = f"{imm_name}({name})"
-                value = f"{imm_value}({value})"
-                imm = False
-            if isinstance(operand, ImmediateOperand):
-                imm_name = name
-                imm_value = value
-                imm = True
-            if not imm:
-                yield (name, value)
+    @classmethod
+    def operands(cls, record):
+        for operand in super().operands(record=record):
+            parent = operand.__class__
+            name = f"SVP64{parent.__name__}"
+            bases = (SVP64Operand, parent)
+            child = type(name, bases, {})
+            yield child(**dict(operand))
 
 
 def parse(stream, factory):
@@ -3793,6 +3756,9 @@ class Database:
 
     @_functools.lru_cache(maxsize=None)
     def __getitem__(self, key):
+        if isinstance(key, SVP64Instruction):
+            key = key.suffix
+
         if isinstance(key, Instruction):
             PO = int(key.PO)
             key = int(key)

@@ -44,7 +44,7 @@ def opcodes(entry):
 
 
 def asm(record, binutils=False, regex=False):
-    operands = [op_cls(record=record, **op_kwargs) for (op_cls, op_kwargs) in record.dynamic_operands]
+    operands = tuple(record.dynamic_operands)
     for (idx, operand) in enumerate(operands):
         values = []
         for each in operands:
@@ -70,11 +70,9 @@ def dis(record, binutils=True):
 
     asm_plain = tuple(asm(record, binutils=binutils, regex=False))
     asm_regex = tuple(asm(record, binutils=binutils, regex=True))
-    for (idx, (op_cls, op_kwargs)) in enumerate(record.dynamic_operands):
-        dynamic_operand = op_cls(record=record, **op_kwargs)
+    for (idx, dynamic_operand) in enumerate(record.dynamic_operands):
         insn = _WordInstruction.integer(value=0)
-        for (op_cls, op_kwargs) in record.static_operands:
-            static_operand = op_cls(record=record, **op_kwargs)
+        for static_operand in record.static_operands:
             insn[static_operand.span] = static_operand.value
         span = dynamic_operand.span
         insn[span] = ((1 << len(span)) - 1)

@@ -84,12 +84,10 @@ class SVP64Asm:
         log("opcode, fields substed", ls, opcode, fields)
 
         # identify if it is a word instruction
-        record = None
         record = DB[opcode]
         if record is not None:
-            insn = WordInstruction.assemble(db=DB,
-                entry=opcode, arguments=fields)
-            yield from insn.disassemble(db=DB, style=Style.LEGACY)
+            insn = WordInstruction.assemble(record=record, arguments=fields)
+            yield from insn.disassemble(record=record, style=Style.LEGACY)
             return
 
         # identify if is a svp64 mnemonic
@@ -100,22 +98,13 @@ class SVP64Asm:
 
         # start working on decoding the svp64 op: sv.basev30Bop/vec2/mode
         opmodes = opcode.split("/")  # split at "/"
-        v30b_op_orig = opmodes.pop(0)    # first is the v3.0B
-        # check instruction ends with dot
-        rc_mode = v30b_op_orig.endswith('.')
-        if rc_mode:
-            v30b_op = v30b_op_orig[:-1]
-        else:
-            v30b_op = v30b_op_orig
+        v30b_op = opmodes.pop(0)    # first is the v3.0B
 
-        record = None
         record = DB[v30b_op]
         if record is not None:
-            insn = SVP64Instruction.assemble(db=DB,
-                entry=v30b_op_orig,
-                arguments=fields,
-                specifiers=opmodes)
-            yield from insn.disassemble(db=DB, style=Style.LEGACY)
+            insn = SVP64Instruction.assemble(record=record,
+                arguments=fields, specifiers=opmodes)
+            yield from insn.disassemble(record=record, style=Style.LEGACY)
             return
 
         raise AssemblerError(insn_no_comments)
