@@ -7,6 +7,7 @@ import os as _os
 import operator as _operator
 import pathlib as _pathlib
 import re as _re
+import sys as _sys
 
 try:
     from functools import cached_property
@@ -598,7 +599,7 @@ class Operands:
         _SVExtraReg.FRTp,
     )
 
-    def __init__(self, insn, iterable):
+    def __init__(self, insn, operands):
         custom_insns = {
             "b": {"target_addr": TargetAddrOperandLI},
             "ba": {"target_addr": TargetAddrOperandLI},
@@ -611,6 +612,15 @@ class Operands:
             "addpcis": {"D": DOperandDX},
             "fishmv": {"D": DOperandDX},
             "fmvis": {"D": DOperandDX},
+
+            # FIXME: these instructions are broken according to the specs.
+            # The operands in the assembly syntax are FRT,FRA,FRC,FRB.
+            # The real assembly order, however, is FRT,FRA,FRB,FRC.
+            # The legacy assembler placed operands in syntax order.
+            "ffmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
+            "ffmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
+            "fdmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
+            "fdmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
         }
         custom_fields = {
             "SVi": NonZeroOperand,
@@ -639,7 +649,7 @@ class Operands:
         }
 
         mapping = {}
-        for operand in iterable:
+        for operand in operands:
             cls = DynamicOperand
 
             if "=" in operand:
@@ -663,8 +673,7 @@ class Operands:
                     cls = custom_insns[insn][name]
                 elif name in custom_fields:
                     cls = custom_fields[name]
-
-                if name in _SVExtraReg.__members__:
+                elif name in _SVExtraReg.__members__:
                     reg = _SVExtraReg[name]
                     if reg in self.__class__.__GPR_PAIRS:
                         cls = GPRPairOperand
@@ -727,9 +736,9 @@ class Operands:
 
 
 class Arguments(tuple):
-    def __new__(cls, arguments, operands):
-        arguments = iter(tuple(arguments))
+    def __new__(cls, record, arguments, operands):
         operands = iter(tuple(operands))
+        arguments = iter(tuple(arguments))
 
         items = []
         while True:
@@ -1098,6 +1107,9 @@ class POStaticOperand(SpanStaticOperand):
 
 class XOStaticOperand(SpanStaticOperand):
     def __init__(self, record, value, span):
+        if record.name == "ffadds":
+            print(value, span)
+
         bits = record.section.bitsel
         value = _SelectableInt(value=value, bits=len(bits))
         span = dict(zip(bits, range(len(bits))))
@@ -1355,6 +1367,27 @@ class FPROperand(SimpleRegisterOperand):
         prefix = "" if (style <= Style.SHORT) else "f"
         yield from super().disassemble(prefix=prefix, insn=insn,
             style=style, indent=indent)
+
+
+class RedirectedOperand(DynamicOperand):
+    def __init__(self, record, name, target):
+        self.__target = target
+        return super().__init__(record=record, name=name)
+
+    @cached_property
+    def span(self):
+        print(f"{self.record.name}: {self.name} => {self.__target}", file=_sys.stderr)
+        return self.record.fields[self.__target]
+
+
+class FMAOperandFRB(RedirectedOperand, FPROperand):
+    def __init__(self, record, name):
+        return super().__init__(record=record, name=name, target="FRC")
+
+
+class FMAOperandFRC(RedirectedOperand, FPROperand):
+    def __init__(self, record, name):
+        return super().__init__(record=record, name=name, target="FRB")
 
 
 class FPRPairOperand(FPROperand):
@@ -1738,8 +1771,9 @@ class Instruction(_Mapping):
         for operand in cls.static_operands(record=record):
             operand.assemble(insn=insn)
 
-        dynamic_operands = tuple(cls.dynamic_operands(record=record))
-        for (value, operand) in Arguments(arguments, dynamic_operands):
+        arguments = Arguments(record=record,
+            arguments=arguments, operands=cls.dynamic_operands(record=record))
+        for (value, operand) in arguments:
             operand.assemble(insn=insn, value=value)
 
         return insn
@@ -3549,7 +3583,7 @@ class MarkdownDatabase:
                 operands.extend(dynamic)
                 operands.extend(static)
             pcode = PCode(iterable=desc.pcode)
-            operands = Operands(insn=name, iterable=operands)
+            operands = Operands(insn=name, operands=operands)
             db[name] = MarkdownRecord(pcode=pcode, operands=operands)
 
         self.__db = dict(sorted(db.items()))
