@@ -2653,9 +2653,6 @@ class SpecifierFFPR(SpecifierPredicate):
         if self.record.svp64.mode is _SVMode.CROP:
             if self.mode == "pr":
                 raise ValueError("crop: 'pr' mode not supported")
-            if (self.record.svp64.extra_CR_3bit and
-                    (self.pred.mode is not _SVP64PredMode.RC1)):
-                raise ValueError("3-bit CRs only support RC1/~RC1 BO")
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
@@ -2663,9 +2660,12 @@ class SpecifierFFPR(SpecifierPredicate):
             raise ValueError("cannot override mode")
         if self.record.svp64.mode is _SVMode.CROP:
             selector.mode.sel = 0b10
-            selector.inv = self.pred.inv
-            if not self.record.svp64.extra_CR_3bit:
-                selector.CR = self.pred.state
+            # HACK: please finally provide correct logic for CRs.
+            if self.pred in (_SVP64Pred.RC1, _SVP64Pred.RC1_N):
+                selector.mode[2] = (self.pred is _SVP64Pred.RC1_N)
+            else:
+                selector.mode[2] = self.pred.inv
+                selector.mode[3, 4] = self.pred.state
         else:
             selector.mode.sel = 0b01 if self.mode == "ff" else 0b11
             selector.inv = self.pred.inv
