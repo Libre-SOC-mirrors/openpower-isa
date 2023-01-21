@@ -374,6 +374,8 @@ class SVP64Record:
 
     @classmethod
     def CSV(cls, record):
+        record["insn"] = record["insn"].split("=")[-1]
+
         for key in frozenset({
                     "in1", "in2", "in3", "CR in",
                     "out", "out2", "CR out",
