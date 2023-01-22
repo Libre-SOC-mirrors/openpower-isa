@@ -397,7 +397,6 @@ class SVP64Record:
 
         return dataclass(cls, record, keymap=cls.__KEYMAP)
 
-    @_functools.lru_cache(maxsize=None)
     def extra_idx(self, key):
         extra_idx = (
             _SVExtra.Idx0,
@@ -414,25 +413,25 @@ class SVP64Record:
 
         sel = getattr(self, key)
         if sel is _CRInSel.BA_BB:
-            return _SVExtra.Idx_1_2
+            yield _SVExtra.Idx_1_2
+            return
+
         reg = _SVExtraReg(sel)
         if reg is _SVExtraReg.NONE:
-            return _SVExtra.NONE
+            return
 
         extra_map = {
-            _SVExtraRegType.SRC: {},
             _SVExtraRegType.DST: {},
+            _SVExtraRegType.SRC: {},
         }
         for index in range(0, 4):
             for entry in self.extra[index]:
                 extra_map[entry.regtype][entry.reg] = extra_idx[index]
 
-        for regtype in (_SVExtraRegType.SRC, _SVExtraRegType.DST):
-            extra = extra_map[regtype].get(reg, _SVExtra.NONE)
+        for regs in extra_map.values():
+            extra = regs.get(reg, _SVExtra.NONE)
             if extra is not _SVExtra.NONE:
-                return extra
-
-        return _SVExtra.NONE
+                yield extra
 
     extra_idx_in1 = property(_functools.partial(extra_idx, key="in1"))
     extra_idx_in2 = property(_functools.partial(extra_idx, key="in2"))
@@ -1109,9 +1108,6 @@ class POStaticOperand(SpanStaticOperand):
 
 class XOStaticOperand(SpanStaticOperand):
     def __init__(self, record, value, span):
-        if record.name == "ffadds":
-            print(value, span)
-
         bits = record.section.bitsel
         value = _SelectableInt(value=value, bits=len(bits))
         span = dict(zip(bits, range(len(bits))))
@@ -1172,10 +1168,7 @@ class ExtendableOperand(DynamicOperand):
     def sv_spec_enter(self, value, span):
         return (value, span)
 
-    def sv_spec_leave(self, value, span, origin_value, origin_span):
-        return (value, span)
-
-    def spec(self, insn):
+    def sv_spec(self, insn):
         vector = False
         span = self.span
         value = insn[span]
@@ -1185,52 +1178,52 @@ class ExtendableOperand(DynamicOperand):
             (origin_value, origin_span) = (value, span)
             (value, span) = self.sv_spec_enter(value=value, span=span)
 
-            extra_idx = self.extra_idx
-            if extra_idx is _SVExtra.NONE:
-                return (vector, value, span)
-
-            if self.record.etype is _SVEType.EXTRA3:
-                spec = insn.prefix.rm.extra3[extra_idx]
-            elif self.record.etype is _SVEType.EXTRA2:
-                spec = insn.prefix.rm.extra2[extra_idx]
-            else:
-                raise ValueError(self.record.etype)
-
-            if spec != 0:
-                vector = bool(spec[0])
-                spec_span = spec.__class__
+            for extra_idx in self.extra_idx:
                 if self.record.etype is _SVEType.EXTRA3:
-                    spec_span = tuple(map(str, spec_span[1, 2]))
-                    spec = spec[1, 2]
+                    spec = insn.prefix.rm.extra3[extra_idx]
                 elif self.record.etype is _SVEType.EXTRA2:
-                    spec_span = tuple(map(str, spec_span[1,]))
-                    spec = _SelectableInt(value=spec[1].value, bits=2)
-                    if vector:
-                        spec <<= 1
-                        spec_span = (spec_span + ("{0}",))
-                    else:
-                        spec_span = (("{0}",) + spec_span)
+                    spec = insn.prefix.rm.extra2[extra_idx]
                 else:
                     raise ValueError(self.record.etype)
 
-                vector_shift = (2 + (5 - value.bits))
-                scalar_shift = value.bits
-                spec_shift = (5 - value.bits)
+                if spec != 0:
+                    vector = bool(spec[0])
+                    spec_span = spec.__class__
+                    if self.record.etype is _SVEType.EXTRA3:
+                        spec_span = tuple(map(str, spec_span[1, 2]))
+                        spec = spec[1, 2]
+                    elif self.record.etype is _SVEType.EXTRA2:
+                        spec_span = tuple(map(str, spec_span[1,]))
+                        spec = _SelectableInt(value=spec[1].value, bits=2)
+                        if vector:
+                            spec <<= 1
+                            spec_span = (spec_span + ("{0}",))
+                        else:
+                            spec_span = (("{0}",) + spec_span)
+                    else:
+                        raise ValueError(self.record.etype)
 
-                bits = (len(span) + len(spec_span))
-                value = _SelectableInt(value=value.value, bits=bits)
-                spec = _SelectableInt(value=spec.value, bits=bits)
-                if vector:
-                    value = ((value << vector_shift) | (spec << spec_shift))
-                    span = (span + spec_span + ((spec_shift * ("{0}",))))
-                else:
-                    value = ((spec << scalar_shift) | value)
-                    span = ((spec_shift * ("{0}",)) + spec_span + span)
+                    vector_shift = (2 + (5 - value.bits))
+                    scalar_shift = value.bits
+                    spec_shift = (5 - value.bits)
+
+                    bits = (len(span) + len(spec_span))
+                    value = _SelectableInt(value=value.value, bits=bits)
+                    spec = _SelectableInt(value=spec.value, bits=bits)
+                    if vector:
+                        value = ((value << vector_shift) | (spec << spec_shift))
+                        span = (span + spec_span + ((spec_shift * ("{0}",))))
+                    else:
+                        value = ((spec << scalar_shift) | value)
+                        span = ((spec_shift * ("{0}",)) + spec_span + span)
 
             (value, span) = self.sv_spec_leave(value=value, span=span,
                 origin_value=origin_value, origin_span=origin_span)
 
         return (vector, value, span)
+
+    def sv_spec_leave(self, value, span, origin_value, origin_span):
+        return (value, span)
 
     @property
     def extra_reg(self):
@@ -1252,10 +1245,10 @@ class ExtendableOperand(DynamicOperand):
                     "out", "out2", "cr_out",
                 }):
             extra_reg = self.record.svp64.extra_reg(key=key)
-            if pairs.get(extra_reg, extra_reg) is pairs.get(self.extra_reg, self.extra_reg):
-                return self.record.extra_idx(key=key)
-
-        return _SVExtra.NONE
+            this_extra_reg = pairs.get(self.extra_reg, self.extra_reg)
+            that_extra_reg = pairs.get(extra_reg, extra_reg)
+            if this_extra_reg is that_extra_reg:
+                yield from tuple(self.record.extra_idx(key=key))
 
     def remap(self, value, vector):
         raise NotImplementedError()
@@ -1279,22 +1272,19 @@ class ExtendableOperand(DynamicOperand):
         if isinstance(insn, SVP64Instruction):
             (value, extra) = self.remap(value=value, vector=vector)
 
-            extra_idx = self.extra_idx
-            if extra_idx is _SVExtra.NONE:
-                raise ValueError(self.record)
-
-            if self.record.etype is _SVEType.EXTRA3:
-                insn.prefix.rm.extra3[extra_idx] = extra
-            elif self.record.etype is _SVEType.EXTRA2:
-                insn.prefix.rm.extra2[extra_idx] = extra
-            else:
-                raise ValueError(self.record.etype)
+            for extra_idx in self.extra_idx:
+                if self.record.etype is _SVEType.EXTRA3:
+                    insn.prefix.rm.extra3[extra_idx] = extra
+                elif self.record.etype is _SVEType.EXTRA2:
+                    insn.prefix.rm.extra2[extra_idx] = extra
+                else:
+                    raise ValueError(self.record.etype)
 
         return super().assemble(value=value, insn=insn)
 
     def disassemble(self, insn,
             style=Style.NORMAL, prefix="", indent=""):
-        (vector, value, span) = self.spec(insn=insn)
+        (vector, value, span) = self.sv_spec(insn=insn)
 
         if style >= Style.VERBOSE:
             mode = "vector" if vector else "scalar"
@@ -1498,7 +1488,7 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
 
     def disassemble(self, insn,
             style=Style.NORMAL, prefix="", indent=""):
-        (vector, value, span) = self.spec(insn=insn)
+        (vector, value, span) = self.sv_spec(insn=insn)
 
         if style >= Style.VERBOSE:
             mode = "vector" if vector else "scalar"
