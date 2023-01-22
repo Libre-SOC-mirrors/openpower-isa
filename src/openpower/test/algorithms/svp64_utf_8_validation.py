@@ -302,9 +302,27 @@ def assemble(instructions, start_pc=0):
             pc += 8
         else:
             pc += 4
-        out_instructions.append(instr)
+        out_instructions.append((pc, instr))
+    last_pc = pc
+
+    for (idx, (pc, instr)) in enumerate(tuple(out_instructions)):
+        for (label, target) in labels.items():
+            if label in instr:
+                if pc < target:
+                    sign = ""
+                    addr = (target - pc + 4)
+                else:
+                    sign = "-"
+                    addr = (pc - target - 4)
+
+                origin = instr
+                instr = instr.replace(label, f"{sign}0x{addr:X}")
+                break
+        out_instructions[idx] = instr
+
     for k, v in labels.items():
-        out_instructions.append(f".set {k}, . - 0x{pc - v:X} # 0x{v:X}")
+        out_instructions.append(f".set {k}, . - 0x{last_pc - v:X} # 0x{v:X}")
+
     return Program(list(SVP64Asm(out_instructions)), 0)
 
 
