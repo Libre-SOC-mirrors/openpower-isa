@@ -6,8 +6,8 @@
 
 TLI-Form
 
-* ternlogi RT,RA,RB,TLI
-* ternlogi. RT,RA,RB,TLI
+* ternlogi RT,RA,RB,TLI (Rc=0)
+* ternlogi. RT,RA,RB,TLI (Rc=1)
 
 Pseudo-code:
 
