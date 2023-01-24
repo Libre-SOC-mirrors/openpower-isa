@@ -1048,7 +1048,10 @@
         Formats: BM2
     XO (29:31)
         Extended opcode field.
-        Formats: DQ, TLI
+        Formats: DQ
+    XO (29:30)
+        Extended opcode field.
+        Formats: TLI
     XO (30)
         Extended opcode field.
         Formats: SC
