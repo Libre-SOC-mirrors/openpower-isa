@@ -711,7 +711,7 @@ _insns = [
     "divmod2du",
     "divw", "divwe", "divweo",
     "divweu", "divweuo", "divwo", "divwu", "divwuo",
-    "dsld", "dsrd",
+    "dsld", "dsld.", "dsrd", "dsrd.",
     "eieio", "eqv",
     "extsb", "extsh", "extsw", "extswsli",
     "fadd", "fadds", "fsub", "fsubs",                   # FP add / sub
