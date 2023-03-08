@@ -70,7 +70,7 @@ Pseudo-code:
 
 Special Registers Altered:
 
-    None
+    XER.OV
 
 # [DRAFT] Double-width Shift Left Doubleword
 
@@ -86,9 +86,9 @@ Pseudo-code:
     mask <- MASK(0, 63-n)
     RT <- (v[0:63] & mask) | ((RC) & ¬mask)
     RS <- v[0:63] & ¬mask
-    overflow <- 0
+    overflow <- 0             # relevant only when Rc=1
     if RS != [0]*64 then
-        overflow <- 1
+        overflow <- 1         # relevant only when Rc=1
 
 Special Registers Altered:
 
@@ -108,9 +108,9 @@ Pseudo-code:
     mask <- MASK(n, 63)
     RT <- (v[0:63] & mask) | ((RC) & ¬mask)
     RS <- v[0:63] & ¬mask
-    overflow <- 0
+    overflow <- 0             # relevant only when Rc=1
     if RS != [0]*64 then
-        overflow <- 1
+        overflow <- 1         # relevant only when Rc=1
 
 Special Registers Altered:
 
