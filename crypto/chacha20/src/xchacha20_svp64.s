@@ -104,6 +104,9 @@ xchacha_hchacha20_svp64_real:
     sv.xor/w=32         *x+24, *x+24, *x+24
     svremap             31, 0, 3, 2, 2, 0, 0    # RA=2, RB=3, RS=2 (0b01110)
     sv.rldcl/w=32       *x+24, *x+24, *SHIFTS, 0
+    # 16 is the destination containing the result of svstep.
+    # it overlaps with SHAPE2 which is also 16. the first 8 indices
+    # will get corrupted.
     svstep.             16, 1, 0                # step to next in-regs element
     bc                  6, 3, .inner            # svstep. Rc=1 loop-end-condition?
     # inner-loop done: outer loop standard CTR-decrement to setvl again

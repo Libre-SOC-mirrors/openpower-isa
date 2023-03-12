@@ -112,7 +112,9 @@ class SVSTATETestCase(FHDLTestCase):
         SHAPE0 = 22
         SHAPE1 = 30
         SHAPE2 = 38
-        shifts = 18
+        shifts = 18 # registers for 4 32-bit shift amounts
+        ctr = 9     # register for CTR
+        temp = 16   # temporary register for result from svstep
 
         isa = SVP64Asm([
             # set up VL=32 vertical-first, and SVSHAPEs 0-2
@@ -123,8 +125,8 @@ class SVSTATETestCase(FHDLTestCase):
             'svindex %d, 2, 1, 3, 0, 1, 0' % (SHAPE2//2),  # SVSHAPE2, c
             'svshape2 0, 0, 3, 4, 0, 1',  # SVSHAPE3, shift amount, mod 4
             # establish CTR for outer round count
-            'addi 16, 0, %d' % nrounds,     # set number of rounds
-            'mtspr 9, 16',                  # set CTR to number of rounds
+            'addi %d, 0, %d' % (ctr, nrounds),  # set number of rounds
+            'mtspr 9, %d' % ctr,                # set CTR to number of rounds
             # outer loop begins here (standard CTR loop)
             'setvl %d, %d, 32, 1, 1, 0' % (vl, vl), # vertical-first, set VL
             # inner loop begins here. add-xor-rotl32 with remap, step, branch
@@ -134,7 +136,7 @@ class SVSTATETestCase(FHDLTestCase):
             'sv.xor/w=32 *%d, *%d, *%d' % (block, block, block),
             'svremap 31, 0, 3, 2, 2, 0, 0',  # RA=2, RB=3, RS=2 (0b01110)
             'sv.rldcl/w=32 *%d, *%d, *%d, 0' % (block, block, shifts),
-            'svstep. 16, 1, 0',              # step to next in-regs element
+            'svstep. %d, 1, 0' % temp,      # step to next in-regs element
             'bc 6, 3, -0x28',               # svstep. Rc=1 loop-end-condition?
             # inner-loop done: outer loop standard CTR-decrement to setvl again
             'bc 16, 0, -0x30',
