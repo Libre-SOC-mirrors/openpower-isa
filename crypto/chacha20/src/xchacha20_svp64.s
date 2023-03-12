@@ -74,43 +74,41 @@ xchacha_hchacha20_svp64_real:
     setvl	            0,0,2,0,1,1			    # Set VL to 4 elements
     sv.ld               *x+6, 0(in_ptr)
 
-    # after this step, registers 16-32 hold the values that will be in the main loop
-    # establish CTR for outer round count
-    #li                  ctr, 10
-    #mtctr	            ctr				        # Set up counter
-
-    # outer loop begins here (standard CTR loop)
     # set up VL=32 vertical-first, and SVSHAPEs 0-2
     # vertical-first, set MAXVL (and r22)
-    setvl               22, 0, 16, 1, 0, 1
-    # SHAPE0, used by sv.add starts at GPR #8, need to offset those indices for x=24
+    setvl               22, 0, 32, 1, 0, 1
+    # SHAPE0, used by sv.add starts at GPR #8
     svindex             4, 0, 1, 3, 0, 1, 0     # SVSHAPE0, a
     # SHAPE1, used by sv.xor starts at GPR #12
     svindex             6, 1, 1, 3, 0, 1, 0     # SVSHAPE1, b
     # SHAPE2, used by sv.rldcl starts at GPR #16
     svindex             8, 2, 1, 3, 0, 1, 0     # SVSHAPE2, c
     # SHAPE3, used also by sv.rldcl to hold the shift values starts at GPR #20
-    # The inner loop will do 16 iterations, but there are only 4 shift values, so we mod 4
+    # The inner loop will do 32 iterations, but there are only 4 shift values, so we mod 4
     svshape2            0, 0, 3, 4, 0, 1        # SVSHAPE3, shift amount, mod 4
-    
+
+    # establish CTR for outer round count
+    li                  ctr, 10
+    mtctr	            ctr				        # Set up counter
+
 .outer:
     # outer loop begins here (standard CTR loop)
-    setvl               22, 22, 16, 1, 1, 0     # vertical-first, set VL from r22
+    setvl               22, 22, 32, 1, 1, 0     # vertical-first, set VL from r22
     # inner loop begins here. add-xor-rotl32 with remap, step, branch
 .inner:
     svremap             31, 1, 0, 0, 0, 0, 0    # RA=1, RB=0, RT=0 (0b01011)
-    sv.add/w=32         *x+24, *x+24, *x+24
+    sv.add/w=32         *x, *x, *x
     svremap             31, 2, 0, 2, 2, 0, 0    # RA=2, RB=0, RS=2 (0b00111)
-    sv.xor/w=32         *x+24, *x+24, *x+24
+    sv.xor/w=32         *x, *x, *x
     svremap             31, 0, 3, 2, 2, 0, 0    # RA=2, RB=3, RS=2 (0b01110)
-    sv.rldcl/w=32       *x+24, *x+24, *SHIFTS, 0
+    sv.rldcl/w=32       *x, *x, *SHIFTS, 0
     # 16 is the destination containing the result of svstep.
     # it overlaps with SHAPE2 which is also 16. the first 8 indices
     # will get corrupted.
-    svstep.             16, 1, 0                # step to next in-regs element
+    svstep.             ctr, 1, 0               # step to next in-regs element
     bc                  6, 3, .inner            # svstep. Rc=1 loop-end-condition?
     # inner-loop done: outer loop standard CTR-decrement to setvl again
-    #bdnz	            .outer                  # Loop until CTR is zero
+    bdnz	            .outer                  # Loop until CTR is zero
 
     # store x0-x3 directly to *out_ptr
 	setvl	            0,0,2,0,1,1			    # Set VL to 4 elements
