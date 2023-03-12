@@ -107,6 +107,7 @@ class SVSTATETestCase(FHDLTestCase):
         """
 
         nrounds = 2  # should be 10 for full algorithm
+        block = 64 # register for block of 16
 
         isa = SVP64Asm([
             # set up VL=32 vertical-first, and SVSHAPEs 0-2
@@ -123,11 +124,11 @@ class SVSTATETestCase(FHDLTestCase):
             'setvl 17, 17, 32, 1, 1, 0',    # vertical-first, set VL from r17
             # inner loop begins here. add-xor-rotl32 with remap, step, branch
             'svremap 31, 1, 0, 0, 0, 0, 0',  # RA=1, RB=0, RT=0 (0b01011)
-            'sv.add/w=32 *0, *0, *0',
+            'sv.add/w=32 *%d, *%d, *%d' % (block, block, block),
             'svremap 31, 2, 0, 2, 2, 0, 0',  # RA=2, RB=0, RS=2 (0b00111)
-            'sv.xor/w=32 *0, *0, *0',
+            'sv.xor/w=32 *%d, *%d, *%d' % (block, block, block),
             'svremap 31, 0, 3, 2, 2, 0, 0',  # RA=2, RB=3, RS=2 (0b01110)
-            'sv.rldcl/w=32 *0, *0, *18, 0',
+            'sv.rldcl/w=32 *%d, *%d, *18, 0' % (block, block),
             'svstep. 16, 1, 0',              # step to next in-regs element
             'bc 6, 3, -0x28',               # svstep. Rc=1 loop-end-condition?
             # inner-loop done: outer loop standard CTR-decrement to setvl again
@@ -159,7 +160,7 @@ class SVSTATETestCase(FHDLTestCase):
         for i in range(16):
             x[i] = i << 1
         for i in range(16):
-            set_masked_reg(initial_regs, 0, i, ew_bits=32, value=x[i])
+            set_masked_reg(initial_regs, block, i, ew_bits=32, value=x[i])
 
         # SVSTATE vl=32
         svstate = SVP64State()
@@ -175,15 +176,16 @@ class SVSTATETestCase(FHDLTestCase):
         for i in range(nrounds):
             chacha_idx_schedule(expected, fn=quarter_round)
         for i in range(16):
-            set_masked_reg(expected_regs, 0, i, ew_bits=32, value=expected[i])
+            set_masked_reg(expected_regs, block, i, ew_bits=32,
+                           value=expected[i])
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs, svstate=svstate)
 
-            # print out expected regs
+            # print out expected: 16 values @ 32-bit ea -> QTY8 64-bit regs
             for i in range(8):
-                RS = sim.gpr(i).value
-                print("expected", i, hex(RS), hex(expected_regs[i]))
+                RS = sim.gpr(i+block).value
+                print("expected", i+block, hex(RS), hex(expected_regs[i+block]))
 
             print(sim.spr)
             SVSHAPE0 = sim.spr['SVSHAPE0']
