@@ -75,8 +75,9 @@ xchacha_hchacha20_svp64_real:
     sv.ld               *x+6, 0(in_ptr)
 
     # set up VL=32 vertical-first, and SVSHAPEs 0-2
-    # vertical-first, set MAXVL (and r22)
-    setvl               22, 0, 32, 1, 0, 1
+    # set vertical firstMAXVL (and r22)a
+    setvl               0, 0, 32, 0, 1, 1       # MAXVL=VL=32
+    setvl               22, 0, 32, 1, 0, 1      # vertical-first mode
     # SHAPE0, used by sv.add starts at GPR #8
     svindex             4, 0, 1, 3, 0, 1, 0     # SVSHAPE0, a
     # SHAPE1, used by sv.xor starts at GPR #12
