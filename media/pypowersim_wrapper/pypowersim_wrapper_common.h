@@ -40,7 +40,7 @@ static pypowersim_state_t *pypowersim_prepare(void) {
       Py_Initialize();
 
       PyObject* sysPath = PySys_GetObject((char*)"path");
-      PyObject* curDir = PyUnicode_FromString("../../../src/openpower/decoder/isa/");
+      PyObject* curDir = PyUnicode_FromString("/home/markos/src/openpower-isa/src/openpower/decoder/isa/");
       PyList_Append(sysPath, curDir);
       Py_DECREF(curDir);
 
