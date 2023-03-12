@@ -106,7 +106,7 @@ class SVSTATETestCase(FHDLTestCase):
         *ZERO* branch-prediction misses, obviating a need for loop-unrolling.
         """
 
-        nrounds = 2  # should be 10 for full algorithm
+        nrounds = 10  # should be 10 for full algorithm
 
         block = 24 # register for block of 16
         vl = 22 # copy of VL placed in here
@@ -165,8 +165,23 @@ class SVSTATETestCase(FHDLTestCase):
 
         # set up input test vector then pack it into regs
         x = [0] * 16
-        for i in range(16):
-            x[i] = i << 1
+        x[0]  = 0x61707865
+        x[1]  = 0x3320646e
+        x[2]  = 0x79622d32
+        x[3]  = 0x6b206574
+        x[4]  = 0x6d8bc55e
+        x[5]  = 0xa5e04f51
+        x[6]  = 0xea0d1e6f
+        x[7]  = 0x5a09dc7b
+        x[8]  = 0x18b6f510
+        x[9]  = 0x26f2b6bd
+        x[10] = 0x7b59cc2f
+        x[11] = 0xefb330b2
+        x[12] = 0xcff545a3
+        x[13] = 0x7c512380
+        x[14] = 0x75f0fcc0
+        x[15] = 0x5f868c74
+
         for i in range(16):
             set_masked_reg(initial_regs, block, i, ew_bits=32, value=x[i])
 
