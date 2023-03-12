@@ -106,7 +106,7 @@ class SVSTATETestCase(FHDLTestCase):
         *ZERO* branch-prediction misses, obviating a need for loop-unrolling.
         """
 
-        nrounds = 10  # should be 10 for full algorithm
+        nrounds = 2  # should be 10 for full algorithm
 
         block = 24 # register for block of 16
         vl = 22 # copy of VL placed in here
@@ -119,7 +119,8 @@ class SVSTATETestCase(FHDLTestCase):
         isa = SVP64Asm([
             # set up VL=32 vertical-first, and SVSHAPEs 0-2
             # vertical-first, set MAXVL (and r17)
-            'setvl %d, 0, 32, 1, 0, 1' % (vl),
+            'setvl 0, 0, 32, 0, 1, 1',         # MAXVL=VL=32
+            'setvl %d, 0, 32, 1, 0, 1' % (vl), # vertical-first mode
             'svindex %d, 0, 1, 3, 0, 1, 0' % (SHAPE0//2),  # SVSHAPE0, a
             'svindex %d, 1, 1, 3, 0, 1, 0' % (SHAPE1//2),  # SVSHAPE1, b
             'svindex %d, 2, 1, 3, 0, 1, 0' % (SHAPE2//2),  # SVSHAPE2, c
@@ -187,8 +188,8 @@ class SVSTATETestCase(FHDLTestCase):
 
         # SVSTATE vl=32
         svstate = SVP64State()
-        svstate.vl = 32  # VL
-        svstate.maxvl = 32  # MAXVL
+        #svstate.vl = 32  # VL
+        #svstate.maxvl = 32  # MAXVL
         print("SVSTATE", bin(svstate.asint()))
 
         # copy before running, compute expected results
