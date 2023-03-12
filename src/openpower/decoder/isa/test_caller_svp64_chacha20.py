@@ -113,8 +113,7 @@ class SVSTATETestCase(FHDLTestCase):
         SHAPE1 = 30
         SHAPE2 = 38
         shifts = 18 # registers for 4 32-bit shift amounts
-        ctr = 9     # register for CTR
-        temp = 16   # temporary register for result from svstep
+        ctr = 16     # register for CTR
 
         isa = SVP64Asm([
             # set up VL=32 vertical-first, and SVSHAPEs 0-2
@@ -136,7 +135,7 @@ class SVSTATETestCase(FHDLTestCase):
             'sv.xor/w=32 *%d, *%d, *%d' % (block, block, block),
             'svremap 31, 0, 3, 2, 2, 0, 0',  # RA=2, RB=3, RS=2 (0b01110)
             'sv.rldcl/w=32 *%d, *%d, *%d, 0' % (block, block, shifts),
-            'svstep. %d, 1, 0' % temp,      # step to next in-regs element
+            'svstep. %d, 1, 0' % ctr,      # step to next in-regs element
             'bc 6, 3, -0x28',               # svstep. Rc=1 loop-end-condition?
             # inner-loop done: outer loop standard CTR-decrement to setvl again
             'bc 16, 0, -0x30',
@@ -178,7 +177,7 @@ class SVSTATETestCase(FHDLTestCase):
 
         # copy before running, compute expected results
         expected_regs = deepcopy(initial_regs)
-        expected_regs[16] = 0  # reaches zero
+        expected_regs[ctr] = 0  # reaches zero
         expected_regs[vl] = 32  # gets set to MAXVL
         expected = deepcopy(x)
         for i in range(nrounds):
