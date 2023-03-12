@@ -33,13 +33,13 @@
 .endif
 .endm
 
-	.machine libresoc
-	.file	"xchacha20_svp64.s"
-	.abiversion 2
-	.section	".text"
-	.align 2
-	.globl  xchacha_hchacha20_svp64_real
-	.type   xchacha_hchacha20_svp64_real, @function
+    .machine libresoc
+    .file	"xchacha20_svp64.s"
+    .abiversion 2
+    .section	".text"
+    .align 2
+    .globl  xchacha_hchacha20_svp64_real
+    .type   xchacha_hchacha20_svp64_real, @function
 xchacha_hchacha20_svp64_real:
 .LFB0:
 	.cfi_startproc
@@ -67,17 +67,17 @@ xchacha_hchacha20_svp64_real:
     ldi                 SHIFTS+1, 0x0000000700000008
 
     # Load 8 values from k_ptr
-	setvl	            0,0,4,0,1,1			    # Set VL to 8 elements
+    setvl	            0,0,4,0,1,1			    # Set VL to 8 elements
     sv.ld               *x+2, 0(k_ptr)
 
     # Load 4 values from in_ptr
-	setvl	            0,0,2,0,1,1			    # Set VL to 4 elements
+    setvl	            0,0,2,0,1,1			    # Set VL to 4 elements
     sv.ld               *x+6, 0(in_ptr)
 
     # after this step, registers 16-32 hold the values that will be in the main loop
     # establish CTR for outer round count
     #li                  ctr, 10
-	#mtctr	            ctr				        # Set up counter
+    #mtctr	            ctr				        # Set up counter
 
     # outer loop begins here (standard CTR loop)
     # set up VL=32 vertical-first, and SVSHAPEs 0-2
@@ -107,19 +107,19 @@ xchacha_hchacha20_svp64_real:
     svstep.             16, 1, 0                # step to next in-regs element
     bc                  6, 3, .inner            # svstep. Rc=1 loop-end-condition?
     # inner-loop done: outer loop standard CTR-decrement to setvl again
-	#bdnz	            .outer                  # Loop until CTR is zero
+    #bdnz	            .outer                  # Loop until CTR is zero
 
     # store x0-x3 directly to *out_ptr
 	setvl	            0,0,2,0,1,1			    # Set VL to 4 elements
     sv.std              *x, 0(out_ptr)
     # store x12-x15 to *out_ptr + 16
     sv.std              *x+6, 16(out_ptr)
-	blr
-	.long 0
-	.byte 0,0,0,0,0,3,0,0
-	.cfi_endproc
+    blr
+    .long 0
+    .byte 0,0,0,0,0,3,0,0
+    .cfi_endproc
 
 .LFE0:
-	.size	xchacha_hchacha20_svp64_real,.-xchacha_hchacha20_svp64_real
-	.ident	"GCC: (Debian 8.3.0-6) 8.3.0"
-	.section	.note.GNU-stack,"",@progbits
+    .size	xchacha_hchacha20_svp64_real,.-xchacha_hchacha20_svp64_real
+    .ident	"GCC: (Debian 8.3.0-6) 8.3.0"
+    .section	.note.GNU-stack,"",@progbits
