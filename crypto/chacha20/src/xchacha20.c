@@ -81,7 +81,7 @@ void xchacha_hchacha20(uint8_t *out, const uint8_t *in, const uint8_t *k){
 	x14 = U8TO32_LITTLE(in +  8);
 	x15 = U8TO32_LITTLE(in + 12);
 
-	//for (i = 0; i < 10; i++){
+	for (i = 0; i < 10; i++){
 		QUARTERROUND(x0, x4,  x8, x12);
 		QUARTERROUND(x1, x5,  x9, x13);
 		QUARTERROUND(x2, x6, x10, x14);
@@ -90,7 +90,7 @@ void xchacha_hchacha20(uint8_t *out, const uint8_t *in, const uint8_t *k){
 		QUARTERROUND(x1, x6, x11, x12);
 		QUARTERROUND(x2, x7,  x8, x13);
 		QUARTERROUND(x3, x4,  x9, x14);
-	//}
+	}
 
 	U32TO8_LITTLE(out +  0, x0);
 	U32TO8_LITTLE(out +  4, x1);
