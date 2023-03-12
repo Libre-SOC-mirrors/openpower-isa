@@ -144,6 +144,7 @@ class SVSTATETestCase(FHDLTestCase):
 
         # offsets for a b c
         for i, (a, b, c, d) in enumerate(schedule):
+            print ("chacha20 schedule", i, hex(a), hex(b), hex(c), hex(d))
             set_masked_reg(initial_regs, 22, i, ew_bits=8, value=a)
             set_masked_reg(initial_regs, 30, i, ew_bits=8, value=b)
             set_masked_reg(initial_regs, 38, i, ew_bits=8, value=c)
