@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "xchacha20.h"
+#include "xchacha20_wrapper.h"
 
 #include <stdio.h>
 
@@ -66,7 +67,7 @@ void xchacha_hchacha20(uint8_t *out, const uint8_t *in, const uint8_t *k){
 	x1 = 0x3320646e;
 	x2 = 0x79622d32;
 	x3 = 0x6b206574;
-
+    (void)k;
 	x4  = U8TO32_LITTLE(k +  0);
 	x5  = U8TO32_LITTLE(k +  4);
 	x6  = U8TO32_LITTLE(k +  8);
@@ -80,7 +81,7 @@ void xchacha_hchacha20(uint8_t *out, const uint8_t *in, const uint8_t *k){
 	x14 = U8TO32_LITTLE(in +  8);
 	x15 = U8TO32_LITTLE(in + 12);
 
-	for (i = 0; i < 10; i++){
+	//for (i = 0; i < 10; i++){
 		QUARTERROUND(x0, x4,  x8, x12);
 		QUARTERROUND(x1, x5,  x9, x13);
 		QUARTERROUND(x2, x6, x10, x14);
@@ -89,7 +90,7 @@ void xchacha_hchacha20(uint8_t *out, const uint8_t *in, const uint8_t *k){
 		QUARTERROUND(x1, x6, x11, x12);
 		QUARTERROUND(x2, x7,  x8, x13);
 		QUARTERROUND(x3, x4,  x9, x14);
-	}
+	//}
 
 	U32TO8_LITTLE(out +  0, x0);
 	U32TO8_LITTLE(out +  4, x1);
@@ -117,7 +118,7 @@ void xchacha_keysetup(XChaCha_ctx *ctx, const uint8_t *k, uint8_t *iv){
 	 * We then use this sub-key and the last 8 bytes of the iv
 	 * as normal.
 	 */
-	xchacha_hchacha20(k2, iv, k);
+	xchacha_hchacha20_svp64(k2, iv, k);
 
 
 	ctx->input[0] = 0x61707865;
