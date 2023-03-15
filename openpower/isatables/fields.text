@@ -15,8 +15,9 @@
     | PO   |  RT |   RA |   RB |bm   |L  |   XO   |
 
 # 1.6.2.1 CRB-FORM
-    |0     |6    |9   |12  |15  |18  |21    |29    |31 |
-    | PO   |  BF | BFA| BFB| BFC| msk| TLI  |   XO |msk|
+    |0     |6    |9   |11   |14   | 16  |19   |26   | 31|
+    | PO   | BF  | msk|BFA  | msk | BFB | //  | XO  | / |
+    | PO   | BF  | msk|BFA  | msk | BFB | TLI | XO  |TLI|
 
 # 1.6.3 SC-FORM
     |0     |6    |11    |16    |20     |27  |30 |31  |
@@ -620,6 +621,10 @@
     rmm (11:15)
         Field used to specify a REMAP shape for SVI-Form
         Formats: SVI
+    msk (9:10,14:15)
+        Field used by crternlogi and crbinlut to select which bits
+        of CR Field BF are to be modified. Requires BF to be Read-Modify-Write
+        Formats: CRB-Form
     MB (21:25)
         Field used in M-form instructions to specify the first
         1-bit of a 64-bit mask, as described in
@@ -912,6 +917,10 @@
          Field used by the ternlogi instruction as the
          look-up table.
          Formats: TLI
+    TLI (21:25,19:20,31)
+        Field used by the crternlogi instruction as the
+        look-up table.
+        Formats: CRB-Form
     TO (6:10)
          Field used to specify the conditions on which to
          trap.     The    encoding     is    described   in
@@ -1033,7 +1042,7 @@
         Formats: XX4
     XO (26:30)
         Extended opcode field.
-        Formats: A, DX, VA2, SVL
+        Formats: A, DX, VA2, SVL, CRB
     XO (26:31)
         Extended opcode field.
         Formats: VA, SVM, SVRM, SVI
