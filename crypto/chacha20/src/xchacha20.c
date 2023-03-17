@@ -120,7 +120,6 @@ void xchacha_keysetup(XChaCha_ctx *ctx, const uint8_t *k, uint8_t *iv){
 	 */
 	xchacha_hchacha20_svp64(k2, iv, k);
 
-
 	ctx->input[0] = 0x61707865;
 	ctx->input[1] = 0x3320646e;
 	ctx->input[2] = 0x79622d32;
@@ -228,8 +227,8 @@ void xchacha_encrypt_bytes(XChaCha_ctx *ctx, const uint8_t *m, uint8_t *c, uint3
 		x14 = j14;
 		x15 = j15;
 
-		/* Do 20 rounds instead of 8 */
-		for (i = 20; i > 0;i -= 2) {
+		/* Do 10 rounds instead of 8 */
+		for (i = 0; i < 10; i++) {
 #ifdef DUMP
             dump_hex(&x0, 4);
             dump_hex(&x1, 4);
