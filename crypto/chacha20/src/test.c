@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "xchacha20.h"
+#include "xchacha20_wrapper.h"
 
 
 /** Compare our output to the output of a known good XChaCha20 library.
@@ -52,7 +53,8 @@ int check_cpp(void){
 
 	/* Crypto++ initializes their counter to 1 instead of 0 */
 	xchacha_set_counter(&ctx, counter);
-	xchacha_encrypt_bytes(&ctx, plaintext, buffer, msglen);
+	//xchacha_encrypt_bytes(&ctx, plaintext, buffer, msglen);
+	xchacha_encrypt_bytes_svp64(&ctx, plaintext, buffer, msglen);
 
 	/* Compare our ciphertext to the correct ciphertext */
 	if(memcmp(buffer, correct_ciphertext, msglen) != 0){
