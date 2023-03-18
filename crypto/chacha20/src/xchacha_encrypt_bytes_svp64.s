@@ -12,7 +12,6 @@
     .set c_ptr, 5
     .set bytes, 6
     .set ctr, 7
-    .set i, 8
     .set SHAPE0, 8
     .set SHAPE1, 12 
     .set SHAPE2, 16
@@ -39,18 +38,18 @@ xchacha_encrypt_bytes_svp64_real:
     quarterround_const  SHAPE0, SHAPE1, SHAPE2, SHIFTS
 .loop:
     # Copy j[] to x[], 16 x 32-bit elements
-    setvl	            0,0,16,0,1,1
-    sv.ori/w=32         *x, *j, 0
+    setvl               0,0,8,0,1,1
+    sv.or               *x, *j, *j
 
     # find out how many bytes to load from m: min(bytes, 64), but need to count octets
-    srdi                i, bytes, 3
-    cmplwi              i, 8
+    srdi                tmp, bytes, 3
+    cmplwi              tmp, 8
     bgt                 .l1
-    li                  i, 8
+    li                  tmp, 8
               
 .l1:
     # Set ctr to min(64, bytes)
-    ori                 ctr, i, 0
+    ori                 ctr, tmp, 0
 
     # Load 64 bytes from m_ptr, 8 x 64-bit elements, set MAXVL=8
     setvl	            0,ctr,8,0,1,1
@@ -85,8 +84,10 @@ xchacha_encrypt_bytes_svp64_real:
 .l3:
     bne                 .l4
     # find out how many bytes to load from m: min(bytes, 64), but need to count octets
-    srdi                i, bytes, 3
-    setvl	            0,i,8,0,1,1
+    # TODO: properly store the bytes using elwidth
+    srdi                tmp, bytes, 3
+    addi                tmp, tmp, 1
+    setvl               0,tmp,8,0,1,1
     sv.ld               *m, 0(c_ptr)
 
 .l4:
@@ -96,7 +97,7 @@ xchacha_encrypt_bytes_svp64_real:
     subi                bytes, bytes, 64
     addi                c_ptr, c_ptr, 64
     addi                m_ptr, m_ptr, 64
-    b                   .loop
+    bl                  .loop
 
     .long 0
     .byte 0,0,0,0,0,3,0,0
