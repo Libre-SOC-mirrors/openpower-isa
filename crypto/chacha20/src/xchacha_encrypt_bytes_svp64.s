@@ -24,7 +24,7 @@
     .globl  xchacha_encrypt_bytes_svp64_real
     .type   xchacha_encrypt_bytes_svp64_real, @function
 xchacha_encrypt_bytes_svp64_real:
-	.cfi_startproc
+    .cfi_startproc
 
     # if bytes == 0, return
     cmplwi              bytes, 0
@@ -61,7 +61,7 @@ xchacha_encrypt_bytes_svp64_real:
     quarterround        x, ctr, VL, SHAPE0, SHAPE1, SHAPE2, SHIFTS
 
     # Add j[] to x[], 16 x 32-bit elements
-    setvl	            0,0,16,0,1,1
+    setvl               0,0,16,0,1,1
     sv.add/w=32         *x, *x, *j
 
     # XOR x[] elements with m[], 16 x 32-bit elements
@@ -76,7 +76,7 @@ xchacha_encrypt_bytes_svp64_real:
 
 .l2:
     # Store 8 x 64-bit from x[] to c_ptr
-	setvl	            0,0,8,0,1,1
+    setvl               0,0,8,0,1,1
     sv.std              *x, 0(c_ptr)
 
     cmplwi              bytes, 64
