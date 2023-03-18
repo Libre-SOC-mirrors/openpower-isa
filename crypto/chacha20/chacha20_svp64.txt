@@ -17,7 +17,8 @@ for (i = 0; i < 10; i++){
     a = PLUS(a,b); d = ROTATE(XOR(d,a), 8); \
     c = PLUS(c,d); b = ROTATE(XOR(b,c), 7);
     
-We see that the loop is split in two groups of QUARTERROUND calls, one with step=4:
+We see that the loop is split in two groups of QUARTERROUND calls,
+one with step=4:
 
     QUARTERROUND(x0, x4,  x8, x12);
     QUARTERROUND(x1, x5,  x9, x13);
@@ -31,7 +32,8 @@ and another with step=5:
     QUARTERROUND(x2, x7,  x8, x13);
     QUARTERROUND(x3, x4,  x9, x14);
     
-Let's start with the first group of QUARTERROUNDs, by unrolling it, essentially it results in the following instructions:
+Let's start with the first group of QUARTERROUNDs, by unrolling it,
+essentially it results in the following instructions:
 
     x0  = x0 + x4;   x12 = ROTATE(x12 ^ x0, 16);
     x8  = x8 + x12;   x4 = ROTATE(x4 ^ x8, 12);
@@ -103,8 +105,10 @@ Let's list the additions only:
     x3  = x3 + x4
     x9  = x9 + x14
     
-Since we're going to use Vertical-First mode, the additions will be executed one by one and we need to note the indices that are going to be used for each operation.
-We remind that sv.add is the instruction that will be executed, in the form:
+Since we're going to use Vertical-First mode, the additions will be
+executed one by one and we need to note the indices that are going to
+be used for each operation.  We remind that sv.add is the instruction
+that will be executed, in the form:
 
     sv.add RT, RA, RB  # RT = RA + RB
 
@@ -115,14 +119,17 @@ Let's assume the values x in the registers 24-36
     GPR 32 |  x8 |  x9 | x10 | x11 |
     GPR 36 | x12 | x13 | x14 | x15 |
 
-So for the addition in Vertical-First mode, RT (and RA as they are the same) indices are (in terms of x):
+So for the addition in Vertical-First mode, RT (and RA as they are the
+same) indices are (in terms of x):
 
    |  0 |  8 |  0 |  8 |  1 |  9 |  1 |  9 |
    |  2 | 10 |  2 | 10 |  3 | 11 |  3 | 11 |
    |  0 | 10 |  0 | 10 |  1 | 11 |  1 | 11 |
    |  2 |  8 |  2 |  8 |  3 |  9 |  3 |  9 |
 
-However, since the indices are small values, using a single 64-bit register for a single index value is a waste so we will compress them, 8 indices in a 64-bit register:
+However, since the indices are small values, using a single 64-bit
+register for a single index value is a waste so we will compress them,
+8 indices in a 64-bit register:
 So, RT indices will fit inside these 4 registers (in Little Endian format):
 
    SVSHAPE0: | 0x901090108000800 | 0xb030b030a020a02 | 0xb010b010a000a00 | 0x903090308020802 |
@@ -155,29 +162,47 @@ The first instruction
 
     svindex             4, 0, 1, 3, 0, 1, 0
 
-loads the add RT indices in the SVSHAPE0, in register 8. You will note that 4 is listed, but that's because it only works on even registers, so in order to save a bit, we have to double that number to get the actual register. So, SVSHAPE0 will be listed in GPRs 8-12. The number 3 lists that the elements will be 8-bit long. 0=64-bit, 1=32-bit, 2=16-bit, 3=8-bit.
+loads the add RT indices in the SVSHAPE0, in register 8. You will note
+that 4 is listed, but that's because it only works on even registers,
+so in order to save a bit, we have to double that number to get the
+actual register. So, SVSHAPE0 will be listed in GPRs 8-12. The number
+3 lists that the elements will be 8-bit long. 0=64-bit, 1=32-bit,
+2=16-bit, 3=8-bit.
 
 The next step instruction
 
     svindex             6, 1, 1, 3, 0, 1, 0
 
-loads the add RB indices into SVSHAPE1. Again, even though we list 6, the actual registers will be loaded in GPR #12, again a use of 8-bit elements is denoted.
+loads the add RB indices into SVSHAPE1. Again, even though we list 6,
+the actual registers will be loaded in GPR #12, again a use of 8-bit
+elements is denoted.
 Next, the setvl instructions:
 
     setvl               0, 0, 32, 0, 1, 1
     setvl               22, 0, 32, 1, 0, 1
 
-We have to call setvl twice, the first one sets MAXVL and VL to 32. The second setvl, stores the VL to register 22 and also configures Vertical-First mode.
-Afterwards, we have to instruct the way we intend to use the indices, and we do this using svremap.
+We have to call setvl twice, the first one sets MAXVL and VL to
+32. The second setvl, stores the VL to register 22 and also configures
+Vertical-First mode.  Afterwards, we have to instruct the way we intend
+to use the indices, and we do this using svremap.
 
     svremap 31, 1, 0, 0, 0, 0, 0
     
-svremap basically instructs the scheduler to use SVSHAPE0 for RT and RB, SVSHAPE1 for RA.
-The next instruction performs the *actual* addition:
+svremap basically instructs the scheduler to use SVSHAPE0 for RT and RB,
+SVSHAPE1 for RA.  The next instruction performs the *actual* addition:
 
     sv.add/w=32         *x, *x, *x
     
-Note the /w=32 suffix. This instructs the adder to perform the operation in elements of w=32 bits. Since the Power CPU is a 64-bit CPU, this means that we need to have 2 32-bit elements loaded in each register. Also, note that in all parameters we use the *x as argument. This instructs the scheduler to act on the registers as a vector, or a sequence of elements. But even though they are all the same, their indices will be taken from the SVSHAPE0/SVSHAPE1 indices as defined previously. Also note that the indices are relative to the actual register used. So, if *x starts in GPR 24 for example, in essence this instruction will issue the following sequence of instructions:
+Note the /w=32 suffix. This instructs the adder to perform the operation
+in elements of w=32 bits. Since the Power CPU is a 64-bit CPU, this means
+that we need to have 2 32-bit elements loaded in each register. Also,
+note that in all parameters we use the *x as argument. This instructs
+the scheduler to act on the registers as a vector, or a sequence of
+elements. But even though they are all the same, their indices will be
+taken from the SVSHAPE0/SVSHAPE1 indices as defined previously. Also
+note that the indices are relative to the actual register used. So,
+if *x starts in GPR 24 for example, in essence this instruction will
+issue the following sequence of instructions:
 
     add/w=32            24 + 0, 24 +  4, 24 + 0
     add/w=32            24 + 8, 24 + 12, 24 + 8
@@ -191,8 +216,10 @@ Note the /w=32 suffix. This instructs the adder to perform the operation in elem
 
 Finally, the svstep. instruction steps to the next set of indices 
 
-We have shown how to do the additions in a Vertical-first mode. Now let's add the rest of the instructions in the QUARTERROUNDs.
-For the XOR instructions of both QUARTERROUNDs groups only, assuming that d = XOR(d, a):
+We have shown how to do the additions in a Vertical-first mode. Now
+let's add the rest of the instructions in the QUARTERROUNDs.  For the
+XOR instructions of both QUARTERROUNDs groups only, assuming that d =
+XOR(d, a):
 
     x12 = x12 ^ x0
     x4 = x4 ^ x8
@@ -227,7 +254,9 @@ For the XOR instructions of both QUARTERROUNDs groups only, assuming that d = XO
     x14 = x14 ^ x3
     x4 = x4 ^ x9
 
-We will need to create another set of indices for the XOR instructions. We will only need one set as the other set of indices is the same as RT for sv.add (SHAPE0). So, remembering that our 
+We will need to create another set of indices for the XOR instructions. We
+will only need one set as the other set of indices is the same as RT
+for sv.add (SHAPE0). So, remembering that our
     
     | 12 |  4 | 12 |  4 | 13 |  5 | 13 |  5 |
     | 14 |  6 | 14 |  6 | 15 |  7 | 15 |  7 |
@@ -238,22 +267,33 @@ Again, we find
 
     SVSHAPE2: | 0x50d050d040c040c | 0x70f070f060e060e | 0x60c060c050f050f | 0x40e040e070d070d |
     
-The next operation is the ROTATE which takes as operand the result of the XOR and a shift argument. You can easily see that the indices used in this case are the same as the XOR. However, the shift values cycle every 4: 16, 12, 8, 7. For the indices we can again use svindex, like this:
+The next operation is the ROTATE which takes as operand the result of the
+XOR and a shift argument. You can easily see that the indices used in this
+case are the same as the XOR. However, the shift values cycle every 4:
+16, 12, 8, 7. For the indices we can again use svindex, like this:
 
     svindex             8, 2, 1, 3, 0, 1, 0
     
-Which again means SVPSHAPE2, operating on 8-bit elements, starting from GPR #16 (8*2). For the shift values cycling every 4 elements, the svshape2 instruction will be used:
+Which again means SVPSHAPE2, operating on 8-bit elements, starting
+from GPR #16 (8*2). For the shift values cycling every 4 elements,
+the svshape2 instruction will be used:
 
     svshape2            0, 0, 3, 4, 0, 1
     
-This will create an SVSHAPE3, which will use a modulo 4 for all of its elements. Now we can list both XOR and ROTATE instructions in assembly, together with the respective svremap instructions:
+This will create an SVSHAPE3, which will use a modulo 4 for all of its
+elements. Now we can list both XOR and ROTATE instructions in assembly,
+together with the respective svremap instructions:
 
     svremap             31, 2, 0, 2, 2, 0, 0            # RA=2, RB=0, RS=2 (0b00111)
     sv.xor/w=32         *x, *x, *x
     svremap             31, 0, 3, 2, 2, 0, 0            # RA=2, RB=3, RS=2 (0b01110)
     sv.rldcl/w=32       *x, *x, *SHIFTS, 0
 
-So, in a similar fashion, we instruct XOR (sv.xor) to use SVSHAPE2 for RA and RS and SVSHAPE0 for RB, again for 32-bit elements, while ROTATE (sv.rldcl) will also use SVSHAPE2 for RA and RS, but SVSHAPE3 for RB (the shift values, which cycle every 4 elements). Note that the actual indices for SVSHAPE3 will have to be in 32-bit elements:
+So, in a similar fashion, we instruct XOR (sv.xor) to use SVSHAPE2 for
+RA and RS and SVSHAPE0 for RB, again for 32-bit elements, while ROTATE
+(sv.rldcl) will also use SVSHAPE2 for RA and RS, but SVSHAPE3 for RB
+(the shift values, which cycle every 4 elements). Note that the actual
+indices for SVSHAPE3 will have to be in 32-bit elements:
 
     SHIFTS: | 0x0000000c00000010 | 0x0000000700000008 |
 
