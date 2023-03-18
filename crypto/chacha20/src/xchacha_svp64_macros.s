@@ -1,3 +1,6 @@
+    .machine libresoc
+    .file      "xchacha20_svp64_macros.s"
+
 # Helper macros for assembly
 
 # load word immediate for 32-bit constants
