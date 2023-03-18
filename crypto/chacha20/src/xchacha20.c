@@ -118,6 +118,7 @@ void xchacha_keysetup(XChaCha_ctx *ctx, const uint8_t *k, uint8_t *iv){
 	 * We then use this sub-key and the last 8 bytes of the iv
 	 * as normal.
 	 */
+	//xchacha_hchacha20(k2, iv, k);
 	xchacha_hchacha20_svp64(k2, iv, k);
 
 	ctx->input[0] = 0x61707865;
