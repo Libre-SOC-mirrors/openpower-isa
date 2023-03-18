@@ -58,6 +58,16 @@ int check_cpp(void){
 
 	/* Compare our ciphertext to the correct ciphertext */
 	if(memcmp(buffer, correct_ciphertext, msglen) != 0){
+        printf("msglen: %d\n", msglen);
+        printf("correct:\n");
+        for (uint32_t i=0; i < msglen; i++) {
+            printf("%02x ", correct_ciphertext[i]);
+        }
+        printf("\nsvp64:\n");
+        for (uint32_t i=0; i < msglen; i++) {
+            printf("%02x ", buffer[i]);
+        }
+        printf("\n");
 		return(-1);
 	}
 
