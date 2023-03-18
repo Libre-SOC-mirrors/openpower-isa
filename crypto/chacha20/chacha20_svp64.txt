@@ -105,10 +105,11 @@ Let's list the additions only:
     x3  = x3 + x4
     x9  = x9 + x14
     
-Since we're going to use Vertical-First mode, the additions will be
-executed one by one and we need to note the indices that are going to
-be used for each operation.  We remind that sv.add is the instruction
-that will be executed, in the form:
+Since we're going to use Vertical-First mode (instructions are executed
+first, and an explicit "svstep" moves on to the next register), the
+additions will be executed one by one and we need to note the indices
+that are going to be used for each operation.  We remind that sv.add is
+the instruction that will be executed, in the form:
 
     sv.add RT, RA, RB  # RT = RA + RB
 
