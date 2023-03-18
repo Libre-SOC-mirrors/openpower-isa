@@ -85,8 +85,10 @@ void xchacha_hchacha20_svp64(uint8_t *out, const uint8_t *in, const uint8_t *k) 
 }
 
 void xchacha_encrypt_bytes_svp64(XChaCha_ctx *ctx, const uint8_t *m, uint8_t *c, uint32_t bytes) {
-    uint8_t c2[1000];
-    xchacha_encrypt_bytes(ctx, m, c2, bytes);
+    /*uint8_t c2[1000];
+    XChaCha_ctx ctx2;
+    memcpy(&ctx2, ctx, sizeof(XChaCha_ctx));
+    xchacha_encrypt_bytes(&ctx2, m, c2, bytes);*/
 
     // These cannot be the same pointer as the original function, as it is really a separate CPU/RAM
     // we have to memcpy from input to this pointer, the address was chosen arbitrarily
@@ -182,20 +184,20 @@ void xchacha_encrypt_bytes_svp64(XChaCha_ctx *ctx, const uint8_t *m, uint8_t *c,
     }
 
     uint64_t *cptr64 = (uint64_t *) c;
-    for (size_t i=0; i < 32; i += 8) {
+    for (size_t i=0; i < (bytes/8+1)*8; i += 8) {
       PyObject *svp64_address = PyLong_FromUnsignedLongLong((cptr_svp64 + i)/8);
       PyObject *pyval = PyDict_GetItem(mem, svp64_address);
       uint64_t val = PyLong_AsUnsignedLongLong(pyval);
       *cptr64 = val;
-      printf("c: %p -> %016lx\t val: %016lx -> %lx\n", cptr64, *cptr64, val, cptr_svp64 + i);
+      //printf("c: %p -> %016lx\t val: %016lx -> %lx\n", cptr64, *cptr64, val, cptr_svp64 + i);
       cptr64++;
     }
-
-    for (size_t i=0; i < bytes; i+= 8) {
+/*
+    for (size_t i=0; i < (bytes/8+1)*8; i+= 8) {
       printf("c[%ld]  : %02x %02x %02x %02x %02x %02x %02x %02x\n", i, c[i+0], c[i+1], c[i+2], c[i+3],
                                                                         c[i+4], c[i+5], c[i+6], c[i+7]);
       printf("c2[%ld] : %02x %02x %02x %02x %02x %02x %02x %02x\n", i, c2[i+0], c2[i+1], c2[i+2], c2[i+3],
                                                                         c2[i+4], c2[i+5], c2[i+6], c2[i+7]);
-    }
+    }*/
 
 }
