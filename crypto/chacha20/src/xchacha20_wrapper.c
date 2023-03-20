@@ -6,6 +6,9 @@
 #include "xchacha20_wrapper.h"
 #include "xchacha20.h"
 
+const char *xchacha_hchacha_svp64_filename = "./bin/xchacha_hchacha20_svp64.bin";
+const char *xchacha_encrypt_bytes_svp64_filename = "./bin/xchacha_encrypt_bytes_svp64.bin";
+
 void xchacha_hchacha20_svp64(uint8_t *out, const uint8_t *in, const uint8_t *k) {
 
     // These cannot be the same pointer as the original function, as it is really a separate CPU/RAM
@@ -18,7 +21,7 @@ void xchacha_hchacha20_svp64(uint8_t *out, const uint8_t *in, const uint8_t *k) 
     pypowersim_state_t *state = pypowersim_prepare();
 
     // Change the relevant elements, mandatory: body
-    state->binary = PyBytes_FromStringAndSize((const char *)&xchacha_hchacha20_svp64_real, 10000);
+    state->binary = PyBytes_FromStringAndSize(xchacha_hchacha_svp64_filename, strlen(xchacha_hchacha_svp64_filename));
     // Set GPR #3 to the output pointer
     PyObject *out_address = PyLong_FromUnsignedLongLong(outptr_svp64);
     PyList_SetItem(state->initial_regs, 3, out_address);
@@ -100,7 +103,7 @@ void xchacha_encrypt_bytes_svp64(XChaCha_ctx *ctx, const uint8_t *m, uint8_t *c,
     pypowersim_state_t *state = pypowersim_prepare();
 
     // Change the relevant elements
-    state->binary = PyBytes_FromStringAndSize((const char *)&xchacha_encrypt_bytes_svp64_real, 10000);
+    state->binary = PyBytes_FromStringAndSize(xchacha_encrypt_bytes_svp64_filename, strlen(xchacha_encrypt_bytes_svp64_filename));
 
     // Set GPR #3 to the output pointer
     PyObject *ctxptr_address = PyLong_FromUnsignedLongLong(ctxptr_svp64);
