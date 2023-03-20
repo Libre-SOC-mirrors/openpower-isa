@@ -25,6 +25,7 @@ INCLUDES := $(wildcard $(SRCDIR)/*.h))
 SVP64OBJECTS := $(ASFILES:$(SRCDIR)/%.s=$(SRCDIR)/%.o)
 OBJECTS := $(CFILES:$(SRCDIR)/%.c=$(SRCDIR)/%.o)
 BINFILES := $(BINDIR)/xchacha_hchacha20_svp64.bin $(BINDIR)/xchacha_encrypt_bytes_svp64.bin
+ELFFILES := $(BINDIR)/xchacha_hchacha20_svp64.bin $(BINDIR)/xchacha_encrypt_bytes_svp64.bin
 
 $(BINDIR)/%.elf: $(SRCDIR)/%.o
 	$(CROSSLD) -EL -o $@ -T memmap $^
@@ -35,11 +36,11 @@ $(BINDIR)/%.bin: $(BINDIR)/%.elf
 .PHONY: all clean remove
 all: ${TARGET}
 
-$(TARGET): $(OBJECTS) $(SVP64OBJECTS) $(BINFILES)
+$(TARGET): $(OBJECTS) $(SVP64OBJECTS) $(ELFFILES)
 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
 
 clean:
-	$ rm -f $(OBJECTS) $(SVP64OBJECTS) $(BINFILES)
+	$ rm -f $(OBJECTS) $(SVP64OBJECTS) $(BINFILES) $(ELFFILES)
 
 remove: clean
 	$ rm -f $(TARGET)
