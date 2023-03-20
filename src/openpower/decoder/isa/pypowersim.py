@@ -281,13 +281,13 @@ def help():
     exit(-1)
 
 
-def run_a_simulation(binary, bigendian, prog, 
+def run_a_simulation(binaryname, bigendian, prog,
                      qemu_cosim, initial_regs,
                      initial_sprs, svstate, mmu,
                      initial_cr, initial_mem,
                      initial_fprs, initial_pc):
 
-    log ("binary", binary)
+    log ("binaryname", binaryname)
     log ("bigendian", bigendian)
     log ("prog", prog)
     log ("qemu_cosim", qemu_cosim)
@@ -299,6 +299,9 @@ def run_a_simulation(binary, bigendian, prog,
     log ("initial_mem", initial_mem)
     log ("initial_fprs", initial_fprs)
     log ("initial_pc", initial_pc)
+
+    with open(binaryname, "rb") as f:
+        binary = f.read()
 
     with Program(binary, bigendian=bigendian, orig_filename=None) as prog:
         simulator, qemu = run_tst(None, prog, qemu_cosim,
