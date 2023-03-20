@@ -25,7 +25,7 @@ INCLUDES := $(wildcard $(SRCDIR)/*.h))
 SVP64OBJECTS := $(ASFILES:$(SRCDIR)/%.s=$(SRCDIR)/%.o)
 OBJECTS := $(CFILES:$(SRCDIR)/%.c=$(SRCDIR)/%.o)
 BINFILES := $(BINDIR)/xchacha_hchacha20_svp64.bin $(BINDIR)/xchacha_encrypt_bytes_svp64.bin
-ELFFILES := $(BINDIR)/xchacha_hchacha20_svp64.bin $(BINDIR)/xchacha_encrypt_bytes_svp64.bin
+ELFFILES := $(BINDIR)/xchacha_hchacha20_svp64.elf $(BINDIR)/xchacha_encrypt_bytes_svp64.elf
 
 $(BINDIR)/%.elf: $(SRCDIR)/%.o
 	$(CROSSLD) -EL -o $@ -T memmap $^
