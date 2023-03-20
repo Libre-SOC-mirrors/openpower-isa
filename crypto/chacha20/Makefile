@@ -26,7 +26,6 @@ SVP64OBJECTS := $(ASFILES:$(SRCDIR)/%.s=$(SRCDIR)/%.o)
 OBJECTS := $(CFILES:$(SRCDIR)/%.c=$(SRCDIR)/%.o)
 BINFILES := $(BINDIR)/xchacha_hchacha20_svp64.bin $(BINDIR)/xchacha_encrypt_bytes_svp64.bin
 
-
 $(BINDIR)/%.elf: $(SRCDIR)/%.o
 	$(CROSSLD) -EL -o $@ -T memmap $^
 
@@ -40,7 +39,7 @@ $(TARGET): $(OBJECTS) $(SVP64OBJECTS) $(BINFILES)
 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
 
 clean:
-	$ rm -f $(OBJECTS) $(SVP64OBJECTS)
+	$ rm -f $(OBJECTS) $(SVP64OBJECTS) $(BINFILES)
 
 remove: clean
 	$ rm -f $(TARGET)
