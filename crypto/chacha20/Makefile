@@ -36,7 +36,7 @@ $(BINDIR)/%.bin: $(BINDIR)/%.elf
 .PHONY: all clean remove
 all: ${TARGET}
 
-$(TARGET): $(OBJECTS) $(SVP64OBJECTS) $(ELFFILES)
+$(TARGET): $(OBJECTS) $(SVP64OBJECTS) $(ELFFILES) $(BINFILES)
 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
 
 clean:
