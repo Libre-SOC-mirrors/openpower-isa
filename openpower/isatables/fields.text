@@ -624,7 +624,7 @@
     msk (9:10,14:15)
         Field used by crternlogi and crbinlut to select which bits
         of CR Field BF are to be modified. Requires BF to be Read-Modify-Write
-        Formats: CRB-Form
+        Formats: CRB
     MB (21:25)
         Field used in M-form instructions to specify the first
         1-bit of a 64-bit mask, as described in
@@ -920,7 +920,7 @@
     TLI (21:25,19:20,31)
         Field used by the crternlogi instruction as the
         look-up table.
-        Formats: CRB-Form
+        Formats: CRB
     TO (6:10)
          Field used to specify the conditions on which to
          trap.     The    encoding     is    described   in

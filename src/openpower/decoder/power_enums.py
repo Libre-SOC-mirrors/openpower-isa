@@ -167,6 +167,7 @@ class Form(Enum):
     VA2 = 39
     SVC = 40
     SVR = 41
+    CRB = 42 # crternlogi / crbinlut
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
