@@ -89,7 +89,8 @@ class SVSTATETestCase(FHDLTestCase):
         sim.gpr.dump()
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64),
-                             "GPR %d %x expected %x" % (i, sim.gpr(i).value, expected[i]))
+                             "GPR %d %x expected %x" % \
+                             (i, sim.gpr(i).value, expected[i]))
 
     def test_1_sv_chacha20_main_rounds(self):
         """chacha20 main rounds
