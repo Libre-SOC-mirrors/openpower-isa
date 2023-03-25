@@ -65,25 +65,26 @@
     # SHAPE2, used by sv.rldcl starts at GPR #16
     svindex             \_SHAPE2/2, 2, 1, 3, 0, 1, 0    # SVSHAPE2, c
     # SHAPE3, used also by sv.rldcl to hold the shift values starts at GPR #20
-    # The inner loop will do 32 iterations, but there are only 4 shift values, so we mod 4
-    svshape2            0, 0, 3, 4, 0, 1                # SVSHAPE3, shift amount, mod 4
+    # The inner loop will do 32 iterations, but there are only 4 shift values,
+    # so we mod 4
+    svshape2            0, 0, 3, 4, 0, 1      # SVSHAPE3, shift amount, mod 4
 
 .outer:
     # outer loop begins here (standard CTR loop)
-    setvl               0, 0, 32, 1, 1, 1               # MAXVL=VL=32, VF=1
+    setvl               0, 0, 32, 1, 1, 1           # MAXVL=VL=32, VF=1
     # inner loop begins here. add-xor-rotl32 with remap, step, branch
 .inner:
-    svremap             31, 1, 0, 0, 0, 0, 0            # RA=1, RB=0, RT=0 (0b01011)
+    svremap             31, 1, 0, 0, 0, 0, 0        # RA=1, RB=0, RT=0 (0b01011)
     sv.add/w=32         *\_x, *\_x, *\_x
-    svremap             31, 2, 0, 2, 2, 0, 0            # RA=2, RB=0, RS=2 (0b00111)
+    svremap             31, 2, 0, 2, 2, 0, 0        # RA=2, RB=0, RS=2 (0b00111)
     sv.xor/w=32         *\_x, *\_x, *\_x
-    svremap             31, 0, 3, 2, 2, 0, 0            # RA=2, RB=3, RS=2 (0b01110)
+    svremap             31, 0, 3, 2, 2, 0, 0        # RA=2, RB=3, RS=2 (0b01110)
     sv.rldcl/w=32       *\_x, *\_x, *\_SHIFTS, 0
     # 16 is the destination containing the result of svstep.
     # it overlaps with SHAPE2 which is also 16. the first 8 indices
     # will get corrupted.
-    svstep.             \_ctr, 1, 0                     # step to next in-regs element
-    bc                  6, 3, .inner                    # svstep. Rc=1 loop-end-condition?
+    svstep.             \_ctr, 1, 0        # step to next in-regs element
+    bc                  6, 3, .inner       # svstep. Rc=1 loop-end-condition?
     # inner-loop done: outer loop standard CTR-decrement to setvl again
-    bdnz	            .outer                          # Loop until CTR is zero
+    bdnz	            .outer             # Loop until CTR is zero
 .endm
