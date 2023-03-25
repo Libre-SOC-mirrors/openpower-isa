@@ -148,12 +148,12 @@ Using a similar method, we find the final 4 registers with the RB indices:
    
 Now, we can construct the Vertical First loop:
 
-    svindex             4, 0, 1, 3, 0, 1, 0             # SVSHAPE0, add RA/RT indices
-    svindex             6, 1, 1, 3, 0, 1, 0             # SVSHAPE1, add RB indices
-    setvl               0, 0, 32, 1, 1, 1               # MAXVL=VL=32, VF=1
-    svremap             31, 1, 0, 0, 0, 0, 0            # RA=1, RB=0, RT=0 (0b01011)
-    sv.add/w=32         *x, *x, *x                      # RT, RB will use SHAPE0, RA will use SHAPE1
-    svstep. 16, 1, 0                                    # step to next in-regs element
+    svindex             4, 0, 1, 3, 0, 1, 0     # SVSHAPE0, add RA/RT indices
+    svindex             6, 1, 1, 3, 0, 1, 0     # SVSHAPE1, add RB indices
+    setvl               0, 0, 32, 1, 1, 1       # MAXVL=VL=32, VF=1
+    svremap             31, 1, 0, 0, 0, 0, 0    # RA=1, RB=0, RT=0 (0b01011)
+    sv.add/w=32         *x, *x, *x              # RT, RB: SHAPE0. RA: SHAPE1
+    svstep. 16, 1, 0                            # step to next in-regs element
 
 What this code snippet does is the following:
 
@@ -179,8 +179,9 @@ Next, the setvl instructions:
 
     setvl               0, 0, 32, 1, 1, 1
 
-We have to call setvl to set MAXVL and VL to 32 and also configure Vertical-First mode.
-Afterwards, we have to instruct the way we intend to use the indices, and we do this using svremap.
+We have to call setvl to set MAXVL and VL to 32 and also configure
+Vertical-First mode.  Afterwards, we have to instruct the way we intend
+to use the indices, and we do this using svremap.
 
     svremap 31, 1, 0, 0, 0, 0, 0
     
@@ -280,9 +281,9 @@ This will create an SVSHAPE3, which will use a modulo 4 for all of its
 elements. Now we can list both XOR and ROTATE instructions in assembly,
 together with the respective svremap instructions:
 
-    svremap             31, 2, 0, 2, 2, 0, 0            # RA=2, RB=0, RS=2 (0b00111)
+    svremap             31, 2, 0, 2, 2, 0, 0       # RA=2, RB=0, RS=2 (0b00111)
     sv.xor/w=32         *x, *x, *x
-    svremap             31, 0, 3, 2, 2, 0, 0            # RA=2, RB=3, RS=2 (0b01110)
+    svremap             31, 0, 3, 2, 2, 0, 0       # RA=2, RB=3, RS=2 (0b01110)
     sv.rldcl/w=32       *x, *x, *SHIFTS, 0
 
 So, in a similar fashion, we instruct XOR (sv.xor) to use SVSHAPE2 for
@@ -295,36 +296,37 @@ indices for SVSHAPE3 will have to be in 32-bit elements:
 
 The complete algorithm for a loop with 10 iterations is as follows:
     
-    li                  7, 10                           # Load value 10 into GPR #7
-    mtctr               7                               # Set up counter on GPR #7
+    li                  7, 10                     # Load value 10 into GPR #7
+    mtctr               7                         # Set up counter on GPR #7
     
     # set up VL=32 vertical-first, and SVSHAPEs 0-2
     setvl               0, 0, 32, 1, 1, 1
     # SHAPE0, used by sv.add starts at GPR #8
-    svindex             8/2, 0, 1, 3, 0, 1, 0           # SVSHAPE0, a
+    svindex             8/2, 0, 1, 3, 0, 1, 0     # SVSHAPE0, a
     # SHAPE1, used by sv.xor starts at GPR #12
-    svindex             12/2, 1, 1, 3, 0, 1, 0          # SVSHAPE1, b
+    svindex             12/2, 1, 1, 3, 0, 1, 0    # SVSHAPE1, b
     # SHAPE2, used by sv.rldcl starts at GPR #16
-    svindex             16/2, 2, 1, 3, 0, 1, 0          # SVSHAPE2, c
+    svindex             16/2, 2, 1, 3, 0, 1, 0    # SVSHAPE2, c
     # SHAPE3, used also by sv.rldcl to hold the shift values starts at GPR #20
-    # The inner loop will do 32 iterations, but there are only 4 shift values, so we mod 4
-    svshape2            0, 0, 3, 4, 0, 1                # SVSHAPE3, shift amount, mod 4
+    # The inner loop will do 32 iterations, but there are only
+    # 4 shift values, so we mod by 4, and can cycle through them
+    svshape2            0, 0, 3, 4, 0, 1          # SVSHAPE3, shift amount, mod4
 
 .outer:
     # outer loop begins here (standard CTR loop)
-    setvl               0, 0, 32, 1, 1, 1               # MAXVL=VL=32, VF=1
+    setvl               0, 0, 32, 1, 1, 1         # MAXVL=VL=32, VF=1
     # inner loop begins here. add-xor-rotl32 with remap, step, branch
 .inner:
-    svremap             31, 1, 0, 0, 0, 0, 0            # RA=1, RB=0, RT=0 (0b01011)
+    svremap             31, 1, 0, 0, 0, 0, 0      # RA=1, RB=0, RT=0 (0b01011)
     sv.add/w=32         *x, *x, *x
-    svremap             31, 2, 0, 2, 2, 0, 0            # RA=2, RB=0, RS=2 (0b00111)
+    svremap             31, 2, 0, 2, 2, 0, 0      # RA=2, RB=0, RS=2 (0b00111)
     sv.xor/w=32         *x, *x, *x
-    svremap             31, 0, 3, 2, 2, 0, 0            # RA=2, RB=3, RS=2 (0b01110)
+    svremap             31, 0, 3, 2, 2, 0, 0      # RA=2, RB=3, RS=2 (0b01110)
     sv.rldcl/w=32       *x, *x, *SHIFTS, 0
     # 16 is the destination containing the result of svstep.
     # it overlaps with SHAPE2 which is also 16. the first 8 indices
     # will get corrupted.
-    svstep.             7, 1, 0                         # step to next in-regs element
-    bc                  6, 3, .inner                    # svstep. Rc=1 loop-end-condition?
+    svstep.             7, 1, 0               # step to next in-regs element
+    bc                  6, 3, .inner          # svstep. Rc=1 loop-end-condition?
     # inner-loop done: outer loop standard CTR-decrement to setvl again
-    bdnz                .outer                          # Loop until CTR is zero
+    bdnz                .outer                # Loop until CTR is zero
