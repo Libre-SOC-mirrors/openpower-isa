@@ -57,10 +57,10 @@ Pseudo-code:
     SVSTATE[7:13] <- VL
     if _RT != 0 then
        GPR(_RT) <- [0]*57 || VL
-    if ((¬vs) & ¬(ms)) = 0 then
-        # set requested Vertical-First mode, clear persist
-        SVSTATE[63] <- vf
-        SVSTATE[62] <- 0b0
+    # MAXVL is a static "state-reset".
+    if ms = 1 then
+        SVSTATE[63] <- vf   # set Vertical-First mode
+        SVSTATE[62] <- 0b0  # clear persist bit
 
 Special Registers Altered:
 
