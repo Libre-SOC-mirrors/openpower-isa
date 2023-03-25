@@ -11,7 +11,7 @@ SVL-Form
 Pseudo-code:
 
     if SVi[3:4] = 0b11 then
-        # store subvl, pack and unpack in SVSTATE
+        # store pack and unpack in SVSTATE
         SVSTATE[53] <- SVi[5]
         SVSTATE[54] <- SVi[6]
         RT <- [0]*62 || SVSTATE[53:54]
