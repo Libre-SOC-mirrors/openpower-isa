@@ -150,9 +150,7 @@ Now, we can construct the Vertical First loop:
 
     svindex             4, 0, 1, 3, 0, 1, 0             # SVSHAPE0, add RA/RT indices
     svindex             6, 1, 1, 3, 0, 1, 0             # SVSHAPE1, add RB indices
-    setvl               0, 0, 32, 0, 1, 1               # MAXVL=VL=32
-    # set r22 from VL, set vertical-first
-    setvl               22, 0, 32, 1, 0, 1              # vertical-first mode
+    setvl               0, 0, 32, 1, 1, 1               # MAXVL=VL=32, VF=1
     svremap             31, 1, 0, 0, 0, 0, 0            # RA=1, RB=0, RT=0 (0b01011)
     sv.add/w=32         *x, *x, *x                      # RT, RB will use SHAPE0, RA will use SHAPE1
     svstep. 16, 1, 0                                    # step to next in-regs element
@@ -179,13 +177,10 @@ the actual registers will be loaded in GPR #12, again a use of 8-bit
 elements is denoted.
 Next, the setvl instructions:
 
-    setvl               0, 0, 32, 0, 1, 1
-    setvl               22, 0, 32, 1, 0, 1
+    setvl               0, 0, 32, 1, 1, 1
 
-We have to call setvl twice, the first one sets MAXVL and VL to
-32. The second setvl, stores the VL to register 22 and also configures
-Vertical-First mode.  Afterwards, we have to instruct the way we intend
-to use the indices, and we do this using svremap.
+We have to call setvl to set MAXVL and VL to 32 and also configure Vertical-First mode.
+Afterwards, we have to instruct the way we intend to use the indices, and we do this using svremap.
 
     svremap 31, 1, 0, 0, 0, 0, 0
     
@@ -304,10 +299,7 @@ The complete algorithm for a loop with 10 iterations is as follows:
     mtctr               7                               # Set up counter on GPR #7
     
     # set up VL=32 vertical-first, and SVSHAPEs 0-2
-    # set VL/MAXVL first
-    setvl               0, 0, 32, 0, 1, 1               # MAXVL=VL=32
-    # set r22 from VL, set vertical-first
-    setvl               22, 0, 32, 1, 0, 1              # vertical-first mode
+    setvl               0, 0, 32, 1, 1, 1
     # SHAPE0, used by sv.add starts at GPR #8
     svindex             8/2, 0, 1, 3, 0, 1, 0           # SVSHAPE0, a
     # SHAPE1, used by sv.xor starts at GPR #12
@@ -320,7 +312,7 @@ The complete algorithm for a loop with 10 iterations is as follows:
 
 .outer:
     # outer loop begins here (standard CTR loop)
-    setvl               22, 22, 32, 1, 1, 0             # vertical-first, set VL from r22
+    setvl               0, 0, 32, 1, 1, 1               # MAXVL=VL=32, VF=1
     # inner loop begins here. add-xor-rotl32 with remap, step, branch
 .inner:
     svremap             31, 1, 0, 0, 0, 0, 0            # RA=1, RB=0, RT=0 (0b01011)
