@@ -16,7 +16,6 @@
     .set SHAPE1, 12 
     .set SHAPE2, 16
     .set SHIFTS, 20
-    .set VL, 22
     .set j, 24
     .set m, 32
     .set x, 40
@@ -58,7 +57,7 @@ xchacha_encrypt_bytes_svp64_real:
     # establish CTR for outer round count
     li                  ctr, 10
     # Call QuarterRound macro for CTR loops on x[]
-    quarterround        x, ctr, VL, SHAPE0, SHAPE1, SHAPE2, SHIFTS
+    quarterround        x, ctr, SHAPE0, SHAPE1, SHAPE2, SHIFTS
 
     # Add j[] to x[], 16 x 32-bit elements
     setvl               0,0,16,0,1,1

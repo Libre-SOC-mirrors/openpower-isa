@@ -15,7 +15,6 @@
     .set SHAPE1, 12 
     .set SHAPE2, 16
     .set SHIFTS, 20
-    .set VL, 22
 
     .globl  xchacha_hchacha20_svp64_real
     .type   xchacha_hchacha20_svp64_real, @function
@@ -37,7 +36,7 @@ xchacha_hchacha20_svp64_real:
 
     # establish CTR for outer round count and call quarterround macro
     li                  ctr, 10
-    quarterround        x, ctr, VL, SHAPE0, SHAPE1, SHAPE2, SHIFTS
+    quarterround        x, ctr, SHAPE0, SHAPE1, SHAPE2, SHIFTS
 
     # store x0-x3 directly to *out_ptr
 	setvl	            0,0,2,0,1,1			    # Set VL to 4 elements

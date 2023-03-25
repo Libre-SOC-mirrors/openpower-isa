@@ -53,14 +53,11 @@
 .endm
 
 # This macro uses registers 8-21
-.macro  quarterround _x, _ctr, _VL, _SHAPE0, _SHAPE1, _SHAPE2, _SHIFTS
+.macro  quarterround _x, _ctr, _SHAPE0, _SHAPE1, _SHAPE2, _SHIFTS
     mtctr	            \_ctr                           # Set up counter
 
-    # set up VL=32 vertical-first, and SVSHAPEs 0-2
-    # set VL/MAXVL first
-    setvl               0, 0, 32, 0, 1, 1               # MAXVL=VL=32
-    # set r22 from VL, set vertical-first
-    setvl               \_VL, 0, 32, 1, 0, 1            # vertical-first mode
+    # set up MAXVL=VL=32 and vertical-first, then SVSHAPEs 0-2
+    setvl               0, 0, 32, 1, 1, 1               # MAXVL=VL=32, VF=1
     # SHAPE0, used by sv.add starts at GPR #8
     svindex             \_SHAPE0/2, 0, 1, 3, 0, 1, 0    # SVSHAPE0, a
     # SHAPE1, used by sv.xor starts at GPR #12
@@ -73,7 +70,7 @@
 
 .outer:
     # outer loop begins here (standard CTR loop)
-    setvl               \_VL, \_VL, 32, 1, 1, 0         # vertical-first, set VL from r22
+    setvl               0, 0, 32, 1, 1, 1               # MAXVL=VL=32, VF=1
     # inner loop begins here. add-xor-rotl32 with remap, step, branch
 .inner:
     svremap             31, 1, 0, 0, 0, 0, 0            # RA=1, RB=0, RT=0 (0b01011)
