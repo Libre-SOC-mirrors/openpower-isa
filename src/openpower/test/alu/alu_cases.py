@@ -7,7 +7,82 @@ from openpower.decoder.power_enums import XER_bits
 from openpower.decoder.isa.caller import special_sprs
 from openpower.decoder.helpers import exts
 from openpower.test.state import ExpectedState
-import unittest
+from openpower.util import log
+from pathlib import Path
+import gzip
+import json
+import sys
+from hashlib import sha256
+from functools import lru_cache
+
+# output-for-v0.2.0-7-g95fdd1c.json.gz generated from:
+# https://salsa.debian.org/Kazan-team/power-instruction-analyzer/-/commit/95fdd1c4edbd91c0a02b772ba02aa2045101d2b0
+# running on POWER9
+PIA_OUTPUT_URL = "https://ftp.libre-soc.org/power-instruction-analyzer/output-for-v0.2.0-7-g95fdd1c.json.gz"
+PIA_OUTPUT_SHA256 = "2ad50464eb6c9b6bf2dad2ee16b6820a34024bc008ea86818845cf14f7f457ad"
+PIA_OUTPUT_PATH = Path(__file__).parent / PIA_OUTPUT_URL.rpartition('/')[2]
+
+
+def download_pia_output():
+    from urllib.request import urlopen
+    from shutil import copyfileobj
+    with PIA_OUTPUT_PATH.open("wb") as f:
+        print(f"downloading {PIA_OUTPUT_URL} to {PIA_OUTPUT_PATH}",
+              file=sys.stderr, flush=True)
+        with urlopen(PIA_OUTPUT_URL) as response:
+            copyfileobj(response, f)
+
+
+def read_pia_output(filter_fn):
+    tried_download = False
+    while True:
+        try:
+            file_bytes = PIA_OUTPUT_PATH.read_bytes()
+            digest = sha256(file_bytes).hexdigest()
+            if digest != PIA_OUTPUT_SHA256:
+                raise Exception(f"{PIA_OUTPUT_PATH} has wrong hash, expected "
+                                f"{PIA_OUTPUT_SHA256} got {digest}")
+            file_bytes = gzip.decompress(file_bytes)
+            test_cases = json.loads(file_bytes)['test_cases']
+            return list(filter(filter_fn, test_cases))
+        except:
+            if tried_download:
+                raise
+            pass
+        tried_download = True
+        download_pia_output()
+
+
+@lru_cache(maxsize=None)
+def get_addmeo_subfmeo_reference_cases():
+    return read_pia_output(lambda i: i['instr'] in ("addmeo", "subfmeo"))
+
+
+def check_addmeo_subfmeo_matches_reference(instr, case_filter, out):
+    case_filter = {
+        'instr': instr,
+        'ra': '0x0', 'ca': False, 'ca32': False,
+        'so': False, 'ov': False, 'ov32': False,
+        **case_filter
+    }
+    for case in get_addmeo_subfmeo_reference_cases():
+        skip = False
+        for k, v in case_filter.items():
+            if case[k] != v:
+                skip = True
+                break
+        if skip:
+            continue
+        reference_outputs = case['native_outputs']
+        for k, v in out.items():
+            assert reference_outputs[k] == v, (
+                f"{instr} outputs don't match reference:\n"
+                f"case_filter={case_filter}\nout={out}\n"
+                f"reference_outputs={reference_outputs}")
+        log(f"PIA reference successfully matched: {case_filter}")
+        return True
+    log(f"PIA reference not found: {case_filter}")
+    return False
 
 
 class ALUTestCase(TestAccumulatorBase):
@@ -201,7 +276,7 @@ class ALUTestCase(TestAccumulatorBase):
 
     def case_addme_subfme_ca_propagation(self):
         for flags in range(1 << 2):
-            ca = flags & 1
+            ca_in = bool(flags & 1)
             is_sub = (flags >> 1) & 1
             if is_sub:
                 prog = Program(["subfmeo 3, 4"], bigendian)
@@ -209,25 +284,26 @@ class ALUTestCase(TestAccumulatorBase):
                 prog = Program(["addmeo 3, 4"], bigendian)
             for i in range(-2, 3):
                 ra = i % 2 ** 64
-                with self.subTest(ra=hex(ra), ca=ca, is_sub=is_sub):
+                with self.subTest(ra=hex(ra), ca=ca_in, is_sub=is_sub):
                     initial_regs = [0] * 32
                     initial_regs[4] = ra
                     initial_sprs = {}
                     xer = SelectableInt(0, 64)
-                    xer[XER_bits['CA']] = ca
+                    xer[XER_bits['CA']] = ca_in
                     initial_sprs[special_sprs['XER']] = xer
                     e = ExpectedState(pc=4)
                     e.intregs[4] = ra
                     rb = 2 ** 64 - 1  # add 0xfff...fff *not* -1
-                    expected = ca + rb
-                    expected32 = ca + (rb % 2 ** 32)
+                    expected = ca_in + rb
+                    expected32 = ca_in + (rb % 2 ** 32)
                     inv_ra = ra
                     if is_sub:
                         # 64-bit bitwise not
                         inv_ra = ~ra % 2 ** 64
                     expected += inv_ra
                     expected32 += inv_ra % 2 ** 32
-                    e.intregs[3] = expected % 2 ** 64
+                    rt_out = expected % 2 ** 64
+                    e.intregs[3] = rt_out
                     ca = bool(expected >> 64)
                     ca32 = bool(expected32 >> 32)
                     e.ca = (ca32 << 1) | ca
@@ -239,6 +315,14 @@ class ALUTestCase(TestAccumulatorBase):
                     e32msb = (expected32 >> 31) & 1
                     ov32 = ca32 ^ e32msb and not (axb >> 31) & 1
                     e.ov = (ov32 << 1) | ov
+                    check_addmeo_subfmeo_matches_reference(
+                        instr='subfmeo' if is_sub else 'addmeo',
+                        case_filter={
+                            'ra': f'0x{ra:X}', 'ca': ca_in,
+                        }, out={
+                            'rt': f'0x{rt_out:X}', 'ca': ca,
+                            'ca32': ca32, 'ov': ov, 'ov32': ov32,
+                        })
                     self.add_case(prog, initial_regs, initial_sprs,
                                   expected=e)
 
