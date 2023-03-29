@@ -33,7 +33,8 @@ def download_pia_output():
             copyfileobj(response, f)
 
 
-def read_pia_output(filter_fn):
+@lru_cache(maxsize=None)
+def read_pia_output(filter_fn=lambda _: True):
     tried_download = False
     while True:
         try:
@@ -657,3 +658,107 @@ class ALUTestCase(TestAccumulatorBase):
                     e.crregs[1] = 0x4
 
             self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_pia_ca_ov_cases(self):
+        wanted_outputs = 'ca', 'ca32', 'ov', 'ov32', 'so'
+        wanted_instrs = {
+            'addi', 'paddi', 'addis', 'add', 'addic', 'subf', 'subfic', 'addc',
+            'subfc', 'adde', 'subfe', 'addme', 'subfme', 'addze', 'subfze',
+            'addex', 'neg',
+        }
+        wanted_instrs |= {i + 'o' for i in wanted_instrs}
+        # intentionally don't test Rc=1 instrs
+        unary_inputs = {
+            '0x0', '0x1', '0x2',
+            '0xFFFFFFFFFFFFFFFF', '0xFFFFFFFFFFFFFFFE',
+            '0x7FFFFFFFFFFFFFFE', '0x7FFFFFFFFFFFFFFF',
+            '0x8000000000000000', '0x8000000000000001',
+            '0x123456787FFFFFFE', '0x123456787FFFFFFF',
+            '0x1234567880000000', '0x1234567880000001',
+        }
+        imm_inputs = {
+            '0x0', '0x1', '0x2',
+            '0xFFFFFFFFFFFFFFFF', '0xFFFFFFFFFFFFFFFE',
+            '0xFFFFFFFFFFFF8000', '0xFFFFFFFFFFFF8001',
+            '0x7FFE', '0x7FFF', '0x8000', '0x8001',
+        }
+        binary_inputs32 = {
+            '0x0', '0x1', '0x2',
+            '0x12345678FFFFFFFF', '0x12345678FFFFFFFE',
+            '0x123456787FFFFFFE', '0x123456787FFFFFFF',
+            '0x1234567880000000', '0x1234567880000001',
+        }
+        binary_inputs64 = {
+            '0x0', '0x1', '0x2',
+            '0xFFFFFFFFFFFFFFFF', '0xFFFFFFFFFFFFFFFE',
+            '0x7FFFFFFFFFFFFFFE', '0x7FFFFFFFFFFFFFFF',
+            '0x8000000000000000', '0x8000000000000001',
+        }
+
+        def matches(case, **kwargs):
+            for k, v in kwargs.items():
+                if case[k] not in v:
+                    return False
+            return True
+
+        programs = {}
+
+        for case in read_pia_output():
+            instr = case['instr']
+            if instr not in wanted_instrs:
+                continue
+            if not any(i in case['native_outputs'] for i in wanted_outputs):
+                continue
+            if case.get('so') == True:
+                continue
+            if case.get('ov32') == True:
+                continue
+            if case.get('ca32') == True:
+                continue
+            initial_regs = [0] * 32
+            initial_sprs = {}
+            xer = SelectableInt(0, 64)
+            xer[XER_bits['CA']] = case.get('ca', False)
+            xer[XER_bits['OV']] = case.get('ov', False)
+            initial_sprs[special_sprs['XER']] = xer
+            e = ExpectedState(pc=4)
+            e.intregs[3] = int(case['native_outputs']['rt'], 0)
+            ca_out = case['native_outputs'].get('ca', False)
+            ca32_out = case['native_outputs'].get('ca32', False)
+            ov_out = case['native_outputs'].get('ov', False)
+            ov32_out = case['native_outputs'].get('ov32', False)
+            e.ca = ca_out | (ca32_out << 1)
+            e.ov = ov_out | (ov32_out << 1)
+            e.so = int(case['native_outputs'].get('so', False))
+            if 'rb' in case:  # binary op
+                pass32 = matches(case, ra=binary_inputs32, rb=binary_inputs32)
+                pass64 = matches(case, ra=binary_inputs64, rb=binary_inputs64)
+                if not pass32 and not pass64:
+                    continue
+                asm = f'{instr} 3, 4, 5'
+                if instr == 'addex':
+                    asm += ', 0'
+                e.intregs[4] = initial_regs[4] = int(case['ra'], 0)
+                e.intregs[5] = initial_regs[5] = int(case['rb'], 0)
+            elif 'immediate' in case:
+                pass32 = matches(case, ra=binary_inputs32,
+                                 immediate=imm_inputs)
+                pass64 = matches(case, ra=binary_inputs64,
+                                 immediate=imm_inputs)
+                if not pass32 and not pass64:
+                    continue
+                immediate = int(case['immediate'], 16)
+                if immediate >> 63:
+                    immediate -= 1 << 64
+                asm = f'{instr} 3, 4, {immediate}'
+                e.intregs[4] = initial_regs[4] = int(case['ra'], 0)
+            else:  # unary op
+                if not matches(case, ra=unary_inputs):
+                    continue
+                asm = f'{instr} 3, 4'
+                e.intregs[4] = initial_regs[4] = int(case['ra'], 0)
+            with self.subTest(case=repr(case)):
+                if asm not in programs:
+                    programs[asm] = Program([asm], bigendian)
+                self.add_case(programs[asm], initial_regs,
+                              initial_sprs=initial_sprs, expected=e)
