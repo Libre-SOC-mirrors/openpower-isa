@@ -164,10 +164,9 @@ Pseudo-code:
         # FRC (coefficients)
         SVSHAPE2[28:29] <- 0b10           # k schedule
     # set schedule up for (i)DCT Inner butterfly
-    # SVrm Mode 2 (Mode 6 for iDCT) is for pre-calculated coefficients,
     # SVrm Mode 4 (Mode 12 for iDCT) is for on-the-fly (Vertical-First Mode)
-    if ((SVrm = 0b0010) | (SVrm = 0b0100) |
-        (SVrm = 0b1010) | (SVrm = 0b1100)) then
+    if ((SVrm = 0b0100) |
+        (SVrm = 0b1100)) then
         # calculate O(N log2 N)
         n <- [0] * 3
         do while n < 5
@@ -181,17 +180,14 @@ Pseudo-code:
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
         mscale <- (0b0 || SVzd) + 1
-        if (SVrm = 0b1010) | (SVrm = 0b1100) then
+        if (SVrm = 0b1100) then
             SVSHAPE0[30:31] <- 0b11          # iDCT mode
             SVSHAPE0[18:20] <- 0b011         # iDCT Inner Butterfly sub-mode
         else
             SVSHAPE0[30:31] <- 0b01          # DCT mode
             SVSHAPE0[18:20] <- 0b001         # DCT Inner Butterfly sub-mode
             SVSHAPE0[21:23] <- 0b001         # "inverse" on outer loop
-        if (SVrm = 0b1100) | (SVrm = 0b0100) then
-            SVSHAPE0[6:11] <- 0b000011       # (i)DCT Inner Butterfly mode 4
-        else
-            SVSHAPE0[6:11] <- 0b000001       # (i)DCT Inner Butterfly mode 2
+        SVSHAPE0[6:11] <- 0b000011       # (i)DCT Inner Butterfly mode 4
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
         SVSHAPE2[0:31] <- SVSHAPE0[0:31]
