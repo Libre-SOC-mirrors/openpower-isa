@@ -672,13 +672,13 @@ class ALUTestCase(TestAccumulatorBase):
 
     def case_pia_ca_ov_cases(self):
         wanted_outputs = 'ca', 'ca32', 'ov', 'ov32', 'so'
+        # only test one variant of each instr --
+        # the variant with Rc=1 OV=1 as much as possible
         wanted_instrs = {
-            'addi', 'paddi', 'addis', 'add', 'addic', 'subf', 'subfic', 'addc',
-            'subfc', 'adde', 'subfe', 'addme', 'subfme', 'addze', 'subfze',
-            'addex', 'neg',
+            'addi', 'paddi', 'addis', 'addo.', 'addic.', 'subfo.', 'subfic',
+            'addco.', 'subfco.', 'addeo.', 'subfeo.', 'addmeo.', 'subfmeo.',
+            'addzeo.', 'subfzeo.', 'addex', 'nego.',
         }
-        wanted_instrs |= {i + 'o' for i in wanted_instrs}
-        # intentionally don't test Rc=1 instrs
         unary_inputs = {
             '0x0', '0x1', '0x2',
             '0xFFFFFFFFFFFFFFFF', '0xFFFFFFFFFFFFFFFE',
@@ -768,6 +768,13 @@ class ALUTestCase(TestAccumulatorBase):
                     continue
                 asm = f'{instr} 3, 4'
                 e.intregs[4] = initial_regs[4] = int(case['ra'], 0)
+            if 'cr0' in case['native_outputs']:
+                cr0 = case['native_outputs']['cr0']
+                v = cr0['lt'] << 3
+                v |= cr0['gt'] << 2
+                v |= cr0['eq'] << 1
+                v |= cr0['so']
+                e.crregs[0] = v
             with self.subTest(case=repr(case)):
                 if asm not in programs:
                     programs[asm] = Program([asm], bigendian)
