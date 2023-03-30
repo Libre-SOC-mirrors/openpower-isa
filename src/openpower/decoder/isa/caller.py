@@ -1369,7 +1369,96 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.namespace['sz'] = SelectableInt(sz, 1)
             self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
 
-    def handle_carry_(self, inputs, output, ca, ca32):
+    def get_kludged_op_add_ca_ov(self, inputs, inp_ca_ov):
+        def ca(a, b, ca_in, width):
+            mask = (1 << width) - 1
+            y = (a & mask) + (b & mask) + ca_in
+            return y >> width
+
+        asmcode = yield self.dec2.dec.op.asmcode
+        insn = insns.get(asmcode)
+        SI = yield self.dec2.dec.SI
+        SI &= 0xFFFF
+        CA, OV = inp_ca_ov
+        inputs = [i.value for i in inputs]
+        if SI & 0x8000:
+            SI -= 0x10000
+        if insn in ("add", "addo", "addc", "addco"):
+            a = inputs[0]
+            b = inputs[1]
+            ca_in = 0
+        elif insn == "addic" or insn == "addic.":
+            a = inputs[0]
+            b = SI
+            ca_in = 0
+        elif insn in ("subf", "subfo", "subfc", "subfco"):
+            a = ~inputs[0]
+            b = inputs[1]
+            ca_in = 1
+        elif insn == "subfic":
+            a = ~inputs[0]
+            b = SI
+            ca_in = 1
+        elif insn == "adde" or insn == "addeo":
+            a = inputs[0]
+            b = inputs[1]
+            ca_in = CA
+        elif insn == "subfe" or insn == "subfeo":
+            a = ~inputs[0]
+            b = inputs[1]
+            ca_in = CA
+        elif insn == "addme" or insn == "addmeo":
+            a = inputs[0]
+            b = ~0
+            ca_in = CA
+        elif insn == "addze" or insn == "addzeo":
+            a = inputs[0]
+            b = 0
+            ca_in = CA
+        elif insn == "subfme" or insn == "subfmeo":
+            a = ~inputs[0]
+            b = ~0
+            ca_in = CA
+        elif insn == "subfze" or insn == "subfzeo":
+            a = ~inputs[0]
+            b = 0
+            ca_in = CA
+        elif insn == "addex":
+            # CA[32] aren't actually written, just generate so we have
+            # something to return
+            ca64 = ov64 = ca(inputs[0], inputs[1], OV, 64)
+            ca32 = ov32 = ca(inputs[0], inputs[1], OV, 32)
+            return ca64, ca32, ov64, ov32
+        elif insn == "neg" or insn == "nego":
+            a = ~inputs[0]
+            b = 0
+            ca_in = 1
+        else:
+            raise NotImplementedError(
+                "op_add kludge unimplemented instruction: ", asmcode, insn)
+
+        ca64 = ca(a, b, ca_in, 64)
+        ca32 = ca(a, b, ca_in, 32)
+        ov64 = ca64 != ca(a, b, ca_in, 63)
+        ov32 = ca32 != ca(a, b, ca_in, 31)
+        return ca64, ca32, ov64, ov32
+
+    def handle_carry_(self, inputs, output, ca, ca32, inp_ca_ov):
+        op = yield self.dec2.e.do.insn_type
+        if op == MicrOp.OP_ADD.value and ca is None and ca32 is None:
+            retval = yield from self.get_kludged_op_add_ca_ov(
+                inputs, inp_ca_ov)
+            ca, ca32, ov, ov32 = retval
+            asmcode = yield self.dec2.dec.op.asmcode
+            if insns.get(asmcode) == 'addex':
+                # TODO: if 32-bit mode, set ov to ov32
+                self.spr['XER'][XER_bits['OV']] = ov
+                self.spr['XER'][XER_bits['OV32']] = ov32
+            else:
+                # TODO: if 32-bit mode, set ca to ca32
+                self.spr['XER'][XER_bits['CA']] = ca
+                self.spr['XER'][XER_bits['CA32']] = ca32
+            return
         inv_a = yield self.dec2.e.do.invert_in
         if inv_a:
             inputs[0] = ~inputs[0]
@@ -1414,7 +1503,17 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if ca32 is None:  # already written
             self.spr['XER'][XER_bits['CA32']] = cy32
 
-    def handle_overflow(self, inputs, output, div_overflow):
+    def handle_overflow(self, inputs, output, div_overflow, inp_ca_ov):
+        op = yield self.dec2.e.do.insn_type
+        if op == MicrOp.OP_ADD.value:
+            retval = yield from self.get_kludged_op_add_ca_ov(
+                inputs, inp_ca_ov)
+            ca, ca32, ov, ov32 = retval
+            # TODO: if 32-bit mode, set ov to ov32
+            self.spr['XER'][XER_bits['OV']] = ov
+            self.spr['XER'][XER_bits['OV32']] = ov32
+            self.spr['XER'][XER_bits['SO']] |= ov
+            return
         if hasattr(self.dec2.e.do, "invert_in"):
             inv_a = yield self.dec2.e.do.invert_in
             if inv_a:
@@ -1947,6 +2046,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             end_loop = no_in_vec or srcstep == vl-1 or dststep == vl-1
             self.namespace['end_loop'] = SelectableInt(end_loop, 1)
 
+        inp_ca_ov = (self.spr['XER'][XER_bits['CA']].value,
+                     self.spr['XER'][XER_bits['OV']].value)
+
         # execute actual instruction here (finally)
         log("inputs", inputs)
         results = info.func(self, *inputs)
@@ -1981,7 +2083,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("carry already done?", ca, ca32, output_names)
         carry_en = yield self.dec2.e.do.output_carry
         if carry_en:
-            yield from self.handle_carry_(inputs, results[0], ca, ca32)
+            yield from self.handle_carry_(
+                inputs, results[0], ca, ca32, inp_ca_ov=inp_ca_ov)
 
         # get outout named "overflow" and "CR0"
         overflow = outs.get('overflow')
@@ -1993,7 +2096,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             ov_ok = yield self.dec2.e.do.oe.ok
             log("internal overflow", ins_name, overflow, "en?", ov_en, ov_ok)
             if ov_en & ov_ok:
-                yield from self.handle_overflow(inputs, results[0], overflow)
+                yield from self.handle_overflow(
+                    inputs, results[0], overflow, inp_ca_ov=inp_ca_ov)
 
         # only do SVP64 dest predicated Rc=1 if dest-pred is not enabled
         rc_en = False
