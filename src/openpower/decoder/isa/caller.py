@@ -1333,6 +1333,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.namespace['XER'] = self.spr['XER']
         self.namespace['CA'] = self.spr['XER'][XER_bits['CA']].value
         self.namespace['CA32'] = self.spr['XER'][XER_bits['CA32']].value
+        self.namespace['OV'] = self.spr['XER'][XER_bits['OV']].value
+        self.namespace['OV32'] = self.spr['XER'][XER_bits['OV32']].value
         self.namespace['XLEN'] = xlen
 
         # add some SVSTATE convenience variables

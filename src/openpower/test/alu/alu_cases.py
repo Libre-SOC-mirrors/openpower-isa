@@ -87,6 +87,35 @@ def check_addmeo_subfmeo_matches_reference(instr, case_filter, out):
 
 
 class ALUTestCase(TestAccumulatorBase):
+    def case_addex(self):
+        lst = [f"addex 3, 4, 5, 0"]
+        program = Program(lst, bigendian)
+        values = (*range(-2, 4), ~1 << 63, (1 << 63) - 1)
+        for ra in values:
+            ra %= 1 << 64
+            for rb in values:
+                rb %= 1 << 64
+                for ov in (0, 1):
+                    with self.subTest(ra=hex(ra), rb=hex(rb), ov=ov):
+                        initial_regs = [0] * 32
+                        initial_regs[4] = ra
+                        initial_regs[5] = rb
+                        initial_sprs = {}
+                        xer = SelectableInt(0, 64)
+                        xer[XER_bits['OV']] = ov
+                        initial_sprs[special_sprs['XER']] = xer
+                        e = ExpectedState(pc=4)
+                        v = ra + rb + ov
+                        v32 = (ra % (1 << 32)) + (rb % (1 << 32)) + ov
+                        ov = v >> 64
+                        ov32 = v32 >> 32
+                        e.intregs[3] = v % (1 << 64)
+                        e.intregs[4] = ra
+                        e.intregs[5] = rb
+                        e.ov = (ov32 << 1) | ov
+                        self.add_case(program, initial_regs,
+                                      initial_sprs=initial_sprs, expected=e)
+
     def case_nego_(self):
         lst = [f"nego. 3, 4"]
         initial_regs = [0] * 32

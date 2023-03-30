@@ -689,6 +689,7 @@ _insns = [
     "NONE", "add", "addc", "addco", "adde", "addeo",
     "addi", "addic", "addic.", "addis",
     "addme", "addmeo", "addo", "addze", "addzeo",
+    "addex",
     "addg6s",
     "and", "andc", "andi.", "andis.",
     "attn",
