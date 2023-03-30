@@ -1,5 +1,5 @@
 import random
-from openpower.test.common import TestAccumulatorBase
+from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.endian import bigendian
 from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
@@ -749,27 +749,33 @@ class ALUTestCase(TestAccumulatorBase):
                 continue
             if not any(i in case['native_outputs'] for i in wanted_outputs):
                 continue
-            if case.get('so') == True:
+            so_in = case.get('so', False)
+            ca_in = case.get('ca', False)
+            ca32_in = case.get('ca32', False)
+            ov_in = case.get('ov', False)
+            ov32_in = case.get('ov32', False)
+            if so_in:
                 continue
-            if case.get('ov32') == True:
+            if ov32_in:
                 continue
-            if case.get('ca32') == True:
+            if ca32_in:
                 continue
             initial_regs = [0] * 32
             initial_sprs = {}
             xer = SelectableInt(0, 64)
-            xer[XER_bits['CA']] = case.get('ca', False)
-            xer[XER_bits['OV']] = case.get('ov', False)
+            xer[XER_bits['CA']] = ca_in
+            xer[XER_bits['OV']] = ov_in
             initial_sprs[special_sprs['XER']] = xer
             e = ExpectedState(pc=4)
             e.intregs[3] = int(case['native_outputs']['rt'], 0)
-            ca_out = case['native_outputs'].get('ca', False)
-            ca32_out = case['native_outputs'].get('ca32', False)
-            ov_out = case['native_outputs'].get('ov', False)
-            ov32_out = case['native_outputs'].get('ov32', False)
+            ca_out = case['native_outputs'].get('ca', ca_in)
+            ca32_out = case['native_outputs'].get('ca32', ca32_in)
+            ov_out = case['native_outputs'].get('ov', ov_in)
+            ov32_out = case['native_outputs'].get('ov32', ov32_in)
+            so_out = case['native_outputs'].get('so', so_in)
             e.ca = ca_out | (ca32_out << 1)
             e.ov = ov_out | (ov32_out << 1)
-            e.so = int(case['native_outputs'].get('so', False))
+            e.so = int(so_out)
             if 'rb' in case:  # binary op
                 pass32 = matches(case, ra=binary_inputs32, rb=binary_inputs32)
                 pass64 = matches(case, ra=binary_inputs64, rb=binary_inputs64)
