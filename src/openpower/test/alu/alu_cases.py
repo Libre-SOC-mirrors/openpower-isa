@@ -167,14 +167,14 @@ class ALUTestCase(TestAccumulatorBase):
                 e.intregs[3] = result & ((2**64)-1)
                 eq = 0
                 gt = 0
-                le = 0
+                lt = 0
                 if (e.intregs[3] & (1 << 63)) != 0:
-                    le = 1
+                    lt = 1
                 elif e.intregs[3] == 0:
                     eq = 1
                 else:
                     gt = 1
-                e.crregs[0] = (eq << 1) | (gt << 2) | (le << 3)
+                e.crregs[0] = (eq << 1) | (gt << 2) | (lt << 3)
             elif choice == "subf":
                 result = ~initial_regs[1] + initial_regs[2] + 1
                 e.intregs[3] = result & ((2**64)-1)
@@ -414,9 +414,9 @@ class ALUTestCase(TestAccumulatorBase):
             result = result & ((1 << 64)-1)  # round
             eq = 0
             gt = 0
-            le = 0
+            lt = 0
             if (result & (1 << 63)) != 0:
-                le = 1
+                lt = 1
             elif result == 0:
                 eq = 1
             else:
@@ -428,9 +428,9 @@ class ALUTestCase(TestAccumulatorBase):
             e.intregs[5] = result
             # carry_out goes into bit 0 of ca, carry_out32 into bit 1
             e.ca = carry_out | (carry_out32 << 1)
-            # eq goes into bit 1 of CR0, gt into bit 2, le into bit 3.
+            # eq goes into bit 1 of CR0, gt into bit 2, lt into bit 3.
             # SO goes into bit 0 but overflow doesn't occur here [we hope]
-            e.crregs[0] = (eq << 1) | (gt << 2) | (le << 3)
+            e.crregs[0] = (eq << 1) | (gt << 2) | (lt << 3)
 
             self.add_case(Program(lst, bigendian),
                           initial_regs, initial_sprs, expected=e)
