@@ -1974,7 +1974,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # detect if CA/CA32 already in outputs (sra*, basically)
         ca = outs.get("CA")
-        ca32 = outs.get("CA32 ")
+        ca32 = outs.get("CA32")
 
         log("carry already done?", ca, ca32, output_names)
         carry_en = yield self.dec2.e.do.output_carry
