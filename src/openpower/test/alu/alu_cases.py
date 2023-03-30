@@ -87,6 +87,17 @@ def check_addmeo_subfmeo_matches_reference(instr, case_filter, out):
 
 
 class ALUTestCase(TestAccumulatorBase):
+    def case_nego_(self):
+        lst = [f"nego. 3, 4"]
+        initial_regs = [0] * 32
+        initial_regs[4] = 0
+        e = ExpectedState(pc=4)
+        e.intregs[3] = 0
+        e.intregs[4] = 0
+        e.so = 0
+        e.ov = 0
+        e.crregs[0] = 2
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_1_regression(self):
         lst = [f"add. 3, 1, 2"]
