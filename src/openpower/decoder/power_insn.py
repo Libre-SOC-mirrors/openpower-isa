@@ -2248,8 +2248,9 @@ class LDSTImmPostRM(LDSTImmBaseRM):
             yield "lf"
 
 
-class LDSTImmFFRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
-    """ld/st immediate: Rc=1: ffirst CR sel"""
+class LDSTFFRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
+    """ld/st immediate&indexed: Rc=1: ffirst CR sel"""
+    VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
 
@@ -2257,8 +2258,9 @@ class LDSTImmFFRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class LDSTImmFFRc0RM(FFPRRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
-    """ld/st immediate: Rc=0: ffirst z/nonz"""
+class LDSTFFRc0RM(FFPRRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
+    """ld/st immediate&indexed: Rc=0: ffirst z/nonz"""
+    VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
     els: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
@@ -2276,33 +2278,12 @@ class LDSTImmSatRM(ElsBaseRM, SatBaseRM, ZZBaseRM, LDSTImmBaseRM):
     sz: BaseRM.mode[3]
 
 
-class LDSTImmPRRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
-    """ld/st immediate: Rc=1: pred-result CR sel"""
-    inv: BaseRM.mode[2]
-    CR: BaseRM.mode[3, 4]
-
-    def specifiers(self, record):
-        yield from super().specifiers(record=record, mode="pr")
-
-
-class LDSTImmPRRc0RM(FFPRRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
-    """ld/st immediate: Rc=0: pred-result z/nonz"""
-    inv: BaseRM.mode[2]
-    els: BaseRM.mode[3]
-    RC1: BaseRM.mode[4]
-
-    def specifiers(self, record):
-        yield from super().specifiers(record=record, mode="pr")
-
-
 class LDSTImmRM(LDSTImmBaseRM):
     simple: LDSTImmSimpleRM
     post: LDSTImmPostRM
-    ffrc1: LDSTImmFFRc1RM
-    ffrc0: LDSTImmFFRc0RM
+    ffrc1: LDSTFFRc1RM
+    ffrc0: LDSTFFRc0RM
     sat: LDSTImmSatRM
-    prrc1: LDSTImmPRRc1RM
-    prrc0: LDSTImmPRRc0RM
 
 
 class LDSTIdxBaseRM(PredicateWidthBaseRM):
@@ -2314,20 +2295,15 @@ class LDSTIdxBaseRM(PredicateWidthBaseRM):
 
 
 class LDSTIdxSimpleRM(SEABaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
-    """ld/st index: simple mode"""
-    SEA: BaseRM.mode[2]
-    dz: BaseRM.mode[3]
-    sz: BaseRM.mode[4]
-
-
-class LDSTIdxStrideRM(SEABaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
-    """ld/st index: strided (scalar only source)"""
+    """ld/st index: simple mode (includes element-strided and Signed-EA)"""
+    els: BaseRM.mode[0]
     SEA: BaseRM.mode[2]
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[4]
 
     def specifiers(self, record):
-        yield "els"
+        if self.els:
+            yield "els"
 
         yield from super().specifiers(record=record)
 
@@ -2339,33 +2315,11 @@ class LDSTIdxSatRM(SatBaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
     sz: BaseRM.mode[4]
 
 
-class LDSTIdxPRRc1RM(LDSTIdxBaseRM):
-    """ld/st index: Rc=1: pred-result CR sel"""
-    inv: BaseRM.mode[2]
-    CR: BaseRM.mode[3, 4]
-
-    def specifiers(self, record):
-        yield from super().specifiers(record=record, mode="pr")
-
-
-class LDSTIdxPRRc0RM(FFPRRc0BaseRM, ZZBaseRM, LDSTIdxBaseRM):
-    """ld/st index: Rc=0: pred-result z/nonz"""
-    inv: BaseRM.mode[2]
-    zz: BaseRM.mode[3]
-    RC1: BaseRM.mode[4]
-    dz: BaseRM.mode[3]
-    sz: BaseRM.mode[3]
-
-    def specifiers(self, record):
-        yield from super().specifiers(record=record, mode="pr")
-
-
 class LDSTIdxRM(LDSTIdxBaseRM):
     simple: LDSTIdxSimpleRM
-    stride: LDSTIdxStrideRM
     sat: LDSTIdxSatRM
-    prrc1: LDSTIdxPRRc1RM
-    prrc0: LDSTIdxPRRc0RM
+    ffrc1: LDSTFFRc1RM
+    ffrc0: LDSTFFRc0RM
 
 
 
@@ -2878,18 +2832,17 @@ class SpecifierEls(Specifier):
             return None
 
         if record.svp64.mode not in (_SVMode.LDST_IMM, _SVMode.LDST_IDX):
-            raise ValueError("els is only valid in ld/st modes")
+            raise ValueError("els is only valid in ld/st modes, not "
+                             "%s" % str(self.record.svp64.mode))
 
         return cls(record=record)
 
     def assemble(self, insn):
         if self.record.svp64.mode is _SVMode.LDST_IDX: # stride mode
-            insn.prefix.rm.mode[0] = 0
-            insn.prefix.rm.mode[1] = 1
+            insn.prefix.rm.mode[1] = 0
 
         selector = insn.select(record=self.record)
-        if self.record.svp64.mode is not _SVMode.LDST_IDX: # stride mode
-            selector.els = 1
+        selector.els = 1
 
 
 
@@ -2904,7 +2857,8 @@ class SpecifierSEA(Specifier):
 
     def validate(self, others):
         if self.record.svp64.mode is not _SVMode.LDST_IDX:
-            raise ValueError("sea is only valid in ld/st modes")
+            raise ValueError("sea is only valid in ld/st modes, not "
+                             "%s" % str(self.record.svp64.mode))
 
         for spec in others:
             if isinstance(spec, SpecifierFF):
@@ -2912,8 +2866,9 @@ class SpecifierSEA(Specifier):
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
-        if selector.mode.sel not in (0b00, 0b01):
-            raise ValueError("sea is only valid for normal and els modes")
+        if selector.mode.sel not in (0b10, 0b00):
+            raise ValueError("sea is only valid for normal and els modes, "
+                             "not %d" % int(selector.mode.sel))
         selector.SEA = 1
 
 
@@ -3377,13 +3332,11 @@ class RMSelector:
             # ironically/coincidentally this table is identical to NORMAL
             # mode except reserved in place of mr
             table = (
-                (0b000000, 0b111000, "simple"), # simple     (no Rc)
-                (0b001000, 0b111000, "post"),   # post       (no Rc)
-                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
-                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
+                (0b000000, 0b111000, "simple"), # simple     (no Rc involved)
+                (0b001000, 0b111000, "post"),   # post       (no Rc involved)
+                (0b010001, 0b010001, "ffrc1"),  # ffirst,     Rc=1
+                (0b010000, 0b010001, "ffrc0"),  # ffirst,     Rc=0
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
             )
             search = ((int(self.insn.prefix.rm.ldst_imm.mode) << 1) |
                       self.record.Rc)
@@ -3392,11 +3345,9 @@ class RMSelector:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
             #    mode  Rc  mask  Rc  member
             table = (
-                (0b000000, 0b110000, "simple"), # simple     (no Rc)
-                (0b010000, 0b110000, "stride"), # strided,   (no Rc)
-                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
+                (0b000000, 0b010000, "simple"), # simple     (no Rc involved)
+                (0b010001, 0b010001, "ffrc1"),  # ffirst,     Rc=1
+                (0b010000, 0b010001, "ffrc0"),  # ffirst,     Rc=0
             )
             search = ((int(self.insn.prefix.rm.ldst_idx.mode) << 1) |
                       self.record.Rc)
