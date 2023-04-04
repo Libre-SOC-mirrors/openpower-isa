@@ -836,7 +836,8 @@ class Record:
     @cached_property
     def opcodes(self):
         def binary(mapping):
-            return int("".join(str(int(mapping[bit])) for bit in sorted(mapping)), 2)
+            return int("".join(str(int(mapping[bit])) \
+                       for bit in sorted(mapping)), 2)
 
         def PO_XO(value, mask, opcode, bits):
             value = dict(value)
@@ -850,7 +851,8 @@ class Record:
             return PO_XO(value=value, mask=mask, opcode=opcode, bits=bits)
 
         def XO(value, mask, opcode, bits):
-            (value, mask) = PO_XO(value=value, mask=mask, opcode=opcode, bits=bits)
+            (value, mask) = PO_XO(value=value, mask=mask,
+                                  opcode=opcode, bits=bits)
             for (op_cls, op_kwargs) in self.mdwn.operands.static:
                 operand = op_cls(record=self, **op_kwargs)
                 for (src, dst) in enumerate(reversed(operand.span)):
@@ -1098,7 +1100,8 @@ class SpanStaticOperand(StaticOperand):
 
 class POStaticOperand(SpanStaticOperand):
     def __init__(self, record, value):
-        return super().__init__(record=record, name="PO", value=value, span=range(0, 6))
+        return super().__init__(record=record, name="PO",
+                                value=value, span=range(0, 6))
 
     def __iter__(self):
         for (key, value) in super().__iter__():
@@ -1125,7 +1128,8 @@ class XOStaticOperand(SpanStaticOperand):
         value = int(_selectconcat(*(value[bit] for bit in span.values())))
         span = tuple(span.keys())
 
-        return super().__init__(record=record, name="XO", value=value, span=span)
+        return super().__init__(record=record, name="XO",
+                                value=value, span=span)
 
     def __iter__(self):
         for (key, value) in super().__iter__():
@@ -1368,7 +1372,8 @@ class RedirectedOperand(DynamicOperand):
 
     @cached_property
     def span(self):
-        print(f"{self.record.name}: {self.name} => {self.__target}", file=_sys.stderr)
+        print(f"{self.record.name}: {self.name} => "
+              f"{self.__target}", file=_sys.stderr)
         return self.record.fields[self.__target]
 
 
@@ -1594,7 +1599,8 @@ class EXTSOperand(SignedOperand):
 
 class TargetAddrOperand(EXTSOperand):
     def __init__(self, record, name, field):
-        return super().__init__(record=record, name=name, field=field, nz=2, fmt="#x")
+        return super().__init__(record=record, name=name, field=field,
+                                nz=2, fmt="#x")
 
 
 class TargetAddrOperandLI(TargetAddrOperand):
@@ -2737,7 +2743,8 @@ class SpecifierSM(SpecifierMask):
             if twin is None:
                 raise ValueError("missing dest-mask in CR twin predication")
             if self.pred.mode != twin.pred.mode:
-                raise ValueError(f"predicate masks mismatch: {self.pred!r} vs {twin.pred!r}")
+                raise ValueError(f"predicate masks mismatch: "
+                                 f"{self.pred!r} vs {twin.pred!r}")
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
@@ -2764,7 +2771,8 @@ class SpecifierDM(SpecifierMask):
             if twin is None:
                 raise ValueError("missing source-mask in CR twin predication")
             if self.pred.mode != twin.pred.mode:
-                raise ValueError(f"predicate masks mismatch: {self.pred!r} vs {twin.pred!r}")
+                raise ValueError(f"predicate masks mismatch: "
+                                 f"{self.pred!r} vs {twin.pred!r}")
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
@@ -2822,7 +2830,8 @@ class SpecifierXZ(Specifier):
             if twin is None:
                 raise ValueError(f"missing {self.hint} in CR twin predication")
             if self.pred != twin.pred:
-                raise ValueError(f"predicate masks mismatch: {self.pred!r} vs {twin.pred!r}")
+                raise ValueError(f"predicate masks mismatch: "
+                                 f"{self.pred!r} vs {twin.pred!r}")
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
@@ -2918,8 +2927,10 @@ class SpecifierSat(Specifier):
         if desc != etalon:
             return None
 
-        if record.svp64.mode not in (_SVMode.NORMAL, _SVMode.LDST_IMM, _SVMode.LDST_IDX):
-            raise ValueError("only normal, ld/st imm and ld/st idx modes supported")
+        if record.svp64.mode not in (_SVMode.NORMAL, _SVMode.LDST_IMM,
+                                     _SVMode.LDST_IDX):
+            raise ValueError("only normal, ld/st imm and "
+                             "ld/st idx modes supported")
 
         return cls(record=record, desc=desc, sign=sign)
 
@@ -3357,7 +3368,8 @@ class RMSelector:
                 (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
                 (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
             )
-            search = ((int(self.insn.prefix.rm.normal.mode) << 1) | self.record.Rc)
+            search = ((int(self.insn.prefix.rm.normal.mode) << 1) |
+                      self.record.Rc)
 
         elif self.record.svp64.mode is _SVMode.LDST_IMM:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
@@ -3373,7 +3385,8 @@ class RMSelector:
                 (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
                 (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
             )
-            search = ((int(self.insn.prefix.rm.ldst_imm.mode) << 1) | self.record.Rc)
+            search = ((int(self.insn.prefix.rm.ldst_imm.mode) << 1) |
+                      self.record.Rc)
 
         elif self.record.svp64.mode is _SVMode.LDST_IDX:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
@@ -3385,7 +3398,8 @@ class RMSelector:
                 (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
                 (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
             )
-            search = ((int(self.insn.prefix.rm.ldst_idx.mode) << 1) | self.record.Rc)
+            search = ((int(self.insn.prefix.rm.ldst_idx.mode) << 1) |
+                      self.record.Rc)
 
         elif self.record.svp64.mode is _SVMode.CROP:
             # concatenate mode 5-bit with regtype (LSB) then do mask/map search
@@ -3396,7 +3410,8 @@ class RMSelector:
                 (0b100001, 0b100001, "ff3"),    # ffirst, 3-bit CR
                 (0b100000, 0b100000, "ff5"),    # ffirst, 5-bit CR
             )
-            search = ((int(self.insn.prefix.rm.crop.mode) << 1) | int(self.record.svp64.extra_CR_3bit))
+            search = ((int(self.insn.prefix.rm.crop.mode) << 1) |
+                      int(self.record.svp64.extra_CR_3bit))
 
         elif self.record.svp64.mode is _SVMode.BRANCH:
             # just mode 2-bit
