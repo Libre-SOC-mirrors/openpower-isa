@@ -1370,6 +1370,22 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
 
     def get_kludged_op_add_ca_ov(self, inputs, inp_ca_ov):
+        """ this was not at all necessary to do.  this function massively
+        duplicates - in a laborious and complex fashion - the contents of
+        the CSV files that were extracted two years ago from microwatt's
+        source code.  A-inversion is the "inv A" column, output inversion
+        is the "inv out" column, carry-in equal to 0 or 1 or CA is the
+        "cry in" column
+
+        all of that information is available in
+            self.instrs[ins_name].op_fields
+        where info is usually assigned to self.instrs[ins_name]
+
+        https://git.libre-soc.org/?p=openpower-isa.git;a=blob;f=openpower/isatables/minor_31.csv;hb=HEAD
+
+        the immediate constants are *also* decoded correctly and placed
+        usually by DecodeIn2Imm into operand2, as part of power_decoder2.py
+        """
         def ca(a, b, ca_in, width):
             mask = (1 << width) - 1
             y = (a & mask) + (b & mask) + ca_in
