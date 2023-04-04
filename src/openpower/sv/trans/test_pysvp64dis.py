@@ -445,5 +445,23 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_32_ldst_idx_ffirst(self):
+        expected = [
+                    "sv.stdx/ff=RC1 *4,16,2",
+                    "sv.stdx/ff=~RC1 *4,16,2",
+                    "sv.ldx/ff=RC1 *4,16,2",
+                    "sv.ldx/ff=~RC1 *4,16,2",
+                        ]
+        self._do_tst(expected)
+
+    def test_33_ldst_imm_ffirst(self):
+        expected = [
+                    "sv.std/ff=RC1 *4,16(2)",
+                    "sv.std/ff=~RC1 *4,16(2)",
+                    "sv.ld/ff=RC1 *4,16(2)",
+                    "sv.ld/ff=~RC1 *4,16(2)",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
