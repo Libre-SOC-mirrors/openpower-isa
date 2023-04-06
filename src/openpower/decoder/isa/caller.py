@@ -2234,14 +2234,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if op == MicrOp.OP_LOAD.value:
             if remap_active:
                 offsmul = yield self.dec2.in1_step
-                log("D-field REMAP src", imm, offsmul)
+                log("D-field REMAP src", imm, offsmul, ldstmode)
             else:
                 offsmul = (srcstep * (subvl+1)) + ssubstep
-                log("D-field src", imm, offsmul)
+                log("D-field src", imm, offsmul, ldstmode)
         elif op == MicrOp.OP_STORE.value:
             # XXX NOTE! no bit-reversed STORE! this should not ever be used
             offsmul = (dststep * (subvl+1)) + dsubstep
-            log("D-field dst", imm, offsmul)
+            log("D-field dst", imm, offsmul, ldstmode)
         # Unit-Strided LD/ST adds offset*width to immediate
         if ldstmode == SVP64LDSTmode.UNITSTRIDE.value:
             ldst_len = yield self.dec2.e.do.data_len

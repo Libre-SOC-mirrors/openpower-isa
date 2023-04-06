@@ -271,6 +271,10 @@ class SVP64MODEb(_Const):
     LDI_POST = 2 # LD-Immediate Post/FF Mode
     LDI_PI = 3 # LD-Immediate Post-Increment
     LDI_FF = 4 # LD-Immediate Fault-First
+    # LDST Indexed
+    LDIDX_ELS = 0 # Indexed element-strided
+    # LDST VLI for ffirst is in bit 0
+    LDST_VLI = 0
     # BO bits
     BO_MSB = 2
     BO_LSB = 4
