@@ -664,6 +664,12 @@ def collect(db):
 
             if issubclass(cls, Boolean):
                 value = Boolean(value)
+            elif issubclass(cls, Extra):
+                value = tuple(value)
+                if not value:
+                    value = cls["NONE"]
+                else:
+                    value = cls[value[0].name]
             elif issubclass(cls, _enum.Enum):
                 value = cls[value.name]
             else:
