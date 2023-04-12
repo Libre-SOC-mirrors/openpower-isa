@@ -32,7 +32,7 @@
 .set sum, 0
 .set sum2, 1
 
-	.machine power9
+	.machine libresoc
 	.abiversion 2
 	.section	".text"
 	.align 2

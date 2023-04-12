@@ -5,7 +5,8 @@ AS = $(CROSS)as
 LD = $(CROSS)ld
 OBJCOPY = $(CROSS)objcopy
 
-AFLAGS ?= -mpwr9
+PYSVP64TRANS ?= cp
+AFLAGS ?= -mlibresoc
 
 EXPECTED_VER = 1
 VER = $(shell cat data/VERSION)
@@ -31,7 +32,7 @@ wget:
 	tar -C data -xvf media-test-data.txz
 
 %.bin: %.s
-	pysvp64asm $< $<.sv
+	$(PYSVP64TRANS) $< $<.sv
 	$(AS) $(AFLAGS) -c $<.sv -le -o $<.o
 	$(LD) $<.o -EL -o $<.elf -T memmap
 	$(OBJCOPY) $<.elf -I elf64-little -O binary $@

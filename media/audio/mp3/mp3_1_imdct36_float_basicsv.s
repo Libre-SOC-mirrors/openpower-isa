@@ -18,7 +18,7 @@
 .set vin, 8
 .set vin1, 9
 .set vin2, 11
-.set pred, 30
+.set pred, %r30
 
 # floats
 
@@ -105,22 +105,22 @@ imdct36:                                	# @imdct36
 	# Similarly, the values of 'in' array are already in registers 8-26
 	setvl 0,0,2,0,1,1
 	# t1
-	sv.fsubs 32.v, 8.v, 20.v
+	sv.fsubs *32, *8, *20
 	# t2
-	sv.fadds 35.v, 16.v, 24.v
-	sv.fsubs 35.v, 35.v, 12.v
+	sv.fadds *35, *16, *24
+	sv.fsubs *35, *35, *12
 	# t3, SHR(a,b) = a * 1.0f/(1 << (1)) = a / 2 essentially fdiv a, a, 2.0
-	sv.fdivs 38.v, 20.v, 29
-	sv.fadds 38.v, 38.v, 8.v
-	# t4, essentially fdiv 41.v, 35.v, 29
-	sv.fdivs 41.v, 35.v, 29
-	sv.fsubs 41.v, 32.v, 41.v
+	sv.fdivs *38, *20, 29
+	sv.fadds *38, *38, *8
+	# t4, essentially fdiv *41, *35, 29
+	sv.fdivs *41, *35, 29
+	sv.fsubs *41, *32, *41
 	# t5
-	sv.fadds 44.v, 32.v, 35.v
+	sv.fadds *44, *32, *35
 
 	# Use SETVL again as we want to store 18 floats to (out)
 	setvl 0,0,18,0,1,1
-	sv.stfs 32.v, 0(3)
+	sv.stfs *32, 0(3)
 	blr
 	.long	0
 	.quad	0
