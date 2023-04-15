@@ -543,6 +543,15 @@ def get_cr_out(dec2, name):
     if name == 'CR1':  # these are not actually calculated correctly
         if out_sel == CROutSel.CR1.value:
             return out, o_isvec
+    # check RC1 set? if so return implicit vector, this is a REAL bad hack
+    RC1 = yield dec2.rm_dec.RC1
+    if RC1:
+        log("get_cr_out RC1 mode")
+        if name == 'CR0':
+            return 0, True # XXX TODO: offset CR0 from SVSTATE SPR
+        if name == 'CR1':
+            return 1, True # XXX TODO: offset CR1 from SVSTATE SPR
+    # nope - not found.
     log("get_cr_out not found", name)
     return None, False
 

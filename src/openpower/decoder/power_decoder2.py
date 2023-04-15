@@ -1487,7 +1487,7 @@ class PowerDecode2(PowerDecodeSubset):
                 (e.read_cr1, self.dec_cr_in, "cr_bitfield", crin_svdec, 0),
                 (e.read_cr2, self.dec_cr_in, "cr_bitfield_b", crin_svdec_b, 0),
                 (e.read_cr3, self.dec_cr_in, "cr_bitfield_o", crin_svdec_o, 0),
-                    (e.write_cr, self.dec_cr_out, "cr_bitfield", crout_svdec, 1)):
+                (e.write_cr, self.dec_cr_out, "cr_bitfield", crout_svdec, 1)):
                 fromreg = getattr(cr, name)
                 comb += svdec.extra.eq(extra)     # EXTRA field of SVP64 RM
                 comb += svdec.etype.eq(sv_etype)  # EXTRA2/3 for this insn
