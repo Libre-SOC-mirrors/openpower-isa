@@ -118,7 +118,7 @@ Special Registers Altered:
 
     CR0                    (if Rc=1)
 
-# Add With Shift By Immediate Unsinged Word
+# Add With Shift By Immediate Unsigned Word
 
 Z23-Form
 
