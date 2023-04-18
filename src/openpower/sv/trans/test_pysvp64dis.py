@@ -424,7 +424,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def test_31_shadd_shadduw(self):
+    def test_31_shadd_shaddw_shadduw(self):
         expected = [
                     "shadd 31,0,0,0",
                     "shadd 0,31,0,0",
@@ -434,6 +434,14 @@ class SVSTATETestCase(unittest.TestCase):
                     "shadd. 0,31,0,0",
                     "shadd. 0,0,31,0",
                     "shadd. 0,0,0,3",
+                    "shaddw 31,0,0,0",
+                    "shaddw 0,31,0,0",
+                    "shaddw 0,0,31,0",
+                    "shaddw 0,0,0,3",
+                    "shaddw. 31,0,0,0",
+                    "shaddw. 0,31,0,0",
+                    "shaddw. 0,0,31,0",
+                    "shaddw. 0,0,0,3",
                     "shadduw 31,0,0,0",
                     "shadduw 0,31,0,0",
                     "shadduw 0,0,31,0",

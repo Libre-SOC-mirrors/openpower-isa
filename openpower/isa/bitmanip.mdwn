@@ -118,6 +118,25 @@ Special Registers Altered:
 
     CR0                    (if Rc=1)
 
+# Add With Shift By Immediate Word
+
+Z23-Form
+
+* shaddw RT,RA,RB,sm (Rc=0)
+* shaddw. RT,RA,RB,sm (Rc=1)
+
+Pseudo-code:
+
+    n <- ([0]*(XLEN/2)) || (RB)[XLEN/2:XLEN-1]
+    if (RB)[XLEN/2] = 1 then
+        n[0:XLEN/2-1] <- [1]*(XLEN/2)
+    m <- ((0b0 || sm) + 1)
+    RT <- (n[m:XLEN-1] || [0]*m) + (RA)
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
 # Add With Shift By Immediate Unsigned Word
 
 Z23-Form

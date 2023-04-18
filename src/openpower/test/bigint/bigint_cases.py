@@ -137,6 +137,23 @@ class BigIntCases(TestAccumulatorBase):
                 e.intregs[3] = RT
                 self.add_case(prog, gprs, expected=e)
 
+    def case_shaddw(self):
+        for sm in range(4):
+            with self.subTest(sm=sm):
+                insn = ("shaddw 3,4,5,%d" % sm)
+                prog = Program(list(SVP64Asm([insn])), False)
+                gprs = [0] * 32
+                gprs[3] = 0x01234567890abcde
+                RA = gprs[4] = 0xf00dcafedeadbeef
+                RB = gprs[5] = 0xabadbabedefec8ed
+                RB_i32 = RB & _MASK32
+                if RB_i32 >> 31:
+                    RB_i32 -= 1 << 32
+                RT = ((((RB_i32 << (sm+1)) & _MASK64) + RA) & _MASK64)
+                e = ExpectedState(pc=4, int_regs=gprs)
+                e.intregs[3] = RT
+                self.add_case(prog, gprs, expected=e)
+
     def case_shadduw(self):
         for sm in range(4):
             with self.subTest(sm=sm):

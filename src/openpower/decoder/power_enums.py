@@ -769,7 +769,7 @@ _insns = [
     "svshape2",  # https://libre-soc.org/openpower/sv/remap/discussion TODO
     "svstep",  # https://libre-soc.org/openpower/sv/setvl
     "sim_cfg",
-    "shadd", "shadduw",
+    "shadd", "shaddw", "shadduw",
     "slbia", "sld", "slw", "srad", "sradi",
     "sraw", "srawi", "srd", "srw",
     "stb", "stbcix", "stbcx", "stbu", "stbux", "stbx",
