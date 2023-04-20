@@ -278,7 +278,7 @@ Pseudo-code:
        if (RS)[XLEN-1-n] = 0b1 then
             leave
        n  <- n + 1
-    RA <- EXTZXL(n)
+    RA <- XLCASTU(n)
 
 Special Registers Altered:
 
@@ -447,7 +447,7 @@ Pseudo-code:
        if (RS)[XLEN-1-n] = 0b1 then
             leave
        n  <- n + 1
-    RA <- EXTZXL(n)
+    RA <- XLCASTU(n)
 
 Special Registers Altered:
 
