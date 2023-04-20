@@ -811,14 +811,22 @@ class ISACallerHelper:
         return self.__XLEN
 
     def XLCASTS(self, value):
-        return SelectableInt(exts(value.value, self.XLEN), self.XLEN)
+        if isinstance(value, SelectableInt):
+            value = value.value
+        return SelectableInt(exts(value, self.XLEN), self.XLEN)
 
     def XLCASTU(self, value):
+        if isinstance(value, SelectableInt):
+            value = value.value
         # SelectableInt already takes care of masking out the bits
-        return SelectableInt(value.value, self.XLEN)
+        return SelectableInt(value, self.XLEN)
 
     def EXTSXL(self, value, bits):
-        return SelectableInt(exts(value.value, bits), self.XLEN)
+        if isinstance(value, SelectableInt):
+            value = value.value
+        if isinstance(bits, SelectableInt):
+            bits = bits.value
+        return SelectableInt(exts(value, bits), self.XLEN)
 
     def DOUBLE2SINGLE(self, FRS):
         """ DOUBLE2SINGLE has been renamed to FRSP since it is the
