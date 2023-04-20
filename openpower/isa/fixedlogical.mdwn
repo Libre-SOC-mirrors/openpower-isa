@@ -223,7 +223,7 @@ X-Form
 
 Pseudo-code:
 
-    RA <- EXTSXL(RS, 8)
+    RA <- EXTSXL(RS, XLEN/8)
 
 Special Registers Altered:
 
@@ -238,7 +238,7 @@ X-Form
 
 Pseudo-code:
 
-    RA <- EXTSXL(RS, 16)
+    RA <- EXTSXL(RS, XLEN/4)
 
 Special Registers Altered:
 
@@ -389,7 +389,7 @@ X-Form
 
 Pseudo-code:
 
-    RA <- EXTSXL(RS, 32)
+    RA <- EXTSXL(RS, XLEN/2)
 
 Special Registers Altered:
 
