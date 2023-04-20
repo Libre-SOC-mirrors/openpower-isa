@@ -274,11 +274,11 @@ X-Form
 Pseudo-code:
 
     n <- 0
-    do while n < 32
-       if (RS)[63-n] = 0b1 then
+    do while n < XLEN/2
+       if (RS)[XLEN-1-n] = 0b1 then
             leave
        n  <- n + 1
-    RA <- EXTZ64(n)
+    RA <- EXTZXL(n)
 
 Special Registers Altered:
 
@@ -447,7 +447,7 @@ Pseudo-code:
        if (RS)[XLEN-1-n] = 0b1 then
             leave
        n  <- n + 1
-    RA <- EXTZ64(n)
+    RA <- EXTZXL(n)
 
 Special Registers Altered:
 
@@ -461,14 +461,14 @@ X-Form
 
 Pseudo-code:
 
-    perm <- [0] * 8
+    perm <- [0] * (XLEN/8)
     for i = 0 to ((XLEN/8)-1)
        index <- (RS)[8*i:8*i+7]
        if index <u XLEN then
             perm[i] <- (RB)[index]
        else
             perm[i] <- 0
-    RA <- [0]*(XLEN-8) || perm[0:7]
+    RA <- [0]*(XLEN*7/8) || perm
 
 Special Registers Altered:
 
