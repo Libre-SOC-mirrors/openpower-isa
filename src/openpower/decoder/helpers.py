@@ -46,6 +46,14 @@ def EXTS(value):
     return SelectableInt(exts(value.value, value.bits) & ((1 << 256)-1), 256)
 
 
+def EXTZ(value):
+    """ zero extend to 256 bits
+    """
+    if isinstance(value, SelectableInt):
+        value = value.value
+    return SelectableInt(value & ((1 << 256) - 1), 256)
+
+
 def EXTS64(value):
     """ extends sign bit out from current MSB to 64 bits
     """
