@@ -18,7 +18,7 @@ D-Form
 
 Pseudo-code:
 
-    RA <- (RS) & XLCASTU(UI)
+    RA <- (RS) & EXTZ(UI)
 
 Special Registers Altered:
 
@@ -32,7 +32,7 @@ D-Form
 
 Pseudo-code:
 
-    RA <- (RS) | XLCASTU(UI)
+    RA <- (RS) | EXTZ(UI)
 
 Special Registers Altered:
 
@@ -46,7 +46,7 @@ D-Form
 
 Pseudo-code:
 
-    RA <- (RS) & XLCASTU(UI || [0]*16)
+    RA <- (RS) & EXTZ(UI || [0]*16)
 
 Special Registers Altered:
 
@@ -60,7 +60,7 @@ D-Form
 
 Pseudo-code:
 
-    RA <- (RS) | XLCASTU(UI || [0]*16)
+    RA <- (RS) | EXTZ(UI || [0]*16)
 
 Special Registers Altered:
 
@@ -74,7 +74,7 @@ D-Form
 
 Pseudo-code:
 
-    RA <- (RS) ^ XLCASTU(UI || [0]*16)
+    RA <- (RS) ^ EXTZ(UI || [0]*16)
 
 Special Registers Altered:
 
@@ -88,7 +88,7 @@ D-Form
 
 Pseudo-code:
 
-    RA <- (RS) ^ XLCASTU(UI)
+    RA <- (RS) ^ EXTZ(UI)
 
 Special Registers Altered:
 
@@ -278,7 +278,7 @@ Pseudo-code:
        if (RS)[XLEN-1-n] = 0b1 then
             leave
        n  <- n + 1
-    RA <- XLCASTU(n)
+    RA <- EXTZ(n)
 
 Special Registers Altered:
 
@@ -447,7 +447,7 @@ Pseudo-code:
        if (RS)[XLEN-1-n] = 0b1 then
             leave
        n  <- n + 1
-    RA <- XLCASTU(n)
+    RA <- EXTZ(n)
 
 Special Registers Altered:
 
