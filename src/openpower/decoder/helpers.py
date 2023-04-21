@@ -818,21 +818,21 @@ class ISACallerHelper:
     def XLEN(self):
         return self.__XLEN
 
-    def XLCASTS(self, value):
+    def EXTZXL(self, value, bits=None):
+        if bits is None:
+            bits = self.XLEN
+        elif isinstance(bits, SelectableInt):
+            bits = bits.value
         if isinstance(value, SelectableInt):
             value = value.value
-        return SelectableInt(exts(value, self.XLEN), self.XLEN)
+        return SelectableInt(value & ((1 << bits) - 1), self.XLEN)
 
-    def XLCASTU(self, value):
+    def EXTSXL(self, value, bits=None):
         if isinstance(value, SelectableInt):
             value = value.value
-        # SelectableInt already takes care of masking out the bits
-        return SelectableInt(value, self.XLEN)
-
-    def EXTSXL(self, value, bits):
-        if isinstance(value, SelectableInt):
-            value = value.value
-        if isinstance(bits, SelectableInt):
+        if bits is None:
+            bits = self.XLEN
+        elif isinstance(bits, SelectableInt):
             bits = bits.value
         return SelectableInt(exts(value, bits), self.XLEN)
 
