@@ -325,6 +325,11 @@
     | PO | RT |  RA |  RB | TLI | XO |Rc |
     | PO | RT |  RA |  RB | TLI | XO |L  |
 
+# 1.6.38 MM-FORM
+    |0    |6    |11   |16   |21   |24 |25  |31  |
+    | PO  | FRT | FRA | FRB | FMM     | XO | Rc |
+    | PO  | RT  | RA  | RB  | MMM | / | XO | Rc |
+
 # 1.6.28 Instruction Fields
     A (6)
         Field used by the tbegin. instruction to specify an
@@ -506,10 +511,13 @@
         Field mask used to identify the FPSCR fields that
         are to be updated by the mtfsf instruction.
         Formats: XFL
+    FMM (21:24)
+        Field used to specify minimum/maximum mode for fminmax[s].
+        Formats: MM
     FRA (11:15)
         Field used to specify a FPR to be used as a
         source.
-        Formats: A, X, Z22, Z23
+        Formats: A, MM, X, Z22, Z23
     FRAp (11:15)
         Field used to specify an even/odd pair of FPRs to
         be concatenated and used as a source.
@@ -517,7 +525,7 @@
     FRB (16:20)
         Field used to specify an FPR to be used as a
         source.
-        Formats: A, X, XFL, Z23
+        Formats: A, MM, X, XFL, Z23
     FRBp (16:20)
          Field used to specify an even/odd pair of FPRs to
          be concatenated and used as a source.
@@ -537,7 +545,7 @@
     FRT (6:10)
          Field used to specify an FPR to be used as a tar-
          get.
-         Formats: A, D, X, Z22, Z23
+         Formats: A, D, MM, X, Z22, Z23
     FRTp (6:10)
          Field used to specify an even/odd pair of FPRs to
          be concatenated and used as a target.
@@ -662,6 +670,9 @@
         Field used to specify the meaning of the rmm field for SVI-Form
         and SVM2-Form
         Formats: SVI, SVM2
+    MMM (21:23)
+        Field used to specify minimum/maximum mode for integer minmax.
+        Formats: MM
     mo0 (17:18)
         Field used in REMAP to select the SVSHAPE for 1st output register
         Formats: SVRM
@@ -719,11 +730,11 @@
     RA (11:15)
         Field used to specify a GPR to be used as a
         source or as a target.
-        Formats: A, BM2, D, DQ, DQE, DS, M, MD, MDS, TX, VA, VA2, VX, X, XO, XS, SVL, XB, TLI, Z23
+        Formats: A, BM2, D, DQ, DQE, DS, M, MD, MDS, MM, TX, VA, VA2, VX, X, XO, XS, SVL, XB, TLI, Z23
     RB (16:20)
         Field used to specify a GPR to be used as a
         source.
-        Formats: A, BM2, M, MDS, VA, VA2, X, XO, TLI, Z23
+        Formats: A, BM2, M, MDS, MM, VA, VA2, X, XO, TLI, Z23
     Rc (21)
         RECORD bit.
         0    Do not alter the Condition Register.
@@ -741,7 +752,7 @@
         1    Set Condition Register Field 0 or Field 1 as
              described in Section 2.3.1, 'Condition Regis-
              ter' on page 30.
-        Formats: A, M, MD, MDS, VA2, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI
+        Formats: A, M, MD, MDS, MM, VA2, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI
     RIC (12:13)
         Field used to specify what types of entries to inval-
         idate for tlbie[l].
@@ -770,7 +781,7 @@
         Formats: DS, X
     RT (6:10)
         Field used to specify a GPR to be used as a target.
-        Formats: A, BM2, D, DQE, DS, DX, VA, VA2, VX, X, XFX, XO, XX2, SVL, XB, TLI, Z23
+        Formats: A, BM2, D, DQE, DS, DX, MM, VA, VA2, VX, X, XFX, XO, XX2, SVL, XB, TLI, Z23
     RTp (6:10)
         Field used to specify an even/odd pair of GPRs to
         be concatenated and used as a target.
@@ -1036,7 +1047,7 @@
         Formats: X, Z23
     XO (25:30)
         Extended opcode field.
-        Formats: TX
+        Formats: MM, TX
     XO (26:27)
         Extended opcode field.
         Formats: XX4

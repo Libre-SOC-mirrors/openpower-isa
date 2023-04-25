@@ -168,6 +168,7 @@ class Form(Enum):
     SVC = 40
     SVR = 41
     CRB = 42 # crternlogi / crbinlut
+    MM = 43  # [f]minmax[s][.]
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
