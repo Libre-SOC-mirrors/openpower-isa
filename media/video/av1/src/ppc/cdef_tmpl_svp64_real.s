@@ -445,7 +445,7 @@ cdef_find_dir_svp64_real:
 
 	mr			max, cost+5
 	setvl			0,0,8,0,1,1			# Set VL to 8 elements
-	#sv.maxs/mr		max, max, *cost
+	#sv.minmax/mr		max, max, *cost, 3 # MMM=maxs
 	sv.cmp			0, 0, *cost, max
 	svstep			retval, 5, 1
 #	sv.addi/m=eq		retval,*,0

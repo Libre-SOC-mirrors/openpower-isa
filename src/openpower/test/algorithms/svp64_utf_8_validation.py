@@ -161,7 +161,7 @@ def svp64_utf8_validation_asm():
         add_arg = 0x80 - compare_rhs
         return [
             f"addi {temp_s}, 0, {max_arg}",
-            f"sv.maxu *{out_v}, *{inp_v}, {temp_s}",
+            f"sv.minmax *{out_v}, *{inp_v}, {temp_s}, 1",
             f"sv.addi *{out_v}, *{out_v}, {add_arg}"
         ]
     return [

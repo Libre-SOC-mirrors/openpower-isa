@@ -748,7 +748,7 @@ _insns = [
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
-    "mins", "maxs", "minu", "maxu",                     # AV bitmanip
+    "minmax",                     # AV bitmanip
     "modsd", "modsw", "modud", "moduw",
     "mtcrf/mtocrf", "mtmsr", "mtmsrd", "mtspr",
     "mulhd", "mulhdu", "mulhw", "mulhwu", "mulld", "mulldo",

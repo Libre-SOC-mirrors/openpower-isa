@@ -275,8 +275,8 @@ if __name__ == '__main__':
         'sv.svstep. 2.v, 4, 0',
     ]
     lst = [
-        'maxs 3,12,5',
-        'maxs. 3,12,5',
+        'minmax 3,12,5,3',
+        'minmax. 3,12,5,4',
         'avgadd 3,12,5',
         'absdu 3,12,5',
         'absds 3,12,5',

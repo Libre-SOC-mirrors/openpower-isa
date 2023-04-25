@@ -1888,7 +1888,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         dotstrp = asmop[:-1] if asmop[-1] == '.' else asmop
         if dotstrp in [*FPTRANS_INSNS,
                        'ffmadds', 'fdmadds', 'ffadds',
-                       'mins', 'maxs', 'minu', 'maxu',
+                       'minmax',
                        'setvl', 'svindex', 'svremap', 'svstep',
                        'svshape', 'svshape2',
                        'grev', 'ternlogi', 'bmask', 'cprop',
