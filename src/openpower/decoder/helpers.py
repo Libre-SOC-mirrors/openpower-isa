@@ -68,6 +68,31 @@ def EXTS128(value):
     return SelectableInt(exts(value.value, value.bits) & ((1 << 128)-1), 128)
 
 
+def copy_assign_rhs(inp):
+    """ implicitly added function call to all assignment RHSes.
+        This copies the passed-in value so later assignments to parts of the
+        LHS don't modify the RHS if it's a SelectableInt.
+
+        Example:
+        ```
+        # this needs to copy the SelectableInt instance in RA
+        # not just assign a reference to it to A
+        A <- RA
+        A[0] <- 1  # if the copy wasn't performed, we just modified RA too!
+        ```
+    """
+    if isinstance(inp, (str, int)):
+        return inp
+    if isinstance(inp, SelectableInt):
+        return SelectableInt(inp)
+    if isinstance(inp, tuple):
+        return tuple(map(copy_assign_rhs, inp))
+    if isinstance(inp, dict):
+        return {copy_assign_rhs(k): copy_assign_rhs(v) for k, v in inp.items()}
+    raise TypeError("tried to assign an unsupported type in pseudo-code",
+                    repr(type(inp)))
+
+
 # signed version of MUL
 def MULS(a, b):
     if isinstance(b, int):
