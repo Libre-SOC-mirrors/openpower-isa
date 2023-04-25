@@ -14,10 +14,20 @@
     |0     |6    |11    |16    |21   |26 |27    31|
     | PO   |  RT |   RA |   RB |bm   |L  |   XO   |
 
-# 1.6.2.1 CRB-FORM
+# 1.6.2.2 CRB-FORM
     |0     |6    |9   |11   |14   | 16  |19   |26   | 31|
     | PO   | BF  | msk|BFA  | msk | BFB | //  | XO  | / |
     | PO   | BF  | msk|BFA  | msk | BFB | TLI | XO  |TLI|
+
+# 1.6.2.3 CW-FORM
+    |0     |6   |9 |11|12   |16   |19  |22   |26   |31|
+    | PO   | RA    |M |fmsk |BF   |XO  |fmap | XO     |
+    | PO   | BT    |M |fmsk |BF   |XO  |fmap | XO     |
+    | PO   | BF |  |M |fmsk |BF   |XO  |fmap | XO     |
+
+# 1.6.2.3 CW2-FORM
+    |0     |6   |9 |11|12   |16   |19  |22   |26   |31|
+    | PO   | RT    |M |fmsk |BFA  |XO  |fmap | XO  |Rc|
 
 # 1.6.3 SC-FORM
     |0     |6    |11    |16    |20     |27  |30 |31  |
@@ -514,6 +524,13 @@
     FMM (21:24)
         Field used to specify minimum/maximum mode for fminmax[s].
         Formats: MM
+    fmap (22:25)
+        Field used to specify the CR Field set/clear map for CR Weird
+        instructions.
+        Formats: CW, CW2
+    fmsk (12:15)
+        Field used to specify the CR Field mask for CR Weird instructions.
+        Formats: CW, CW2
     FRA (11:15)
         Field used to specify a FPR to be used as a
         source.
