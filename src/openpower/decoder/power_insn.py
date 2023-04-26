@@ -2607,13 +2607,6 @@ class SpecifierFF(SpecifierFFPR):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierPR(SpecifierFFPR):
-    @classmethod
-    def match(cls, desc, record):
-        return super().match(desc=desc, record=record, mode="pr")
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
 class SpecifierMask(SpecifierPredicate):
     @classmethod
     def match(cls, desc, record, mode):
@@ -2776,8 +2769,6 @@ class SpecifierSZ(SpecifierXZ):
             if self.record.svp64.mode is not _SVMode.CROP:
                 if isinstance(spec, SpecifierFF):
                     raise ValueError("source-zero not allowed in ff mode")
-                elif isinstance(spec, SpecifierPR):
-                    raise ValueError("source-zero not allowed in pr mode")
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -2790,10 +2781,9 @@ class SpecifierDZ(SpecifierXZ):
     def validate(self, others):
         for spec in others:
             if ((self.record.svp64.mode is not _SVMode.CROP) and
-                    isinstance(spec, (SpecifierFF, SpecifierPR)) and
+                    isinstance(spec, SpecifierFF) and
                     (spec.pred.mode is _SVP64PredMode.RC1)):
-                mode = "ff" if isinstance(spec, SpecifierFF) else "pr"
-                raise ValueError(f"dest-zero not allowed in {mode} mode BO")
+                raise ValueError(f"dest-zero not allowed in ff mode BO")
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -3160,7 +3150,6 @@ class Specifiers(tuple):
         SpecifierDW,
         SpecifierSubVL,
         SpecifierFF,
-        SpecifierPR,
         SpecifierM,
         SpecifierSM,
         SpecifierDM,
