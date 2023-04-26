@@ -226,7 +226,6 @@ if __name__ == '__main__':
            'sv.setb/sw=8/ew=16 5, 31',
            'sv.extsw./ff=eq 5, 31',
            'sv.extsw./satu/sz/dz/sm=r3/dm=r3 5, 31',
-           'sv.extsw./pr=eq 5.v, 31',
            'sv.add. 5.v, 2.v, 1.v',
            'sv.add./m=r3 5.v, 2.v, 1.v',
            ]
