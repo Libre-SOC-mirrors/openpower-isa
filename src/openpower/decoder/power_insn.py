@@ -1963,7 +1963,7 @@ class BaseRM(_Mapping):
                 yield f"{indent}{', '.join(map(str, span))}"
 
 
-class FFPRRc1BaseRM(BaseRM):
+class FFRc1BaseRM(BaseRM):
     def specifiers(self, record, mode):
         inv = _SelectableInt(value=int(self.inv), bits=1)
         CR = _SelectableInt(value=int(self.CR), bits=2)
@@ -1974,7 +1974,7 @@ class FFPRRc1BaseRM(BaseRM):
         yield from super().specifiers(record=record)
 
 
-class FFPRRc0BaseRM(BaseRM):
+class FFRc0BaseRM(BaseRM):
     def specifiers(self, record, mode):
         if self.RC1:
             inv = "~" if self.inv else ""
@@ -2163,7 +2163,7 @@ class NormalMRRM(MRBaseRM, NormalBaseRM):
     RG: BaseRM.mode[4]
 
 
-class NormalFFRc1RM(FFPRRc1BaseRM, NormalBaseRM):
+class NormalFFRc1RM(FFRc1BaseRM, NormalBaseRM):
     """normal: Rc=1: ffirst CR sel"""
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
@@ -2172,7 +2172,7 @@ class NormalFFRc1RM(FFPRRc1BaseRM, NormalBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class NormalFFRc0RM(FFPRRc0BaseRM, VLiBaseRM, NormalBaseRM):
+class NormalFFRc0RM(FFRc0BaseRM, VLiBaseRM, NormalBaseRM):
     """normal: Rc=0: ffirst z/nonz"""
     inv: BaseRM.mode[2]
     VLi: BaseRM.mode[3]
@@ -2225,7 +2225,7 @@ class LDSTImmPostRM(LDSTImmBaseRM):
             yield "lf"
 
 
-class LDSTFFRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
+class LDSTFFRc1RM(FFRc1BaseRM, LDSTImmBaseRM):
     """ld/st immediate&indexed: Rc=1: ffirst CR sel"""
     VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
@@ -2235,7 +2235,7 @@ class LDSTFFRc1RM(FFPRRc1BaseRM, LDSTImmBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class LDSTFFRc0RM(FFPRRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
+class LDSTFFRc0RM(FFRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
     """ld/st immediate&indexed: Rc=0: ffirst z/nonz"""
     VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
@@ -2328,7 +2328,7 @@ class CROpMRRM(MRBaseRM, ZZCombinedBaseRM, CROpBaseRM):
     sz: BaseRM[23]
 
 
-class CROpFF3RM(FFPRRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpFF3RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """crop: ffirst 3-bit mode"""
     RC1: BaseRM[19]
     VLi: BaseRM[20]
@@ -2343,7 +2343,7 @@ class CROpFF3RM(FFPRRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, C
 # FIXME: almost everything in this class contradicts the specs.
 # However, this is the direct translation of the pysvp64asm code.
 # Please revisit this code; there is an inactive sketch below.
-class CROpFF5RM(FFPRRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
+class CROpFF5RM(FFRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
     VLi: BaseRM[20]
     inv: BaseRM[21]
@@ -2568,11 +2568,11 @@ class SpecifierPredicate(Specifier):
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierFFPR(SpecifierPredicate):
+class SpecifierFF(SpecifierPredicate):
     @classmethod
-    def match(cls, desc, record, mode):
+    def match(cls, desc, record):
         return super().match(desc=desc, record=record,
-            mode_match=lambda mode_arg: mode_arg == mode,
+            mode_match=lambda mode_arg: mode_arg == "ff",
             pred_match=lambda pred_arg: pred_arg.mode in (
                 _SVP64PredMode.CR,
                 _SVP64PredMode.RC1,
@@ -2597,13 +2597,6 @@ class SpecifierFFPR(SpecifierPredicate):
                 selector.CR = self.pred.state
             else:
                 selector.RC1 = self.pred.state
-
-
-@_dataclasses.dataclass(eq=True, frozen=True)
-class SpecifierFF(SpecifierFFPR):
-    @classmethod
-    def match(cls, desc, record):
-        return super().match(desc=desc, record=record, mode="ff")
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
