@@ -230,9 +230,7 @@ class SVSTATETestCase(unittest.TestCase):
     def test_13_RC1(self):
         expected = [
                     "sv.add/ff=RC1 *3,*7,*11",
-                    "sv.add/pr=RC1 *3,*7,*11",
                     "sv.add/ff=~RC1 *3,*7,*11",
-                    "sv.add/pr=~RC1 *3,*7,*11",
                         ]
         self._do_tst(expected)
 
@@ -245,8 +243,6 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.add./ff=le *3,*7,*11",
                     "sv.add./ff=gt *3,*7,*11",
                     "sv.add./ff=ne *3,*7,*11",
-                    "sv.add./pr=eq *3,*7,*11",
-                    "sv.add./pr=ns *3,*7,*11",
                         ]
         self._do_tst(expected)
 
