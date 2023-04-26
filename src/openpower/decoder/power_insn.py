@@ -2189,35 +2189,12 @@ class NormalSatRM(SatBaseRM, ZZCombinedBaseRM, NormalBaseRM):
     sz: BaseRM.mode[4]
 
 
-class NormalPRRc1RM(FFPRRc1BaseRM, NormalBaseRM):
-    """normal: Rc=1: pred-result CR sel"""
-    inv: BaseRM.mode[2]
-    CR: BaseRM.mode[3, 4]
-
-    def specifiers(self, record):
-        yield from super().specifiers(record=record, mode="pr")
-
-
-class NormalPRRc0RM(FFPRRc0BaseRM, ZZBaseRM, NormalBaseRM):
-    """normal: Rc=0: pred-result z/nonz"""
-    inv: BaseRM.mode[2]
-    zz: BaseRM.mode[3]
-    RC1: BaseRM.mode[4]
-    dz: BaseRM.mode[3]
-    sz: BaseRM.mode[3]
-
-    def specifiers(self, record):
-        yield from super().specifiers(record=record, mode="pr")
-
-
 class NormalRM(NormalBaseRM):
     simple: NormalSimpleRM
     mr: NormalMRRM
     ffrc1: NormalFFRc1RM
     ffrc0: NormalFFRc0RM
     sat: NormalSatRM
-    prrc1: NormalPRRc1RM
-    prrc0: NormalPRRc0RM
 
 
 class LDSTImmBaseRM(PredicateWidthBaseRM):
@@ -2600,11 +2577,6 @@ class SpecifierFFPR(SpecifierPredicate):
                 _SVP64PredMode.CR,
                 _SVP64PredMode.RC1,
             ))
-
-    def validate(self, others):
-        if self.record.svp64.mode is _SVMode.CROP:
-            if self.mode == "pr":
-                raise ValueError("crop: 'pr' mode not supported")
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
@@ -3316,15 +3288,15 @@ class RMSelector:
             #    mode  Rc  mask  Rc  member
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
-                (0b001000, 0b111000, "mr"),     # mapreduce  (no Rc)
+                (0b001000, 0b111100, "mr"),     # mapreduce  (no Rc)
                 (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
                 (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)
-                (0b110000, 0b110001, "prrc0"),  # predicate,  Rc=0
-                (0b110001, 0b110001, "prrc1"),  # predicate,  Rc=1
+                (0b001100, 0b111100, "rsvd"),   # reserved
+                (0b110000, 0b110000, "rsvd"),   # reserved
             )
-            search = ((int(self.insn.prefix.rm.normal.mode) << 1) |
-                      self.record.Rc)
+            mode = int(self.insn.prefix.rm.normal.mode)
+            search = ((mode << 1) | self.record.Rc)
 
         elif self.record.svp64.mode is _SVMode.LDST_IMM:
             # concatenate mode 5-bit with Rc (LSB) then do a mask/map search
@@ -3379,6 +3351,8 @@ class RMSelector:
         # look up in table
         if table is not None:
             for (value, mask, field) in table:
+                if field.startswith("rsvd"):
+                    continue
                 if ((value & mask) == (search & mask)):
                     return getattr(rm, field)
 
