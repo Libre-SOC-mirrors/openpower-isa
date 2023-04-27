@@ -298,11 +298,18 @@ Pseudo-code:
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
         mscale <- (0b0 || SVzd) + 1
-        SVSHAPE0[30:31] <- 0b10          # parallel reduce submode
+        SVSHAPE0[30:31] <- 0b10          # parallel reduce/prefix submode
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
-        # set up right operand (left operand 28:29 is zero)
-        SVSHAPE1[28:29] <- 0b01           # right operand
+        # set up submodes: parallel or prefix
+        if (SVyd = 1) then
+            SVSHAPE0[28:29] <- 0b00   # left operand
+            SVSHAPE1[28:29] <- 0b01   # right operand
+        if (SVyd = 2) then
+            SVSHAPE0[28:29] <- 0b10   # left operand
+            SVSHAPE1[28:29] <- 0b11   # right operand
+        SVSHAPE0[28:29] <- 0b00   # left operand
+        SVSHAPE1[28:29] <- 0b01   # right operand
     # set VL, MVL and Vertical-First
     m[0:12] <- vlen * mscale
     maxvl[0:6] <- m[6:12]
