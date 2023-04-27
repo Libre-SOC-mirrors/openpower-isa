@@ -155,6 +155,12 @@ class Opcode:
             return NotImplemented
         return ((self.value, self.mask) < (other.value, other.mask))
 
+    def __int__(self):
+        return (self.value & self.mask)
+
+    def __index__(self):
+        return int(self).__index__()
+
     def __repr__(self):
         def pattern(value, mask, bit_length):
             for bit in range(bit_length):
