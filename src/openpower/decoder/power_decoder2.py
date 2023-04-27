@@ -1066,6 +1066,12 @@ class PowerDecodeSubset(Elaboratable):
                 )):
                 comb += self.implicit_rs.eq(1)
                 comb += self.extend_rc_maxvl.eq(1) # RS=RT+MAXVL or RS=RC
+            # implicit RS for major 22, integer maddsubrs
+            with m.If((major == 22) & xo6.matches(
+                    '-01000',  # maddsubrs
+                )):
+                comb += self.implicit_rs.eq(1)
+                comb += self.extend_rb_maxvl.eq(1) # extend RB
 
         # rc and oe out
         comb += self.do_copy("rc", dec_rc.rc_out)
