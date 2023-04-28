@@ -172,6 +172,7 @@ class Form(Enum):
     CW = 44
     CW2 = 45
     DCT = 46 # fdmadds
+    DCTI = 47 # maddsubrs
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
@@ -756,6 +757,7 @@ _insns = [
     # "lwzbr", "lwzubr", # more load word SVP64 bit-reversed
     "maddedu", "maddedus",
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
+    "maddsubrs",         # Integer DCT Butterfly
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
     "minmax",                     # AV bitmanip
@@ -917,6 +919,7 @@ class MicrOp(Enum):
     OP_DSHL = 101
     OP_DSHR = 102
     OP_SHADD = 103
+    OP_MADDSUBRS = 104
 
 
 class In1Sel(Enum):

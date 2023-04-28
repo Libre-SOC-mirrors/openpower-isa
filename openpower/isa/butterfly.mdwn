@@ -1,0 +1,24 @@
+<!-- SVP64 Butterfly DCT Instructions here described are based on -->
+
+<!-- PLEASE NOTE THESE ARE UNAPPROVED AND DRAFT, NOT SUBMITTED TO OPF ISA WG -->
+
+# [DRAFT] Integer Butterfly Multiply Add/Sub FFT/DCT
+
+DCTI-Form
+
+* maddsubrs  RT,RA,RB,SH
+
+Pseudo-code:
+
+    sum <- (RT) + (RA)
+    diff <- (RT) - (RA)
+    prod1 <- MUL(RB, sum)
+    prod2 <- MUL(RB, diff)
+    res1 <- ROTL64(prod1, XLEN-SH)
+    res2 <- ROTL64(prod2, XLEN-SH)
+    RT <- (RT) + res1
+    RS <- (RS) + res2
+
+Special Registers Altered:
+
+    None

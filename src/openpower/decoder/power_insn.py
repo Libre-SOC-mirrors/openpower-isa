@@ -1113,11 +1113,15 @@ class XOStaticOperand(SpanStaticOperand):
         span = dict(zip(bits, range(len(bits))))
         span_rev = {value:key for (key, value) in span.items()}
 
+        print(record)
         # This part is tricky: we cannot use record.operands,
         # as this code is called by record.static_operands method.
         for (cls, kwargs) in record.mdwn.operands:
             operand = cls(record=record, **kwargs)
+            print(operand)
+            print(operand.span)
             for idx in operand.span:
+                print(idx)
                 rev = span.pop(idx, None)
                 if rev is not None:
                     span_rev.pop(rev, None)

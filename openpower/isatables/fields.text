@@ -143,6 +143,10 @@
     |0     |6     |11      |16     |21      |26    |31 |
     | PO   |  FRT |   FRA  |   FRB |   //   |   XO | Rc |
 
+# 1.6.7.2 DCTI-FORM
+    |0     | 6    |11      |16     |21    |25      |31  |
+    | PO   |  RT  |   RA   |   RB  |   SH |   XO   | Rc |
+
 # 1.6.8 XL-FORM
     |0     |6    |9  |11  |14   |16    |19|20|21    |31 |
     | PO   |   BT    |     BA   |    BB      |   XO | / |
@@ -348,6 +352,7 @@
     |0    |6    |11   |16   |21   |24 |25  |31  |
     | PO  | FRT | FRA | FRB | FMM     | XO | Rc |
     | PO  | RT  | RA  | RB  | MMM | / | XO | Rc |
+
 
 # 1.6.28 Instruction Fields
     A (6)
@@ -763,11 +768,11 @@
     RA (11:15)
         Field used to specify a GPR to be used as a
         source or as a target.
-        Formats: A, BM2, D, DQ, DQE, DS, M, MD, MDS, MM, TX, VA, VA2, VX, X, XO, XS, SVL, XB, TLI, Z23
+        Formats: A, BM2, D, DQ, DQE, DS, M, MD, MDS, MM, TX, VA, VA2, VX, X, XO, XS, SVL, XB, TLI, Z23, DCTI
     RB (16:20)
         Field used to specify a GPR to be used as a
         source.
-        Formats: A, BM2, M, MDS, MM, VA, VA2, X, XO, TLI, Z23
+        Formats: A, BM2, M, MDS, MM, VA, VA2, X, XO, TLI, Z23, DCTI
     Rc (21)
         RECORD bit.
         0    Do not alter the Condition Register.
@@ -785,7 +790,7 @@
         1    Set Condition Register Field 0 or Field 1 as
              described in Section 2.3.1, 'Condition Regis-
              ter' on page 30.
-        Formats: A, M, MD, MDS, MM, VA2, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI, DCT
+        Formats: A, M, MD, MDS, MM, VA2, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI, DCT, DCTI 
     RIC (12:13)
         Field used to specify what types of entries to inval-
         idate for tlbie[l].
@@ -814,7 +819,7 @@
         Formats: DS, X
     RT (6:10)
         Field used to specify a GPR to be used as a target.
-        Formats: A, BM2, D, DQE, DS, DX, MM, VA, VA2, VX, X, XFX, XO, XX2, SVL, XB, TLI, Z23
+        Formats: A, BM2, D, DQE, DS, DX, MM, VA, VA2, VX, X, XFX, XO, XX2, SVL, XB, TLI, Z23, DCTI
     RTp (6:10)
         Field used to specify an even/odd pair of GPRs to
         be concatenated and used as a target.
@@ -852,6 +857,9 @@
     SH (16:21)
         Field used to specify a shift amount.
         Formats: Z22
+    SH (21:24)
+        Field used to specify a shift amount.
+        Formats: DCTI
     sh (30,16:20)
         Fields that are concatenated to specify a shift
         amount.
@@ -1080,7 +1088,7 @@
         Formats: X, Z23
     XO (25:30)
         Extended opcode field.
-        Formats: MM, TX
+        Formats: MM, TX, DCTI 
     XO (26:27)
         Extended opcode field.
         Formats: XX4
