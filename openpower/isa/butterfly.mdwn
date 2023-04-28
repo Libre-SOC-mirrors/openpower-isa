@@ -4,7 +4,7 @@
 
 # [DRAFT] Integer Butterfly Multiply Add/Sub FFT/DCT
 
-DCTI-Form
+A-Form
 
 * maddsubrs  RT,RA,RB,SH
 
@@ -15,8 +15,8 @@ Pseudo-code:
     diff <- (RT) - (RA)
     prod1 <- MUL(RB, sum)
     prod2 <- MUL(RB, diff)
-    res1 <- ROTL64(prod1, n)
-    res2 <- ROTL64(prod2, n)
+    res1 <- prod1[XLEN/2-SH:XLEN-1-SH]
+    res2 <- prod2[XLEN/2-SH:XLEN-1-SH]
     RT <- (RT) + res1
     RS <- (RS) + res2
 

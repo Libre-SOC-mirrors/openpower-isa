@@ -172,7 +172,6 @@ class Form(Enum):
     CW = 44
     CW2 = 45
     DCT = 46 # fdmadds
-    DCTI = 47 # maddsubrs
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
