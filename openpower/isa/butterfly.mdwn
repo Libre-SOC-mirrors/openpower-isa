@@ -6,19 +6,24 @@
 
 A-Form
 
-* maddsubrs  RT,RA,RB,SH
+* maddsubrs  RT,RA,SH,RB
 
 Pseudo-code:
 
-    n <- XLEN-SH
+    n <- SH
     sum <- (RT) + (RA)
     diff <- (RT) - (RA)
-    prod1[0:(XLEN*2)-1] <- MULS(RB, sum)
-    prod2[0:(XLEN*2)-1] <- MULS(RB, diff)
-    res1 <- prod1[XLEN/2-SH:XLEN-1-SH]
-    res2 <- prod2[XLEN/2-SH:XLEN-1-SH]
-    RT <- (RT) + EXTS(res1)
-    RS <- (RS) + EXTS(res2)
+    prod1 <- MULS(RB, sum)[XLEN:(XLEN*2)-1]
+    prod2 <- MULS(RB, diff)[XLEN:(XLEN*2)-1]
+    res1 <- ROTL64(prod1, XLEN-n)
+    res2 <- ROTL64(prod2, XLEN-n)
+    m <- MASK(n, (XLEN-1))
+    s1 <- res1[0]
+    s2 <- res2[0]
+    smask1 <- ([s1]*XLEN) & ¬m
+    smask2 <- ([s2]*XLEN) & ¬m
+    RT <- res1 & m | smask1
+    RS <- res2 & m | smask2
 
 Special Registers Altered:
 

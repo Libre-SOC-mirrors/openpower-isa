@@ -213,12 +213,12 @@
 
 # 1.6.17 A-FORM
     |0     |6     |11      |16     |21      |26    |31 |
-    | PO   |  FRT |   FRA  | FRB   |   FRC  |   XO |Rc |
-    | PO   |  FRT |   FRA  | FRB   |    /// |   XO |Rc |
-    | PO   |  FRT |   FRA  |   /// |   FRC  |   XO |Rc |
-    | PO   |  FRT |    /// | FRB   |    /// |   XO |Rc |
-    | PO   |   RT |   RA   |   RB  |    BC  |   XO |  /|
-    | PO   |  RT  |   RA   |   RB  |   SH   |   XO |Rc |
+    | PO   |  FRT |  FRA  |  FRB   |   FRC  |   XO |Rc |
+    | PO   |  FRT |  FRA  |  FRB   |   ///  |   XO |Rc |
+    | PO   |  FRT |  FRA  |  ///   |   FRC  |   XO |Rc |
+    | PO   |  FRT |  ///  |  FRB   |   ///  |   XO |Rc |
+    | PO   |   RT |  RA   |  RB    |   BC   |   XO |  /|
+    | PO   |   RT |  RA   |  RB    |   SH   |   XO |Rc |
 
 # 1.6.18 M-FORM
     |0     |6    |11    |16    |21    |26    |31|
