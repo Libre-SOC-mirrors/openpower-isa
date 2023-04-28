@@ -44,7 +44,7 @@ def iterate_indices2(SVSHAPE, pred=None):
     # invert the indices if needed
     if SVSHAPE.invxyz[0]:
         ix.reverse()
-    if SVSHAPE.order != [0, 1, 2] or any(SVSHAPE.invxyz[1:]):
+    if SVSHAPE.order != (0, 1, 2) or any(SVSHAPE.invxyz[1:]):
         raise ValueError("undefined")
     if SVSHAPE.skip & 0b10:
         # this is a scan/prefix-sum rather than a reduction.
@@ -113,7 +113,7 @@ def demo_prefix_sum():
         pass
     SVSHAPE0 = SVSHAPE()
     SVSHAPE0.lims = [xdim, 0, 0]
-    SVSHAPE0.order = [0, 1, 2]
+    SVSHAPE0.order = 0, 1, 2
     SVSHAPE0.mode = 0b10
     SVSHAPE0.skip = 0b10  # prefix-sum lhs
     SVSHAPE0.offset = 0       # experiment with different offset, here
@@ -121,7 +121,7 @@ def demo_prefix_sum():
 
     SVSHAPE1 = SVSHAPE()
     SVSHAPE1.lims = [xdim, 0, 0]
-    SVSHAPE1.order = [0, 1, 2]
+    SVSHAPE1.order = 0, 1, 2
     SVSHAPE1.mode = 0b10
     SVSHAPE1.skip = 0b11  # prefix-sum rhs
     SVSHAPE1.offset = 0       # experiment with different offset, here

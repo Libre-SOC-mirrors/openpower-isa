@@ -33,7 +33,7 @@ class TestRemapPrefixSum(unittest.TestCase):
     def iterate_indices2_helper(self, reverse, item_count, offset):
         lhs_svshape = MockSVShape(
             lims=[item_count, 0, 0],
-            order=[0, 1, 2],
+            order=(0, 1, 2),
             mode=0b10,
             skip=0b10,  # prefix-sum lhs
             offset=offset,
@@ -41,7 +41,7 @@ class TestRemapPrefixSum(unittest.TestCase):
         )
         rhs_svshape = MockSVShape(
             lims=[item_count, 0, 0],
-            order=[0, 1, 2],
+            order=(0, 1, 2),
             mode=0b10,
             skip=0b11,  # prefix-sum rhs
             offset=offset,
