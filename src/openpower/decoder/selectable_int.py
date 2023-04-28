@@ -528,17 +528,21 @@ def onebit(bit):
 def selectltu(lhs, rhs):
     """ less-than (unsigned)
     """
+    if isinstance(lhs, SelectableInt):
+        lhs = lhs.value
     if isinstance(rhs, SelectableInt):
         rhs = rhs.value
-    return onebit(lhs.value < rhs)
+    return onebit(lhs < rhs)
 
 
 def selectgtu(lhs, rhs):
     """ greater-than (unsigned)
     """
+    if isinstance(lhs, SelectableInt):
+        lhs = lhs.value
     if isinstance(rhs, SelectableInt):
         rhs = rhs.value
-    return onebit(lhs.value > rhs)
+    return onebit(lhs > rhs)
 
 
 # XXX this probably isn't needed...
