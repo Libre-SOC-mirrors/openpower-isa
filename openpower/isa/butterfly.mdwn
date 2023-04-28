@@ -10,12 +10,13 @@ DCTI-Form
 
 Pseudo-code:
 
+    n <- XLEN-SH
     sum <- (RT) + (RA)
     diff <- (RT) - (RA)
     prod1 <- MUL(RB, sum)
     prod2 <- MUL(RB, diff)
-    res1 <- ROTL64(prod1, XLEN-SH)
-    res2 <- ROTL64(prod2, XLEN-SH)
+    res1 <- ROTL64(prod1, n)
+    res2 <- ROTL64(prod2, n)
     RT <- (RT) + res1
     RS <- (RS) + res2
 
