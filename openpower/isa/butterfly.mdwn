@@ -13,12 +13,12 @@ Pseudo-code:
     n <- XLEN-SH
     sum <- (RT) + (RA)
     diff <- (RT) - (RA)
-    prod1 <- MULS(RB, sum)
-    prod2 <- MULS(RB, diff)
+    prod1[0:(XLEN*2)-1] <- MULS(RB, sum)
+    prod2[0:(XLEN*2)-1] <- MULS(RB, diff)
     res1 <- prod1[XLEN/2-SH:XLEN-1-SH]
     res2 <- prod2[XLEN/2-SH:XLEN-1-SH]
-    RT <- (RT) + res1
-    RS <- (RS) + res2
+    RT <- (RT) + EXTS(res1)
+    RS <- (RS) + EXTS(res2)
 
 Special Registers Altered:
 
