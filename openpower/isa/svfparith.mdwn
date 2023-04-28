@@ -161,16 +161,16 @@ Special Registers Altered:
 
 # [DRAFT] Floating Twin Multiply-Add DCT [Single]
 
-A-Form
+DCT-Form
 
-* fdmadds FRT,FRA,FRC,FRB (Rc=0)
-* fdmadds. FRT,FRA,FRC,FRB (Rc=1)
+* fdmadds FRT,FRA,FRB (Rc=0)
+* fdmadds. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
-    FRS <- FPADD32(FRA, FRB)
-    sub <- FPSUB32(FRA, FRB)
-    FRT <- FPMUL32(FRC, sub)
+    FRS <- FPADD32(FRT, FRB)
+    sub <- FPSUB32(FRT, FRB)
+    FRT <- FPMUL32(FRA, sub)
 
 Special Registers Altered:
 

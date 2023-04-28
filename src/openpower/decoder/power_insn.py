@@ -241,7 +241,7 @@ class PPCRecord:
     comment2: str = ""
     function: _Function = _Function.NONE
     intop: _MicrOp = _MicrOp.OP_ILLEGAL
-    in1: _In1Sel = _In1Sel.RA
+    in1: _In1Sel = _In1Sel.NONE
     in2: _In2Sel = _In2Sel.NONE
     in3: _In3Sel = _In3Sel.NONE
     out: _OutSel = _OutSel.NONE
@@ -620,8 +620,8 @@ class Operands:
             # The legacy assembler placed operands in syntax order.
             "ffmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
             "ffmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
-            "fdmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
-            "fdmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
+            #"fdmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
+            #"fdmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
         }
         custom_fields = {
             "SVi": NonZeroOperand,

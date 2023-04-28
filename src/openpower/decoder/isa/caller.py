@@ -431,6 +431,8 @@ def get_idx_map(dec2, name):
     elif name == 'FRA':
         if in1_sel == In1Sel.FRA.value:
             return 1
+        if in3_sel == In3Sel.FRA.value:
+            return 3
     elif name == 'FRB':
         if in2_sel == In2Sel.FRB.value:
             return 2
@@ -442,6 +444,12 @@ def get_idx_map(dec2, name):
             return 1
         if in3_sel == In3Sel.FRS.value:
             return 3
+    elif name == 'FRT':
+        if in1_sel == In1Sel.FRT.value:
+            return 1
+    elif name == 'RT':
+        if in1_sel == In1Sel.RT.value:
+            return 1
     return None
 
 
@@ -576,6 +584,9 @@ def get_out_map(dec2, name):
             return True
     elif name == 'FRA':
         if out_sel == OutSel.FRA.value:
+            return True
+    elif name == 'FRS':
+        if out_sel == OutSel.FRS.value:
             return True
     elif name == 'FRT':
         if out_sel == OutSel.FRT.value:

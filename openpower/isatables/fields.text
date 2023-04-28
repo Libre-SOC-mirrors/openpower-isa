@@ -135,6 +135,11 @@
     | PO   |   FRT         |   FRA       |   FRB       |   XO | Rc |
     | PO   |   FRT         |   FRA       |    RB       |   XO | Rc |
 
+# 1.6.7.1 DCT-FORM
+
+    |0     |6     |11      |16     |21      |26    |31 |
+    | PO   |  FRT |   FRA  |   FRB |   //   |   XO | Rc |
+
 # 1.6.8 XL-FORM
     |0     |6    |9  |11  |14   |16    |19|20|21    |31 |
     | PO   |   BT    |     BA   |    BB      |   XO | / |
@@ -534,7 +539,7 @@
     FRA (11:15)
         Field used to specify a FPR to be used as a
         source.
-        Formats: A, MM, X, Z22, Z23
+        Formats: A, MM, X, Z22, Z23, DCT
     FRAp (11:15)
         Field used to specify an even/odd pair of FPRs to
         be concatenated and used as a source.
@@ -542,7 +547,7 @@
     FRB (16:20)
         Field used to specify an FPR to be used as a
         source.
-        Formats: A, MM, X, XFL, Z23
+        Formats: A, MM, X, XFL, Z23, DCT
     FRBp (16:20)
          Field used to specify an even/odd pair of FPRs to
          be concatenated and used as a source.
@@ -562,7 +567,7 @@
     FRT (6:10)
          Field used to specify an FPR to be used as a tar-
          get.
-         Formats: A, D, MM, X, Z22, Z23
+         Formats: A, D, MM, X, Z22, Z23, DCT
     FRTp (6:10)
          Field used to specify an even/odd pair of FPRs to
          be concatenated and used as a target.
@@ -769,7 +774,7 @@
         1    Set Condition Register Field 0 or Field 1 as
              described in Section 2.3.1, 'Condition Regis-
              ter' on page 30.
-        Formats: A, M, MD, MDS, MM, VA2, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI
+        Formats: A, M, MD, MDS, MM, VA2, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI, DCT
     RIC (12:13)
         Field used to specify what types of entries to inval-
         idate for tlbie[l].
@@ -1070,7 +1075,7 @@
         Formats: XX4
     XO (26:30)
         Extended opcode field.
-        Formats: A, DX, VA2, SVL, CRB
+        Formats: A, DX, VA2, SVL, CRB, DCT
     XO (26:31)
         Extended opcode field.
         Formats: VA, SVM, SVRM, SVI

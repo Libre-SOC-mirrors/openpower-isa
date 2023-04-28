@@ -171,6 +171,7 @@ class Form(Enum):
     MM = 43  # [f]minmax[s][.]
     CW = 44
     CW2 = 45
+    DCT = 46 # fdmadds
 
 # Simple-V svp64 fields https://libre-soc.org/openpower/sv/svp64/
 
@@ -922,7 +923,9 @@ class In1Sel(Enum):
     FRAp = FRA
     FRS = 6
     FRSp = FRS
-    CIA = 7 # for addpcis
+    FRT = 7
+    CIA = 8 # for addpcis
+    RT = 9
 
 
 class In2Sel(Enum):
@@ -961,6 +964,7 @@ class In3Sel(Enum):
     RC = 5  # for SVP64 bit-reverse LD/ST
     RT = 6  # for ternlog[i]
     RTp = RT
+    FRA = 7
 
 
 class OutSel(Enum):
@@ -976,6 +980,7 @@ class OutSel(Enum):
     FRSp = FRS
     RS = 7
     RSp = RS
+    FRA = 8
 
 
 @unique

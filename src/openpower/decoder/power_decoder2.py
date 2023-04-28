@@ -163,6 +163,13 @@ class DecodeA(Elaboratable):
             comb += reg.data.eq(frs)
             comb += reg.ok.eq(1)
 
+        # select Register FRT field,
+        frt = Signal(5, reset_less=True)
+        comb += frt.eq(self.dec.FRT)
+        with m.If(self.sel_in == In1Sel.FRT):
+            comb += reg.data.eq(frt)
+            comb += reg.ok.eq(1)
+
         # decode Fast-SPR based on instruction type
         with m.Switch(op.internal_op):
 
@@ -365,6 +372,9 @@ class DecodeC(Elaboratable):
             with m.Case(In3Sel.FRS):
                 comb += reg.data.eq(self.dec.FRS)
                 comb += reg.ok.eq(1)
+            with m.Case(In3Sel.FRA):
+                comb += reg.data.eq(self.dec.FRA)
+                comb += reg.ok.eq(1)
             with m.Case(In3Sel.FRC):
                 comb += reg.data.eq(self.dec.FRC)
                 comb += reg.ok.eq(1)
@@ -414,6 +424,9 @@ class DecodeOut(Elaboratable):
         with m.Switch(self.sel_in):
             with m.Case(OutSel.FRS):
                 comb += reg.data.eq(self.dec.FRS)
+                comb += reg.ok.eq(1)
+            with m.Case(OutSel.FRA):
+                comb += reg.data.eq(self.dec.FRA)
                 comb += reg.ok.eq(1)
             with m.Case(OutSel.FRT):
                 comb += reg.data.eq(self.dec.FRT)
