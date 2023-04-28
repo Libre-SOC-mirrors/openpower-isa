@@ -278,22 +278,45 @@ Pseudo-code:
         else
             SVSHAPE0[30:31] <- 0b11          # DCT mode
         SVSHAPE0[6:11] <- 0b000101       # DCT "half-swap" mode
-    # set schedule up for parallel reduction
+    # set schedule up for parallel reduction or prefix-sum
     if (SVrm = 0b0111) then
+        # is scan/prefix-sum
+        is_scan <- SVyd = 2
         # calculate the total number of operations (brute-force)
         vlen[0:6] <- [0] * 7
         itercount[0:6] <- (0b00 || SVxd) + 0b0000001
-        step[0:6] <- 0b0000001
-        i[0:6] <- 0b0000000
-        do while step <u itercount
-            newstep <- step[1:6] || 0b0
-            j[0:6] <- 0b0000000
-            do while (j+step <u itercount)
-                j <- j + newstep
-                i <- i + 1
-            step <- newstep
-        # VL in Parallel-Reduce is the number of operations
-        vlen[0:6] <- i
+        if is_scan then
+            # prefix sum algorithm with operations replaced with
+            # incrementing vlen
+            dist <- 1
+            vlen[0:6] <- 0
+            do while dist <u itercount
+                start <- dist * 2 - 1
+                step <- dist * 2
+                i <- start
+                do while i <u itercount
+                    vlen[0:6] <- vlen[0:6] + 1
+                    i <- i + step
+                dist <- dist * 2
+            dist <- dist / 2
+            do while dist != 0
+                i <- dist * 3 - 1
+                do while i <u itercount
+                    vlen[0:6] <- vlen[0:6] + 1
+                    i <- i + dist * 2
+                dist <- dist / 2
+        else
+            step <- 0b0000001
+            i <- 0b0000000
+            do while step <u itercount
+                newstep <- step[1:6] || 0b0
+                j[0:6] <- 0b0000000
+                do while (j+step <u itercount)
+                    j <- j + newstep
+                    i <- i + 1
+                step <- newstep
+            # VL in Parallel-Reduce is the number of operations
+            vlen[0:6] <- i
         # set up template in SVSHAPE0, then copy to 1. only 2 needed
         SVSHAPE0[0:5] <- (0b0 || SVxd)   # xdim
         SVSHAPE0[12:17] <- (0b0 || SVzd)   # zdim - "striding" (2D DCT)
@@ -302,14 +325,11 @@ Pseudo-code:
         # copy
         SVSHAPE1[0:31] <- SVSHAPE0[0:31]
         # set up submodes: parallel or prefix
-        if (SVyd = 1) then
-            SVSHAPE0[28:29] <- 0b00   # left operand
-            SVSHAPE1[28:29] <- 0b01   # right operand
-        if (SVyd = 2) then
-            SVSHAPE0[28:29] <- 0b10   # left operand
-            SVSHAPE1[28:29] <- 0b11   # right operand
         SVSHAPE0[28:29] <- 0b00   # left operand
         SVSHAPE1[28:29] <- 0b01   # right operand
+        if is_scan then
+            SVSHAPE0[28:29] <- 0b10   # left operand
+            SVSHAPE1[28:29] <- 0b11   # right operand
     # set VL, MVL and Vertical-First
     m[0:12] <- vlen * mscale
     maxvl[0:6] <- m[6:12]
