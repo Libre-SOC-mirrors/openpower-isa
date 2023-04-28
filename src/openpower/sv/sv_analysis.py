@@ -597,7 +597,7 @@ def extra_classifier(insn_name, value, name, res, regs):
 
     elif value == 'RM-1P-3S1D':
         res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
-        if regs == ['FRT', 'FRB', 'FRA', 'FRT', '', 'CR1']:  # fdmadds
+        if regs == ['FRT', 'FRB', 'FRA', 'FRT', '', 'CR1']:  # ffmadds/fdmadds
             res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA2
             res['1'] = 's:FRT'  # FRT: Rsrc1_EXTRA2
             res['2'] = 's:FRB'  # FRB: Rsrc2_EXTRA2

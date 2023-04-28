@@ -308,7 +308,7 @@ class DCTTestCase(FHDLTestCase):
                 self.assertEqual(sim.fpr(i+0), t)
                 self.assertEqual(sim.fpr(i+4), u)
 
-    def tst_sv_remap_fpmadds_idct_outer_8(self, stride=2):
+    def test_sv_remap_fpmadds_idct_outer_8(self, stride=2):
         """>>> lst = ["svshape 8, 1, 1, 11, 0",
                      "svremap 27, 0, 1, 2, 1, 0, 0",
                          "sv.fadds *0, *0, *0"
@@ -367,7 +367,7 @@ class DCTTestCase(FHDLTestCase):
                 print("err", i, err)
                 self.assertTrue(err < 1e-6)
 
-    def tst_sv_remap_fpmadds_dct_outer_8(self, stride=2):
+    def test_sv_remap_fpmadds_dct_outer_8(self, stride=2):
         """>>> lst = ["svshape 8, 1, 1, 3, 0",
                      "svremap 27, 1, 0, 2, 0, 1, 0",
                          "sv.fadds *0, *0, *0"
@@ -419,7 +419,7 @@ class DCTTestCase(FHDLTestCase):
                 print("err", i, err)
                 self.assertTrue(err < 1e-6)
 
-    def tst_sv_remap_dct_cos_precompute_inner_8(self):
+    def test_sv_remap_dct_cos_precompute_inner_8(self):
         """pre-computes a DCT COS table, using the shorter costable
         indices schedule.  turns out, some COS values are repeated
         in each layer of the DCT butterfly.
@@ -657,7 +657,7 @@ class DCTTestCase(FHDLTestCase):
                 print("err", i, err)
                 self.assertTrue(err < 1e-5)
 
-    def tst_sv_remap_fpmadds_ldbrev_idct_8_mode_4(self):
+    def test_sv_remap_fpmadds_ldbrev_idct_8_mode_4(self):
         """>>> lst = [# LOAD bit-reversed with half-swap
                       "svshape 8, 1, 1, 14, 0",
                       "svremap 1, 0, 0, 0, 0, 0, 0",
@@ -668,7 +668,7 @@ class DCTTestCase(FHDLTestCase):
                       "sv.fadds *0, *0, *0",
                       # Inner butterfly, twin +/- MUL-ADD-SUB
                       "svshape 8, 1, 1, 12, 0",
-                      "sv.ffmadds *0, *0, *0, *8"
+                      "sv.ffmadds *0, *8, *0"
                      ]
             runs a full in-place 8-long O(N log2 N) Inverse-DCT, both
             inner and outer butterfly "REMAP" schedules, and using
@@ -684,7 +684,7 @@ class DCTTestCase(FHDLTestCase):
                         "svshape 8, 1, 1, 11, 0",
                         "sv.fadds *0, *0, *0",
                         "svshape 8, 1, 1, 12, 0",
-                        "sv.ffmadds *0, *0, *0, *8"
+                        "sv.ffmadds *0, *8, *0"
                         ])
         lst = list(lst)
 

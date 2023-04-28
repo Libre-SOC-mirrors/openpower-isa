@@ -618,8 +618,8 @@ class Operands:
             # The operands in the assembly syntax are FRT,FRA,FRC,FRB.
             # The real assembly order, however, is FRT,FRA,FRB,FRC.
             # The legacy assembler placed operands in syntax order.
-            "ffmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
-            "ffmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
+            #"ffmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
+            #"ffmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
             #"fdmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
             #"fdmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
         }

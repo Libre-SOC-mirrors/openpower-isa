@@ -137,7 +137,7 @@ class FFTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_fft_4(self):
         """>>> lst = ["svshape 2, 1, 1, 1, 0",
                      "svremap 31, 1, 0, 2, 0, 1, 0",
-                      "sv.ffmadds. *2, *2, *2, *10"
+                      "sv.ffmadds. *2, *10, *2"
                      ]
         this is a cheap (cheating) way to run a single "ffmadds." to
         get at least Rc=1 on sv.ffmadds to be activated. the results
@@ -146,7 +146,7 @@ class FFTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["svshape 2, 1, 1, 1, 0",
                         "svremap 31, 1, 0, 2, 0, 1, 0",
-                        "sv.ffmadds *0, *0, *0, *8"
+                        "sv.ffmadds *0, *8, *0"
                         ])
         lst = list(lst)
 
@@ -190,7 +190,7 @@ class FFTTestCase(FHDLTestCase):
     def test_sv_remap_fpmadds_fft(self):
         """>>> lst = ["svshape 8, 1, 1, 1, 0",
                      "svremap 31, 1, 0, 2, 0, 1, 0",
-                      "sv.ffmadds *2, *2, *2, *10"
+                      "sv.ffmadds *2, *10, *2"
                      ]
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform.
@@ -206,7 +206,7 @@ class FFTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["svshape 8, 1, 1, 1, 0",
                         "svremap 31, 1, 0, 2, 0, 1, 0",
-                        "sv.ffmadds *0, *0, *0, *8"
+                        "sv.ffmadds *0, *8, *0"
                         ])
         lst = list(lst)
 
@@ -252,7 +252,7 @@ class FFTTestCase(FHDLTestCase):
         """>>> lst = SVP64Asm( [
                             "svshape 8, 1, 1, 1, 1",
                              "svremap 31, 1, 0, 2, 0, 1, 0",
-                            "sv.ffmadds *0, *0, *0, *8",
+                            "sv.ffmadds *0, *8, *0",
                             "svstep. 12, 1, 0",
                             "bc 6, 3, -16"
                             ])
@@ -267,7 +267,7 @@ class FFTTestCase(FHDLTestCase):
         lst = SVP64Asm([
             "svshape 8, 1, 1, 1, 1",
             "svremap 31, 1, 0, 2, 0, 1, 0",
-            "sv.ffmadds *0, *0, *0, *8",
+            "sv.ffmadds *0, *8, *0",
             "svstep. 27, 1, 0",
             "bc 6, 3, -16"
         ])
@@ -443,7 +443,7 @@ class FFTTestCase(FHDLTestCase):
                 self.assertTrue(err < 1e-7)
 
     def test_sv_fpmadds_fft(self):
-        """>>> lst = ["sv.ffmadds *2, *2, *2, *10"
+        """>>> lst = ["sv.ffmadds *2, *10, *2"
                         ]
             four in-place vector mul-adds, four in-place vector mul-subs
 
@@ -461,7 +461,7 @@ class FFTTestCase(FHDLTestCase):
                 fnmsubs FRT+vl, FRA, FRC, FRB+vl
 
         """
-        lst = SVP64Asm(["sv.ffmadds *2, *2, *2, *10"
+        lst = SVP64Asm(["sv.ffmadds *2, *10, *2"
                         ])
         lst = list(lst)
 
@@ -748,7 +748,7 @@ class FFTTestCase(FHDLTestCase):
                          "sv.lfs/els *0, 4(0)", 
                          "svshape 8, 1, 1, 1, 0",
                          "svremap 31, 1, 0, 2, 0, 1, 0",
-                         "sv.ffmadds *0, *0, *0, *8"
+                         "sv.ffmadds *0, *8, *0"
 
             runs a full in-place O(N log2 N) butterfly schedule for
             Discrete Fourier Transform, using bit-reversed LD/ST
@@ -758,7 +758,7 @@ class FFTTestCase(FHDLTestCase):
                         "sv.lfs/els *0, 4(0)",
                         "svshape 8, 1, 1, 1, 0",
                         "svremap 31, 1, 0, 2, 0, 1, 0",
-                        "sv.ffmadds *0, *0, *0, *8"
+                        "sv.ffmadds *0, *8, *0"
                         ])
         lst = list(lst)
 
