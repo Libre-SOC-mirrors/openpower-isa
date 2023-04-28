@@ -18,12 +18,14 @@ Pseudo-code:
     res1 <- ROTL64(prod1, XLEN-n)
     res2 <- ROTL64(prod2, XLEN-n)
     m <- MASK(n, (XLEN-1))
-    s1 <- res1[0]
-    s2 <- res2[0]
-    smask1 <- ([s1]*XLEN) & ¬m
-    smask2 <- ([s2]*XLEN) & ¬m
-    RT <- res1 & m | smask1
-    RS <- res2 & m | smask2
+    signbit1 <- res1[0]
+    signbit2 <- res2[0]
+    smask1 <- ([signbit1]*XLEN) & ¬m
+    smask2 <- ([signbit2]*XLEN) & ¬m
+    s64_1 <- [0]*(XLEN-1) || signbit1
+    s64_2 <- [0]*(XLEN-1) || signbit2
+    RT <- (res1 & m | smask1) + s64_1
+    RS <- (res2 & m | smask2) + s64_2
 
 Special Registers Altered:
 
