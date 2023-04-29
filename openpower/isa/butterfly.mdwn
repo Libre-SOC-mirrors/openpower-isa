@@ -13,8 +13,8 @@ Pseudo-code:
     n <- SH
     sum <- (RT) + (RA)
     diff <- (RT) - (RA)
-    prod1 <- MULS(RB, sum)[XLEN:(XLEN*2)-1]
-    prod2 <- MULS(RB, diff)[XLEN:(XLEN*2)-1]
+    prod1 <- MULS(RB, sum)[XLEN:(XLEN*2)-1] + 1
+    prod2 <- MULS(RB, diff)[XLEN:(XLEN*2)-1] + 1
     res1 <- ROTL64(prod1, XLEN-n)
     res2 <- ROTL64(prod2, XLEN-n)
     m <- MASK(n, (XLEN-1))
