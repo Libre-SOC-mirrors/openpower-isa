@@ -41,3 +41,48 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
         e.intregs[2] = 0xffffffffd90f96f9
         e.intregs[3] = 0x00002d41
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_2_maddsubrs(self):
+        isa = SVP64Asm(["maddsubrs 1,2,2,3"])
+        lst = list(isa)
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x100000000
+        initial_regs[2] = 0x000000003
+        initial_regs[3] = 0x10000000
+
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0x40000000c000000;
+        e.intregs[2] = 0x3fffffff4000000;
+        e.intregs[3] = 0x10000000;
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_3_maddsubrs(self):
+        isa = SVP64Asm(["maddsubrs 1,2,16,3"])
+        lst = list(isa)
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x100000000
+        initial_regs[2] = 0x000000003
+        initial_regs[3] = 0x10000000
+
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0x100000003000;
+        e.intregs[2] = 0x0fffffffd000;
+        e.intregs[3] = 0x10000000;
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_3_maddsubrs(self):
+        isa = SVP64Asm(["maddsubrs 1,2,1,3"])
+        lst = list(isa)
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x100000000
+        initial_regs[2] = 0x000000003
+        initial_regs[3] = 0xff0000000
+
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0xf8000017e8000000;
+        e.intregs[2] = 0xf7ffffe818000000;
+        e.intregs[3] = 0xff0000000;
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
