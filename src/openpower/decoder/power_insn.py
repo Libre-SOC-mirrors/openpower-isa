@@ -1148,6 +1148,8 @@ class NonZeroOperand(DynamicOperand):
             value = int(value, 0)
         if not isinstance(value, int):
             raise ValueError("non-integer operand")
+        if value == 0:
+            raise ValueError("non-zero operand")
         value -= 1
         return super().assemble(value=value, insn=insn)
 
