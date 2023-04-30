@@ -619,15 +619,6 @@ class Operands:
             "addpcis": {"D": DOperandDX},
             "fishmv": {"D": DOperandDX},
             "fmvis": {"D": DOperandDX},
-
-            # FIXME: these instructions are broken according to the specs.
-            # The operands in the assembly syntax are FRT,FRA,FRC,FRB.
-            # The real assembly order, however, is FRT,FRA,FRB,FRC.
-            # The legacy assembler placed operands in syntax order.
-            #"ffmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
-            #"ffmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
-            #"fdmadds": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
-            #"fdmadds.": {"FRB": FMAOperandFRB, "FRC": FMAOperandFRC},
         }
         custom_fields = {
             "SVi": NonZeroOperand,
@@ -1369,28 +1360,6 @@ class FPROperand(SimpleRegisterOperand):
         prefix = "" if (style <= Style.SHORT) else "f"
         yield from super().disassemble(prefix=prefix, insn=insn,
             style=style, indent=indent)
-
-
-class RedirectedOperand(DynamicOperand):
-    def __init__(self, record, name, target):
-        self.__target = target
-        return super().__init__(record=record, name=name)
-
-    @cached_property
-    def span(self):
-        print(f"{self.record.name}: {self.name} => "
-              f"{self.__target}", file=_sys.stderr)
-        return self.record.fields[self.__target]
-
-
-class FMAOperandFRB(RedirectedOperand, FPROperand):
-    def __init__(self, record, name):
-        return super().__init__(record=record, name=name, target="FRC")
-
-
-class FMAOperandFRC(RedirectedOperand, FPROperand):
-    def __init__(self, record, name):
-        return super().__init__(record=record, name=name, target="FRB")
 
 
 class FPRPairOperand(FPROperand):
