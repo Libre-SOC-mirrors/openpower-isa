@@ -13,19 +13,32 @@ Pseudo-code:
     n <- SH
     sum <- (RT) + (RA)
     diff <- (RT) - (RA)
-    prod1 <- MULS(RB, sum)[XLEN:(XLEN*2)-1] + 1
-    prod2 <- MULS(RB, diff)[XLEN:(XLEN*2)-1] + 1
-    res1 <- ROTL64(prod1, XLEN-n)
-    res2 <- ROTL64(prod2, XLEN-n)
-    m <- MASK(n, (XLEN-1))
-    signbit1 <- res1[0]
-    signbit2 <- res2[0]
-    smask1 <- ([signbit1]*XLEN) & ¬m
-    smask2 <- ([signbit2]*XLEN) & ¬m
-    s64_1 <- [0]*(XLEN-1) || signbit1
-    s64_2 <- [0]*(XLEN-1) || signbit2
-    RT <- (res1 & m | smask1) + s64_1
-    RS <- (res2 & m | smask2) + s64_2
+    prod1 <- MULS(RB, sum)[XLEN:(XLEN*2)-1]
+    prod2 <- MULS(RB, diff)[XLEN:(XLEN*2)-1]
+    if n = 0 then
+        #round <- EXTS([0]*(XLEN-1) || [1]*1)
+        #prod1 <- ROTL64(prod1, 1)
+        #prod2 <- ROTL64(prod2, 1)
+        #prod1 <- prod1 + round
+        #prod2 <- prod2 + round
+        #res1 <- ROTL64(prod1, XLEN-1)
+        #res2 <- ROTL64(prod2, XLEN-1)
+        #m <- MASK(1, (XLEN-1))
+        RT <- prod1
+        RS <- prod2
+    else
+        round <- EXTS([0]*(XLEN -n -1) || [1]*1 || [0]*(n-1))
+        prod1 <- prod1 + round
+        prod2 <- prod2 + round
+        res1 <- ROTL64(prod1, XLEN-n)
+        res2 <- ROTL64(prod2, XLEN-n)
+        m <- MASK(n, (XLEN-1))
+        signbit1 <- prod1[0]
+        signbit2 <- prod2[0]
+        smask1 <- ([signbit1]*XLEN) & ¬m
+        smask2 <- ([signbit2]*XLEN) & ¬m
+        RT <- (res1 & m | smask1)
+        RS <- (res2 & m | smask2)
 
 Special Registers Altered:
 

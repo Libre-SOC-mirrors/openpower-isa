@@ -17,13 +17,27 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
         lst = list(isa)
 
         initial_regs = [0] * 32
-        initial_regs[1] = 0x00000a70
+        initial_regs[1] = 0x00000a71
         initial_regs[2] = 0x0000e6b8
         initial_regs[3] = 0x00002d41
 
         e = ExpectedState(pc=4)
-        e.intregs[1] = 0x0000aa85
+        e.intregs[1] = 0x0000aa86
         e.intregs[2] = 0xffffffffffff643e
         e.intregs[3] = 0x00002d41
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def case_1_maddsubrs(self):
+        isa = SVP64Asm(["maddsubrs 1,2,0,3"])
+        lst = list(isa)
+
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x00000a71
+        initial_regs[2] = 0x0000e6b8
+        initial_regs[3] = 0x00002d41
+
+        e = ExpectedState(pc=4)
+        e.intregs[1] = 0x2aa17069
+        e.intregs[2] = 0xffffffffd90f96f9
+        e.intregs[3] = 0x00002d41
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
