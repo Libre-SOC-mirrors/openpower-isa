@@ -223,13 +223,14 @@ Special Registers Altered:
 
 A-Form
 
-* ffnmadds FRT,FRA,FRC,FRB (Rc=0)
-* ffnmadds. FRT,FRA,FRC,FRB (Rc=1)
+* ffnmadds FRT,FRA,FRB (Rc=0)
+* ffnmadds. FRT,FRA,FRB (Rc=1)
 
 Pseudo-code:
 
-    FRT <- FPMULADD32(FRA, FRC, FRB, -1, -1)
-    FRS <- FPMULADD32(FRA, FRC, FRB, 1, -1)
+    tmp <- FRT
+    FRT <- FPMULADD32(tmp, FRA, FRB, -1, -1)
+    FRS <- FPMULADD32(tmp, FRA, FRB, 1, -1)
 
 Special Registers Altered:
 
