@@ -21,10 +21,8 @@ Pseudo-code:
         RT <- prod1_lo
         RS <- prod2_lo
     else
-        if n = 1 then
-            round <- [0]*(XLEN -n) || [1]*1
-        else
-            round <- [0]*(XLEN -n) || [1]*1 || [0]*(n-1)
+        round <- [0]*XLEN
+        round[XLEN -n] <- 1
         prod1_lo <- prod1_lo + round
         prod2_lo <- prod2_lo + round
         m <- MASK(n, (XLEN-1))
