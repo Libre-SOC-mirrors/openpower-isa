@@ -4,6 +4,16 @@
 # Funded by NLnet
 #
 # Bugs: https://bugs.libre-soc.org/show_bug.cgi?id=1039
+"""
+    CPU:   Fetch   <- log file
+            |
+           Decode  <- works out read/write regs
+            |
+           Issue   <- checks read-regs, sets write-regs
+            |
+           Execute  -> stages (countdown) clears write-regs
+
+"""
 
 class RegisterWrite(set):
     """RegisterWrite: contains the set of Read-after-Write Hazards.
@@ -91,12 +101,15 @@ class Decode:
 
     def process_instructions(self, stall):
         if stall: return stall
-        insn, writeregs, readregs = self.stages[0] # get current instruction
+        # get current instruction
+        insn, writeregs, readregs = self.stages[0]
         # check that the readregs are all available
         reads_possible = self.cpu.reads_possible(readregs):
         stall = reads_possible != readregs
         # perform the "reads" that are possible in this cycle
         readregs.difference_update(reads_possible)
+        # and "Reserves" the writes
+        self.cpu.expect_write(writeregs)
         return stall
 
 
