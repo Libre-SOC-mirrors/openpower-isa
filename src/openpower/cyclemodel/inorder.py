@@ -35,7 +35,7 @@ class Execute:
         self.add_stage(2, {'insn': insn, 'writes': writeregs})
 
     def tick(self):
-        self.stages.pop(0)
+        self.stages.pop(0) # tick drops anything at time "zero"
 
     def process_instructions(self):
         stall = False                 # stalls if not all writes possible
@@ -53,3 +53,38 @@ class Execute:
         for instruction in instructions:
             instruction['writes'].difference_update(writes_possible)
         return stall
+
+class Decode:
+    def __init__(self, cpu):
+        self.stages = [] # only ever going to be 1 long but hey
+        self.cpu = cpu
+
+    def add_instruction(self, insn):
+        # get the read and write regs
+        writeregs = get_input_regs(insn)
+        readregs = get_output_regs(insn)
+
+
+class CPU:
+    """CPU: contains Fetch, Decode, Issue and Execute pipelines, and regs.
+    Reads "instructions" from a file, starts putting them into a pipeline,
+    and monitors hazards.  first version looks only for register hazards.
+    """
+    def __init__(self):
+        self.regs = RegisterWrite()
+        self.fetch = Fetch(self)
+        self.decode = Decode(self)
+        self.issue = Issue(self)
+        self.exe = Execute(self)
+
+    def process_instructions(self):
+        stall = self.fetch.process_instructions()
+        stall |= self.decode.process_instructions()
+        stall |= self.issue.process_instructions()
+        stall |= self.exe.process_instructions()
+        if not stall:
+            self.fetch.tick()
+            self.decode.tick()
+            self.issue.tick()
+            self.exe.tick()
+
