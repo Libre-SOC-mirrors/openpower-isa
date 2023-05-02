@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # An In-order cycle-accurate model of a Power ISA 3.0 hardware implementation
+# LGPLv3+
+# Funded by NLnet
+#
+# Bugs: https://bugs.libre-soc.org/show_bug.cgi?id=1039
 
 class RegisterWrite(set):
     """RegisterWrite: contains the set of Read-after-Write Hazards.
