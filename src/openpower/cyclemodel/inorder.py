@@ -37,14 +37,13 @@ class Execute:
     def tick(self):
         self.stages.pop(0) # tick drops anything at time "zero"
 
-    def process_instructions(self):
-        stall = False                 # stalls if not all writes possible
+    def process_instructions(self, stall):
         instructions = self.stages[0] # get list of instructions
         to_write = set()              # need to know total writes
         for instruction in instructions:
             to_write.update(instruction['writes'])
         # see if all writes can be done, otherwise stall
-        writes_possible = self.cpu.all_writes_possible(to_write):
+        writes_possible = self.cpu.writes_possible(to_write):
         if writes_possible != to_write:
             stall = True
         # retire the writes that are possible in this cycle (regfile writes)
@@ -54,15 +53,66 @@ class Execute:
             instruction['writes'].difference_update(writes_possible)
         return stall
 
+
+class Fetch:
+    """Fetch: reads the next log-entry and puts it into the queue.
+    """
+    def __init__(self, cpu):
+        self.stages = [None] # only ever going to be 1 long but hey
+        self.cpu = cpu
+
+    def tick(self):
+        self.stages[0] = None
+
+    def process_instructions(self, stall):
+        if stall: return stall
+        insn = self.stages[0] # get current instruction
+        if insn is not None:
+            self.cpu.decode.add_instructions(insn) # pass on instruction
+        # read from log file, write into self.stages[0]
+        # XXX TODO
+        return stall
+
+
 class Decode:
     def __init__(self, cpu):
-        self.stages = [] # only ever going to be 1 long but hey
+        self.stages = [None] # only ever going to be 1 long but hey
         self.cpu = cpu
 
     def add_instruction(self, insn):
         # get the read and write regs
         writeregs = get_input_regs(insn)
         readregs = get_output_regs(insn)
+        assert self.stages[0] is None # must be empty (tick or stall)
+        self.stages[0] = (insn, writeregs, readregs)
+
+    def tick(self):
+        self.stages[0] = None
+
+    def process_instructions(self, stall):
+        if stall: return stall
+        insn, writeregs, readregs = self.stages[0] # get current instruction
+        # check that the readregs are all available
+        reads_possible = self.cpu.reads_possible(readregs):
+        stall = reads_possible != readregs
+        # perform the "reads" that are possible in this cycle
+        readregs.difference_update(reads_possible)
+        return stall
+
+
+class Issue:
+    """Issue phase: if not stalled will place the instruction into execute
+    """
+    def __init__(self, cpu):
+        self.stages = [None] # only ever going to be 1 long but hey
+        self.cpu = cpu
+
+    def tick(self):
+        self.stages[0] = None
+
+    def process_instructions(self, stall):
+        if stall: return
+        self.cpu.execute.add_instructions(self.stages[0])
 
 
 class CPU:
@@ -76,12 +126,33 @@ class CPU:
         self.decode = Decode(self)
         self.issue = Issue(self)
         self.exe = Execute(self)
+        self.stall = False
+
+    def reads_possible(self, regs):
+        # TODO: subdivide this down by GPR FPR CR-field.
+        # currently assumes total of 3 regs are readable at one time
+        possible = set()
+        r = regs.copy()
+        while len(possible) < 3 and len(r) > 0:
+            possible.add(r.pop())
+        return possible
+
+    def writess_possible(self, regs):
+        # TODO: subdivide this down by GPR FPR CR-field.
+        # currently assumes total of 1 reg is possible regardless of what it is
+        possible = set()
+        r = regs.copy()
+        while len(possible) < 1 and len(r) > 0:
+            possible.add(r.pop())
+        return possible
 
     def process_instructions(self):
-        stall = self.fetch.process_instructions()
-        stall |= self.decode.process_instructions()
-        stall |= self.issue.process_instructions()
-        stall |= self.exe.process_instructions()
+        stall = self.stall
+        stall = self.fetch.process_instructions(stall)
+        stall = self.decode.process_instructions(stall)
+        stall = self.issue.process_instructions(stall)
+        stall = self.exe.process_instructions(stall)
+        self.stall = stall
         if not stall:
             self.fetch.tick()
             self.decode.tick()
