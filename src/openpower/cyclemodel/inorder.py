@@ -15,6 +15,7 @@
 
 """
 
+
 class RegisterWrite(set):
     """RegisterWrite: contains the set of Read-after-Write Hazards.
     Anything in this set must be a STALL at Decode phase because the
@@ -23,6 +24,7 @@ class RegisterWrite(set):
     def expect_write(self, regs): self.update(regs)
     def write_expected(self, regs): len(self.intersection(regs)) != 0
     def retire_write(self, regs): self.difference_update(regs)
+
 
 class Execute:
     """Execute Pipeline: keeps a countdown-sorted list of instructions
@@ -85,6 +87,10 @@ class Fetch:
 
 
 class Decode:
+    """Decode: performs a "decode" of the instruction. identifies and records
+    read/write regs. the reads/writes possible should likely not all be here,
+    perhaps split across "Issue"?
+    """
     def __init__(self, cpu):
         self.stages = [None] # only ever going to be 1 long but hey
         self.cpu = cpu
@@ -110,22 +116,31 @@ class Decode:
         readregs.difference_update(reads_possible)
         # and "Reserves" the writes
         self.cpu.expect_write(writeregs)
+        # now pass the instruction on to Issue
+        self.cpu.issue.add_instruction(insn, writeregs)
         return stall
 
 
 class Issue:
-    """Issue phase: if not stalled will place the instruction into execute
+    """Issue phase: if not stalled will place the instruction into execute.
+    TODO: move the reading and writing of regs here.
     """
     def __init__(self, cpu):
         self.stages = [None] # only ever going to be 1 long but hey
         self.cpu = cpu
 
+    def add_instruction(self, insn, writeregs):
+        # get the read and write regs
+        assert self.stages[0] is None # must be empty (tick or stall)
+        self.stages[0] = (insn, writeregs)
+
     def tick(self):
         self.stages[0] = None
 
     def process_instructions(self, stall):
-        if stall: return
+        if stall: return stall
         self.cpu.execute.add_instructions(self.stages[0])
+        return stall
 
 
 class CPU:
