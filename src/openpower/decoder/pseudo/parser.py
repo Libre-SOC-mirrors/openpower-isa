@@ -28,71 +28,6 @@ fregs = ['FRA', 'FRS', 'FRB', 'FRC', 'FRT', 'FRS']
 SPECIAL_HELPERS = {'concat', 'MEM', 'GPR', 'FPR', 'SPR'}
 
 
-def Assign(autoassign, assignname, left, right, iea_mode):
-    names = []
-    print("Assign", autoassign, assignname, left, right)
-    if isinstance(left, ast.Name):
-        # Single assignment on left
-        # XXX when doing IntClass, which will have an "eq" function,
-        # this is how to access it
-        #   eq = ast.Attribute(left, "eq")   # get eq fn
-        #   return ast.Call(eq, [right], []) # now call left.eq(right)
-        return ast.Assign([ast.Name(left.id, ast.Store())], right)
-    elif isinstance(left, ast.Tuple):
-        # List of things - make sure they are Name nodes
-        names = []
-        for child in left.elts:
-            if not isinstance(child, ast.Name):
-                raise SyntaxError("that assignment not supported")
-            names.append(child.id)
-        ass_list = [ast.Name(name, ast.Store()) for name in names]
-        return ast.Assign([ast.Tuple(ass_list)], right)
-    elif isinstance(left, ast.Subscript):
-        ls = left.slice
-        # XXX changing meaning of "undefined" to a function
-        # if (isinstance(ls, ast.Slice) and isinstance(right, ast.Name) and
-        #        right.id == 'undefined'):
-        #    # undefined needs to be copied the exact same slice
-        #    right = ast.Subscript(right, ls, ast.Load())
-        #    return ast.Assign([left], right)
-        res = ast.Assign([left], right)
-        if autoassign and isinstance(ls, ast.Slice):
-            # hack to create a variable pre-declared based on a slice.
-            # dividend[0:32] = (RA)[0:32] will create
-            #       dividend = [0] * 32
-            #       dividend[0:32] = (RA)[0:32]
-            # the declaration makes the slice-assignment "work"
-            lower, upper, step = ls.lower, ls.upper, ls.step
-            print("lower, upper, step", repr(lower), repr(upper), step)
-            # XXX relax constraint that indices on auto-assign have
-            # to be constants x[0:32]
-            # if not isinstance(lower, ast.Constant) or \
-            #   not isinstance(upper, ast.Constant):
-            #    return res
-            qty = ast.BinOp(upper, binary_ops['-'], lower)
-            keywords = [ast.keyword(arg='repeat', value=qty)]
-            l = [ast.Num(0)]
-            right = ast.Call(ast.Name("concat", ast.Load()), l, keywords)
-            declare = ast.Assign([ast.Name(assignname, ast.Store())], right)
-            return [declare, res]
-        return res
-        # XXX HMMM probably not needed...
-        ls = left.slice
-        if isinstance(ls, ast.Slice):
-            lower, upper, step = ls.lower, ls.upper, ls.step
-            print("slice assign", lower, upper, step)
-            if step is None:
-                ls = (lower, upper, None)
-            else:
-                ls = (lower, upper, step)
-            ls = ast.Tuple(ls)
-        return ast.Call(ast.Name("selectassign", ast.Load()),
-                        [left.value, ls, right], [])
-    else:
-        print("Assign fail")
-        raise SyntaxError("Can't do that yet")
-
-
 # I implemented INDENT / DEDENT generation as a post-processing filter
 
 # The original lex token stream contains WS and NEWLINE characters.
@@ -197,7 +132,7 @@ def identify_sint_mul_pattern(p):
     if (not isinstance(p[3], ast.Constant) and  # rhs = Num
         not isinstance(p[3], ast.BinOp) and     # rhs = (XLEN-something)
             (not isinstance(p[3], ast.Name) and  # rhs = {a variable}
-            not isinstance(p[3], ast.Attribute))):   # rhs = XLEN
+             not isinstance(p[3], ast.Attribute))):   # rhs = XLEN
         return False
     if not isinstance(p[1], ast.List):  # lhs is a list
         return False
@@ -501,7 +436,7 @@ class PowerParser:
             # documentation for why we need this
             copy_fn = ast.Name("copy_assign_rhs", ast.Load())
             rhs = ast.Call(copy_fn, (p[3],), [])
-            p[0] = Assign(autoassign, name, p[1], rhs, iea_mode)
+            p[0] = self.Assign(autoassign, name, p[1], rhs, iea_mode)
             if name:
                 self.declared_vars.add(name)
 
@@ -930,6 +865,71 @@ class PowerParser:
     def p_error(self, p):
         # print "Error!", repr(p)
         raise SyntaxError(p)
+
+    def Assign(self, autoassign, assignname, left, right, iea_mode):
+        names = []
+        print("Assign", autoassign, assignname, left, right)
+        if isinstance(left, ast.Name):
+            # Single assignment on left
+            # XXX when doing IntClass, which will have an "eq" function,
+            # this is how to access it
+            #   eq = ast.Attribute(left, "eq")   # get eq fn
+            #   return ast.Call(eq, [right], []) # now call left.eq(right)
+            return ast.Assign([ast.Name(left.id, ast.Store())], right)
+        elif isinstance(left, ast.Tuple):
+            # List of things - make sure they are Name nodes
+            names = []
+            for child in left.elts:
+                if not isinstance(child, ast.Name):
+                    raise SyntaxError("that assignment not supported")
+                names.append(child.id)
+            ass_list = [ast.Name(name, ast.Store()) for name in names]
+            return ast.Assign([ast.Tuple(ass_list)], right)
+        elif isinstance(left, ast.Subscript):
+            ls = left.slice
+            # XXX changing meaning of "undefined" to a function
+            # if (isinstance(ls, ast.Slice) and isinstance(right, ast.Name) and
+            #        right.id == 'undefined'):
+            #    # undefined needs to be copied the exact same slice
+            #    right = ast.Subscript(right, ls, ast.Load())
+            #    return ast.Assign([left], right)
+            res = ast.Assign([left], right)
+            if autoassign and isinstance(ls, ast.Slice):
+                # hack to create a variable pre-declared based on a slice.
+                # dividend[0:32] = (RA)[0:32] will create
+                #       dividend = [0] * 32
+                #       dividend[0:32] = (RA)[0:32]
+                # the declaration makes the slice-assignment "work"
+                lower, upper, step = ls.lower, ls.upper, ls.step
+                print("lower, upper, step", repr(lower), repr(upper), step)
+                # XXX relax constraint that indices on auto-assign have
+                # to be constants x[0:32]
+                # if not isinstance(lower, ast.Constant) or \
+                #   not isinstance(upper, ast.Constant):
+                #    return res
+                qty = ast.BinOp(upper, binary_ops['-'], lower)
+                keywords = [ast.keyword(arg='repeat', value=qty)]
+                l = [ast.Num(0)]
+                right = ast.Call(ast.Name("concat", ast.Load()), l, keywords)
+                declare = ast.Assign(
+                    [ast.Name(assignname, ast.Store())], right)
+                return [declare, res]
+            return res
+            # XXX HMMM probably not needed...
+            ls = left.slice
+            if isinstance(ls, ast.Slice):
+                lower, upper, step = ls.lower, ls.upper, ls.step
+                print("slice assign", lower, upper, step)
+                if step is None:
+                    ls = (lower, upper, None)
+                else:
+                    ls = (lower, upper, step)
+                ls = ast.Tuple(ls)
+            return ast.Call(ast.Name("selectassign", ast.Load()),
+                            [left.value, ls, right], [])
+        else:
+            print("Assign fail")
+            raise SyntaxError("Can't do that yet")
 
 
 _CACHE_DECODER = True
