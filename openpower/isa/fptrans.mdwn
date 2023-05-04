@@ -1442,581 +1442,583 @@ Special Registers Altered:
     VXSNAN VXISI VXIMZ
     CR1          (if Rc=1)
 
-# [DRAFT] Floating MINNUM08 Single
-
-X-Form
-
-* fminnum08s FRT,FRA,FRB (Rc=0)
-* fminnum08s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MINNUM08(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINNUM08
-
-X-Form
-
-* fminnum08 FRT,FRA,FRB (Rc=0)
-* fminnum08. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MINNUM08(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXNUM08 Single
-
-X-Form
-
-* fmaxnum08s FRT,FRA,FRB (Rc=0)
-* fmaxnum08s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MAXNUM08(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXNUM08
-
-X-Form
-
-* fmaxnum08 FRT,FRA,FRB (Rc=0)
-* fmaxnum08. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MAXNUM08(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MIN19 Single
-
-X-Form
-
-* fmin19s FRT,FRA,FRB (Rc=0)
-* fmin19s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MIN19(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MIN19
-
-X-Form
-
-* fmin19 FRT,FRA,FRB (Rc=0)
-* fmin19. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MIN19(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAX19 Single
-
-X-Form
-
-* fmax19s FRT,FRA,FRB (Rc=0)
-* fmax19s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MAX19(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAX19
-
-X-Form
-
-* fmax19 FRT,FRA,FRB (Rc=0)
-* fmax19. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MAX19(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINNUM19 Single
-
-X-Form
-
-* fminnum19s FRT,FRA,FRB (Rc=0)
-* fminnum19s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MINNUM19(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINNUM19
-
-X-Form
-
-* fminnum19 FRT,FRA,FRB (Rc=0)
-* fminnum19. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MINNUM19(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXNUM19 Single
-
-X-Form
-
-* fmaxnum19s FRT,FRA,FRB (Rc=0)
-* fmaxnum19s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MAXNUM19(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXNUM19
-
-X-Form
-
-* fmaxnum19 FRT,FRA,FRB (Rc=0)
-* fmaxnum19. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MAXNUM19(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINC Single
-
-X-Form
-
-* fmincs FRT,FRA,FRB (Rc=0)
-* fmincs. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MINC(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINC
-
-X-Form
-
-* fminc FRT,FRA,FRB (Rc=0)
-* fminc. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MINC(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXC Single
-
-X-Form
-
-* fmaxcs FRT,FRA,FRB (Rc=0)
-* fmaxcs. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MAXC(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXC
-
-X-Form
-
-* fmaxc FRT,FRA,FRB (Rc=0)
-* fmaxc. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MAXC(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINMAGNUM08 Single
-
-X-Form
-
-* fminmagnum08s FRT,FRA,FRB (Rc=0)
-* fminmagnum08s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MINMAGNUM08(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINMAGNUM08
-
-X-Form
-
-* fminmagnum08 FRT,FRA,FRB (Rc=0)
-* fminmagnum08. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MINMAGNUM08(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXMAGNUM08 Single
-
-X-Form
-
-* fmaxmagnum08s FRT,FRA,FRB (Rc=0)
-* fmaxmagnum08s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MAXMAGNUM08(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXMAGNUM08
-
-X-Form
-
-* fmaxmagnum08 FRT,FRA,FRB (Rc=0)
-* fmaxmagnum08. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MAXMAGNUM08(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINMAG19 Single
-
-X-Form
-
-* fminmag19s FRT,FRA,FRB (Rc=0)
-* fminmag19s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MINMAG19(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINMAG19
-
-X-Form
-
-* fminmag19 FRT,FRA,FRB (Rc=0)
-* fminmag19. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MINMAG19(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXMAG19 Single
-
-X-Form
-
-* fmaxmag19s FRT,FRA,FRB (Rc=0)
-* fmaxmag19s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MAXMAG19(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXMAG19
-
-X-Form
-
-* fmaxmag19 FRT,FRA,FRB (Rc=0)
-* fmaxmag19. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MAXMAG19(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINMAGNUM19 Single
-
-X-Form
-
-* fminmagnum19s FRT,FRA,FRB (Rc=0)
-* fminmagnum19s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MINMAGNUM19(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINMAGNUM19
-
-X-Form
-
-* fminmagnum19 FRT,FRA,FRB (Rc=0)
-* fminmagnum19. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MINMAGNUM19(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXMAGNUM19 Single
-
-X-Form
-
-* fmaxmagnum19s FRT,FRA,FRB (Rc=0)
-* fmaxmagnum19s. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MAXMAGNUM19(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXMAGNUM19
-
-X-Form
-
-* fmaxmagnum19 FRT,FRA,FRB (Rc=0)
-* fmaxmagnum19. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MAXMAGNUM19(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINMAGC Single
-
-X-Form
-
-* fminmagcs FRT,FRA,FRB (Rc=0)
-* fminmagcs. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MINMAGC(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MINMAGC
-
-X-Form
-
-* fminmagc FRT,FRA,FRB (Rc=0)
-* fminmagc. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MINMAGC(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXMAGC Single
-
-X-Form
-
-* fmaxmagcs FRT,FRA,FRB (Rc=0)
-* fmaxmagcs. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- DOUBLE(bfp32_MAXMAGC(SINGLE(FRA), SINGLE(FRB)))
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
-
-# [DRAFT] Floating MAXMAGC
-
-X-Form
-
-* fmaxmagc FRT,FRA,FRB (Rc=0)
-* fmaxmagc. FRT,FRA,FRB (Rc=1)
-
-Pseudo-code:
-
-    FRT <- bfp64_MAXMAGC(FRA, FRB)
-
-Special Registers Altered:
-
-    FPRF FR FI
-    FX OX UX XX
-    VXSNAN VXISI VXIMZ
-    CR1          (if Rc=1)
+<!-- fmin*/fmax* need to be replaced with fminmax -->
+<!-- commented for now to make encoding space for fmv/cvt -->
+<!-- # [DRAFT] Floating MINNUM08 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminnum08s FRT,FRA,FRB (Rc=0) -->
+<!-- * fminnum08s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MINNUM08(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINNUM08 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminnum08 FRT,FRA,FRB (Rc=0) -->
+<!-- * fminnum08. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MINNUM08(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXNUM08 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxnum08s FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxnum08s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MAXNUM08(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXNUM08 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxnum08 FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxnum08. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MAXNUM08(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MIN19 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmin19s FRT,FRA,FRB (Rc=0) -->
+<!-- * fmin19s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MIN19(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MIN19 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmin19 FRT,FRA,FRB (Rc=0) -->
+<!-- * fmin19. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MIN19(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAX19 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmax19s FRT,FRA,FRB (Rc=0) -->
+<!-- * fmax19s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MAX19(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAX19 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmax19 FRT,FRA,FRB (Rc=0) -->
+<!-- * fmax19. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MAX19(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINNUM19 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminnum19s FRT,FRA,FRB (Rc=0) -->
+<!-- * fminnum19s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MINNUM19(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINNUM19 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminnum19 FRT,FRA,FRB (Rc=0) -->
+<!-- * fminnum19. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MINNUM19(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXNUM19 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxnum19s FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxnum19s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MAXNUM19(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXNUM19 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxnum19 FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxnum19. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MAXNUM19(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINC Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmincs FRT,FRA,FRB (Rc=0) -->
+<!-- * fmincs. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MINC(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINC -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminc FRT,FRA,FRB (Rc=0) -->
+<!-- * fminc. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MINC(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXC Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxcs FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxcs. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MAXC(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXC -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxc FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxc. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MAXC(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINMAGNUM08 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminmagnum08s FRT,FRA,FRB (Rc=0) -->
+<!-- * fminmagnum08s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MINMAGNUM08(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINMAGNUM08 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminmagnum08 FRT,FRA,FRB (Rc=0) -->
+<!-- * fminmagnum08. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MINMAGNUM08(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXMAGNUM08 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxmagnum08s FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxmagnum08s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MAXMAGNUM08(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXMAGNUM08 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxmagnum08 FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxmagnum08. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MAXMAGNUM08(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINMAG19 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminmag19s FRT,FRA,FRB (Rc=0) -->
+<!-- * fminmag19s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MINMAG19(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINMAG19 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminmag19 FRT,FRA,FRB (Rc=0) -->
+<!-- * fminmag19. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MINMAG19(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXMAG19 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxmag19s FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxmag19s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MAXMAG19(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXMAG19 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxmag19 FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxmag19. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MAXMAG19(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINMAGNUM19 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminmagnum19s FRT,FRA,FRB (Rc=0) -->
+<!-- * fminmagnum19s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MINMAGNUM19(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINMAGNUM19 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminmagnum19 FRT,FRA,FRB (Rc=0) -->
+<!-- * fminmagnum19. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MINMAGNUM19(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXMAGNUM19 Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxmagnum19s FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxmagnum19s. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MAXMAGNUM19(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXMAGNUM19 -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxmagnum19 FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxmagnum19. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MAXMAGNUM19(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINMAGC Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminmagcs FRT,FRA,FRB (Rc=0) -->
+<!-- * fminmagcs. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MINMAGC(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MINMAGC -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fminmagc FRT,FRA,FRB (Rc=0) -->
+<!-- * fminmagc. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MINMAGC(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXMAGC Single -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxmagcs FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxmagcs. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- DOUBLE(bfp32_MAXMAGC(SINGLE(FRA), SINGLE(FRB))) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
+<!--  -->
+<!-- # [DRAFT] Floating MAXMAGC -->
+<!--  -->
+<!-- X-Form -->
+<!--  -->
+<!-- * fmaxmagc FRT,FRA,FRB (Rc=0) -->
+<!-- * fmaxmagc. FRT,FRA,FRB (Rc=1) -->
+<!--  -->
+<!-- Pseudo-code: -->
+<!--  -->
+<!--     FRT <- bfp64_MAXMAGC(FRA, FRB) -->
+<!--  -->
+<!-- Special Registers Altered: -->
+<!--  -->
+<!--     FPRF FR FI -->
+<!--     FX OX UX XX -->
+<!--     VXSNAN VXISI VXIMZ -->
+<!--     CR1          (if Rc=1) -->
 
 # [DRAFT] Floating MOD Single
 
