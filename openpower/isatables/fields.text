@@ -201,11 +201,11 @@
     | PO   |  RT |   RA |  XBI |   XO |Rc |
 
 # 1.6.16 XO-FORM
-    |0     |6   |11   |16     |21 |22    |31  |
-    | PO   |  RT|   RA|   RB  |OE |   XO |Rc  |
-    | PO   |  RT|   RA|   RB  |  /|   XO |Rc  |
-    | PO   |  RT|   RA|   RB  |  /|   XO |  / |
-    | PO   |  RT|   RA|   /// |OE |   XO |Rc  |
+    |0   |6   |11  |13   |16   |21  |22  |31  |
+    | PO | RT | RA       | RB  | OE | XO | Rc |
+    | PO | RT | RA       | RB  |  / | XO | Rc |
+    | PO | RT | RA       | RB  |  / | XO | /  |
+    | PO | RT | RA       | /// | OE | XO | Rc |
 
 # 1.6.17 A-FORM
     |0     |6     |11      |16     |21      |26    |31 |
