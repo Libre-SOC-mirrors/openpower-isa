@@ -617,6 +617,11 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
             res['3'] = 's:RT'  # RT: Rsrc3_EXTRA2
+        elif regs == ['RA', 'RB', 'RT', 'RT', '', '']:  # maddsubrs
+            res['0'] = 'd:RT'  # RT: Rdest1_EXTRA2
+            res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
+            res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
+            res['3'] = 's:RT'  # RT: Rsrc3_EXTRA2
         elif insn_name == 'isel':
             res['0'] = 'd:RT'  # RT: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
