@@ -802,7 +802,7 @@ class DecoderTestCase(FHDLTestCase):
         """
         isa = SVP64Asm(["setvl 0, 0, 2, 0, 1, 1",
                         'sv.add *1, *5, *9',
-                        "setvl 3, 0, 0, 0, 0, 0",
+                        "setvl 3, 0, 1, 0, 0, 0",
                         ])
         lst = list(isa)
         print("listing", lst)
@@ -832,7 +832,7 @@ class DecoderTestCase(FHDLTestCase):
                         "setvl. 0, 0, 1, 1, 0, 0",
                         'sv.add *1, *5, *9',
                         "svstep. 3, 1, 0", # svstep (Rc=1)
-                        "setvl 4, 0, 0, 0, 0, 0", # getvl
+                        "setvl 4, 0, 1, 0, 0, 0", # getvl
                         ])
         sequence is as follows:
         * setvl sets VL=2 but also "Vertical First" mode.
@@ -849,7 +849,7 @@ class DecoderTestCase(FHDLTestCase):
                         "svstep. 0, 1, 0",  # svstep (Rc=1)
                         'sv.add *1, *5, *9',
                         "svstep. 3, 1, 0",  # svstep (Rc=1)
-                        "setvl 4, 0, 0, 0, 0, 0",  # getvl
+                        "setvl 4, 0, 1, 0, 0, 0",  # getvl
                         ])
         lst = list(lst)
 

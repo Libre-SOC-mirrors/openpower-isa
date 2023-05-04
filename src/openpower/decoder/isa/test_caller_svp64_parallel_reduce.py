@@ -24,13 +24,13 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_remap1(self):
-        """>>> lst = ["svshape 7, 0, 0, 7, 0",
+        """>>> lst = ["svshape 7, 1, 1, 7, 0",
                         "svremap 31, 0, 1, 0, 0, 0, 0",
                        "sv.add *0, *8, *16"
                         ]
                 REMAP add RT,RA,RB
         """
-        lst = SVP64Asm(["svshape 7, 0, 0, 7, 0",
+        lst = SVP64Asm(["svshape 7, 1, 1, 7, 0",
                         "svremap 31, 0, 1, 0, 0, 0, 0",
                        "sv.add *0, *0, *0"
                         ])
@@ -63,14 +63,14 @@ class DecoderTestCase(FHDLTestCase):
                 self.assertEqual(v, expected[i])
 
     def test_sv_remap2(self):
-        """>>> lst = ["svshape 7, 0, 0, 7, 0",
+        """>>> lst = ["svshape 7, 1, 1, 7, 0",
                         "svremap 31, 1, 0, 0, 0, 0, 0", # different order
                        "sv.subf *0, *8, *16"
                         ]
                 REMAP sv.subf RT,RA,RB - inverted application of RA/RB
                                          left/right due to subf
         """
-        lst = SVP64Asm(["svshape 7, 0, 0, 7, 0",
+        lst = SVP64Asm(["svshape 7, 1, 1, 7, 0",
                         "svremap 31, 1, 0, 0, 0, 0, 0",
                        "sv.subf *0, *0, *0"
                         ])
@@ -104,14 +104,14 @@ class DecoderTestCase(FHDLTestCase):
                                  expected[i] & 0xffffffffffffffff)
 
     def test_sv_remap3(self):
-        """>>> lst = ["svshape 7, 0, 0, 7, 0",
+        """>>> lst = ["svshape 7, 1, 1, 7, 0",
                         "svremap 31, 0, 1, 0, 0, 0, 0",
                        "sv.fcpsgn *0, *8, *16"
                         ]
                 REMAP sv.subf RT,RA,RB - inverted application of RA/RB
                                          left/right due to subf
         """
-        lst = SVP64Asm(["svshape 7, 0, 0, 7, 0",
+        lst = SVP64Asm(["svshape 7, 1, 1, 7, 0",
                         "svremap 31, 0, 1, 0, 0, 0, 0",
                        "sv.fcpsgn *0, *0, *0"
                         ])

@@ -206,7 +206,7 @@ class DecoderTestCase(FHDLTestCase):
                         "sv.addi/m=1<<r3 12, *16, 0",  # key item to 12
                         "sv.cmp/ff=lt/m=~r10 *0, 1, *16, 12",
                         "sv.addi/m=ge *16, *17, 0",  # move down
-                        "setvl 3, 0, 0, 0, 0, 0",  # get VL into r3
+                        "setvl 3, 0, 1, 0, 0, 0",  # get VL into r3
                         "addi 3, 3, -1",
                         "setvl 13, 0, 10, 0, 1, 1",  # put VL back from CTR
                         "sv.addi/m=1<<r3 *16, 12, 0",  # restore key
