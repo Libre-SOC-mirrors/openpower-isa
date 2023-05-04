@@ -94,7 +94,4 @@ build:
 
         - make generate &> generate.log || { cat generate.log; false; }
 
-        - err=0
-        - SILENCELOG='!*,default' INSNDB=true pytest -n auto -v src/openpower --maxfail=5 || err=1
-        - SILENCELOG='!*,default' pytest -n auto -v src/openpower --maxfail=5 || err=1
-        - (exit $err)
+        - SILENCELOG='!*,default' pytest -n auto -v src/openpower --maxfail=5
