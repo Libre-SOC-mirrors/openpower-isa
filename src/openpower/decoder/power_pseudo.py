@@ -258,21 +258,21 @@ def get_reg_hex(reg):
     return hex(reg.value)
 
 
-def convert_to_pure_python(pcode, helper=False):
+def convert_to_pure_python(pcode, helper=False, filename="string"):
 
     gsc = GardenSnakeCompiler(form=None, incl_carry=False, helper=helper)
 
-    tree = gsc.compile(pcode, mode="exec", filename="string")
+    tree = gsc.compile(pcode, mode="exec", filename=filename)
     tree = ast.fix_missing_locations(tree)
     return astor.to_source(tree)
 
 
-def convert_to_python(pcode, form, incl_carry, helper=False):
+def convert_to_python(pcode, form, incl_carry, helper=False, filename="string"):
 
     print("form", form)
     gsc = GardenSnakeCompiler(form=form, incl_carry=incl_carry, helper=helper)
 
-    tree = gsc.compile(pcode, mode="exec", filename="string")
+    tree = gsc.compile(pcode, mode="exec", filename=filename)
     tree = ast.fix_missing_locations(tree)
     regsused = {'read_regs': gsc.parser.read_regs,
                 'write_regs': gsc.parser.write_regs,

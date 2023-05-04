@@ -12,6 +12,14 @@ from copy import copy
 from ply import lex
 from openpower.decoder.selectable_int import SelectableInt
 
+
+def raise_syntax_error(msg, filename, lineno, lexpos, input_text):
+    line_start = input_text.rfind('\n', 0, lexpos) + 1
+    line_end = input_text.find('\n', line_start)
+    col = (lexpos - line_start) + 1
+    raise SyntaxError(str(msg), (filename, lineno, col,
+                                 input_text[line_start:line_end]))
+
 # I implemented INDENT / DEDENT generation as a post-processing filter
 
 # The original lex token stream contains WS and NEWLINE characters.
@@ -332,6 +340,7 @@ class PowerLexer:
     # Build the lexer
     def build(self, **kwargs):
         self.lexer = lex.lex(module=self, **kwargs)
+        self.filename = None
 
     def t_HEX(self, t):
         r"""0x[0-9a-fA-F_]+"""
@@ -454,7 +463,9 @@ class PowerLexer:
     #t_ignore = " "
 
     def t_error(self, t):
-        raise SyntaxError("Unknown symbol %r" % (t.value[0],))
+        raise_syntax_error("Unknown symbol %r" % (t.value[0],),
+                           self.filename, t.lexer.lineno,
+                           t.lexer.lexpos, t.lexer.lexdata)
         print("Skipping", repr(t.value[0]))
         t.lexer.skip(1)
 

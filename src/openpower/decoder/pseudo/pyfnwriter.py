@@ -4,7 +4,7 @@ import os
 import sys
 import shutil
 import subprocess
-from openpower.decoder.pseudo.functionreader import ISAFunctions
+from openpower.decoder.pseudo.functionreader import ISAFunctions, get_isafn_dir
 from openpower.decoder.power_pseudo import convert_to_pure_python
 
 
@@ -50,7 +50,8 @@ class PyISAFnWriter(ISAFunctions):
             if phash in sourcecache:
                 pycode = sourcecache[phash]
             else:
-                pycode = convert_to_pure_python(pcode, True)
+                filename = os.path.join(get_isafn_dir(), pagename + ".mdwn")
+                pycode = convert_to_pure_python(pcode, True, filename=filename)
                 sourcecache[phash] = pycode
             f.write(pycode)
 

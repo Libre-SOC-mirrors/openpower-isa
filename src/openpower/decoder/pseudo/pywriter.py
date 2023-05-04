@@ -4,7 +4,7 @@ import os
 import sys
 import shutil
 import subprocess
-from openpower.decoder.pseudo.pagereader import ISA
+from openpower.decoder.pseudo.pagereader import ISA, get_isa_dir
 from openpower.decoder.power_pseudo import convert_to_python
 from openpower.decoder.orderedset import OrderedSet
 from openpower.decoder.isa.caller import create_args
@@ -77,7 +77,9 @@ class PyISAWriter(ISA):
                 pcode = '\n'.join(d.pcode) + '\n'
                 print(pcode)
                 incl_carry = pagename == 'fixedshift'
-                pycode, rused = convert_to_python(pcode, d.form, incl_carry)
+                filename = os.path.join(get_isa_dir(), pagename + ".mdwn")
+                pycode, rused = convert_to_python(pcode, d.form, incl_carry,
+                                                  filename=filename)
                 # create list of arguments to call
                 regs = list(rused['read_regs']) + list(rused['uninit_regs'])
                 regs += list(rused['special_regs'])

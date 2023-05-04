@@ -14,7 +14,7 @@ import astor
 from copy import deepcopy
 
 from openpower.decoder.power_decoder import create_pdecode
-from openpower.decoder.pseudo.lexer import IndentLexer
+from openpower.decoder.pseudo.lexer import IndentLexer, raise_syntax_error
 from openpower.decoder.orderedset import OrderedSet
 
 # I use the Python AST
@@ -254,6 +254,8 @@ class PowerParser:
         self.include_ca_in_write = include_carry_in_write
         self.helper = helper
         self.form = form
+        self.filename = None
+        self.input_text = None
         self.reset()
 
     # The grammar comments come from Python's Grammar/Grammar file
@@ -436,7 +438,7 @@ class PowerParser:
             # documentation for why we need this
             copy_fn = ast.Name("copy_assign_rhs", ast.Load())
             rhs = ast.Call(copy_fn, (p[3],), [])
-            p[0] = self.Assign(autoassign, name, p[1], rhs, iea_mode)
+            p[0] = self.Assign(autoassign, name, p[1], rhs, iea_mode, p[2])
             if name:
                 self.declared_vars.add(name)
 
@@ -864,9 +866,10 @@ class PowerParser:
 
     def p_error(self, p):
         # print "Error!", repr(p)
-        raise SyntaxError(p)
+        raise_syntax_error(str(p), self.filename, p.lineno, p.lexpos,
+                           self.input_text)
 
-    def Assign(self, autoassign, assignname, left, right, iea_mode):
+    def Assign(self, autoassign, assignname, left, right, iea_mode, eq_tok):
         names = []
         print("Assign", autoassign, assignname, left, right)
         if isinstance(left, ast.Name):
@@ -881,7 +884,9 @@ class PowerParser:
             names = []
             for child in left.elts:
                 if not isinstance(child, ast.Name):
-                    raise SyntaxError("that assignment not supported")
+                    raise_syntax_error(
+                        "that assignment not supported", self.filename,
+                        eq_tok.lineno, eq_tok.lexpos, self.input_text)
                 names.append(child.id)
             ass_list = [ast.Name(name, ast.Store()) for name in names]
             return ast.Assign([ast.Tuple(ass_list)], right)
@@ -929,7 +934,8 @@ class PowerParser:
                             [left.value, ls, right], [])
         else:
             print("Assign fail")
-            raise SyntaxError("Can't do that yet")
+            raise_syntax_error("Can't do that yet", self.filename,
+                               eq_tok.lineno, eq_tok.lexpos, self.input_text)
 
 
 _CACHE_DECODER = True
@@ -958,6 +964,7 @@ class GardenSnakeParser(PowerParser):
 
     def parse(self, code):
         self.reset()
+        self.lexer.filename = self.filename
         result = self.parser.parse(code, lexer=self.lexer, debug=self.debug)
         if self.helper:
             result = [ast.ClassDef("ISACallerFnHelper", [
@@ -988,6 +995,10 @@ class GardenSnakeCompiler(object):
                                             incl_carry=incl_carry, helper=helper)
 
     def compile(self, code, mode="exec", filename="<string>"):
+        if filename in ["string", "<string>"]:
+            raise ValueError("missing filename")
+        self.parser.filename = filename
+        self.parser.input_text = code
         tree = self.parser.parse(code)
         print("snake")
         pprint(tree)

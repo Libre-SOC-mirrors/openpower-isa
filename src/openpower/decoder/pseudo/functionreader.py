@@ -54,7 +54,7 @@ class ISAFunctions:
             # so please put ending of comments on one line:
             # <!-- line 1 comment -->
             # <!-- line 2 comment -->
-            if l.startswith('<!--'):
+            if l.strip().startswith('<!--'):
                 # print ("skipping comment", l)
                 l = lines.pop(0).rstrip()  # get next line
                 prefix_lines += 1
@@ -92,7 +92,7 @@ class ISAFunctions:
                 if len(l) == 0:
                     li.append(l)
                     continue
-                if l.startswith('<!--'):
+                if l.strip().startswith('<!--'):
                     li.append("")
                     continue
                 assert l.startswith('    '), ("4spcs not found in line %s" % l)

@@ -218,6 +218,7 @@ class ISA:
         # all sections are mandatory so no need for a full LALR parser.
 
         l = lines.pop(0).rstrip()  # get first line
+        prefix_lines = 0
         while lines:
             if self.verbose:
                 print(l)
@@ -229,11 +230,13 @@ class ISA:
             if l.strip().startswith('<!--'):
                 # print ("skipping comment", l)
                 l = lines.pop(0).rstrip()  # get next line
+                prefix_lines += 1
                 continue
 
             # Ignore blank lines before the first #
             if len(l) == 0:
                 l = lines.pop(0).rstrip()  # get next line
+                prefix_lines += 1
                 continue
 
             # expect get heading
@@ -242,23 +245,27 @@ class ISA:
 
             # whitespace expected
             l = lines.pop(0).strip()
+            prefix_lines += 1
             if self.verbose:
                 print(repr(l))
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # Form expected
             l = lines.pop(0).strip()
+            prefix_lines += 1
             assert l.endswith('-Form'), ("line with -Form expected %s" % l)
             d['form'] = l.split('-')[0]
 
             # whitespace expected
             l = lines.pop(0).strip()
+            prefix_lines += 1
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # get list of opcodes
             opcodes = []
             while True:
                 l = lines.pop(0).strip()
+                prefix_lines += 1
                 if len(l) == 0:
                     break
                 assert l.startswith('*'), ("* not found in line %s" % l)
@@ -285,22 +292,31 @@ class ISA:
 
             # "Pseudocode" expected
             l = lines.pop(0).rstrip()
+            prefix_lines += 1
             assert l.startswith("Pseudo-code:"), ("pseudocode found %s" % l)
 
             # whitespace expected
             l = lines.pop(0).strip()
+            prefix_lines += 1
             if self.verbose:
                 print(repr(l))
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # get pseudocode
-            li = []
+
+            # fix parser line numbers by prepending the right number of
+            # blank lines to the parser input
+            li = [""] * prefix_lines
+            li += [l[4:]]  # first line detected with 4-space
             while True:
                 l = lines.pop(0).rstrip()
-                if l.strip().startswith('<!--'):
-                    continue
+                prefix_lines += 1
                 if len(l) == 0:
+                    li.append(l)
                     break
+                if l.strip().startswith('<!--'):
+                    li.append("")
+                    continue
                 assert l.startswith('    '), ("4spcs not found in line %s" % l)
                 l = l[4:]  # lose 4 spaces
                 li.append(l)
@@ -308,16 +324,19 @@ class ISA:
 
             # "Special Registers Altered" expected
             l = lines.pop(0).rstrip()
+            prefix_lines += 1
             assert l.startswith("Special"), ("special not found %s" % l)
 
             # whitespace expected
             l = lines.pop(0).strip()
+            prefix_lines += 1
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # get special regs
             li = []
             while lines:
                 l = lines.pop(0).rstrip()
+                prefix_lines += 1
                 if len(l) == 0:
                     break
                 assert l.startswith('    '), ("4spcs not found in line %s" % l)
@@ -332,6 +351,7 @@ class ISA:
             # expect and drop whitespace and comments
             while lines:
                 l = lines.pop(0).rstrip()
+                prefix_lines += 1
                 if len(l) != 0 and not l.strip().startswith('<!--'):
                     break
 
