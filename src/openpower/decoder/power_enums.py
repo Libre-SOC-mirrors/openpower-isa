@@ -756,7 +756,9 @@ _insns = [
     # "lwzbr", "lwzubr", # more load word SVP64 bit-reversed
     "maddedu", "maddedus",
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
-    "maddsubrs",         # Integer DCT Butterfly
+    "maddsubrs",         # Integer DCT Butterfly Add Sub and Round Shift
+    "maddrs",            # Integer DCT Butterfly Add and Accumulate and Round Shift
+    "msubrs",            # Integer DCT Butterfly Subtract From and Round Shift
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
     "minmax",                     # AV bitmanip
@@ -919,6 +921,8 @@ class MicrOp(Enum):
     OP_DSHR = 102
     OP_SHADD = 103
     OP_MADDSUBRS = 104
+    OP_MADDRS = 105
+    OP_MSUBRS = 106
 
 
 class In1Sel(Enum):

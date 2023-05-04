@@ -38,3 +38,59 @@ Pseudo-code:
 Special Registers Altered:
 
     None
+
+# [DRAFT] Integer Butterfly Multiply Add and Accumulate FFT/DCT
+
+A-Form
+
+* maddrs  RT,RA,SH,RB
+
+Pseudo-code:
+
+    n <- SH
+    prod <- MULS(RB, RA)
+    prod_lo <- prod[XLEN:(XLEN*2)-1]
+    if n = 0 then
+        RT <- (RT) + prod_lo
+    else
+        res <- (RT) + prod_lo
+        round <- [0]*XLEN
+        round[XLEN -n] <- 1
+        res <- res + round
+        signbit <- res[0]
+        m <- MASK(n, (XLEN-1))
+        res <- ROTL64(res, XLEN-n) & m
+        smask <- ([signbit]*XLEN) & ¬m
+        RT <- (res | smask)
+
+Special Registers Altered:
+
+    None
+
+# [DRAFT] Integer Butterfly Multiply Subtract From FFT/DCT 
+
+A-Form
+
+* msubrs  RT,RA,SH,RB
+
+Pseudo-code:
+
+    n <- SH
+    prod <- MULS(RB, RA)
+    prod_lo <- prod[XLEN:(XLEN*2)-1]
+    if n = 0 then
+        RT <- (RT) - prod_lo
+    else
+        res <- (RT) - prod_lo
+        round <- [0]*XLEN
+        round[XLEN -n] <- 1
+        res <- res + round
+        signbit <- res[0]
+        m <- MASK(n, (XLEN-1))
+        res <- ROTL64(res, XLEN-n) & m
+        smask <- ([signbit]*XLEN) & ¬m
+        RT <- (res | smask)
+
+Special Registers Altered:
+
+    None

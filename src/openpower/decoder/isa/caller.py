@@ -1920,7 +1920,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        "fmvtg", "fmvtgs",
                        "fcvtfg", "fcvtfgs",
                        "fmvfg", "fmvfgs",
-                       "maddsubrs"
+                       "maddsubrs", "maddrs", "msubrs"
                        ]:
             illegal = False
             ins_name = dotstrp

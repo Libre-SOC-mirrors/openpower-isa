@@ -1082,6 +1082,7 @@ class PowerDecodeSubset(Elaboratable):
             # implicit RS for major 22, integer maddsubrs
             with m.If((major == 22) & xo6.matches(
                     '-01000',  # maddsubrs
+                    '-01001',  # maddrs
                 )):
                 comb += self.implicit_rs.eq(1)
                 comb += self.extend_rb_maxvl.eq(1) # extend RB
