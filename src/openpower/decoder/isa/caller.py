@@ -1916,6 +1916,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        'fmvis', 'fishmv', 'pcdec', "maddedu", "divmod2du",
                        "dsld", "dsrd", "maddedus",
                        "shadd", "shaddw", "shadduw",
+                       "fcvttg", "fcvttgo", "fcvttgs", "fcvttgso",
+                       "fmvtg", "fmvtgs",
+                       "fcvtfg", "fcvtfgs",
+                       "fmvfg", "fmvfgs",
                        ]:
             illegal = False
             ins_name = dotstrp

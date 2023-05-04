@@ -76,3 +76,63 @@ Pseudo-code:
 Special Registers Altered:
 
     CR1          (if Rc=1)
+
+# [DRAFT] Floating Move To GPR
+
+X-Form
+
+* fmvtg RT,FRB (Rc=0)
+* fmvtg. RT,FRB (Rc=1)
+
+Pseudo-code:
+
+    RT <- (FRB)
+
+Special Registers Altered:
+
+    CR0          (if Rc=1)
+
+# [DRAFT] Floating Move To GPR Single
+
+X-Form
+
+* fmvtgs RT,FRB (Rc=0)
+* fmvtgs. RT,FRB (Rc=1)
+
+Pseudo-code:
+
+    RT <- [0] * (XLEN/2) || SINGLE((FRB))  # SINGLE since that's what stfs uses
+
+Special Registers Altered:
+
+    CR0          (if Rc=1)
+
+# [DRAFT] Floating Move From GPR
+
+X-Form
+
+* fmvfg FRT,RB (Rc=0)
+* fmvfg. FRT,RB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- (RB)
+
+Special Registers Altered:
+
+    CR1          (if Rc=1)
+
+# [DRAFT] Floating Move From GPR Single
+
+X-Form
+
+* fmvfgs FRT,RB (Rc=0)
+* fmvfgs. FRT,RB (Rc=1)
+
+Pseudo-code:
+
+    FRT <- DOUBLE((RB)[XLEN/2:XLEN-1])  # DOUBLE since that's what lfs uses
+
+Special Registers Altered:
+
+    CR1          (if Rc=1)
