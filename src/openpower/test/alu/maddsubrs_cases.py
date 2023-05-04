@@ -94,8 +94,7 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
 
     def case_0_maddrs(self):
         isa = SVP64Asm(["maddsubrs 1,10,0,11",
-                        "maddrs 1,10,0,12",
-                        "msubrs 2,10,0,12"])
+                        "maddrs 1,10,0,12"])
         lst = list(isa)
 
         initial_regs = [0] * 32
@@ -104,7 +103,7 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x00002d41
         initial_regs[12] = 0x00000d00
 
-        e = ExpectedState(pc=12)
+        e = ExpectedState(pc=8)
         e.intregs[1] = 0x3658c869
         e.intregs[2] = 0xffffffffcd583ef9
         e.intregs[10] = 0x0000e6b8
@@ -114,8 +113,7 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
 
     def case_1_maddrs(self):
         isa = SVP64Asm(["maddsubrs 1,10,0,11",
-                        "maddrs 1,10,14,12",
-                        "msubrs 2,10,14,12"])
+                        "maddrs 1,10,14,12"])
         lst = list(isa)
 
         initial_regs = [0] * 32
@@ -124,7 +122,7 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x00002d41
         initial_regs[12] = 0x00000d00
 
-        e = ExpectedState(pc=12)
+        e = ExpectedState(pc=8)
         e.intregs[1] = 0x0000d963
         e.intregs[2] = 0xffffffffffff3561
         e.intregs[10] = 0x0000e6b8
