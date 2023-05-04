@@ -2567,6 +2567,7 @@ class SVP64FPTransCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
+    @skip_case("need to be updated to use fminmax")
     def case_sv_fminc(self):
         lst = list(SVP64Asm(["sv.fminc *32,*64,*96"]))
         gprs = [0] * 128
@@ -2614,6 +2615,7 @@ class SVP64FPTransCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
+    @skip_case("need to be updated to use fminmax")
     def case_sv_fmaxmag19(self):
         lst = list(SVP64Asm(["sv.fmaxmag19 *32,*64,*96"]))
         gprs = [0] * 128
