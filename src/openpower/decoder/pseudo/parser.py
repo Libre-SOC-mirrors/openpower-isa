@@ -786,8 +786,11 @@ class PowerParser:
         p[0] = p[1]
 
     def p_trailer_arglist(self, p):
-        "trailer_arglist : LPAR arglist RPAR"
-        p[0] = ("CALL", p[2])
+        """trailer_arglist : LPAR arglist RPAR
+                           | LPAR RPAR
+        """
+        args = [] if len(p) == 3 else p[2]
+        p[0] = ("CALL", args)
 
     def p_trailer_subscript(self, p):
         "trailer_subscript : LBRACK subscript RBRACK"
