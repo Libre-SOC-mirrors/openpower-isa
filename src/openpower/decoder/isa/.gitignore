@@ -3,6 +3,7 @@
 /bcd.py
 /bitmanip.py
 /branch.py
+/butterfly.py
 /comparefixed.py
 /condition.py
 /fixedarith.py

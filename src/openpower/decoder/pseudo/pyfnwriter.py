@@ -5,7 +5,8 @@ import sys
 import shutil
 import subprocess
 from openpower.decoder.pseudo.functionreader import ISAFunctions, get_isafn_dir
-from openpower.decoder.power_pseudo import convert_to_pure_python
+from openpower.decoder.power_pseudo import (convert_to_pure_python,
+                                            check_in_gitignore)
 
 
 def get_isafn_src_dir():
@@ -40,6 +41,7 @@ class PyISAFnWriter(ISAFunctions):
         os.makedirs(isadir, exist_ok=True)
         fname = os.path.join(isadir, "%s.py" % pagename)
         sourcecache = dict()
+        check_in_gitignore(fname)
         with open(fname, "w") as f:
             f.write(header % function['desc'])  # write out header
             # go through all instructions

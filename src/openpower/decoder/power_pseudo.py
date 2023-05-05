@@ -8,7 +8,7 @@
 #             30 August 2006 / Cape Town, South Africa
 
 # Modifications for inclusion in PLY distribution
-import sys
+import os
 from pprint import pprint
 from copy import copy
 from ply import lex, yacc
@@ -280,6 +280,22 @@ def convert_to_python(pcode, form, incl_carry, helper=False, filename="string"):
                 'special_regs': gsc.parser.special_regs,
                 'op_fields': gsc.parser.op_fields}
     return astor.to_source(tree), regsused
+
+
+def check_in_gitignore(output_file):
+    gitignore_file = os.path.join(os.path.dirname(output_file), ".gitignore")
+    base_name = os.path.basename(output_file)
+    with open(gitignore_file, "r") as f:
+        for l in f.readlines():
+            l = l.strip()
+            if "/" + base_name == l:
+                return
+            if l == "*.py":
+                if base_name.endswith(".py"):
+                    return
+    raise ValueError(f"generated output file not in .gitignore:\n"
+                     f"output file: {output_file}\n"
+                     f".gitignore file: {gitignore_file}")
 
 
 def test():
