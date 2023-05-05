@@ -489,7 +489,7 @@ class DecodeFields:
         #print ("decode", txt)
         forms = {}
         reading_data = False
-        for l in txt:
+        for lineno, l in enumerate(txt):
             l = l.strip()
             if len(l) == 0:
                 continue
@@ -497,7 +497,20 @@ class DecodeFields:
                 if l[0] == '#':
                     reading_data = False
                 else:
-                    forms[heading].append(l)
+                    form = forms[heading]
+                    form.append(l)
+                    if len(form) <= 1:
+                        continue
+                    for i, ch in enumerate(l):
+                        if ch != '|':
+                            continue
+                        if i >= len(form[0]) or form[0][i] != '|':
+                            col = len(txt[lineno]) - len(txt[lineno].lstrip())
+                            col += i + 1
+                            raise SyntaxError(
+                                "form line field separator ('|') "
+                                "with no corresponding separator in header",
+                                (self.fname, lineno + 1, col, txt[lineno]))
             if not reading_data:
                 assert l[0] == '#'
                 heading = l[1:].strip()

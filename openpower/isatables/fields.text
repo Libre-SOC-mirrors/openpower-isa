@@ -140,7 +140,7 @@
 
 # 1.6.7.1 DCT-FORM
 
-    |0     |6     |11      |16     |21      |26    |31 |
+    |0     |6     |11      |16     |21      |26    |31  |
     | PO   |  FRT |   FRA  |   FRB |   //   |   XO | Rc |
 
 # 1.6.8 XL-FORM
@@ -212,7 +212,7 @@
     | PO | RT | IT | CVM | FRB | OE | XO | Rc |
 
 # 1.6.17 A-FORM
-    |0     |6     |11      |16     |21      |26    |31 |
+    |0     |6     |11     |16      |21      |26    |31 |
     | PO   |  FRT |  FRA  |  FRB   |   FRC  |   XO |Rc |
     | PO   |  FRT |  FRA  |  FRB   |   ///  |   XO |Rc |
     | PO   |  FRT |  FRA  |  ///   |   FRC  |   XO |Rc |
