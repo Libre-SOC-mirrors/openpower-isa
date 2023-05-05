@@ -557,7 +557,7 @@
     FRB (16:20)
         Field used to specify an FPR to be used as a
         source.
-        Formats: A, MM, X, XFL, Z23, DCT
+        Formats: A, MM, X, XFL, XO, Z23, DCT
     FRBp (16:20)
          Field used to specify an even/odd pair of FPRs to
          be concatenated and used as a source.
