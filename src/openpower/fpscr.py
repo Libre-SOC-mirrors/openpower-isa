@@ -5,43 +5,43 @@ Power ISA v3.1B Book I section 4.2.2 page 136(162)
 
 FPSCR fields in MSB0:
 
-| Bits  | Mnemonic | Description                                                             |
-|-------|----------|-------------------------------------------------------------------------|
-| 0:28  | &nbsp;   | Reserved                                                                |
-| 29:31 | DRN      | Decimal Rounding Mode                                                   |
-| 32    | FX       | Floating-Point Exception Summary                                        |
-| 33    | FEX      | Floating-Point Enabled Exception Summary                                |
-| 34    | VX       | Floating-Point Invalid Operation Exception Summary                      |
-| 35    | OX       | Floating-Point Overflow Exception                                       |
-| 36    | UX       | Floating-Point Underflow Exception                                      |
-| 37    | ZX       | Floating-Point Zero Divide Exception                                    |
-| 38    | XX       | Floating-Point Inexact Exception                                        |
-| 39    | VXSNAN   | Floating-Point Invalid Operation Exception (SNaN)                       |
-| 40    | VXISI    | Floating-Point Invalid Operation Exception (∞ - ∞)                      |
-| 41    | VXIDI    | Floating-Point Invalid Operation Exception (∞ ÷ ∞)                      |
-| 42    | VXZDZ    | Floating-Point Invalid Operation Exception (0 ÷ 0)                      |
-| 43    | VXIMZ    | Floating-Point Invalid Operation Exception (∞ × 0)                      |
-| 44    | VXVC     | Floating-Point Invalid Operation Exception (Invalid Compare)            |
-| 45    | FR       | Floating-Point Fraction Rounded                                         |
-| 46    | FI       | Floating-Point Fraction Inexact                                         |
-| 47:51 | FPRF     | Floating-Point Result Flags                                             |
-| 47    | C        | Floating-Point Result Class Descriptor                                  |
-| 48:51 | FPCC     | Floating-Point Condition Code                                           |
-| 48    | FL       | Floating-Point Less Than or Negative                                    |
-| 49    | FG       | Floating-Point Greater Than or Positive                                 |
-| 50    | FE       | Floating-Point Equal or Zero                                            |
-| 51    | FU       | Floating-Point Unordered or NaN                                         |
-| 52    | &nbsp;   | Reserved                                                                |
-| 53    | VXSOFT   | Floating-Point Invalid Operation Exception (Software-Defined Condition) |
-| 54    | VXSQRT   | Floating-Point Invalid Operation Exception (Invalid Square Root)        |
-| 55    | VXCVI    | Floating-Point Invalid Operation Exception (Invalid Integer Convert)    |
-| 56    | VE       | Floating-Point Invalid Operation Exception Enable                       |
-| 57    | OE       | Floating-Point Overflow Exception Enable                                |
-| 58    | UE       | Floating-Point Underflow Exception Enable                               |
-| 59    | ZE       | Floating-Point Zero Divide Exception Enable                             |
-| 60    | XE       | Floating-Point Inexact Exception Enable                                 |
-| 61    | NI       | Floating-Point Non-IEEE Mode                                            |
-| 62:63 | RN       | Floating-Point Rounding Control                                         |
+|Bits |Mnemonic | Description                                                 |
+|-----|---------|-------------------------------------------------------------|
+|0:28 | &nbsp;  | Reserved                                                    |
+|29:31| DRN     | Decimal Rounding Mode                                       |
+|32   | FX      | FP Exception Summary                                        |
+|33   | FEX     | FP Enabled Exception Summary                                |
+|34   | VX      | FP Invalid Operation Exception Summary                      |
+|35   | OX      | FP Overflow Exception                                       |
+|36   | UX      | FP Underflow Exception                                      |
+|37   | ZX      | FP Zero Divide Exception                                    |
+|38   | XX      | FP Inexact Exception                                        |
+|39   | VXSNAN  | FP Invalid Operation Exception (SNaN)                       |
+|40   | VXISI   | FP Invalid Operation Exception (∞ - ∞)                      |
+|41   | VXIDI   | FP Invalid Operation Exception (∞ ÷ ∞)                      |
+|42   | VXZDZ   | FP Invalid Operation Exception (0 ÷ 0)                      |
+|43   | VXIMZ   | FP Invalid Operation Exception (∞ × 0)                      |
+|44   | VXVC    | FP Invalid Operation Exception (Invalid Compare)            |
+|45   | FR      | FP Fraction Rounded                                         |
+|46   | FI      | FP Fraction Inexact                                         |
+|47:51| FPRF    | FP Result Flags                                             |
+|47   | C       | FP Result Class Descriptor                                  |
+|48:51| FPCC    | FP Condition Code                                           |
+|48   | FL      | FP Less Than or Negative                                    |
+|49   | FG      | FP Greater Than or Positive                                 |
+|50   | FE      | FP Equal or Zero                                            |
+|51   | FU      | FP Unordered or NaN                                         |
+|52   | &nbsp;  | Reserved                                                    |
+|53   | VXSOFT  | FP Invalid Operation Exception (Software-Defined Condition) |
+|54   | VXSQRT  | FP Invalid Operation Exception (Invalid Square Root)        |
+|55   | VXCVI   | FP Invalid Operation Exception (Invalid Integer Convert)    |
+|56   | VE      | FP Invalid Operation Exception Enable                       |
+|57   | OE      | FP Overflow Exception Enable                                |
+|58   | UE      | FP Underflow Exception Enable                               |
+|59   | ZE      | FP Zero Divide Exception Enable                             |
+|60   | XE      | FP Inexact Exception Enable                                 |
+|61   | NI      | FP Non-IEEE Mode                                            |
+|62:63| RN      | FP Rounding Control                                         |
 """
 
 from nmigen import Record
