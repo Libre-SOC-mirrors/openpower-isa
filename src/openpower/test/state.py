@@ -73,6 +73,7 @@ class State:
     memory - stored as a dictionary {location: data}
     """
     def get_state(self):
+        yield from self.get_fpscr()
         yield from self.get_fpregs()
         yield from self.get_intregs()
         yield from self.get_crregs()
@@ -128,6 +129,11 @@ class State:
 
         # pc
         self.dut.assertEqual(self.pc, s2.pc, "pc mismatch (%s != %s) %s" %
+            (self.state_type, s2.state_type, repr(self.code)))
+
+        # fpscr
+        self.dut.assertEqual(self.fpscr, s2.fpscr,
+                             "fpscr mismatch (%s != %s) %s" %
             (self.state_type, s2.state_type, repr(self.code)))
 
     def compare_mem(self, s2):
@@ -210,6 +216,12 @@ class SimState(State):
         self.fpregs = _get_regs(self.sim.fpr)
         log("class sim fp regs", list(map(hex, self.fpregs)))
 
+    def get_fpscr(self):
+        if False:
+            yield
+        self.fpscr = self.sim.fpscr.value
+        log("class sim fpscr", hex(self.fpscr))
+
     def get_intregs(self):
         if False:
             yield
@@ -267,12 +279,13 @@ class ExpectedState(State):
     see openpower/test/shift_rot/shift_rot_cases2.py for examples
     """
     def __init__(self, int_regs=None, pc=0, crregs=None,
-                 so=0, ov=0, ca=0, fp_regs=None):
+                 so=0, ov=0, ca=0, fp_regs=None, fpscr=0):
         if fp_regs is None:
             fp_regs = 32
         if isinstance(fp_regs, int):
             fp_regs = [0] * fp_regs
         self.fpregs = deepcopy(fp_regs)
+        self.fpscr = fpscr
         if int_regs is None:
             int_regs = 32
         if isinstance(int_regs, int):
@@ -289,6 +302,8 @@ class ExpectedState(State):
         self.ca = ca
 
     def get_fpregs(self):
+        if False: yield
+    def get_fpscr(self):
         if False: yield
     def get_intregs(self):
         if False: yield
