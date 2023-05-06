@@ -501,16 +501,16 @@ class DecodeFields:
                     form.append(l)
                     if len(form) <= 1:
                         continue
+                    # check separators line up with header
                     for i, ch in enumerate(l):
                         if ch != '|':
                             continue
                         if i >= len(form[0]) or form[0][i] != '|':
                             col = len(txt[lineno]) - len(txt[lineno].lstrip())
                             col += i + 1
-                            raise SyntaxError(
-                                "form line field separator ('|') "
-                                "with no corresponding separator in header",
-                                (self.fname, lineno + 1, col, txt[lineno]))
+                            raise SyntaxError("form line field separator ('|') "
+                                    "with no corresponding separator in header",
+                                    (self.fname, lineno + 1, col, txt[lineno]))
             if not reading_data:
                 assert l[0] == '#'
                 heading = l[1:].strip()
