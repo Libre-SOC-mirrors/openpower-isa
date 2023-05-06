@@ -45,217 +45,43 @@ FPSCR fields in MSB0:
 """
 
 from nmigen import Record
-from typing import NoReturn
-from nmutil.plain_data import plain_data
-import linecache
+from copy import deepcopy
+from openpower.util import log
 from openpower.decoder.selectable_int import (
     FieldSelectableInt, SelectableInt)
 
 
-def _parse_line_fields(line):
-    # type: (str) -> None | list[str]
-    sline = line.strip()
-    if not sline.startswith("|"):
-        return None
-    if not sline.endswith("|"):
-        return None
-    if sline == "|":
-        return None
-    return [v.strip() for v in sline[1:-2].split("|")]
-
-
-_BITS_FIELD = "Bits"
-_MNEMONIC_FIELD = "Mnemonic"
-FPSCR_WIDTH = 64
-
-
-@plain_data()
-class _MutableField:
-    __slots__ = "name", "bits_msb0", "lineno", "include_in_record"
-
-    def __init__(self, name, bits_msb0, lineno, include_in_record=True):
-        # type: (str, int | range, int, bool) -> None
-        self.name = name
-        self.bits_msb0 = bits_msb0
-        self.lineno = lineno
-        self.include_in_record = include_in_record
-
-    def bits_msb0_iter(self):
-        # type: () -> range | tuple[int]
-        if isinstance(self.bits_msb0, int):
-            return self.bits_msb0,
-        return self.bits_msb0
-
-    def to_field(self):
-        # type () -> FPSCRField
-        return FPSCRField(name=self.name, bits_msb0=self.bits_msb0,
-                          include_in_record=self.include_in_record)
-
-
-@plain_data(frozen=True, unsafe_hash=True)
-class FPSCRField:
-    __slots__ = "name", "bits_msb0", "include_in_record"
-
-    def __init__(self, name, bits_msb0, include_in_record):
-        # type: (str, int | range, bool) -> None
-        self.name = name
-        self.bits_msb0 = bits_msb0
-        self.include_in_record = include_in_record
-        """True if this field should be
-        included in `FPSCRRecord`, since there are some overlapping fields and
-        `Record` doesn't support that.
-        """
-
-    def bits_msb0_iter(self):
-        # type: () -> range | tuple[int]
-        if isinstance(self.bits_msb0, int):
-            return self.bits_msb0,
-        return self.bits_msb0
-
-
-def _parse_fields():
-    # type: () -> tuple[FPSCRField, ...]
-    lines = __doc__.splitlines()
-    in_header_sep = False
-    in_table_body = False
-    header_fields = []  # type: list[str]
-    header_lineno = 0
-    fields = {}  # type: dict[str, _MutableField]
-    bit_fields = [None] * FPSCR_WIDTH  # type: list[_MutableField | None]
-    lineno = 0
-
-    def raise_(msg, col=1, err_lineno=None):
-        # type: (str, int, int | None) -> NoReturn
-        nonlocal lineno
-        if err_lineno is None:
-            err_lineno = lineno
-        line = lines[err_lineno]
-        for i in range(10000):  # 10000 is random limit if we can't read
-            if linecache.getline(__file__, i).strip().startswith('"'):
-                break
-            err_lineno += 1  # lines before doc comment start
-        raise SyntaxError(msg, (__file__, err_lineno, col, line))
-
-    for lineno, line in enumerate(lines):
-        line_fields = _parse_line_fields(line)
-        if in_table_body:
-            if line_fields is None:
-                if len(fields) == 0:
-                    raise_("missing table body")
-                break
-            if len(line_fields) != len(header_fields):
-                raise_("wrong number of fields")
-            fields_dict = {k: v for k, v in zip(header_fields, line_fields)}
-            name = fields_dict[_MNEMONIC_FIELD]
-            if name == "" or name == "&nbsp;":
-                continue
-            if not name.isidentifier():
-                raise_(f"invalid field name {name!r}")
-            if name in fields:
-                raise_(f"duplicate field name {name}")
-            bits_str = fields_dict[_BITS_FIELD]
-            bits_fields_str = bits_str.split(":")
-            if len(bits_fields_str) not in (1, 2) or not all(
-                    v.isascii() and v.isdigit() for v in bits_fields_str):
-                raise_(f"`{_BITS_FIELD}` field must be "
-                       f"of the form `23` or `23:56`")
-            bits_fields = [int(v, base=10) for v in bits_fields_str]
-            if not all(0 <= v < FPSCR_WIDTH for v in bits_fields):
-                raise_(f"`{_BITS_FIELD}` field value is beyond the "
-                       f"limits of FPSCR: must be `0 <= v < {FPSCR_WIDTH}`")
-            if len(bits_fields) == 2:
-                first, last = bits_fields
-                if first > last:
-                    raise_(f"`{_BITS_FIELD}` field value is an improper "
-                           f"range: {first} > {last}")
-                bits = range(first, last + 1)
-            else:
-                bits = bits_fields[0]
-            field = _MutableField(name=name, bits_msb0=bits, lineno=lineno)
-            fields[name] = field
-            for bit in field.bits_msb0_iter():
-                old_field = bit_fields[bit]
-                if old_field is not None:
-                    # field is overwritten -- don't include in Record
-                    old_field.include_in_record = False
-                bit_fields[bit] = field
-        elif in_header_sep:
-            if line_fields is None:
-                raise_("missing header separator line")
-            for v in line_fields:
-                if v != "-" * len(v):
-                    raise_("header separator field isn't just hyphens")
-            if len(line_fields) != len(header_fields):
-                raise_("wrong number of fields")
-            in_header_sep = False
-            in_table_body = True
-        else:
-            if line_fields is None:
-                continue
-            if _BITS_FIELD not in line_fields:
-                raise_(f"missing `{_BITS_FIELD}` field")
-            if _MNEMONIC_FIELD not in line_fields:
-                raise_(f"missing `{_MNEMONIC_FIELD}` field")
-            if len(set(line_fields)) != len(line_fields):
-                raise_("duplicate header field")
-            header_fields = line_fields
-            in_header_sep = True
-            header_lineno = lineno
-    if len(fields) == 0:
-        raise_("missing table")
-    # insert reserved fields and check for partially overwritten fields
-    for bit in range(FPSCR_WIDTH):
-        field = bit_fields[bit]
-        if field is None:
-            start = bit
-            bit += 1
-            while bit < FPSCR_WIDTH and bit_fields[bit] is None:
-                bit += 1
-            field = _MutableField(name=f"RESERVED_{start}_{bit - 1}",
-                                  bits_msb0=range(start, bit),
-                                  lineno=header_lineno)
-            if len(field.bits_msb0) == 1:
-                field.bits_msb0 = start
-                field.name = f"RESERVED_{start}"
-            for bit in field.bits_msb0_iter():
-                bit_fields[bit] = field
-            if field.name in fields:
-                raise_(f"field {field.name}'s name conflicts with a "
-                       f"generated reserved field",
-                       err_lineno=fields[field.name].lineno)
-            fields[field.name] = field
-        elif not field.include_in_record:
-            raise_(f"field {field.name} is partially overwritten -- "
-                   f"this is an error because FPSCRRecord will have "
-                   f"incorrect fields", err_lineno=field.lineno)
-        else:
-            bit += 1
-    return tuple(f.to_field() for f in fields.values())
-
-
-FPSCR_FIELDS_MSB0 = _parse_fields()  # type: tuple[FPSCRField, ...]
-""" All fields in FPSCR. """
-
-
-def _calc_record_layout_lsb0():
-    # type: () -> list[tuple[str, int]]
-    fields_lsb0 = []  # type: list[tuple[int, int, str]]
-    for field in FPSCR_FIELDS_MSB0:
-        if not field.include_in_record:
-            continue
-        start_msb0 = field.bits_msb0_iter()[0]
-        field_len = len(field.bits_msb0_iter())
-        start_lsb0 = FPSCR_WIDTH - 1 - start_msb0
-        fields_lsb0.append((start_lsb0, field_len, field.name))
-    fields_lsb0.sort()
-    # _parse_fields already checks for partially overlapping fields and
-    # inserts reserved fields ensuring the returned fields cover every bit
-    # exactly one, therefore this is correct
-    return [(name, f_len) for _, f_len, name in fields_lsb0]
-
-
 class FPSCRRecord(Record):
-    layout = _calc_record_layout_lsb0()
+    layout = [("RN", 2),
+              ("NI", 1),
+              ("XE", 1),
+              ("ZE", 1),
+              ("UE", 1),
+              ("OE", 1),
+              ("VE", 1),
+              ("VXCVI", 1),
+              ("VXSQRT", 1),
+              ("VXSOFT", 1),
+              ("rsvd1", 1),
+              ("FPCC", 4), # layout FL/FG/FE/FU TODO
+              ("FPRF", 2), # layout C/rsvd TODO
+              ("FI", 1),
+              ("FR", 1),
+              ("VXVC", 1),
+              ("VXZDZ", 1),
+              ("VXIDI", 1),
+              ("VXISI", 1),
+              ("VXSNAN", 1),
+              ("XX", 1),
+              ("ZX", 1),
+              ("UX", 1),
+              ("OX", 1),
+              ("VX", 1),
+              ("FEX", 1),
+              ("FX", 1),
+              ("DRN", 3),
+              ("rsvd2", 29),
+    ]
 
     def __init__(self, name=None):
         super().__init__(name=name, layout=FPSCRRecord.layout)
@@ -263,11 +89,33 @@ class FPSCRRecord(Record):
 
 class FPSCRState(SelectableInt):
     def __init__(self, value=0):
-        SelectableInt.__init__(self, value, FPSCR_WIDTH)
+        SelectableInt.__init__(self, value, 64)
         self.fsi = {}
-        for field in FPSCR_FIELDS_MSB0:
-            bits_msb0 = tuple(field.bits_msb0_iter())
-            self.fsi[field.name] = FieldSelectableInt(self, bits_msb0)
+        offs = 0
+        # set up sub-fields from Record layout
+        self.fsi = {}
+        l = deepcopy(FPSCRRecord.layout)
+        l.reverse()
+        for field, width in l:
+            end =  offs+width
+            fs = tuple(range(offs, end))
+            v = FieldSelectableInt(self, fs)
+            self.fsi[field] = v
+            log("SVSTATE setup field", field, offs, end)
+            offs = end
+        # extra fields, temporarily explicitly added. TODO nested layout above
+        extras = [(47, "C"),
+                  (48, "FL"),
+                  (49, "FG"),
+                  (50, "FE"),
+                  (51, "FU"),
+                 ]
+        for offs, field in extras:
+            end =  offs+1
+            fs = tuple(range(offs, end))
+            v = FieldSelectableInt(self, fs)
+            self.fsi[field] = v
+            log("SVSTATE extra field", field, offs, end)
 
     @property
     def DRN(self):
@@ -536,9 +384,18 @@ class FPSCRState(SelectableInt):
 
 if __name__ == "__main__":
     from pprint import pprint
-    print("FPSCR_FIELDS_MSB0:")
-    pprint(FPSCR_FIELDS_MSB0)
     print("FPSCRRecord.layout:")
     pprint(FPSCRRecord.layout)
     print("FPSCRState.fsi:")
     pprint(FPSCRState().fsi)
+
+    # quick test of setter/getters
+    fpscr = FPSCRState()
+    fpscr.FPCC = 0b001
+    print (fpscr.FPCC, fpscr.FL, fpscr.FG, fpscr.FE, fpscr.FU)
+    fpscr.FG = 0b1
+    print (fpscr.FPCC, fpscr.FL, fpscr.FG, fpscr.FE, fpscr.FU)
+    fpscr.FPRF = 0b11
+    print (fpscr.FPRF, fpscr.C)
+    fpscr[63] = 1
+    print (fpscr.RN)
