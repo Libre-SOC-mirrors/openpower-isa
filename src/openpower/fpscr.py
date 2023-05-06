@@ -129,12 +129,12 @@ def _parse_fields():
         nonlocal lineno
         if err_lineno is None:
             err_lineno = lineno
+        line = lines[err_lineno]
         for i in range(10000):  # 10000 is random limit if we can't read
             if linecache.getline(__file__, i).strip().startswith('"'):
                 break
             err_lineno += 1  # lines before doc comment start
-        raise SyntaxError(msg, (
-            __file__, err_lineno + 3, col, lines[err_lineno]))
+        raise SyntaxError(msg, (__file__, err_lineno, col, line))
 
     for lineno, line in enumerate(lines):
         line_fields = _parse_line_fields(line)
