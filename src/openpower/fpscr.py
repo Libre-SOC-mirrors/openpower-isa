@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: LGPLv3+
 # Funded by NLnet https://nlnet.nl/
+
+# XXX TODO: get this into openpower/consts.py instead.
+# create the layout from an auto-created Enum FPSCRb
 """ Record for FPSCR as defined in
 Power ISA v3.1B Book I section 4.2.2 page 136(162)
 
