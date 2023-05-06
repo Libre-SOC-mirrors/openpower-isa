@@ -38,6 +38,7 @@ from openpower.decoder.power_insn import SVP64Instruction
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.selectable_int import (FieldSelectableInt,
                                               SelectableInt, selectconcat)
+from openpower.fpscr import FPSCRState
 from openpower.util import LogKind, log
 
 instruction_info = namedtuple('instruction_info',
@@ -74,6 +75,7 @@ REG_SORT_ORDER = {
     "CTR": 0,
     "TAR": 0,
     "MSR": 0,
+    "FPSCR": 0,
     "SVSTATE": 0,
     "SVSHAPE0": 0,
     "SVSHAPE1": 0,
@@ -1133,7 +1135,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  initial_pc=0,
                  bigendian=False,
                  mmu=False,
-                 icachemmu=False):
+                 icachemmu=False,
+                 initial_fpscr=0):
 
         self.bigendian = bigendian
         self.halted = False
@@ -1206,6 +1209,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # FPR (same as GPR except for FP nums)
         # 4.2.2 p124 FPSCR (definitely "separate" - not in SPR)
         #            note that mffs, mcrfs, mtfsf "manage" this FPSCR
+        self.fpscr = FPSCRState(initial_fpscr)
+
         # 2.3.1 CR (and sub-fields CR0..CR6 - CR0 SO comes from XER.SO)
         #         note that mfocrf, mfcr, mtcr, mtocrf, mcrxrx "manage" CRs
         #         -- Done
@@ -1239,6 +1244,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                                'SVSHAPE3': self.spr['SVSHAPE3'],
                                'CR': self.cr,
                                'MSR': self.msr,
+                               'FPSCR': self.fpscr,
                                'undefined': undefined,
                                'mode_is_64bit': True,
                                'SO': XER_bits['SO'],
