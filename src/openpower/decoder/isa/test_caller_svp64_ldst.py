@@ -33,7 +33,10 @@ class DecoderTestCase(FHDLTestCase):
         """>>> lst = [
                     ]
 
-        strncpy using post-increment ld/st, sv.bc, and data-dependent ffirst
+        strncpy using post-increment ld/st, sv.bc, and data-dependent ffirst.
+        note that /lf (Load-Fault) mode is not set in this example when it
+        should be. however implementing Load-Fault in ISACaller is tricky
+        (requires implementing multiple hardware models)
         """
         maxvl = 4
         lst = SVP64Asm(
@@ -46,8 +49,8 @@ class DecoderTestCase(FHDLTestCase):
                 # VL (and r1) = MIN(CTR,MAXVL=4)
                 "setvl 1,0,%d,0,1,1" % maxvl,
                 # load VL bytes (update r10 addr)
-                "sv.lbzu/pi *16, 1(10)",
-                "sv.cmpi/ff=eq/vli *0,1,*16,0",  # compare against zero, truncate VL
+                "sv.lbzu/pi *16, 1(10)",         # should be /lf here as well
+                "sv.cmpi/ff=eq/vli *0,1,*16,0",  # cmp against zero, truncate VL
                 # store VL bytes (update r12 addr)
                 "sv.stbu/pi *16, 1(12)",
                 "sv.bc/all 0, *2, -0x1c",       # test CTR, stop if cmpi failed
@@ -58,7 +61,7 @@ class DecoderTestCase(FHDLTestCase):
                 "setvl 1,0,%d,0,1,1" % maxvl,
                 # store VL zeros (update r12 addr)
                 "sv.stbu/pi 0, 1(12)",
-                "sv.bc 16, *0, -0xc",           # decrement CTR by VL, stop at zero
+                "sv.bc 16, *0, -0xc",           # dec CTR by VL, stop at zero
             ]
         )
         lst = list(lst)
