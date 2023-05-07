@@ -252,6 +252,10 @@ def _maxmag(a, b):
 
 
 class ISAFPHelpers:
+
+    # XXX stub
+    def reset_xflags(self): pass
+
     # bfp32/64_OP naming mirrors that in the Power ISA spec.
 
     def bfp64_ATAN2PI(self, a, b):
