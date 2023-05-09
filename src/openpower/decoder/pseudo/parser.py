@@ -143,45 +143,6 @@ def identify_sint_mul_pattern(p):
     return True  # yippee!
 
 
-def apply_trailer(atom, trailer, read_regs):
-    if trailer[0] == "TLIST":
-        # assume depth of one
-        atom = apply_trailer(atom, trailer[1], read_regs)
-        trailer = trailer[2]
-    if trailer[0] == "CALL":
-        #p[0] = ast.Expr(ast.Call(p[1], p[2][1], []))
-        for arg in trailer[1]:
-            if isinstance(arg, ast.Name):
-                name = arg.id
-                if name in regs + fregs:
-                    read_regs.add(name)
-        # special-case, these functions must NOT be made "self.xxxx"
-        if atom.id not in SPECIAL_HELPERS:
-            name = ast.Name("self", ast.Load())
-            atom = ast.Attribute(name, atom, ast.Load())
-        return ast.Call(atom, trailer[1], [])
-        # if p[1].id == 'print':
-        #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)
-        # else:
-        #    p[0] = ast.CallFunc(p[1], p[2][1], None, None)
-    else:
-        print("subscript atom", trailer[1])
-        #raise AssertionError("not implemented %s" % p[2][0])
-        subs = trailer[1]
-        if len(subs) == 1:
-            idx = subs[0]
-            if isinstance(idx, ast.Name) and idx.id in regs + fregs:
-                read_regs.add(idx.id)
-            if isinstance(idx, ast.Name) and idx.id in regs:
-                print("single atom subscript, underscored", idx.id)
-                idx = ast.Name("_%s" % idx.id, ast.Load())
-        else:
-            idx = ast.Slice(subs[0], subs[1], None)
-        # if isinstance(atom, ast.Name) and atom.id == 'CR':
-            # atom.id = 'CR' # bad hack
-            #print ("apply_trailer Subscript", atom.id, idx)
-        return ast.Subscript(atom, idx, ast.Load())
-
 ##########   Parser (tokens -> AST) ######
 
 # also part of Ply
@@ -684,7 +645,7 @@ class PowerParser:
             print(astor.dump_tree(p[1]))
             print("power dump trailerlist")
             print(astor.dump_tree(p[2]))
-            p[0] = apply_trailer(p[1], p[2], self.read_regs)
+            p[0] = self.apply_trailer(p[1], p[2], self.read_regs)
             if isinstance(p[1], ast.Name):
                 name = p[1].id
                 if name in regs + fregs:
@@ -940,6 +901,45 @@ class PowerParser:
             print("Assign fail")
             raise_syntax_error("Can't do that yet", self.filename,
                                eq_tok.lineno, eq_tok.lexpos, self.input_text)
+
+    def apply_trailer(self, atom, trailer, read_regs):
+        if trailer[0] == "TLIST":
+            # assume depth of one
+            atom = self.apply_trailer(atom, trailer[1], read_regs)
+            trailer = trailer[2]
+        if trailer[0] == "CALL":
+            #p[0] = ast.Expr(ast.Call(p[1], p[2][1], []))
+            for arg in trailer[1]:
+                if isinstance(arg, ast.Name):
+                    name = arg.id
+                    if name in regs + fregs:
+                        read_regs.add(name)
+            # special-case, these functions must NOT be made "self.xxxx"
+            if atom.id not in SPECIAL_HELPERS:
+                name = ast.Name("self", ast.Load())
+                atom = ast.Attribute(name, atom, ast.Load())
+            return ast.Call(atom, trailer[1], [])
+            # if p[1].id == 'print':
+            #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)
+            # else:
+            #    p[0] = ast.CallFunc(p[1], p[2][1], None, None)
+        else:
+            print("subscript atom", trailer[1])
+            #raise AssertionError("not implemented %s" % p[2][0])
+            subs = trailer[1]
+            if len(subs) == 1:
+                idx = subs[0]
+                if isinstance(idx, ast.Name) and idx.id in regs + fregs:
+                    read_regs.add(idx.id)
+                if isinstance(idx, ast.Name) and idx.id in regs:
+                    print("single atom subscript, underscored", idx.id)
+                    idx = ast.Name("_%s" % idx.id, ast.Load())
+            else:
+                idx = ast.Slice(subs[0], subs[1], None)
+            # if isinstance(atom, ast.Name) and atom.id == 'CR':
+                # atom.id = 'CR' # bad hack
+                #print ("apply_trailer Subscript", atom.id, idx)
+            return ast.Subscript(atom, idx, ast.Load())
 
 
 _CACHE_DECODER = True
