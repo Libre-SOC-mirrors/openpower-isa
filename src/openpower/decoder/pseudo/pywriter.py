@@ -148,15 +148,16 @@ class PyISAWriter(ISA):
                         'import %s\n' % (page, page))
             f.write('\n')
 
-            classes = ', '.join(['ISACaller', 'ISACallerFnHelper',
-                                 'ISACallerHelper'] + self.pages_written)
-            f.write('class ISA(%s):\n' % classes)
+            f.write('class ISAPages(%s):\n' % ", ".join(self.pages_written))
             f.write('    def __init__(self, *args, **kwargs):\n')
             f.write('        super().__init__(*args, **kwargs)\n')
             f.write('        self.instrs = {\n')
             for page in self.pages_written:
                 f.write('            **self.%s_instrs,\n' % page)
             f.write('        }\n')
+            classes = ', '.join(['ISAPages', 'ISACaller', 'ISACallerFnHelper',
+                                 'ISACallerHelper'])
+            f.write('class ISA(%s): pass\n' % classes)
 
 
 def pywriter():
