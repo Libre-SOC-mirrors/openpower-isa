@@ -48,14 +48,14 @@ Pseudo-code:
                 src <- bfp_CONVERT_FROM_SI64((RB))
             default:  # Unsigned 64-bit
                 src <- bfp_CONVERT_FROM_UI64((RB))
-        rnd <- bfp_ROUND_TO_BFP64(FPSCR[RN], src)
+        rnd <- bfp_ROUND_TO_BFP64(FPSCR.RN, src)
         result <- bfp64_CONVERT_FROM_BFP(rnd)
         cls <- fprf_CLASS_BFP64(result)
-        if xx_flag = 1 then SetFX(FPSCR[XX])
+        if xx_flag = 1 then SetFX(FPSCR.XX)
         FRT <- result
-        FPSCR[FPRF] <- cls
-        FPSCR[FR] <- inc_flag
-        FPSCR[FI] <- xx_flag
+        FPSCR.FPRF <- cls
+        FPSCR.FR <- inc_flag
+        FPSCR.FI <- xx_flag
 
 Special Registers Altered:
 
@@ -84,15 +84,15 @@ Pseudo-code:
             src <- bfp_CONVERT_FROM_SI64((RB))
         default:  # Unsigned 64-bit
             src <- bfp_CONVERT_FROM_UI64((RB))
-    rnd <- bfp_ROUND_TO_BFP32(FPSCR[RN], src)
+    rnd <- bfp_ROUND_TO_BFP32(FPSCR.RN, src)
     result32 <- bfp32_CONVERT_FROM_BFP(rnd)
     cls <- fprf_CLASS_BFP32(result32)
     result <- DOUBLE(result32)
-    if xx_flag = 1 then SetFX(FPSCR[XX])
+    if xx_flag = 1 then SetFX(FPSCR.XX)
     FRT <- result
-    FPSCR[FPRF] <- cls
-    FPSCR[FR] <- inc_flag
-    FPSCR[FI] <- xx_flag
+    FPSCR.FPRF <- cls
+    FPSCR.FR <- inc_flag
+    FPSCR.FI <- xx_flag
 
 Special Registers Altered:
 
@@ -130,13 +130,13 @@ Pseudo-code:
             range_min <- bfp_CONVERT_FROM_UI64(0)
             range_max <- bfp_CONVERT_FROM_UI64(0xFFFF_FFFF_FFFF_FFFF)
             js_mask <- 0xFFFF_FFFF_FFFF_FFFF
-    if (CVM[2] = 1) | (FPSCR[RN] = 0b01) then
+    if (CVM[2] = 1) | (FPSCR.RN = 0b01) then
         rnd <- bfp_ROUND_TO_INTEGER_TRUNC(src)
-    else if FPSCR[RN] = 0b00 then
+    else if FPSCR.RN = 0b00 then
         rnd <- bfp_ROUND_TO_INTEGER_NEAR_EVEN(src)
-    else if FPSCR[RN] = 0b10 then
+    else if FPSCR.RN = 0b10 then
         rnd <- bfp_ROUND_TO_INTEGER_CEIL(src)
-    else if FPSCR[RN] = 0b11 then
+    else if FPSCR.RN = 0b11 then
         rnd <- bfp_ROUND_TO_INTEGER_FLOOR(src)
     switch(CVM)
         case(0, 1):  # OpenPower semantics
@@ -186,21 +186,21 @@ Pseudo-code:
             result_bfp <- bfp_CONVERT_FROM_SI64(result)
         default:  # Unsigned 64-bit
             result_bfp <- bfp_CONVERT_FROM_UI64(result)
-    if vxsnan_flag = 1 then SetFX(FPSCR[VXSNAN])
-    if vxcvi_flag = 1 then SetFX(FPSCR[VXCVI])
-    if xx_flag = 1 then SetFX(FPSCR[XX])
+    if vxsnan_flag = 1 then SetFX(FPSCR.VXSNAN)
+    if vxcvi_flag = 1 then SetFX(FPSCR.VXCVI)
+    if xx_flag = 1 then SetFX(FPSCR.XX)
     vx_flag <- vxsnan_flag | vxcvi_flag
-    vex_flag <- FPSCR[VE] & vx_flag
+    vex_flag <- FPSCR.VE & vx_flag
     if vex_flag = 0 then
         RT <- result
-        FPSCR[FPRF] <- undefined
-        FPSCR[FR] <- inc_flag
-        FPSCR[FI] <- xx_flag
+        FPSCR.FPRF <- undefined
+        FPSCR.FR <- inc_flag
+        FPSCR.FI <- xx_flag
         if IsNaN(src) | ¬bfp_COMPARE_EQ(src, result_bfp) then
             overflow <- 1  # signals SO only when OE = 1
     else
-        FPSCR[FR] <- 0
-        FPSCR[FI] <- 0
+        FPSCR.FR <- 0
+        FPSCR.FI <- 0
 
 Special Registers Altered:
 
@@ -239,13 +239,13 @@ Pseudo-code:
             range_min <- bfp_CONVERT_FROM_UI64(0)
             range_max <- bfp_CONVERT_FROM_UI64(0xFFFF_FFFF_FFFF_FFFF)
             js_mask <- 0xFFFF_FFFF_FFFF_FFFF
-    if (CVM[2] = 1) | (FPSCR[RN] = 0b01) then
+    if (CVM[2] = 1) | (FPSCR.RN = 0b01) then
         rnd <- bfp_ROUND_TO_INTEGER_TRUNC(src)
-    else if FPSCR[RN] = 0b00 then
+    else if FPSCR.RN = 0b00 then
         rnd <- bfp_ROUND_TO_INTEGER_NEAR_EVEN(src)
-    else if FPSCR[RN] = 0b10 then
+    else if FPSCR.RN = 0b10 then
         rnd <- bfp_ROUND_TO_INTEGER_CEIL(src)
-    else if FPSCR[RN] = 0b11 then
+    else if FPSCR.RN = 0b11 then
         rnd <- bfp_ROUND_TO_INTEGER_FLOOR(src)
     switch(CVM)
         case(0, 1):  # OpenPower semantics
@@ -295,21 +295,21 @@ Pseudo-code:
             result_bfp <- bfp_CONVERT_FROM_SI64(result)
         default:  # Unsigned 64-bit
             result_bfp <- bfp_CONVERT_FROM_UI64(result)
-    if vxsnan_flag = 1 then SetFX(FPSCR[VXSNAN])
-    if vxcvi_flag = 1 then SetFX(FPSCR[VXCVI])
-    if xx_flag = 1 then SetFX(FPSCR[XX])
+    if vxsnan_flag = 1 then SetFX(FPSCR.VXSNAN)
+    if vxcvi_flag = 1 then SetFX(FPSCR.VXCVI)
+    if xx_flag = 1 then SetFX(FPSCR.XX)
     vx_flag <- vxsnan_flag | vxcvi_flag
-    vex_flag <- FPSCR[VE] & vx_flag
+    vex_flag <- FPSCR.VE & vx_flag
     if vex_flag = 0 then
         RT <- result
-        FPSCR[FPRF] <- undefined
-        FPSCR[FR] <- inc_flag
-        FPSCR[FI] <- xx_flag
+        FPSCR.FPRF <- undefined
+        FPSCR.FR <- inc_flag
+        FPSCR.FI <- xx_flag
         if IsNaN(src) | ¬bfp_COMPARE_EQ(src, result_bfp) then
             overflow <- 1  # signals SO only when OE = 1
     else
-        FPSCR[FR] <- 0
-        FPSCR[FI] <- 0
+        FPSCR.FR <- 0
+        FPSCR.FI <- 0
 
 Special Registers Altered:
 
