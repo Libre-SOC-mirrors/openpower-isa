@@ -90,6 +90,36 @@ class FPSCRRecord(Record):
         super().__init__(name=name, layout=FPSCRRecord.layout)
 
 
+class FPSCR_FPRF(FieldSelectableInt):
+    """ special FieldSelectableInt instance to handle assigning strings to
+    FPSCR.FPRF
+
+    Translation Table from:
+    PowerISA v3.1B Book I Section 4.2.2 Page 139(165)
+    Figure 47 Floating-Point Result Flags
+    """
+    TRANSLATION_TABLE = (
+        ("Quiet NaN", 0b10001),
+        ("QNaN", 0b10001),
+        ("- Infinity", 0b01001),
+        ("- Normalized Number", 0b01000),
+        ("- Normal Number", 0b01000),
+        ("- Denormalized Number", 0b11000),
+        ("- Zero", 0b10010),
+        ("+ Zero", 0b00010),
+        ("+ Denormalized Number", 0b10100),
+        ("+ Normalized Number", 0b00100),
+        ("+ Normal Number", 0b00100),
+        ("+ Infinity", 0b00101),
+    )
+    TRANSLATION_TABLE_DICT = {k.casefold(): v for k, v in TRANSLATION_TABLE}
+
+    def eq(self, b):
+        if isinstance(b, str):
+            b = FPSCR_FPRF.TRANSLATION_TABLE_DICT[b.casefold()]
+        super().eq(b)
+
+
 class FPSCRState(SelectableInt):
     def __init__(self, value=0):
         SelectableInt.__init__(self, value, 64)
@@ -102,9 +132,11 @@ class FPSCRState(SelectableInt):
         for field, width in l:
             end =  offs+width
             fs = tuple(range(offs, end))
-            v = FieldSelectableInt(self, fs)
+            if field == "FPRF":
+                v = FPSCR_FPRF(self, fs)
+            else:
+                v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
-            log("SVSTATE setup field", field, offs, end)
             offs = end
         # extra fields, temporarily explicitly added. TODO nested layout above
         extras = [(47, "C"),
@@ -118,7 +150,6 @@ class FPSCRState(SelectableInt):
             fs = tuple(range(offs, end))
             v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
-            log("SVSTATE extra field", field, offs, end)
 
     @property
     def DRN(self):
