@@ -364,6 +364,8 @@ class PowerParser:
                     autoassign = (name not in self.declared_vars and
                                   name not in self.fnparm_vars and
                                   name not in self.special_regs)
+            elif isinstance(p[1], (ast.Attribute, ast.Tuple)):
+                pass
             elif isinstance(p[1], ast.Call) and p[1].func.id in \
                     ['GPR', 'FPR', 'SPR']:
                 print(astor.dump_tree(p[1]))
@@ -386,8 +388,10 @@ class PowerParser:
                 print(astor.dump_tree(p[0]))
                 return
             else:
-                print("help, help")
                 print(astor.dump_tree(p[1]))
+                raise_syntax_error("help, help", self.filename,
+                                   p.slice[2].lineno, p.slice[2].lexpos,
+                                   self.input_text)
             print("expr assign", name, p[1], "to", p[3])
             if isinstance(p[3], ast.Name):
                 toname = p[3].id
@@ -400,7 +404,8 @@ class PowerParser:
             # documentation for why we need this
             copy_fn = ast.Name("copy_assign_rhs", ast.Load())
             rhs = ast.Call(copy_fn, (p[3],), [])
-            p[0] = self.Assign(autoassign, name, p[1], rhs, iea_mode, p[2])
+            p[0] = self.Assign(autoassign, name, p[1], rhs, iea_mode,
+                               p.slice[2])
             if name:
                 self.declared_vars.add(name)
 
@@ -744,6 +749,7 @@ class PowerParser:
     def p_trailer(self, p):
         """trailer : trailer_arglist
                    | trailer_subscript
+                   | trailer_attr
         """
         p[0] = p[1]
 
@@ -752,11 +758,15 @@ class PowerParser:
                            | LPAR RPAR
         """
         args = [] if len(p) == 3 else p[2]
-        p[0] = ("CALL", args)
+        p[0] = ("CALL", args, p.slice[1])
 
     def p_trailer_subscript(self, p):
         "trailer_subscript : LBRACK subscript RBRACK"
         p[0] = ("SUBS", p[2])
+
+    def p_trailer_attr(self, p):
+        "trailer_attr : PERIOD NAME"
+        p[0] = ("ATTR", p[2])
 
     # subscript: '.' '.' '.' | test | [test] ':' [test]
 
@@ -855,6 +865,9 @@ class PowerParser:
                 names.append(child.id)
             ass_list = [ast.Name(name, ast.Store()) for name in names]
             return ast.Assign([ast.Tuple(ass_list)], right)
+        elif isinstance(left, ast.Attribute):
+            return ast.Assign([
+                ast.Attribute(left.value, left.attr, ast.Store())], right)
         elif isinstance(left, ast.Subscript):
             ls = left.slice
             # XXX changing meaning of "undefined" to a function
@@ -923,6 +936,14 @@ class PowerParser:
             #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)
             # else:
             #    p[0] = ast.CallFunc(p[1], p[2][1], None, None)
+        elif trailer[0] == "ATTR":
+            #p[0] = ast.Expr(ast.Call(p[1], p[2][1], []))
+            for arg in trailer[1]:
+                if isinstance(arg, ast.Name):
+                    name = arg.id
+                    if name in regs + fregs:
+                        read_regs.add(name)
+            return ast.Attribute(atom, trailer[1], ast.Load())
         else:
             print("subscript atom", trailer[1])
             #raise AssertionError("not implemented %s" % p[2][0])

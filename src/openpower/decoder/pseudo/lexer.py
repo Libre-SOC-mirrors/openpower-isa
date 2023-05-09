@@ -346,6 +346,7 @@ class PowerLexer:
         'WS',
         'NEWLINE',
         'COMMA',
+        'PERIOD',
         'SEMICOLON',
         'INDENT',
         'DEDENT',
@@ -399,6 +400,7 @@ class PowerLexer:
     t_MOD = r'%'
     t_INVERT = r'¬'
     t_COMMA = r','
+    t_PERIOD = r'.'
     t_SEMICOLON = r';'
     t_APPEND = r'\|\|'
     t_BITOR = r'\|'
