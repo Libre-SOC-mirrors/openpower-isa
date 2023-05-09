@@ -14,7 +14,8 @@ import astor
 from copy import deepcopy
 
 from openpower.decoder.power_decoder import create_pdecode
-from openpower.decoder.pseudo.lexer import IndentLexer, raise_syntax_error
+from openpower.decoder.pseudo.lexer import (
+    IndentLexer, raise_syntax_error, SyntaxError2)
 from openpower.decoder.orderedset import OrderedSet
 
 # I use the Python AST
@@ -1002,7 +1003,10 @@ class GardenSnakeCompiler(object):
             raise ValueError("missing filename")
         self.parser.filename = filename
         self.parser.input_text = code
-        tree = self.parser.parse(code)
+        try:
+            tree = self.parser.parse(code)
+        except SyntaxError2 as e:
+            e.raise_syntax_error()
         print("snake")
         pprint(tree)
         return tree

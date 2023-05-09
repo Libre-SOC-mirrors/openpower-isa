@@ -13,12 +13,27 @@ from ply import lex
 from openpower.decoder.selectable_int import SelectableInt
 
 
+class SyntaxError2(Exception):
+    """ class used to raise a syntax error but get ply to stop eating errors
+    since it catches and discards SyntaxError after setting a flag.
+    """
+
+    def __repr__(self):
+        return repr(SyntaxError(*self.args))
+
+    def __str__(self):
+        return str(SyntaxError(*self.args))
+
+    def raise_syntax_error(self):
+        raise SyntaxError(*self.args) from self
+
+
 def raise_syntax_error(msg, filename, lineno, lexpos, input_text):
     line_start = input_text.rfind('\n', 0, lexpos) + 1
     line_end = input_text.find('\n', line_start)
     col = (lexpos - line_start) + 1
-    raise SyntaxError(str(msg), (filename, lineno, col,
-                                 input_text[line_start:line_end]))
+    raise SyntaxError2(str(msg), (filename, lineno, col,
+                                  input_text[line_start:line_end]))
 
 # I implemented INDENT / DEDENT generation as a post-processing filter
 
