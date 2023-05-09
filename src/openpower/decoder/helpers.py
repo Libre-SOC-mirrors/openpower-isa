@@ -2,7 +2,7 @@ import unittest
 import struct
 import sys
 from openpower.decoder.selectable_int import (SelectableInt, onebit,
-                                              selectconcat)
+                                              selectconcat, FieldSelectableInt)
 from nmutil.divmod import trunc_divs, trunc_rems
 from operator import floordiv, mod
 from openpower.decoder.selectable_int import selectltu as ltu
@@ -83,7 +83,7 @@ def copy_assign_rhs(inp):
     """
     if isinstance(inp, (str, int)):
         return inp
-    if isinstance(inp, SelectableInt):
+    if isinstance(inp, (SelectableInt, FieldSelectableInt)):
         return SelectableInt(inp)
     if isinstance(inp, tuple):
         return tuple(map(copy_assign_rhs, inp))

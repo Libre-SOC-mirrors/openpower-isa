@@ -58,18 +58,10 @@ class FieldSelectableInt:
         self.br = br  # map of indices
 
     def eq(self, b):
-        if isinstance(b, int):
-            # convert integer to same SelectableInt of same bitlength as range
-            blen = len(self.br)
-            b = SelectableInt(b, blen)
-            for i in range(b.bits):
-                self[i] = b[i]
-        elif isinstance(b, SelectableInt):
-            for i in range(b.bits):
-                self[i] = b[i]
-        else:
-            self.si = copy(b.si)
-            self.br = copy(b.br)
+        if not isinstance(b, SelectableInt):
+            b = SelectableInt(b, len(self.br))
+        for i in range(b.bits):
+            self[i] = b[i]
 
     def _op(self, op, b):
         vi = self.get_range()
@@ -239,6 +231,8 @@ class SelectableInt:
     """
 
     def __init__(self, value, bits=None):
+        if isinstance(value, FieldSelectableInt):
+            value = value.get_range()
         if isinstance(value, SelectableInt):
             if bits is not None:
                 # check if the bitlength is different. TODO, allow override?
@@ -246,11 +240,6 @@ class SelectableInt:
                     raise ValueError(value)
             bits = value.bits
             value = value.value
-        elif isinstance(value, FieldSelectableInt):
-            if bits is not None:
-                raise ValueError(value)
-            bits = len(value.br)
-            value = value.si.value
         else:
             if not isinstance(value, int):
                 raise ValueError(value)
@@ -575,7 +564,7 @@ def selectconcat(*args, repeat=1):
     res = copy(args[0])
     for i in args[1:]:
         if isinstance(i, FieldSelectableInt):
-            i = i.si
+            i = i.get_range()
         assert isinstance(i, SelectableInt), "can only concat SIs, sorry"
         res.bits += i.bits
         res.value = (res.value << i.bits) | i.value
