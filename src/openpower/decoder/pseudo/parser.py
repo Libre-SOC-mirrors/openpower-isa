@@ -927,6 +927,19 @@ class PowerParser:
                     name = arg.id
                     if name in regs + fregs:
                         read_regs.add(name)
+            if atom.id == "SetFX":
+                if len(trailer[1]) != 1 or \
+                        not isinstance(trailer[1][0], ast.Attribute):
+                    raise_syntax_error(
+                        "SetFX call must have only one argument that is an "
+                        "attribute access -- like `SetFX(FPSCR.VXSNAN)`",
+                        self.filename, trailer[2].lineno, trailer[2].lexpos,
+                        self.input_text)
+                arg = trailer[1][0]
+                args = [arg.value, ast.Str(arg.attr)]
+                name = ast.Name("self", ast.Load())
+                atom = ast.Attribute(name, atom, ast.Load())
+                return ast.Call(atom, args, [])
             # special-case, these functions must NOT be made "self.xxxx"
             if atom.id not in SPECIAL_HELPERS:
                 name = ast.Name("self", ast.Load())
