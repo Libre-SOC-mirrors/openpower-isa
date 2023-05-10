@@ -1265,7 +1265,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.decoder = decoder2.dec
         self.dec2 = decoder2
 
-        super().__init__(XLEN=self.namespace["XLEN"])
+        super().__init__(XLEN=self.namespace["XLEN"], FPSCR=self.fpscr)
 
     @property
     def XLEN(self):

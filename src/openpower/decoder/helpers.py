@@ -841,8 +841,11 @@ def log2(val):
 
 
 class ISACallerHelper:
-    def __init__(self, XLEN):
+    def __init__(self, XLEN, FPSCR):
         self.__XLEN = XLEN
+        if FPSCR is None:
+            FPSCR = FPSCRState()
+        self.__FPSCR = FPSCR
 
     @property
     def XLEN(self):
@@ -850,10 +853,7 @@ class ISACallerHelper:
 
     @property
     def FPSCR(self):
-        # fallback for when not used through ISACaller
-        # needed for tests that use DOUBLE2SINGLE without using ISACaller
-        self.__dict__["FPSCR"] = retval = FPSCRState()
-        return retval
+        return self.__FPSCR
 
     def EXTZXL(self, value, bits=None):
         if bits is None:
@@ -942,7 +942,8 @@ class ISACallerHelper:
 
 class HelperTests(unittest.TestCase, ISACallerHelper):
     def __init__(self, *args, **kwargs):
-        ISACallerHelper.__init__(self, 64) # TODO: dynamic (64/32/16/8)
+        # TODO: dynamic (64/32/16/8)
+        ISACallerHelper.__init__(self, 64, FPSCR=None)
         unittest.TestCase.__init__(self, *args, **kwargs)
 
     def test_MASK(self):

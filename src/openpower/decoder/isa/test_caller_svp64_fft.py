@@ -11,7 +11,7 @@ from openpower.sv.trans.svp64 import SVP64Asm
 
 # really bad hack.  need to access the DOUBLE2SINGLE function auto-generated
 # from pseudo-code.
-fph = ISACallerFnHelper(XLEN=64)
+fph = ISACallerFnHelper(XLEN=64, FPSCR=None)
 
 
 def transform_radix2(vec, exptable, reverse=False):
