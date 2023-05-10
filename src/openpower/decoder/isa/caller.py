@@ -1701,6 +1701,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def execute_one(self):
         """execute one instruction
         """
+        self.insnlog = [] # log the instruction
         # get the disassembly code for this instruction
         if not self.disassembly:
             code = yield from self.get_assembly_name()
@@ -1710,6 +1711,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 offs, dbg = 4, "svp64 "
             code = self.disassembly[self._pc+offs]
             log("    %s sim-execute" % dbg, hex(self._pc), code)
+            self.insnlog.append(code)
         opname = code.split(' ')[0]
         try:
             yield from self.call(opname)         # execute the instruction
@@ -1740,6 +1742,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 return
             # not supported yet:
             raise e                          # ... re-raise
+
+        # append the log file
+        with open("/tmp/insnlog.txt", "a+") as f:
+            f.write(" ".join(self.insnlog)+"\n")
 
         log("gprs after code", code)
         self.gpr.dump()
@@ -2336,8 +2342,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             if name in fregs:
                 reg_val = SelectableInt(self.fpr(base, is_vec, offs, ew_src))
                 log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
+                self.insnlog.append("rFPR:%d.%d/%d" % (base, offs, ew_src))
             elif name is not None:
                 reg_val = SelectableInt(self.gpr(base, is_vec, offs, ew_src))
+                self.insnlog.append("rGPR:%d.%d/%d" % (base, offs, ew_src))
                 log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)
@@ -2456,10 +2464,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # zero-extend tov64 bit begore storing (should use EXT oh well)
         if output.bits > 64:
             output = SelectableInt(output.value, 64)
+        rnum, base, offset = regnum
         if name in fregs:
             self.fpr.write(regnum, output, is_vec, ew_dst)
+            self.insnlog.append("wFPR:%d.%d/%d" % (rnum, offset, ew_dst))
         else:
             self.gpr.write(regnum, output, is_vec, ew_dst)
+            self.insnlog.append("wGPR:%d.%d/%d" % (rnum, offset, ew_dst))
 
     def check_step_increment(self, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
