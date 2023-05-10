@@ -39,6 +39,7 @@ from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.selectable_int import (FieldSelectableInt,
                                               SelectableInt, selectconcat)
 from openpower.fpscr import FPSCRState
+from openpower.xer import XERState
 from openpower.util import LogKind, log
 
 instruction_info = namedtuple('instruction_info',
@@ -266,7 +267,7 @@ class SPR(dict):
                 info = spr_dict[key]
             else:
                 info = spr_byname[key]
-            dict.__setitem__(self, key, SelectableInt(0, info.length))
+            self[key] = SelectableInt(0, info.length)
             res = dict.__getitem__(self, key)
         log("spr returning", key, res)
         return res
@@ -282,6 +283,8 @@ class SPR(dict):
             self.__setitem__('SRR0', value)
         if key == 'HSRR1':  # HACK!
             self.__setitem__('SRR1', value)
+        if key == 1:
+            value = XERState(value)
         log("setting spr", key, value)
         dict.__setitem__(self, key, value)
 
