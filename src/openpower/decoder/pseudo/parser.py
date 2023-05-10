@@ -671,7 +671,7 @@ class PowerParser:
                     'SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3']:
             self.special_regs.add(name)
             self.write_regs.add(name)  # and add to list to write
-        if name in {'XLEN'}:
+        if name in ('XLEN', 'FPSCR'):
             attr = ast.Name("self", ast.Load())
             p[0] = ast.Attribute(attr, name, ast.Load(), lineno=p.lineno(1))
         else:

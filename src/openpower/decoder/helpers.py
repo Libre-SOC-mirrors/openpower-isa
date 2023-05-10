@@ -84,8 +84,6 @@ def copy_assign_rhs(inp):
     """
     if isinstance(inp, (str, int)):
         return inp
-    if isinstance(inp, FPSCRState):
-        return FPSCRState(inp)
     if isinstance(inp, (SelectableInt, FieldSelectableInt)):
         return SelectableInt(inp)
     if isinstance(inp, tuple):
@@ -880,8 +878,7 @@ class ISACallerHelper:
             implementation of the frsp instruction.
             use SINGLE() or FRSP() instead, or just use struct.pack/unpack
         """
-        FRT, FPSCR = self.FRSP(FRS, self.FPSCR)
-        return FRT
+        return self.FRSP(FRS)
 
     def ROTL32(self, value, bits):
         if isinstance(bits, SelectableInt):
