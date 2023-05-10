@@ -17,17 +17,24 @@
 
 
 class RegisterWrite(set):
-    """RegisterWrite: contains the set of Read-after-Write Hazards.
+    """
+    RegisterWrite: contains the set of Read-after-Write Hazards.
     Anything in this set must be a STALL at Decode phase because the
     answer has still not popped out the end of a pipeline
     """
-    def expect_write(self, regs): self.update(regs)
-    def write_expected(self, regs): len(self.intersection(regs)) != 0
-    def retire_write(self, regs): self.difference_update(regs)
+    def expect_write(self, regs):
+        return self.update(regs)
+
+    def write_expected(self, regs):
+        return (len(self.intersection(regs)) != 0)
+
+    def retire_write(self, regs):
+        return self.difference_update(regs)
 
 
 class Execute:
-    """Execute Pipeline: keeps a countdown-sorted list of instructions
+    """
+    Execute Pipeline: keeps a countdown-sorted list of instructions
     to expect at a future cycle (tick).  Anything at zero is processed
     by assuming it is completed, and wishes to write to the regfile.
     However there are only a limited number of regfile write ports,
@@ -67,7 +74,8 @@ class Execute:
 
 
 class Fetch:
-    """Fetch: reads the next log-entry and puts it into the queue.
+    """
+    Fetch: reads the next log-entry and puts it into the queue.
     """
     def __init__(self, cpu):
         self.stages = [None] # only ever going to be 1 long but hey
@@ -87,7 +95,8 @@ class Fetch:
 
 
 class Decode:
-    """Decode: performs a "decode" of the instruction. identifies and records
+    """
+    Decode: performs a "decode" of the instruction. identifies and records
     read/write regs. the reads/writes possible should likely not all be here,
     perhaps split across "Issue"?
     """
@@ -122,7 +131,8 @@ class Decode:
 
 
 class Issue:
-    """Issue phase: if not stalled will place the instruction into execute.
+    """
+    Issue phase: if not stalled will place the instruction into execute.
     TODO: move the reading and writing of regs here.
     """
     def __init__(self, cpu):
@@ -144,7 +154,8 @@ class Issue:
 
 
 class CPU:
-    """CPU: contains Fetch, Decode, Issue and Execute pipelines, and regs.
+    """
+    CPU: contains Fetch, Decode, Issue and Execute pipelines, and regs.
     Reads "instructions" from a file, starts putting them into a pipeline,
     and monitors hazards.  first version looks only for register hazards.
     """
@@ -186,4 +197,3 @@ class CPU:
             self.decode.tick()
             self.issue.tick()
             self.exe.tick()
-
