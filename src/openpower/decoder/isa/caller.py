@@ -1270,6 +1270,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def XLEN(self):
         return self.namespace["XLEN"]
 
+    @property
+    def FPSCR(self):
+        return self.fpscr
+
     def call_trap(self, trap_addr, trap_bit):
         """calls TRAP and sets up NIA to the new execution location.
         next instruction will begin at trap_addr.

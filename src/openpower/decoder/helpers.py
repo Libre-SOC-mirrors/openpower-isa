@@ -8,6 +8,7 @@ from operator import floordiv, mod
 from openpower.decoder.selectable_int import selectltu as ltu
 from openpower.decoder.selectable_int import selectgtu as gtu
 from openpower.decoder.selectable_int import check_extsign
+from openpower.fpscr import FPSCRState
 
 from openpower.util import log
 import math
@@ -846,6 +847,13 @@ class ISACallerHelper:
     @property
     def XLEN(self):
         return self.__XLEN
+
+    @property
+    def FPSCR(self):
+        # fallback for when not used through ISACaller
+        # needed for tests that use DOUBLE2SINGLE without using ISACaller
+        self.__dict__["FPSCR"] = retval = FPSCRState()
+        return retval
 
     def EXTZXL(self, value, bits=None):
         if bits is None:
