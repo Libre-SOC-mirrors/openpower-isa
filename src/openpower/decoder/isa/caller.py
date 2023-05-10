@@ -1250,7 +1250,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                                'FPSCR': self.fpscr,
                                'undefined': undefined,
                                'mode_is_64bit': True,
-                               'SO': XER_bits['SO'],
                                'XLEN': 64  # elwidth overrides
                                })
 
