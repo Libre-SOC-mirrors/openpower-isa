@@ -7,15 +7,15 @@ Round to Single-Precision instruction.
 
     def FRSP(FRB, FPSCR):
         if ((FRB)[1:11] <u 897) & ((FRB)[1:63] >u 0) then
-            if FPSCR['UE'] = 0 then
+            if FPSCR[UE] = 0 then
                 return FRSP_Disabled_Exponent_Underflow(FRB, FPSCR)
-            if FPSCR['UE'] = 1 then
+            if FPSCR[UE] = 1 then
                 return FRSP_Enabled_Exponent_Underflow(FRB, FPSCR)
 
         if ((FRB)[1:11] >u 1150) & ((FRB)[1:11] <u 2047) then
-            if FPSCR['OE'] = 0 then
+            if FPSCR[OE] = 0 then
                 return FRSP_Disabled_Exponent_Overflow(FRB, FPSCR)
-            if FPSCR['OE'] = 1 then
+            if FPSCR[OE] = 1 then
                 return FRSP_Enabled_Exponent_Overflow(FRB, FPSCR)
 
         if ((FRB)[1:11] >u 896) & ((FRB)[1:11] <u 1151) then
@@ -54,22 +54,22 @@ Round to Single-Precision instruction.
             G <- frac[52]
             frac[0:52] <- 0b0 || frac[0:51]
 
-        FPSCR['UX'] <- (frac[24:52] || G || R || X) >u 0
+        FPSCR[UX] <- (frac[24:52] || G || R || X) >u 0
         exp, frac, FPSCR <- Round_Single(sign, exp, frac[0:52], G, R, X, FPSCR)
-        FPSCR['XX'] <- FPSCR['XX'] | FPSCR['FI']
+        FPSCR[XX] <- FPSCR[XX] | FPSCR[FI]
         FRT <- [0b0] * 64
         if frac[0:52] = 0 then
             FRT[0] <- sign
             FRT[1:63] <- 0
-            if sign = 0 then FPSCR['FPRF'] <- '+ zero'
-            if sign = 1 then FPSCR['FPRF'] <- '- zero'
+            if sign = 0 then FPSCR[FPRF] <- '+ zero'
+            if sign = 1 then FPSCR[FPRF] <- '- zero'
         if frac[0:52] >u 0 then
             if frac[0] = 1 then
-                if sign = 0 then FPSCR['FPRF'] <- '+ normal number'
-                if sign = 1 then FPSCR['FPRF'] <- '- normal number'
+                if sign = 0 then FPSCR[FPRF] <- '+ normal number'
+                if sign = 1 then FPSCR[FPRF] <- '- normal number'
             if frac[0] = 0 then
-                if sign = 0 then FPSCR['FPRF'] <- '+ denormalized number'
-                if sign = 1 then FPSCR['FPRF'] <- '- denormalized number'
+                if sign = 0 then FPSCR[FPRF] <- '+ denormalized number'
+                if sign = 1 then FPSCR[FPRF] <- '- denormalized number'
 
             # Normalize operand:
             do while frac[0] = 0
@@ -82,7 +82,7 @@ Round to Single-Precision instruction.
         return FRT, FPSCR
 
     def FRSP_Enabled_Exponent_Underflow(FRB, FPSCR):
-        FPSCR['UX'] <- 1
+        FPSCR[UX] <- 1
         sign <- (FRB)[0]
         frac <- [0b0] * 53
         exp <- 0
@@ -99,42 +99,42 @@ Round to Single-Precision instruction.
             frac[0:52] <- frac[1:52] || 0b0
 
         exp, frac, FPSCR <- Round_Single(sign, exp, frac[0:52], 0b0, 0b0, 0b0, FPSCR)
-        FPSCR['XX'] <- FPSCR['XX'] | FPSCR['FI']
+        FPSCR[XX] <- FPSCR[XX] | FPSCR[FI]
         exp <- exp + 192
         FRT <- [0b0] * 64
         FRT[0] <- sign
         FRT[1:11] <- exp + 1023
         FRT[12:63] <- frac[1:52]
-        if sign = 0 then FPSCR['FPRF'] <- '+ normal number'
-        if sign = 1 then FPSCR['FPRF'] <- '- normal number'
+        if sign = 0 then FPSCR[FPRF] <- '+ normal number'
+        if sign = 1 then FPSCR[FPRF] <- '- normal number'
         return FRT, FPSCR
 
     def FRSP_Disabled_Exponent_Overflow(FRB, FPSCR):
-        FPSCR['OX'] <- 1
+        FPSCR[OX] <- 1
         FRT <- [0b0] * 64
-        if FPSCR['RN'] = 0b00 then             # Round to Nearest
+        if FPSCR[RN] = 0b00 then             # Round to Nearest
             if (FRB)[0] = 0 then FRT <- 0x7FF0_0000_0000_0000
             if (FRB)[0] = 1 then FRT <- 0xFFF0_0000_0000_0000
-            if (FRB)[0] = 0 then FPSCR['FPRF'] <- '+ infinity'
-            if (FRB)[0] = 1 then FPSCR['FPRF'] <- '- infinity'
-        if FPSCR['RN'] = 0b01 then             # Round toward Zero
+            if (FRB)[0] = 0 then FPSCR[FPRF] <- '+ infinity'
+            if (FRB)[0] = 1 then FPSCR[FPRF] <- '- infinity'
+        if FPSCR[RN] = 0b01 then             # Round toward Zero
             if (FRB)[0] = 0 then FRT <- 0x47EF_FFFF_E000_0000
             if (FRB)[0] = 1 then FRT <- 0xC7EF_FFFF_E000_0000
-            if (FRB)[0] = 0 then FPSCR['FPRF'] <- '+ normal number'
-            if (FRB)[0] = 1 then FPSCR['FPRF'] <- '- normal number'
-        if FPSCR['RN'] = 0b10 then             # Round toward +Infinity
+            if (FRB)[0] = 0 then FPSCR[FPRF] <- '+ normal number'
+            if (FRB)[0] = 1 then FPSCR[FPRF] <- '- normal number'
+        if FPSCR[RN] = 0b10 then             # Round toward +Infinity
             if (FRB)[0] = 0 then FRT <- 0x7FF0_0000_0000_0000
             if (FRB)[0] = 1 then FRT <- 0xC7EF_FFFF_E000_0000
-            if (FRB)[0] = 0 then FPSCR['FPRF'] <- '+ infinity'
-            if (FRB)[0] = 1 then FPSCR['FPRF'] <- '- normal number'
-        if FPSCR['RN'] = 0b11 then             # Round toward -Infinity
+            if (FRB)[0] = 0 then FPSCR[FPRF] <- '+ infinity'
+            if (FRB)[0] = 1 then FPSCR[FPRF] <- '- normal number'
+        if FPSCR[RN] = 0b11 then             # Round toward -Infinity
             if (FRB)[0] = 0 then FRT <- 0x47EF_FFFF_E000_0000
             if (FRB)[0] = 1 then FRT <- 0xFFF0_0000_0000_0000
-            if (FRB)[0] = 0 then FPSCR['FPRF'] <- '+ normal number'
-            if (FRB)[0] = 1 then FPSCR['FPRF'] <- '- infinity'
-        FPSCR['FR'] <- undefined(0) # FIXME: figure out what values POWER9 uses
-        FPSCR['FI'] <- 1
-        FPSCR['XX'] <- 1
+            if (FRB)[0] = 0 then FPSCR[FPRF] <- '+ normal number'
+            if (FRB)[0] = 1 then FPSCR[FPRF] <- '- infinity'
+        FPSCR[FR] <- undefined(0) # FIXME: figure out what values POWER9 uses
+        FPSCR[FI] <- 1
+        FPSCR[XX] <- 1
         return FRT, FPSCR
 
     def FRSP_Enabled_Exponent_Overflow(FRB, FPSCR):
@@ -143,49 +143,49 @@ Round to Single-Precision instruction.
         frac <- [0b0] * 53
         frac[0:52] <- 0b1 || (FRB)[12:63]
         exp, frac, FPSCR <- Round_Single(sign, exp, frac[0:52], 0b0, 0b0, 0b0, FPSCR)
-        FPSCR['XX'] <- FPSCR['XX'] | FPSCR['FI']
+        FPSCR[XX] <- FPSCR[XX] | FPSCR[FI]
         # Enabled Overflow:
-        FPSCR['OX'] <- 1
+        FPSCR[OX] <- 1
         exp <- exp - 192
         FRT <- [0b0] * 64
         FRT[0] <- sign
         FRT[1:11] <- exp + 1023
         FRT[12:63] <- frac[1:52]
-        if sign = 0 then FPSCR['FPRF'] <- '+ normal number'
-        if sign = 1 then FPSCR['FPRF'] <- '- normal number'
+        if sign = 0 then FPSCR[FPRF] <- '+ normal number'
+        if sign = 1 then FPSCR[FPRF] <- '- normal number'
         return FRT, FPSCR
 
     def FRSP_Zero_Operand(FRB, FPSCR):
         FRT <- (FRB)
-        if (FRB)[0] = 0 then FPSCR['FPRF'] <- '+ zero'
-        if (FRB)[0] = 1 then FPSCR['FPRF'] <- '- zero'
-        FPSCR['FRFI'] <- 0b00
+        if (FRB)[0] = 0 then FPSCR[FPRF] <- '+ zero'
+        if (FRB)[0] = 1 then FPSCR[FPRF] <- '- zero'
+        FPSCR[FRFI] <- 0b00
         return FRT, FPSCR
 
     def FRSP_Infinity_Operand(FRB, FPSCR):
         FRT <- (FRB)
-        if (FRB)[0] = 0 then FPSCR['FPRF'] <- '+ infinity'
-        if (FRB)[0] = 1 then FPSCR['FPRF'] <- '- infinity'
-        FPSCR['FRFI'] <- 0b00
+        if (FRB)[0] = 0 then FPSCR[FPRF] <- '+ infinity'
+        if (FRB)[0] = 1 then FPSCR[FPRF] <- '- infinity'
+        FPSCR[FRFI] <- 0b00
         return FRT, FPSCR
 
     def FRSP_QNaN_Operand(FRB, FPSCR):
         FRT <- (FRB)[0:34] || [0b0] * 29
-        FPSCR['FPRF'] <- 'QNaN'
-        FPSCR['FR'] <- 0b0
-        FPSCR['FI'] <- 0b0
+        FPSCR[FPRF] <- 'QNaN'
+        FPSCR[FR] <- 0b0
+        FPSCR[FI] <- 0b0
         return FRT, FPSCR
 
     def FRSP_SNaN_Operand(FRB, FPSCR):
-        FPSCR['VXSNAN'] <- 1
+        FPSCR[VXSNAN] <- 1
         FRT <- [0b0] * 64
-        if FPSCR['VE'] = 0 then
+        if FPSCR[VE] = 0 then
             FRT[0:11] <- (FRB)[0:11]
             FRT[12] <- 1
             FRT[13:63] <- (FRB)[13:34] || [0b0] * 29
-            FPSCR['FPRF'] <- 'QNaN'
-        FPSCR['FR'] <- 0b0
-        FPSCR['FI'] <- 0b0
+            FPSCR[FPRF] <- 'QNaN'
+        FPSCR[FR] <- 0b0
+        FPSCR[FI] <- 0b0
         return FRT, FPSCR
 
     def FRSP_Normal_Operand(FRB, FPSCR):
@@ -194,17 +194,17 @@ Round to Single-Precision instruction.
         frac <- [0b0] * 53
         frac[0:52] <- 0b1 || (FRB)[12:63]
         exp, frac, FPSCR <- Round_Single(sign, exp, frac[0:52], 0b0, 0b0, 0b0, FPSCR)
-        FPSCR['XX'] <- FPSCR['XX'] | FPSCR['FI']
-        if (exp > 127) & (FPSCR['OE'] = 0) then
+        FPSCR[XX] <- FPSCR[XX] | FPSCR[FI]
+        if (exp > 127) & (FPSCR[OE] = 0) then
             return FRSP_Disabled_Exponent_Overflow(FRB, FPSCR)
-        if (exp > 127) & (FPSCR['OE'] = 1) then
+        if (exp > 127) & (FPSCR[OE] = 1) then
             return FRSP_Enabled_Overflow(FRB, FPSCR)
         FRT <- [0b0] * 64
         FRT[0] <- sign
         FRT[1:11] <- exp + 1023
         FRT[12:63] <- frac[1:52]
-        if sign = 0 then FPSCR['FPRF'] <- '+ normal number'
-        if sign = 1 then FPSCR['FPRF'] <- '- normal number'
+        if sign = 0 then FPSCR[FPRF] <- '+ normal number'
+        if sign = 1 then FPSCR[FPRF] <- '- normal number'
         return FRT, FPSCR
 
     def Round_Single(sign, exp, frac, G, R, X, FPSCR):
@@ -213,17 +213,17 @@ Round to Single-Precision instruction.
         gbit <- frac[24]
         rbit <- frac[25]
         xbit <- (frac[26:52]||G||R||X) != 0
-        if FPSCR['RN'] = 0b00 then                       # Round to Nearest
+        if FPSCR[RN] = 0b00 then                       # Round to Nearest
             # comparisons ignore u bits
             if (lsb || gbit) = 0b11 then inc <- 1
             if (lsb || gbit || rbit) = 0b011 then inc <- 1
             if (lsb || gbit || xbit) = 0b011 then inc <- 1
-        if FPSCR['RN'] = 0b10 then                       # Round toward + Infinity
+        if FPSCR[RN] = 0b10 then                       # Round toward + Infinity
             # comparisons ignore u bits
             if (sign || gbit) = 0b01 then inc <- 1
             if (sign || rbit) = 0b01 then inc <- 1
             if (sign || xbit) = 0b01 then inc <- 1
-        if FPSCR['RN'] = 0b11 then                       # Round toward - Infinity
+        if FPSCR[RN] = 0b11 then                       # Round toward - Infinity
             # comparisons ignore u bits
             if (sign || gbit) = 0b11 then inc <- 1
             if (sign || rbit) = 0b11 then inc <- 1
@@ -233,8 +233,8 @@ Round to Single-Precision instruction.
             frac[0:23] <- 0b1 || frac[0:22]
             exp <- exp + 1
         frac[24:52] <- [0b0] * 29
-        FPSCR['FR'] <- inc
-        FPSCR['FI'] <- gbit | rbit | xbit
+        FPSCR[FR] <- inc
+        FPSCR[FI] <- gbit | rbit | xbit
         return exp, frac, FPSCR
 
 <!-- Power ISA v3.0B p140 section 4.6.2 -->
