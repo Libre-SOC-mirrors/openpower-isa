@@ -915,6 +915,37 @@ class PowerParser:
             raise_syntax_error("Can't do that yet", self.filename,
                                eq_tok.lineno, eq_tok.lexpos, self.input_text)
 
+    def try_extract_name(self, atom):
+        if isinstance(atom, ast.Attribute):
+            if isinstance(atom.value, ast.Name) and atom.value.id == "self":
+                return atom.attr
+            return None
+        if isinstance(atom, ast.Name):
+            return atom.id
+        return None
+
+    def try_extract_uppercase_name(self, atom):
+        name = self.try_extract_name(atom)
+        if name is None:
+            return None
+        # we want to filter out names like _123 that have no letters with
+        # casing at all, hence the lower() check
+        if name.upper() != name or name.lower() == name:
+            return None
+        return name
+
+    def try_get_attr(self, atom, trailer):
+        if trailer[0] == "ATTR":
+            return trailer[1]
+        if trailer[0] != "SUBS":
+            return None
+        base_name = self.try_extract_uppercase_name(atom)
+        if base_name is None or base_name in SPECIAL_HELPERS:
+            return None
+        if len(trailer[1]) != 1:
+            return None
+        return self.try_extract_uppercase_name(trailer[1][0])
+
     def apply_trailer(self, atom, trailer, read_regs):
         if trailer[0] == "TLIST":
             # assume depth of one
@@ -949,15 +980,11 @@ class PowerParser:
             #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)
             # else:
             #    p[0] = ast.CallFunc(p[1], p[2][1], None, None)
-        elif trailer[0] == "ATTR":
-            #p[0] = ast.Expr(ast.Call(p[1], p[2][1], []))
-            for arg in trailer[1]:
-                if isinstance(arg, ast.Name):
-                    name = arg.id
-                    if name in regs + fregs:
-                        read_regs.add(name)
-            return ast.Attribute(atom, trailer[1], ast.Load())
         else:
+            attr = self.try_get_attr(atom, trailer)
+            if attr is not None:
+                return ast.Attribute(atom, attr, ast.Load())
+            assert trailer[0] == "SUBS"
             print("subscript atom", trailer[1])
             #raise AssertionError("not implemented %s" % p[2][0])
             subs = trailer[1]
