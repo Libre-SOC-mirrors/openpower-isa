@@ -2227,11 +2227,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.crl[regnum].eq(cr0)
 
     def do_outregs_nia(self, asmop, ins_name, info, outs,
-                       carry_en, rc_en, ffirst_hit, ew_dst):
+                       ca_en, rc_en, ffirst_hit, ew_dst):
         ffirst_hit, vli = ffirst_hit
-        # write out any regs for this instruction
-        for name, output in outs.items():
-            yield from self.check_write(info, name, output, carry_en, ew_dst)
+        # write out any regs for this instruction, but only if fail-first is ok
+        # XXX TODO: allow CR-vector to be written out even if ffirst fails
+        if not ffirst_hit or vli:
+            for name, output in outs.items():
+                yield from self.check_write(info, name, output, ca_en, ew_dst)
         # restore the CR value on non-VLI failfirst (from sv.cmp and others
         # which write directly to CR in the pseudocode (gah, what a mess)
         # if ffirst_hit and not vli:

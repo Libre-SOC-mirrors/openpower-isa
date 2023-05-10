@@ -709,7 +709,7 @@ class DecoderTestCase(FHDLTestCase):
         lst = SVP64Asm(
             [
                 # load VL bytes but test if they are zero and truncate
-                "sv.lbz/ff=RC1 *16, 1(10)",
+                "sv.lbz/ff=RC1 *16, 1(10)", # deliberately offset by 1
             ]
         )
         lst = list(lst)
@@ -728,6 +728,13 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(8): # set to garbage
             initial_regs[16+i] = (0xbeef00) + i  # identifying garbage
 
+        # calculate expected regs
+        expected_regs = deepcopy(initial_regs)
+        for i, c in enumerate(tst_string[1:]): # note the offset 1(10)
+            c = ord(c)
+            if c == 0: break # strcpy stop at NUL
+            expected_regs[16+i] = c
+
         # some memory with identifying garbage in it
         initial_mem = {16: 0xf0f1_f2f3_f4f5_f6f7,
                        24: 0x4041_4243_4445_4647,
@@ -744,7 +751,10 @@ class DecoderTestCase(FHDLTestCase):
                                        initial_regs=initial_regs)
             mem = sim.mem.dump(printout=True, asciidump=True)
             print (mem)
-            self.assertEqual(sim.svstate.vl, 1)
+            self.assertEqual(sim.svstate.vl, 2)
+            for i in range(len(expected_regs)):
+                print ("%i %x %x" % (i, sim.gpr(i).value, expected_regs[i]))
+                self.assertEqual(sim.gpr(i), expected_regs[i])
 
     def run_tst_program(self, prog, initial_regs=None,
                         svstate=None, initial_fprs=None,
