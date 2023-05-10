@@ -14,7 +14,8 @@ import astor
 from copy import deepcopy
 
 from openpower.decoder.power_decoder import create_pdecode
-from openpower.decoder.pseudo.lexer import IndentLexer, raise_syntax_error
+from openpower.decoder.pseudo.lexer import (
+    IndentLexer, raise_syntax_error, SyntaxError2)
 from openpower.decoder.orderedset import OrderedSet
 
 # I use the Python AST
@@ -141,45 +142,6 @@ def identify_sint_mul_pattern(p):
         return False
     return True  # yippee!
 
-
-def apply_trailer(atom, trailer, read_regs):
-    if trailer[0] == "TLIST":
-        # assume depth of one
-        atom = apply_trailer(atom, trailer[1], read_regs)
-        trailer = trailer[2]
-    if trailer[0] == "CALL":
-        #p[0] = ast.Expr(ast.Call(p[1], p[2][1], []))
-        for arg in trailer[1]:
-            if isinstance(arg, ast.Name):
-                name = arg.id
-                if name in regs + fregs:
-                    read_regs.add(name)
-        # special-case, these functions must NOT be made "self.xxxx"
-        if atom.id not in SPECIAL_HELPERS:
-            name = ast.Name("self", ast.Load())
-            atom = ast.Attribute(name, atom, ast.Load())
-        return ast.Call(atom, trailer[1], [])
-        # if p[1].id == 'print':
-        #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)
-        # else:
-        #    p[0] = ast.CallFunc(p[1], p[2][1], None, None)
-    else:
-        print("subscript atom", trailer[1])
-        #raise AssertionError("not implemented %s" % p[2][0])
-        subs = trailer[1]
-        if len(subs) == 1:
-            idx = subs[0]
-            if isinstance(idx, ast.Name) and idx.id in regs + fregs:
-                read_regs.add(idx.id)
-            if isinstance(idx, ast.Name) and idx.id in regs:
-                print("single atom subscript, underscored", idx.id)
-                idx = ast.Name("_%s" % idx.id, ast.Load())
-        else:
-            idx = ast.Slice(subs[0], subs[1], None)
-        # if isinstance(atom, ast.Name) and atom.id == 'CR':
-            # atom.id = 'CR' # bad hack
-            #print ("apply_trailer Subscript", atom.id, idx)
-        return ast.Subscript(atom, idx, ast.Load())
 
 ##########   Parser (tokens -> AST) ######
 
@@ -402,6 +364,8 @@ class PowerParser:
                     autoassign = (name not in self.declared_vars and
                                   name not in self.fnparm_vars and
                                   name not in self.special_regs)
+            elif isinstance(p[1], (ast.Attribute, ast.Tuple)):
+                pass
             elif isinstance(p[1], ast.Call) and p[1].func.id in \
                     ['GPR', 'FPR', 'SPR']:
                 print(astor.dump_tree(p[1]))
@@ -424,8 +388,10 @@ class PowerParser:
                 print(astor.dump_tree(p[0]))
                 return
             else:
-                print("help, help")
                 print(astor.dump_tree(p[1]))
+                raise_syntax_error("help, help", self.filename,
+                                   p.slice[2].lineno, p.slice[2].lexpos,
+                                   self.input_text)
             print("expr assign", name, p[1], "to", p[3])
             if isinstance(p[3], ast.Name):
                 toname = p[3].id
@@ -438,7 +404,8 @@ class PowerParser:
             # documentation for why we need this
             copy_fn = ast.Name("copy_assign_rhs", ast.Load())
             rhs = ast.Call(copy_fn, (p[3],), [])
-            p[0] = self.Assign(autoassign, name, p[1], rhs, iea_mode, p[2])
+            p[0] = self.Assign(autoassign, name, p[1], rhs, iea_mode,
+                               p.slice[2])
             if name:
                 self.declared_vars.add(name)
 
@@ -683,7 +650,7 @@ class PowerParser:
             print(astor.dump_tree(p[1]))
             print("power dump trailerlist")
             print(astor.dump_tree(p[2]))
-            p[0] = apply_trailer(p[1], p[2], self.read_regs)
+            p[0] = self.apply_trailer(p[1], p[2], self.read_regs)
             if isinstance(p[1], ast.Name):
                 name = p[1].id
                 if name in regs + fregs:
@@ -704,7 +671,7 @@ class PowerParser:
                     'SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3']:
             self.special_regs.add(name)
             self.write_regs.add(name)  # and add to list to write
-        if name in {'XLEN'}:
+        if name in ('XLEN', 'FPSCR'):
             attr = ast.Name("self", ast.Load())
             p[0] = ast.Attribute(attr, name, ast.Load(), lineno=p.lineno(1))
         else:
@@ -782,6 +749,7 @@ class PowerParser:
     def p_trailer(self, p):
         """trailer : trailer_arglist
                    | trailer_subscript
+                   | trailer_attr
         """
         p[0] = p[1]
 
@@ -790,11 +758,15 @@ class PowerParser:
                            | LPAR RPAR
         """
         args = [] if len(p) == 3 else p[2]
-        p[0] = ("CALL", args)
+        p[0] = ("CALL", args, p.slice[1])
 
     def p_trailer_subscript(self, p):
         "trailer_subscript : LBRACK subscript RBRACK"
         p[0] = ("SUBS", p[2])
+
+    def p_trailer_attr(self, p):
+        "trailer_attr : PERIOD NAME"
+        p[0] = ("ATTR", p[2])
 
     # subscript: '.' '.' '.' | test | [test] ':' [test]
 
@@ -893,6 +865,9 @@ class PowerParser:
                 names.append(child.id)
             ass_list = [ast.Name(name, ast.Store()) for name in names]
             return ast.Assign([ast.Tuple(ass_list)], right)
+        elif isinstance(left, ast.Attribute):
+            return ast.Assign([
+                ast.Attribute(left.value, left.attr, ast.Store())], right)
         elif isinstance(left, ast.Subscript):
             ls = left.slice
             # XXX changing meaning of "undefined" to a function
@@ -939,6 +914,93 @@ class PowerParser:
             print("Assign fail")
             raise_syntax_error("Can't do that yet", self.filename,
                                eq_tok.lineno, eq_tok.lexpos, self.input_text)
+
+    def try_extract_name(self, atom):
+        if isinstance(atom, ast.Attribute):
+            if isinstance(atom.value, ast.Name) and atom.value.id == "self":
+                return atom.attr
+            return None
+        if isinstance(atom, ast.Name):
+            return atom.id
+        return None
+
+    def try_extract_uppercase_name(self, atom):
+        name = self.try_extract_name(atom)
+        if name is None:
+            return None
+        # we want to filter out names like _123 that have no letters with
+        # casing at all, hence the lower() check
+        if name.upper() != name or name.lower() == name:
+            return None
+        return name
+
+    def try_get_attr(self, atom, trailer):
+        if trailer[0] == "ATTR":
+            return trailer[1]
+        if trailer[0] != "SUBS":
+            return None
+        base_name = self.try_extract_uppercase_name(atom)
+        if base_name is None or base_name in SPECIAL_HELPERS:
+            return None
+        if len(trailer[1]) != 1:
+            return None
+        return self.try_extract_uppercase_name(trailer[1][0])
+
+    def apply_trailer(self, atom, trailer, read_regs):
+        if trailer[0] == "TLIST":
+            # assume depth of one
+            atom = self.apply_trailer(atom, trailer[1], read_regs)
+            trailer = trailer[2]
+        if trailer[0] == "CALL":
+            #p[0] = ast.Expr(ast.Call(p[1], p[2][1], []))
+            for arg in trailer[1]:
+                if isinstance(arg, ast.Name):
+                    name = arg.id
+                    if name in regs + fregs:
+                        read_regs.add(name)
+            if atom.id == "SetFX":
+                if len(trailer[1]) != 1 or \
+                        not isinstance(trailer[1][0], ast.Attribute):
+                    raise_syntax_error(
+                        "SetFX call must have only one argument that is an "
+                        "attribute access -- like `SetFX(FPSCR.VXSNAN)`",
+                        self.filename, trailer[2].lineno, trailer[2].lexpos,
+                        self.input_text)
+                arg = trailer[1][0]
+                args = [arg.value, ast.Str(arg.attr)]
+                name = ast.Name("self", ast.Load())
+                atom = ast.Attribute(name, atom, ast.Load())
+                return ast.Call(atom, args, [])
+            # special-case, these functions must NOT be made "self.xxxx"
+            if atom.id not in SPECIAL_HELPERS:
+                name = ast.Name("self", ast.Load())
+                atom = ast.Attribute(name, atom, ast.Load())
+            return ast.Call(atom, trailer[1], [])
+            # if p[1].id == 'print':
+            #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)
+            # else:
+            #    p[0] = ast.CallFunc(p[1], p[2][1], None, None)
+        else:
+            attr = self.try_get_attr(atom, trailer)
+            if attr is not None:
+                return ast.Attribute(atom, attr, ast.Load())
+            assert trailer[0] == "SUBS"
+            print("subscript atom", trailer[1])
+            #raise AssertionError("not implemented %s" % p[2][0])
+            subs = trailer[1]
+            if len(subs) == 1:
+                idx = subs[0]
+                if isinstance(idx, ast.Name) and idx.id in regs + fregs:
+                    read_regs.add(idx.id)
+                if isinstance(idx, ast.Name) and idx.id in regs:
+                    print("single atom subscript, underscored", idx.id)
+                    idx = ast.Name("_%s" % idx.id, ast.Load())
+            else:
+                idx = ast.Slice(subs[0], subs[1], None)
+            # if isinstance(atom, ast.Name) and atom.id == 'CR':
+                # atom.id = 'CR' # bad hack
+                #print ("apply_trailer Subscript", atom.id, idx)
+            return ast.Subscript(atom, idx, ast.Load())
 
 
 _CACHE_DECODER = True
@@ -1002,7 +1064,10 @@ class GardenSnakeCompiler(object):
             raise ValueError("missing filename")
         self.parser.filename = filename
         self.parser.input_text = code
-        tree = self.parser.parse(code)
+        try:
+            tree = self.parser.parse(code)
+        except SyntaxError2 as e:
+            e.raise_syntax_error()
         print("snake")
         pprint(tree)
         return tree

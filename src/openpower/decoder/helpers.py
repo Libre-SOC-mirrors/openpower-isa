@@ -9,6 +9,7 @@ from operator import floordiv, mod
 from openpower.decoder.selectable_int import selectltu as ltu
 from openpower.decoder.selectable_int import selectgtu as gtu
 from openpower.decoder.selectable_int import check_extsign
+from openpower.fpscr import FPSCRState
 
 from openpower.util import log
 import math
@@ -841,12 +842,19 @@ def log2(val):
 
 
 class ISACallerHelper:
-    def __init__(self, XLEN):
+    def __init__(self, XLEN, FPSCR):
         self.__XLEN = XLEN
+        if FPSCR is None:
+            FPSCR = FPSCRState()
+        self.__FPSCR = FPSCR
 
     @property
     def XLEN(self):
         return self.__XLEN
+
+    @property
+    def FPSCR(self):
+        return self.__FPSCR
 
     def EXTZXL(self, value, bits=None):
         if bits is None:
@@ -871,14 +879,7 @@ class ISACallerHelper:
             implementation of the frsp instruction.
             use SINGLE() or FRSP() instead, or just use struct.pack/unpack
         """
-        FPSCR = {
-            'UE': SelectableInt(0, 1),
-            'OE': SelectableInt(0, 1),
-            'RN': SelectableInt(0, 2),  # round to nearest, ties to even
-            'XX': SelectableInt(0, 1),
-        }
-        FRT, FPSCR = self.FRSP(FRS, FPSCR)
-        return FRT
+        return self.FRSP(FRS)
 
     def ROTL32(self, value, bits):
         if isinstance(bits, SelectableInt):
@@ -942,7 +943,8 @@ class ISACallerHelper:
 
 class HelperTests(unittest.TestCase, ISACallerHelper):
     def __init__(self, *args, **kwargs):
-        ISACallerHelper.__init__(self, 64) # TODO: dynamic (64/32/16/8)
+        # TODO: dynamic (64/32/16/8)
+        ISACallerHelper.__init__(self, 64, FPSCR=None)
         unittest.TestCase.__init__(self, *args, **kwargs)
 
     def test_MASK(self):

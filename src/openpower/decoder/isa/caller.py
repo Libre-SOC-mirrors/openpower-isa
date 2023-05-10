@@ -40,6 +40,7 @@ from openpower.decoder.selectable_int import (FieldSelectableInt,
                                               SelectableInt, selectconcat,
                                               EFFECTIVELY_UNLIMITED)
 from openpower.fpscr import FPSCRState
+from openpower.xer import XERState
 from openpower.util import LogKind, log
 
 instruction_info = namedtuple('instruction_info',
@@ -267,7 +268,7 @@ class SPR(dict):
                 info = spr_dict[key]
             else:
                 info = spr_byname[key]
-            dict.__setitem__(self, key, SelectableInt(0, info.length))
+            self[key] = SelectableInt(0, info.length)
             res = dict.__getitem__(self, key)
         log("spr returning", key, res)
         return res
@@ -283,6 +284,8 @@ class SPR(dict):
             self.__setitem__('SRR0', value)
         if key == 'HSRR1':  # HACK!
             self.__setitem__('SRR1', value)
+        if key == 1:
+            value = XERState(value)
         log("setting spr", key, value)
         dict.__setitem__(self, key, value)
 
@@ -1263,11 +1266,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.decoder = decoder2.dec
         self.dec2 = decoder2
 
-        super().__init__(XLEN=self.namespace["XLEN"])
+        super().__init__(XLEN=self.namespace["XLEN"], FPSCR=self.fpscr)
 
     @property
     def XLEN(self):
         return self.namespace["XLEN"]
+
+    @property
+    def FPSCR(self):
+        return self.fpscr
 
     def call_trap(self, trap_addr, trap_bit):
         """calls TRAP and sets up NIA to the new execution location.
