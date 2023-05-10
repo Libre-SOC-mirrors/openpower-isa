@@ -3,6 +3,7 @@ import struct
 import sys
 from openpower.decoder.selectable_int import (SelectableInt, onebit,
                                               selectconcat, FieldSelectableInt)
+from openpower.decoder.selectable_int import EFFECTIVELY_UNLIMITED as EU
 from nmutil.divmod import trunc_divs, trunc_rems
 from operator import floordiv, mod
 from openpower.decoder.selectable_int import selectltu as ltu
@@ -39,19 +40,19 @@ def exts(value, bits):
 
 
 def EXTS(value):
-    """ extends sign bit out from current MSB to all 256 bits
+    """ extends sign bit out from current MSB to MAX limit bits
     """
     log("EXTS", value, type(value))
     assert isinstance(value, SelectableInt)
-    return SelectableInt(exts(value.value, value.bits) & ((1 << 256)-1), 256)
+    return SelectableInt(exts(value.value, value.bits) & ((1 << EU)-1), EU)
 
 
 def EXTZ(value):
-    """ zero extend to 256 bits
+    """ zero extend to EFFECTIVELY_UNLIMITED bits
     """
     if isinstance(value, SelectableInt):
         value = value.value
-    return SelectableInt(value & ((1 << 256) - 1), 256)
+    return SelectableInt(value & ((1 << EU) - 1), EU)
 
 
 def EXTS64(value):

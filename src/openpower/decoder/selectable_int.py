@@ -7,13 +7,14 @@ from operator import (add, sub, mul, floordiv, truediv, mod, or_, and_, xor,
                       neg, inv, lshift, rshift, lt, eq)
 from openpower.util import log
 
+EFFECTIVELY_UNLIMITED = 1024
 
 def check_extsign(a, b):
     if isinstance(b, FieldSelectableInt):
         b = b.get_range()
     if isinstance(b, int):
         return SelectableInt(b, a.bits)
-    if b.bits != 256:
+    if b.bits != EFFECTIVELY_UNLIMITED:
         return b
     return SelectableInt(b.value, a.bits)
 
@@ -312,7 +313,7 @@ class SelectableInt:
     def __rsub__(self, b):
         log("rsub", b, self.value)
         if isinstance(b, int):
-            b = SelectableInt(b, 256) # max extent
+            b = SelectableInt(b, EFFECTIVELY_UNLIMITED) # max extent
         #b = check_extsign(self, b)
         #assert b.bits == self.bits
         return SelectableInt(b.value - self.value, b.bits)

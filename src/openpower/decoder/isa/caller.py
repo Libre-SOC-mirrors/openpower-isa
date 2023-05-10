@@ -37,7 +37,8 @@ from openpower.decoder.power_enums import (FPTRANS_INSNS, CRInSel, CROutSel,
 from openpower.decoder.power_insn import SVP64Instruction
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.selectable_int import (FieldSelectableInt,
-                                              SelectableInt, selectconcat)
+                                              SelectableInt, selectconcat,
+                                              EFFECTIVELY_UNLIMITED)
 from openpower.fpscr import FPSCRState
 from openpower.util import LogKind, log
 
@@ -1226,7 +1227,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.cr_backup = 0  # sigh, dreadful hack: for fail-first (VLi)
 
         # "undefined", just set to variable-bit-width int (use exts "max")
-        # self.undefined = SelectableInt(0, 256)  # TODO, not hard-code 256!
+        # self.undefined = SelectableInt(0, EFFECTIVELY_UNLIMITED)
 
         self.namespace = {}
         self.namespace.update(self.spr)
@@ -2402,7 +2403,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if name == 'CR0':  # ignore, done already (above)
             return
         if isinstance(output, int):
-            output = SelectableInt(output, 256)
+            output = SelectableInt(output, EFFECTIVELY_UNLIMITED)
         # write carry flafs
         if name in ['CA', 'CA32']:
             if carry_en:
@@ -2439,7 +2440,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # check zeroing due to predicate bit being zero
         if self.is_svp64_mode and self.pred_dst_zero:
             log('zeroing reg %s %s' % (str(regnum), str(output)), is_vec)
-            output = SelectableInt(0, 256)
+            output = SelectableInt(0, EFFECTIVELY_UNLIMITED)
         log("write reg %s%s 0x%x ew %d" % (reg_prefix, str(regnum),
                                            output.value, ew_dst),
             kind=LogKind.InstrInOuts)
