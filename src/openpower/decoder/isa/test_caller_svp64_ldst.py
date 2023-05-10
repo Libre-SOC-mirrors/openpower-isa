@@ -704,7 +704,7 @@ class DecoderTestCase(FHDLTestCase):
                 self.assertEqual(sim.gpr(i+12), av[i])
 
     def test_sv_load_dd_ffirst_excl(self):
-        """data-dependent fail-first on LD/ST
+        """data-dependent fail-first on LD/ST, exclusive (VLi=0)
         """
         lst = SVP64Asm(
             [
@@ -752,6 +752,59 @@ class DecoderTestCase(FHDLTestCase):
             mem = sim.mem.dump(printout=True, asciidump=True)
             print (mem)
             self.assertEqual(sim.svstate.vl, 2)
+            for i in range(len(expected_regs)):
+                print ("%i %x %x" % (i, sim.gpr(i).value, expected_regs[i]))
+                self.assertEqual(sim.gpr(i), expected_regs[i])
+
+    def test_sv_load_dd_ffirst_incl(self):
+        """data-dependent fail-first on LD/ST, inclusive (/vli)
+        """
+        lst = SVP64Asm(
+            [
+                # load VL bytes but test if they are zero and truncate
+                "sv.lbz/ff=RC1/vli *16, 1(10)", # deliberately offset by 1
+            ]
+        )
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=8)
+        svstate = SVP64State()
+        svstate.vl = 8  # VL
+        svstate.maxvl = 8  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
+
+        tst_string = "hel\x00e\x00"
+        initial_regs = [0] * 32
+        initial_regs[3] = len(tst_string)  # including the zero
+        initial_regs[10] = 16  # load address
+        initial_regs[12] = 40  # store address
+        for i in range(8): # set to garbage
+            initial_regs[16+i] = (0xbeef00) + i  # identifying garbage
+
+        # calculate expected regs
+        expected_regs = deepcopy(initial_regs)
+        for i, c in enumerate(tst_string[1:]): # note the offset 1(10)
+            c = ord(c)
+            expected_regs[16+i] = c
+            if c == 0: break # strcpy stop at NUL *including* NUL
+
+        # some memory with identifying garbage in it
+        initial_mem = {16: 0xf0f1_f2f3_f4f5_f6f7,
+                       24: 0x4041_4243_4445_4647,
+                       40: 0x8081_8283_8485_8687,
+                       48: 0x9091_9293_9495_9697,
+                       }
+
+        for i, c in enumerate(tst_string):
+            write_byte(initial_mem, 16+i, ord(c))
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_mem=initial_mem,
+                                       initial_regs=initial_regs)
+            mem = sim.mem.dump(printout=True, asciidump=True)
+            print (mem)
+            self.assertEqual(sim.svstate.vl, 3)
             for i in range(len(expected_regs)):
                 print ("%i %x %x" % (i, sim.gpr(i).value, expected_regs[i]))
                 self.assertEqual(sim.gpr(i), expected_regs[i])
