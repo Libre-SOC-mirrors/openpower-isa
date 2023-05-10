@@ -16,20 +16,23 @@
 """
 
 
-class RegisterWrite(set):
+class RegisterWrite:
     """
     RegisterWrite: contains the set of Read-after-Write Hazards.
     Anything in this set must be a STALL at Decode phase because the
     answer has still not popped out the end of a pipeline
     """
+    def __init__(self):
+        self.storage = set()
+
     def expect_write(self, regs):
-        return self.update(regs)
+        return self.storage.update(regs)
 
     def write_expected(self, regs):
-        return (len(self.intersection(regs)) != 0)
+        return (len(self.storage.intersection(regs)) != 0)
 
     def retire_write(self, regs):
-        return self.difference_update(regs)
+        return self.storage.difference_update(regs)
 
 
 class Execute:
