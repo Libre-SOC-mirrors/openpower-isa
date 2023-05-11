@@ -106,11 +106,17 @@ class BFPStateClass:
 
 
 class SelectableMSB0Fraction:
-    """a MSB0 infinite bit string that is really a real number between 0 and 1,
-    but we approximate it using a Fraction.
+    """a MSB0 infinite bit string that is a real number generally between 0
+    and 2, but we approximate it using a Fraction.
 
-    this is not just SelectableInt because we need more than 256 bits and
-    because this isn't an integer.
+    bit 0 is the lsb of the integer part,
+    bit 1 is the msb of the fraction part,
+    bit 2 is the next-to-msb of the fraction part, etc.
+
+    this is not SelectableInt because we need more bits and because this isn't
+    an integer -- it can represent unlimited values, both really small and
+    really large -- corresponding to having bits be able to be set in bit
+    indexes 0, -1, -2, -3, etc.
     """
 
     def __init__(self, value=None):
@@ -133,7 +139,9 @@ class SelectableMSB0Fraction:
             # use int() to convert from
             start = int(0 if index.start is None else index.start)
             stop = int(index.stop)
-            length = stop - start + 1
+            # pseudo-code compiler converts from inclusive to
+            # standard Python slices
+            length = stop - start
         else:
             start = int(index)
             length = 1
@@ -142,16 +150,20 @@ class SelectableMSB0Fraction:
     def __slice_as_int(self, start, length):
         if start < 0 or length < 0:
             raise ValueError("slice out of range")
-        end = start + length
+        if length == 0:
+            return 0
+        last = start + length - 1
         # shift so bits we want are the lsb bits of the integer part
-        v = math.floor(self.value * (1 << end))
+        v = math.floor(self.value * (1 << last))
         return v & ~(~0 << length)  # mask off unwanted bits
 
     def __set_slice(self, start, length, value):
         if start < 0 or length < 0:
             raise ValueError("slice out of range")
-        end = start + length
-        shift_factor = 1 << end
+        if length == 0:
+            return
+        last = start + length - 1
+        shift_factor = 1 << last
         # shift so bits we want to replace are the lsb bits of the integer part
         v = self.value * shift_factor
         mask = ~(~0 << length)
@@ -160,7 +172,7 @@ class SelectableMSB0Fraction:
         # compute how much we need to add
         offset = value - (math.floor(v) & mask)
         # shift offset back into position
-        offset /= shift_factor
+        offset = Fraction(offset, shift_factor)
         self.value += offset
 
     def __getitem__(self, index):
@@ -179,7 +191,7 @@ class SelectableMSB0Fraction:
                 ):
         """ convert to a string of the form: `0x3a.bc` or
         `0x...face.face_face_face_face... (0xa8ef0000 / 0x5555)`"""
-        if max_int_digits < 0 or max_fraction_digits < 0:
+        if max_int_digits <= 0 or max_fraction_digits <= 0:
             raise ValueError("invalid digit limit")
         approx = False
         int_part = math.floor(self.value)
@@ -191,21 +203,22 @@ class SelectableMSB0Fraction:
             int_part %= int_part_limit
             int_str = f"0x...{int_part:0{max_int_digits}x}"
 
-        # is the denominator a power of 2?
-        if (self.value.denominator & (self.value.denominator - 1)) == 0:
-            fraction_bits = self.value.denominator.bit_length() - 1
-            fraction_digits = -(-fraction_bits) // 4  # ceil division by 4
+        factor = 0x10 ** max_fraction_digits
+        fraction_part_exact = (self.value - math.floor(self.value)) * factor
+        fraction_part = math.floor(fraction_part_exact)
+
+        if fraction_part == fraction_part_exact:
+            # extract least-significant set bit of fraction_part
+            fraction_part_lsb = fraction_part & -fraction_part
+            log2_fraction_part_lsb = fraction_part_lsb.bit_length() - 1
+            zero_fraction_digits = max(0, log2_fraction_part_lsb // 4)
+            fraction_part >>= 4 * zero_fraction_digits
+            fraction_digits = max_fraction_digits - zero_fraction_digits
+            suffix = ""
         else:
-            # something bigger than max_fraction_digits
-            fraction_digits = max_fraction_digits + 1
-        if fraction_digits > max_fraction_digits:
             suffix = "..."
             approx = True
             fraction_digits = max_fraction_digits
-        else:
-            suffix = ""
-        factor = 0x10 ** fraction_digits
-        fraction_part = math.floor(self.value * factor)
         fraction_str = f"{fraction_part:0{fraction_digits}x}"
         fraction_parts = []
         if fraction_sep_period is not None and fraction_sep_period > 0:
@@ -216,10 +229,28 @@ class SelectableMSB0Fraction:
         retval = int_str
         if self.value.denominator != 1:
             retval += fraction_str
+        else:
+            retval += ".0"
         if approx:
             n = self.value.numerator
             d = self.value.denominator
-            retval += f" ({n:#x} / {d:#x})"
+            fraction = f" ({n:#x} / {d:#x})"
+
+            # is the denominator a power of 2?
+            if (self.value.denominator & (self.value.denominator - 1)) == 0:
+                log2_d = self.value.denominator.bit_length() - 1
+
+                if self.value.denominator == 1:
+                    fraction = f" ({n:#x})"
+
+                # extract least-significant set bit of n
+                n_lsb = n & -n
+                n //= n_lsb
+                log2_n_lsb = n_lsb.bit_length() - 1
+                exponent = log2_n_lsb - log2_d
+                if exponent < -8 or exponent > 8:
+                    fraction = f" ({n:#x} * 2**{exponent})"
+            retval += fraction
         return retval
 
     def __repr__(self):
@@ -241,6 +272,18 @@ class SelectableMSB0Fraction:
 
     def __pos__(self):
         return SelectableMSB0Fraction(self)
+
+    def __floor__(self):
+        return SelectableMSB0Fraction(math.floor(self.value))
+
+    def __ceil__(self):
+        return SelectableMSB0Fraction(math.ceil(self.value))
+
+    def __trunc__(self):
+        return SelectableMSB0Fraction(math.trunc(self.value))
+
+    def __round__(self):
+        return SelectableMSB0Fraction(round(self.value))
 
     @staticmethod
     def __arith_op(lhs, rhs, op):
@@ -270,6 +313,18 @@ class SelectableMSB0Fraction:
     def __rtruediv__(self, other):
         return self.__arith_op(other, self, operator.truediv)
 
+    def __floordiv__(self, other):
+        return self.__arith_op(self, other, operator.floordiv)
+
+    def __rfloordiv__(self, other):
+        return self.__arith_op(other, self, operator.floordiv)
+
+    def __mod__(self, other):
+        return self.__arith_op(self, other, operator.mod)
+
+    def __rmod__(self, other):
+        return self.__arith_op(other, self, operator.mod)
+
     def __lshift__(self, amount):
         if not isinstance(amount, int):
             raise TypeError("can't shift by non-int")
@@ -298,22 +353,22 @@ class SelectableMSB0Fraction:
         return op(self.value, other)
 
     def __eq__(self, other):
-        return self.__cmp_op(self, other, operator.eq)
+        return self.__cmp_op(other, operator.eq)
 
     def __ne__(self, other):
-        return self.__cmp_op(self, other, operator.ne)
+        return self.__cmp_op(other, operator.ne)
 
     def __lt__(self, other):
-        return self.__cmp_op(self, other, operator.lt)
+        return self.__cmp_op(other, operator.lt)
 
     def __le__(self, other):
-        return self.__cmp_op(self, other, operator.le)
+        return self.__cmp_op(other, operator.le)
 
     def __gt__(self, other):
-        return self.__cmp_op(self, other, operator.gt)
+        return self.__cmp_op(other, operator.gt)
 
     def __ge__(self, other):
-        return self.__cmp_op(self, other, operator.ge)
+        return self.__cmp_op(other, operator.ge)
 
 
 class BFPState:
