@@ -47,9 +47,10 @@ class DecoderTestCase(FHDLTestCase):
             expected_vl = 0
             for i in range(4):
                 result = expected[i] - gprs[8]
-                expected[i] = result
                 if result <= 0:
                     break
+                # VLi=0 - test comes FIRST!
+                expected[i] = result
                 # only write out if successful
                 expected_vl += 1
             for i, v in enumerate(res):
@@ -91,9 +92,10 @@ class DecoderTestCase(FHDLTestCase):
             expected = deepcopy(vec)
             for i in range(4):
                 result = expected[i] - gprs[8]
-                expected[i] = result
                 if result == 0:
                     break
+                # VLi=0 - test comes FIRST!
+                expected[i] = result
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
@@ -133,9 +135,10 @@ class DecoderTestCase(FHDLTestCase):
             expected = deepcopy(vec)
             for i in range(4):
                 result = expected[i] - gprs[8]
-                expected[i] = result
                 if result == 0:
                     break
+                # VLi=0 - test comes FIRST!
+                expected[i] = result
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
@@ -145,6 +148,8 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.dststep, 0)
 
     def test_sv_addi_ffirst_vli(self):
+        """data-dependent fail-first with VLi=1, the test comes *after* write
+        """
         lst = SVP64Asm(["sv.subf/ff=RC1/vli *0,8,*0"
                         ])
         lst = list(lst)
@@ -174,6 +179,7 @@ class DecoderTestCase(FHDLTestCase):
             # confirm that the results are as expected
             expected = deepcopy(vec)
             for i in range(4):
+                # VLi=1 - test comes AFTER write!
                 expected[i] -= gprs[8]
                 if expected[i] == 0:
                     break
