@@ -17,6 +17,7 @@ from openpower.decoder.power_decoder import create_pdecode
 from openpower.decoder.pseudo.lexer import (
     IndentLexer, raise_syntax_error, SyntaxError2)
 from openpower.decoder.orderedset import OrderedSet
+from openpower.decoder.power_enums import BFP_FLAG_NAMES
 
 # I use the Python AST
 #from compiler import ast
@@ -671,7 +672,7 @@ class PowerParser:
                     'SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3']:
             self.special_regs.add(name)
             self.write_regs.add(name)  # and add to list to write
-        if name in ('XLEN', 'FPSCR'):
+        if name in ('XLEN', 'FPSCR') or name in BFP_FLAG_NAMES:
             attr = ast.Name("self", ast.Load())
             p[0] = ast.Attribute(attr, name, ast.Load(), lineno=p.lineno(1))
         else:

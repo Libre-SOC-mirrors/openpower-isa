@@ -1109,6 +1109,23 @@ XER_bits = {
 
 MSRSpec = namedtuple("MSRSpec", ["dr", "pr", "sf"])
 
+# flags for bfp_* functions
+BFP_FLAG_NAMES = (
+    'vxsnan_flag',
+    'vximz_flag',
+    'vxidi_flag',
+    'vxisi_flag',
+    'vxzdz_flag',
+    'vxsqrt_flag',
+    'vxcvi_flag',
+    'vxvc_flag',
+    'ox_flag',
+    'ux_flag',
+    'xx_flag',
+    'zx_flag',
+    'inc_flag',
+)
+
 if __name__ == '__main__':
     # find out what the heck is in SPR enum :)
     print("sprs full", len(SPRfull))

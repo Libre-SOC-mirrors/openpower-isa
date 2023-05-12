@@ -33,7 +33,8 @@ from openpower.decoder.power_enums import (FPTRANS_INSNS, CRInSel, CROutSel,
                                            SVP64LDSTmode, SVP64PredCR,
                                            SVP64PredInt, SVP64PredMode,
                                            SVP64RMMode, SVPType, XER_bits,
-                                           insns, spr_byname, spr_dict)
+                                           insns, spr_byname, spr_dict,
+                                           BFP_FLAG_NAMES)
 from openpower.decoder.power_insn import SVP64Instruction
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.selectable_int import (FieldSelectableInt,
@@ -1254,6 +1255,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                                'SO': XER_bits['SO'],
                                'XLEN': 64  # elwidth overrides
                                })
+
+        for name in BFP_FLAG_NAMES:
+            setattr(self, name, 0)
 
         # update pc to requested start point
         self.set_pc(initial_pc)
