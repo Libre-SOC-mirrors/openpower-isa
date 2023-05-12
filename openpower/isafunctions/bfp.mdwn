@@ -1,0 +1,314 @@
+# binary-floating-point helper functions
+
+`bfp_*` and related functions as needed by fcvt* from PowerISA v3.1B Book I
+section 7.6.2.2
+
+    def reset_xflags():
+        vxsnan_flag <- 0
+        vximz_flag <- 0
+        vxidi_flag <- 0
+        vxisi_flag <- 0
+        vxzdz_flag <- 0
+        vxsqrt_flag <- 0
+        vxcvi_flag <- 0
+        vxvc_flag <- 0
+        ox_flag <- 0
+        ux_flag <- 0
+        xx_flag <- 0
+        zx_flag <- 0
+
+    def bfp_CONVERT_FROM_BFP64(x):
+        # x is a binary floating-point value represented in
+        # double-precision format.
+        exponent <- x[1:11]
+        fraction <- x[12:63]
+
+        result <- BFPState()
+        result.sign <- 0
+        result.exponent <- 0
+        result.significand <- 0
+        result.class.SNaN <- 0
+        result.class.QNaN <- 0
+        result.class.Infinity <- 0
+        result.class.Zero <- 0
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+        if (exponent = 2047) & (fraction[0] = 0) & (fraction != 0) then
+            # x is a SNaN
+            result.class.SNaN <- 1
+            result.sign <- x[0]
+            result.significand[0] <- 0
+            result.significand[1:52] <- fraction
+        else if (exponent = 2047) & (fraction[0] != 0) & (fraction != 0) then
+            # x is a QNaN
+            result.class.QNaN <- 1
+            result.sign <- x[0]
+            result.significand[0] <- 0
+            result.significand[1:52] <- fraction
+        else if (exponent = 2047) & (fraction = 0) then
+            # is an Infinity
+            result.class.Infinity <- 1
+            result.sign <- x[0]
+        else if (exponent = 0) & (fraction = 0) then
+            # x is a Zero
+            result.class.Zero <- 1
+            result.sign <- x[0]
+        else if (exponent = 0) & (fraction != 0) then
+            # x is a Denormal
+            result.class.Denormal <- 1
+            result.sign <- x[0]
+            result.exp <- -1022
+            result.significand[0] <- 0
+            result.significand[1:52] <- fraction
+            do while result.significand[0] != 1
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+        else
+            result.class.Normal <- 1
+            result.sign <- x[0]
+            result.exponent <- exponent - 1023
+            result.significand[0] <- 1
+            result.significand[1:52] <- fraction
+        return result
+
+    def bfp_CONVERT_FROM_SI32(x):
+        # x is an integer value represented in signed word integer format.
+
+        result <- BFPState()
+        result.sign <- 0
+        result.exponent <- 0
+        result.significand <- 0
+        result.class.SNaN <- 0
+        result.class.QNaN <- 0
+        result.class.Infinity <- 0
+        result.class.Zero <- 0
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+
+        if x = 0x0000_0000 then
+            result.class.Zero <- 1
+        else
+            result.class.Normal <- 1
+            result.sign <- x[0]
+            result.exponent <- 32
+            result.significand[0:32] <- EXTS(x)
+
+            if result.significand[0] = 1 then
+                result.sign <- 1
+                result.significand[0:32] <- -result.significand[0:32]
+            do while result.significand[0] = 0
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+        return result
+
+    def bfp_CONVERT_FROM_SI64(x):
+        # x is an integer value represented in signed double-word integer
+        # format.
+
+        result <- BFPState()
+        result.sign <- 0
+        result.exponent <- 0
+        result.significand <- 0
+        result.class.SNaN <- 0
+        result.class.QNaN <- 0
+        result.class.Infinity <- 0
+        result.class.Zero <- 0
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+
+        if x = 0x0000_0000_0000_0000 then
+            result.class.Zero <- 1
+        else
+            result.class.Normal <- 1
+            result.sign <- x[0]
+            result.exponent <- 64
+            result.significand[0:64] <- EXTS(x)
+
+            if result.significand[0] = 1 then
+                result.sign <- 1
+                result.significand[0:64] <- -result.significand[0:64]
+            do while result.significand[0] = 0
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+        return result
+
+    def bfp_CONVERT_FROM_UI128(x):
+        # x is a 128-bit unsigned integer value.
+
+        result <- BFPState()
+        result.sign <- 0
+        result.exponent <- 0
+        result.significand <- 0
+        result.class.SNaN <- 0
+        result.class.QNaN <- 0
+        result.class.Infinity <- 0
+        result.class.Zero <- 0
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+
+        if x = 0x0000_0000_0000_0000_0000_0000_0000_0000 then
+            result.class.Zero <- 1
+        else
+            result.class.Normal <- 1
+            result.sign <- 0
+            result.exponent <- 128
+            result.significand[0:128] <- 0b0 || x
+            do while result.significand[0] = 0
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+        return result
+
+    def bfp_ROUND_TO_INTEGER(rmode, x):
+        # x is a binary floating-point value that is represented in the
+        # binary floating-point working format and has
+        # unbounded exponent range and significand precision.
+
+        if IsSNaN(x) then vxsnan_flag <- 1
+        if IsNaN(x) & ¬IsSNaN(x) then return x
+        if IsSNaN(x) then
+            result <- x
+            result.class.SNaN <- 0
+            result.class.QNaN <- 1
+            return result
+        if IsInf(x) | IsZero(x) then return x
+        result <- x
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+        exact <- 0
+        halfway <- 0
+        more_than_halfway <- 0
+        even <- 0
+        if result.exponent < -1 then
+            # all values have magnitude < 0.5
+            result.significand <- 0
+            result.exponent <- 0
+            even <- 1
+        else if result.exponent = -1 then
+            if result.significand[0] = 1 then
+                result.significand[0] <- 0
+                if result.significand = 0 then halfway <- 1
+                else more_than_halfway <- 1
+            result.significand <- 0
+            result.exponent <- 0
+            even <- 1
+        else
+            result.significand <- 0
+            int_part <- x.significand[0:x.exponent]
+            result.significand[0:x.exponent] <- int_part
+            even <- int_part[x.exponent]
+            temp <- x.significand
+            temp[0:x.exponent] <- 0
+            if temp = 0 then exact <- 1
+            if temp[x.exponent + 1] = 1 then
+                temp[x.exponent + 1] <- 0
+                if temp = 0 then halfway <- 1
+                else more_than_halfway <- 1
+        if rmode = 0b000 then  # Round to Nearest Even
+            round_up <- (even & halfway) | more_than_halfway
+        if rmode = 0b001 then  # Round towards Zero
+            round_up <- 0
+        if rmode = 0b010 then  # Round towards +Infinity
+            round_up <- (x.sign = 0) & ¬exact
+        if rmode = 0b011 then  # Round towards -Infinity
+            round_up <- (x.sign = 1) & ¬exact
+        if rmode = 0b100 then  # Round to Nearest Away
+            round_up <- halfway | more_than_halfway
+        if round_up then
+            inc_flag <- 1
+            temp <- BFPState()
+            temp.significand <- 0
+            temp.significand[result.exponent] <- 1
+            result.significand <- result.significand + temp.significand
+            if result.significand >= 2 then
+                result.significand <- truediv(result.significand, 2)
+                result.exponent <- result.exponent + 1
+        else inc_flag <- 0  # TODO: does the spec specify this?
+        if result.significand = 0 then result.class.Zero <- 1
+        else result.class.Normal <- 1
+        if ¬bfp_COMPARE_EQ(result, x) then xx_flag <- 1
+        else xx_flag <- 0  # TODO: does the spec specify this?
+        return result
+
+    def bfp_ROUND_TO_INTEGER_NEAR_EVEN(x):
+        return bfp_ROUND_TO_INTEGER(0b000, x)
+
+    def bfp_ROUND_TO_INTEGER_TRUNC(x):
+        return bfp_ROUND_TO_INTEGER(0b001, x)
+
+    def bfp_ROUND_TO_INTEGER_CEIL(x):
+        return bfp_ROUND_TO_INTEGER(0b010, x)
+
+    def bfp_ROUND_TO_INTEGER_FLOOR(x):
+        return bfp_ROUND_TO_INTEGER(0b011, x)
+
+    def bfp_ROUND_TO_INTEGER_NEAR_AWAY(x):
+        return bfp_ROUND_TO_INTEGER(0b100, x)
+
+    def bfp_COMPARE_EQ(x, y):
+        # x is a binary floating-point value represented in the
+        # binary floating-point working format.
+        # y is a binary floating-point value represented in the
+        # binary floating-point working format.
+
+        if IsNaN(x) | IsNaN(y) then
+            return 0b0
+        if IsZero(x) & IsZero(y) then
+            return 0b1
+        if IsZero(x) | IsZero(y) then
+            return 0b0
+        if x.sign != y.sign then
+            return 0b0
+        if x.exponent != y.exponent then
+            return 0b0
+        return x.significand = y.significand
+
+    def bfp_COMPARE_GT(x, y):
+        # x is a binary floating-point value represented in the
+        # binary floating-point working format.
+        # y is a binary floating-point value represented in the
+        # binary floating-point working format.
+
+        if IsNaN(x) | IsNaN(y) then
+            return 0b0
+        if IsZero(x) & IsZero(y) then
+            return 0b0
+        if IsZero(x) then
+            return IsNeg(y)
+        if IsZero(y) then
+            return ¬IsNeg(x)
+        if x.sign != y.sign then
+            return IsNeg(y)
+        if x.exponent != y.exponent then
+            if x.sign = 1 then return x.exponent < y.exponent
+            return x.exponent > y.exponent
+        if x.sign = 1 then return x.significand < y.significand
+        return x.significand > y.significand
+
+    def bfp_COMPARE_LT(x, y):
+        # x is a binary floating-point value represented in the
+        # binary floating-point working format.
+        # y is a binary floating-point value represented in the
+        # binary floating-point working format.
+
+        if IsNaN(x) | IsNaN(y) then
+            return 0b0
+        if IsZero(x) & IsZero(y) then
+            return 0b0
+        if IsZero(x) then
+            return ¬IsNeg(y)
+        if IsZero(y) then
+            return IsNeg(x)
+        if x.sign != y.sign then
+            return IsNeg(x)
+        if x.exponent != y.exponent then
+            if x.sign = 1 then return x.exponent > y.exponent
+            return x.exponent < y.exponent
+        if x.sign = 1 then return x.significand > y.significand
+        return x.significand < y.significand
+
+    def bfp_ABSOLUTE(x):
+        # x is a binary floating-point value represented in the
+        # binary floating-point working format.
+        result <- x
+        result.sign <- 0
+        return result
