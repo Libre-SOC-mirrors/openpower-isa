@@ -295,6 +295,9 @@ def filter(lexer, add_endmarker=True):
             lineno = token.lineno
         yield _new_token("ENDMARKER", lineno)
 
+
+KEYWORD_REPLACEMENTS = {'class': 'class_'}
+
 ##### Lexer ######
 
 
@@ -428,6 +431,8 @@ class PowerLexer:
     def t_NAME(self, t):
         r'[a-zA-Z_][a-zA-Z0-9_]*'
         t.type = self.RESERVED.get(t.value, "NAME")
+        if t.value in KEYWORD_REPLACEMENTS:
+            t.value = KEYWORD_REPLACEMENTS[t.value]
         return t
 
     # Putting this before t_WS let it consume lines with only comments in
