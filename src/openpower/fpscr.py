@@ -66,11 +66,19 @@ class FPSCRRecord(Record):
               ("VXSQRT", 1),
               ("VXSOFT", 1),
               ("rsvd1", 1),
-              ("FPCC", 4), # layout FL/FG/FE/FU TODO
-              ("FPRF", 2), # layout C/rsvd TODO
+              ("FPRF", [
+                  ("FPCC", [
+                      ("FU", 1),
+                      ("FE", 1),
+                      ("FG", 1),
+                      ("FL", 1),
+                  ]),
+                  ("C", 1),
+              ]),
               ("FI", 1),
               ("FR", 1),
               ("VXVC", 1),
+              ("VXIMZ", 1),
               ("VXZDZ", 1),
               ("VXIDI", 1),
               ("VXISI", 1),
@@ -130,24 +138,29 @@ class FPSCRState(SelectableInt):
         l = deepcopy(FPSCRRecord.layout)
         l.reverse()
         for field, width in l:
-            end =  offs+width
-            fs = tuple(range(offs, end))
             if field == "FPRF":
-                v = FPSCR_FPRF(self, fs)
+                v = FPSCR_FPRF(self, tuple(range(47, 52)))
+                end = 52
             else:
+                end = offs + width
+                fs = tuple(range(offs, end))
                 v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
             offs = end
         # extra fields, temporarily explicitly added. TODO nested layout above
-        extras = [(47, "C"),
-                  (48, "FL"),
-                  (49, "FG"),
-                  (50, "FE"),
-                  (51, "FU"),
-                 ]
+        extras = [
+            (47, "C"),
+            (range(48, 52), "FPCC"),
+            (48, "FL"),
+            (49, "FG"),
+            (50, "FE"),
+            (51, "FU"),
+        ]
         for offs, field in extras:
-            end =  offs+1
-            fs = tuple(range(offs, end))
+            if isinstance(offs, int):
+                fs = (offs,)
+            else:
+                fs = tuple(offs)
             v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
 
@@ -425,11 +438,11 @@ if __name__ == "__main__":
 
     # quick test of setter/getters
     fpscr = FPSCRState()
-    fpscr.FPCC = 0b001
-    print (fpscr.FPCC, fpscr.FL, fpscr.FG, fpscr.FE, fpscr.FU)
+    fpscr.FPCC = 0b0001
+    print(fpscr.FPCC, fpscr.FL, fpscr.FG, fpscr.FE, fpscr.FU)
     fpscr.FG = 0b1
-    print (fpscr.FPCC, fpscr.FL, fpscr.FG, fpscr.FE, fpscr.FU)
-    fpscr.FPRF = 0b11
-    print (fpscr.FPRF, fpscr.C)
+    print(fpscr.FPCC, fpscr.FL, fpscr.FG, fpscr.FE, fpscr.FU)
+    fpscr.FPRF = 0b00011
+    print(fpscr.FPRF, fpscr.C)
     fpscr[63] = 1
-    print (fpscr.RN)
+    print(fpscr.RN)
