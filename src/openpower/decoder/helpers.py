@@ -843,6 +843,46 @@ def log2(val):
     return retval
 
 
+# BFP classification predicates
+# these need to be implemented in python because they work with multiple
+# input types
+def IsInf(v):
+    if isinstance(v, BFPState):
+        return onebit(v.class_.Infinity)
+    # TODO: implement for SelectableInt/int
+    raise NotImplementedError("not yet implemented for non-BFPState values")
+
+
+def IsNaN(v):
+    if isinstance(v, BFPState):
+        return onebit(v.class_.SNaN or v.class_.QNaN)
+    # TODO: implement for SelectableInt/int
+    raise NotImplementedError("not yet implemented for non-BFPState values")
+
+
+def IsNeg(v):
+    if isinstance(v, BFPState):
+        if v.class_.SNaN or v.class_.QNaN or v.class_.Zero:
+            return onebit(0)
+        return onebit(v.sign)
+    # TODO: implement for SelectableInt/int
+    raise NotImplementedError("not yet implemented for non-BFPState values")
+
+
+def IsSNaN(v):
+    if isinstance(v, BFPState):
+        return onebit(v.class_.SNaN)
+    # TODO: implement for SelectableInt/int
+    raise NotImplementedError("not yet implemented for non-BFPState values")
+
+
+def IsZero(v):
+    if isinstance(v, BFPState):
+        return onebit(v.class_.Zero)
+    # TODO: implement for SelectableInt/int
+    raise NotImplementedError("not yet implemented for non-BFPState values")
+
+
 class ISACallerHelper:
     def __init__(self, XLEN, FPSCR):
         self.__XLEN = XLEN
