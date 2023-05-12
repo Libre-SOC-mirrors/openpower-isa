@@ -193,7 +193,7 @@ Pseudo-code:
     vex_flag <- FPSCR.VE & vx_flag
     if vex_flag = 0 then
         RT <- result
-        FPSCR.FPRF <- undefined
+        FPSCR.FPRF <- undefined(0b00000)
         FPSCR.FR <- inc_flag
         FPSCR.FI <- xx_flag
         if IsNaN(src) | ¬bfp_COMPARE_EQ(src, result_bfp) then
@@ -302,7 +302,7 @@ Pseudo-code:
     vex_flag <- FPSCR.VE & vx_flag
     if vex_flag = 0 then
         RT <- result
-        FPSCR.FPRF <- undefined
+        FPSCR.FPRF <- undefined(0b00000)
         FPSCR.FR <- inc_flag
         FPSCR.FI <- xx_flag
         if IsNaN(src) | ¬bfp_COMPARE_EQ(src, result_bfp) then
