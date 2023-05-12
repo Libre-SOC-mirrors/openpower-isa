@@ -10,6 +10,8 @@ from openpower.decoder.selectable_int import selectltu as ltu
 from openpower.decoder.selectable_int import selectgtu as gtu
 from openpower.decoder.selectable_int import check_extsign
 from openpower.fpscr import FPSCRState
+from openpower.decoder.fp_working_format import (
+    BFPState, SelectableMSB0Fraction)
 
 from openpower.util import log
 import math
@@ -87,6 +89,10 @@ def copy_assign_rhs(inp):
         return inp
     if isinstance(inp, (SelectableInt, FieldSelectableInt)):
         return SelectableInt(inp)
+    if isinstance(inp, BFPState):
+        return BFPState(inp)
+    if isinstance(inp, SelectableMSB0Fraction):
+        return SelectableMSB0Fraction(inp)
     if isinstance(inp, tuple):
         return tuple(map(copy_assign_rhs, inp))
     if isinstance(inp, dict):
