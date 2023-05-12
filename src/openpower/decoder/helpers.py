@@ -5,7 +5,7 @@ from openpower.decoder.selectable_int import (SelectableInt, onebit,
                                               selectconcat, FieldSelectableInt)
 from openpower.decoder.selectable_int import EFFECTIVELY_UNLIMITED as EU
 from nmutil.divmod import trunc_divs, trunc_rems
-from operator import floordiv, mod
+from operator import floordiv, mod, truediv  # truediv used by bfp_* functions
 from openpower.decoder.selectable_int import selectltu as ltu
 from openpower.decoder.selectable_int import selectgtu as gtu
 from openpower.decoder.selectable_int import check_extsign
