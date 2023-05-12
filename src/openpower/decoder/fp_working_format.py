@@ -121,7 +121,8 @@ class SelectableMSB0Fraction:
 
     def __init__(self, value=None):
         self.__value = Fraction()
-        self.eq(value)
+        if value is not None:
+            self.eq(value)
 
     @property
     def value(self):
