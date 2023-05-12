@@ -31,6 +31,7 @@ class DecoderTestCase(FHDLTestCase):
         vec = [9, 8, 3, 4]
 
         res = []
+        cr_res = []
         # store GPRs
         for i, x in enumerate(vec):
             gprs[i] = x
@@ -41,18 +42,28 @@ class DecoderTestCase(FHDLTestCase):
             for i in range(4):
                 val = sim.gpr(i).value
                 res.append(val)
+                cr_res.append(0)
                 print("i", i, val)
             # confirm that the results are as expected
             expected = deepcopy(vec)
             expected_vl = 0
             for i in range(4):
-                result = expected[i] - gprs[8]
+                # calculate expected result and expected CR field
+                result = vec[i] - gprs[8]
+                crf = ((result==0)<<1) | ((result > 0)<<2) | ((result < 0) << 3)
+                cr_res[i] = crf
                 if result <= 0:
                     break
                 # VLi=0 - test comes FIRST!
                 expected[i] = result
                 # only write out if successful
                 expected_vl += 1
+
+            for i, v in enumerate(cr_res):
+                crf = sim.crl[i].get_range().value
+                print ("crf", i, res[i], bin(crf), bin(v))
+                self.assertEqual(crf, v)
+
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
@@ -77,6 +88,7 @@ class DecoderTestCase(FHDLTestCase):
         vec = [9, 8, 3, 4]
 
         res = []
+        cr_res = []
         # store GPRs
         for i, x in enumerate(vec):
             gprs[i] = x
@@ -87,15 +99,23 @@ class DecoderTestCase(FHDLTestCase):
             for i in range(4):
                 val = sim.gpr(i).value
                 res.append(val)
+                cr_res.append(0)
                 print("i", i, val)
             # confirm that the results are as expected
             expected = deepcopy(vec)
             for i in range(4):
-                result = expected[i] - gprs[8]
+                result = vec[i] - gprs[8]
+                crf = ((result==0)<<1) | ((result > 0)<<2) | ((result < 0) << 3)
+                cr_res[i] = crf
                 if result == 0:
                     break
                 # VLi=0 - test comes FIRST!
                 expected[i] = result
+            for i, v in enumerate(cr_res):
+                crf = sim.crl[i].get_range().value
+                print ("crf", i, res[i], bin(crf), bin(v))
+                self.assertEqual(crf, v)
+
             for i, v in enumerate(res):
                 self.assertEqual(v, expected[i])
 
