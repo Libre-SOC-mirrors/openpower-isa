@@ -117,11 +117,11 @@ Pseudo-code:
         case(0):  # Signed 32-bit
             range_min <- bfp_CONVERT_FROM_SI32(0x8000_0000)
             range_max <- bfp_CONVERT_FROM_SI32(0x7FFF_FFFF)
-            js_mask <- 0xFFFF_FFFF
+            js_mask <- 0x0000_0000_FFFF_FFFF
         case(1):  # Unsigned 32-bit
             range_min <- bfp_CONVERT_FROM_UI32(0)
             range_max <- bfp_CONVERT_FROM_UI32(0xFFFF_FFFF)
-            js_mask <- 0xFFFF_FFFF
+            js_mask <- 0x0000_0000_FFFF_FFFF
         case(2):  # Signed 64-bit
             range_min <- bfp_CONVERT_FROM_SI64(-0x8000_0000_0000_0000)
             range_max <- bfp_CONVERT_FROM_SI64(0x7FFF_FFFF_FFFF_FFFF)
@@ -191,6 +191,7 @@ Pseudo-code:
     if xx_flag = 1 then SetFX(FPSCR.XX)
     vx_flag <- vxsnan_flag | vxcvi_flag
     vex_flag <- FPSCR.VE & vx_flag
+    overflow <- 0
     if vex_flag = 0 then
         RT <- result
         FPSCR.FPRF <- undefined(0b00000)
@@ -226,11 +227,11 @@ Pseudo-code:
         case(0):  # Signed 32-bit
             range_min <- bfp_CONVERT_FROM_SI32(0x8000_0000)
             range_max <- bfp_CONVERT_FROM_SI32(0x7FFF_FFFF)
-            js_mask <- 0xFFFF_FFFF
+            js_mask <- 0x0000_0000_FFFF_FFFF
         case(1):  # Unsigned 32-bit
             range_min <- bfp_CONVERT_FROM_UI32(0)
             range_max <- bfp_CONVERT_FROM_UI32(0xFFFF_FFFF)
-            js_mask <- 0xFFFF_FFFF
+            js_mask <- 0x0000_0000_FFFF_FFFF
         case(2):  # Signed 64-bit
             range_min <- bfp_CONVERT_FROM_SI64(-0x8000_0000_0000_0000)
             range_max <- bfp_CONVERT_FROM_SI64(0x7FFF_FFFF_FFFF_FFFF)
@@ -300,6 +301,7 @@ Pseudo-code:
     if xx_flag = 1 then SetFX(FPSCR.XX)
     vx_flag <- vxsnan_flag | vxcvi_flag
     vex_flag <- FPSCR.VE & vx_flag
+    overflow <- 0
     if vex_flag = 0 then
         RT <- result
         FPSCR.FPRF <- undefined(0b00000)
