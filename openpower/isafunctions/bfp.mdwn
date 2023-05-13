@@ -132,6 +132,36 @@ section 7.6.2.2
                 result.exponent <- result.exponent - 1
         return result
 
+    def bfp_CONVERT_FROM_SI128(x):
+        # x is a 128-bit signed integer value.
+
+        result <- BFPState()
+        result.sign <- 0
+        result.exponent <- 0
+        result.significand <- 0
+        result.class.SNaN <- 0
+        result.class.QNaN <- 0
+        result.class.Infinity <- 0
+        result.class.Zero <- 0
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+
+        if x = 0x0000_0000_0000_0000_0000_0000_0000_0000 then
+            result.class.Zero <- 1
+        else
+            result.class.Normal <- 1
+            result.sign <- x[0]
+            result.exponent <- 128
+            result.significand[0:128] <- EXTS(x)
+
+            if result.significand[0] = 1 then
+                result.sign <- 1
+                result.significand[0:128] <- -result.significand[0:128]
+            do while result.significand[0] = 0
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+        return result
+
     def bfp_CONVERT_FROM_UI128(x):
         # x is a 128-bit unsigned integer value.
 
@@ -312,3 +342,37 @@ section 7.6.2.2
         result <- x
         result.sign <- 0
         return result
+
+    def si128_CONVERT_FROM_BFP(x):
+        # x is an integer value represented in the
+        # binary floating-point working format.
+
+        if IsNaN(x) then
+            vxcvi_flag <- 1
+            if IsSNaN(x) then vxsnan_flag <- 1
+            return 0x8000_0000_0000_0000_0000_0000_0000_0000
+        else
+            temp_xx <- xx_flag
+            temp_inc <- inc_flag
+            rnd <- bfp_ROUND_TO_INTEGER_TRUNC(x)
+            # TODO: does the spec say these are preserved?
+            xx_flag <- temp_xx
+            inc_flag <- temp_inc
+            exponent <- rnd.exponent
+            significand <- rnd.significand
+            si128max <- bfp_CONVERT_FROM_SI128(0b0 || [1] * 127)
+            si128min <- bfp_CONVERT_FROM_SI128(0b1 || [0] * 127)
+            if bfp_COMPARE_GT(rnd, si128max) then
+                vxcvi_flag <- 1
+                return 0x7FFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF
+            if bfp_COMPARE_LT(rnd, si128min) then
+                vxcvi_flag <- 1
+                return 0x8000_0000_0000_0000_0000_0000_0000_0000
+            else
+                if ¬bfp_COMPARE_EQ(rnd, x) then xx_flag <- 1
+                else xx_flag <- 0  # TODO: does the spec specify this?
+                inc_flag <- 0
+                # TODO: spec says this is logical shift right:
+                significand <- significand[0:127] / pow(2, 127 - exponent)
+                if IsNeg(rnd) then significand <- -significand
+                return significand[0:127]

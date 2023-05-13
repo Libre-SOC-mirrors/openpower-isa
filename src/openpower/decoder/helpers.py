@@ -883,6 +883,13 @@ def IsZero(v):
     raise NotImplementedError("not yet implemented for non-BFPState values")
 
 
+def SetFX(fpscr, field):
+    assert isinstance(fpscr, FPSCRState), "SetFX only works on FPSCR fields"
+    if eq(getattr(fpscr, field), SelectableInt(0, 1)):
+        setattr(fpscr, field, SelectableInt(1, 1))
+        fpscr.FX = SelectableInt(1, 1)
+
+
 class ISACallerHelper:
     def __init__(self, XLEN, FPSCR):
         self.__XLEN = XLEN
