@@ -20,6 +20,7 @@ class FMvFCvtCases(TestAccumulatorBase):
             fprs[0] = inp_bits
             e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
             e.intregs[3] = expected
+            e.fpscr = None
             self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_js_toint32(self):
