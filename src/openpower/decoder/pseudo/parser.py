@@ -27,7 +27,7 @@ import ast
 
 regs = ['RA', 'RS', 'RB', 'RC', 'RT']
 fregs = ['FRA', 'FRS', 'FRB', 'FRC', 'FRT', 'FRS']
-SPECIAL_HELPERS = {'concat', 'MEM', 'GPR', 'FPR', 'SPR'}
+SPECIAL_HELPERS = {'concat', 'MEM', 'GPR', 'FPR', 'SPR', 'pow'}
 
 
 # I implemented INDENT / DEDENT generation as a post-processing filter
