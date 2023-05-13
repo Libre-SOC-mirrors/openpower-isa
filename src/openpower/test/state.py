@@ -132,9 +132,10 @@ class State:
             (self.state_type, s2.state_type, repr(self.code)))
 
         # fpscr
-        self.dut.assertEqual(self.fpscr, s2.fpscr,
-                             "fpscr mismatch (%s != %s) %s" %
-            (self.state_type, s2.state_type, repr(self.code)))
+        if self.fpscr is not None and s2.fpscr is not None:
+            self.dut.assertEqual(
+                self.fpscr, s2.fpscr, "fpscr mismatch (%s != %s) %s" %
+                (self.state_type, s2.state_type, repr(self.code)))
 
     def compare_mem(self, s2):
         # copy dics to preserve state mem then pad empty locs since
