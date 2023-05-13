@@ -195,7 +195,7 @@ section 7.6.2.2
             result.significand <- 0
             int_part <- x.significand[0:x.exponent]
             result.significand[0:x.exponent] <- int_part
-            even <- int_part[x.exponent]
+            even <- ¬int_part[x.exponent]
             temp <- x.significand
             temp[0:x.exponent] <- 0
             if temp = 0 then exact <- 1
