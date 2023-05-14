@@ -3480,7 +3480,7 @@ class MarkdownDatabase:
                 (dynamic, *static) = desc.regs
                 operands.extend(dynamic)
                 operands.extend(static)
-            pcode = PCode(iterable=desc.pcode)
+            pcode = PCode(iterable=filter(str.strip, desc.pcode))
             operands = Operands(insn=name, operands=operands)
             db[name] = MarkdownRecord(pcode=pcode, operands=operands)
 
