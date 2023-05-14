@@ -404,8 +404,9 @@ class SVP64Record:
         return dataclass(cls, record, keymap=cls.__KEYMAP)
 
     def extra_idx(self, key, regtype):
-        """finds the index slot that came from the CSV file for this
-           reg (RA/RB/BA/etc) and direction (source/dest)
+        """
+        Find the index slot that came from the CSV file for this
+        reg (RA/RB/BA/etc) and direction (source/dest).
         """
         extra_idx = (
             _SVExtra.Idx0,
@@ -437,21 +438,21 @@ class SVP64Record:
             for entry in self.extra[index]:
                 extra_map[entry.regtype][entry.reg] = extra_idx[index]
 
-        for rtype, regs in extra_map.items():
+        for (rtype, regs) in extra_map.items():
             if rtype != regtype:
                 continue
             extra = regs.get(reg, _SVExtra.NONE)
             if extra is not _SVExtra.NONE:
                 yield extra
 
-    extra_idx_in1 = property(_functools.partial(extra_idx, key="in1"))
-    extra_idx_in2 = property(_functools.partial(extra_idx, key="in2"))
-    extra_idx_in3 = property(_functools.partial(extra_idx, key="in3"))
-    extra_idx_out = property(_functools.partial(extra_idx, key="out"))
-    extra_idx_out2 = property(_functools.partial(extra_idx, key="out2"))
-    extra_idx_cr_in = property(_functools.partial(extra_idx, key="cr_in"))
-    extra_idx_cr_in2 = property(_functools.partial(extra_idx, key="cr_in2"))
-    extra_idx_cr_out = property(_functools.partial(extra_idx, key="cr_out"))
+    extra_idx_in1 = property(_functools.partial(extra_idx, key="in1", regtype=_SVExtraRegType.SRC))
+    extra_idx_in2 = property(_functools.partial(extra_idx, key="in2", regtype=_SVExtraRegType.SRC))
+    extra_idx_in3 = property(_functools.partial(extra_idx, key="in3", regtype=_SVExtraRegType.SRC))
+    extra_idx_out = property(_functools.partial(extra_idx, key="out", regtype=_SVExtraRegType.DST))
+    extra_idx_out2 = property(_functools.partial(extra_idx, key="out2", regtype=_SVExtraRegType.DST))
+    extra_idx_cr_in = property(_functools.partial(extra_idx, key="cr_in", regtype=_SVExtraRegType.SRC))
+    extra_idx_cr_in2 = property(_functools.partial(extra_idx, key="cr_in2", regtype=_SVExtraRegType.SRC))
+    extra_idx_cr_out = property(_functools.partial(extra_idx, key="cr_out", regtype=_SVExtraRegType.DST))
 
     @_functools.lru_cache(maxsize=None)
     def extra_reg(self, key):
@@ -1248,20 +1249,22 @@ class ExtendableOperand(DynamicOperand):
             _SVExtraReg.FRTp: _SVExtraReg.FRT,
         }
 
+        keys = {}
+        for key in ("in1", "in2", "in3", "cr_in", "cr_in2"):
+            keys[key] = _SVExtraRegType.SRC
+        for key in ("out", "out2", "cr_out"):
+            keys[key] = _SVExtraRegType.DST
+        regtype = keys.get(key)
+        if regtype is None:
+            raise KeyError(key)
+
         found = {} # prevent duplicates.
-        for key in frozenset({
-                    "in1", "in2", "in3", "cr_in", "cr_in2",
-                    "out", "out2", "cr_out",
-                }):
-            if "in" in key:
-                rtype = _SVExtraRegType.SRC
-            else:
-                rtype = _SVExtraRegType.DST
+        for (key, regtype) in keys.items():
             extra_reg = self.record.svp64.extra_reg(key=key)
             this_extra_reg = pairs.get(self.extra_reg, self.extra_reg)
             that_extra_reg = pairs.get(extra_reg, extra_reg)
             if this_extra_reg is that_extra_reg:
-                bits = tuple(self.record.extra_idx(key=key, regtype=rtype))
+                bits = tuple(self.record.extra_idx(key=key, regtype=regtype))
                 if this_extra_reg in found:
                     assert found[this_extra_reg] == bits # check identical bits
                     continue                             # skip - already found
