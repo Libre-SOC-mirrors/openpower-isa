@@ -222,15 +222,16 @@ class Format(enum.Enum):
 
     def declarations(self, values, lens):
         def declaration_binutils(value, width):
-            yield f"/* TODO: implement binutils declaration (value={value!r}, width={width!r}) */"
+            yield "/* TODO: implement binutils declaration " \
+                  "(value=%x, width=%x) */" % (value, width)
 
         def declaration_vhdl(value, width):
-            yield f"    type sv_{value}_rom_array_t is " \
-                f"array(0 to {width}) of sv_decode_rom_t;"
+            yield "    type sv_%s _rom_array_t is " \
+                "array(0 to %d) of sv_decode_rom_t;" % (value, width)
 
         for value in values:
             if value not in lens:
-                todo = [f"TODO {value} (or no SVP64 augmentation)"]
+                todo = ["TODO %s (or no SVP64 augmentation)" % value]
                 todo = self.wrap_comment(todo)
                 yield from map(lambda line: f"    {line}", todo)
             else:
@@ -244,9 +245,9 @@ class Format(enum.Enum):
         def definitions_vhdl():
             for (value, entries) in entries_svp64.items():
                 yield ""
-                yield f"    constant sv_{value}_decode_rom_array :"
-                yield f"             sv_{value}_rom_array_t := ("
-                yield f"        -- {'  '.join(fullcols)}"
+                yield "    constant sv_%s_decode_rom_array :" % value
+                yield "             sv_%s_rom_array_t := (" % value
+                yield "        -- %s" % '  '.join(fullcols)
 
                 for (op, insn, row) in entries:
                     yield f"    {op:>13} => ({', '.join(row)}), -- {insn}"
@@ -267,14 +268,14 @@ class Format(enum.Enum):
         def wrap_comment_binutils(lines):
             lines = tuple(lines)
             if len(lines) == 1:
-                yield f"/* {lines[0]} */"
+                yield "/* %s */" % lines[0]
             else:
                 yield "/*"
-                yield from map(lambda line: f" * {line}", lines)
+                yield from map(lambda line: " * %s" % line, lines)
                 yield " */"
 
         def wrap_comment_vhdl(lines):
-            yield from map(lambda line: f"-- {line}", lines)
+            yield from map(lambda line: "-- %s" % line, lines)
 
         yield from {
             Format.BINUTILS: wrap_comment_binutils,
@@ -807,7 +808,9 @@ def process_csvs(format):
                     mode = 'LDST_IMM'
             elif insn_name.startswith('bc'):
                 mode = 'BRANCH'
-            elif insn_name.startswith('cmp') or insn_name.startswith('cr') or insn_name in crops:
+            elif (insn_name.startswith('cmp') or
+                  insn_name.startswith('cr') or
+                  insn_name in crops):
                 mode = 'CROP'
             res['mode'] = mode
 
@@ -938,7 +941,8 @@ def output(format, svt, csvcols, insns, csvs_svp64, stream):
     fullcols = csvcols + sv_cols
 
     entries_svp64 = defaultdict(list)
-    for (value, csv) in filter(lambda kv: kv[0] in lens, csvs_svp64_canon.items()):
+    for (value, csv) in filter(lambda kv: kv[0] in lens,
+                               csvs_svp64_canon.items()):
         for entry in csv:
             insn = str(entry['insn'])
             condition = str(entry['CONDITIONS'])
