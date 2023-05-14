@@ -809,6 +809,54 @@ class DecoderTestCase(FHDLTestCase):
                 print ("%i %x %x" % (i, sim.gpr(i).value, expected_regs[i]))
                 self.assertEqual(sim.gpr(i), expected_regs[i])
 
+    def tst_sv_load_update_dd_ffirst_incl(self):
+        """data-dependent fail-first on LD/ST, inclusive (/vli)
+        performs linked-list walking
+        """
+        lst = SVP64Asm(
+            [
+                # load VL bytes but test if they are zero and truncate
+                "sv.ldu/ff=~RC1/vli *16, 0(*17)", # offset zero to next addr
+            ]
+        )
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=8)
+        svstate = SVP64State()
+        svstate.vl = 8  # VL
+        svstate.maxvl = 8  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0] * 32
+        initial_regs[17] = 20  # data starting point
+        for i in range(8): # set to garbage
+            initial_regs[16+i] = (0xbeef00) + i  # identifying garbage
+
+        # some memory with addresses to get from
+        initial_mem = {20: 40,
+                       40: 10,
+                       10: 0}
+
+        # calculate expected regs
+        expected_regs = deepcopy(initial_regs)
+        ptr_addr = 20
+        i = 0
+        while True: # VLI needs break at end
+            expected_regs[16+i] = ptr_addr
+            if ptr_addr == 0: break
+            ptr_addr = initial_mem[ptr_addr] # linked-list walk
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_mem=initial_mem,
+                                       initial_regs=initial_regs)
+            mem = sim.mem.dump(printout=True, asciidump=True)
+            print (mem)
+            self.assertEqual(sim.svstate.vl, 3)
+            for i in range(len(expected_regs)):
+                print ("%i %x %x" % (i, sim.gpr(i).value, expected_regs[i]))
+                self.assertEqual(sim.gpr(i), expected_regs[i])
+
     def run_tst_program(self, prog, initial_regs=None,
                         svstate=None, initial_fprs=None,
                         initial_mem=None):

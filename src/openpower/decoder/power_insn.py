@@ -1789,6 +1789,13 @@ class WordInstruction(Instruction):
             yield f"{blob}.long 0x{int(self):08x}"
             return
 
+        # awful temporary hack: workaround for ld-update
+        # https://bugs.libre-soc.org/show_bug.cgi?id=1056#c2
+        # XXX TODO must check that *EXTENDED* RA != extended-RT
+        if record.mode == _SVMode.LDST_IMM and 'u' in record.name:
+            yield f"{blob}.long 0x{int(self):08x}"
+            return
+
         paired = False
         if style is Style.LEGACY:
             paired = False

@@ -467,5 +467,11 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_34_ldst_update_imm_ffirst(self):
+        expected = [
+                    "sv.ldu/ff=~RC1/vli *16, 0(*17)",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
