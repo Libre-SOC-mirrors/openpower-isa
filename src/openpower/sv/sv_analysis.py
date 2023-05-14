@@ -430,10 +430,9 @@ def extra_classifier(insn_name, value, name, res, regs):
         res['1'] = 's:RA'  # RA: Rsrc1_EXTRA3
 
     elif value == 'LDSTRM-2P-1S2D':
-        res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
-        res['0'] = dRT    # RT: Rdest_EXTRA3
-        res['1'] = 'd:RA'  # RA: Rdest2_EXTRA2
-        res['2'] = 's:RA'  # RA: Rsrc1_EXTRA2
+        res['Etype'] = 'EXTRA3'  # RM EXTRA2 type
+        res['0'] = dRT          # RT: Rdest_EXTRA3
+        res['1'] = 'd:RA;s:RA'  # RA: Rdest2_EXTRA3
 
     elif value == 'LDSTRM-2P-2S':
         # stw, std, sth, stb
@@ -443,10 +442,9 @@ def extra_classifier(insn_name, value, name, res, regs):
 
     elif value == 'LDSTRM-2P-2S1D':
         if 'st' in insn_name and 'x' not in insn_name:  # stwu/stbu etc
-            res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
-            res['0'] = 'd:RA'  # RA: Rdest1_EXTRA2
-            res['1'] = sRS    # RS: Rdsrc1_EXTRA2
-            res['2'] = 's:RA'  # RA: Rsrc2_EXTRA2
+            res['Etype'] = 'EXTRA3'  # RM EXTRA2 type
+            res['0'] = 'd:RA;s:RA'  # RA: Rdest_EXTRA3 /  Rsrc_EXTRA3
+            res['1'] = sRS    # RS: Rdsrc1_EXTRA3
         elif 'st' in insn_name and 'x' in insn_name:  # stwux
             res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
             res['0'] = 'd:RA'  # RA: Rdest1_EXTRA2
