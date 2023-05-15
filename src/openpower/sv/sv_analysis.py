@@ -446,11 +446,10 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['0'] = 'd:RA;s:RA'  # RA: Rdest_EXTRA3 /  Rsrc_EXTRA3
             res['1'] = sRS    # RS: Rdsrc1_EXTRA3
         elif 'st' in insn_name and 'x' in insn_name:  # stwux
-            res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
-            res['0'] = 'd:RA'  # RA: Rdest1_EXTRA2
-            # RS: Rdest2_EXTRA2, RA: Rsrc1_EXTRA2
-            res['1'] = "%s;%s" % (sRS, 's:RA')
-            res['2'] = 's:RB'  # RB: Rsrc2_EXTRA2
+            res['Etype'] = 'EXTRA3'  # RM EXTRA2 type
+            # RS: Rdest2_EXTRA2, RA: Rsrc1_EXTRA2 / Rdest
+            res['0'] = "%s;s:RA;d:RA" % (sRS)
+            res['1'] = 's:RB'  # RB: Rsrc2_EXTRA2
         elif 'u' in insn_name:  # ldux etc.
             res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
             res['0'] = dRT    # RT: Rdest1_EXTRA2
@@ -600,7 +599,6 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['0'] = 's:FRT;d:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA2
             res['1'] = 's:FRB'  # FRB: Rsrc1_EXTRA2
             res['2'] = 's:FRA'  # FRA: Rsrc2_EXTRA2
-            res['3'] = ''       # empty
         elif regs == ['RA', 'RB', 'RC', 'RT', '', '']:  # madd*
             res['0'] = 'd:RT'  # RT,CR0: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
@@ -615,12 +613,10 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['0'] = 's:RT;d:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
-            res['3'] = ''      # empty
         elif regs == ['RA', 'RB', 'RT', 'RT', '', '']:  # maddsubrs
             res['0'] = 's:RT;d:RT'  # RT: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
-            res['3'] = ''      # empty
         elif insn_name == 'isel':
             res['0'] = 'd:RT'  # RT: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2

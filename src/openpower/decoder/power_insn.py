@@ -1262,6 +1262,8 @@ class ExtendableOperand(DynamicOperand):
             that_extra_reg = pairs.get(extra_reg, extra_reg)
             if this_extra_reg is that_extra_reg:
                 bits = tuple(self.record.extra_idx(key=key, regtype=rtype))
+                if len(bits) == 0: # empty slot, do not attempt to use it!
+                    continue
                 if this_extra_reg in found:
                     assert found[this_extra_reg] == bits # check identical bits
                     continue                             # skip - already found
@@ -2164,8 +2166,9 @@ class NormalMRRM(MRBaseRM, NormalBaseRM):
     RG: BaseRM.mode[4]
 
 
-class NormalFFRc1RM(FFRc1BaseRM, NormalBaseRM):
+class NormalFFRc1RM(FFRc1BaseRM, VLiBaseRM, NormalBaseRM):
     """normal: Rc=1: ffirst CR sel"""
+    VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
     CR: BaseRM.mode[3, 4]
 
@@ -2175,8 +2178,8 @@ class NormalFFRc1RM(FFRc1BaseRM, NormalBaseRM):
 
 class NormalFFRc0RM(FFRc0BaseRM, VLiBaseRM, NormalBaseRM):
     """normal: Rc=0: ffirst z/nonz"""
+    VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
-    VLi: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
     def specifiers(self, record):
@@ -2226,7 +2229,7 @@ class LDSTImmPostRM(LDSTImmBaseRM):
             yield "lf"
 
 
-class LDSTFFRc1RM(FFRc1BaseRM, LDSTImmBaseRM):
+class LDSTFFRc1RM(FFRc1BaseRM, VLiBaseRM, LDSTImmBaseRM):
     """ld/st immediate&indexed: Rc=1: ffirst CR sel"""
     VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
@@ -2236,7 +2239,7 @@ class LDSTFFRc1RM(FFRc1BaseRM, LDSTImmBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class LDSTFFRc0RM(FFRc0BaseRM, ElsBaseRM, LDSTImmBaseRM):
+class LDSTFFRc0RM(FFRc0BaseRM, VLiBaseRM, ElsBaseRM, LDSTImmBaseRM):
     """ld/st immediate&indexed: Rc=0: ffirst z/nonz"""
     VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
@@ -2346,7 +2349,7 @@ class CROpFF3RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CRO
 # Please revisit this code; there is an inactive sketch below.
 class CROpFF5RM(FFRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
-    VLi: BaseRM[20]
+    VLi: BaseRM[19]
     inv: BaseRM[21]
     CR: BaseRM[22, 23]
     dz: BaseRM[22]
@@ -3272,11 +3275,10 @@ class RMSelector:
             table = (
                 (0b000000, 0b111000, "simple"), # simple     (no Rc)
                 (0b001000, 0b111100, "mr"),     # mapreduce  (no Rc)
-                (0b010001, 0b110001, "ffrc1"),  # ffirst,     Rc=1
-                (0b010000, 0b110001, "ffrc0"),  # ffirst,     Rc=0
+                (0b010001, 0b010001, "ffrc1"),  # ffirst,     Rc=1
+                (0b010000, 0b010001, "ffrc0"),  # ffirst,     Rc=0
                 (0b100000, 0b110000, "sat"),    # saturation (no Rc)
                 (0b001100, 0b111100, "rsvd"),   # reserved
-                (0b110000, 0b110000, "rsvd"),   # reserved
             )
             mode = int(self.insn.prefix.rm.normal.mode)
             search = ((mode << 1) | self.record.Rc)
