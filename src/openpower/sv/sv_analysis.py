@@ -226,7 +226,7 @@ class Format(enum.Enum):
                   "(value=%x, width=%x) */" % (value, width)
 
         def declaration_vhdl(value, width):
-            yield "    type sv_%s _rom_array_t is " \
+            yield "    type sv_%s_rom_array_t is " \
                 "array(0 to %d) of sv_decode_rom_t;" % (value, width)
 
         for value in values:
