@@ -469,7 +469,7 @@ class SVSTATETestCase(unittest.TestCase):
 
     def test_34_ldst_update_imm_ffirst(self):
         expected = [
-                    "sv.ldu/ff=~RC1/vli *16, 0(*17)",
+                    "sv.ldu/ff=~RC1/vli *16,0(*17)",
                         ]
         self._do_tst(expected)
 
