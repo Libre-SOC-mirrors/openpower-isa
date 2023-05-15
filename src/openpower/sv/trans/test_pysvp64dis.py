@@ -72,7 +72,7 @@ class SVSTATETestCase(unittest.TestCase):
         expected = [
                     'sv.crand *16,*2,*33',
                     'sv.crand 12,2,33',
-                    'sv.crand/ff=eq/m=r10 12,2,33',
+                    'sv.crand/ff=RC1/m=r10 12,2,33',
                     'sv.crand/m=r10 12,2,33',
                     'sv.crand/m=r10/sz 12,2,33',
                     'sv.crand/m=r10/zz 12,2,33',    # SHOULD PASS
@@ -318,9 +318,9 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.cmp/ff=eq *4,1,*0,1",
                     "sv.cmp/ff=eq/vli *4,1,*0,1",
                     "sv.cmp/ff=ne *4,1,*0,1",
-                    "sv.cmp/ff=eq/m=r3/sz *4,1,*0,1",
-                    "sv.cmp/dz/ff=lt/m=r3 *4,1,*0,1",
-                    "sv.cmp/dz/ff=gt/m=r3/sz *4,1,*0,1",
+                    "sv.cmp/ff=eq/m=r3/zz *4,1,*0,1",
+                    "sv.cmp/ff=lt/m=r3/zz *4,1,*0,1",
+                    "sv.cmp/ff=gt/m=r3/zz *4,1,*0,1",
                         ]
         self._do_tst(expected)
 

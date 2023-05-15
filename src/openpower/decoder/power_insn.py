@@ -2344,14 +2344,12 @@ class CROpFF5RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CRO
 
 # FIXME: almost everything in this class contradicts the specs (it doesn't)
 # The modes however are swapped: 5-bit is 3-bit, 3-bit is 5-bit
-class CROpFF3RM(FFRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
+class CROpFF3RM(FFRc1BaseRM, PredicateBaseRM, VLiBaseRM, ZZBaseRM, CROpBaseRM):
     """cr_op: ffirst 3-bit mode"""
-    RC1 = 0 # temporary hack
     VLi: BaseRM[19]
     inv: BaseRM[21]
     CR: BaseRM[22, 23]
-    dz: BaseRM[22]
-    sz: BaseRM[23]
+    zz: BaseRM[6]
 
     def specifiers(self, record):
         yield from super().specifiers(record=record, mode="ff")
