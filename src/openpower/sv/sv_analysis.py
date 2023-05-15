@@ -597,10 +597,10 @@ def extra_classifier(insn_name, value, name, res, regs):
     elif value == 'RM-1P-3S1D':
         res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
         if regs == ['FRT', 'FRB', 'FRA', 'FRT', '', 'CR1']:  # ffmadds/fdmadds
-            res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA2
-            res['1'] = 's:FRT'  # FRT: Rsrc1_EXTRA2
-            res['2'] = 's:FRB'  # FRB: Rsrc2_EXTRA2
-            res['3'] = 's:FRA'  # FRA: Rsrc3_EXTRA2
+            res['0'] = 's:FRT;d:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA2
+            res['1'] = 's:FRB'  # FRB: Rsrc1_EXTRA2
+            res['2'] = 's:FRA'  # FRA: Rsrc2_EXTRA2
+            res['3'] = ''       # empty
         elif regs == ['RA', 'RB', 'RC', 'RT', '', '']:  # madd*
             res['0'] = 'd:RT'  # RT,CR0: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
@@ -612,15 +612,15 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
             res['3'] = 's:RC'  # RT: Rsrc3_EXTRA2
         elif regs == ['RA', 'RB', 'RT', 'RT', '', 'CR0']:  # overwrite 3-in
-            res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
+            res['0'] = 's:RT;d:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
-            res['3'] = 's:RT'  # RT: Rsrc3_EXTRA2
+            res['3'] = ''      # empty
         elif regs == ['RA', 'RB', 'RT', 'RT', '', '']:  # maddsubrs
-            res['0'] = 'd:RT'  # RT: Rdest1_EXTRA2
+            res['0'] = 's:RT;d:RT'  # RT: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
-            res['3'] = 's:RT'  # RT: Rsrc3_EXTRA2
+            res['3'] = ''      # empty
         elif insn_name == 'isel':
             res['0'] = 'd:RT'  # RT: Rdest1_EXTRA2
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
