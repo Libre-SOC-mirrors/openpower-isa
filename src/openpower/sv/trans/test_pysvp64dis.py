@@ -315,12 +315,12 @@ class SVSTATETestCase(unittest.TestCase):
     def test_20_cmp(self):
         expected = [
                     "sv.cmp *4,1,*0,1",
-                    "sv.cmp/ff=RC1 *4,1,*0,1",
-                    "sv.cmp/ff=RC1/vli *4,1,*0,1",
-                    "sv.cmp/ff=~RC1 *4,1,*0,1",
-                    "sv.cmp/ff=RC1/m=r3/sz *4,1,*0,1",
-                    "sv.cmp/dz/ff=RC1/m=r3 *4,1,*0,1",
-                    "sv.cmp/dz/ff=RC1/m=r3/sz *4,1,*0,1",
+                    "sv.cmp/ff=eq *4,1,*0,1",
+                    "sv.cmp/ff=eq/vli *4,1,*0,1",
+                    "sv.cmp/ff=ne *4,1,*0,1",
+                    "sv.cmp/ff=eq/m=r3/sz *4,1,*0,1",
+                    "sv.cmp/dz/ff=lt/m=r3 *4,1,*0,1",
+                    "sv.cmp/dz/ff=gt/m=r3/sz *4,1,*0,1",
                         ]
         self._do_tst(expected)
 

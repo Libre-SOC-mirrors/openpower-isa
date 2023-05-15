@@ -2330,10 +2330,10 @@ class CROpMRRM(MRBaseRM, ZZCombinedBaseRM, CROpBaseRM):
     sz: BaseRM[23]
 
 
-class CROpFF3RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
-    """crop: ffirst 3-bit mode"""
+class CROpFF5RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+    """crop: ffirst 5-bit mode"""
     VLi: BaseRM[19]
-    RC1 = 0
+    RC1 = 1
     inv: BaseRM[21]
     dz: BaseRM[22]
     sz: BaseRM[23]
@@ -2342,12 +2342,11 @@ class CROpFF3RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CRO
         yield from super().specifiers(record=record, mode="ff")
 
 
-# FIXME: almost everything in this class contradicts the specs.
-# However, this is the direct translation of the pysvp64asm code.
-# Please revisit this code; there is an inactive sketch below.
-class CROpFF5RM(FFRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
-    """cr_op: ffirst 5-bit mode"""
-    RC1 = 1 # temporary hack
+# FIXME: almost everything in this class contradicts the specs (it doesn't)
+# The modes however are swapped: 5-bit is 3-bit, 3-bit is 5-bit
+class CROpFF3RM(FFRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
+    """cr_op: ffirst 3-bit mode"""
+    RC1 = 0 # temporary hack
     VLi: BaseRM[19]
     inv: BaseRM[21]
     CR: BaseRM[22, 23]
