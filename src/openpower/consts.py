@@ -256,6 +256,7 @@ class SVP64MODEb(_Const):
     REDUCE = 2  # 0=normal predication 1=reduce mode
     CRM = 4  # CR mode on reduce (Rc=1) 0=some 1=all
     RG = 4   # Reverse-gear on reduce
+    CROP_RG = 3   # Reverse-gear on reduce CR-ops
     # saturation mode
     N = 2  # saturation signed mode 0=signed 1=unsigned
     # ffirst and predicate result modes

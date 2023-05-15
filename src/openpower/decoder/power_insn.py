@@ -2311,7 +2311,7 @@ class CROpBaseRM(BaseRM):
 
 class CROpSimpleRM(PredicateBaseRM, ZZCombinedBaseRM, CROpBaseRM):
     """crop: simple mode"""
-    RG: BaseRM[20]
+    RG: BaseRM[21]
     dz: BaseRM[22]
     sz: BaseRM[23]
 
@@ -2323,8 +2323,8 @@ class CROpSimpleRM(PredicateBaseRM, ZZCombinedBaseRM, CROpBaseRM):
 
 
 class CROpMRRM(MRBaseRM, ZZCombinedBaseRM, CROpBaseRM):
-    """crop: scalar reduce mode (mapreduce), SUBVL=1"""
-    RG: BaseRM[20]
+    """crop: scalar reduce mode (mapreduce)"""
+    RG: BaseRM[21]
     dz: BaseRM[22]
     sz: BaseRM[23]
 
