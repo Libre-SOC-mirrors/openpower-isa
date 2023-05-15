@@ -1493,12 +1493,12 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
             yield f"{indent}{indent}{int(value):0{value.bits}b}"
             yield f"{indent}{indent}{', '.join(span)}"
             if isinstance(insn, SVP64Instruction):
-                extra_idx = self.extra_idx
-                if self.record.etype is _SVEType.NONE:
-                    yield f"{indent}{indent}extra[none]"
-                else:
-                    etype = repr(self.record.etype).lower()
-                    yield f"{indent}{indent}{etype}{extra_idx!r}"
+                for extra_idx in frozenset(self.extra_idx):
+                    if self.record.etype is _SVEType.NONE:
+                        yield f"{indent}{indent}extra[none]"
+                    else:
+                        etype = repr(self.record.etype).lower()
+                        yield f"{indent}{indent}{etype}{extra_idx!r}"
         else:
             vector = "*" if vector else ""
             CR = int(value >> 2)
