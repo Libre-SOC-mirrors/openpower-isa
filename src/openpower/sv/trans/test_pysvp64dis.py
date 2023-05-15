@@ -321,6 +321,7 @@ class SVSTATETestCase(unittest.TestCase):
                     "sv.cmp/ff=eq/m=r3/zz *4,1,*0,1",
                     "sv.cmp/ff=lt/m=r3/zz *4,1,*0,1",
                     "sv.cmp/ff=gt/m=r3/zz *4,1,*0,1",
+                    "sv.cmp/zz/ff=gt/m=r3 *4,1,*0,1", # WRONG
                         ]
         self._do_tst(expected)
 
