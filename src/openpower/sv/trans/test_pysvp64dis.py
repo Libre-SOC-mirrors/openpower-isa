@@ -473,5 +473,11 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_35_ffmadds(self):
+        expected = [
+                    "sv.ffmadds *0,*0,*0",
+                        ]
+        self._do_tst(expected)
+
 if __name__ == "__main__":
     unittest.main()
