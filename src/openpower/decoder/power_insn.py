@@ -2332,8 +2332,8 @@ class CROpMRRM(MRBaseRM, ZZCombinedBaseRM, CROpBaseRM):
 
 class CROpFF3RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
     """crop: ffirst 3-bit mode"""
-    RC1: BaseRM[19]
-    VLi: BaseRM[20]
+    VLi: BaseRM[19]
+    RC1 = 0
     inv: BaseRM[21]
     dz: BaseRM[22]
     sz: BaseRM[23]
@@ -2347,6 +2347,7 @@ class CROpFF3RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CRO
 # Please revisit this code; there is an inactive sketch below.
 class CROpFF5RM(FFRc1BaseRM, PredicateBaseRM, VLiBaseRM, CROpBaseRM):
     """cr_op: ffirst 5-bit mode"""
+    RC1 = 1 # temporary hack
     VLi: BaseRM[19]
     inv: BaseRM[21]
     CR: BaseRM[22, 23]
