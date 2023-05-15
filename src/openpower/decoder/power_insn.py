@@ -403,7 +403,10 @@ class SVP64Record:
 
         return dataclass(cls, record, keymap=cls.__KEYMAP)
 
-    def extra_idx(self, key):
+    def extra_idx(self, key, regtype):
+        """finds the index slot that came from the CSV file for this
+           reg (RA/RB/BA/etc) and direction (source/dest)
+        """
         extra_idx = (
             _SVExtra.Idx0,
             _SVExtra.Idx1,
@@ -434,7 +437,9 @@ class SVP64Record:
             for entry in self.extra[index]:
                 extra_map[entry.regtype][entry.reg] = extra_idx[index]
 
-        for regs in extra_map.values():
+        for rtype, regs in extra_map.items():
+            if rtype != regtype:
+                continue
             extra = regs.get(reg, _SVExtra.NONE)
             if extra is not _SVExtra.NONE:
                 yield extra
@@ -939,8 +944,8 @@ class Record:
     ptype = property(lambda self: self.svp64.ptype)
     etype = property(lambda self: self.svp64.etype)
 
-    def extra_idx(self, key):
-        return self.svp64.extra_idx(key)
+    def extra_idx(self, key, regtype):
+        return self.svp64.extra_idx(key, regtype)
 
     extra_idx_in1 = property(lambda self: self.svp64.extra_idx_in1)
     extra_idx_in2 = property(lambda self: self.svp64.extra_idx_in2)
@@ -1243,15 +1248,25 @@ class ExtendableOperand(DynamicOperand):
             _SVExtraReg.FRTp: _SVExtraReg.FRT,
         }
 
+        found = {} # prevent duplicates.
         for key in frozenset({
                     "in1", "in2", "in3", "cr_in", "cr_in2",
                     "out", "out2", "cr_out",
                 }):
+            if "in" in key:
+                rtype = _SVExtraRegType.SRC
+            else:
+                rtype = _SVExtraRegType.DST
             extra_reg = self.record.svp64.extra_reg(key=key)
             this_extra_reg = pairs.get(self.extra_reg, self.extra_reg)
             that_extra_reg = pairs.get(extra_reg, extra_reg)
             if this_extra_reg is that_extra_reg:
-                yield from tuple(self.record.extra_idx(key=key))
+                bits = tuple(self.record.extra_idx(key=key, regtype=rtype))
+                if this_extra_reg in found:
+                    assert found[this_extra_reg] == bits # check identical bits
+                    continue                             # skip - already found
+                yield from bits                          # yield the idx
+                found[this_extra_reg] = bits             # skip next time round
 
     def remap(self, value, vector):
         raise NotImplementedError()
