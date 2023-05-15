@@ -45,7 +45,9 @@ from openpower.xer import XERState
 from openpower.util import LogKind, log
 
 LDST_UPDATE_INSNS = ['ldu', 'lwzu', 'lbzu', 'lhzu', 'lhau', 'lfsu', 'lfdu',
-                    ]
+                     'stwu', 'stbu', 'sthu', 'stfsu', 'stfdu', 'stdu', 
+                     ]
+
 
 instruction_info = namedtuple('instruction_info',
                               'func read_regs uninit_regs write_regs ' +

@@ -809,14 +809,14 @@ class DecoderTestCase(FHDLTestCase):
                 print ("%i %x %x" % (i, sim.gpr(i).value, expected_regs[i]))
                 self.assertEqual(sim.gpr(i), expected_regs[i])
 
-    def tst_sv_load_update_dd_ffirst_incl(self):
+    def test_sv_load_dd_ffirst_incl(self):
         """data-dependent fail-first on LD/ST, inclusive (/vli)
         performs linked-list walking
         """
         lst = SVP64Asm(
             [
                 # load VL bytes but test if they are zero and truncate
-                "sv.ldu/ff=~RC1/vli *16, 0(*17)", # offset zero to next addr
+                "sv.ld/ff=RC1/vli *17, 8(*16)", # offset 8 to next addr
             ]
         )
         lst = list(lst)
@@ -828,23 +828,28 @@ class DecoderTestCase(FHDLTestCase):
         print("SVSTATE", bin(svstate.asint()))
 
         initial_regs = [0] * 32
-        initial_regs[17] = 20  # data starting point
         for i in range(8): # set to garbage
             initial_regs[16+i] = (0xbeef00) + i  # identifying garbage
+        initial_regs[16] = 24  # data starting point
 
-        # some memory with addresses to get from
-        initial_mem = {20: 40,
-                       40: 10,
-                       10: 0}
+        # some memory with addresses to get from.  all locations are offset 8
+        initial_mem = { 24: 0xfeed0001, 32: 48, # data @ 24, ptr @ 32+8 -> 48
+                        48: 0xfeed0002, 56: 16, # data @ 48, ptr @ 48+8 -> 16
+                        16: 0xfeed0003, 24: 80, # data @ 16, ptr @ 16+8 -> 80
+                        80: 0xfeed0004, 88: 0,  # data @ 80, ptr @ 80+8 -> 0
+                      }
 
         # calculate expected regs
         expected_regs = deepcopy(initial_regs)
-        ptr_addr = 20
+        ptr_addr = 24
         i = 0
         while True: # VLI needs break at end
             expected_regs[16+i] = ptr_addr
+            print ("expected regs", 16+i, hex(expected_regs[16+i]))
+            i += 1
             if ptr_addr == 0: break
-            ptr_addr = initial_mem[ptr_addr] # linked-list walk
+            print ("ptr_addr", ptr_addr)
+            ptr_addr = initial_mem[ptr_addr+8] # linked-list walk, offset 8
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, svstate=svstate,
@@ -852,7 +857,62 @@ class DecoderTestCase(FHDLTestCase):
                                        initial_regs=initial_regs)
             mem = sim.mem.dump(printout=True, asciidump=True)
             print (mem)
-            self.assertEqual(sim.svstate.vl, 3)
+            self.assertEqual(sim.svstate.vl, 4)
+            for i in range(len(expected_regs)):
+                print ("%i %x %x" % (i, sim.gpr(i).value, expected_regs[i]))
+                self.assertEqual(sim.gpr(i), expected_regs[i])
+
+    def test_sv_load_update_dd_ffirst_incl(self):
+        """data-dependent fail-first on LD/ST-with-update, inclusive (/vli)
+        performs linked-list walking, and stores the Effective Address
+        *behind* where it is picked up (on the next element-iteration).
+        """
+        lst = SVP64Asm(
+            [
+                # load VL bytes but test if they are zero and truncate
+                "sv.ldu/ff=RC1/vli *17, 8(*16)", # offset 8 to next addr
+            ]
+        )
+        lst = list(lst)
+
+        # SVSTATE (in this case, VL=8)
+        svstate = SVP64State()
+        svstate.vl = 8  # VL
+        svstate.maxvl = 8  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
+
+        initial_regs = [0] * 32
+        for i in range(8): # set to garbage
+            initial_regs[16+i] = (0xbeef00) + i  # identifying garbage
+        initial_regs[16] = 24  # data starting point
+
+        # some memory with addresses to get from.  all locations are offset 8
+        initial_mem = { 24: 0xfeed0001, 32: 48, # data @ 24, ptr @ 32+8 -> 48
+                        48: 0xfeed0002, 56: 16, # data @ 48, ptr @ 48+8 -> 16
+                        16: 0xfeed0003, 24: 80, # data @ 16, ptr @ 16+8 -> 80
+                        80: 0xfeed0004, 88: 0,  # data @ 80, ptr @ 80+8 -> 0
+                      }
+
+        # calculate expected regs
+        expected_regs = deepcopy(initial_regs)
+        i = 0
+        while True: # VLI needs break at end
+            ptr_addr = expected_regs[16+i]
+            newptr_addr = initial_mem[ptr_addr+8] # linked-list walk, offset 8
+            expected_regs[17+i] = newptr_addr
+            expected_regs[16+i] = ptr_addr+8
+            print ("expected regs", 16+i, hex(expected_regs[16+i]))
+            i += 1
+            print ("ptr_addr", ptr_addr)
+            if newptr_addr == 0: break # VLI stop at end
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, svstate=svstate,
+                                       initial_mem=initial_mem,
+                                       initial_regs=initial_regs)
+            mem = sim.mem.dump(printout=True, asciidump=True)
+            print (mem)
+            self.assertEqual(sim.svstate.vl, 4)
             for i in range(len(expected_regs)):
                 print ("%i %x %x" % (i, sim.gpr(i).value, expected_regs[i]))
                 self.assertEqual(sim.gpr(i), expected_regs[i])
