@@ -44,6 +44,9 @@ from openpower.fpscr import FPSCRState
 from openpower.xer import XERState
 from openpower.util import LogKind, log
 
+LDST_UPDATE_INSNS = ['ldu', 'lwzu', 'lbzu', 'lhzu', 'lhau', 'lfsu', 'lfdu',
+                    ]
+
 instruction_info = namedtuple('instruction_info',
                               'func read_regs uninit_regs write_regs ' +
                               'special_regs op_fields form asmregs')
@@ -1931,6 +1934,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # list of instructions not being supported by binutils (.long)
         dotstrp = asmop[:-1] if asmop[-1] == '.' else asmop
         if dotstrp in [*FPTRANS_INSNS,
+                       *LDST_UPDATE_INSNS,
                        'ffmadds', 'fdmadds', 'ffadds',
                        'minmax',
                        'setvl', 'svindex', 'svremap', 'svstep',
