@@ -496,7 +496,6 @@ class SVP64RMMode(Enum):
     MAPREDUCE = 1
     FFIRST = 2
     SATURATE = 3
-    PREDRES = 4
     BRANCH = 5
 
 

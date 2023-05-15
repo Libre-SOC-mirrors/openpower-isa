@@ -1262,8 +1262,6 @@ class ExtendableOperand(DynamicOperand):
             that_extra_reg = pairs.get(extra_reg, extra_reg)
             if this_extra_reg is that_extra_reg:
                 bits = tuple(self.record.extra_idx(key=key, regtype=rtype))
-                if len(bits) == 0: # empty slot, do not attempt to use it!
-                    continue
                 if this_extra_reg in found:
                     assert found[this_extra_reg] == bits # check identical bits
                     continue                             # skip - already found
@@ -2587,7 +2585,7 @@ class SpecifierFF(SpecifierPredicate):
         if selector.mode.sel != 0:
             raise ValueError("cannot override mode")
         if self.record.svp64.mode is _SVMode.CROP:
-            selector.mode.sel = 0b10
+            selector.mode.sel = 0b01
             # HACK: please finally provide correct logic for CRs.
             if self.pred in (_SVP64Pred.RC1, _SVP64Pred.RC1_N):
                 selector.mode[2] = (self.pred is _SVP64Pred.RC1_N)
@@ -3315,8 +3313,8 @@ class RMSelector:
             table = (
                 (0b000000, 0b111000, "simple"), # simple
                 (0b001000, 0b111000, "mr"),     # mapreduce
-                (0b100001, 0b100001, "ff3"),    # ffirst, 3-bit CR
-                (0b100000, 0b100000, "ff5"),    # ffirst, 5-bit CR
+                (0b010001, 0b010001, "ff3"),    # ffirst, 3-bit CR
+                (0b010000, 0b010000, "ff5"),    # ffirst, 5-bit CR
             )
             search = ((int(self.insn.prefix.rm.crop.mode) << 1) |
                       int(self.record.svp64.extra_CR_3bit))

@@ -331,13 +331,10 @@ class SVP64RMModeDecode(Elaboratable):
                         comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
                     with m.Else():
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
-                with m.Case(1):
+                with m.Case(1,3):
                     comb += self.mode.eq(SVP64RMMode.FFIRST) # ffirst
                 with m.Case(2):
                     comb += self.mode.eq(SVP64RMMode.SATURATE) # saturate
-                with m.Case(3):
-                    # mode = 0b11: arithmetic predicate-result
-                    comb += self.mode.eq(SVP64RMMode.PREDRES) # pred result
 
             # extract "reverse gear" for mapreduce mode
             with m.If((~is_ldst) &                     # not for LD/ST
