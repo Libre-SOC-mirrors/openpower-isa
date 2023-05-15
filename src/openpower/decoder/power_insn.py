@@ -2068,6 +2068,11 @@ class WidthBaseRM(BaseRM):
         FP = False
         dw = WidthBaseRM.width(FP, int(self.elwidth))
         sw = WidthBaseRM.width(FP, int(self.ewsrc))
+        if self.record.svp64.mode is _SVMode.CROP:
+            if dw:
+                yield ("dw=" + dw)
+        else:
+            sw = WidthBaseRM.width(FP, int(self.ewsrc))
         if dw == sw and dw:
             yield ("w=" + dw)
         else:
@@ -2503,7 +2508,8 @@ class SpecifierW(SpecifierWidth):
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
-        selector.ewsrc = self.width.value
+        if self.record.svp64.mode is not _SVMode.CROP:
+            selector.ewsrc = self.width.value
         selector.elwidth = self.width.value
 
 
@@ -2511,6 +2517,8 @@ class SpecifierW(SpecifierWidth):
 class SpecifierSW(SpecifierWidth):
     @classmethod
     def match(cls, desc, record):
+        if record.svp64.mode is _SVMode.CROP:
+            return None
         return super().match(desc=desc, record=record, etalon="sw")
 
     def assemble(self, insn):
