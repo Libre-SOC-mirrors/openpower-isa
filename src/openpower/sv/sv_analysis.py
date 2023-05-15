@@ -453,7 +453,7 @@ def extra_classifier(insn_name, value, name, res, regs):
         elif 'u' in insn_name:  # ldux etc.
             res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
             res['0'] = dRT    # RT: Rdest1_EXTRA2
-            res['1'] = 'd:RA'  # RA: Rdest2_EXTRA2
+            res['1'] = 's:RA;d:RA'  # RA: Rdest2_EXTRA2
             res['2'] = 's:RB'  # RB: Rsrc1_EXTRA2
         else:
             res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
