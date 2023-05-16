@@ -3,14 +3,16 @@ from openpower.sv.trans.svp64 import SVP64Asm
 from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State
+from openpower.fpscr import FPSCRState
 import struct
 import math
 
 
 class FMvFCvtCases(TestAccumulatorBase):
-    def js_toint32(self, inp, expected, test_title=""):
+    def js_toint32(self, inp, expected, test_title="", inp_bits=None):
         inp = float(inp)
-        inp_bits = struct.unpack("<Q", struct.pack("<d", inp))[0]
+        if inp_bits is None:
+            inp_bits = struct.unpack("<Q", struct.pack("<d", inp))[0]
         expected %= 2 ** 64
         with self.subTest(inp=inp.hex(), inp_bits=hex(inp_bits),
                           expected=hex(expected), test_title=test_title):
@@ -20,8 +22,28 @@ class FMvFCvtCases(TestAccumulatorBase):
             fprs[0] = inp_bits
             e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
             e.intregs[3] = expected
-            e.fpscr = None
-            self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
+            fpscr = FPSCRState()
+            if math.isnan(inp) and (inp_bits & 2 ** 51) == 0:  # SNaN
+                fpscr.VXSNAN = 1
+                fpscr.FX = 1
+
+            if not math.isfinite(inp) or not (
+                    -0x8000_0000 <= math.trunc(inp) <= 0x7fff_ffff):
+                fpscr.VXCVI = 1
+                fpscr.FX = 1
+            elif math.trunc(inp) != inp:  # inexact
+                fpscr.XX = 1
+                fpscr.FX = 1
+                fpscr.FI = 1
+            fpscr.FPRF = 0  # undefined value we happen to pick
+            fpscr.FR = 0  # trunc never increments
+            with self.subTest(expected_VXSNAN=fpscr.VXSNAN,
+                              expected_VXCVI=fpscr.VXCVI,
+                              expected_XX=fpscr.XX,
+                              expected_FI=fpscr.FI):
+                e.fpscr = int(fpscr)
+                self.add_case(
+                    Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_js_toint32(self):
         min_value = pow(2, -1074)
@@ -57,6 +79,7 @@ class FMvFCvtCases(TestAccumulatorBase):
         self.js_toint32(math.inf, 0, "Inf")
         self.js_toint32(-math.inf, 0, "-Inf")
         self.js_toint32(math.nan, 0, "NaN")
+        self.js_toint32(math.nan, 0, "SNaN", inp_bits=0x7ff0_0000_0000_0001)
         self.js_toint32(0.0, 0, "zero")
         self.js_toint32(-0.0, 0, "-zero")
         self.js_toint32(min_value, 0)
