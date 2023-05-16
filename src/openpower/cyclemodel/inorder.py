@@ -18,6 +18,9 @@
 #       should be bare-minimum practical demonstrations but also within this
 #       file.
 #
+#       Duplication of code from other models in this series is perfectly
+#       acceptable in order to respect the self-sufficiency requirement.
+#
 # Bugs:
 #
 # * https://bugs.libre-soc.org/show_bug.cgi?id=1039
