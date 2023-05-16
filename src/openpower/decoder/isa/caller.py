@@ -45,7 +45,7 @@ from openpower.xer import XERState
 from openpower.util import LogKind, log
 
 LDST_UPDATE_INSNS = ['ldu', 'lwzu', 'lbzu', 'lhzu', 'lhau', 'lfsu', 'lfdu',
-                     'stwu', 'stbu', 'sthu', 'stfsu', 'stfdu', 'stdu', 
+                     'stwu', 'stbu', 'sthu', 'stfsu', 'stfdu', 'stdu',
                      ]
 
 
@@ -1146,7 +1146,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  bigendian=False,
                  mmu=False,
                  icachemmu=False,
-                 initial_fpscr=0):
+                 initial_fpscr=0,
+                 insnlog=None):
+
+        # trace log file for model output. if None do nothing
+        self.insnlog = insnlog
+        self.insnlog_is_file = hasattr(insnlog, "write")
+        if not self.insnlog_is_file and self.insnlog:
+            self.insnlog = open(self.insnlog, "w")
 
         self.bigendian = bigendian
         self.halted = False
@@ -1276,6 +1283,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.dec2 = decoder2
 
         super().__init__(XLEN=self.namespace["XLEN"], FPSCR=self.fpscr)
+
+    def trace(self, out):
+        if self.insnlog is None: return
+        self.insnlog.write(out)
 
     @property
     def XLEN(self):
@@ -1710,7 +1721,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def execute_one(self):
         """execute one instruction
         """
-        self.insnlog = [] # log the instruction
         # get the disassembly code for this instruction
         if not self.disassembly:
             code = yield from self.get_assembly_name()
@@ -1720,7 +1730,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 offs, dbg = 4, "svp64 "
             code = self.disassembly[self._pc+offs]
             log("    %s sim-execute" % dbg, hex(self._pc), code)
-            self.insnlog.append(code)
         opname = code.split(' ')[0]
         try:
             yield from self.call(opname)         # execute the instruction
@@ -1752,9 +1761,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # not supported yet:
             raise e                          # ... re-raise
 
-        # append the log file
-        with open("/tmp/insnlog.txt", "a+") as f:
-            f.write(" ".join(self.insnlog)+"\n")
+        # append to the trace log file
+        self.trace(" # %s\n" % code)
 
         log("gprs after code", code)
         self.gpr.dump()
@@ -2352,10 +2360,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             if name in fregs:
                 reg_val = SelectableInt(self.fpr(base, is_vec, offs, ew_src))
                 log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
-                self.insnlog.append("rFPR:%d.%d/%d" % (base, offs, ew_src))
+                self.trace("r:FPR:%d:%d:%d " % (base, offs, ew_src))
             elif name is not None:
                 reg_val = SelectableInt(self.gpr(base, is_vec, offs, ew_src))
-                self.insnlog.append("rGPR:%d.%d/%d" % (base, offs, ew_src))
+                self.trace("r:GPR:%d:%d:%d " % (base, offs, ew_src))
                 log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)
@@ -2477,10 +2485,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         rnum, base, offset = regnum
         if name in fregs:
             self.fpr.write(regnum, output, is_vec, ew_dst)
-            self.insnlog.append("wFPR:%d.%d/%d" % (rnum, offset, ew_dst))
+            self.trace("w:FPR:%d:%d:%d " % (rnum, offset, ew_dst))
         else:
             self.gpr.write(regnum, output, is_vec, ew_dst)
-            self.insnlog.append("wGPR:%d.%d/%d" % (rnum, offset, ew_dst))
+            self.trace("w:GPR:%d:%d:%d " % (rnum, offset, ew_dst))
 
     def check_step_increment(self, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
