@@ -130,7 +130,7 @@ class FPSCR_FPRF(FieldSelectableInt):
 
 class FPSCRState(SelectableInt):
     def __init__(self, value=0):
-        self.__do_update_computed_bits = False
+        self.__do_update_summary_bits = False
         SelectableInt.__init__(self, value, 64)
         self.fsi = {}
         offs = 0
@@ -164,7 +164,7 @@ class FPSCRState(SelectableInt):
                 fs = tuple(offs)
             v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
-        self.__update_computed_bits()
+        self.__update_summary_bits()
 
     @property
     def value(self):
@@ -173,11 +173,11 @@ class FPSCRState(SelectableInt):
     @value.setter
     def value(self, value):
         self.__value = value
-        if self.__do_update_computed_bits:
-            self.__update_computed_bits()
+        if self.__do_update_summary_bits:
+            self.__update_summary_bits()
 
-    def __update_computed_bits(self):
-        self.__do_update_computed_bits = False
+    def __update_summary_bits(self):
+        self.__do_update_summary_bits = False
         try:
             # update summary bits -- FX is manually handled by pseudo-code,
             # so we don't update it here
@@ -196,7 +196,7 @@ class FPSCRState(SelectableInt):
                         (self.ZX & self.ZE) |
                         (self.XX & self.XE))
         finally:
-            self.__do_update_computed_bits = True
+            self.__do_update_summary_bits = True
 
     @property
     def DRN(self):
