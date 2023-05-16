@@ -12,9 +12,12 @@ class TestFPSCR(unittest.TestCase):
         expected = 0x3
         self.assertEqual(FPSCR, expected)
         self.assertEqual(FPSCR.VXCVI, 0)
+        self.assertEqual(FPSCR.VX, 0)
         FPSCR.VXCVI = 1
         self.assertEqual(FPSCR.VXCVI, 1)
+        self.assertEqual(FPSCR.VX, 1)
         expected |= 1 << (64 - 55 - 1)
+        expected |= 1 << (64 - 34 - 1)
         self.assertEqual(FPSCR, expected)
         self.assertEqual(FPSCR.FX, 0)
         FPSCR.FX = 1
@@ -35,6 +38,15 @@ class TestFPSCR(unittest.TestCase):
         self.assertEqual(FPSCR, expected)
         self.assertEqual(FPSCR.FPRF, 0b10010)
         self.assertEqual(FPSCR.FPCC, 0b0010)
+        self.assertEqual(FPSCR.VE, 0)
+        self.assertEqual(FPSCR.VX, 1)
+        self.assertEqual(FPSCR.FEX, 0)
+        FPSCR.VE = 1
+        self.assertEqual(FPSCR.VE, 1)
+        self.assertEqual(FPSCR.FEX, 1)
+        expected |= 1 << (64 - 56 - 1)
+        expected |= 1 << (64 - 33 - 1)
+        self.assertEqual(FPSCR, expected)
 
 
 if __name__ == "__main__":
