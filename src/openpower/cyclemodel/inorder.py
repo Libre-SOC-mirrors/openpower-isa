@@ -15,6 +15,45 @@
 
 """
 
+from collections import namedtuple
+import io
+import unittest
+
+# trace file entries are lists of these.
+Hazards = namedtuple("Hazards", ["action", "target", "ident", "offs", "elwid"])
+
+# key: readport, writeport (per clock cycle)
+HazardProfiles = {
+    "GPR": (4, 1),  # GPR allows 4 reads 1 write possible in 1 cycle...
+    "FPR": (3, 1),
+    "CR" : (2, 1),  # Condition Register (32-bit)
+    "CRf": (3, 3),  # Condition Register Fields (4-bit each)
+    "XER": (1, 1),
+    "MSR": (1, 1),
+    "FPSCR": (1, 1),
+    "PC": (1, 1),    # Program Counter
+    "SPRf" : (4, 3), # Fast SPR (actually STATE regfile in TestIssuer)
+    "SPRs" : (1, 1), # Slow SPR
+}
+
+
+def read_file(fname):
+    """reads a trace file in the format "[r:FILE:regnum:offset:width]* # insn"
+    """
+    is_file = hasattr(fname, "write")
+    if not is_file:
+        fname = open(fname, "r")
+    res = []
+    for line in fname.readlines():
+        (specs, insn) = map(str.strip, line.strip().split("#"))
+        line = [insn]
+        for spec in specs.split(" "):
+            line.append(Hazards._make(spec.split(":")))
+        res.append(line)
+    if not is_file:
+        fname.close()
+    return res
+
 
 class RegisterWrite:
     """
@@ -65,7 +104,7 @@ class Execute:
         for instruction in instructions:
             to_write.update(instruction['writes'])
         # see if all writes can be done, otherwise stall
-        writes_possible = self.cpu.writes_possible(to_write):
+        writes_possible = self.cpu.writes_possible(to_write)
         if writes_possible != to_write:
             stall = True
         # retire the writes that are possible in this cycle (regfile writes)
@@ -122,7 +161,7 @@ class Decode:
         # get current instruction
         insn, writeregs, readregs = self.stages[0]
         # check that the readregs are all available
-        reads_possible = self.cpu.reads_possible(readregs):
+        reads_possible = self.cpu.reads_possible(readregs)
         stall = reads_possible != readregs
         # perform the "reads" that are possible in this cycle
         readregs.difference_update(reads_possible)
@@ -200,3 +239,25 @@ class CPU:
             self.decode.tick()
             self.issue.tick()
             self.exe.tick()
+
+class TestTrace(unittest.TestCase):
+
+    def test_trace(self): # TODO, assert this is valid
+        lines = (
+            "r:GPR:0:0:64 w:GPR:1:0:64 # addi 1, 0, 0x0010",
+            "r:GPR:0:0:64 w:GPR:2:0:64 # addi 2, 0, 0x1234",
+            "r:GPR:1:0:64 r:GPR:2:0:64 # stw 2, 0(1)",
+            "r:GPR:1:0:64 w:GPR:3:0:64 # lwz 3, 0(1)",
+            "r:GPR:3:0:64 r:GPR:2:0:64 w:GPR:1:0:64 # add 1, 3, 2",
+            "r:GPR:0:0:64 w:GPR:3:0:64 # addi 3, 0, 0x1234",
+            "r:GPR:0:0:64 w:GPR:2:0:64 # addi 2, 0, 0x4321",
+            "r:GPR:3:0:64 r:GPR:2:0:64 w:GPR:1:0:64 # add  1, 3, 2",
+        )
+        f = io.StringIO("\n".join(lines))
+        lines = read_file(f)
+        for trace in lines:
+            print(trace)
+
+
+if __name__ == "__main__":
+    unittest.main()
