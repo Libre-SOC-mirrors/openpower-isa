@@ -1,9 +1,27 @@
 #!/usr/bin/env python3
-# An In-order cycle-accurate model of a Power ISA 3.0 hardware implementation
+# Copyright (C) 2023 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
+# Copyright (C) 2023 Dimitry Selyutin <ghostmansd@gmail.com>
 # LGPLv3+
 # Funded by NLnet
 #
-# Bugs: https://bugs.libre-soc.org/show_bug.cgi?id=1039
+# An In-order cycle-accurate model of a Power ISA 3.0 hardware implementation
+#
+#       This program should be entirely self-sufficient such that it may be
+#       published in a magazine, or in a specification, or on another website,
+#       or as part of an Academic Paper (please ensure Attribution/Copyright
+#       is retained: distribution without these Copyright Notices intact is
+#       prohibited).
+#
+#       It should therefore not import complex modules (regex, dataclass)
+#       keeping to simple techniques and simple python modules that are
+#       easy to understand.  readability comments are crucial.  Unit tests
+#       should be bare-minimum practical demonstrations but also within this
+#       file.
+#
+# Bugs:
+#
+# * https://bugs.libre-soc.org/show_bug.cgi?id=1039
+#
 """
     CPU:   Fetch   <- log file
             |
@@ -240,17 +258,18 @@ class CPU:
             self.issue.tick()
             self.exe.tick()
 
+
 class TestTrace(unittest.TestCase):
 
     def test_trace(self): # TODO, assert this is valid
         lines = (
-            "r:GPR:0:0:64 w:GPR:1:0:64 # addi 1, 0, 0x0010",
-            "r:GPR:0:0:64 w:GPR:2:0:64 # addi 2, 0, 0x1234",
-            "r:GPR:1:0:64 r:GPR:2:0:64 # stw 2, 0(1)",
-            "r:GPR:1:0:64 w:GPR:3:0:64 # lwz 3, 0(1)",
+            "r:GPR:0:0:64 w:GPR:1:0:64              # addi 1, 0, 0x0010",
+            "r:GPR:0:0:64 w:GPR:2:0:64              # addi 2, 0, 0x1234",
+            "r:GPR:1:0:64 r:GPR:2:0:64              # stw 2, 0(1)",
+            "r:GPR:1:0:64 w:GPR:3:0:64              # lwz 3, 0(1)",
             "r:GPR:3:0:64 r:GPR:2:0:64 w:GPR:1:0:64 # add 1, 3, 2",
-            "r:GPR:0:0:64 w:GPR:3:0:64 # addi 3, 0, 0x1234",
-            "r:GPR:0:0:64 w:GPR:2:0:64 # addi 2, 0, 0x4321",
+            "r:GPR:0:0:64 w:GPR:3:0:64              # addi 3, 0, 0x1234",
+            "r:GPR:0:0:64 w:GPR:2:0:64              # addi 2, 0, 0x4321",
             "r:GPR:3:0:64 r:GPR:2:0:64 w:GPR:1:0:64 # add  1, 3, 2",
         )
         f = io.StringIO("\n".join(lines))
