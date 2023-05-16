@@ -25,6 +25,7 @@ methods, the use of yield from/yield is required.
 from openpower.decoder.power_enums import XER_bits
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.util import log
+from openpower.fpscr import FPSCRState
 import os
 import sys
 from copy import deepcopy
@@ -133,9 +134,26 @@ class State:
 
         # fpscr
         if self.fpscr is not None and s2.fpscr is not None:
-            self.dut.assertEqual(
-                self.fpscr, s2.fpscr, "fpscr mismatch (%s != %s) %s" %
-                (self.state_type, s2.state_type, repr(self.code)))
+            if self.fpscr != s2.fpscr:
+                # use FPSCRState.fsi since that's much easier to read than a
+                # decimal integer and since unittest has fancy dict diffs.
+
+                # use auto_update_summary_bits=False since HDL might
+                # mis-compute those summary bits and we want to show the
+                # actual bits, not the corrected bits
+                fpscr1 = FPSCRState(self.fpscr, auto_update_summary_bits=False)
+                fpscr2 = FPSCRState(s2.fpscr, auto_update_summary_bits=False)
+                # FieldSelectableInt.__repr__ is too long
+                fpscr1 = {k: hex(int(v)) for k, v in fpscr1.fsi.items()}
+                fpscr2 = {k: hex(int(v)) for k, v in fpscr2.fsi.items()}
+                old_max_diff = self.dut.maxDiff
+                self.dut.maxDiff = None  # show full diff
+                try:
+                    self.dut.assertEqual(
+                        fpscr1, fpscr2, "fpscr mismatch (%s != %s) %s\n" %
+                        (self.state_type, s2.state_type, repr(self.code)))
+                finally:
+                    self.dut.maxDiff = old_max_diff
 
     def compare_mem(self, s2):
         # copy dics to preserve state mem then pad empty locs since

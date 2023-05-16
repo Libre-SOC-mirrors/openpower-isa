@@ -129,7 +129,7 @@ class FPSCR_FPRF(FieldSelectableInt):
 
 
 class FPSCRState(SelectableInt):
-    def __init__(self, value=0):
+    def __init__(self, value=0, *, auto_update_summary_bits=True):
         self.__do_update_summary_bits = False
         SelectableInt.__init__(self, value, 64)
         self.fsi = {}
@@ -164,7 +164,8 @@ class FPSCRState(SelectableInt):
                 fs = tuple(offs)
             v = FieldSelectableInt(self, fs)
             self.fsi[field] = v
-        self.__update_summary_bits()
+        if auto_update_summary_bits:
+            self.__update_summary_bits()
 
     @property
     def value(self):
