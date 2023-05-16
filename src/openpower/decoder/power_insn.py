@@ -2068,7 +2068,7 @@ class WidthBaseRM(BaseRM):
         FP = False
         dw = WidthBaseRM.width(FP, int(self.elwidth))
         sw = WidthBaseRM.width(FP, int(self.ewsrc))
-        if self.record.svp64.mode is _SVMode.CROP:
+        if record.svp64.mode is _SVMode.CROP:
             if dw:
                 yield ("dw=" + dw)
         else:
