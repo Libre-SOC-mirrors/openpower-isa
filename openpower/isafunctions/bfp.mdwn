@@ -57,7 +57,7 @@ section 7.6.2.2
             # x is a Denormal
             result.class.Denormal <- 1
             result.sign <- x[0]
-            result.exp <- -1022
+            result.exponent <- -1022
             result.significand[0] <- 0
             result.significand[1:52] <- fraction
             do while result.significand[0] != 1
@@ -66,7 +66,10 @@ section 7.6.2.2
         else
             result.class.Normal <- 1
             result.sign <- x[0]
-            result.exponent <- exponent - 1023
+            result.exponent <- exponent
+            # have to do the subtraction separately since SelectableInt won't
+            # give negative results
+            result.exponent <- result.exponent - 1023
             result.significand[0] <- 1
             result.significand[1:52] <- fraction
         return result
