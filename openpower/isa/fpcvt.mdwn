@@ -163,10 +163,11 @@ Pseudo-code:
                 result <- si64_CONVERT_FROM_BFP(range_max)
         default:  # JavaScript semantics
             # CVM = 6, 7 are illegal instructions
-            # this works because the largest type we try to convert from has
-            # 53 significand bits, and the largest type we try to convert to
-            # has 64 bits, and the sum of those is strictly less than the 128
-            # bits of the intermediate result.
+            # using a 128-bit intermediate works here because the largest type
+            # this instruction can convert from has 53 significand bits, and
+            # the largest type this instruction can convert to has 64 bits,
+            # and the sum of those is strictly less than the 128 bits of the
+            # intermediate result.
             limit <- bfp_CONVERT_FROM_UI128([1] * 128)
             if IsInf(rnd) | IsNaN(rnd) then
                 result <- [0] * 64
@@ -277,10 +278,11 @@ Pseudo-code:
                 result <- si64_CONVERT_FROM_BFP(range_max)
         default:  # JavaScript semantics
             # CVM = 6, 7 are illegal instructions
-            # this works because the largest type we try to convert from has
-            # 53 significand bits, and the largest type we try to convert to
-            # has 64 bits, and the sum of those is strictly less than the 128
-            # bits of the intermediate result.
+            # using a 128-bit intermediate works here because the largest type
+            # this instruction can convert from has 53 significand bits, and
+            # the largest type this instruction can convert to has 64 bits,
+            # and the sum of those is strictly less than the 128 bits of the
+            # intermediate result.
             limit <- bfp_CONVERT_FROM_UI128([1] * 128)
             if IsInf(rnd) | IsNaN(rnd) then
                 result <- [0] * 64
