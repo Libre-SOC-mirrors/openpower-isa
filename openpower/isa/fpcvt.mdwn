@@ -147,9 +147,9 @@ Pseudo-code:
             else if bfp_COMPARE_LT(rnd, range_min) then
                 result <- si64_CONVERT_FROM_BFP(range_min)
             else if IT[1] = 1 then  # Unsigned 32/64-bit
-                result <- ui64_CONVERT_FROM_BFP(range_max)
+                result <- ui64_CONVERT_FROM_BFP(rnd)
             else  # Signed 32/64-bit
-                result <- si64_CONVERT_FROM_BFP(range_max)
+                result <- si64_CONVERT_FROM_BFP(rnd)
         case(2, 3):  # Java/Saturating semantics
             if IsNaN(rnd) then
                 result <- [0] * 64
@@ -158,9 +158,9 @@ Pseudo-code:
             else if bfp_COMPARE_LT(rnd, range_min) then
                 result <- si64_CONVERT_FROM_BFP(range_min)
             else if IT[1] = 1 then  # Unsigned 32/64-bit
-                result <- ui64_CONVERT_FROM_BFP(range_max)
+                result <- ui64_CONVERT_FROM_BFP(rnd)
             else  # Signed 32/64-bit
-                result <- si64_CONVERT_FROM_BFP(range_max)
+                result <- si64_CONVERT_FROM_BFP(rnd)
         default:  # JavaScript semantics
             # CVM = 6, 7 are illegal instructions
             # using a 128-bit intermediate works here because the largest type
@@ -262,9 +262,9 @@ Pseudo-code:
             else if bfp_COMPARE_LT(rnd, range_min) then
                 result <- si64_CONVERT_FROM_BFP(range_min)
             else if IT[1] = 1 then  # Unsigned 32/64-bit
-                result <- ui64_CONVERT_FROM_BFP(range_max)
+                result <- ui64_CONVERT_FROM_BFP(rnd)
             else  # Signed 32/64-bit
-                result <- si64_CONVERT_FROM_BFP(range_max)
+                result <- si64_CONVERT_FROM_BFP(rnd)
         case(2, 3):  # Java/Saturating semantics
             if IsNaN(rnd) then
                 result <- [0] * 64
@@ -273,9 +273,9 @@ Pseudo-code:
             else if bfp_COMPARE_LT(rnd, range_min) then
                 result <- si64_CONVERT_FROM_BFP(range_min)
             else if IT[1] = 1 then  # Unsigned 32/64-bit
-                result <- ui64_CONVERT_FROM_BFP(range_max)
+                result <- ui64_CONVERT_FROM_BFP(rnd)
             else  # Signed 32/64-bit
-                result <- si64_CONVERT_FROM_BFP(range_max)
+                result <- si64_CONVERT_FROM_BFP(rnd)
         default:  # JavaScript semantics
             # CVM = 6, 7 are illegal instructions
             # using a 128-bit intermediate works here because the largest type
