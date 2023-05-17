@@ -74,7 +74,8 @@ class SimRunner(StateRunner):
                   bigendian=bigendian,
                   initial_svstate=test.svstate,
                   mmu=self.mmu,
-                  fpregfile=test.fpregs)
+                  fpregfile=test.fpregs,
+                  initial_fpscr=test.initial_fpscr)
 
         # run the loop of the instructions on the current test
         index = sim.pc.CIA.value//4

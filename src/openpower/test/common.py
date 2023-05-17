@@ -122,6 +122,7 @@ class TestAccumulatorBase:
                  expected=None,
                  stop_at_pc=None,
                  fpregs=None,
+                 initial_fpscr=None,
                  src_loc_at=0):
 
         # name of caller of this function
@@ -138,7 +139,8 @@ class TestAccumulatorBase:
                       stop_at_pc=stop_at_pc,
                       test_file=test_file,
                       subtest_args=self.__subtest_args.copy(),
-                      fpregs=fpregs)
+                      fpregs=fpregs,
+                      initial_fpscr=initial_fpscr)
 
         self.test_data.append(tc)
 
@@ -155,7 +157,8 @@ class TestCase:
                  stop_at_pc=None,
                  test_file=None,
                  subtest_args=None,
-                 fpregs=None):
+                 fpregs=None,
+                 initial_fpscr=None):
 
         self.program = program
         self.name = name
@@ -181,6 +184,9 @@ class TestCase:
         self.stop_at_pc = stop_at_pc # hard-stop address (do not attempt to run)
         self.test_file = test_file
         self.subtest_args = {} if subtest_args is None else dict(subtest_args)
+        if initial_fpscr is None:
+            initial_fpscr = 0
+        self.initial_fpscr = initial_fpscr
 
 
 class ALUHelpers:
