@@ -6,6 +6,12 @@ from openpower.decoder.isa.caller import SVP64State
 from openpower.fpscr import FPSCRState
 import struct
 import math
+import functools
+
+
+@functools.lru_cache()
+def _cached_program(*instrs):
+    return Program(list(SVP64Asm(list(instrs))), bigendian=False)
 
 
 def fp_bits_add(fp, amount):
@@ -15,50 +21,102 @@ def fp_bits_add(fp, amount):
     return struct.unpack("<d", struct.pack("<Q", bits))[0]
 
 
+def round_even(v):
+    """round v to the nearest integer, with ties rounding to the even integer
+    """
+    v = float(v)
+    return int(v - math.remainder(v, 1.0))
+
+
+def do_round(v, round_mode):
+    if round_mode == 0:
+        return round_even(v)
+    if round_mode == 1:
+        return math.trunc(v)
+    if round_mode == 2:
+        return math.ceil(v)
+    if round_mode == 3:
+        return math.floor(v)
+    assert False, "invalid round_mode"
+
+
 class FMvFCvtCases(TestAccumulatorBase):
     def toint(
         self, inp, expected=None, test_title="", inp_bits=None,
-        signed=True, _32bit=True,
+        signed=True, _32bit=True, CVM=5, RN=0,
     ):
+        if CVM & 1:
+            for i in range(4):
+                self.toint(inp=inp, inp_bits=inp_bits, signed=signed,
+                           _32bit=_32bit, CVM=CVM - 1, RN=i)
+        if CVM == 5:
+            for i in (1, 3):
+                self.toint(inp=inp, inp_bits=inp_bits, signed=signed,
+                           _32bit=_32bit, CVM=i)
+        if CVM & 1:
+            round_mode = 1  # trunc
+        else:
+            round_mode = RN
+        max_v = 2 ** 64 - 1
+        if _32bit:
+            max_v >>= 32
+        min_v = 0
+        if signed:
+            max_v >>= 1
+            min_v = ~max_v
         inp = float(inp)
         if inp_bits is None:
             inp_bits = struct.unpack("<Q", struct.pack("<d", inp))[0]
         if expected is None:
-            if math.isfinite(inp):
-                expected = math.trunc(inp)
-            else:
-                expected = 0
-            if _32bit:
-                expected %= 2 ** 32
-                if signed and expected >> 31:
-                    expected -= 2 ** 32
+            if CVM >> 1 == 0:  # openpower semantics
+                if math.isnan(inp):
+                    expected = min_v
+                elif inp > max_v:
+                    expected = max_v
+                elif inp < min_v:
+                    expected = min_v
+                else:
+                    expected = do_round(inp, round_mode)
+            elif CVM >> 1 == 1:  # saturating semantics
+                if math.isnan(inp):
+                    expected = 0
+                elif inp > max_v:
+                    expected = max_v
+                elif inp < min_v:
+                    expected = min_v
+                else:
+                    expected = do_round(inp, round_mode)
+            elif CVM >> 1 == 2:  # js semantics
+                if math.isfinite(inp):
+                    expected = do_round(inp, round_mode)
+                else:
+                    expected = 0
+                if _32bit:
+                    expected %= 2 ** 32
+                    if signed and expected >> 31:
+                        expected -= 2 ** 32
         expected %= 2 ** 64
         IT = (not signed) + (not _32bit) * 2
         with self.subTest(inp=inp.hex(), inp_bits=hex(inp_bits),
                           expected=hex(expected), test_title=test_title,
-                          signed=signed, _32bit=_32bit):
-            lst = list(SVP64Asm([f"fcvttg 3,0,5,{IT}"]))
+                          signed=signed, _32bit=_32bit, CVM=CVM, RN=RN):
+            lst = [f"fcvttg 3,0,{CVM},{IT}"]
             gprs = [0] * 32
             fprs = [0] * 32
             fprs[0] = inp_bits
+            initial_fpscr = FPSCRState()
+            initial_fpscr.RN = RN
             e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
             e.intregs[3] = expected
-            fpscr = FPSCRState()
+            fpscr = FPSCRState(initial_fpscr)
             if math.isnan(inp) and (inp_bits & 2 ** 51) == 0:  # SNaN
                 fpscr.VXSNAN = 1
                 fpscr.FX = 1
-            max_v = 2 ** 64 - 1
-            if _32bit:
-                max_v >>= 32
-            min_v = 0
-            if signed:
-                max_v >>= 1
-                min_v = ~max_v
             if not math.isfinite(inp) or not (
-                    min_v <= math.trunc(inp) <= max_v):
+                    min_v <= do_round(inp, round_mode) <= max_v):
                 fpscr.VXCVI = 1
                 fpscr.FX = 1
-            elif math.trunc(inp) != inp:  # inexact
+            elif do_round(inp, round_mode) != inp:  # inexact
                 fpscr.XX = 1
                 fpscr.FX = 1
                 fpscr.FI = 1
@@ -70,7 +128,8 @@ class FMvFCvtCases(TestAccumulatorBase):
                               expected_FI=fpscr.FI):
                 e.fpscr = int(fpscr)
                 self.add_case(
-                    Program(lst, False), gprs, fpregs=fprs, expected=e)
+                    _cached_program(*lst), gprs, fpregs=fprs, expected=e,
+                    initial_fpscr=int(initial_fpscr))
 
     def case_js_toint32(self):
         min_value = pow(2, -1074)
