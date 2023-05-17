@@ -48,60 +48,51 @@ sv_input_record_layout = [
     ]
 
 """RM Mode
-there are four Mode variants, two for LD/ST, one for Branch-Conditional,
+there are five Mode variants, two for LD/ST, one for Branch-Conditional,
 and one for everything else
 https://libre-soc.org/openpower/sv/svp64/
 https://libre-soc.org/openpower/sv/ldst/
 https://libre-soc.org/openpower/sv/branches/
+https://libre-soc.org/openpower/sv/crops/
 
 LD/ST immed:
+
 | 0 | 1 |  2  |  3   4  |  description               |
 |---|---| --- |---------|--------------------------- |
 | 0 | 0 | 0   |  zz els | simple mode                |
 | 0 | 0 | 1   | PI  LF  | post-increment and Fault-First  |
 | 1 | 0 |   N | zz  els |  sat mode: N=0/1 u/s       |
-|VLi| 1 | inv | CR-bit  | Rc=1: ffirst CR sel        |
-|VLi| 1 | inv | els RC1 |  Rc=0: ffirst z/nonz       |
-
-00	0	zz els	normal mode (with element-stride option)
-01	inv	CR-bit	Rc=1: ffirst CR sel
-01	inv	els RC1	Rc=0: ffirst z/nonz
-10	N	zz els	sat mode: N=0/1 u/s
-11	inv	CR-bit	Rc=1: pred-result CR sel
-11	inv	els RC1	Rc=0: pred-result z/nonz
+|VLi| 1 | inv | CR-bit  | ffirst CR sel             |
 
 LD/ST indexed:
 
 | 0 | 1 |  2  |  3   4  |  description               |
 |---|---| --- |---------|--------------------------- |
 |els| 0 | SEA |  dz  sz | simple mode        |
-|VLi| 1 | inv | CR-bit  | Rc=1: ffirst CR sel        |
-|VLi| 1 | inv | els RC1 |  Rc=0: ffirst z/nonz       |
-
-00	0	sz dz	normal mode
-00	1	rsvd	reserved
-01	inv	CR-bit	Rc=1: ffirst CR sel
-01	inv	dz RC1	Rc=0: ffirst z/nonz
-10	N	sz dz	sat mode: N=0/1 u/s
-11	inv	CR-bit	Rc=1: pred-result CR sel
-11	inv	zz RC1	Rc=0: pred-result z/nonz
+|VLi| 1 | inv | CR-bit  | ffirst CR sel        |
 
 Arithmetic:
-| 0-1 |  2  |  3   4  |  description              |
-| --- | --- |---------|-------------------------- |
-| 00  |   0 |  dz  sz | simple mode                      |
-| 00  |   1 | 0  RG   | scalar reduce mode (mapreduce), SUBVL=1 |
-| 00  |   1 | SVM 0   | subvector reduce mode, SUBVL>1   |
-| 00  |   1 | /   1   | reserved |
-| 01  | inv | CR-bit  | Rc=1: ffirst CR sel              |
-| 01  | inv | VLi RC1 |  Rc=0: ffirst z/nonz |
-| 10  |   N | dz   sz |  sat mode: N=0/1 u/s, SUBVL=1 |
-| 10  |   N | zz   0  |  sat mode: N=0/1 u/s, SUBVL>1 |
-| 10  |   N | /    1  |  reserved |
-| 11  | inv | CR-bit  |  Rc=1: pred-result CR sel |
-| 11  | inv | zz  RC1 |  Rc=0: pred-result z/nonz |
+
+| 0-1    |  2  |  3   4  |  description                     |
+| ------ | --- |---------|----------------------------------|
+| 0   0  |   0 |  dz  sz | simple mode                      |
+| 0   0  |   1 |  RG  0  | scalar reduce mode (mapreduce)   |
+| 0   0  |   1 |  /   1  | reserved                         |
+| 1   0  |   N | dz   sz |  sat mode: N=0/1 u/s             |
+| VLi 1  | inv | CR-bit  | Rc=1: ffirst CR sel              |
+| VLi 1  | inv | zz RC1  | Rc=0: ffirst z/nonz              |
+
+CROps:
+
+|6 | 7 |19:20|21 | 22:23   |  description     |
+|--|---|-----|---|---------|------------------|
+|/ | / |0  0 |RG | dz  sz  | simple mode                      |
+|/ | / |1  0 |RG | dz  sz  | scalar reduce mode (mapreduce) |
+|zz|SNZ|VLI 1|inv|  CR-bit | Ffirst 3-bit mode      |
+|/ |SNZ|VLI 1|inv|  dz sz  | Ffirst 5-bit mode (implies CR-bit from result) |
 
 Branch Conditional:
+
 note that additional BC modes are in *other bits*, specifically
 the element-width fields: SVP64Rec.ewsrc and SVP64Rec.elwidth
 
