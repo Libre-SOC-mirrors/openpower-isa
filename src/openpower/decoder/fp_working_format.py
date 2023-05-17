@@ -436,9 +436,26 @@ class BFPState:
                 f"significand: {self.significand}",
                 *self.class_._bfp_state_fields())
 
+    def __str__(self):
+        if self.class_.SNaN:
+            return "SNaN"
+        if self.class_.QNaN:
+            return "QNaN"
+        if self.class_.Infinity:
+            return "-Inf" if self.sign else "Inf"
+        retval = self.significand
+        if self.sign:
+            retval = -retval
+        retval <<= self.exponent
+        sign = ""
+        if retval < 0:
+            sign = "-"
+            retval = -retval
+        return sign + retval.__str__(max_int_digits=16)
+
     def __repr__(self):
         fields = self._bfp_state_fields()
-        return f"<BFPState {fields}>"
+        return f"<BFPState {self} {fields}>"
 
 
 # TODO: add tests
