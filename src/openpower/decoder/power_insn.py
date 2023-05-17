@@ -2335,7 +2335,8 @@ class CROpMRRM(MRBaseRM, ZZCombinedBaseRM, CROpBaseRM):
     sz: BaseRM[23]
 
 
-class CROpFF5RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM, SZBaseRM, CROpBaseRM):
+class CROpFF5RM(FFRc0BaseRM, PredicateBaseRM, VLiBaseRM, DZBaseRM,
+                SZBaseRM, CROpBaseRM):
     """crop: ffirst 5-bit mode"""
     VLi: BaseRM[19]
     RC1 = 1
@@ -3219,7 +3220,8 @@ class SVP64OperandMeta(type):
 
     class SVP64XOStaticOperand(SpanStaticOperand):
         def __init__(self, record, value, span):
-            return super().__init__(record=record, name="XO", value=value, span=span)
+            return super().__init__(record=record, name="XO",
+                                    value=value, span=span)
 
     __TRANSFORM = {
         NonZeroOperand: SVP64NonZeroOperand,
