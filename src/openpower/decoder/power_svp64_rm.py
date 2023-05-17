@@ -203,18 +203,18 @@ class SVP64RMModeDecode(Elaboratable):
         #####################
         with m.Elif(is_cr):
             with m.Switch(mode2):
-                with m.Case(0, 1): # needs further decoding (LDST no mapreduce)
+                with m.Case(0, 2): # needs further decoding (LDST no mapreduce)
                     with m.If(mode[SVP64MODE.REDUCE]):
                         comb += self.mode.eq(SVP64RMMode.MAPREDUCE)
                     with m.Else():
                         comb += self.mode.eq(SVP64RMMode.NORMAL)
-                with m.Case(2,3):
+                with m.Case(1,3):
                     comb += self.mode.eq(SVP64RMMode.FFIRST) # fail-first
 
             # extract failfirst
             with m.If(self.mode == SVP64RMMode.FFIRST): # fail-first
                 comb += self.inv.eq(mode[SVP64MODE.INV])
-                comb += self.vli.eq(mode[SVP64MODE.BC_VLSET])
+                comb += self.vli.eq(mode[SVP64MODE.VLI])
                 with m.If(self.cr_5bit_in):
                     comb += self.cr_sel.eq(0b10) # EQ bit index is implicit
                 with m.Else():
