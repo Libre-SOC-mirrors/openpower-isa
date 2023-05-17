@@ -165,6 +165,60 @@ section 7.6.2.2
                 result.exponent <- result.exponent - 1
         return result
 
+    def bfp_CONVERT_FROM_UI32(x):
+        # x is an integer value represented in unsigned word integer
+        # format.
+
+        result <- BFPState()
+        result.sign <- 0
+        result.exponent <- 0
+        result.significand <- 0
+        result.class.SNaN <- 0
+        result.class.QNaN <- 0
+        result.class.Infinity <- 0
+        result.class.Zero <- 0
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+
+        if x = 0x0000_0000 then
+            result.class.Zero <- 1
+        else
+            result.class.Normal <- 1
+            result.sign <- 0
+            result.exponent <- 32
+            result.significand[0:32] <- 0b0 || x
+            do while result.significand[0] = 0
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+        return result
+
+    def bfp_CONVERT_FROM_UI64(x):
+        # x is an integer value represented in unsigned double-word integer
+        # format.
+
+        result <- BFPState()
+        result.sign <- 0
+        result.exponent <- 0
+        result.significand <- 0
+        result.class.SNaN <- 0
+        result.class.QNaN <- 0
+        result.class.Infinity <- 0
+        result.class.Zero <- 0
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+
+        if x = 0x0000_0000_0000_0000 then
+            result.class.Zero <- 1
+        else
+            result.class.Normal <- 1
+            result.sign <- 0
+            result.exponent <- 64
+            result.significand[0:64] <- 0b0 || x
+            do while result.significand[0] = 0
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+        return result
+
     def bfp_CONVERT_FROM_UI128(x):
         # x is a 128-bit unsigned integer value.
 
