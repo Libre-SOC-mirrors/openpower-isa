@@ -186,7 +186,7 @@ Pseudo-code:
             result_bfp <- bfp_CONVERT_FROM_SI64(result)
         default:  # Unsigned 64-bit
             result_bfp <- bfp_CONVERT_FROM_UI64(result)
-    overflow <- 0
+    overflow <- 0  # signals SO only when OE = 1
     if IsNaN(src) | ¬bfp_COMPARE_EQ(rnd, result_bfp) then
         overflow <- 1  # signals SO only when OE = 1
         vxcvi_flag <- 1
@@ -300,7 +300,7 @@ Pseudo-code:
             result_bfp <- bfp_CONVERT_FROM_SI64(result)
         default:  # Unsigned 64-bit
             result_bfp <- bfp_CONVERT_FROM_UI64(result)
-    overflow <- 0
+    overflow <- 0  # signals SO only when OE = 1
     if IsNaN(src) | ¬bfp_COMPARE_EQ(rnd, result_bfp) then
         overflow <- 1  # signals SO only when OE = 1
         vxcvi_flag <- 1
