@@ -339,6 +339,10 @@ section 7.6.2.2
 
         if IsNaN(x) | IsNaN(y) then
             return 0b0
+        if IsInf(x) & IsInf(y) then
+            return x.sign = y.sign
+        if IsInf(x) | IsInf(y) then
+            return 0b0
         if IsZero(x) & IsZero(y) then
             return 0b1
         if IsZero(x) | IsZero(y) then
@@ -357,6 +361,12 @@ section 7.6.2.2
 
         if IsNaN(x) | IsNaN(y) then
             return 0b0
+        if IsInf(x) & IsInf(y) then
+            return ¬IsNeg(x) & IsNeg(y)
+        if IsInf(x) then
+            return ¬IsNeg(x)
+        if IsInf(y) then
+            return IsNeg(y)
         if IsZero(x) & IsZero(y) then
             return 0b0
         if IsZero(x) then
@@ -379,6 +389,12 @@ section 7.6.2.2
 
         if IsNaN(x) | IsNaN(y) then
             return 0b0
+        if IsInf(x) & IsInf(y) then
+            return IsNeg(x) & ¬IsNeg(y)
+        if IsInf(x) then
+            return IsNeg(x)
+        if IsInf(y) then
+            return ¬IsNeg(y)
         if IsZero(x) & IsZero(y) then
             return 0b0
         if IsZero(x) then
