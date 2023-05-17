@@ -291,7 +291,7 @@ section 7.6.2.2
                 if temp = 0 then halfway <- 1
                 else more_than_halfway <- 1
         if rmode = 0b000 then  # Round to Nearest Even
-            round_up <- (even & halfway) | more_than_halfway
+            round_up <- (¬even & halfway) | more_than_halfway
         if rmode = 0b001 then  # Round towards Zero
             round_up <- 0
         if rmode = 0b010 then  # Round towards +Infinity
