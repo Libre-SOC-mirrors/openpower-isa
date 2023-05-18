@@ -83,7 +83,6 @@ REG_SORT_ORDER = {
     "CTR": 0,
     "TAR": 0,
     "MSR": 0,
-    "FPSCR": 0,
     "SVSTATE": 0,
     "SVSHAPE0": 0,
     "SVSHAPE1": 0,
@@ -92,6 +91,8 @@ REG_SORT_ORDER = {
 
     "CA": 0,
     "CA32": 0,
+
+    "FPSCR": 1,
 
     "overflow": 7,  # should definitely be last
     "CR0": 8,       # likewise
@@ -2187,7 +2188,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # XXX TODO: now that CR0 is supported, sort out svstep's pseudocode
         # to write directly to CR0 instead of in ISACaller. hooyahh.
         if rc_en and ins_name not in ['svstep']:
-            yield from self.do_rc_ov(ins_name, results[0], overflow, cr0)
+            yield from self.do_rc_ov(
+                ins_name, results[0], overflow, cr0, output_names)
 
         # check failfirst
         ffirst_hit = False, False
@@ -2236,8 +2238,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         yield Settle()  # let decoder update
         return True, vli_
 
-    def do_rc_ov(self, ins_name, result, overflow, cr0):
-        if ins_name.startswith("f"):
+    def do_rc_ov(self, ins_name, result, overflow, cr0, output_names):
+        if ins_name.startswith("f") and "RT" not in output_names:
             rc_reg = "CR1"  # not calculated correctly yet (not FP compares)
         else:
             rc_reg = "CR0"
