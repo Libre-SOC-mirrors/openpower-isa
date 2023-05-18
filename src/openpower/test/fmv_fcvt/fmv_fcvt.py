@@ -100,7 +100,7 @@ class FMvFCvtCases(TestAccumulatorBase):
         with self.subTest(inp=inp.hex(), inp_bits=hex(inp_bits),
                           expected=hex(expected), test_title=test_title,
                           signed=signed, _32bit=_32bit, CVM=CVM, RN=RN):
-            lst = [f"fcvttg 3,0,{CVM},{IT}"]
+            lst = [f"fcvttgo. 3,0,{CVM},{IT}"]
             gprs = [0] * 32
             fprs = [0] * 32
             fprs[0] = inp_bits
@@ -112,16 +112,24 @@ class FMvFCvtCases(TestAccumulatorBase):
             if math.isnan(inp) and (inp_bits & 2 ** 51) == 0:  # SNaN
                 fpscr.VXSNAN = 1
                 fpscr.FX = 1
-            if not math.isfinite(inp) or not (
-                    min_v <= do_round(inp, round_mode) <= max_v):
+            overflow = True
+            if math.isfinite(inp):
+                overflow = not (min_v <= do_round(inp, round_mode) <= max_v)
+            if overflow:
                 fpscr.VXCVI = 1
                 fpscr.FX = 1
+                e.so = 1
+                e.ov = 0b11
             elif do_round(inp, round_mode) != inp:  # inexact
                 fpscr.XX = 1
                 fpscr.FX = 1
                 fpscr.FI = 1
             fpscr.FPRF = 0  # undefined value we happen to pick
             fpscr.FR = 0  # trunc never increments
+            lt = bool(expected & (1 << 63))
+            gt = not lt and expected != 0
+            eq = expected == 0
+            e.crregs[0] = (lt << 3) | (gt << 2) | (eq << 1) | e.so
             with self.subTest(expected_VXSNAN=fpscr.VXSNAN,
                               expected_VXCVI=fpscr.VXCVI,
                               expected_XX=fpscr.XX,
