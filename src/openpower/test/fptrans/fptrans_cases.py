@@ -29,7 +29,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe921fb60000000  # pi/4 as f32 as f64
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatan2(self):
@@ -50,7 +49,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe921fb54442d18
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatan2pis(self):
@@ -71,7 +69,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fd0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatan2pi(self):
@@ -92,7 +89,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fd0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fpows(self):
@@ -113,7 +109,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fpow(self):
@@ -134,7 +129,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fpowns(self):
@@ -155,7 +149,6 @@ class FPTransCases(TestAccumulatorBase):
         gprs[5] = 3
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fpown(self):
@@ -176,7 +169,6 @@ class FPTransCases(TestAccumulatorBase):
         gprs[5] = 3
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fpowrs(self):
@@ -197,7 +189,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fpowr(self):
@@ -218,7 +209,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_frootns(self):
@@ -239,7 +229,6 @@ class FPTransCases(TestAccumulatorBase):
         gprs[5] = 3
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_frootn(self):
@@ -260,7 +249,6 @@ class FPTransCases(TestAccumulatorBase):
         gprs[5] = 3
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fhypots(self):
@@ -281,7 +269,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff6a09e60000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fhypot(self):
@@ -302,7 +289,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff6a09e667f3bcd
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_frsqrts(self):
@@ -321,7 +307,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_frsqrt(self):
@@ -340,7 +325,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fcbrts(self):
@@ -359,7 +343,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fcbrt(self):
@@ -378,7 +361,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_frecips(self):
@@ -397,7 +379,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_frecip(self):
@@ -416,7 +397,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp2m1s(self):
@@ -435,7 +415,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp2m1(self):
@@ -454,7 +433,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog2p1s(self):
@@ -473,7 +451,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog2p1(self):
@@ -492,7 +469,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp2s(self):
@@ -511,7 +487,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x4000000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp2(self):
@@ -530,7 +505,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x4000000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog2s(self):
@@ -549,7 +523,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog2(self):
@@ -568,7 +541,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexpm1s(self):
@@ -587,7 +559,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ffb7e1520000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexpm1(self):
@@ -606,7 +577,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ffb7e151628aed2
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flogp1s(self):
@@ -625,7 +595,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe62e4300000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flogp1(self):
@@ -644,7 +613,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe62e42fefa39ef
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexps(self):
@@ -663,7 +631,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x4005bf0a80000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp(self):
@@ -682,7 +649,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x4005bf0a8b145769
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flogs(self):
@@ -701,7 +667,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog(self):
@@ -720,7 +685,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp10m1s(self):
@@ -739,7 +703,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x4022000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp10m1(self):
@@ -758,7 +721,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x4022000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog10p1s(self):
@@ -777,7 +739,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fd3441360000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog10p1(self):
@@ -796,7 +757,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fd34413509f79ff
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp10s(self):
@@ -815,7 +775,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x4024000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fexp10(self):
@@ -834,7 +793,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x4024000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog10s(self):
@@ -853,7 +811,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_flog10(self):
@@ -872,7 +829,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fsins(self):
@@ -891,7 +847,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3feaed5480000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fsin(self):
@@ -910,7 +865,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3feaed548f090cee
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fcoss(self):
@@ -929,7 +883,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe14a2800000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fcos(self):
@@ -948,7 +901,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe14a280fb5068c
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_ftans(self):
@@ -967,7 +919,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff8eb2460000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_ftan(self):
@@ -986,7 +937,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff8eb245cbee3a6
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fasins(self):
@@ -1005,7 +955,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff921fb60000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fasin(self):
@@ -1024,7 +973,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff921fb54442d18
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_facoss(self):
@@ -1043,7 +991,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_facos(self):
@@ -1062,7 +1009,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatans(self):
@@ -1081,7 +1027,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe921fb60000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatan(self):
@@ -1100,7 +1045,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe921fb54442d18
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fsinpis(self):
@@ -1119,7 +1063,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3fe0000000000000  # 0.5
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fsinpi(self):
@@ -1138,7 +1081,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3fe0000000000000  # 0.5
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fcospis(self):
@@ -1157,7 +1099,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0xbff0000000000000
-        e.crregs[1] = 0x8
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fcospi(self):
@@ -1176,7 +1117,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0xbff0000000000000
-        e.crregs[1] = 0x8
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_ftanpis(self):
@@ -1195,7 +1135,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3fc0000000000000  # 0.125
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fda8279a0000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_ftanpi(self):
@@ -1214,7 +1153,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3fc0000000000000  # 0.125
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fda827999fcef32
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fasinpis(self):
@@ -1233,7 +1171,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fasinpi(self):
@@ -1252,7 +1189,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_facospis(self):
@@ -1271,7 +1207,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_facospi(self):
@@ -1290,7 +1225,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatanpis(self):
@@ -1309,7 +1243,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fd0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatanpi(self):
@@ -1328,7 +1261,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fd0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fsinhs(self):
@@ -1347,7 +1279,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff2cd9fc0000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fsinh(self):
@@ -1366,7 +1297,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff2cd9fc44eb982
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fcoshs(self):
@@ -1385,7 +1315,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff8b07560000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fcosh(self):
@@ -1404,7 +1333,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff8b07551d9f550
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_ftanhs(self):
@@ -1423,7 +1351,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe85efac0000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_ftanh(self):
@@ -1442,7 +1369,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe85efab514f394
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fasinhs(self):
@@ -1461,7 +1387,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fec343660000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fasinh(self):
@@ -1480,7 +1405,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fec34366179d427
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_facoshs(self):
@@ -1499,7 +1423,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_facosh(self):
@@ -1518,7 +1441,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatanhs(self):
@@ -1537,7 +1459,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3fe0000000000000  # 0.5
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe193ea80000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fatanh(self):
@@ -1556,7 +1477,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[4] = 0x3fe0000000000000  # 0.5
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3fe193ea7aad030a
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1579,7 +1499,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1602,7 +1521,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1625,7 +1543,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1648,7 +1565,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1671,7 +1587,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1694,7 +1609,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1717,7 +1631,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1740,7 +1653,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1763,7 +1675,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1786,7 +1697,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1809,7 +1719,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1832,7 +1741,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1855,7 +1763,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1878,7 +1785,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1901,7 +1807,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1924,7 +1829,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1947,7 +1851,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1970,7 +1873,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -1993,7 +1895,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2016,7 +1917,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2039,7 +1939,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2062,7 +1961,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2085,7 +1983,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2108,7 +2005,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2131,7 +2027,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2154,7 +2049,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2177,7 +2071,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2200,7 +2093,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2223,7 +2115,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2246,7 +2137,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2269,7 +2159,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     @skip_case("need to be updated to use fminmax")
@@ -2292,7 +2181,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x3ff0000000000000
-        e.crregs[1] = 0x4
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fmods(self):
@@ -2313,7 +2201,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fmod(self):
@@ -2334,7 +2221,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fremainders(self):
@@ -2355,7 +2241,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
     def case_fremainder(self):
@@ -2376,7 +2261,6 @@ class FPTransCases(TestAccumulatorBase):
         fprs[5] = 0x3ff0000000000000  # 1.0
         e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
         e.fpregs[3] = 0x0
-        e.crregs[1] = 0x2
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
 
