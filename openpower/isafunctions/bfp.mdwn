@@ -620,3 +620,128 @@ section 7.6.2.2
                 # TODO: spec says this is logical shift right:
                 significand <- significand[0:127] / pow(2, 127 - exponent)
                 return significand[0:127]
+
+    def bfp64_CONVERT_FROM_BFP(x):
+        # x is a floating-point value represented in the binary floating-point
+        # working format.
+
+        result <- [0] * 64
+        if x.class.QNaN = 1 then
+            result[0] <- x.sign
+            result[1:11] <- 0b111_1111_1111
+            result[12:63] <- x.significand[1:52]
+        else if x.class.Infinity = 1 then
+            result[0] <- x.sign
+            result[1:11] <- 0b111_1111_1111
+            result[12:63] <- 0
+        else if x.class.Zero = 1 then
+            result[0] <- x.sign
+            result[1:63] <- 0
+        else if (x.exponent < -1022) & (FPSCR.UE = 0) then
+            result[0] <- x.sign
+            sh_cnt <- -1022 - x.exponent
+            result[1:11] <- 0b000_0000_0000
+            # TODO: spec says this is shift right
+            result[12:63] <- x.significand[1:52] / pow(2, sh_cnt)
+        else if (x.exponent < -1022) & (FPSCR.UE = 1) then
+            result[0:63] <- undefined(0)  # TODO: which undefined value to use?
+        else if (x.exponent > 1023) & (FPSCR.OE = 1) then
+            result[0:63] <- undefined(0)  # TODO: which undefined value to use?
+        else
+            result[0] <- x.sign
+            result[1:11] <- x.exponent + 1023
+            result[12:63] <- x.significand[1:52]
+        return result
+
+    def bfp_ROUND_TO_BFP64(ro, rmode, x):
+        # x is a normalized binary floating-point value that is represented in
+        # the binary floating-point working format and has unbounded exponent
+        # range and significand precision.
+        # ro is a 1-bit unsigned integer and rmode is a 2-bit unsigned integer,
+        # together specifying one of five rounding modes to be used in
+        # rounding z.
+        #
+        # ro=0 rmode=0b00  Round to Nearest Even
+        # ro=0 rmode=0b01  Round towards Zero
+        # ro=0 rmode=0b10  Round towards +Infinity
+        # ro=0 rmode=0b11  Round towards -Infinity
+        # ro=1             Round to Odd
+        #
+        # Return the value x rounded to double-precision under control of the
+        # specified rounding mode.
+
+        if x.class.QNaN then return x
+        if x.class.Infinity then return x
+        if x.class.Zero then return x
+        if bfp_COMPARE_LT(bfp_ABSOLUTE(x), bfp_NMIN_BFP64()) then
+            if FPSCR.UE=0 then
+                x <- bfp_DENORM(-1022, x)
+                if (ro=0) & (rmode=0b00) then r <- bfp_ROUND_NEAR_EVEN(53, x)
+                if (ro=0) & (rmode=0b01) then r <- bfp_ROUND_TRUNC(53, x)
+                if (ro=0) & (rmode=0b10) then r <- bfp_ROUND_CEIL(53, x)
+                if (ro=0) & (rmode=0b11) then r <- bfp_ROUND_FLOOR(53, x)
+                if  ro=1                 then r <- bfp_ROUND_ODD(53, x)
+                ux_flag <- xx_flag
+                return r
+            else
+                x.exponent <- x.exponent + 1536
+                ux_flag <- 1
+        if (ro=0) & (rmode=0b00) then r <- bfp_ROUND_NEAR_EVEN(53, x)
+        if (ro=0) & (rmode=0b01) then r <- bfp_ROUND_TRUNC(53, x)
+        if (ro=0) & (rmode=0b10) then r <- bfp_ROUND_CEIL(53, x)
+        if (ro=0) & (rmode=0b11) then r <- bfp_ROUND_FLOOR(53, x)
+        if  ro=1                 then r <- bfp_ROUND_ODD(53, x)
+        if bfp_ABSOLUTE(r) > bfp_NMAX_BFP64() then
+            if FPSCR.OE=0 then
+                if x.sign then
+                    if (ro=0) & (rmode=0b00) then r <- bfp_INFINITY()
+                    if (ro=0) & (rmode=0b01) then r <- bfp_NMAX_BFP64()
+                    if (ro=0) & (rmode=0b10) then r <- bfp_NMAX_BFP64()
+                    if (ro=0) & (rmode=0b11) then r <- bfp_INFINITY()
+                    if  ro=1                 then r <- bfp_NMAX_BFP64()
+                else
+                    if (ro=0) & (rmode=0b00) then r <- bfp_INFINITY()
+                    if (ro=0) & (rmode=0b01) then r <- bfp_NMAX_BFP64()
+                    if (ro=0) & (rmode=0b10) then r <- bfp_INFINITY()
+                    if (ro=0) & (rmode=0b11) then r <- bfp_NMAX_BFP64()
+                    if  ro=1                 then r <- bfp_NMAX_BFP64()
+                r.sign <- x.sign
+                ox_flag <- 0b1
+                xx_flag <- 0b1
+                inc_flag <- undefined(0)  # TODO: which undefined value to use?
+                return r
+            else
+                r.exponent <- r.exponent - 1536
+                ox_flag <- 1
+        return r
+
+    def bfp_INFINITY():
+        # The value +Infinity represented in the binary floating-point working
+        # format.
+        r <- BFPState()
+        r.class.Infinity <- 1
+        return r
+
+    def bfp_NMAX_BFP32():
+        # Return the largest finite single-precision floating-point value
+        # (i.e., 2^128 - 2^(128-24)) in the binary floating-point working
+        # format.
+        return bfp_CONVERT_FROM_BFP32(0x7F7F_FFFF)
+
+    def bfp_NMAX_BFP64():
+        # Return the largest finite double-precision floating-point value
+        # (i.e., 2^1024 - 2^(1024-53)) in the binary floating-point working
+        # format.
+        return bfp_CONVERT_FROM_BFP64(0x7FEF_FFFF_FFFF_FFFF)
+
+    def bfp_NMIN_BFP32():
+        # Return the smallest positive normalized single-precision
+        # floating-point value, 2^-126, represented in the binary
+        # floating-point working format.
+        return bfp_CONVERT_FROM_BFP32(0x0080_0000)
+
+    def bfp_NMIN_BFP64():
+        # Return the smallest positive normalized double-precision
+        # floating-point value, 2^-1022, represented in the binary
+        # floating-point working format.
+        return bfp_CONVERT_FROM_BFP64(0x0010_0000_0000_0000)
