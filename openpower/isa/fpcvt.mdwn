@@ -48,7 +48,7 @@ Pseudo-code:
                 src <- bfp_CONVERT_FROM_SI64((RB))
             default:  # Unsigned 64-bit
                 src <- bfp_CONVERT_FROM_UI64((RB))
-        rnd <- bfp_ROUND_TO_BFP64(FPSCR.RN, src)
+        rnd <- bfp_ROUND_TO_BFP64(0b0, FPSCR.RN, src)
         result <- bfp64_CONVERT_FROM_BFP(rnd)
         cls <- fprf_CLASS_BFP64(result)
         if xx_flag = 1 then SetFX(FPSCR.XX)
