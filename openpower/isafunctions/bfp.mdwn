@@ -745,3 +745,23 @@ section 7.6.2.2
         # floating-point value, 2^-1022, represented in the binary
         # floating-point working format.
         return bfp_CONVERT_FROM_BFP64(0x0010_0000_0000_0000)
+
+    def bfp_ROUND_CEIL(p, x):
+        # x is a binary floating-point value that is represented in the binary
+        # floating-point working format and has unbounded exponent range and
+        # significand precision. x must be rounded as presented, without
+        # prenormalization.
+        #
+        # p is an integer value specifying the precision (i.e., number of bits)
+        # the significand is rounded to.
+
+        TODO()  # TODO: finish
+        # Return the smallest floating-point number having unbounded exponent
+        # range and a significand with a width of p bits that is greater or
+        # equal in value to x.
+
+        if bfp_COMPARE_GT(bfp_ABSOLUTE(result), bfp_ABSOLUTE(x)) then
+            inc_flag <- 1
+        else inc_flag <- 0  # TODO: does the spec specify this?
+        if bfp_COMPARE_EQ(result, x) then xx_flag <- 1
+        else xx_flag <- 0  # TODO: does the spec specify this?
