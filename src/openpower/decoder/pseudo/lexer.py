@@ -368,8 +368,9 @@ class PowerLexer:
         return t
 
     def t_BINARY(self, t):
-        r"""0b[01]+"""
-        t.value = SelectableInt(int(t.value, 2), len(t.value)-2)
+        r"""0b[01_]+"""
+        val = t.value.replace("_", "")
+        t.value = SelectableInt(int(val, 2), len(val)-2)
         return t
 
     #t_NUMBER = r'\d+'
