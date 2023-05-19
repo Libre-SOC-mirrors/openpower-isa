@@ -4,7 +4,7 @@ Bugreports:
 """
 
 from contextlib import contextmanager
-import inspect
+import sys
 import functools
 import types
 import os
@@ -125,11 +125,11 @@ class TestAccumulatorBase:
                  initial_fpscr=None,
                  src_loc_at=0):
 
+        c = sys._getframe(1 + src_loc_at).f_code
         # name of caller of this function
-        test_name = inspect.stack()[1 + src_loc_at][3]
+        test_name = c.co_name
         # name of file containing test case
-        test_file = os.path.splitext(os.path.basename(
-                                    inspect.stack()[1][1]))[0]
+        test_file = os.path.splitext(os.path.basename(c.co_filename))[0]
         tc = TestCase(prog, test_name,
                       regs=initial_regs, sprs=initial_sprs, cr=initial_cr,
                       msr=initial_msr,
