@@ -14,11 +14,21 @@ def _cached_program(*instrs):
     return Program(list(SVP64Asm(list(instrs))), bigendian=False)
 
 
-def fp_bits_add(fp, amount):
-    """add `amount` to the IEEE 754 bits representing `fp`"""
-    bits = struct.unpack("<Q", struct.pack("<d", fp))[0]
-    bits += amount
+def bitcast_int_to_fp(bits, bfp32):
+    if bfp32:
+        return struct.unpack("<f", struct.pack("<L", bits))[0]
     return struct.unpack("<d", struct.pack("<Q", bits))[0]
+
+
+def bitcast_fp_to_int(fp, bfp32):
+    if bfp32:
+        return struct.unpack("<L", struct.pack("<f", fp))[0]
+    return struct.unpack("<Q", struct.pack("<d", fp))[0]
+
+
+def fp_bits_add(fp, amount, bfp32=False):
+    """add `amount` to the IEEE 754 bits representing `fp`"""
+    return bitcast_int_to_fp(amount + bitcast_fp_to_int(fp, bfp32), bfp32)
 
 
 def round_even(v):
@@ -425,6 +435,121 @@ class FMvFCvtCases(TestAccumulatorBase):
         self.toint(-fp_bits_add(2**64, -1), signed=False, _32bit=False)
         self.toint(-(2**64), 0, signed=False, _32bit=False)
         self.toint(-fp_bits_add(2**64, 1), signed=False, _32bit=False)
+
+    @skip_case("FIXME: WIP")
+    def fcvtfg_one(self, inp, bfp32, IT, Rc, RN):
+        inp %= 2 ** 64
+        inp_width = 64 if IT & 0b10 else 32
+        inp_value = inp % 2 ** inp_width
+        if IT & 0b1 == 0:
+            # signed
+            if inp_value >> (inp_width - 1):
+                # negative
+                inp_value -= 2 ** inp_width
+        # cast to nearby f32/f64
+        inp_fp = fp_bits_add(inp_value, 0, bfp32=bfp32)
+        if inp_fp == inp_value:  # exact conversion -- no rounding necessary
+            expected_fp = inp_fp
+            expected_bits = bitcast_fp_to_int(expected_fp, bfp32=False)
+        else:
+            # get the fp value on either side of the exact value.
+            # we need to get several values and select 2 because int -> fp
+            # conversion in fp_bits_add could be off by a bit due to
+            # rounding/double-rounding.
+            # we can ignore weirdness around infinity because input values
+            # can't get big enough to convert to infinity for bfp32/64.
+            # we can ignore weirdness around zero because small integers
+            # always convert exactly, and therefore don't reach this
+            # `else` block.
+            fp_values = sorted(
+                fp_bits_add(inp_value, i, bfp32=bfp32) for i in range(-2, 3))
+            while fp_values[-2] > inp_value:
+                fp_values.pop()
+            prev_fp = fp_values[-2]
+            next_fp = fp_values[-1]
+            # if fp values are big enough to not be exact, they are always
+            # integers.
+            prev_int = int(prev_fp)
+            next_int = int(next_fp)
+            prev_fp_is_even = bitcast_fp_to_int(prev_fp, bfp32=bfp32) & 1 == 0
+            halfway = 2 * inp_value == prev_int + next_int
+            next_is_closer = 2 * inp_value > prev_int + next_int
+            if RN == 0:
+                # round to nearest
+                use_prev = (halfway and prev_fp_is_even) or not next_is_closer
+            elif RN == 1:
+                # trunc
+                use_prev = abs(prev_int) < abs(next_int)
+            elif RN == 2:
+                # ceil
+                use_prev = False
+            else:
+                assert RN == 3, "invalid RN"
+                # floor
+                use_prev = True
+            if use_prev:
+                expected_fp = prev_fp
+            else:
+                expected_fp = next_fp
+        expected_bits = bitcast_fp_to_int(expected_fp, bfp32=False)
+        initial_fpscr = FPSCRState()
+        initial_fpscr.RN = RN
+        fpscr = FPSCRState(initial_fpscr)
+        if expected_fp != inp_value:
+            fpscr.XX = 1
+            fpscr.FX = 1
+            fpscr.FI = 1
+            fpscr.FR = abs(expected_fp) > abs(inp_value)
+        if expected_fp < 0:
+            fpscr.FPRF = "- Normal Number"
+        elif expected_fp > 0:
+            fpscr.FPRF = "+ Normal Number"
+        else:
+            # integer conversion never gives -0.0
+            fpscr.FPRF = "+ Zero"
+        if inp_width == 32 and not bfp32:
+            # defined to not modify FPSCR since the conversion is always exact
+            fpscr = FPSCRState(initial_fpscr)
+        cr1 = int(fpscr.FX) << 3
+        cr1 |= int(fpscr.FEX) << 2
+        cr1 |= int(fpscr.VX) << 1
+        cr1 |= int(fpscr.OX)
+        with self.subTest(
+            inp=hex(inp), bfp32=bfp32, IT=IT, Rc=Rc, RN=RN,
+            expected_fp=expected_fp.hex(), expected_bits=hex(expected_bits),
+            XX=fpscr.XX, FR=fpscr.FR, FPRF=bin(int(fpscr.FPRF)), CR1=bin(cr1),
+        ):
+            rc_str = "." if Rc else ""
+            lst = [f"fcvtfg{rc_str} 0,3,{IT}"]
+            gprs = [0] * 32
+            fprs = [0] * 32
+            gprs[3] = inp
+            e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
+            e.crregs[1] = cr1
+            e.fpregs[0] = expected_bits
+            e.fpscr = int(fpscr)
+            self.add_case(
+                _cached_program(*lst), gprs, fpregs=fprs, expected=e,
+                initial_fpscr=int(initial_fpscr))
+
+    def fcvtfg(self, inp):
+        for bfp32 in (False, True):
+            for IT in range(4):
+                for Rc in (False, True):
+                    for RN in range(4):
+                        self.fcvtfg_one(inp, bfp32, IT, Rc, RN)
+
+    def case_fcvtfg(self):
+        inp_values = {0}
+        for sh in (0, 22, 23, 24, 31, 52, 53, 54, 63):
+            for offset in range(-2, 3):
+                for offset_sh in range(64):
+                    v = 1 << sh
+                    v += offset << offset_sh
+                    v %= 2 ** 64
+                    inp_values.add(v)
+        for i in sorted(inp_values):
+            self.fcvtfg(i)
 
 
 class SVP64FMvFCvtCases(TestAccumulatorBase):
