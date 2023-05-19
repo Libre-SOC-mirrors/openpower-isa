@@ -2169,6 +2169,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # get outout named "overflow" and "CR0"
         overflow = outs.get('overflow')
         cr0 = outs.get('CR0')
+        cr1 = outs.get('CR1')
 
         if not self.is_svp64_mode:  # yeah just no. not in parallel processing
             # detect if overflow was in return result
@@ -2189,7 +2190,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # to write directly to CR0 instead of in ISACaller. hooyahh.
         if rc_en and ins_name not in ['svstep']:
             yield from self.do_rc_ov(
-                ins_name, results[0], overflow, cr0, output_names)
+                ins_name, results[0], overflow, cr0, cr1, output_names)
 
         # check failfirst
         ffirst_hit = False, False
@@ -2238,9 +2239,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         yield Settle()  # let decoder update
         return True, vli_
 
-    def do_rc_ov(self, ins_name, result, overflow, cr0, output_names):
+    def do_rc_ov(self, ins_name, result, overflow, cr0, cr1, output_names):
         if ins_name.startswith("f") and "RT" not in output_names:
-            rc_reg = "CR1"  # not calculated correctly yet (not FP compares)
+            rc_reg = "CR1"  # not calculated correctly yet for FP compares
         else:
             rc_reg = "CR0"
         regnum, is_vec = yield from get_cr_out(self.dec2, rc_reg)
@@ -2251,8 +2252,19 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         #else:
         #    overflow = None  # do not override overflow except in setvl
 
-        # if there was not an explicit CR0 in the pseudocode, do implicit Rc=1
-        if cr0 is None:
+        if rc_reg == "CR1":
+            if cr1 is None:
+                cr1 = int(self.FPSCR.FX) << 3
+                cr1 |= int(self.FPSCR.FEX) << 2
+                cr1 |= int(self.FPSCR.VX) << 1
+                cr1 |= int(self.FPSCR.OX)
+                log("default fp cr1", cr1)
+            else:
+                log("explicit cr1", cr1)
+            self.crl[regnum].eq(cr1)
+        elif cr0 is None:
+            # if there was not an explicit CR0 in the pseudocode,
+            # do implicit Rc=1
             self.handle_comparison(result, regnum, overflow, no_so=is_setvl)
         else:
             # otherwise we just blat CR0 into the required regnum
