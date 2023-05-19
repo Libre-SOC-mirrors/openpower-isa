@@ -125,7 +125,8 @@ class FMvFCvtCases(TestAccumulatorBase):
                 fpscr.FX = 1
                 fpscr.FI = 1
             fpscr.FPRF = 0  # undefined value we happen to pick
-            fpscr.FR = 0  # trunc never increments
+            if not overflow:
+                fpscr.FR = abs(do_round(inp, round_mode)) > abs(inp)
             lt = bool(expected & (1 << 63))
             gt = not lt and expected != 0
             eq = expected == 0
