@@ -339,19 +339,22 @@ section 7.6.2.2
 
         if IsNaN(x) | IsNaN(y) then
             return 0b0
+        if IsZero(x) & IsZero(y) then
+            return 0b1
+
         if IsInf(x) & IsInf(y) then
             return x.sign = y.sign
         if IsInf(x) | IsInf(y) then
             return 0b0
-        if IsZero(x) & IsZero(y) then
-            return 0b1
         if IsZero(x) | IsZero(y) then
             return 0b0
         if x.sign != y.sign then
             return 0b0
-        if x.exponent != y.exponent then
-            return 0b0
-        return x.significand = y.significand
+        if x.exponent > 0 then xs <- x.significand * pow(2, x.exponent)
+        else xs <- truediv(x.significand, pow(2, -x.exponent))
+        if y.exponent > 0 then ys <- y.significand * pow(2, y.exponent)
+        else ys <- truediv(y.significand, pow(2, -y.exponent))
+        return xs = ys
 
     def bfp_COMPARE_GT(x, y):
         # x is a binary floating-point value represented in the
@@ -361,25 +364,27 @@ section 7.6.2.2
 
         if IsNaN(x) | IsNaN(y) then
             return 0b0
+        if IsZero(x) & IsZero(y) then
+            return 0b0
+
         if IsInf(x) & IsInf(y) then
             return ¬IsNeg(x) & IsNeg(y)
         if IsInf(x) then
             return ¬IsNeg(x)
         if IsInf(y) then
             return IsNeg(y)
-        if IsZero(x) & IsZero(y) then
-            return 0b0
         if IsZero(x) then
             return IsNeg(y)
         if IsZero(y) then
             return ¬IsNeg(x)
         if x.sign != y.sign then
             return IsNeg(y)
-        if x.exponent != y.exponent then
-            if x.sign = 1 then return x.exponent < y.exponent
-            return x.exponent > y.exponent
-        if x.sign = 1 then return x.significand < y.significand
-        return x.significand > y.significand
+        if x.exponent > 0 then xs <- x.significand * pow(2, x.exponent)
+        else xs <- truediv(x.significand, pow(2, -x.exponent))
+        if y.exponent > 0 then ys <- y.significand * pow(2, y.exponent)
+        else ys <- truediv(y.significand, pow(2, -y.exponent))
+        if x.sign = 1 then return xs < ys
+        return xs > ys
 
     def bfp_COMPARE_LT(x, y):
         # x is a binary floating-point value represented in the
@@ -389,25 +394,27 @@ section 7.6.2.2
 
         if IsNaN(x) | IsNaN(y) then
             return 0b0
+        if IsZero(x) & IsZero(y) then
+            return 0b0
+
         if IsInf(x) & IsInf(y) then
             return IsNeg(x) & ¬IsNeg(y)
         if IsInf(x) then
             return IsNeg(x)
         if IsInf(y) then
             return ¬IsNeg(y)
-        if IsZero(x) & IsZero(y) then
-            return 0b0
         if IsZero(x) then
             return ¬IsNeg(y)
         if IsZero(y) then
             return IsNeg(x)
         if x.sign != y.sign then
             return IsNeg(x)
-        if x.exponent != y.exponent then
-            if x.sign = 1 then return x.exponent > y.exponent
-            return x.exponent < y.exponent
-        if x.sign = 1 then return x.significand > y.significand
-        return x.significand < y.significand
+        if x.exponent > 0 then xs <- x.significand * pow(2, x.exponent)
+        else xs <- truediv(x.significand, pow(2, -x.exponent))
+        if y.exponent > 0 then ys <- y.significand * pow(2, y.exponent)
+        else ys <- truediv(y.significand, pow(2, -y.exponent))
+        if x.sign = 1 then return xs > ys
+        return xs < ys
 
     def bfp_ABSOLUTE(x):
         # x is a binary floating-point value represented in the
