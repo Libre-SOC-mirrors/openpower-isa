@@ -659,7 +659,7 @@ section 7.6.2.2
         # range and significand precision.
         # ro is a 1-bit unsigned integer and rmode is a 2-bit unsigned integer,
         # together specifying one of five rounding modes to be used in
-        # rounding z.
+        # rounding x.
         #
         # ro=0 rmode=0b00  Round to Nearest Even
         # ro=0 rmode=0b01  Round towards Zero
