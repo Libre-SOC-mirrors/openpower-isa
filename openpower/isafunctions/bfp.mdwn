@@ -746,6 +746,120 @@ section 7.6.2.2
         # floating-point working format.
         return bfp_CONVERT_FROM_BFP64(0x0010_0000_0000_0000)
 
+    def bfp_ROUND_HELPER(p, ro, rmode, x):
+        # not part of the PowerISA v3.1B specification.
+        # helper function for the bfp_ROUND_* functions.
+        # doesn't set inc_flag or xx_flag.
+        #
+        # x is a binary floating-point value that is represented in the binary
+        # floating-point working format and has unbounded exponent range and
+        # significand precision. x must be rounded as presented, without
+        # prenormalization.
+        #
+        # p is an integer value specifying the precision (i.e., number of bits)
+        # the significand is rounded to.
+        #
+        # ro is a 1-bit unsigned integer and rmode is a 3-bit unsigned integer,
+        # together specifying one of six rounding modes to be used in
+        # rounding x.
+        #
+        # ro=0 rmode=0b000  Round to Nearest Even
+        # ro=0 rmode=0b001  Round towards Zero
+        # ro=0 rmode=0b010  Round towards +Infinity
+        # ro=0 rmode=0b011  Round towards -Infinity
+        # ro=0 rmode=0b100  Round to Nearest Away
+        # ro=1              Round to Odd
+
+        if IsInf(x) | IsNaN(x) | IsZero(x) then
+            inc_flag <- 0  # TODO: does the spec specify this?
+            xx_flag <- 0  # TODO: does the spec specify this?
+            return x
+
+        result <- x
+        result.significand <- 0
+        result.significand[0:p - 1] <- x.significand[0:p - 1]
+        exact <- x.significand = result.significand
+        halfway <- 0b0
+        more_than_half <- 0b0
+        if x.significand[p] then
+            t <- x
+            t.significand <- 0
+            t.significand[0:p] <- x.significand[0:p]
+            if t.significand = x.significand then halfway <- 0b1
+            else more_than_half <- 0b1
+        even <- ¬result.significand[p - 1]
+
+        if (ro=0) & (rmode=0b000) then  # Round to Nearest Even
+            round_up <- (halfway & ¬even) | more_than_half
+        if (ro=0) & (rmode=0b001) then  # Round towards Zero
+            round_up <- 0b0
+        if (ro=0) & (rmode=0b010) then  # Round towards +Infinity
+            round_up <- (x.sign = 0) & ¬exact
+        if (ro=0) & (rmode=0b011) then  # Round towards -Infinity
+            round_up <- (x.sign = 1) & ¬exact
+        if (ro=0) & (rmode=0b100) then  # Round to Nearest Away
+            round_up <- halfway | more_than_half
+        if  ro=1                  then  # Round to Odd
+            round_up <- ¬exact & even
+
+        if round_up then
+            result.significand[0:p-1] <- result.significand[0:p-1] + 1
+            if result.significand[0:p-1] = 0 then
+                result.significand[0] <- 1
+                result.exponent <- result.exponent + 1
+
+        if result.significand != 0 then
+            do while result.significand[0] != 1
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+            result.class.Normal <- 1
+            result.class.Denormal <- 0
+            result.class.Zero <- 0
+        else
+            result.class.Normal <- 0
+            result.class.Denormal <- 0
+            result.class.Zero <- 1
+
+        return result
+
+    def bfp_ROUND_NEAR_EVEN(p, x):
+        # x is a binary floating-point value that is represented in the binary
+        # floating-point working format and has unbounded exponent range and
+        # significand precision. x must be rounded as presented, without
+        # prenormalization.
+        #
+        # p is an integer value specifying the precision (i.e., number of bits)
+        # the significand is rounded to.
+
+        result <- bfp_ROUND_HELPER(p, 0b0, 0b000, x)
+
+        if bfp_COMPARE_GT(bfp_ABSOLUTE(result), bfp_ABSOLUTE(x)) then
+            inc_flag <- 1
+        else inc_flag <- 0  # TODO: does the spec specify this?
+        if ¬bfp_COMPARE_EQ(result, x) then xx_flag <- 1
+        else xx_flag <- 0  # TODO: does the spec specify this?
+
+        return result
+
+    def bfp_ROUND_TRUNC(p, x):
+        # x is a binary floating-point value that is represented in the binary
+        # floating-point working format and has unbounded exponent range and
+        # significand precision. x must be rounded as presented, without
+        # prenormalization.
+        #
+        # p is an integer value specifying the precision (i.e., number of bits)
+        # the significand is rounded to.
+
+        result <- bfp_ROUND_HELPER(p, 0b0, 0b001, x)
+
+        if bfp_COMPARE_GT(bfp_ABSOLUTE(result), bfp_ABSOLUTE(x)) then
+            inc_flag <- 1
+        else inc_flag <- 0  # TODO: does the spec specify this?
+        if ¬bfp_COMPARE_EQ(result, x) then xx_flag <- 1
+        else xx_flag <- 0  # TODO: does the spec specify this?
+
+        return result
+
     def bfp_ROUND_CEIL(p, x):
         # x is a binary floating-point value that is represented in the binary
         # floating-point working format and has unbounded exponent range and
@@ -755,13 +869,87 @@ section 7.6.2.2
         # p is an integer value specifying the precision (i.e., number of bits)
         # the significand is rounded to.
 
-        TODO()  # TODO: finish
-        # Return the smallest floating-point number having unbounded exponent
-        # range and a significand with a width of p bits that is greater or
-        # equal in value to x.
+        result <- bfp_ROUND_HELPER(p, 0b0, 0b010, x)
 
         if bfp_COMPARE_GT(bfp_ABSOLUTE(result), bfp_ABSOLUTE(x)) then
             inc_flag <- 1
         else inc_flag <- 0  # TODO: does the spec specify this?
-        if bfp_COMPARE_EQ(result, x) then xx_flag <- 1
+        if ¬bfp_COMPARE_EQ(result, x) then xx_flag <- 1
         else xx_flag <- 0  # TODO: does the spec specify this?
+
+        return result
+
+    def bfp_ROUND_FLOOR(p, x):
+        # x is a binary floating-point value that is represented in the binary
+        # floating-point working format and has unbounded exponent range and
+        # significand precision. x must be rounded as presented, without
+        # prenormalization.
+        #
+        # p is an integer value specifying the precision (i.e., number of bits)
+        # the significand is rounded to.
+
+        result <- bfp_ROUND_HELPER(p, 0b0, 0b011, x)
+
+        if bfp_COMPARE_GT(bfp_ABSOLUTE(result), bfp_ABSOLUTE(x)) then
+            inc_flag <- 1
+        else inc_flag <- 0  # TODO: does the spec specify this?
+        if ¬bfp_COMPARE_EQ(result, x) then xx_flag <- 1
+        else xx_flag <- 0  # TODO: does the spec specify this?
+
+        return result
+
+    def bfp_ROUND_NEAR_AWAY(p, x):
+        # not part of the PowerISA v3.1B specification.
+        #
+        # x is a binary floating-point value that is represented in the binary
+        # floating-point working format and has unbounded exponent range and
+        # significand precision. x must be rounded as presented, without
+        # prenormalization.
+        #
+        # p is an integer value specifying the precision (i.e., number of bits)
+        # the significand is rounded to.
+
+        result <- bfp_ROUND_HELPER(p, 0b0, 0b100, x)
+
+        if bfp_COMPARE_GT(bfp_ABSOLUTE(result), bfp_ABSOLUTE(x)) then
+            inc_flag <- 1
+        else inc_flag <- 0  # TODO: does the spec specify this?
+        if ¬bfp_COMPARE_EQ(result, x) then xx_flag <- 1
+        else xx_flag <- 0  # TODO: does the spec specify this?
+
+        return result
+
+    def bfp_ROUND_ODD(p, x):
+        # x is a binary floating-point value that is represented in the binary
+        # floating-point working format and has unbounded exponent range and
+        # significand precision. x must be rounded as presented, without
+        # prenormalization.
+        #
+        # p is an integer value specifying the precision (i.e., number of bits)
+        # the significand is rounded to.
+
+        result <- bfp_ROUND_HELPER(p, 0b1, 0b000, x)
+
+        if bfp_COMPARE_GT(bfp_ABSOLUTE(result), bfp_ABSOLUTE(x)) then
+            inc_flag <- 1
+        else inc_flag <- 0  # TODO: does the spec specify this?
+        if ¬bfp_COMPARE_EQ(result, x) then xx_flag <- 1
+        else xx_flag <- 0  # TODO: does the spec specify this?
+
+        return result
+
+    def fprf_CLASS_BFP64(x):
+        # x is a floating-point value represented in double-precision format.
+        #
+        # Return the 5-bit code that specifies the sign and class of x.
+
+        v <- bfp_CONVERT_FROM_BFP64(x)
+        if v.class.QNaN then return 0b10001
+        if (v.sign = 1) & v.class.Infinity then return 0b01001
+        if (v.sign = 0) & v.class.Infinity then return 0b00101
+        if (v.sign = 1) & v.class.Zero then return 0b10010
+        if (v.sign = 0) & v.class.Zero then return 0b00010
+        if (v.sign = 1) & v.class.Denormal then return 0b11000
+        if (v.sign = 0) & v.class.Denormal then return 0b10100
+        if (v.sign = 1) & v.class.Normal then return 0b01000
+        if (v.sign = 0) & v.class.Normal then return 0b00100
