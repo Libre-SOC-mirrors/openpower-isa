@@ -282,7 +282,7 @@ class FMvFCvtCases(TestAccumulatorBase):
         self.toint(-math.inf, 0, "-Infinity", signed=False)
         self.toint(math.nan, 0, "NaN", signed=False)
         self.toint(math.nan, 0, "SNaN", inp_bits=0x7ff0_0000_0000_0001,
-                      signed=False)
+                   signed=False)
         self.toint(min_value, 0, "MIN", signed=False)
         self.toint(-min_value, 0, "-MIN", signed=False)
         self.toint(0.1, 0, "0.1", signed=False)
@@ -315,7 +315,7 @@ class FMvFCvtCases(TestAccumulatorBase):
         self.toint(-math.inf, 0, "-Inf", _32bit=False)
         self.toint(math.nan, 0, "NaN", _32bit=False)
         self.toint(math.nan, 0, "SNaN",
-                      inp_bits=0x7ff0_0000_0000_0001, _32bit=False)
+                   inp_bits=0x7ff0_0000_0000_0001, _32bit=False)
         self.toint(0.0, 0, "zero", _32bit=False)
         self.toint(-0.0, 0, "-zero", _32bit=False)
         self.toint(min_value, 0, _32bit=False)
@@ -414,7 +414,7 @@ class FMvFCvtCases(TestAccumulatorBase):
         self.toint(-math.inf, 0, "-Infinity", signed=False, _32bit=False)
         self.toint(math.nan, 0, "NaN", signed=False, _32bit=False)
         self.toint(math.nan, 0, "SNaN", inp_bits=0x7ff0_0000_0000_0001,
-                      signed=False, _32bit=False)
+                   signed=False, _32bit=False)
         self.toint(min_value, 0, "MIN", signed=False, _32bit=False)
         self.toint(-min_value, 0, "-MIN", signed=False, _32bit=False)
         self.toint(0.1, 0, "0.1", signed=False, _32bit=False)
