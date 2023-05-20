@@ -261,23 +261,23 @@ section 7.6.2.2
         result <- x
         result.class.Denormal <- 0
         result.class.Normal <- 0
-        exact <- 0
-        halfway <- 0
-        more_than_halfway <- 0
-        even <- 0
+        exact <- 0b0
+        halfway <- 0b0
+        more_than_halfway <- 0b0
+        even <- 0b0
         if result.exponent < -1 then
             # all values have magnitude < 0.5
             result.significand <- 0
             result.exponent <- 0
-            even <- 1
+            even <- 0b1
         else if result.exponent = -1 then
             if result.significand[0] = 1 then
                 result.significand[0] <- 0
-                if result.significand = 0 then halfway <- 1
-                else more_than_halfway <- 1
+                if result.significand = 0 then halfway <- 0b1
+                else more_than_halfway <- 0b1
             result.significand <- 0
             result.exponent <- 0
-            even <- 1
+            even <- 0b1
         else
             result.significand <- 0
             int_part <- x.significand[0:x.exponent]
@@ -285,15 +285,15 @@ section 7.6.2.2
             even <- ¬int_part[x.exponent]
             temp <- x.significand
             temp[0:x.exponent] <- 0
-            if temp = 0 then exact <- 1
+            if temp = 0 then exact <- 0b1
             if temp[x.exponent + 1] = 1 then
                 temp[x.exponent + 1] <- 0
-                if temp = 0 then halfway <- 1
-                else more_than_halfway <- 1
+                if temp = 0 then halfway <- 0b1
+                else more_than_halfway <- 0b1
         if rmode = 0b000 then  # Round to Nearest Even
             round_up <- (¬even & halfway) | more_than_halfway
         if rmode = 0b001 then  # Round towards Zero
-            round_up <- 0
+            round_up <- 0b0
         if rmode = 0b010 then  # Round towards +Infinity
             round_up <- (x.sign = 0) & ¬exact
         if rmode = 0b011 then  # Round towards -Infinity
