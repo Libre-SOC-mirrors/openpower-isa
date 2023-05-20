@@ -691,7 +691,7 @@ section 7.6.2.2
         if (ro=0) & (rmode=0b10) then r <- bfp_ROUND_CEIL(53, x)
         if (ro=0) & (rmode=0b11) then r <- bfp_ROUND_FLOOR(53, x)
         if  ro=1                 then r <- bfp_ROUND_ODD(53, x)
-        if bfp_ABSOLUTE(r) > bfp_NMAX_BFP64() then
+        if bfp_COMPARE_GT(bfp_ABSOLUTE(r), bfp_NMAX_BFP64()) then
             if FPSCR.OE=0 then
                 if x.sign then
                     if (ro=0) & (rmode=0b00) then r <- bfp_INFINITY()
