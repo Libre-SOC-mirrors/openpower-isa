@@ -519,8 +519,9 @@ class FMvFCvtCases(TestAccumulatorBase):
             expected_fp=expected_fp.hex(), expected_bits=hex(expected_bits),
             XX=fpscr.XX, FR=fpscr.FR, FPRF=bin(int(fpscr.FPRF)), CR1=bin(cr1),
         ):
+            s = "s" if bfp32 else ""
             rc_str = "." if Rc else ""
-            lst = [f"fcvtfg{rc_str} 0,3,{IT}"]
+            lst = [f"fcvtfg{s}{rc_str} 0,3,{IT}"]
             gprs = [0] * 32
             fprs = [0] * 32
             gprs[3] = inp
