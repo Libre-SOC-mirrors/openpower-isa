@@ -51,10 +51,8 @@ def do_round(v, round_mode):
 
 
 class FMvFCvtCases(TestAccumulatorBase):
-    def toint(
-        self, inp, expected=None, test_title="", inp_bits=None,
-        signed=True, _32bit=True, CVM=5, RN=0,
-    ):
+    def toint(self, inp, expected=None, test_title="", inp_bits=None,
+              signed=True, _32bit=True, CVM=5, RN=0):
         if CVM & 1:
             for i in range(4):
                 self.toint(inp=inp, inp_bits=inp_bits, signed=signed,
