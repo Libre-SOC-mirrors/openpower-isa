@@ -300,6 +300,7 @@ class SVSTATETestCase(unittest.TestCase):
     def test_18_sea(self):
         expected = [
                     "sv.ldux/sea 5,6,7",
+                    "sv.ldux/pi/sea 5,6,7",
                         ]
         self._do_tst(expected)
 

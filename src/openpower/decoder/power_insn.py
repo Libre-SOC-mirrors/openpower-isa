@@ -2264,16 +2264,20 @@ class LDSTIdxBaseRM(PredicateWidthBaseRM):
     pass
 
 
-class LDSTIdxSimpleRM(SEABaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
+class LDSTIdxSimpleRM(SEABaseRM, ZZBaseRM, LDSTIdxBaseRM):
     """ld/st index: simple mode (includes element-strided and Signed-EA)"""
+    pi: BaseRM.mode[2]  # Post-Increment Mode
     els: BaseRM.mode[0]
-    SEA: BaseRM.mode[2]
+    SEA: BaseRM.mode[4]
+    zz: BaseRM.mode[3]
     dz: BaseRM.mode[3]
-    sz: BaseRM.mode[4]
+    sz: BaseRM.mode[3]
 
     def specifiers(self, record):
         if self.els:
             yield "els"
+        if self.pi:
+            yield "pi"
 
         yield from super().specifiers(record=record)
 
@@ -3071,14 +3075,13 @@ class SpecifierPI(Specifier):
         if desc != "pi":
             return None
 
-        if record.svp64.mode is not _SVMode.LDST_IMM:
-            raise ValueError("only ld/st imm mode supported")
+        if record.svp64.mode not in [_SVMode.LDST_IMM, _SVMode.LDST_IDX]:
+            raise ValueError("only ld/st imm/idx mode supported")
 
         return cls(record=record)
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
-        selector.mode[1] = 0b0
         selector.mode[2] = 0b1
         selector.pi = 0b1
 
@@ -3119,6 +3122,7 @@ class SpecifierVLi(Specifier):
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
+        selector.mode[1] = 1
         selector.VLi = 1
 
 

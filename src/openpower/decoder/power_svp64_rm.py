@@ -59,16 +59,14 @@ LD/ST immed:
 
 | 0 | 1 |  2  |  3   4  |  description               |
 |---|---| --- |---------|--------------------------- |
-| 0 | 0 | 0   |  zz els | simple mode                |
-| 0 | 0 | 1   | PI  LF  | post-increment and Fault-First  |
-| 1 | 0 |   N | zz  els |  sat mode: N=0/1 u/s       |
+|els| 0 | PI  |  zz LF | simple mode                |
 |VLi| 1 | inv | CR-bit  | ffirst CR sel             |
 
 LD/ST indexed:
 
 | 0 | 1 |  2  |  3   4  |  description               |
 |---|---| --- |---------|--------------------------- |
-|els| 0 | SEA |  dz  sz | simple mode        |
+|els| 0 | PI  |  zz SEA | simple mode        |
 |VLi| 1 | inv | CR-bit  | ffirst CR sel        |
 
 Arithmetic:
