@@ -2453,7 +2453,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             return
         if isinstance(output, int):
             output = SelectableInt(output, EFFECTIVELY_UNLIMITED)
-        # write carry flafs
+        # write carry flags
         if name in ['CA', 'CA32']:
             if carry_en:
                 log("writing %s to XER" % name, output)
