@@ -8,14 +8,21 @@ from openpower.decoder.isa.remap_dct_yield import (
     halfrev2, inverse_transform2, iterate_dct_inner_butterfly_indices,
     iterate_dct_outer_butterfly_indices, reverse_bits, transform2)
 from openpower.decoder.isa.test_caller import run_tst
-from openpower.decoder.isafunctions.double2single import ISACallerFnHelper
+from openpower.decoder.isafunctions.double2single import (
+        ISACallerFnHelper_double2single)
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
 from openpower.sv.trans.svp64 import SVP64Asm
 
 # really bad hack.  need to access the DOUBLE2SINGLE function auto-generated
 # from pseudo-code.
-fph = ISACallerFnHelper(XLEN=64, FPSCR=None)
+fph = ISACallerFnHelper_double2single(XLEN=64, FPSCR=None)
+fph.namespace = {'FPSCR': fph.FPSCR,
+                 'NIA': None,
+                 'XLEN': fph.XLEN,
+                 'CIA': None,
+                 'SVSTATE': None,
+                }
 
 
 def transform_inner_radix2_dct(vec, ctable):
