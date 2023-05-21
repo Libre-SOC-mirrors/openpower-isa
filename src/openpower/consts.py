@@ -268,12 +268,10 @@ class SVP64MODEb(_Const):
     # LD immediate els (element-stride) locations, depending on mode
     ELS_NORMAL = 4
     ELS_FFIRST_PRED = 3
-    ELS_SAT = 4
-    LDI_POST = 2 # LD-Immediate Post/FF Mode
-    LDI_PI = 3 # LD-Immediate Post-Increment
+    LDI_PI = 2 # LD-Immediate Post-Increment
     LDI_FF = 4 # LD-Immediate Fault-First
-    # LDST Indexed
-    LDIDX_ELS = 0 # Indexed element-strided
+    # LDST element-strided
+    LDST_ELS = 0 # Indexed element-strided
     # LDST VLI for ffirst is in bit 0
     LDST_VLI = 0
     # BO bits

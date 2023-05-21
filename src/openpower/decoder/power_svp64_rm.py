@@ -216,20 +216,12 @@ class SVP64RMModeDecode(Elaboratable):
         #####################
         with m.Elif(is_ldst):
             with m.Switch(mode2):
-                with m.Case(0): # needs further decoding (LDST no mapreduce)
-                    with m.If(is_ldstimm & mode[SVP64MODE.LDI_POST]):
-                        comb += self.mode.eq(SVP64RMMode.NORMAL)
-                        comb += self.ldst_postinc.eq(mode[SVP64MODE.LDI_PI])
-                        comb += self.ldst_ffirst.eq(mode[SVP64MODE.LDI_FF])
-                    with m.Elif(is_ldst):
-                        comb += self.mode.eq(SVP64RMMode.NORMAL)
+                with m.Case(0, 2): # needs further decoding (LDST no mapreduce)
+                    comb += self.mode.eq(SVP64RMMode.NORMAL)
+                    comb += self.ldst_postinc.eq(mode[SVP64MODE.LDI_PI])
+                    comb += self.ldst_ffirst.eq(mode[SVP64MODE.LDI_FF])
                 with m.Case(1, 3):
                     comb += self.mode.eq(SVP64RMMode.FFIRST) # ffirst
-                with m.Case(2):
-                    with m.If(is_ldstimm):
-                        comb += self.mode.eq(SVP64RMMode.SATURATE) # saturate
-                    with m.Else():
-                        comb += self.mode.eq(SVP64RMMode.NORMAL) # els-bit
 
             # extract zeroing
             with m.If(is_ldst & ~is_ldstimm): # LDST-Indexed
@@ -241,15 +233,10 @@ class SVP64RMModeDecode(Elaboratable):
 
             with m.Elif(is_ldstimm): # LDST-Immediate
                 with m.Switch(mode2):
-                    with m.Case(0):  # simple mode
-                        with m.If(~mode[2]): # (but not PI/LF)
-                            # [MSB0-numbered] bits 0,1,2 of mode zero, use zz
-                            comb += self.pred_sz.eq(mode[SVP64MODE.ZZ])
-                            comb += self.pred_dz.eq(mode[SVP64MODE.ZZ])
-                    with m.Case(2): # saturated mode
-                            # saturated-mode also uses zz
-                            comb += self.pred_sz.eq(mode[SVP64MODE.ZZ])
-                            comb += self.pred_dz.eq(mode[SVP64MODE.ZZ])
+                    with m.Case(0,2):  # simple mode
+                        # use zz
+                        comb += self.pred_sz.eq(mode[SVP64MODE.ZZ])
+                        comb += self.pred_dz.eq(mode[SVP64MODE.ZZ])
 
             # extract failfirst
             with m.If(self.mode == SVP64RMMode.FFIRST): # fail-first
@@ -283,23 +270,12 @@ class SVP64RMModeDecode(Elaboratable):
             # extract els (element strided mode bit)
             # see https://libre-soc.org/openpower/sv/ldst/
             els = Signal()
-            with m.If(is_ldstimm):    # LD/ST-immediate
-                with m.Switch(mode2):
-                    with m.Case(0):
-                        with m.If(~mode[2]): # (but not PI/LF)
-                            comb += els.eq(mode[SVP64MODE.ELS_NORMAL])
-                    with m.Case(2):
-                        comb += els.eq(mode[SVP64MODE.ELS_SAT])
-                    with m.Case(1, 3):
-                        with m.If(self.rc_in):
-                            comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
-            with m.Else():           # LD/ST-Indexed
-                with m.Switch(mode2):
-                    with m.Case(0, 2):
-                        comb += els.eq(mode[SVP64MODE.LDIDX_ELS])
-                    with m.Case(1, 3):
-                        with m.If(self.rc_in):
-                            comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
+            with m.Switch(mode2):
+                with m.Case(0, 2):
+                    comb += els.eq(mode[SVP64MODE.LDST_ELS])
+                with m.Case(1, 3):
+                    with m.If(self.rc_in):
+                        comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
 
             # RA is vectorised
             with m.If(self.ldst_ra_vec):
@@ -377,38 +353,6 @@ class SVP64RMModeDecode(Elaboratable):
             comb += self.ew_src.eq(self.rm_in.ewsrc)
             comb += self.ew_dst.eq(self.rm_in.elwidth)
             comb += self.subvl.eq(self.rm_in.subvl)
-
-            # extract els (element strided mode bit)
-            # see https://libre-soc.org/openpower/sv/ldst/
-            els = Signal()
-            with m.If(is_ldst):
-                with m.If(is_ldstimm):
-                    with m.Switch(mode2):
-                        with m.Case(0):
-                            comb += els.eq(mode[SVP64MODE.ELS_NORMAL])
-                        with m.Case(2):
-                            comb += els.eq(mode[SVP64MODE.ELS_SAT])
-                        with m.Case(1, 3):
-                            with m.If(self.rc_in):
-                                comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
-                with m.Else():
-                    with m.Switch(mode2):
-                        with m.Case(0, 2):
-                            comb += els.eq(mode[SVP64MODE.LDIDX_ELS])
-                        with m.Case(1, 3):
-                            with m.If(self.rc_in):
-                                comb += els.eq(mode[SVP64MODE.ELS_FFIRST_PRED])
-
-                # RA is vectorised
-                with m.If(self.ldst_ra_vec):
-                    comb += self.ldstmode.eq(SVP64LDSTmode.INDEXED)
-                # not element-strided, therefore unit...
-                with m.Elif(~els):
-                    comb += self.ldstmode.eq(SVP64LDSTmode.UNITSTRIDE)
-                # but if the LD/ST immediate is zero, allow cache-inhibited
-                # loads from same location, therefore don't do element-striding
-                with m.Elif(~self.ldst_imz_in):
-                    comb += self.ldstmode.eq(SVP64LDSTmode.ELSTRIDE)
 
         ######################
         # Common fields (not many, sigh)

@@ -2214,22 +2214,20 @@ class LDSTImmBaseRM(PredicateWidthBaseRM):
 
 class LDSTImmSimpleRM(ElsBaseRM, ZZBaseRM, LDSTImmBaseRM):
     """ld/st immediate: simple mode"""
+    pi: BaseRM.mode[2]  # Post-Increment Mode
+    lf: BaseRM.mode[4]  # Fault-First Mode (not *Data-Dependent* Fail-First)
     zz: BaseRM.mode[3]
-    els: BaseRM.mode[4]
+    els: BaseRM.mode[0]
     dz: BaseRM.mode[3]
     sz: BaseRM.mode[3]
-
-
-class LDSTImmPostRM(LDSTImmBaseRM):
-    """ld/st immediate: postinc mode (and load-fault)"""
-    pi: BaseRM.mode[3]  # Post-Increment Mode
-    lf: BaseRM.mode[4]  # Fault-First Mode (not *Data-Dependent* Fail-First)
 
     def specifiers(self, record):
         if self.pi:
             yield "pi"
         if self.lf:
             yield "lf"
+
+        yield from super().specifiers(record=record)
 
 
 class LDSTFFRc1RM(FFRc1BaseRM, VLiBaseRM, LDSTImmBaseRM):
@@ -2242,32 +2240,20 @@ class LDSTFFRc1RM(FFRc1BaseRM, VLiBaseRM, LDSTImmBaseRM):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class LDSTFFRc0RM(FFRc0BaseRM, VLiBaseRM, ElsBaseRM, LDSTImmBaseRM):
+class LDSTFFRc0RM(FFRc0BaseRM, VLiBaseRM, LDSTImmBaseRM):
     """ld/st immediate&indexed: Rc=0: ffirst z/nonz"""
     VLi: BaseRM.mode[0]
     inv: BaseRM.mode[2]
-    els: BaseRM.mode[3]
     RC1: BaseRM.mode[4]
 
     def specifiers(self, record):
         yield from super().specifiers(record=record, mode="ff")
 
 
-class LDSTImmSatRM(ElsBaseRM, SatBaseRM, ZZBaseRM, LDSTImmBaseRM):
-    """ld/st immediate: sat mode: N=0/1 u/s"""
-    N: BaseRM.mode[2]
-    zz: BaseRM.mode[3]
-    els: BaseRM.mode[4]
-    dz: BaseRM.mode[3]
-    sz: BaseRM.mode[3]
-
-
 class LDSTImmRM(LDSTImmBaseRM):
     simple: LDSTImmSimpleRM
-    post: LDSTImmPostRM
     ffrc1: LDSTFFRc1RM
     ffrc0: LDSTFFRc0RM
-    sat: LDSTImmSatRM
 
 
 class LDSTIdxBaseRM(PredicateWidthBaseRM):
@@ -2292,16 +2278,8 @@ class LDSTIdxSimpleRM(SEABaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
         yield from super().specifiers(record=record)
 
 
-class LDSTIdxSatRM(SatBaseRM, ZZCombinedBaseRM, LDSTIdxBaseRM):
-    """ld/st index: sat mode: N=0/1 u/s"""
-    N: BaseRM.mode[2]
-    dz: BaseRM.mode[3]
-    sz: BaseRM.mode[4]
-
-
 class LDSTIdxRM(LDSTIdxBaseRM):
     simple: LDSTIdxSimpleRM
-    sat: LDSTIdxSatRM
     ffrc1: LDSTFFRc1RM
     ffrc0: LDSTFFRc0RM
 
@@ -3100,7 +3078,6 @@ class SpecifierPI(Specifier):
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
-        selector.mode[0] = 0b0
         selector.mode[1] = 0b0
         selector.mode[2] = 0b1
         selector.pi = 0b1
@@ -3120,7 +3097,7 @@ class SpecifierLF(Specifier):
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
-        selector.mode[2] = 1
+        selector.mode[1] = 0
         selector.lf = 0b1
 
 
@@ -3295,11 +3272,9 @@ class RMSelector:
             # ironically/coincidentally this table is identical to NORMAL
             # mode except reserved in place of mr
             table = (
-                (0b000000, 0b111000, "simple"), # simple     (no Rc involved)
-                (0b001000, 0b111000, "post"),   # post       (no Rc involved)
+                (0b000000, 0b010000, "simple"), # simple     (no Rc involved)
                 (0b010001, 0b010001, "ffrc1"),  # ffirst,     Rc=1
                 (0b010000, 0b010001, "ffrc0"),  # ffirst,     Rc=0
-                (0b100000, 0b110000, "sat"),    # saturation (no Rc)
             )
             search = ((int(self.insn.prefix.rm.ldst_imm.mode) << 1) |
                       self.record.Rc)
