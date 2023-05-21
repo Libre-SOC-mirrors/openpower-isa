@@ -2453,6 +2453,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             return
         if isinstance(output, int):
             output = SelectableInt(output, EFFECTIVELY_UNLIMITED)
+        # write FPSCR
+        if name in ['FPSCR', ]:
+            log("write FPSCR 0x%x" % (output.value))
+            self.FPSCR.eq(output)
+            return
         # write carry flags
         if name in ['CA', 'CA32']:
             if carry_en:
