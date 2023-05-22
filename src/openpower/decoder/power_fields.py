@@ -1,14 +1,14 @@
 from collections import namedtuple
 
-import operator as _operator
-import functools as _functools
+import operator
+import functools
 
-from openpower.decoder.power_enums import find_wiki_file as _find_wiki_file
+from openpower.decoder.power_enums import find_wiki_file
 from openpower.decoder.selectable_int import (
-    SelectableInt as _SelectableInt,
-    BitRange as _BitRange,
-    selectconcat as _selectconcat,
-    selectltu as _selectltu,
+    SelectableInt,
+    BitRange,
+    selectconcat,
+    selectltu,
 )
 
 
@@ -32,10 +32,10 @@ class Descriptor:
         self.__cls(storage=instance.storage).assign(value)
 
 
-@_functools.total_ordering
+@functools.total_ordering
 class Reference:
     def __init__(self, storage, *args, **kwargs):
-        if not isinstance(storage, _SelectableInt):
+        if not isinstance(storage, SelectableInt):
             raise ValueError(storage)
 
         self.storage = storage
@@ -48,17 +48,17 @@ class Reference:
 
     def __binary_operator(self, op, other):
         span = dict.fromkeys(self.__class__.span).keys()
-        lhs = _selectconcat(*(self.storage[bit] for bit in span))
+        lhs = selectconcat(*(self.storage[bit] for bit in span))
 
         if isinstance(other, Reference):
             span = dict.fromkeys(other.__class__.span).keys()
-            rhs = _selectconcat(*(other.storage[bit] for bit in span))
+            rhs = selectconcat(*(other.storage[bit] for bit in span))
         elif isinstance(other, int):
             bits = len(self.__class__)
             if other.bit_length() > bits:
                 raise OverflowError(other)
-            rhs = _SelectableInt(value=other, bits=bits)
-        elif isinstance(other, _SelectableInt):
+            rhs = SelectableInt(value=other, bits=bits)
+        elif isinstance(other, SelectableInt):
             rhs = other
         else:
             raise ValueError(other)
@@ -66,17 +66,17 @@ class Reference:
         return op(lhs, rhs)
 
     def __lt__(self, other):
-        return self.__binary_operator(_selectltu, other)
+        return self.__binary_operator(selectltu, other)
 
     def __eq__(self, other):
-        return self.__binary_operator(_operator.eq, other)
+        return self.__binary_operator(operator.eq, other)
 
     def __bool__(self):
         return bool(int(self))
 
     def __int__(self):
         span = dict.fromkeys(self.__class__.span).keys()
-        return int(_selectconcat(*(self.storage[bit] for bit in span)))
+        return int(selectconcat(*(self.storage[bit] for bit in span)))
 
     def __index__(self):
         return int(self).__index__()
@@ -87,7 +87,7 @@ class Reference:
 
     @storage.setter
     def storage(self, storage):
-        if not isinstance(storage, _SelectableInt):
+        if not isinstance(storage, SelectableInt):
             raise ValueError(storage)
 
         self.__storage = storage
@@ -106,8 +106,8 @@ class Reference:
             value = int(value)
             if value.bit_length() > len(bits):
                 raise OverflowError(value)
-            value = _SelectableInt(value=value, bits=len(bits))
-        if not isinstance(value, _SelectableInt):
+            value = SelectableInt(value=value, bits=len(bits))
+        if not isinstance(value, SelectableInt):
             raise ValueError(value)
         if value.bits != len(bits):
             raise OverflowError(value)
@@ -197,12 +197,12 @@ class Field(Reference, metaclass=FieldMeta):
     def __getitem__(self, key):
         if isinstance(key, int):
             bit = self.storage[self.__class__.__members__[key]]
-            return _SelectableInt(value=bit, bits=1)
+            return SelectableInt(value=bit, bits=1)
         if isinstance(key, slice):
             assert key.step is None or key.step == 1
             key = range(key.start, key.stop)
 
-        return _selectconcat(*(self[bit] for bit in key))
+        return selectconcat(*(self[bit] for bit in key))
 
     def __setitem__(self, key, value):
         return self.assign(value=value, bits=key)
@@ -411,7 +411,7 @@ def decode_form(form):
 
 class DecodeFields:
 
-    def __init__(self, bitkls=_BitRange, bitargs=(), fname=None,
+    def __init__(self, bitkls=BitRange, bitargs=(), fname=None,
                  name_on_wiki=None):
         self.bitkls = bitkls
         self.bitargs = bitargs
@@ -419,7 +419,7 @@ class DecodeFields:
             assert name_on_wiki is None
             fname = "fields.txt"
             name_on_wiki = "fields.text"
-        self.fname = _find_wiki_file(name_on_wiki)
+        self.fname = find_wiki_file(name_on_wiki)
 
     @property
     def form_names(self):
