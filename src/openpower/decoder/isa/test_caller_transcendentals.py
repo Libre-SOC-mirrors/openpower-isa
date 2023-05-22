@@ -4,14 +4,21 @@ import unittest
 from nmutil.formaltest import FHDLTestCase
 from openpower.decoder.helpers import fp64toselectable
 from openpower.decoder.isa.test_caller import run_tst
-from openpower.decoder.isafunctions.double2single import ISACallerFnHelper
+from openpower.decoder.isafunctions.double2single import (
+        ISACallerFnHelper_double2single)
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
 from openpower.sv.trans.svp64 import SVP64Asm
 
 # really bad hack.  need to access the DOUBLE2SINGLE function auto-generated
 # from pseudo-code.
-fph = ISACallerFnHelper(XLEN=64, FPSCR=None)
+fph = ISACallerFnHelper_double2single(XLEN=64, FPSCR=None)
+fph.namespace = {'FPSCR': fph.FPSCR,
+                 'NIA': None,
+                 'XLEN': fph.XLEN,
+                 'CIA': None,
+                 'SVSTATE': None,
+                }
 
 
 class FPTranscendentalsTestCase(FHDLTestCase):
