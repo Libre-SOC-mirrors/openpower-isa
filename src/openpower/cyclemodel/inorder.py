@@ -43,6 +43,8 @@
 from collections import namedtuple
 import io
 import unittest
+import getopt
+import sys
 
 # trace file entries are lists of these.
 Hazard = namedtuple("Hazard", ["action", "target", "ident", "offs", "elwid"])
@@ -292,6 +294,31 @@ class TestTrace(unittest.TestCase):
         for trace in lines:
             print(trace)
 
+def help():
+    print ("-t             runs unit tests")
+    print ("-h --help      prints this message")
+    exit(-1)
+
 
 if __name__ == "__main__":
-    unittest.main()
+    opts, args = getopt.getopt(sys.argv[1:], "thi:o:",
+                                             ["help",])
+
+    # default files are stdin/stdout.
+    in_file = sys.stdin
+    out_file = sys.stdout
+
+    for opt, arg in opts:
+        if opt in ['-h', '--help']:
+            help()
+        if opt in ['-t']:
+            unittest.main(argv=[sys.argv[0]]+sys.argv[2:])
+        if opt in ['-i']:
+            in_file = arg
+        if opt in ['-o']:
+            out_file = arg
+
+    # TODO: run model
+    lines = read_file(in_file)
+    for trace in lines:
+        out_file.write("|" + "|".join(map(str, trace)) + "|\n")
