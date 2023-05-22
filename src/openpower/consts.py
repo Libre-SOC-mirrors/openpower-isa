@@ -1,4 +1,4 @@
-import enum as _enum
+import enum
 
 
 # Can't think of a better place to put these functions.
@@ -76,18 +76,18 @@ def field(r, msb0_start, msb0_end=None, field_width=64):
 # this module, aside from creating various field constants,
 # helps out by creating alternative (identical) classes with
 # a "b" name to indicate "MSB0 big-endian".
-class _Const(_enum.IntEnum):
+class _Const(enum.IntEnum):
     pass
 
 
-class _ConstLEMeta(_enum.EnumMeta):
+class _ConstLEMeta(enum.EnumMeta):
     def __call__(metacls, *args, **kwargs):
         if len(args) > 1:
             names = args[1]
         else:
             names = kwargs.pop("names")
 
-        if isinstance(names, type) and issubclass(names, _enum.Enum):
+        if isinstance(names, type) and issubclass(names, enum.Enum):
             names = dict(names.__members__)
         if isinstance(names, dict):
             names = tuple(names.items())
