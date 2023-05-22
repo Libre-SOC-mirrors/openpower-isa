@@ -16,7 +16,7 @@
 #       keeping to simple techniques and simple python modules that are
 #       easy to understand.  readability comments are crucial.  Unit tests
 #       should be bare-minimum practical demonstrations but also within this
-#       file.
+#       file, and additional unit tests in separate files (listed below)
 #
 #       Duplication of code from other models in this series is perfectly
 #       acceptable in order to respect the self-sufficiency requirement.
@@ -24,6 +24,10 @@
 # Bugs:
 #
 # * https://bugs.libre-soc.org/show_bug.cgi?id=1039
+#
+# Separate Unit tests:
+#
+# * TODO
 #
 """
     CPU:   Fetch   <- log file
@@ -41,7 +45,7 @@ import io
 import unittest
 
 # trace file entries are lists of these.
-Hazards = namedtuple("Hazards", ["action", "target", "ident", "offs", "elwid"])
+Hazard = namedtuple("Hazard", ["action", "target", "ident", "offs", "elwid"])
 
 # key: readport, writeport (per clock cycle)
 HazardProfiles = {
@@ -59,21 +63,29 @@ HazardProfiles = {
 
 
 def read_file(fname):
-    """reads a trace file in the format "[r:FILE:regnum:offset:width]* # insn"
+    """reads a trace file in the form "[{rw}:FILE:regnum:offset:width]* # insn"
+    this function is a generator, it yields a list comprising each line:
+    ["insn", Hazard(...), Hazard(....), ....]
+
+    fname may be a *file* (an object) with a function named "read",
+    in which case the Contract is that it is the *CALLER* that must
+    take responsibility for the file: opening, closing, seeking.
+
+    if fname is a string then this function will take care of reading
+    from it and is itself responsible for closing the file handle.
     """
-    is_file = hasattr(fname, "write")
+    is_file = hasattr(fname, "read")
     if not is_file:
         fname = open(fname, "r")
-    res = []
+
     for line in fname.readlines():
         (specs, insn) = map(str.strip, line.strip().split("#"))
         line = [insn]
         for spec in specs.split(" "):
-            line.append(Hazards._make(spec.split(":")))
-        res.append(line)
+            line.append(Hazard._make(spec.split(":")))
+        yield line
     if not is_file:
         fname.close()
-    return res
 
 
 class RegisterWrite:
