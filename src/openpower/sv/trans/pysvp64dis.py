@@ -1,21 +1,21 @@
-import argparse as _argparse
-import enum as _enum
-import sys as _sys
-import os as _os
+import argparse
+import enum
+import sys
+import os
 
 from openpower.decoder.power_enums import (
-    find_wiki_dir as _find_wiki_dir,
+    find_wiki_dir,
 )
 from openpower.decoder.power_insn import (
-    Style as _Style,
-    Database as _Database,
-    WordInstruction as _WordInstruction,
-    PrefixedInstruction as _PrefixedInstruction,
-    SVP64Instruction as _SVP64Instruction,
+    Style,
+    Database,
+    WordInstruction,
+    PrefixedInstruction,
+    SVP64Instruction,
 )
 
 
-class ByteOrder(_enum.Enum):
+class ByteOrder(enum.Enum):
     LITTLE = "little"
     BIG = "big"
 
@@ -33,7 +33,7 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
             return
         elif length < 4:
             raise IOError(insn)
-        insn = _WordInstruction.integer(value=insn, byteorder=byteorder)
+        insn = WordInstruction.integer(value=insn, byteorder=byteorder)
         if insn.PO == 0x1:
             suffix = ifile.read(4)
             length = len(suffix)
@@ -44,15 +44,15 @@ def load(ifile, byteorder=ByteOrder.LITTLE, **_):
                 raise IOError(suffix)
 
             prefix = insn
-            suffix = _WordInstruction.integer(value=suffix, byteorder=byteorder)
-            insn = _SVP64Instruction.pair(prefix=prefix, suffix=suffix)
+            suffix = WordInstruction.integer(value=suffix, byteorder=byteorder)
+            insn = SVP64Instruction.pair(prefix=prefix, suffix=suffix)
             if insn.prefix.id != 0b11:
-                insn = _PrefixedInstruction.pair(prefix=prefix, suffix=suffix)
+                insn = PrefixedInstruction.pair(prefix=prefix, suffix=suffix)
         yield insn
 
 
 def dump(insns, style, **_):
-    db = _Database(_find_wiki_dir())
+    db = Database(find_wiki_dir())
     for insn in insns:
         record = db[insn]
         yield from insn.disassemble(record=record, style=style)
@@ -60,22 +60,22 @@ def dump(insns, style, **_):
 
 # this is the entry-point for the console-script pysvp64dis
 def main():
-    parser = _argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument("ifile", nargs="?",
-        type=_argparse.FileType("rb"), default=_sys.stdin.buffer)
+        type=argparse.FileType("rb"), default=sys.stdin.buffer)
     parser.add_argument("ofile", nargs="?",
-        type=_argparse.FileType("w"), default=_sys.stdout)
+        type=argparse.FileType("w"), default=sys.stdout)
     parser.add_argument("-b", "--byteorder",
         type=ByteOrder, default=ByteOrder.LITTLE)
     parser.add_argument("-s", "--short",
-        dest="style", default=_Style.NORMAL,
-        action="store_const", const=_Style.SHORT)
+        dest="style", default=Style.NORMAL,
+        action="store_const", const=Style.SHORT)
     parser.add_argument("-v", "--verbose",
-        dest="style", default=_Style.NORMAL,
-        action="store_const", const=_Style.VERBOSE)
+        dest="style", default=Style.NORMAL,
+        action="store_const", const=Style.VERBOSE)
     parser.add_argument("-l", "--legacy",
-        dest="style", default=_Style.NORMAL,
-        action="store_const", const=_Style.LEGACY)
+        dest="style", default=Style.NORMAL,
+        action="store_const", const=Style.LEGACY)
     parser.add_argument("-L", "--log",
         action="store_true", default=False)
 
@@ -83,7 +83,7 @@ def main():
 
     # if logging requested do not disable it.
     if not args['log']:
-        _os.environ['SILENCELOG'] = '1'
+        os.environ['SILENCELOG'] = '1'
 
     # load instructions and dump them
     insns = load(**args)
