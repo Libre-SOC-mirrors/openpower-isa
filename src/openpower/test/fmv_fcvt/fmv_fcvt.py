@@ -51,16 +51,8 @@ def do_round(v, round_mode):
 
 
 class FMvFCvtCases(TestAccumulatorBase):
-    def toint(self, inp, expected=None, test_title="", inp_bits=None,
-              signed=True, _32bit=True, CVM=5, RN=0):
-        if CVM & 1:
-            for i in range(4):
-                self.toint(inp=inp, inp_bits=inp_bits, signed=signed,
-                           _32bit=_32bit, CVM=CVM - 1, RN=i)
-        if CVM == 5:
-            for i in (1, 3):
-                self.toint(inp=inp, inp_bits=inp_bits, signed=signed,
-                           _32bit=_32bit, CVM=i)
+    def toint_helper(self, *, inp, expected=None, test_title="", inp_bits=None,
+                     signed=True, _32bit=True, CVM, RN, VE):
         if CVM & 1:
             round_mode = 1  # trunc
         else:
@@ -106,16 +98,17 @@ class FMvFCvtCases(TestAccumulatorBase):
         expected %= 2 ** 64
         IT = (not signed) + (not _32bit) * 2
         with self.subTest(inp=inp.hex(), inp_bits=hex(inp_bits),
-                          expected=hex(expected), test_title=test_title,
-                          signed=signed, _32bit=_32bit, CVM=CVM, RN=RN):
+                          test_title=test_title,
+                          signed=signed, _32bit=_32bit, CVM=CVM, RN=RN, VE=VE):
             lst = [f"fcvttgo. 3,0,{CVM},{IT}"]
             gprs = [0] * 32
             fprs = [0] * 32
             fprs[0] = inp_bits
+            gprs[3] = 0xabcdef9876543210
             initial_fpscr = FPSCRState()
             initial_fpscr.RN = RN
+            initial_fpscr.VE = VE
             e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-            e.intregs[3] = expected
             fpscr = FPSCRState(initial_fpscr)
             if math.isnan(inp) and (inp_bits & 2 ** 51) == 0:  # SNaN
                 fpscr.VXSNAN = 1
@@ -135,18 +128,36 @@ class FMvFCvtCases(TestAccumulatorBase):
             fpscr.FPRF = 0  # undefined value we happen to pick
             if not overflow:
                 fpscr.FR = abs(do_round(inp, round_mode)) > abs(inp)
+            if overflow and fpscr.VE:
+                # FIXME: #1087 proposes to change pseudocode of fcvt* to
+                # always write output, this implements reading RT when output
+                # isn't written, which is terrible
+                # https://bugs.libre-soc.org/show_bug.cgi?id=1087#c21
+                expected = e.intregs[3]
             lt = bool(expected & (1 << 63))
             gt = not lt and expected != 0
             eq = expected == 0
             e.crregs[0] = (lt << 3) | (gt << 2) | (eq << 1) | e.so
+            e.intregs[3] = expected
             with self.subTest(expected_VXSNAN=fpscr.VXSNAN,
                               expected_VXCVI=fpscr.VXCVI,
                               expected_XX=fpscr.XX,
-                              expected_FI=fpscr.FI):
+                              expected_FI=fpscr.FI,
+                              expected=hex(expected)):
                 e.fpscr = int(fpscr)
                 self.add_case(
                     _cached_program(*lst), gprs, fpregs=fprs, expected=e,
                     initial_fpscr=int(initial_fpscr))
+
+    def toint(self, inp, expected=None, test_title="", inp_bits=None,
+              signed=True, _32bit=True):
+        for CVM in range(6):
+            for RN in range(1 if CVM & 1 else 4):
+                for VE in range(2):
+                    self.toint_helper(
+                        inp=inp, expected=expected if CVM == 5 else None,
+                        test_title=test_title, inp_bits=inp_bits,
+                        signed=signed, _32bit=_32bit, CVM=CVM, RN=RN, VE=VE)
 
     def case_js_toint32(self):
         min_value = pow(2, -1074)
