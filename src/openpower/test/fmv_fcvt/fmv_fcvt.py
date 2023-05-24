@@ -4,6 +4,7 @@ from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State
 from openpower.fpscr import FPSCRState
+from openpower.consts import MSR
 import struct
 import math
 import functools
@@ -134,6 +135,8 @@ class FMvFCvtCases(TestAccumulatorBase):
                 # isn't written, which is terrible
                 # https://bugs.libre-soc.org/show_bug.cgi?id=1087#c21
                 expected = e.intregs[3]
+                e.pc = 0x700
+                # MSR and other SPRS not tested by ExpectedState
             lt = bool(expected & (1 << 63))
             gt = not lt and expected != 0
             eq = expected == 0
@@ -147,7 +150,8 @@ class FMvFCvtCases(TestAccumulatorBase):
                 e.fpscr = int(fpscr)
                 self.add_case(
                     _cached_program(*lst), gprs, fpregs=fprs, expected=e,
-                    initial_fpscr=int(initial_fpscr))
+                    initial_fpscr=int(initial_fpscr),
+                    initial_msr=(1 << MSR.FE0) | (1 << MSR.FE1))
 
     def toint(self, inp, expected=None, test_title="", inp_bits=None,
               signed=True, _32bit=True):
