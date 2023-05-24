@@ -2200,6 +2200,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             chk = rc_en or is_cr
             ffirst_hit = (yield from self.check_ffirst(info, chk, srcstep))
 
+        if self.FPSCR.FEX and (self.msr[MSRb.FE0] or self.msr[MSRb.FE1]):
+            self.call_trap(0x700, PIb.FP)
+            return
+
         # any modified return results?
         yield from self.do_outregs_nia(asmop, ins_name, info, outs,
                                        carry_en, rc_en, ffirst_hit, ew_dst)
