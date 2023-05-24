@@ -82,6 +82,7 @@ class PyISAWriter(ISA):
                 filename = os.path.join(get_isa_dir(), pagename + ".mdwn")
                 pycode, rused = convert_to_python(pcode, d.form, incl_carry,
                                                   filename=filename)
+                rused['uninit_regs'] |= d.extra_uninit_regs
                 # create list of arguments to call
                 regs = list(rused['read_regs']) + list(rused['uninit_regs'])
                 regs += list(rused['special_regs'])

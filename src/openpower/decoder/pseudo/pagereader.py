@@ -45,12 +45,14 @@ this translates to:
 """
 
 from openpower.util import log
+from openpower.decoder.orderedset import OrderedSet
 from collections import namedtuple, OrderedDict
 from copy import copy
 import os
 import re
 
-opfields = ("desc", "form", "opcode", "regs", "pcode", "sregs", "page")
+opfields = ("desc", "form", "opcode", "regs", "pcode", "sregs", "page",
+            "extra_uninit_regs")
 Ops = namedtuple("Ops", opfields)
 
 
@@ -302,6 +304,8 @@ class ISA:
                 print(repr(l))
             assert len(l) == 0, ("blank line not found %s" % l)
 
+            extra_uninit_regs = OrderedSet()
+
             # get pseudocode
 
             # fix parser line numbers by prepending the right number of
@@ -314,6 +318,13 @@ class ISA:
                 if len(l) == 0:
                     li.append(l)
                     break
+                re_match = re.fullmatch(r" *<!-- EXTRA_UNINIT_REGS:(.*)-->", l)
+                if re_match:
+                    for i in re_match[1].split(' '):
+                        if i != "":
+                            extra_uninit_regs.add(i)
+                    li.append("")
+                    continue
                 if l.strip().startswith('<!--'):
                     li.append("")
                     continue
@@ -321,6 +332,7 @@ class ISA:
                 l = l[4:]  # lose 4 spaces
                 li.append(l)
             d['pcode'] = li
+            d['extra_uninit_regs'] = extra_uninit_regs
 
             # "Special Registers Altered" expected
             l = lines.pop(0).rstrip()
