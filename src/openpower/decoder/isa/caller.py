@@ -2200,6 +2200,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             chk = rc_en or is_cr
             ffirst_hit = (yield from self.check_ffirst(info, chk, srcstep))
 
+        # check if a FP Exception occurred. TODO for DD-FFirst, check VLi
+        # and raise the exception *after* if VLi=1 but if VLi=0 then
+        # truncate and make the exception "disappear". 
         if self.FPSCR.FEX and (self.msr[MSRb.FE0] or self.msr[MSRb.FE1]):
             self.call_trap(0x700, PIb.FP)
             return
