@@ -110,6 +110,7 @@ XO-Form
 
 Pseudo-code:
 
+<!-- EXTRA_UNINIT_REGS: RT -->
     # based on xscvdpuxws
     reset_xflags()
     src <- bfp_CONVERT_FROM_BFP64((FRB))
@@ -227,6 +228,7 @@ XO-Form
 
 Pseudo-code:
 
+<!-- EXTRA_UNINIT_REGS: RT -->
     # based on xscvdpuxws
     reset_xflags()
     src <- bfp_CONVERT_FROM_BFP32(SINGLE((FRB)))
