@@ -292,7 +292,7 @@
     | PO   |  FRT |    TE    |   FRB |RMC|   XO |Rc |
     | PO   |  FRTp|    TE    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRT |   FRA    |   FRB |RMC|   XO |Rc |
-    | PO   |  RT  |   RA     |   RB  |sm |   XO |Rc |
+    | PO   |  RT  |   RA     |   RB  |SH |   XO |Rc |
     | PO   |  RT  |   RA     |   RB  |CY |   XO |Rc |
     | PO   |  FRTp|   FRA    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRTp|  FRAp    |  FRBp |RMC|   XO |Rc |
@@ -839,9 +839,6 @@
     SCi (11:31)
         SV Context Propagation immediate bitfield
         Formats: SVC
-    sm (21:22)
-        Immediate field used for selecting operands (shift mode)
-        Formats: Z23
     SRb (11:14)
         SV REMAP byte-reversal field.
         Formats: SVC
@@ -857,6 +854,9 @@
     SH (21:25)
         Field used to specify a shift amount.
         Formats: A
+    SH (21:22)
+        Immediate field used for selecting operands (shift mode)
+        Formats: Z23
     sh (30,16:20)
         Fields that are concatenated to specify a shift
         amount.
