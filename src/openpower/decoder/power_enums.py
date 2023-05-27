@@ -190,24 +190,32 @@ class SVPType(Enum):
     NONE = 0
     P1 = 1
     P2 = 2
+    P2M = 3 # for mixed EXTRA3/3/2 where MASK_SRC is RM[6,7,18]
 
     @classmethod
     def _missing_(cls, desc):
-        return {"1P": SVPType.P1, "2P": SVPType.P2}.get(desc)
+        return {"1P": SVPType.P1, "2P": SVPType.P2, "2PM": SVType.P2M}.get(desc)
 
     def __repr__(self):
         return {
             SVPType.NONE: "NONE",
             SVPType.P1: "1P",
             SVPType.P2: "2P",
+            SVPType.P2M: "2PM",
         }[self]
 
 
 @unique
 class SVEType(Enum):
+    """SVEType
+    * EXTRA2 : 0: [10,11] 1: [12,13] 2: [14,15] 3: [16,17] unused: [18]
+    * EXTRA3 : 0: [10,11,12] 1: [13,14,15] mask: [16,17,18] 
+    * EXTRA32: 0: [10,11,12] 1: [13,14,15] 2: [16,17] mask: [6,7,18]
+    """
     NONE = 0
     EXTRA2 = 1
     EXTRA3 = 2
+    EXTRA32 = 3 # mixed EXTRA3 and EXTRA2 using RM bits 6&7 for MASK_SRC
 
     def __repr__(self):
         return self.name
