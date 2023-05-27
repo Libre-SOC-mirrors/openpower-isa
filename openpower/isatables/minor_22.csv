@@ -27,9 +27,9 @@ opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry ou
 100--011001,VL,OP_SVSHAPE,NONE,NONE,NONE,NONE,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,svshape2,SVM2,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 # A/V bitmanip
 1101001110-,ALU,OP_AVGADD,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,avgadd,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
---01101110-,ALU,OP_SHADD,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,shadd,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
---10101110-,ALU,OP_SHADD,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,shaddw,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
---11101110-,ALU,OP_SHADD,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,shadduw,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+--01101110-,ALU,OP_SHADD,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,sadd,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+--10101110-,ALU,OP_SHADD,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,saddw,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+--11101110-,ALU,OP_SHADD,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,sadduw,Z23,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1011110110-,ALU,OP_ABSDIFF,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,absdu,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1001110110-,ALU,OP_ABSDIFF,RA,RB,NONE,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,absds,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 1111110110-,ALU,OP_ABSADD,RA,RB,RT,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,absdacu,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg

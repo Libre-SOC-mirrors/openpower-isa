@@ -1954,7 +1954,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
                        'fmvis', 'fishmv', 'pcdec', "maddedu", "divmod2du",
                        "dsld", "dsrd", "maddedus",
-                       "shadd", "shaddw", "shadduw",
+                       "sadd", "saddw", "sadduw",
                        "fcvttg", "fcvttgo", "fcvttgs", "fcvttgso",
                        "fmvtg", "fmvtgs",
                        "fcvtfg", "fcvtfgs",

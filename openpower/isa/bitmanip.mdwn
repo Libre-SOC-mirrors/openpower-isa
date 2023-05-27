@@ -105,13 +105,13 @@ Special Registers Altered:
 
 Z23-Form
 
-* shadd RT,RA,RB,sm (Rc=0)
-* shadd. RT,RA,RB,sm (Rc=1)
+* sadd RT,RA,RB,SH (Rc=0)
+* sadd. RT,RA,RB,SH (Rc=1)
 
 Pseudo-code:
 
     n <- (RB)
-    m <- ((0b0 || sm) + 1)
+    m <- ((0b0 || SH) + 1)
     RT <- (n[m:XLEN-1] || [0]*m) + (RA)
 
 Special Registers Altered:
@@ -122,15 +122,15 @@ Special Registers Altered:
 
 Z23-Form
 
-* shaddw RT,RA,RB,sm (Rc=0)
-* shaddw. RT,RA,RB,sm (Rc=1)
+* saddw RT,RA,RB,SH (Rc=0)
+* saddw. RT,RA,RB,SH (Rc=1)
 
 Pseudo-code:
 
     n <- ([0]*(XLEN/2)) || (RB)[XLEN/2:XLEN-1]
     if (RB)[XLEN/2] = 1 then
         n[0:XLEN/2-1] <- [1]*(XLEN/2)
-    m <- ((0b0 || sm) + 1)
+    m <- ((0b0 || SH) + 1)
     RT <- (n[m:XLEN-1] || [0]*m) + (RA)
 
 Special Registers Altered:
@@ -141,13 +141,13 @@ Special Registers Altered:
 
 Z23-Form
 
-* shadduw RT,RA,RB,sm (Rc=0)
-* shadduw. RT,RA,RB,sm (Rc=1)
+* sadduw RT,RA,RB,SH (Rc=0)
+* sadduw. RT,RA,RB,SH (Rc=1)
 
 Pseudo-code:
 
     n <- ([0]*(XLEN/2)) || (RB)[XLEN/2:XLEN-1]
-    m <- ((0b0 || sm) + 1)
+    m <- ((0b0 || SH) + 1)
     RT <- (n[m:XLEN-1] || [0]*m) + (RA)
 
 Special Registers Altered:
