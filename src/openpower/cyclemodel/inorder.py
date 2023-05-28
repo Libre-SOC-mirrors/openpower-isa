@@ -89,6 +89,19 @@ def read_file(fname):
     if not is_file:
         fname.close()
 
+    # TODO: Determine from Hazard() object
+def get_input_regs(hazard):
+    if hazard.action == 'r':
+        # return the reg to be read
+        return (hazard.target, hazard.ident)
+    return None
+
+def get_output_regs(hazard):
+    if hazard.action == 'w':
+        # return the reg to be read
+        return (hazard.target, hazard.ident)
+    return None
+
 
 class RegisterWrite:
     """
@@ -161,13 +174,14 @@ class Fetch:
     def tick(self):
         self.stages[0] = None
 
-    def process_instructions(self, stall):
+    #TODO: rename 'trace', temp name
+    def process_instructions(self, stall, trace):
         if stall: return stall
         insn = self.stages[0] # get current instruction
         if insn is not None:
-            self.cpu.decode.add_instructions(insn) # pass on instruction
+            self.cpu.decode.add_instruction(insn) # pass on instruction
         # read from log file, write into self.stages[0]
-        # XXX TODO
+        self.stages = trace
         return stall
 
 
@@ -205,7 +219,6 @@ class Decode:
         # now pass the instruction on to Issue
         self.cpu.issue.add_instruction(insn, writeregs)
         return stall
-
 
 class Issue:
     """
@@ -279,6 +292,8 @@ class CPU:
 class TestTrace(unittest.TestCase):
 
     def test_trace(self): # TODO, assert this is valid
+        basic_cpu = CPU()
+
         lines = (
             "r:GPR:0:0:64 w:GPR:1:0:64              # addi 1, 0, 0x0010",
             "r:GPR:0:0:64 w:GPR:2:0:64              # addi 2, 0, 0x1234",
@@ -293,6 +308,10 @@ class TestTrace(unittest.TestCase):
         lines = read_file(f)
         for trace in lines:
             print(trace)
+            # TODO: Only checking the fetch step,
+            # change to cpu.process_instructions() once working
+            #basic_cpu.stall = basic_cpu.fetch.process_instructions(
+            #                  basic_cpu.stall, trace)
 
 def help():
     print ("-t             runs unit tests")
