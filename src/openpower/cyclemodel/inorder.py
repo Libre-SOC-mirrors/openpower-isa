@@ -181,7 +181,7 @@ class Fetch:
         if insn is not None:
             self.cpu.decode.add_instruction(insn) # pass on instruction
         # read from log file, write into self.stages[0]
-        self.stages = trace
+        self.stages[0] = trace
         return stall
 
 
@@ -266,7 +266,7 @@ class CPU:
             possible.add(r.pop())
         return possible
 
-    def writess_possible(self, regs):
+    def writes_possible(self, regs):
         # TODO: subdivide this down by GPR FPR CR-field.
         # currently assumes total of 1 reg is possible regardless of what it is
         possible = set()
