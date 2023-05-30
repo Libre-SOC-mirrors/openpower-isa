@@ -408,6 +408,17 @@ class SVP64Record:
         Find the index slot that came from the CSV file for this
         reg (RA/RB/BA/etc) and direction (source/dest).
         """
+        aliases = {
+            _SVExtraReg.RSp: _SVExtraReg.RS,
+            _SVExtraReg.RTp: _SVExtraReg.RT,
+            _SVExtraReg.FRAp: _SVExtraReg.FRA,
+            _SVExtraReg.FRBp: _SVExtraReg.FRB,
+            _SVExtraReg.FRSp: _SVExtraReg.FRS,
+            _SVExtraReg.FRTp: _SVExtraReg.FRT,
+            _SVExtraReg.RA_OR_ZERO: _SVExtraReg.RA,
+            _SVExtraReg.RT_OR_ZERO: _SVExtraReg.RT,
+        }
+
         extra_idx = (
             _SVExtra.Idx0,
             _SVExtra.Idx1,
@@ -441,6 +452,7 @@ class SVP64Record:
         for (rtype, regs) in extra_map.items():
             if rtype != regtype:
                 continue
+            reg = aliases.get(reg, reg)
             extra = regs.get(reg, _SVExtra.NONE)
             if extra is not _SVExtra.NONE:
                 yield extra
@@ -1234,12 +1246,8 @@ class ExtendableOperand(DynamicOperand):
     def sv_spec_leave(self, value, span, origin_value, origin_span):
         return (value, span)
 
-    @property
-    def extra_reg(self):
-        return _SVExtraReg(self.name)
-
-    @property
-    def extra_idx(self):
+    @cached_property
+    def extras(self):
         pairs = {
             _SVExtraReg.RSp: _SVExtraReg.RS,
             _SVExtraReg.RTp: _SVExtraReg.RT,
@@ -1248,6 +1256,13 @@ class ExtendableOperand(DynamicOperand):
             _SVExtraReg.FRSp: _SVExtraReg.FRS,
             _SVExtraReg.FRTp: _SVExtraReg.FRT,
         }
+        zeros = {
+            _SVExtraReg.RA_OR_ZERO: _SVExtraReg.RA,
+            _SVExtraReg.RT_OR_ZERO: _SVExtraReg.RT,
+        }
+        aliases = {}
+        aliases.update(pairs)
+        aliases.update(zeros)
 
         keys = {}
         for key in ("in1", "in2", "in3", "cr_in", "cr_in2"):
@@ -1258,18 +1273,45 @@ class ExtendableOperand(DynamicOperand):
         if regtype is None:
             raise KeyError(key)
 
-        found = {} # prevent duplicates.
+        records = {}
         for (key, regtype) in keys.items():
             extra_reg = self.record.svp64.extra_reg(key=key)
-            this_extra_reg = pairs.get(self.extra_reg, self.extra_reg)
-            that_extra_reg = pairs.get(extra_reg, extra_reg)
+            this_extra_reg = aliases.get(self.extra_reg, self.extra_reg)
+            that_extra_reg = aliases.get(extra_reg, extra_reg)
             if this_extra_reg is that_extra_reg:
-                bits = tuple(self.record.extra_idx(key=key, regtype=regtype))
-                if this_extra_reg in found:
-                    assert found[this_extra_reg] == bits # check identical bits
-                    continue                             # skip - already found
-                yield from bits                          # yield the idx
-                found[this_extra_reg] = bits             # skip next time round
+                extra_idx = tuple(self.record.extra_idx(key=key, regtype=regtype))
+                records[key] = (extra_reg, extra_idx)
+
+        for (key, (origin, extra_idx)) in tuple(records.items()):
+            for aliases in (pairs, zeros):
+                alias = aliases.get(origin)
+                for (key, (current, extra_idx)) in tuple(records.items()):
+                    if current is alias:
+                        records[key] = (origin, extra_idx)
+
+        extra_regs = set()
+        extra_idxs = set()
+        keys = tuple(records.keys())
+        for (extra_reg, extra_idx) in records.values():
+            extra_regs.add(extra_reg)
+            extra_idxs.add(extra_idx)
+        if len(extra_regs) != 1:
+            raise ValueError(extra_regs)
+        if len(extra_idxs) != 1:
+            raise ValueError(extra_regs)
+
+        extra_reg = extra_regs.pop()
+        extra_idx = extra_idxs.pop()
+
+        return (keys, extra_reg, extra_idx)
+
+    @property
+    def extra_idx(self):
+        yield from self.extras[2]
+
+    @property
+    def extra_reg(self):
+        return _SVExtraReg(self.name)
 
     def remap(self, value, vector):
         raise NotImplementedError()
