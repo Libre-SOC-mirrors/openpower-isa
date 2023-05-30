@@ -22,10 +22,12 @@ methods, the use of yield from/yield is required.
 """
 
 
-from openpower.decoder.power_enums import XER_bits
+from openpower.decoder.power_enums import XER_bits, SPRfull
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.util import log
 from openpower.fpscr import FPSCRState
+from openpower.decoder.selectable_int import SelectableInt
+from openpower.consts import DEFAULT_MSR
 import os
 import sys
 from copy import deepcopy
@@ -62,6 +64,59 @@ class StateRunner:
         if False: yield
 
 
+class StateSPRs:
+    KEYS = tuple(i for i in SPRfull if i != SPRfull.XER)
+
+    def __init__(self, values=None):
+        self.__values = {k: 0 for k in StateSPRs.KEYS}
+        if values is not None:
+            for k, v in values.items():
+                self[k] = v
+
+    @staticmethod
+    def __key(k, raise_if_invalid=True):
+        try:
+            if isinstance(k, str):
+                retval = SPRfull.__members__[k]
+            else:
+                retval = SPRfull(k)
+        except (ValueError, KeyError):
+            retval = None
+        if retval == SPRfull.XER:  # XER is not stored in StateSPRs
+            retval = None
+        if retval is None and raise_if_invalid:
+            raise KeyError(k)
+        return retval
+
+    def items(self):
+        for k in StateSPRs.KEYS:
+            yield (k, self[k])
+
+    def __iter__(self):
+        return iter(StateSPRs.KEYS)
+
+    def __len__(self):
+        return len(StateSPRs.KEYS)
+
+    def __contains__(self, k):
+        return self.__key(k, raise_if_invalid=False) is not None
+
+    def __getitem__(self, k):
+        return self.__values[self.__key(k)]
+
+    def __setitem__(self, k, v):
+        k = self.__key(k)
+        if v is not None:
+            v = int(v)
+        self.__values[k] = v
+
+    def nonzero(self):
+        return {k: v for k, v in self.__values.items() if v != 0}
+
+    def __repr__(self):
+        return repr(self.nonzero())
+
+
 class State:
     """State: Base class for the "state" of the Power ISA object to be tested
     including methods to compare various registers and memory between
@@ -71,8 +126,20 @@ class State:
 
     GPRs and CRs - stored as lists
     XERs/PC - simple members
+        SO/CA[32]/OV[32] are stored in so/ca/ov members,
+        xer_other is all other XER bits.
+    SPRs - stored in self.sprs as a StateSPRs
     memory - stored as a dictionary {location: data}
     """
+
+    @property
+    def sprs(self):
+        return self.__sprs
+
+    @sprs.setter
+    def sprs(self, value):
+        self.__sprs = StateSPRs(value)
+
     def get_state(self):
         yield from self.get_fpscr()
         yield from self.get_fpregs()
@@ -80,6 +147,8 @@ class State:
         yield from self.get_crregs()
         yield from self.get_xregs()
         yield from self.get_pc()
+        yield from self.get_msr()
+        yield from self.get_sprs()
         yield from self.get_mem()
 
     def compare(self, s2):
@@ -127,6 +196,11 @@ class State:
         if self.ca is not None and s2.ca is not None:
             self.dut.assertEqual(self.ca, s2.ca, "ca mismatch (%s != %s) %s" %
                 (self.state_type, s2.state_type, repr(self.code)))
+        if self.xer_other is not None and s2.xer_other is not None:
+            self.dut.assertEqual(
+                hex(self.xer_other), hex(s2.xer_other),
+                "xer_other mismatch (%s != %s) %s" %
+                (self.state_type, s2.state_type, repr(self.code)))
 
         # pc
         self.dut.assertEqual(self.pc, s2.pc, "pc mismatch (%s != %s) %s" %
@@ -154,6 +228,25 @@ class State:
                         (self.state_type, s2.state_type, repr(self.code)))
                 finally:
                     self.dut.maxDiff = old_max_diff
+
+        for spr in self.sprs:
+            spr1 = self.sprs[spr]
+            spr2 = s2.sprs[spr]
+
+            if spr1 == spr2:
+                continue
+
+            if spr1 is not None and spr2 is not None:
+                # if not explicitly ignored
+
+                self.dut.fail(
+                    f"{spr1:#x} != {spr2:#x}: {spr} mismatch "
+                    f"({self.state_type} != {s2.state_type}) {self.code!r}\n")
+
+        if self.msr is not None and s2.msr is not None:
+            self.dut.assertEqual(
+                hex(self.msr), hex(s2.msr), "msr mismatch (%s != %s) %s" %
+                (self.state_type, s2.state_type, repr(self.code)))
 
     def compare_mem(self, s2):
         # copy dics to preserve state mem then pad empty locs since
@@ -206,6 +299,20 @@ class State:
             sout.write("%se.ov = 0x%x\n" % (lindent, self.ov))
         if(self.ca != 0):
             sout.write("%se.ca = 0x%x\n" % (lindent, self.ca))
+        if self.xer_other != 0:
+            sout.write("%se.xer_other = 0x%x\n" % (lindent, self.xer_other))
+
+        # FPSCR
+        if self.fpscr != 0:
+            sout.write(f"{lindent}e.fpscr = {self.fpscr:#x}\n")
+
+        # SPRs
+        for k, v in self.sprs.nonzero().items():
+            sout.write(f"{lindent}e.sprs[{k.name!r}] = {v:#x}\n")
+
+        # MSR
+        if self.msr != 0:
+            sout.write(f"{lindent}e.msr = {self.msr:#x}\n")
 
         if sout != sys.stdout:
             sout.close()
@@ -238,8 +345,14 @@ class SimState(State):
     def get_fpscr(self):
         if False:
             yield
-        self.fpscr = self.sim.fpscr.value
+        self.fpscr = int(self.sim.fpscr)
         log("class sim fpscr", hex(self.fpscr))
+
+    def get_msr(self):
+        if False:
+            yield
+        self.msr = int(self.sim.msr)
+        log("class sim msr", hex(self.msr))
 
     def get_intregs(self):
         if False:
@@ -264,8 +377,33 @@ class SimState(State):
         self.ca32 = self.sim.spr['XER'][XER_bits['CA32']].value
         self.ov = self.ov | (self.ov32 << 1)
         self.ca = self.ca | (self.ca32 << 1)
+        xer_other = SelectableInt(self.sim.spr['XER'])
+        for i in 'SO', 'OV', 'OV32', 'CA', 'CA32':
+            xer_other[XER_bits[i]] = 0
+        self.xer_other = int(xer_other)
         self.xregs.extend((self.so, self.ov, self.ca))
         log("class sim xregs", list(map(hex, self.xregs)))
+
+    def get_sprs(self):
+        if False:
+            yield
+        self.sprs = StateSPRs()
+        for spr in self.sprs:
+            # hacky workaround to workaround luke's hack in caller.py that
+            # aliases HSRR[01] to SRR[01] -- we temporarily clear SRR[01] while
+            # trying to read HSRR[01]
+            clear_srr = spr == SPRfull.HSRR0 or spr == SPRfull.HSRR1
+            if clear_srr:
+                old_srr0 = self.sim.spr['SRR0']
+                old_srr1 = self.sim.spr['SRR1']
+                self.sim.spr['SRR0'] = 0
+                self.sim.spr['SRR1'] = 0
+
+            self.sprs[spr] = self.sim.spr[spr.name]  # setitem converts to int
+
+            if clear_srr:
+                self.sim.spr['SRR0'] = old_srr0
+                self.sim.spr['SRR1'] = old_srr1
 
     def get_pc(self):
         if False:
@@ -298,7 +436,8 @@ class ExpectedState(State):
     see openpower/test/shift_rot/shift_rot_cases2.py for examples
     """
     def __init__(self, int_regs=None, pc=0, crregs=None,
-                 so=0, ov=0, ca=0, fp_regs=None, fpscr=0):
+                 so=0, ov=0, ca=0, fp_regs=None, fpscr=0, sprs=None,
+                 msr=DEFAULT_MSR, xer_other=0):
         if fp_regs is None:
             fp_regs = 32
         if isinstance(fp_regs, int):
@@ -319,6 +458,9 @@ class ExpectedState(State):
         self.so = so
         self.ov = ov
         self.ca = ca
+        self.xer_other = xer_other
+        self.sprs = StateSPRs(sprs)
+        self.msr = msr
 
     def get_fpregs(self):
         if False: yield
@@ -332,6 +474,15 @@ class ExpectedState(State):
         if False: yield
     def get_pc(self):
         if False: yield
+
+    def get_msr(self):
+        if False:
+            yield
+
+    def get_sprs(self):
+        if False:
+            yield
+
     def get_mem(self):
         if False: yield
 

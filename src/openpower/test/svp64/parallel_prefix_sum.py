@@ -25,6 +25,8 @@ class ParallelPrefixSumCases(TestAccumulatorBase):
             "sv.add *10, *10, *10",
         ])), False)
         e = ExpectedState(pc=0x10, int_regs=gprs)
+        e.sprs['SVSHAPE0'] = 0x1c00000a
+        e.sprs['SVSHAPE1'] = 0x1c00000e
         for i, v in enumerate(expected):
             e.intregs[i + 10] = v
         self.add_case(prog, gprs, expected=e)
@@ -48,6 +50,8 @@ class ParallelPrefixSumCases(TestAccumulatorBase):
             "sv.subf *10, *10, *10",
         ])), False)
         e = ExpectedState(pc=0x10, int_regs=gprs)
+        e.sprs['SVSHAPE0'] = 0x1c00000a
+        e.sprs['SVSHAPE1'] = 0x1c00000e
         for i, v in enumerate(expected):
             e.intregs[i + 10] = v
         self.add_case(prog, gprs, expected=e)

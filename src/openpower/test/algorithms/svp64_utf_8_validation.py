@@ -359,9 +359,11 @@ class SVP64UTF8ValidationTestCase(TestAccumulatorBase):
         for i, v in enumerate(SECOND_BYTE_HIGH_NIBBLE_LUT):
             initial_mem[i + SECOND_BYTE_HIGH_NIBBLE_LUT_ADDR] = int(v), 1
         stop_at_pc = 0x10000000
-        initial_sprs = {8: SelectableInt(stop_at_pc, 64)}
+        initial_sprs = {8: stop_at_pc}
+        sprs = initial_sprs.copy()
+        sprs['SVSHAPE0'] = None
         e = ExpectedState(pc=stop_at_pc, int_regs=4, crregs=0, fp_regs=0,
-                          so=None, ov=None, ca=None)
+                          so=None, ov=None, ca=None, sprs=sprs)
         e.intregs[:3] = initial_regs[:3]
         e.intregs[3] = expected
         with self.subTest(data=data, expected=expected):

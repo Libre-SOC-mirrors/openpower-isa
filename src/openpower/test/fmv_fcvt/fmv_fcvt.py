@@ -136,7 +136,9 @@ class FMvFCvtCases(TestAccumulatorBase):
                 # https://bugs.libre-soc.org/show_bug.cgi?id=1087#c21
                 expected = e.intregs[3]
                 e.pc = 0x700
-                # MSR and other SPRS not tested by ExpectedState
+                e.sprs['SRR0'] = 0  # insn is at address 0
+                e.sprs['SRR1'] = e.msr | (1 << (63 - 43))
+                e.msr = 0x9000000000000001
             lt = bool(expected & (1 << 63))
             gt = not lt and expected != 0
             eq = expected == 0
@@ -150,8 +152,7 @@ class FMvFCvtCases(TestAccumulatorBase):
                 e.fpscr = int(fpscr)
                 self.add_case(
                     _cached_program(*lst), gprs, fpregs=fprs, expected=e,
-                    initial_fpscr=int(initial_fpscr),
-                    initial_msr=(1 << MSR.FE0) | (1 << MSR.FE1))
+                    initial_fpscr=int(initial_fpscr))
 
     def toint(self, inp, expected=None, test_title="", inp_bits=None,
               signed=True, _32bit=True):
