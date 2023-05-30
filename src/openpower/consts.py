@@ -132,6 +132,9 @@ class MSRb(_Const):
 # use this inside the HDL (where everything is little-endian)
 MSR = _ConstLE("MSR", names=MSRb, msb=63)
 
+# default MSR value for unit tests, since 0 isn't a good default
+DEFAULT_MSR = sum(1 << i for i in (
+    MSR.SF, MSR.HV, MSR.FP, MSR.FE0, MSR.FE1, MSR.RI, MSR.LE))
 
 # Listed in V3.0B Book III 7.5.9 "Program Interrupt"
 
@@ -348,4 +351,7 @@ class XERRegsEnum:
 
 
 if __name__ == '__main__':
-    print ("EXTRA2 pack", EXTRA2.PACK_en, EXTRA2.PACK_en.value)
+    print("EXTRA2 pack", EXTRA2.PACK_en, EXTRA2.PACK_en.value)
+    for field in MSR:
+        if DEFAULT_MSR & (1 << field.value):
+            print(field)

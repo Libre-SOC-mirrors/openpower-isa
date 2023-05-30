@@ -12,7 +12,7 @@ import os
 from openpower.decoder.power_enums import XER_bits, CryIn, spr_dict
 from openpower.util import LogKind, log, \
     fast_reg_to_spr, slow_reg_to_spr  # HACK!
-from openpower.consts import XERRegsEnum
+from openpower.consts import XERRegsEnum, DEFAULT_MSR
 
 
 # TODO: make this a util routine (somewhere)
@@ -116,7 +116,7 @@ class TestAccumulatorBase:
             self.__subtest_args = old_subtest_args
 
     def add_case(self, prog, initial_regs=None, initial_sprs=None,
-                 initial_cr=0, initial_msr=0,
+                 initial_cr=0, initial_msr=DEFAULT_MSR,
                  initial_mem=None,
                  initial_svstate=0,
                  expected=None,
