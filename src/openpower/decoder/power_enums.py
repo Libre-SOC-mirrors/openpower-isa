@@ -241,12 +241,12 @@ class SVExtra(Enum):
 
     def __repr__(self):
         return {
-            SVExtra.NONE: "NONE",
-            SVExtra.Idx0: "[0]",
-            SVExtra.Idx1: "[1]",
-            SVExtra.Idx2: "[2]",
-            SVExtra.Idx3: "[3]",
-            SVExtra.Idx_1_2: "[1:2]",
+            SVExtra.NONE: "none",
+            SVExtra.Idx0: "extra0",
+            SVExtra.Idx1: "extra1",
+            SVExtra.Idx2: "extra2",
+            SVExtra.Idx3: "extra3",
+            SVExtra.Idx_1_2: "extra1/extra2",
         }[self]
 
 # Backward compatibility
