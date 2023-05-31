@@ -327,6 +327,17 @@ class Reg(Enum):
             Reg.RT_OR_ZERO,
         ))
 
+    @property
+    def pair(self):
+        return (self in (
+            Reg.RSp,
+            Reg.RTp,
+            Reg.FRAp,
+            Reg.FRBp,
+            Reg.FRSp,
+            Reg.FRTp,
+        ))
+
 
 @unique
 class SVP64PredMode(Enum):
