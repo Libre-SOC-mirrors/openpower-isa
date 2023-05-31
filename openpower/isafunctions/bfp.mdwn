@@ -74,6 +74,62 @@ section 7.6.2.2
             result.significand[1:52] <- fraction
         return result
 
+    def bfp_CONVERT_FROM_BFP32(x):
+        # x is a floating-point value represented in single-precision format.
+        exponent <- x[1:8]
+        fraction <- x[9:31]
+
+        result <- BFPState()
+        result.sign <- 0
+        result.exponent <- 0
+        result.significand <- 0
+        result.class.SNaN <- 0
+        result.class.QNaN <- 0
+        result.class.Infinity <- 0
+        result.class.Zero <- 0
+        result.class.Denormal <- 0
+        result.class.Normal <- 0
+        if (exponent = 255) & (fraction[0] = 0) & (fraction != 0) then
+            # x is a SNaN
+            result.class.SNaN <- 1
+            result.sign <- x[0]
+            result.significand[0] <- 0
+            result.significand[1:23] <- fraction
+        else if (exponent = 255) & (fraction[0] != 0) & (fraction != 0) then
+            # x is a QNaN
+            result.class.QNaN <- 1
+            result.sign <- x[0]
+            result.significand[0] <- 0
+            result.significand[1:23] <- fraction
+        else if (exponent = 255) & (fraction = 0) then
+            # is an Infinity
+            result.class.Infinity <- 1
+            result.sign <- x[0]
+        else if (exponent = 0) & (fraction = 0) then
+            # x is a Zero
+            result.class.Zero <- 1
+            result.sign <- x[0]
+        else if (exponent = 0) & (fraction != 0) then
+            # x is a Denormal
+            result.class.Denormal <- 1
+            result.sign <- x[0]
+            result.exponent <- -126
+            result.significand[0] <- 0
+            result.significand[1:23] <- fraction
+            do while result.significand[0] != 1
+                result.significand <- result.significand * 2
+                result.exponent <- result.exponent - 1
+        else
+            result.class.Normal <- 1
+            result.sign <- x[0]
+            result.exponent <- exponent
+            # have to do the subtraction separately since SelectableInt won't
+            # give negative results
+            result.exponent <- result.exponent - 127
+            result.significand[0] <- 1
+            result.significand[1:23] <- fraction
+        return result
+
     def bfp_CONVERT_FROM_SI32(x):
         # x is an integer value represented in signed word integer format.
 
@@ -653,6 +709,38 @@ section 7.6.2.2
             result[12:63] <- x.significand[1:52]
         return result
 
+    def bfp32_CONVERT_FROM_BFP(x):
+        # x is a floating-point value represented in the binary floating-point
+        # working format.
+
+        result <- [0] * 32
+        if x.class.QNaN = 1 then
+            result[0] <- x.sign
+            result[1:8] <- 0b1111_1111
+            result[9:31] <- x.significand[1:23]
+        else if x.class.Infinity = 1 then
+            result[0] <- x.sign
+            result[1:9] <- 0b1111_1111
+            result[9:31] <- 0
+        else if x.class.Zero = 1 then
+            result[0] <- x.sign
+            result[1:31] <- 0
+        else if (x.exponent < -126) & (FPSCR.UE = 0) then
+            result[0] <- x.sign
+            sh_cnt <- -126 - x.exponent
+            result[1:8] <- 0b0000_0000
+            # TODO: spec says this is shift right
+            result[9:31] <- x.significand[1:23] / pow(2, sh_cnt)
+        else if (x.exponent < -126) & (FPSCR.UE = 1) then
+            result[0:31] <- undefined(0)  # TODO: which undefined value to use?
+        else if (x.exponent > 127) & (FPSCR.OE = 1) then
+            result[0:31] <- undefined(0)  # TODO: which undefined value to use?
+        else
+            result[0] <- x.sign
+            result[1:8] <- x.exponent + 127
+            result[9:31] <- x.significand[1:23]
+        return result
+
     def bfp_ROUND_TO_BFP64(ro, rmode, x):
         # x is a normalized binary floating-point value that is represented in
         # the binary floating-point working format and has unbounded exponent
@@ -713,6 +801,73 @@ section 7.6.2.2
             else
                 r.exponent <- r.exponent - 1536
                 ox_flag <- 1
+        return r
+
+    def bfp_ROUND_TO_BFP32(rmode,x):
+        # x is a normalized binary floating-point value that is represented in
+        # the binary floating-point working format and has unbounded exponent
+        # range and significand precision.
+        #
+        # rmode is a 2-bit integer value specifying one of four rounding modes.
+        #
+        # rmode=0b00 Round to Nearest Even
+        # rmode=0b01 Round towards Zero
+        # rmode=0b10 Round towards +Infinity
+        # rmode=0b11 Round towards - Infinity
+        #
+        # If x is a QNaN, Infinity, or Zero, return x. Otherwise, if x is an
+        # SNaN, set vxsnan_flag to 1 and return the corresponding QNaN
+        # representation of x. Otherwise, return the value x rounded to
+        # single-precision format’s exponent range and significand precision
+        # represented in the floating-point working format using the rounding
+        # mode specified by rmode.
+
+        if x.class.SNaN then
+            vxsnan_flag <- 1
+            return bfp_QUIET(x)
+
+        if x.class.QNaN then return x
+        if x.class.Infinity then return x
+        if x.class.Zero then return x
+
+        if bfp_COMPARE_LT(bfp_ABSOLUTE(x), bfp_NMIN_BFP32()) then
+            x <- bfp_DENORM(-126,x)
+            if rmode = 0b00 then r <- bfp_ROUND_NEAR_EVEN(24, x)
+            if rmode = 0b01 then r <- bfp_ROUND_TRUNC(24, x)
+            if rmode = 0b10 then r <- bfp_ROUND_CEIL(24, x)
+            if rmode = 0b11 then r <- bfp_ROUND_FLOOR(24, x)
+            if FPSCR.UE = 0 then
+                ux_flag <- xx_flag
+                return r
+            else
+                x.exponent <- x.exponent + 192
+                ux_flag <- 0b1
+
+        if rmode = 0b00 then r <- bfp_ROUND_NEAR_EVEN(24, x)
+        if rmode = 0b01 then r <- bfp_ROUND_TRUNC(24, x)
+        if rmode = 0b10 then r <- bfp_ROUND_CEIL(24, x)
+        if rmode = 0b11 then r <- bfp_ROUND_FLOOR(24, x)
+
+        if bfp_COMPARE_GT(bfp_ABSOLUTE(r), bfp_NMAX_BFP32()) then
+            if FPSCR.OE = 0 then
+                if x.sign then
+                    if rmode=0b00 then r <- bfp_INFINITY()
+                    if rmode=0b01 then r <- bfp_NMAX_BFP32()
+                    if rmode=0b10 then r <- bfp_NMAX_BFP32()
+                    if rmode=0b11 then r <- bfp_INFINITY()
+                else
+                    if rmode=0b00 then r <- bfp_INFINITY()
+                    if rmode=0b01 then r <- bfp_NMAX_BFP32()
+                    if rmode=0b10 then r <- bfp_INFINITY()
+                    if rmode=0b11 then r <- bfp_NMAX_BFP32()
+                r.sign <- x.sign
+                ox_flag <- 0b1
+                xx_flag <- 0b1
+                inc_flag <- undefined(0)  # TODO: which undefined value to use?
+                return r
+            else
+                r.exponent <- r.exponent - 192
+                ox_flag <- 0b1
         return r
 
     def bfp_INFINITY():
@@ -944,6 +1099,22 @@ section 7.6.2.2
         # Return the 5-bit code that specifies the sign and class of x.
 
         v <- bfp_CONVERT_FROM_BFP64(x)
+        if v.class.QNaN then return 0b10001
+        if (v.sign = 1) & v.class.Infinity then return 0b01001
+        if (v.sign = 0) & v.class.Infinity then return 0b00101
+        if (v.sign = 1) & v.class.Zero then return 0b10010
+        if (v.sign = 0) & v.class.Zero then return 0b00010
+        if (v.sign = 1) & v.class.Denormal then return 0b11000
+        if (v.sign = 0) & v.class.Denormal then return 0b10100
+        if (v.sign = 1) & v.class.Normal then return 0b01000
+        if (v.sign = 0) & v.class.Normal then return 0b00100
+
+    def fprf_CLASS_BFP32(x):
+        # x is a floating-point value represented in single-precision format.
+        #
+        # Return the 5-bit code that specifies the sign and class of x.
+
+        v <- bfp_CONVERT_FROM_BFP32(x)
         if v.class.QNaN then return 0b10001
         if (v.sign = 1) & v.class.Infinity then return 0b01001
         if (v.sign = 0) & v.class.Infinity then return 0b00101
