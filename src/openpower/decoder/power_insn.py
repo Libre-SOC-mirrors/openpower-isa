@@ -34,10 +34,10 @@ from openpower.decoder.power_enums import (
     SVMode as _SVMode,
     SVPType as _SVPType,
     SVExtra as _SVExtra,
+    Reg as _Reg,
     RegType as _RegType,
     SVP64RMMode as _SVP64RMMode,
     SelType as _SelType,
-    SVExtraReg as _SVExtraReg,
     SVP64SubVL as _SVP64SubVL,
     SVP64Pred as _SVP64Pred,
     SVP64PredMode as _SVP64PredMode,
@@ -320,7 +320,7 @@ class SVP64Record:
             @_dataclasses.dataclass(eq=True, frozen=True)
             class Entry:
                 seltype: _SelType = _SelType.NONE
-                reg: _SVExtraReg = _SVExtraReg.NONE
+                reg: _Reg = _Reg.NONE
 
                 def __repr__(self):
                     return f"{self.seltype.value}:{self.reg.name}"
@@ -330,7 +330,7 @@ class SVP64Record:
                     def transform(value):
                         (seltype, reg) = value.split(":")
                         seltype = _SelType(seltype)
-                        reg = _SVExtraReg(reg)
+                        reg = _Reg(reg)
                         return cls.Entry(seltype=seltype, reg=reg)
 
                     if value == "0":
@@ -437,7 +437,7 @@ class SVP64Record:
         seltypes = {}
         for key in keys:
             sel = sels[key] = getattr(self, key)
-            reg = regs[key] = _SVExtraReg(sel)
+            reg = regs[key] = _Reg(sel)
             seltypes[key] = _SelType.NONE
             idxs[key] = _SVExtra.NONE
             for (reg, seltype, idx) in extra(reg.alias):
@@ -452,7 +452,7 @@ class SVP64Record:
             sels["cr_in2"] = _CRIn2Sel.BB
             idxs["cr_in2"] = idxs["cr_in"]
             for key in ("cr_in", "cr_in2"):
-                regs[key] = _SVExtraReg(sels[key])
+                regs[key] = _Reg(sels[key])
                 seltype[key] = _SelType.SRC
 
         records = {}
@@ -610,14 +610,14 @@ class Fields:
 
 class Operands:
     __GPR_PAIRS = (
-        _SVExtraReg.RTp,
-        _SVExtraReg.RSp,
+        _Reg.RTp,
+        _Reg.RSp,
     )
     __FPR_PAIRS = (
-        _SVExtraReg.FRAp,
-        _SVExtraReg.FRBp,
-        _SVExtraReg.FRSp,
-        _SVExtraReg.FRTp,
+        _Reg.FRAp,
+        _Reg.FRBp,
+        _Reg.FRSp,
+        _Reg.FRTp,
     )
 
     def __init__(self, insn, operands):
@@ -685,8 +685,8 @@ class Operands:
                     cls = custom_insns[insn][name]
                 elif name in custom_fields:
                     cls = custom_fields[name]
-                elif name in _SVExtraReg.__members__:
-                    reg = _SVExtraReg[name]
+                elif name in _Reg.__members__:
+                    reg = _Reg[name]
                     if reg in self.__class__.__GPR_PAIRS:
                         cls = GPRPairOperand
                     elif reg in self.__class__.__FPR_PAIRS:
@@ -1247,7 +1247,7 @@ class ExtendableOperand(DynamicOperand):
 
     @cached_property
     def extra_reg(self):
-        return _SVExtraReg(self.name)
+        return _Reg(self.name)
 
     def remap(self, value, vector):
         raise NotImplementedError()
