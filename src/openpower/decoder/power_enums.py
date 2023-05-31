@@ -974,6 +974,12 @@ class In1Sel(Enum):
     CIA = 8 # for addpcis
     RT = 9
 
+    @property
+    def type(self):
+        if self is In1Sel.NONE:
+            return SelType.NONE
+        return SelType.SRC
+
 
 class In2Sel(Enum):
     NONE = 0
@@ -999,6 +1005,12 @@ class In2Sel(Enum):
     CONST_DXHI4 = 18 # for addpcis
     CONST_DQ = 19 # for ld/st-quad
 
+    @property
+    def type(self):
+        if self is In2Sel.NONE:
+            return SelType.NONE
+        return SelType.SRC
+
 
 class In3Sel(Enum):
     NONE = 0
@@ -1012,6 +1024,12 @@ class In3Sel(Enum):
     RT = 6  # for ternlog[i]
     RTp = RT
     FRA = 7
+
+    @property
+    def type(self):
+        if self is In3Sel.NONE:
+            return SelType.NONE
+        return SelType.SRC
 
 
 class OutSel(Enum):
@@ -1028,6 +1046,12 @@ class OutSel(Enum):
     RS = 7
     RSp = RS
     FRA = 8
+
+    @property
+    def type(self):
+        if self is OutSel.NONE:
+            return SelType.NONE
+        return SelType.DST
 
 
 @unique
@@ -1078,11 +1102,23 @@ class CRInSel(Enum):
     CR1 = 7
     BA = 8
 
+    @property
+    def type(self):
+        if self is CRInSel.NONE:
+            return SelType.NONE
+        return SelType.SRC
+
 
 @unique
 class CRIn2Sel(Enum):
     NONE = 0
     BB = 1
+
+    @property
+    def type(self):
+        if self is CRIn2Sel.NONE:
+            return SelType.NONE
+        return SelType.SRC
 
 
 @unique
@@ -1093,6 +1129,12 @@ class CROutSel(Enum):
     BT = 3
     WHOLE_REG = 4
     CR1 = 5
+
+    @property
+    def type(self):
+        if self is CROutSel.NONE:
+            return SelType.NONE
+        return SelType.DST
 
 
 # SPRs - Special-Purpose Registers.  See V3.0B Figure 18 p971 and
