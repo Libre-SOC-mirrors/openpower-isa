@@ -1264,6 +1264,8 @@ class ExtendableOperand(DynamicOperand):
                 value = value[1:]
                 vector = True
             if value.startswith(prefix):
+                if (self.extra_reg.or_zero and (value == f"{prefix}0")):
+                    raise ValueError(value)
                 value = value[len(prefix):]
             value = int(value, 0)
 
