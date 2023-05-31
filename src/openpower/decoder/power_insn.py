@@ -405,11 +405,10 @@ class SVP64Record:
 
     @cached_property
     def extras(self):
-        keys = {}
-        for key in ("in1", "in2", "in3", "cr_in", "cr_in2"):
-            keys[key] = _SelType.SRC
-        for key in ("out", "out2", "cr_out"):
-            keys[key] = _SelType.DST
+        keys = (
+            "in1", "in2", "in3", "cr_in", "cr_in2",
+            "out", "out2", "cr_out",
+        )
 
         idxmap = (
             _SVExtra.Idx0,
