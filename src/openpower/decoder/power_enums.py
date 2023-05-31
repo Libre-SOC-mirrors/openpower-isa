@@ -320,6 +320,13 @@ class Reg(Enum):
 
         return self
 
+    @property
+    def or_zero(self):
+        return (self in (
+            Reg.RA_OR_ZERO,
+            Reg.RT_OR_ZERO,
+        ))
+
 
 @unique
 class SVP64PredMode(Enum):
