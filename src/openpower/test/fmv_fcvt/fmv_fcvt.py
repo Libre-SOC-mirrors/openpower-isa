@@ -450,7 +450,6 @@ class FMvFCvtCases(TestAccumulatorBase):
         self.toint(-(2**64), 0, signed=False, _32bit=False)
         self.toint(-fp_bits_add(2**64, 1), signed=False, _32bit=False)
 
-    @skip_case("FIXME: WIP")
     def fcvtfg_one(self, inp, bfp32, IT, Rc, RN):
         inp %= 2 ** 64
         inp_width = 64 if IT & 0b10 else 32
@@ -487,10 +486,10 @@ class FMvFCvtCases(TestAccumulatorBase):
             next_int = int(next_fp)
             prev_fp_is_even = bitcast_fp_to_int(prev_fp, bfp32=bfp32) & 1 == 0
             halfway = 2 * inp_value == prev_int + next_int
-            next_is_closer = 2 * inp_value > prev_int + next_int
+            prev_is_closer = 2 * inp_value < prev_int + next_int
             if RN == 0:
                 # round to nearest
-                use_prev = (halfway and prev_fp_is_even) or not next_is_closer
+                use_prev = (halfway and prev_fp_is_even) or prev_is_closer
             elif RN == 1:
                 # trunc
                 use_prev = abs(prev_int) < abs(next_int)
@@ -524,10 +523,13 @@ class FMvFCvtCases(TestAccumulatorBase):
         if inp_width == 32 and not bfp32:
             # defined to not modify FPSCR since the conversion is always exact
             fpscr = FPSCRState(initial_fpscr)
-        cr1 = int(fpscr.FX) << 3
-        cr1 |= int(fpscr.FEX) << 2
-        cr1 |= int(fpscr.VX) << 1
-        cr1 |= int(fpscr.OX)
+        if Rc:
+            cr1 = int(fpscr.FX) << 3
+            cr1 |= int(fpscr.FEX) << 2
+            cr1 |= int(fpscr.VX) << 1
+            cr1 |= int(fpscr.OX)
+        else:
+            cr1 = 0
         with self.subTest(
             inp=hex(inp), bfp32=bfp32, IT=IT, Rc=Rc, RN=RN,
             expected_fp=expected_fp.hex(), expected_bits=hex(expected_bits),
