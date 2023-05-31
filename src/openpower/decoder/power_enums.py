@@ -253,7 +253,7 @@ class SVExtra(Enum):
 SVEXTRA = SVExtra
 
 
-class SVExtraReg(Enum):
+class Reg(Enum):
     NONE = auto()
     RA = auto()
     RA_OR_ZERO = RA
@@ -301,24 +301,27 @@ class SVExtraReg(Enum):
     @property
     def alias(self):
         alias = {
-            SVExtraReg.RSp: SVExtraReg.RS,
-            SVExtraReg.RTp: SVExtraReg.RT,
-            SVExtraReg.FRAp: SVExtraReg.FRA,
-            SVExtraReg.FRBp: SVExtraReg.FRB,
-            SVExtraReg.FRSp: SVExtraReg.FRS,
-            SVExtraReg.FRTp: SVExtraReg.FRT,
+            Reg.RSp: Reg.RS,
+            Reg.RTp: Reg.RT,
+            Reg.FRAp: Reg.FRA,
+            Reg.FRBp: Reg.FRB,
+            Reg.FRSp: Reg.FRS,
+            Reg.FRTp: Reg.FRT,
         }.get(self)
         if alias is not None:
             return alias
 
         alias = {
-            SVExtraReg.RA_OR_ZERO: SVExtraReg.RA,
-            SVExtraReg.RT_OR_ZERO: SVExtraReg.RT,
+            Reg.RA_OR_ZERO: Reg.RA,
+            Reg.RT_OR_ZERO: Reg.RT,
         }.get(self)
         if alias is not None:
             return alias
 
         return self
+
+
+SVExtraReg = Reg
 
 
 @unique
@@ -642,7 +645,7 @@ class RegType(Enum):
 
     @classmethod
     def _missing_(cls, value):
-        if isinstance(value, SVExtraReg):
+        if isinstance(value, Reg):
             return cls.__members__.get(value.name)
 
         return super()._missing_(value)
