@@ -36,7 +36,7 @@ from openpower.decoder.power_enums import (
     SVExtra as _SVExtra,
     RegType as _RegType,
     SVP64RMMode as _SVP64RMMode,
-    SVExtraRegType as _SVExtraRegType,
+    SelType as _SelType,
     SVExtraReg as _SVExtraReg,
     SVP64SubVL as _SVP64SubVL,
     SVP64Pred as _SVP64Pred,
@@ -319,19 +319,19 @@ class SVP64Record:
         class Extra(tuple):
             @_dataclasses.dataclass(eq=True, frozen=True)
             class Entry:
-                regtype: _SVExtraRegType = _SVExtraRegType.NONE
+                seltype: _SelType = _SelType.NONE
                 reg: _SVExtraReg = _SVExtraReg.NONE
 
                 def __repr__(self):
-                    return f"{self.regtype.value}:{self.reg.name}"
+                    return f"{self.seltype.value}:{self.reg.name}"
 
             def __new__(cls, value="0"):
                 if isinstance(value, str):
                     def transform(value):
-                        (regtype, reg) = value.split(":")
-                        regtype = _SVExtraRegType(regtype)
+                        (seltype, reg) = value.split(":")
+                        seltype = _SelType(seltype)
                         reg = _SVExtraReg(reg)
-                        return cls.Entry(regtype=regtype, reg=reg)
+                        return cls.Entry(seltype=seltype, reg=reg)
 
                     if value == "0":
                         value = tuple()
@@ -407,9 +407,9 @@ class SVP64Record:
     def extras(self):
         keys = {}
         for key in ("in1", "in2", "in3", "cr_in", "cr_in2"):
-            keys[key] = _SVExtraRegType.SRC
+            keys[key] = _SelType.SRC
         for key in ("out", "out2", "cr_out"):
-            keys[key] = _SVExtraRegType.DST
+            keys[key] = _SelType.DST
 
         idxmap = (
             _SVExtra.Idx0,
@@ -420,33 +420,33 @@ class SVP64Record:
 
         def extra(reg):
             extras = {
-                _SVExtraRegType.DST: {},
-                _SVExtraRegType.SRC: {},
+                _SelType.DST: {},
+                _SelType.SRC: {},
             }
             for index in range(0, 4):
                 for entry in self.extra[index]:
-                    extras[entry.regtype][entry.reg] = idxmap[index]
+                    extras[entry.seltype][entry.reg] = idxmap[index]
 
-            for (regtype, regs) in extras.items():
+            for (seltype, regs) in extras.items():
                 idx = regs.get(reg, _SVExtra.NONE)
                 if idx is not _SVExtra.NONE:
-                    yield (reg, regtype, idx)
+                    yield (reg, seltype, idx)
 
         sels = {}
         idxs = {}
         regs = {}
-        regtypes = {}
+        seltypes = {}
         for key in keys:
             sel = sels[key] = getattr(self, key)
             reg = regs[key] = _SVExtraReg(sel)
-            regtypes[key] = _SVExtraRegType.NONE
+            seltypes[key] = _SelType.NONE
             idxs[key] = _SVExtra.NONE
-            for (reg, regtype, idx) in extra(reg.alias):
+            for (reg, seltype, idx) in extra(reg.alias):
                 if ((idx != idxs[key]) and (idxs[key] is not _SVExtra.NONE)):
                     raise ValueError(idxs[key])
                 idxs[key] = idx
                 regs[key] = reg
-                regtypes[key] = regtype
+                seltypes[key] = seltype
 
         if sels["cr_in"] is _CRInSel.BA_BB:
             sels["cr_in"] = _CRIn2Sel.BA
@@ -454,14 +454,14 @@ class SVP64Record:
             idxs["cr_in2"] = idxs["cr_in"]
             for key in ("cr_in", "cr_in2"):
                 regs[key] = _SVExtraReg(sels[key])
-                regtype[key] = _SVExtraRegType.SRC
+                seltype[key] = _SelType.SRC
 
         records = {}
         for key in keys:
             records[key] = {
                 "sel": sels[key],
                 "reg": regs[key],
-                "regtype": regtypes[key],
+                "seltype": seltypes[key],
                 "idx": idxs[key],
             }
 
@@ -481,7 +481,7 @@ class SVP64Record:
         extra = None
         for idx in range(0, 4):
             for entry in self.extra[idx]:
-                if entry.regtype is _SVExtraRegType.DST:
+                if entry.seltype is _SelType.DST:
                     if extra is not None:
                         raise ValueError(self.svp64)
                     extra = entry
