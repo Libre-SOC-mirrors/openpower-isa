@@ -18,22 +18,27 @@ class SyntaxError2(Exception):
     since it catches and discards SyntaxError after setting a flag.
     """
 
+    def __init__(self, *args, cls=SyntaxError):
+        super().__init__(*args)
+        self.cls = cls
+
     def __repr__(self):
-        return repr(SyntaxError(*self.args))
+        return repr(self.cls(*self.args))
 
     def __str__(self):
-        return str(SyntaxError(*self.args))
+        return str(self.cls(*self.args))
 
     def raise_syntax_error(self):
-        raise SyntaxError(*self.args) from self
+        raise self.cls(*self.args) from self
 
 
-def raise_syntax_error(msg, filename, lineno, lexpos, input_text):
+def raise_syntax_error(msg, filename, lineno, lexpos, input_text,
+                       cls=SyntaxError):
     line_start = input_text.rfind('\n', 0, lexpos) + 1
     line_end = input_text.find('\n', line_start)
     col = (lexpos - line_start) + 1
     raise SyntaxError2(str(msg), (filename, lineno, col,
-                                  input_text[line_start:line_end]))
+                                  input_text[line_start:line_end]), cls=cls)
 
 # I implemented INDENT / DEDENT generation as a post-processing filter
 
@@ -204,7 +209,7 @@ def annoying_case_hack_filter(code):
 
 
 # Track the indentation level and emit the right INDENT / DEDENT events.
-def indentation_filter(tokens):
+def indentation_filter(tokens, filename):
     # A stack of indentation levels; will never pop item 0
     levels = [0]
     token = None
@@ -246,7 +251,10 @@ def indentation_filter(tokens):
         if token.must_indent:
             # The current depth must be larger than the previous level
             if not (depth > levels[-1]):
-                raise IndentationError("expected an indented block")
+                raise_syntax_error("expected an indented block",
+                                   filename, token.lexer.lineno,
+                                   token.lexer.lexpos, token.lexer.lexdata,
+                                   cls=IndentationError)
 
             levels.append(depth)
             yield INDENT(token.lineno)
@@ -257,13 +265,19 @@ def indentation_filter(tokens):
                 # At the same level
                 pass
             elif depth > levels[-1]:
-                raise IndentationError("indent increase but not in new block")
+                raise_syntax_error("indent increase but not in new block",
+                                   filename, token.lexer.lineno,
+                                   token.lexer.lexpos, token.lexer.lexdata,
+                                   cls=IndentationError)
             else:
                 # Back up; but only if it matches a previous level
                 try:
                     i = levels.index(depth)
                 except ValueError:
-                    raise IndentationError("inconsistent indentation")
+                    raise_syntax_error("inconsistent indentation",
+                                       filename, token.lexer.lineno,
+                                       token.lexer.lexpos, token.lexer.lexdata,
+                                       cls=IndentationError)
                 for _ in range(i+1, len(levels)):
                     yield DEDENT(token.lineno)
                     levels.pop()
@@ -281,12 +295,12 @@ def indentation_filter(tokens):
 
 # The top-level filter adds an ENDMARKER, if requested.
 # Python's grammar uses it.
-def filter(lexer, add_endmarker=True):
+def filter(lexer, add_endmarker, filename):
     token = None
     tokens = iter(lexer.token, None)
     tokens = python_colonify(lexer, tokens)
     tokens = track_tokens_filter(lexer, tokens)
-    for token in indentation_filter(tokens):
+    for token in indentation_filter(tokens, filename):
         yield token
 
     if add_endmarker:
@@ -511,7 +525,7 @@ class IndentLexer(PowerLexer):
         self.lexer.brack_count = 0
         self.lexer.lineno = 1
         self.lexer.input(s)
-        self.token_stream = filter(self.lexer, add_endmarker)
+        self.token_stream = filter(self.lexer, add_endmarker, self.filename)
 
     def token(self):
         try:
