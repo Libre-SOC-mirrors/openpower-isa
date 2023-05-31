@@ -307,19 +307,19 @@ class SVExtraReg(Enum):
     @property
     def alias(self):
         alias = {
-            Reg.RSp: Reg.RS,
-            Reg.RTp: Reg.RT,
-            Reg.FRAp: Reg.FRA,
-            Reg.FRBp: Reg.FRB,
-            Reg.FRSp: Reg.FRS,
-            Reg.FRTp: Reg.FRT,
+            SVExtraReg.RSp: SVExtraReg.RS,
+            SVExtraReg.RTp: SVExtraReg.RT,
+            SVExtraReg.FRAp: SVExtraReg.FRA,
+            SVExtraReg.FRBp: SVExtraReg.FRB,
+            SVExtraReg.FRSp: SVExtraReg.FRS,
+            SVExtraReg.FRTp: SVExtraReg.FRT,
         }.get(self)
         if alias is not None:
             return alias
 
         alias = {
-            Reg.RA_OR_ZERO: Reg.RA,
-            Reg.RT_OR_ZERO: Reg.RT,
+            SVExtraReg.RA_OR_ZERO: SVExtraReg.RA,
+            SVExtraReg.RT_OR_ZERO: SVExtraReg.RT,
         }.get(self)
         if alias is not None:
             return alias

@@ -7,7 +7,7 @@ import os as _os
 import operator as _operator
 import pathlib as _pathlib
 import re as _re
-import sys as _sys
+import types as _types
 
 try:
     from functools import cached_property
@@ -403,81 +403,78 @@ class SVP64Record:
 
         return dataclass(cls, record, keymap=cls.__KEYMAP)
 
-    def extra_idx(self, key, regtype):
-        """
-        Find the index slot that came from the CSV file for this
-        reg (RA/RB/BA/etc) and direction (source/dest).
-        """
-        aliases = {
-            _SVExtraReg.RSp: _SVExtraReg.RS,
-            _SVExtraReg.RTp: _SVExtraReg.RT,
-            _SVExtraReg.FRAp: _SVExtraReg.FRA,
-            _SVExtraReg.FRBp: _SVExtraReg.FRB,
-            _SVExtraReg.FRSp: _SVExtraReg.FRS,
-            _SVExtraReg.FRTp: _SVExtraReg.FRT,
-            _SVExtraReg.RA_OR_ZERO: _SVExtraReg.RA,
-            _SVExtraReg.RT_OR_ZERO: _SVExtraReg.RT,
-        }
+    @cached_property
+    def extras(self):
+        keys = {}
+        for key in ("in1", "in2", "in3", "cr_in", "cr_in2"):
+            keys[key] = _SVExtraRegType.SRC
+        for key in ("out", "out2", "cr_out"):
+            keys[key] = _SVExtraRegType.DST
 
-        extra_idx = (
+        idxmap = (
             _SVExtra.Idx0,
             _SVExtra.Idx1,
             _SVExtra.Idx2,
             _SVExtra.Idx3,
         )
 
-        if key not in frozenset({
-                    "in1", "in2", "in3", "cr_in", "cr_in2",
-                    "out", "out2", "cr_out",
-                }):
-            raise KeyError(key)
+        def extra(reg):
+            extras = {
+                _SVExtraRegType.DST: {},
+                _SVExtraRegType.SRC: {},
+            }
+            for index in range(0, 4):
+                for entry in self.extra[index]:
+                    extras[entry.regtype][entry.reg] = idxmap[index]
 
-        sel = getattr(self, key)
-        if sel is _CRInSel.BA_BB:
-            yield _SVExtra.Idx_1_2
-            return
+            for (regtype, regs) in extras.items():
+                idx = regs.get(reg, _SVExtra.NONE)
+                if idx is not _SVExtra.NONE:
+                    yield (reg, regtype, idx)
 
-        reg = _SVExtraReg(sel)
-        if reg is _SVExtraReg.NONE:
-            return
+        sels = {}
+        idxs = {}
+        regs = {}
+        regtypes = {}
+        for key in keys:
+            sel = sels[key] = getattr(self, key)
+            reg = regs[key] = _SVExtraReg(sel)
+            regtypes[key] = _SVExtraRegType.NONE
+            idxs[key] = _SVExtra.NONE
+            for (reg, regtype, idx) in extra(reg.alias):
+                if ((idx != idxs[key]) and (idxs[key] is not _SVExtra.NONE)):
+                    raise ValueError(idxs[key])
+                idxs[key] = idx
+                regs[key] = reg
+                regtypes[key] = regtype
 
-        extra_map = {
-            _SVExtraRegType.DST: {},
-            _SVExtraRegType.SRC: {},
-        }
-        for index in range(0, 4):
-            for entry in self.extra[index]:
-                extra_map[entry.regtype][entry.reg] = extra_idx[index]
+        if sels["cr_in"] is _CRInSel.BA_BB:
+            sels["cr_in"] = _CRIn2Sel.BA
+            sels["cr_in2"] = _CRIn2Sel.BB
+            idxs["cr_in2"] = idxs["cr_in"]
+            for key in ("cr_in", "cr_in2"):
+                regs[key] = _SVExtraReg(sels[key])
+                regtype[key] = _SVExtraRegType.SRC
 
-        for (rtype, regs) in extra_map.items():
-            if rtype != regtype:
-                continue
-            reg = aliases.get(reg, reg)
-            extra = regs.get(reg, _SVExtra.NONE)
-            if extra is not _SVExtra.NONE:
-                yield extra
+        records = {}
+        for key in keys:
+            records[key] = {
+                "sel": sels[key],
+                "reg": regs[key],
+                "regtype": regtypes[key],
+                "idx": idxs[key],
+            }
 
-    extra_idx_in1 = property(_functools.partial(extra_idx, key="in1", regtype=_SVExtraRegType.SRC))
-    extra_idx_in2 = property(_functools.partial(extra_idx, key="in2", regtype=_SVExtraRegType.SRC))
-    extra_idx_in3 = property(_functools.partial(extra_idx, key="in3", regtype=_SVExtraRegType.SRC))
-    extra_idx_out = property(_functools.partial(extra_idx, key="out", regtype=_SVExtraRegType.DST))
-    extra_idx_out2 = property(_functools.partial(extra_idx, key="out2", regtype=_SVExtraRegType.DST))
-    extra_idx_cr_in = property(_functools.partial(extra_idx, key="cr_in", regtype=_SVExtraRegType.SRC))
-    extra_idx_cr_in2 = property(_functools.partial(extra_idx, key="cr_in2", regtype=_SVExtraRegType.SRC))
-    extra_idx_cr_out = property(_functools.partial(extra_idx, key="cr_out", regtype=_SVExtraRegType.DST))
+        return _types.MappingProxyType(records)
 
-    @_functools.lru_cache(maxsize=None)
-    def extra_reg(self, key):
-        return _SVExtraReg(getattr(self, key))
-
-    extra_reg_in1 = property(_functools.partial(extra_reg, key="in1"))
-    extra_reg_in2 = property(_functools.partial(extra_reg, key="in2"))
-    extra_reg_in3 = property(_functools.partial(extra_reg, key="in3"))
-    extra_reg_out = property(_functools.partial(extra_reg, key="out"))
-    extra_reg_out2 = property(_functools.partial(extra_reg, key="out2"))
-    extra_reg_cr_in = property(_functools.partial(extra_reg, key="cr_in"))
-    extra_reg_cr_in2 = property(_functools.partial(extra_reg, key="cr_in2"))
-    extra_reg_cr_out = property(_functools.partial(extra_reg, key="cr_out"))
+    extra_idx_in1 = property(lambda self: self.extras["in1"]["idx"])
+    extra_idx_in2 = property(lambda self: self.extras["in2"]["idx"])
+    extra_idx_in3 = property(lambda self: self.extras["in3"]["idx"])
+    extra_idx_out = property(lambda self: self.extras["out"]["idx"])
+    extra_idx_out2 = property(lambda self: self.extras["out2"]["idx"])
+    extra_idx_cr_in = property(lambda self: self.extras["cr_in"]["idx"])
+    extra_idx_cr_in2 = property(lambda self: self.extras["cr_in2"]["idx"])
+    extra_idx_cr_out = property(lambda self: self.extras["cr_out"]["idx"])
 
     @cached_property
     def extra_CR(self):
@@ -957,9 +954,6 @@ class Record:
     ptype = property(lambda self: self.svp64.ptype)
     etype = property(lambda self: self.svp64.etype)
 
-    def extra_idx(self, key, regtype):
-        return self.svp64.extra_idx(key, regtype)
-
     extra_idx_in1 = property(lambda self: self.svp64.extra_idx_in1)
     extra_idx_in2 = property(lambda self: self.svp64.extra_idx_in2)
     extra_idx_in3 = property(lambda self: self.svp64.extra_idx_in3)
@@ -1246,70 +1240,13 @@ class ExtendableOperand(DynamicOperand):
     def sv_spec_leave(self, value, span, origin_value, origin_span):
         return (value, span)
 
-    @cached_property
-    def extras(self):
-        pairs = {
-            _SVExtraReg.RSp: _SVExtraReg.RS,
-            _SVExtraReg.RTp: _SVExtraReg.RT,
-            _SVExtraReg.FRAp: _SVExtraReg.FRA,
-            _SVExtraReg.FRBp: _SVExtraReg.FRB,
-            _SVExtraReg.FRSp: _SVExtraReg.FRS,
-            _SVExtraReg.FRTp: _SVExtraReg.FRT,
-        }
-        zeros = {
-            _SVExtraReg.RA_OR_ZERO: _SVExtraReg.RA,
-            _SVExtraReg.RT_OR_ZERO: _SVExtraReg.RT,
-        }
-        aliases = {}
-        aliases.update(pairs)
-        aliases.update(zeros)
-
-        keys = {}
-        for key in ("in1", "in2", "in3", "cr_in", "cr_in2"):
-            keys[key] = _SVExtraRegType.SRC
-        for key in ("out", "out2", "cr_out"):
-            keys[key] = _SVExtraRegType.DST
-        regtype = keys.get(key)
-        if regtype is None:
-            raise KeyError(key)
-
-        records = {}
-        for (key, regtype) in keys.items():
-            extra_reg = self.record.svp64.extra_reg(key=key)
-            this_extra_reg = aliases.get(self.extra_reg, self.extra_reg)
-            that_extra_reg = aliases.get(extra_reg, extra_reg)
-            if this_extra_reg is that_extra_reg:
-                extra_idx = tuple(self.record.extra_idx(key=key, regtype=regtype))
-                records[key] = (extra_reg, extra_idx)
-
-        for (key, (origin, extra_idx)) in tuple(records.items()):
-            for aliases in (pairs, zeros):
-                alias = aliases.get(origin)
-                for (key, (current, extra_idx)) in tuple(records.items()):
-                    if current is alias:
-                        records[key] = (origin, extra_idx)
-
-        extra_regs = set()
-        extra_idxs = set()
-        keys = tuple(records.keys())
-        for (extra_reg, extra_idx) in records.values():
-            extra_regs.add(extra_reg)
-            extra_idxs.add(extra_idx)
-        if len(extra_regs) != 1:
-            raise ValueError(extra_regs)
-        if len(extra_idxs) != 1:
-            raise ValueError(extra_regs)
-
-        extra_reg = extra_regs.pop()
-        extra_idx = extra_idxs.pop()
-
-        return (keys, extra_reg, extra_idx)
-
     @property
     def extra_idx(self):
-        yield from self.extras[2]
+        for (key, record) in self.record.svp64.extras.items():
+            if record["reg"].alias is self.extra_reg.alias:
+                yield record["idx"]
 
-    @property
+    @cached_property
     def extra_reg(self):
         return _SVExtraReg(self.name)
 
