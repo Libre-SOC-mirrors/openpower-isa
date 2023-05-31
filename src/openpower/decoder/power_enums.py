@@ -253,12 +253,6 @@ class SVExtra(Enum):
 SVEXTRA = SVExtra
 
 
-class SVExtraRegType(Enum):
-    NONE = None
-    SRC = 's'
-    DST = 'd'
-
-
 class SVExtraReg(Enum):
     NONE = auto()
     RA = auto()
@@ -950,6 +944,22 @@ class MicrOp(Enum):
     OP_SHADD = 103
     OP_MADDSUBRS = 104
     OP_MADDRS = 105
+
+
+class SelType(Enum):
+    NONE = None
+    SRC = 's'
+    DST = 'd'
+
+    def __repr__(self):
+        return {
+            SelType.NONE: "none",
+            SelType.SRC: "src",
+            SelType.DST: "dst",
+        }[self]
+
+
+SVExtraRegType = SelType
 
 
 class In1Sel(Enum):
