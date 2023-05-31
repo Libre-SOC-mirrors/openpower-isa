@@ -481,5 +481,20 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
+    def test_36_extras_rlwimi(self):
+        self._do_tst(["sv.rlwimi 3, 1, 5, 20, 6"])
+
+    def test_36_extras_rlwimi_(self):
+        self._do_tst(["sv.rlwimi. 3, 1, 5, 20, 6"])
+
+    def test_36_extras_rldimi(self):
+        self._do_tst(["sv.rldimi 3, 4, 56, 4"])
+
+    def test_36_extras_rldimi_(self):
+        self._do_tst(["sv.rldimi. 3, 4, 56, 4"])
+
+    def test_36_extras_fishmv(self):
+        self._do_tst(["sv.fishmv 3, 0x0FD0"])
+
 if __name__ == "__main__":
     unittest.main()
