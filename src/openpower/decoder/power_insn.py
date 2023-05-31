@@ -1286,6 +1286,9 @@ class ExtendableOperand(DynamicOperand):
             style=Style.NORMAL, prefix="", indent=""):
         (vector, value, span) = self.sv_spec(insn=insn)
 
+        if (self.extra_reg.or_zero and (value == 0)):
+            prefix = ""
+
         if style >= Style.VERBOSE:
             mode = "vector" if vector else "scalar"
             yield f"{indent}{self.name} ({mode})"
