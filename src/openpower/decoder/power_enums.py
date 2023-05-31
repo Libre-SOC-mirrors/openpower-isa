@@ -321,9 +321,6 @@ class Reg(Enum):
         return self
 
 
-SVExtraReg = Reg
-
-
 @unique
 class SVP64PredMode(Enum):
     ALWAYS = 0
