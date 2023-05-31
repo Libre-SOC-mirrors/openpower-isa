@@ -959,9 +959,6 @@ class SelType(Enum):
         }[self]
 
 
-SVExtraRegType = SelType
-
-
 class In1Sel(Enum):
     NONE = 0
     RA = 1
