@@ -304,6 +304,28 @@ class SVExtraReg(Enum):
 
         return cls.__members__.get(desc)
 
+    @property
+    def alias(self):
+        alias = {
+            Reg.RSp: Reg.RS,
+            Reg.RTp: Reg.RT,
+            Reg.FRAp: Reg.FRA,
+            Reg.FRBp: Reg.FRB,
+            Reg.FRSp: Reg.FRS,
+            Reg.FRTp: Reg.FRT,
+        }.get(self)
+        if alias is not None:
+            return alias
+
+        alias = {
+            Reg.RA_OR_ZERO: Reg.RA,
+            Reg.RT_OR_ZERO: Reg.RT,
+        }.get(self)
+        if alias is not None:
+            return alias
+
+        return self
+
 
 @unique
 class SVP64PredMode(Enum):
