@@ -36,7 +36,6 @@ from openpower.decoder.power_enums import (
     SVExtra as _SVExtra,
     Reg as _Reg,
     RegType as _RegType,
-    SVP64RMMode as _SVP64RMMode,
     SelType as _SelType,
     SVP64SubVL as _SVP64SubVL,
     SVP64Pred as _SVP64Pred,
