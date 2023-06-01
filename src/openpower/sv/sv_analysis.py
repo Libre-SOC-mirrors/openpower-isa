@@ -647,6 +647,15 @@ def extra_classifier(insn_name, value, name, res, regs):
         if insn_name.startswith('bc'):
             res['0'] = 's:BI'  # BI: Rsrc1_EXTRA3
 
+    elif value == 'RM-1P-1S':
+        pass  # FIXME
+
+    elif value == 'non-SV':
+        return
+
+    else:
+        raise NotImplementedError(insn_name)
+
 
 def process_csvs(format):
 
@@ -667,6 +676,7 @@ def process_csvs(format):
               '2R-1W-CRo': 'RM-1P-2S1D',
               '2R': 'non-SV',
               '2R-1W': 'RM-1P-2S1D',
+              '2R-1W-imm': 'RM-1P-2S1D',
               '1R-CRio': 'RM-2P-2S1D',
               '2R-CRio': 'RM-1P-2S1D',
               '2R-CRo': 'RM-1P-2S1D',
@@ -695,6 +705,8 @@ def process_csvs(format):
               'LDST-3R': 'LDSTRM-2P-3S',
               'LDST-3R-CRo': 'LDSTRM-2P-3S',  # st*x
               'LDST-3R-1W': 'LDSTRM-2P-2S1D',  # st*x
+              'LDST-2R': 'non-SV',  # dcbz -- TODO: any vectorizable?
+              'CRo': 'non-SV',  # mtfsb1 -- TODO: any vectorizable?
               }
     print("# map to old SV Prefix")
     print('')
