@@ -133,6 +133,10 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
             e.intregs[10] |= (rt & 0xFFFF) << (16 * i)  # insert element
             e.intregs[11] |= (rs & 0xFFFF) << (16 * i)
 
+        # asserts so you can read the expected values
+        assert e.intregs[10] == 0x182f_15d2_46f2_2061
+        assert e.intregs[11] == 0xfe71_176f_fcef_3a21
+
         self.add_case(p, initial_regs, expected=e, initial_svstate=svstate)
 
     def case_0_maddrs(self):
