@@ -4,6 +4,7 @@ import os
 import random
 from openpower.consts import FastRegsEnum, StateRegsEnum
 from openpower.decoder.power_enums import SPRfull as SPR, spr_dict
+from functools import lru_cache
 
 
 # note that we can get away with using SPRfull here because the values
@@ -98,10 +99,11 @@ class LogKind(Enum):
     SkipCase = "skip_case"
 
 
-def parse_log_env_vars():
-    silencelog = os.environ.get("SILENCELOG", None)
-    if silencelog is None:
+@lru_cache(typed=True)
+def __parse_log_env_var(silencelog_raw):
+    if silencelog_raw is None:
         return {k: False for k in LogKind}
+    silencelog = os.environ.decodevalue(silencelog_raw)
     silencelog = silencelog.lower().split(",")
     for i, v in enumerate(silencelog):
         silencelog[i] = v.strip()
@@ -133,14 +135,16 @@ def parse_log_env_vars():
     return retval
 
 
+__ENCODED_SILENCELOG = os.environ.encodekey("SILENCELOG")
+
+
 def log(*args, kind=LogKind.Default, **kwargs):
     """verbose printing, can be disabled by setting env var "SILENCELOG".
     """
-    # look up in a dict rather than os.environ so we don't
-    # trigger breakpoints on raising exceptions.
-    # read os.environ so that modifications to os.environ at runtime
-    # are picked up
-    LOG_KINDS_SILENCED = parse_log_env_vars()
-    if LOG_KINDS_SILENCED[kind]:
+    # look up in os.environ._data since it is a dict and hence won't raise
+    # internal exceptions to avoid triggering breakpoints on raised exceptions.
+    env_var = os.environ._data.get(__ENCODED_SILENCELOG, None)
+    silenced = __parse_log_env_var(env_var)
+    if silenced[kind]:
         return
     print(*args, **kwargs)
