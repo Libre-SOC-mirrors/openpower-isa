@@ -3,7 +3,7 @@
 # Funded by NLnet http://nlnet.nl
 
 # sigh this entire module is a laborious mess. it really should be
-# auto-generated from the power_insn.py database but a technique
+# auto-generated from the insndb/types.py database but a technique
 # for doing so (similar to python HTML/XML-node-walking) is needed
 
 """SVP64 RM (Remap) Record.

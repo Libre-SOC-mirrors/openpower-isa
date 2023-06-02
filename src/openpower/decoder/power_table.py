@@ -1,6 +1,6 @@
 import collections
 from openpower.decoder.power_enums import find_wiki_dir 
-from openpower.decoder.power_insn import Database
+from openpower.insndb.types import Database
 from openpower.util import log
 
 sections = {}

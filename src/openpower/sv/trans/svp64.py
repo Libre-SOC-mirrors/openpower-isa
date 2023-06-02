@@ -28,10 +28,10 @@ from openpower.decoder.pseudo.pagereader import ISA
 from openpower.decoder.power_svp64 import SVP64RM, get_regtype, decode_extra
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.consts import SVP64MODE
-from openpower.decoder.power_insn import SVP64Instruction
-from openpower.decoder.power_insn import Database
-from openpower.decoder.power_insn import Style
-from openpower.decoder.power_insn import WordInstruction
+from openpower.insndb.types import SVP64Instruction
+from openpower.insndb.types import Database
+from openpower.insndb.types import Style
+from openpower.insndb.types import WordInstruction
 from openpower.decoder.power_enums import find_wiki_dir
 
 # for debug logging
