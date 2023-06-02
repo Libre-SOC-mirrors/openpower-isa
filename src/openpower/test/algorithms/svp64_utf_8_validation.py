@@ -7,7 +7,7 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
 from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.test.state import ExpectedState
-from openpower.sv.trans.svp64 import SVP64Asm
+from openpower.insndb.asm import SVP64Asm
 from cached_property import cached_property
 
 

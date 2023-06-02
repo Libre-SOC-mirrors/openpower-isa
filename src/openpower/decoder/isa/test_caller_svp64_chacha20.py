@@ -9,7 +9,7 @@ from openpower.decoder.isa.caller import SVP64State, set_masked_reg
 from openpower.decoder.isa.test_caller import run_tst
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
-from openpower.sv.trans.svp64 import SVP64Asm
+from openpower.insndb.asm import SVP64Asm
 
 
 # originally from https://github.com/pts/chacha20

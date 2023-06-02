@@ -169,7 +169,7 @@ def get_ws(line):
     return ws, line
 
 
-def asm_process():
+def main():
     # get an input file and an output file
     args = sys.argv[1:]
     if len(args) == 0:

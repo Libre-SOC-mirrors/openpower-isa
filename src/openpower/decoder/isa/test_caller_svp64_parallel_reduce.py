@@ -7,7 +7,7 @@ from openpower.decoder.isa.remap_preduce_yield import preduce_y
 from openpower.decoder.isa.test_caller import run_tst
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
-from openpower.sv.trans.svp64 import SVP64Asm
+from openpower.insndb.asm import SVP64Asm
 
 
 def signcopy(x, y):

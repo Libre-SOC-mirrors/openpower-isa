@@ -1,4 +1,4 @@
-from openpower.sv.trans.svp64 import SVP64Asm
+from openpower.insndb.asm import SVP64Asm
 import random
 from openpower.test.common import TestAccumulatorBase
 from openpower.endian import bigendian
