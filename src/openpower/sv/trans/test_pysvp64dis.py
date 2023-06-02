@@ -1,5 +1,5 @@
 from openpower.simulator.program import Program
-from openpower.sv.trans.pysvp64dis import load, dump
+from openpower.insndb.dis import load, dump
 from openpower.insndb.asm import SVP64Asm
 from openpower.insndb.types import Database, Style
 from openpower.decoder.power_enums import find_wiki_dir

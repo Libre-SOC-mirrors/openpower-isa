@@ -83,7 +83,7 @@ setup(
             'sv_analysis=openpower.sv.sv_analysis:main',
             'pypowersim=openpower.decoder.isa.pypowersim:run_simulation',
             'pysvp64asm=openpower.insndb.asm:main',
-            'pysvp64dis=openpower.sv.trans.pysvp64dis:main'
+            'pysvp64dis=openpower.insndb.dis:main'
         ]
     }
 )
