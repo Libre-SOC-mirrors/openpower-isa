@@ -22,8 +22,8 @@ from openpower.decoder.power_enums import (
     find_wiki_dir as _find_wiki_dir,
 )
 from openpower.consts import SVP64MODE as _SVP64MODE
-from openpower.insndb.types import Database as _Database
-from openpower.insndb.types import SVP64Instruction as _SVP64Instruction
+from openpower.insndb.core import Database as _Database
+from openpower.insndb.core import SVP64Instruction as _SVP64Instruction
 
 
 DISCLAIMER = """\

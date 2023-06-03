@@ -6,7 +6,7 @@ import os
 from openpower.decoder.power_enums import (
     find_wiki_dir,
 )
-from openpower.insndb.types import (
+from openpower.insndb.core import (
     Style,
     Database,
     WordInstruction,
