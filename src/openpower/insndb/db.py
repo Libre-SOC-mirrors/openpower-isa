@@ -60,11 +60,23 @@ class PCodeVisitor(ConcreteInstructionVisitor):
 
 
 def main():
-    visitors = {
-        "list": ListVisitor,
-        "opcodes": OpcodesVisitor,
-        "operands": OperandsVisitor,
-        "pcode": PCodeVisitor,
+    commands = {
+        "list": (
+            ListVisitor,
+            "list available instructions",
+        ),
+        "opcodes": (
+            OpcodesVisitor,
+            "print instruction opcodes",
+        ),
+        "operands": (
+            OperandsVisitor,
+            "print instruction operands",
+        ),
+        "pcode": (
+            PCodeVisitor,
+            "print instruction pseudocode",
+        ),
     }
 
     main_parser = argparse.ArgumentParser()
@@ -73,23 +85,18 @@ def main():
         action="store_true",
         default=False)
     main_subparser = main_parser.add_subparsers(dest="command", required=True)
-    main_subparser.add_parser("list",
-        help="list all instructions")
 
-    for (command, help) in {
-                "opcodes": "print instruction opcodes",
-                "operands": "print instruction operands",
-                "pcode": "print instruction pseudocode",
-            }.items():
+    for (command, (visitor, help)) in commands.items():
         parser = main_subparser.add_parser(command, help=help)
-        parser.add_argument("insn", metavar="INSN", help="instruction")
+        if issubclass(visitor, ConcreteInstructionVisitor):
+            parser.add_argument("insn", metavar="INSN", help="instruction")
 
     args = vars(main_parser.parse_args())
     command = args.pop("command")
     log = args.pop("log")
     if not log:
         os.environ["SILENCELOG"] = "true"
-    visitor = visitors[command](**args)
+    visitor = commands[command][0](**args)
 
     db = Database(find_wiki_dir())
     db.visit(visitor=visitor)
