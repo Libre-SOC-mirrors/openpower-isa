@@ -1,7 +1,7 @@
 from openpower.simulator.program import Program
-from openpower.insndb.disasm import load, dump
+from openpower.insndb.dis import load, dump
 from openpower.insndb.asm import SVP64Asm
-from openpower.insndb.dbtypes import Database, Style
+from openpower.insndb.types import Database, Style
 from openpower.decoder.power_enums import find_wiki_dir
 from openpower.sv import sv_binutils_fptrans
 import unittest

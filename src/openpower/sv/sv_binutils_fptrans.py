@@ -8,7 +8,7 @@ from openpower.decoder.power_enums import (
     FPTRANS_INSNS as _FPTRANS_INSNS,
     find_wiki_dir as _find_wiki_dir,
 )
-from openpower.insndb.dbtypes import (
+from openpower.insndb.types import (
     Database as _Database,
     StaticOperand as _StaticOperand,
     WordInstruction as _WordInstruction,
