@@ -1029,7 +1029,6 @@ class PowerDecodeSubset(Elaboratable):
             sv_ptype = self.op_get("SV_Ptype")
             sv_mode = self.op_get("SV_mode")
             fn = self.op_get("function_unit")
-            print ("sv_mode n", sv_mode)
             comb += rm_dec.sv_mode.eq(sv_mode)  # BRANCH/CROP/LDST_IMM etc.
             comb += rm_dec.fn_in.eq(fn)  # decode needs to know Fn type
             comb += rm_dec.ptype_in.eq(sv_ptype)  # Single/Twin predicated
