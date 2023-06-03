@@ -44,22 +44,34 @@ class OpcodesVisitor(ConcreteInstructionVisitor):
             print(opcode)
 
 
+class OperandsVisitor(ConcreteInstructionVisitor):
+    def handler(self, record):
+        for operand in record.dynamic_operands:
+            print(operand.name)
+        for operand in record.static_operands:
+            if operand.name not in ("PO", "XO"):
+                print(operand.name, operand.value, sep="=")
+
+
 def main():
     visitors = {
         "list": ListVisitor,
         "opcodes": OpcodesVisitor,
+        "operands": OperandsVisitor,
     }
-    parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(dest="command", required=True)
-    parser_list = subparser.add_parser("list",
+    main_parser = argparse.ArgumentParser()
+    main_subparser = main_parser.add_subparsers(dest="command", required=True)
+    main_subparser.add_parser("list",
         help="list all instructions")
-    parser_opcodes = subparser.add_parser("opcodes",
-        help="print instruction opcodes")
-    parser_opcodes.add_argument("insn",
-        metavar="INSN",
-        help="instruction")
 
-    args = vars(parser.parse_args())
+    for (command, help) in {
+                "opcodes": "print instruction opcodes",
+                "operands": "print instruction operands",
+            }.items():
+        parser = main_subparser.add_parser(command, help=help)
+        parser.add_argument("insn", metavar="INSN", help="instruction")
+
+    args = vars(main_parser.parse_args())
     command = args.pop("command")
     visitor = visitors[command](**args)
 
