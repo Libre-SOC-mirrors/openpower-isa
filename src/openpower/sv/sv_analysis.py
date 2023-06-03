@@ -478,6 +478,10 @@ def extra_classifier(insn_name, value, name, res, regs):
         if insn_name == 'mtspr':
             res['0'] = 'd:SPR'  # SPR: Rdest1_EXTRA3
             res['1'] = 's:RS'  # RS: Rsrc1_EXTRA3
+        elif insn_name == 'rlwinm':
+            # weird one, RA is a dest but not in bits 6:10
+            res['0'] = 'd:RA;d:CR0'  # RA: Rdest1_EXTRA3
+            res['1'] = 's:RS'  # RS: Rsrc1_EXTRA3
         elif insn_name == 'mfspr':
             res['0'] = 'd:RS'  # RS: Rdest1_EXTRA3
             res['1'] = 's:SPR'  # SPR: Rsrc1_EXTRA3
@@ -656,6 +660,10 @@ def extra_classifier(insn_name, value, name, res, regs):
     else:
         raise NotImplementedError(insn_name)
 
+    #if insn_name.startswith("rlw"):
+    #    print("regs ", value, insn_name, regs, res)
+
+
 
 def process_csvs(format):
 
@@ -792,6 +800,9 @@ def process_csvs(format):
             insn_name = row[2]
             condition = row[3]
             insn = insns[(insn_name, condition)]
+
+            #if insn_name == 'rlwinm':
+            #    print ("upd rlwinm", insn)
 
             # start constructing svp64 CSV row
             res = OrderedDict()
