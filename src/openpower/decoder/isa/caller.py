@@ -35,7 +35,7 @@ from openpower.decoder.power_enums import (FPTRANS_INSNS, CRInSel, CROutSel,
                                            SVP64RMMode, SVPType, XER_bits,
                                            insns, spr_byname, spr_dict,
                                            BFP_FLAG_NAMES)
-from openpower.insndb.types import SVP64Instruction
+from openpower.insndb.dbtypes import SVP64Instruction
 from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.selectable_int import (FieldSelectableInt,
                                               SelectableInt, selectconcat,
