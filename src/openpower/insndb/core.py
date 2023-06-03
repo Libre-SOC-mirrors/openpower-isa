@@ -826,6 +826,10 @@ class Record:
         with visitor.record(record=self) as record:
             pass
 
+    @property
+    def pcode(self):
+        return self.mdwn.pcode
+
     def __lt__(self, other):
         if not isinstance(other, Record):
             return NotImplemented

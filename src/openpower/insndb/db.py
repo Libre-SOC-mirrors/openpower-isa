@@ -53,11 +53,18 @@ class OperandsVisitor(ConcreteInstructionVisitor):
                 print(operand.name, operand.value, sep="=")
 
 
+class PCodeVisitor(ConcreteInstructionVisitor):
+    def handler(self, record):
+        for line in record.pcode:
+            print(line)
+
+
 def main():
     visitors = {
         "list": ListVisitor,
         "opcodes": OpcodesVisitor,
         "operands": OperandsVisitor,
+        "pcode": PCodeVisitor,
     }
 
     main_parser = argparse.ArgumentParser()
@@ -72,6 +79,7 @@ def main():
     for (command, help) in {
                 "opcodes": "print instruction opcodes",
                 "operands": "print instruction operands",
+                "pcode": "print instruction pseudocode",
             }.items():
         parser = main_subparser.add_parser(command, help=help)
         parser.add_argument("insn", metavar="INSN", help="instruction")
