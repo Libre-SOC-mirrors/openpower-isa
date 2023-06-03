@@ -1940,10 +1940,12 @@ class BaseRM(_Mapping):
     ewsrc: _Field = range(6, 8)
     subvl: _Field = range(8, 10)
     mode: Mode.remap(range(19, 24))
-    smask: _Field = range(16, 19)
+    smask_extra322: _Field = (6,7,18,) # LDST_IDX is EXTRA332
+    smask: _Field = range(16, 19)      # everything else use this
     extra: Extra.remap(range(10, 19))
     extra2: Extra2.remap(range(10, 19))
     extra3: Extra3.remap(range(10, 19))
+    # XXX extra332 = (extra3[0], extra3[1], extra2[3])
 
     def specifiers(self, record):
         subvl = int(self.subvl)
@@ -2114,7 +2116,11 @@ class PredicateBaseRM(BaseRM):
         mask = int(self.mask)
         sm = dm = PredicateBaseRM.predicate(CR, mask)
         if record.svp64.ptype is _SVPType.P2:
-            smask = int(self.smask)
+            # LDST_IDX smask moving to extra322 but not straight away (False)
+            if False and record.svp64.mode is _SVMode.LDST_IDX:
+                smask = int(self.smask_extra332)
+            else:
+                smask = int(self.smask)
             sm = PredicateBaseRM.predicate(CR, smask)
         if sm == dm and dm:
             yield ("m=" + dm)
@@ -2624,6 +2630,12 @@ class SpecifierM(SpecifierMask):
         if ((self.record.ptype is _SVPType.P2) and
                 (self.record.svp64.mode is not _SVMode.BRANCH)):
             selector.smask = int(self.pred)
+            # LDST_IDX smask moving to extra322 but not straight away (False)
+            if False and self.record.svp64.mode is _SVMode.LDST_IDX:
+                selector.smask_extra332 = int(self.pred)
+            else:
+                selector.smask = int(self.pred)
+
         selector.mmode = (self.pred.mode is _SVP64PredMode.CR)
 
 
@@ -2651,7 +2663,11 @@ class SpecifierSM(SpecifierMask):
 
     def assemble(self, insn):
         selector = insn.select(record=self.record)
-        selector.smask = int(self.pred)
+        # LDST_IDX smask moving to extra322 but not straight away (False)
+        if False and self.record.svp64.mode is _SVMode.LDST_IDX:
+            selector.smask_extra332 = int(self.pred)
+        else:
+            selector.smask = int(self.pred)
         selector.mmode = (self.pred.mode is _SVP64PredMode.CR)
 
 
