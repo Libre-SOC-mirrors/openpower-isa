@@ -446,13 +446,19 @@ class SVP64Record:
         regs = {}
         seltypes = {}
         for key in keys:
+            # has the word "in", it is a SelType.SRC "out" -> DST
+            # in1/2/3 and CR in are SRC, and must match only against "s:NN"
+            # out/out1 and CR out are DST, and must match only against "d:NN"
+            keytype = _SelType.SRC if ("in" in key) else _SelType.DST
             sel = sels[key] = getattr(self, key)
             reg = regs[key] = _Reg(sel)
             seltypes[key] = _SelType.NONE
             idxs[key] = _SVExtra.NONE
             for (reg, seltype, idx) in extra(reg.alias):
-                if ((idx != idxs[key]) and (idxs[key] is not _SVExtra.NONE)):
-                    raise ValueError(idxs[key])
+                if keytype != seltype: # only check SRC-to-SRC and DST-to-DST
+                    continue
+                if idx != idxs[key] and idxs[key] is not _SVExtra.NONE:
+                    raise ValueError(idx)
                 idxs[key] = idx
                 regs[key] = reg
                 seltypes[key] = seltype
