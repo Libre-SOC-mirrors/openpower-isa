@@ -241,7 +241,7 @@ class SVExtra(Enum):
 
     def __repr__(self):
         return {
-            SVExtra.NONE: "none",
+            SVExtra.NONE: "NONE",
             SVExtra.Idx0: "extra0",
             SVExtra.Idx1: "extra1",
             SVExtra.Idx2: "extra2",
@@ -971,7 +971,7 @@ class SelType(Enum):
 
     def __repr__(self):
         return {
-            SelType.NONE: "none",
+            SelType.NONE: "NONE",
             SelType.SRC: "src",
             SelType.DST: "dst",
         }[self]
