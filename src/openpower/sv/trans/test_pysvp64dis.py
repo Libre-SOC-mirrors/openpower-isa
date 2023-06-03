@@ -1,5 +1,5 @@
 from openpower.simulator.program import Program
-from openpower.insndb.disam import load, dump
+from openpower.insndb.disasm import load, dump
 from openpower.insndb.asm import SVP64Asm
 from openpower.insndb.core import Database, Style
 from openpower.decoder.power_enums import find_wiki_dir
@@ -35,7 +35,7 @@ class SVSTATETestCase(unittest.TestCase):
                                      "'%s' expected '%s'" % (line, expected[i]))
 
 
-    def tst_0_add(self):
+    def test_0_add(self):
         expected = ['addi 1,5,2',
                     'add 1,5,2',
                     'add. 1,5,2',
@@ -44,13 +44,13 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_1_svshape2(self):
+    def test_1_svshape2(self):
         expected = [
                     'svshape2 12,1,15,5,0,0'
                         ]
         self._do_tst(expected)
 
-    def tst_2_d_custom_op(self):
+    def test_2_d_custom_op(self):
         expected = [
                     'fishmv 12,2',
                     'fmvis 12,97',
@@ -58,7 +58,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_3_sv_isel(self):
+    def test_3_sv_isel(self):
         expected = [
                     'sv.isel 12,2,3,33',
                     'sv.isel 12,2,3,*33',
@@ -68,7 +68,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_4_sv_crand(self):
+    def test_4_sv_crand(self):
         expected = [
                     'sv.crand *16,*2,*33',
                     'sv.crand 12,2,33',
@@ -79,21 +79,21 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_5_setvl(self):
+    def test_5_setvl(self):
         expected = [
                     "setvl 5,4,5,0,1,1",
                     "setvl. 5,4,5,0,1,1",
                         ]
         self._do_tst(expected)
 
-    def tst_6_sv_setvl(self):
+    def test_6_sv_setvl(self):
         expected = [
                     "sv.setvl 5,4,5,0,1,1",
                     "sv.setvl 63,35,5,0,1,1",
                         ]
         self._do_tst(expected)
 
-    def tst_7_batch(self):
+    def test_7_batch(self):
         "these come from https://bugs.libre-soc.org/show_bug.cgi?id=917#c25"
         expected = [
                     "addi 2,2,0",
@@ -167,7 +167,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_8_madd(self):
+    def test_8_madd(self):
         expected = [
                     "maddhd 5,4,5,3",
                     "maddhdu 5,4,5,3",
@@ -175,7 +175,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_9_fptrans(self):
+    def test_9_fptrans(self):
         "enumerates a list of fptrans instruction disassembly entries"
         db = Database(find_wiki_dir())
         entries = sorted(sv_binutils_fptrans.collect(db))
@@ -186,7 +186,7 @@ class SVSTATETestCase(unittest.TestCase):
                 lst.append(line)
         self._do_tst(lst)
 
-    def tst_10_vec(self):
+    def test_10_vec(self):
         expected = [
                     "sv.add./vec2 *3,*7,*11",
                     "sv.add./vec3 *3,*7,*11",
@@ -194,7 +194,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_11_elwidth(self):
+    def test_11_elwidth(self):
         expected = [
                     "sv.add./dw=8 *3,*7,*11",
                     "sv.add./dw=16 *3,*7,*11",
@@ -211,14 +211,14 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_12_sat(self):
+    def test_12_sat(self):
         expected = [
                     "sv.add./satu *3,*7,*11",
                     "sv.add./sats *3,*7,*11",
                         ]
         self._do_tst(expected)
 
-    def tst_12_mr_r(self):
+    def test_12_mr_r(self):
         expected = [
                     "sv.add./mrr/vec2 *3,*7,*11",
                     "sv.add./mr/vec2 *3,*7,*11",
@@ -227,14 +227,14 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_13_RC1(self):
+    def test_13_RC1(self):
         expected = [
                     "sv.add/ff=RC1 *3,*7,*11",
                     "sv.add/ff=~RC1 *3,*7,*11",
                         ]
         self._do_tst(expected)
 
-    def tst_14_rc1_ff_pr(self):
+    def test_14_rc1_ff_pr(self):
         expected = [
                     "sv.add./ff=eq *3,*7,*11",
                     "sv.add./ff=ns *3,*7,*11",
@@ -246,7 +246,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_15_predicates(self):
+    def test_15_predicates(self):
         expected = [
                     "sv.add./m=r3 *3,*7,*11",
                     "sv.add./m=1<<r3 *3,*7,*11",
@@ -263,14 +263,14 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_15_els(self):
+    def test_15_els(self):
         expected = [
                     "sv.stw/els *4,16(2)",
                     "sv.lfs/els *1,256(4)",
                         ]
         self._do_tst(expected)
 
-    def tst_16_bc(self):
+    def test_16_bc(self):
         """bigger list in test_pysvp64dis_branch.py, this one's "quick"
         """
         expected = [
@@ -290,21 +290,21 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_17_vli(self):
+    def test_17_vli(self):
         expected = [
                     "sv.add/ff=RC1/vli 3,7,11",
                     "sv.add/ff=~RC1/vli 3,7,11",
                         ]
         self._do_tst(expected)
 
-    def tst_18_sea(self):
+    def test_18_sea(self):
         expected = [
                     "sv.ldux/sea 5,6,7",
                     "sv.ldux/pi/sea 5,6,7",
                         ]
         self._do_tst(expected)
 
-    def tst_19_ldst_idx_els(self):
+    def test_19_ldst_idx_els(self):
         expected = [
                     "sv.stdx/els *4,16,2",
                     "sv.stdx/els/sea *4,16,2",
@@ -313,7 +313,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_20_cmp(self):
+    def test_20_cmp(self):
         expected = [
                     "sv.cmp *4,1,*0,1",
                     "sv.cmp/ff=eq *4,1,*0,1",
@@ -326,7 +326,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_21_addex(self):
+    def test_21_addex(self):
         expected = [
                     "addex 5,3,2,0",
                     "sv.addex 5,3,2,0",
@@ -334,7 +334,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_22_ld(self):
+    def test_22_ld(self):
         expected = [
                     "ld 4,0(5)",
                     "ld 4,16(5)",       # sigh, needs magic-shift (D||0b00)
@@ -342,7 +342,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_23_lq(self):
+    def test_23_lq(self):
         expected = [
                     "lq 4,0(5)",
                     "lq 4,16(5)",      # ditto, magic-shift (DQ||0b0000)
@@ -351,14 +351,14 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_24_bc(self):
+    def test_24_bc(self):
         expected = [
                     "b 0x28",
                     "bc 16,0,-0xb4",
                         ]
         self._do_tst(expected)
 
-    def tst_25_stq(self):
+    def test_25_stq(self):
         expected = [
                     "stq 4,0(5)",
                     "stq 4,8(5)",
@@ -367,13 +367,13 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_26_sv_stq_vector_name(self):
+    def test_26_sv_stq_vector_name(self):
         expected = [
                     "sv.stq *4,16(*5)", # RSp not recognised as "vector" name
                         ]
         self._do_tst(expected)
 
-    def tst_27_sc(self):
+    def test_27_sc(self):
         expected = [
                     "sc 0",
                     "sc 1",
@@ -382,14 +382,14 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_28_rfid(self):
+    def test_28_rfid(self):
         expected = [
                     "rfid",
                     "rfscv",
                         ]
         self._do_tst(expected)
 
-    def tst_29_postinc(self):
+    def test_29_postinc(self):
         expected = [
                     "sv.ldu/pi 5,8(2)",
                     "sv.lwzu/pi *6,8(2)",
@@ -398,7 +398,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_29_dsld_dsrd(self):
+    def test_29_dsld_dsrd(self):
         expected = [
                     "dsld 5,4,5,3",
                     "dsrd 5,4,5,3",
@@ -411,7 +411,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_30_divmod2du(self):
+    def test_30_divmod2du(self):
         expected = [
                     "divmod2du 5,4,5,3",
                     "maddedu 5,4,5,3",
@@ -422,7 +422,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_31_sadd_saddw_sadduw(self):
+    def test_31_sadd_saddw_sadduw(self):
         expected = [
                     "sadd 31,0,0,0",
                     "sadd 0,31,0,0",
@@ -451,7 +451,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_32_ldst_idx_ffirst(self):
+    def test_32_ldst_idx_ffirst(self):
         expected = [
                     "sv.stdx/ff=RC1 *4,16,2",
                     "sv.stdx/ff=~RC1 *4,16,2",
@@ -460,7 +460,7 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_33_ldst_imm_ffirst(self):
+    def test_33_ldst_imm_ffirst(self):
         expected = [
                     "sv.std/ff=RC1 *4,16(2)",
                     "sv.std/ff=~RC1 *4,16(2)",
@@ -469,32 +469,35 @@ class SVSTATETestCase(unittest.TestCase):
                         ]
         self._do_tst(expected)
 
-    def tst_34_ldst_update_imm_ffirst(self):
+    def test_34_ldst_update_imm_ffirst(self):
         expected = [
                     "sv.ldu/ff=~RC1/vli *16,0(*17)",
                         ]
         self._do_tst(expected)
 
-    def tst_35_ffmadds(self):
+    def test_35_ffmadds(self):
         expected = [
                     "sv.ffmadds *0,*0,*0",
                         ]
         self._do_tst(expected)
 
     def test_36_extras_rlwimi(self):
-        self._do_tst(["sv.rlwimi 3, 1, 5, 20, 6"])
+        self._do_tst(["sv.rlwimi 3,1,5,20,6"])
 
-    def tst_36_extras_rlwimi_(self):
-        self._do_tst(["sv.rlwimi. 3, 1, 5, 20, 6"])
+    def test_36_extras_rlwimi_(self):
+        self._do_tst(["sv.rlwimi. 3,1,5,20,6"])
 
-    def tst_36_extras_rldimi(self):
-        self._do_tst(["sv.rldimi 3, 4, 56, 4"])
+    def test_36_extras_rldimi(self):
+        self._do_tst(["sv.rldimi 3,4,56,4"])
 
-    def tst_36_extras_rldimi_(self):
-        self._do_tst(["sv.rldimi. 3, 4, 56, 4"])
+    def test_36_extras_rldimi_(self):
+        self._do_tst(["sv.rldimi. 3,4,56,4"])
 
-    def tst_36_extras_fishmv(self):
-        self._do_tst(["sv.fishmv 3, 0x0FD0"])
+    def test_36_extras_fishmv(self):
+        self._do_tst(["sv.fishmv 3,4048"]) # 0x0FD0
+
+    def test_37_extras_rldimi(self):
+        self._do_tst(["rldimi 3,4,56,4"])
 
 if __name__ == "__main__":
     unittest.main()
