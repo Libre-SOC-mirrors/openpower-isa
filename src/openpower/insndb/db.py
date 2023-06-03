@@ -11,29 +11,32 @@ from openpower.insndb.core import (
 )
 
 
+class GenericVisitor(Visitor):
+    def __init__(self, **_):
+        pass
+
+
+class ListVisitor(GenericVisitor):
+    @contextlib.contextmanager
+    def record(self, record):
+        print(record.name)
+        yield record
+
+
+class OpcodesVisitor(GenericVisitor):
+    def __init__(self, insn, **_):
+        self.__insn = insn
+        return super().__init__()
+
+    @contextlib.contextmanager
+    def record(self, record):
+        if record.name == self.__insn:
+            for opcode in record.opcodes:
+                print(opcode)
+        yield record
+
+
 def main():
-    class GenericVisitor(Visitor):
-        def __init__(self, **_):
-            pass
-
-    class ListVisitor(GenericVisitor):
-        @contextlib.contextmanager
-        def record(self, record):
-            print(record.name)
-            yield record
-
-    class OpcodesVisitor(GenericVisitor):
-        def __init__(self, insn, **_):
-            self.__insn = insn
-            return super().__init__()
-
-        @contextlib.contextmanager
-        def record(self, record):
-            if record.name == self.__insn:
-                for opcode in record.opcodes:
-                    print(opcode)
-            yield record
-
     visitors = {
         "list": ListVisitor,
         "opcodes": OpcodesVisitor,
