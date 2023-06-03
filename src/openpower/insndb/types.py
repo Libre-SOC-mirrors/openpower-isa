@@ -1,4 +1,5 @@
 import collections as _collections
+import contextlib as _contextlib
 import csv as _csv
 import dataclasses as _dataclasses
 import enum as _enum
@@ -52,6 +53,16 @@ from openpower.decoder.power_fields import (
     DecodeFields as _DecodeFields,
 )
 from openpower.decoder.pseudo.pagereader import ISA as _ISA
+
+
+class Visitor:
+    @_contextlib.contextmanager
+    def db(self, db):
+        yield db
+
+    @_contextlib.contextmanager
+    def record(self, record):
+        yield record
 
 
 @_functools.total_ordering
@@ -810,6 +821,10 @@ class Record:
     fields: Fields
     mdwn: MarkdownRecord
     svp64: SVP64Record = None
+
+    def visit(self, visitor):
+        with visitor.record(record=self) as record:
+            pass
 
     def __lt__(self, other):
         if not isinstance(other, Record):
@@ -3664,6 +3679,11 @@ class Database:
         self.__opcodes = dict(sorted(opcodes.items()))
 
         return super().__init__()
+
+    def visit(self, visitor):
+        with visitor.db(db=self) as db:
+            for record in self.__db:
+                record.visit(visitor=visitor)
 
     def __repr__(self):
         return repr(self.__db)
