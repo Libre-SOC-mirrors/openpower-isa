@@ -14,10 +14,6 @@ from openpower.insndb.types import (
 def main():
     class ListVisitor(Visitor):
         @contextlib.contextmanager
-        def db(self, db):
-            yield db
-
-        @contextlib.contextmanager
         def record(self, record):
             print(record.name)
             yield record
