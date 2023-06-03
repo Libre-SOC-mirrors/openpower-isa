@@ -78,7 +78,7 @@ class FieldSelectableInt:
         return len(self.br)
 
     def __getitem__(self, key):
-        log("getitem", key, self.br)
+        #log("getitem", key, self.br)
         if isinstance(key, SelectableInt):
             key = key.value
 
