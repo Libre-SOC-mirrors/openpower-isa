@@ -1,6 +1,6 @@
 import argparse
 import contextlib
-import sys
+import os
 
 from openpower.decoder.power_enums import (
     find_wiki_dir,
@@ -59,7 +59,12 @@ def main():
         "opcodes": OpcodesVisitor,
         "operands": OperandsVisitor,
     }
+
     main_parser = argparse.ArgumentParser()
+    main_parser.add_argument("-l", "--log",
+        help="activate logging",
+        action="store_true",
+        default=False)
     main_subparser = main_parser.add_subparsers(dest="command", required=True)
     main_subparser.add_parser("list",
         help="list all instructions")
@@ -73,6 +78,9 @@ def main():
 
     args = vars(main_parser.parse_args())
     command = args.pop("command")
+    log = args.pop("log")
+    if not log:
+        os.environ["SILENCELOG"] = "true"
     visitor = visitors[command](**args)
 
     db = Database(find_wiki_dir())
