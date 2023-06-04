@@ -11,6 +11,21 @@ from openpower.insndb.core import (
 )
 
 
+class Instruction(str):
+    def __new__(cls, string):
+        svp64 = False
+        if string.startswith("sv."):
+            string = string[len("sv."):]
+            svp64 = True
+        self = super().__new__(cls, string)
+        self.__svp64 = svp64
+        return self
+
+    @property
+    def svp64(self):
+        return self.__svp64
+
+
 class BaseVisitor(Visitor):
     def __init__(self, **_):
         pass
@@ -89,7 +104,8 @@ def main():
     for (command, (visitor, help)) in commands.items():
         parser = main_subparser.add_parser(command, help=help)
         if issubclass(visitor, ConcreteInstructionVisitor):
-            parser.add_argument("insn", metavar="INSN", help="instruction")
+            parser.add_argument("insn", type=Instruction,
+                metavar="INSN", help="instruction")
 
     args = vars(main_parser.parse_args())
     command = args.pop("command")
@@ -100,3 +116,7 @@ def main():
 
     db = Database(find_wiki_dir())
     db.visit(visitor=visitor)
+
+
+if __name__ == "__main__":
+    main()
