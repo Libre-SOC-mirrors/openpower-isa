@@ -26,6 +26,14 @@ class Instruction(str):
         return self.__svp64
 
 
+class SVP64Instruction(Instruction):
+    def __new__(cls, string):
+        self = super().__new__(cls, string)
+        if not self.svp64:
+            raise ValueError("illegal SVP64 instruction")
+        return self
+
+
 class BaseVisitor(Visitor):
     def __init__(self, **_):
         pass
@@ -53,6 +61,10 @@ class InstructionVisitor(BaseVisitor):
         yield record
 
 
+class SVP64InstructionVisitor(InstructionVisitor):
+    pass
+
+
 class OpcodesVisitor(InstructionVisitor):
     def concrete_record(self, record):
         for opcode in record.opcodes:
@@ -74,7 +86,7 @@ class PCodeVisitor(InstructionVisitor):
             print(line)
 
 
-class ExtrasVisitor(InstructionVisitor):
+class ExtrasVisitor(SVP64InstructionVisitor):
     def concrete_record(self, record):
         for (key, fields) in record.extras.items():
             print(key)
@@ -116,7 +128,11 @@ def main():
     for (command, (visitor, help)) in commands.items():
         parser = main_subparser.add_parser(command, help=help)
         if issubclass(visitor, InstructionVisitor):
-            parser.add_argument("insn", type=Instruction,
+            if issubclass(visitor, SVP64InstructionVisitor):
+                arg_cls = SVP64Instruction
+            else:
+                arg_cls = Instruction
+            parser.add_argument("insn", type=arg_cls,
                 metavar="INSN", help="instruction")
 
     args = vars(main_parser.parse_args())
