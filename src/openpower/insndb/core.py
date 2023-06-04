@@ -833,6 +833,10 @@ class Record:
             pass
 
     @property
+    def extras(self):
+        return self.svp64.extras
+
+    @property
     def pcode(self):
         return self.mdwn.pcode
 

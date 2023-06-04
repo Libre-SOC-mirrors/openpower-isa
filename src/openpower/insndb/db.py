@@ -74,6 +74,14 @@ class PCodeVisitor(InstructionVisitor):
             print(line)
 
 
+class ExtrasVisitor(InstructionVisitor):
+    def concrete_record(self, record):
+        for (key, fields) in record.extras.items():
+            print(key)
+            for (field_key, field_value) in fields.items():
+                print(f"    {field_key} {field_value}")
+
+
 def main():
     commands = {
         "list": (
@@ -91,6 +99,10 @@ def main():
         "pcode": (
             PCodeVisitor,
             "print instruction pseudocode",
+        ),
+        "extras": (
+            ExtrasVisitor,
+            "print instruction extras (SVP64)",
         ),
     }
 
