@@ -217,7 +217,7 @@ class SVEType(Enum):
     EXTRA3 = 2
     EXTRA32 = 3 # mixed EXTRA3 and EXTRA2 using RM bits 6&7 for MASK_SRC
 
-    def __repr__(self):
+    def __str__(self):
         return self.name
 
 
@@ -226,7 +226,7 @@ class SVMaskSrc(Enum):
     NO = 0
     EN = 1
 
-    def __repr__(self):
+    def __str__(self):
         return self.name
 
 
@@ -992,6 +992,11 @@ class In1Sel(Enum):
     CIA = 8 # for addpcis
     RT = 9
 
+    def __str__(self):
+        if self is In1Sel.RA_OR_ZERO:
+            return "RA0"
+        return self.name
+
     @property
     def type(self):
         if self is In1Sel.NONE:
@@ -1023,6 +1028,9 @@ class In2Sel(Enum):
     CONST_DXHI4 = 18 # for addpcis
     CONST_DQ = 19 # for ld/st-quad
 
+    def __str__(self):
+        return self.name
+
     @property
     def type(self):
         if self is In2Sel.NONE:
@@ -1042,6 +1050,9 @@ class In3Sel(Enum):
     RT = 6  # for ternlog[i]
     RTp = RT
     FRA = 7
+
+    def __str__(self):
+        return self.name
 
     @property
     def type(self):
@@ -1064,6 +1075,11 @@ class OutSel(Enum):
     RS = 7
     RSp = RS
     FRA = 8
+
+    def __str__(self):
+        if self is OutSel.RT_OR_ZERO:
+            return "RT0"
+        return self.name
 
     @property
     def type(self):
@@ -1120,6 +1136,9 @@ class CRInSel(Enum):
     CR1 = 7
     BA = 8
 
+    def __str__(self):
+        return self.name
+
     @property
     def type(self):
         if self is CRInSel.NONE:
@@ -1131,6 +1150,9 @@ class CRInSel(Enum):
 class CRIn2Sel(Enum):
     NONE = 0
     BB = 1
+
+    def __str__(self):
+        return self.name
 
     @property
     def type(self):
@@ -1147,6 +1169,9 @@ class CROutSel(Enum):
     BT = 3
     WHOLE_REG = 4
     CR1 = 5
+
+    def __str__(self):
+        return self.name
 
     @property
     def type(self):
