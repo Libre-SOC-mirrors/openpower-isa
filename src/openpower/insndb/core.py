@@ -9,6 +9,7 @@ import operator as _operator
 import pathlib as _pathlib
 import re as _re
 import types as _types
+import typing as _typing
 
 try:
     from functools import cached_property
@@ -63,6 +64,10 @@ class Visitor:
     @_contextlib.contextmanager
     def record(self, record):
         yield record
+
+    @_contextlib.contextmanager
+    def extra(self, extra):
+        yield extra
 
 
 @_functools.total_ordering
@@ -818,6 +823,23 @@ class MarkdownRecord:
     operands: Operands
 
 
+@_dataclasses.dataclass(eq=True, frozen=True)
+class VisitableExtra:
+    name: str
+    sel: _typing.Union[
+        _In1Sel, _In2Sel, _In3Sel, _CRInSel, _CRIn2Sel,
+        _OutSel, _CROutSel,
+    ]
+    reg: _Reg
+    seltype: _SelType
+    idx: _SVExtra
+
+    def visit(self, visitor):
+        with visitor.extra(extra=self) as extra:
+            pass
+
+
+
 @_functools.total_ordering
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Record:
@@ -830,11 +852,16 @@ class Record:
 
     def visit(self, visitor):
         with visitor.record(record=self) as record:
-            pass
+            for (name, fields) in record.extras.items():
+                extra = VisitableExtra(name=name, **fields)
+                extra.visit(visitor=visitor)
 
     @property
     def extras(self):
-        return self.svp64.extras
+        if self.svp64 is not None:
+            return self.svp64.extras
+        else:
+            return _types.MappingProxyType({})
 
     @property
     def pcode(self):
