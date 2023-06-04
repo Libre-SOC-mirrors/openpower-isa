@@ -972,11 +972,11 @@ class SelType(Enum):
     SRC = 's'
     DST = 'd'
 
-    def __repr__(self):
+    def __str__(self):
         return {
             SelType.NONE: "NONE",
-            SelType.SRC: "src",
-            SelType.DST: "dst",
+            SelType.SRC: "SRC",
+            SelType.DST: "DST",
         }[self]
 
 
