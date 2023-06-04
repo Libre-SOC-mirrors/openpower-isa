@@ -287,6 +287,9 @@ class Reg(Enum):
     FRSp = auto()
     FRTp = auto()
 
+    def __str__(self):
+        return self.name
+
     @classmethod
     def _missing_(cls, desc):
         selectors = (
