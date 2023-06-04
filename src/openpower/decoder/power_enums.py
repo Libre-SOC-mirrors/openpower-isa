@@ -280,12 +280,12 @@ class Reg(Enum):
     BFT = auto()
     WHOLE_REG = auto()
     SPR = auto()
-    RSp = auto()
-    RTp = auto()
-    FRAp = auto()
-    FRBp = auto()
-    FRSp = auto()
-    FRTp = auto()
+    RSp = RS
+    RTp = RT
+    FRAp = FRA
+    FRBp = FRB
+    FRSp = FRS
+    FRTp = FRT
 
     def __str__(self):
         return self.name
