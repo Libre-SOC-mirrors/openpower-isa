@@ -38,29 +38,29 @@ class ListVisitor(BaseVisitor):
         yield record
 
 
-class ConcreteInstructionVisitor(BaseVisitor):
+class InstructionVisitor(BaseVisitor):
     def __init__(self, insn, **_):
         self.__insn = insn
         return super().__init__()
 
-    def handler(self, record):
+    def concrete_record(self, record):
         raise NotImplementedError
 
     @contextlib.contextmanager
     def record(self, record):
         if record.name == self.__insn:
-            self.handler(record=record)
+            self.concrete_record(record=record)
         yield record
 
 
-class OpcodesVisitor(ConcreteInstructionVisitor):
-    def handler(self, record):
+class OpcodesVisitor(InstructionVisitor):
+    def concrete_record(self, record):
         for opcode in record.opcodes:
             print(opcode)
 
 
-class OperandsVisitor(ConcreteInstructionVisitor):
-    def handler(self, record):
+class OperandsVisitor(InstructionVisitor):
+    def concrete_record(self, record):
         for operand in record.dynamic_operands:
             print(operand.name)
         for operand in record.static_operands:
@@ -68,8 +68,8 @@ class OperandsVisitor(ConcreteInstructionVisitor):
                 print(operand.name, operand.value, sep="=")
 
 
-class PCodeVisitor(ConcreteInstructionVisitor):
-    def handler(self, record):
+class PCodeVisitor(InstructionVisitor):
+    def concrete_record(self, record):
         for line in record.pcode:
             print(line)
 
@@ -103,7 +103,7 @@ def main():
 
     for (command, (visitor, help)) in commands.items():
         parser = main_subparser.add_parser(command, help=help)
-        if issubclass(visitor, ConcreteInstructionVisitor):
+        if issubclass(visitor, InstructionVisitor):
             parser.add_argument("insn", type=Instruction,
                 metavar="INSN", help="instruction")
 
