@@ -1,6 +1,7 @@
 import argparse
 import contextlib
 import os
+import types
 
 from openpower.decoder.power_enums import (
     find_wiki_dir,
@@ -35,8 +36,46 @@ class SVP64Instruction(Instruction):
 
 
 class BaseVisitor(Visitor):
-    def __init__(self, **_):
-        pass
+    def __init__(self, **arguments):
+        self.__arguments = types.MappingProxyType(arguments)
+        self.__current_db = None
+        self.__current_record = None
+        self.__current_extra = None
+        return super().__init__()
+
+    @property
+    def arguments(self):
+        return self.__arguments
+
+    @property
+    def current_db(self):
+        return self.__current_db
+
+    @property
+    def current_record(self):
+        return self.__current_record
+
+    @property
+    def current_extra(self):
+        return self.__current_extra
+
+    @contextlib.contextmanager
+    def db(self, db):
+        self.__current_db = db
+        yield db
+        self.__current_db = None
+
+    @contextlib.contextmanager
+    def record(self, record):
+        self.__current_record = record
+        yield record
+        self.__current_record = None
+
+    @contextlib.contextmanager
+    def extra(self, extra):
+        self.__current_extra = extra
+        yield extra
+        self.__current_extra = None
 
 
 class ListVisitor(BaseVisitor):
@@ -47,18 +86,7 @@ class ListVisitor(BaseVisitor):
 
 
 class InstructionVisitor(BaseVisitor):
-    def __init__(self, insn, **_):
-        self.__insn = insn
-        return super().__init__()
-
-    def concrete_record(self, record):
-        raise NotImplementedError
-
-    @contextlib.contextmanager
-    def record(self, record):
-        if record.name == self.__insn:
-            self.concrete_record(record=record)
-        yield record
+    pass
 
 
 class SVP64InstructionVisitor(InstructionVisitor):
@@ -66,33 +94,49 @@ class SVP64InstructionVisitor(InstructionVisitor):
 
 
 class OpcodesVisitor(InstructionVisitor):
-    def concrete_record(self, record):
+    @contextlib.contextmanager
+    def record(self, record):
         for opcode in record.opcodes:
             print(opcode)
 
 
 class OperandsVisitor(InstructionVisitor):
-    def concrete_record(self, record):
-        for operand in record.dynamic_operands:
-            print(operand.name, ",".join(map(str, operand.span)))
-        for operand in record.static_operands:
-            if operand.name not in ("PO", "XO"):
-                desc = f"{operand.name}={operand.value}"
-                print(desc, ",".join(map(str, operand.span)))
+    @contextlib.contextmanager
+    def record(self, record):
+        with super().record(record=record):
+            if self.current_record.name == self.arguments["insn"]:
+                for operand in record.dynamic_operands:
+                    print(operand.name, ",".join(map(str, operand.span)))
+                for operand in record.static_operands:
+                    if operand.name not in ("PO", "XO"):
+                        desc = f"{operand.name}={operand.value}"
+                        print(desc, ",".join(map(str, operand.span)))
+
+        yield record
 
 
 class PCodeVisitor(InstructionVisitor):
-    def concrete_record(self, record):
-        for line in record.pcode:
-            print(line)
+    @contextlib.contextmanager
+    def record(self, record):
+        with super().record(record=record):
+            if self.current_record.name == self.arguments["insn"]:
+                for line in record.pcode:
+                    print(line)
 
 
 class ExtrasVisitor(SVP64InstructionVisitor):
-    def concrete_record(self, record):
-        for (key, fields) in record.extras.items():
-            print(key)
-            for (field_key, field_value) in fields.items():
-                print(f"    {field_key} {field_value}")
+    @contextlib.contextmanager
+    def extra(self, extra):
+        with super().extra(extra=extra) as extra:
+            if self.current_record.name == self.arguments["insn"]:
+                print(extra.name)
+                print("    sel", extra.sel)
+                print("    reg", extra.reg)
+                print("    seltype", extra.seltype)
+                print("    idx", extra.idx)
+                pass
+
+        yield extra
 
 
 def main():
