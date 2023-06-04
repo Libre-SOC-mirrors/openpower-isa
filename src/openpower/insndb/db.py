@@ -74,10 +74,11 @@ class OpcodesVisitor(InstructionVisitor):
 class OperandsVisitor(InstructionVisitor):
     def concrete_record(self, record):
         for operand in record.dynamic_operands:
-            print(operand.name)
+            print(operand.name, ",".join(map(str, operand.span)))
         for operand in record.static_operands:
             if operand.name not in ("PO", "XO"):
-                print(operand.name, operand.value, sep="=")
+                desc = f"{operand.name}={operand.value}"
+                print(desc, ",".join(map(str, operand.span)))
 
 
 class PCodeVisitor(InstructionVisitor):
