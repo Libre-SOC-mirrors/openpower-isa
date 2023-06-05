@@ -256,12 +256,12 @@ SVEXTRA = SVExtra
 class Reg(Enum):
     NONE = auto()
     RA = auto()
-    RA_OR_ZERO = RA
+    RA_OR_ZERO = auto()
     RB = auto()
     RC = auto()
     RS = auto()
     RT = auto()
-    RT_OR_ZERO = RT
+    RT_OR_ZERO = auto()
     FRA = auto()
     FRB = auto()
     FRC = auto()
@@ -280,12 +280,12 @@ class Reg(Enum):
     BFT = auto()
     WHOLE_REG = auto()
     SPR = auto()
-    RSp = RS
-    RTp = RT
-    FRAp = FRA
-    FRBp = FRB
-    FRSp = FRS
-    FRTp = FRT
+    RSp = auto()
+    RTp = auto()
+    FRAp = auto()
+    FRBp = auto()
+    FRSp = auto()
+    FRTp = auto()
 
     def __str__(self):
         return self.name
