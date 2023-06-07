@@ -824,7 +824,7 @@ class MarkdownRecord:
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class VisitableExtra:
+class Extra:
     name: str
     sel: _typing.Union[
         _In1Sel, _In2Sel, _In3Sel, _CRInSel, _CRIn2Sel,
@@ -853,7 +853,7 @@ class Record:
     def visit(self, visitor):
         with visitor.record(record=self) as record:
             for (name, fields) in record.extras.items():
-                extra = VisitableExtra(name=name, **fields)
+                extra = Extra(name=name, **fields)
                 extra.visit(visitor=visitor)
 
     @property
@@ -1928,11 +1928,11 @@ class Mode(_Mapping):
     sel: _Field = (0, 1)
 
 
-class Extra(_Mapping):
+class ExtraRM(_Mapping):
     _: _Field = range(0, 9)
 
 
-class Extra2(Extra):
+class Extra2RM(ExtraRM):
     idx0: _Field = range(0, 2)
     idx1: _Field = range(2, 4)
     idx2: _Field = range(4, 6)
@@ -1954,7 +1954,7 @@ class Extra2(Extra):
         self[key].assign(value)
 
 
-class Extra3(Extra):
+class Extra3RM(ExtraRM):
     idx0: _Field = range(0, 3)
     idx1: _Field = range(3, 6)
     idx2: _Field = range(6, 9)
@@ -1983,9 +1983,9 @@ class BaseRM(_Mapping):
     mode: Mode.remap(range(19, 24))
     smask_extra322: _Field = (6,7,18,) # LDST_IDX is EXTRA332
     smask: _Field = range(16, 19)      # everything else use this
-    extra: Extra.remap(range(10, 19))
-    extra2: Extra2.remap(range(10, 19))
-    extra3: Extra3.remap(range(10, 19))
+    extra: ExtraRM.remap(range(10, 19))
+    extra2: Extra2RM.remap(range(10, 19))
+    extra3: Extra3RM.remap(range(10, 19))
     # XXX extra332 = (extra3[0], extra3[1], extra2[3])
 
     def specifiers(self, record):
