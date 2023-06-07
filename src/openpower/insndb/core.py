@@ -56,18 +56,34 @@ from openpower.decoder.power_fields import (
 from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 
+class Node:
+    @property
+    def subnodes(self):
+        yield from ()
+
+
 class Visitor:
     @_contextlib.contextmanager
-    def db(self, db):
-        yield db
+    def Node(self, node, depth):
+        yield node
+        for subnode in node.subnodes:
+            manager = subnode.__class__.__name__
+            manager = getattr(self, manager, self.Node)
+            with manager(node=subnode, depth=(depth + 1)):
+                pass
 
-    @_contextlib.contextmanager
-    def record(self, record):
-        yield record
+    def __getattr__(self, attr):
+        return self.Node
 
-    @_contextlib.contextmanager
-    def extra(self, extra):
-        yield extra
+    def __call__(self, node, depth):
+        manager = node.__class__.__name__
+        manager = getattr(self, manager, self.Node)
+        return manager(node=node, depth=depth)
+
+
+def visit(visitor, node):
+    with visitor(node=node, depth=0):
+        pass
 
 
 @_functools.total_ordering
@@ -824,7 +840,7 @@ class MarkdownRecord:
 
 
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Extra:
+class Extra(Node):
     name: str
     sel: _typing.Union[
         _In1Sel, _In2Sel, _In3Sel, _CRInSel, _CRIn2Sel,
@@ -839,10 +855,9 @@ class Extra:
             pass
 
 
-
 @_functools.total_ordering
 @_dataclasses.dataclass(eq=True, frozen=True)
-class Record:
+class Record(Node):
     name: str
     section: Section
     ppc: PPCRecord
@@ -850,11 +865,10 @@ class Record:
     mdwn: MarkdownRecord
     svp64: SVP64Record = None
 
-    def visit(self, visitor):
-        with visitor.record(record=self) as record:
-            for (name, fields) in record.extras.items():
-                extra = Extra(name=name, **fields)
-                extra.visit(visitor=visitor)
+    @property
+    def subnodes(self):
+        for (name, fields) in self.extras.items():
+            yield Extra(name=name, **fields)
 
     @property
     def extras(self):
@@ -3703,7 +3717,7 @@ class SVP64Database:
         return None
 
 
-class Database:
+class Database(Node):
     def __init__(self, root):
         root = _pathlib.Path(root)
         mdwndb = MarkdownDatabase()
@@ -3737,10 +3751,10 @@ class Database:
 
         return super().__init__()
 
-    def visit(self, visitor):
-        with visitor.db(db=self) as db:
-            for record in self.__db:
-                record.visit(visitor=visitor)
+    @property
+    def subnodes(self):
+        for record in self.__db:
+            yield record
 
     def __repr__(self):
         return repr(self.__db)

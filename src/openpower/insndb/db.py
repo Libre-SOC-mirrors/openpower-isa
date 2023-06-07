@@ -9,6 +9,7 @@ from openpower.decoder.power_enums import (
 from openpower.insndb.core import (
     Database,
     Visitor,
+    visit,
 )
 
 
@@ -38,55 +39,27 @@ class SVP64Instruction(Instruction):
 class BaseVisitor(Visitor):
     def __init__(self, **arguments):
         self.__arguments = types.MappingProxyType(arguments)
-        self.__current_db = None
-        self.__current_record = None
-        self.__current_extra = None
         return super().__init__()
 
-    @property
-    def arguments(self):
-        return self.__arguments
-
-    @property
-    def current_db(self):
-        return self.__current_db
-
-    @property
-    def current_record(self):
-        return self.__current_record
-
-    @property
-    def current_extra(self):
-        return self.__current_extra
-
-    @contextlib.contextmanager
-    def db(self, db):
-        self.__current_db = db
-        yield db
-        self.__current_db = None
-
-    @contextlib.contextmanager
-    def record(self, record):
-        self.__current_record = record
-        yield record
-        self.__current_record = None
-
-    @contextlib.contextmanager
-    def extra(self, extra):
-        self.__current_extra = extra
-        yield extra
-        self.__current_extra = None
+    def __getitem__(self, argument):
+        return self.__arguments[argument]
 
 
 class ListVisitor(BaseVisitor):
     @contextlib.contextmanager
-    def record(self, record):
-        print(record.name)
-        yield record
+    def Record(self, node, depth):
+        print(node.name)
+        yield node
 
 
 class InstructionVisitor(BaseVisitor):
-    pass
+    @contextlib.contextmanager
+    def Database(self, node, depth):
+        yield node
+        for subnode in node.subnodes:
+            if subnode.name == self["insn"]:
+                with self(node=subnode, depth=(depth + 1)):
+                    pass
 
 
 class SVP64InstructionVisitor(InstructionVisitor):
@@ -95,48 +68,41 @@ class SVP64InstructionVisitor(InstructionVisitor):
 
 class OpcodesVisitor(InstructionVisitor):
     @contextlib.contextmanager
-    def record(self, record):
-        for opcode in record.opcodes:
+    def Record(self, node, depth):
+        for opcode in node.opcodes:
             print(opcode)
+        yield node
 
 
 class OperandsVisitor(InstructionVisitor):
     @contextlib.contextmanager
-    def record(self, record):
-        with super().record(record=record):
-            if self.current_record.name == self.arguments["insn"]:
-                for operand in record.dynamic_operands:
-                    print(operand.name, ",".join(map(str, operand.span)))
-                for operand in record.static_operands:
-                    if operand.name not in ("PO", "XO"):
-                        desc = f"{operand.name}={operand.value}"
-                        print(desc, ",".join(map(str, operand.span)))
-
-        yield record
+    def Record(self, node, depth):
+        for operand in node.dynamic_operands:
+            print(operand.name, ",".join(map(str, operand.span)))
+        for operand in node.static_operands:
+            if operand.name not in ("PO", "XO"):
+                desc = f"{operand.name}={operand.value}"
+                print(desc, ",".join(map(str, operand.span)))
+        yield node
 
 
 class PCodeVisitor(InstructionVisitor):
     @contextlib.contextmanager
-    def record(self, record):
-        with super().record(record=record):
-            if self.current_record.name == self.arguments["insn"]:
-                for line in record.pcode:
-                    print(line)
+    def Record(self, node, depth):
+        for line in node.pcode:
+            print(line)
+        yield node
 
 
 class ExtrasVisitor(SVP64InstructionVisitor):
     @contextlib.contextmanager
-    def extra(self, extra):
-        with super().extra(extra=extra) as extra:
-            if self.current_record.name == self.arguments["insn"]:
-                print(extra.name)
-                print("    sel", extra.sel)
-                print("    reg", extra.reg)
-                print("    seltype", extra.seltype)
-                print("    idx", extra.idx)
-                pass
-
-        yield extra
+    def Extra(self, node, depth):
+        print(node.name)
+        print("    sel", node.sel)
+        print("    reg", node.reg)
+        print("    seltype", node.seltype)
+        print("    idx", node.idx)
+        yield node
 
 
 def main():
@@ -188,7 +154,7 @@ def main():
     visitor = commands[command][0](**args)
 
     db = Database(find_wiki_dir())
-    db.visit(visitor=visitor)
+    visit(visitor=visitor, node=db)
 
 
 if __name__ == "__main__":
