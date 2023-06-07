@@ -56,46 +56,32 @@ from openpower.decoder.power_fields import (
 from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 
-class Node:
-    def visit(self, handler, matcher, depth):
-        if matcher(node=self, depth=depth):
-            with handler(node=self, depth=depth):
-                pass
-
-
 class Visitor:
-    def __init__(self, **parameters):
-        self.__parameters = _types.MappingProxyType(parameters)
-        return super().__init__()
-
-    def __contains__(self, key):
-        return self.__parameters.__contains__(key)
-
-    def __getitem__(self, key):
-        return self.__parameters.__getitem__(key)
-
-    def Node(self, node, depth):
-        raise NotImplementedError()
-
-    def __call__(self, node, depth):
+    def __call__(self, node):
         method = node.__class__.__name__
         method = getattr(self, method, self.Node)
-        return method(node=node, depth=depth)
+        return method(node=node)
 
-
-class Matcher(Visitor):
-    def Node(self, node, depth):
-        return True
-
-
-class Handler(Visitor):
     @_contextlib.contextmanager
-    def Node(self, node, depth):
+    def Node(self, node):
+        for subnode in node.subnodes:
+            with self(subnode):
+                pass
         yield node
 
 
-def visit(node, handler, matcher=Matcher()):
-    node.visit(handler=handler, matcher=matcher, depth=0)
+class Node:
+    @property
+    def subnodes(self):
+        yield from ()
+
+
+def walk(root):
+    nodes = _collections.deque([root])
+    while nodes:
+        node = nodes.popleft()
+        nodes.extend(node.subnodes)
+        yield node
 
 
 @_functools.total_ordering
@@ -873,13 +859,10 @@ class Record(Node):
     mdwn: MarkdownRecord
     svp64: SVP64Record = None
 
-    def visit(self, handler, matcher, depth):
-        if matcher(node=self, depth=depth):
-            with handler(node=self, depth=depth):
-                for (name, fields) in self.extras.items():
-                    extra = Extra(name=name, **fields)
-                    extra.visit(depth=(depth + 1),
-                        handler=handler, matcher=matcher)
+    @property
+    def subnodes(self):
+        for (name, fields) in self.extras.items():
+            yield Extra(name=name, **fields)
 
     @property
     def extras(self):
@@ -3762,17 +3745,9 @@ class Database(Node):
 
         return super().__init__()
 
-    def visit(self, handler, matcher, depth):
-        if matcher(node=self, depth=depth):
-            with handler(node=self, depth=depth):
-                for record in self:
-                    record.visit(depth=(depth + 1),
-                        handler=handler, matcher=matcher)
-
     @property
     def subnodes(self):
-        for record in self.__db:
-            yield record
+        yield from self
 
     def __repr__(self):
         return repr(self.__db)

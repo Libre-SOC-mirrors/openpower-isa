@@ -8,9 +8,7 @@ from openpower.decoder.power_enums import (
 )
 from openpower.insndb.core import (
     Database,
-    Handler,
-    Matcher,
-    visit,
+    Visitor,
 )
 
 
@@ -37,33 +35,40 @@ class SVP64Instruction(Instruction):
         return self
 
 
-class ListHandler(Handler):
+class RecordNameVisitor(Visitor):
+    def __init__(self, name):
+        self.__name = name
+        self.__records = set()
+        return super().__init__()
+
     @contextlib.contextmanager
-    def Record(self, node, depth):
+    def Record(self, node):
+        if node.name == self.__name:
+            self.__records.add(node)
+        yield node
+
+    def __iter__(self):
+        yield from self.__records
+
+
+class ListVisitor(Visitor):
+    @contextlib.contextmanager
+    def Record(self, node):
         print(node.name)
         yield node
 
 
-class InstructionMatcher(Matcher):
-    def Record(self, node, depth):
-        return (node.name == self["insn"])
-
-
-class SVP64InstructionMatcher(InstructionMatcher):
-    pass
-
-
-class OpcodesHandler(Handler):
+class OpcodesVisitor(Visitor):
     @contextlib.contextmanager
-    def Record(self, node, depth):
+    def Record(self, node):
         for opcode in node.opcodes:
             print(opcode)
         yield node
 
 
-class OperandsHandler(Handler):
+class OperandsVisitor(Visitor):
     @contextlib.contextmanager
-    def Record(self, node, depth):
+    def Record(self, node):
         for operand in node.dynamic_operands:
             print(operand.name, ",".join(map(str, operand.span)))
         for operand in node.static_operands:
@@ -73,17 +78,17 @@ class OperandsHandler(Handler):
         yield node
 
 
-class PCodeHandler(Handler):
+class PCodeVisitor(Visitor):
     @contextlib.contextmanager
-    def Record(self, node, depth):
+    def Record(self, node):
         for line in node.pcode:
             print(line)
         yield node
 
 
-class ExtrasHandler(Handler):
+class ExtrasVisitor(Visitor):
     @contextlib.contextmanager
-    def Extra(self, node, depth):
+    def Extra(self, node):
         print(node.name)
         print("    sel", node.sel)
         print("    reg", node.reg)
@@ -95,28 +100,23 @@ class ExtrasHandler(Handler):
 def main():
     commands = {
         "list": (
-            ListHandler,
-            Matcher,
+            ListVisitor,
             "list available instructions",
         ),
         "opcodes": (
-            OpcodesHandler,
-            InstructionMatcher,
+            OpcodesVisitor,
             "print instruction opcodes",
         ),
         "operands": (
-            OperandsHandler,
-            InstructionMatcher,
+            OperandsVisitor,
             "print instruction operands",
         ),
         "pcode": (
-            PCodeHandler,
-            InstructionMatcher,
+            PCodeVisitor,
             "print instruction pseudocode",
         ),
         "extras": (
-            ExtrasHandler,
-            InstructionMatcher,
+            ExtrasVisitor,
             "print instruction extras (SVP64)",
         ),
     }
@@ -128,10 +128,10 @@ def main():
         default=False)
     main_subparser = main_parser.add_subparsers(dest="command", required=True)
 
-    for (command, (handler, matcher, help)) in commands.items():
-        parser = main_subparser.add_parser(command, help=help)
-        if issubclass(matcher, InstructionMatcher):
-            if issubclass(matcher, SVP64InstructionMatcher):
+    for (command, (visitor, helper)) in commands.items():
+        parser = main_subparser.add_parser(command, help=helper)
+        if command not in ("list",):
+            if command in ("extras",):
                 arg_cls = SVP64Instruction
             else:
                 arg_cls = Instruction
@@ -143,11 +143,19 @@ def main():
     log = args.pop("log")
     if not log:
         os.environ["SILENCELOG"] = "true"
-    handler = commands[command][0](**args)
-    matcher = commands[command][1](**args)
+    visitor = commands[command][0]()
 
     db = Database(find_wiki_dir())
-    visit(handler=handler, matcher=matcher, node=db)
+    if command in ("list",):
+        nodes = (db,)
+    else:
+        match = RecordNameVisitor(name=args["insn"])
+        with match(node=db):
+            nodes = frozenset(match)
+
+    for node in nodes:
+        with visitor(node=node):
+            pass
 
 
 if __name__ == "__main__":
