@@ -57,33 +57,45 @@ from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 
 class Node:
-    @property
-    def subnodes(self):
-        yield from ()
+    def visit(self, handler, matcher, depth):
+        if matcher(node=self, depth=depth):
+            with handler(node=self, depth=depth):
+                pass
 
 
 class Visitor:
+    def __init__(self, **parameters):
+        self.__parameters = _types.MappingProxyType(parameters)
+        return super().__init__()
+
+    def __contains__(self, key):
+        return self.__parameters.__contains__(key)
+
+    def __getitem__(self, key):
+        return self.__parameters.__getitem__(key)
+
+    def Node(self, node, depth):
+        raise NotImplementedError()
+
+    def __call__(self, node, depth):
+        method = node.__class__.__name__
+        method = getattr(self, method, self.Node)
+        return method(node=node, depth=depth)
+
+
+class Matcher(Visitor):
+    def Node(self, node, depth):
+        return True
+
+
+class Handler(Visitor):
     @_contextlib.contextmanager
     def Node(self, node, depth):
         yield node
-        for subnode in node.subnodes:
-            manager = subnode.__class__.__name__
-            manager = getattr(self, manager, self.Node)
-            with manager(node=subnode, depth=(depth + 1)):
-                pass
-
-    def __getattr__(self, attr):
-        return self.Node
-
-    def __call__(self, node, depth):
-        manager = node.__class__.__name__
-        manager = getattr(self, manager, self.Node)
-        return manager(node=node, depth=depth)
 
 
-def visit(visitor, node):
-    with visitor(node=node, depth=0):
-        pass
+def visit(node, handler, matcher=Matcher()):
+    node.visit(handler=handler, matcher=matcher, depth=0)
 
 
 @_functools.total_ordering
@@ -850,10 +862,6 @@ class Extra(Node):
     seltype: _SelType
     idx: _SVExtra
 
-    def visit(self, visitor):
-        with visitor.extra(extra=self) as extra:
-            pass
-
 
 @_functools.total_ordering
 @_dataclasses.dataclass(eq=True, frozen=True)
@@ -865,10 +873,13 @@ class Record(Node):
     mdwn: MarkdownRecord
     svp64: SVP64Record = None
 
-    @property
-    def subnodes(self):
-        for (name, fields) in self.extras.items():
-            yield Extra(name=name, **fields)
+    def visit(self, handler, matcher, depth):
+        if matcher(node=self, depth=depth):
+            with handler(node=self, depth=depth):
+                for (name, fields) in self.extras.items():
+                    extra = Extra(name=name, **fields)
+                    extra.visit(depth=(depth + 1),
+                        handler=handler, matcher=matcher)
 
     @property
     def extras(self):
@@ -3750,6 +3761,13 @@ class Database(Node):
         self.__opcodes = dict(sorted(opcodes.items()))
 
         return super().__init__()
+
+    def visit(self, handler, matcher, depth):
+        if matcher(node=self, depth=depth):
+            with handler(node=self, depth=depth):
+                for record in self:
+                    record.visit(depth=(depth + 1),
+                        handler=handler, matcher=matcher)
 
     @property
     def subnodes(self):

@@ -8,7 +8,8 @@ from openpower.decoder.power_enums import (
 )
 from openpower.insndb.core import (
     Database,
-    Visitor,
+    Handler,
+    Matcher,
     visit,
 )
 
@@ -36,37 +37,23 @@ class SVP64Instruction(Instruction):
         return self
 
 
-class BaseVisitor(Visitor):
-    def __init__(self, **arguments):
-        self.__arguments = types.MappingProxyType(arguments)
-        return super().__init__()
-
-    def __getitem__(self, argument):
-        return self.__arguments[argument]
-
-
-class ListVisitor(BaseVisitor):
+class ListHandler(Handler):
     @contextlib.contextmanager
     def Record(self, node, depth):
         print(node.name)
         yield node
 
 
-class InstructionVisitor(BaseVisitor):
-    @contextlib.contextmanager
-    def Database(self, node, depth):
-        yield node
-        for subnode in node.subnodes:
-            if subnode.name == self["insn"]:
-                with self(node=subnode, depth=(depth + 1)):
-                    pass
+class InstructionMatcher(Matcher):
+    def Record(self, node, depth):
+        return (node.name == self["insn"])
 
 
-class SVP64InstructionVisitor(InstructionVisitor):
+class SVP64InstructionMatcher(InstructionMatcher):
     pass
 
 
-class OpcodesVisitor(InstructionVisitor):
+class OpcodesHandler(Handler):
     @contextlib.contextmanager
     def Record(self, node, depth):
         for opcode in node.opcodes:
@@ -74,7 +61,7 @@ class OpcodesVisitor(InstructionVisitor):
         yield node
 
 
-class OperandsVisitor(InstructionVisitor):
+class OperandsHandler(Handler):
     @contextlib.contextmanager
     def Record(self, node, depth):
         for operand in node.dynamic_operands:
@@ -86,7 +73,7 @@ class OperandsVisitor(InstructionVisitor):
         yield node
 
 
-class PCodeVisitor(InstructionVisitor):
+class PCodeHandler(Handler):
     @contextlib.contextmanager
     def Record(self, node, depth):
         for line in node.pcode:
@@ -94,7 +81,7 @@ class PCodeVisitor(InstructionVisitor):
         yield node
 
 
-class ExtrasVisitor(SVP64InstructionVisitor):
+class ExtrasHandler(Handler):
     @contextlib.contextmanager
     def Extra(self, node, depth):
         print(node.name)
@@ -108,23 +95,28 @@ class ExtrasVisitor(SVP64InstructionVisitor):
 def main():
     commands = {
         "list": (
-            ListVisitor,
+            ListHandler,
+            Matcher,
             "list available instructions",
         ),
         "opcodes": (
-            OpcodesVisitor,
+            OpcodesHandler,
+            InstructionMatcher,
             "print instruction opcodes",
         ),
         "operands": (
-            OperandsVisitor,
+            OperandsHandler,
+            InstructionMatcher,
             "print instruction operands",
         ),
         "pcode": (
-            PCodeVisitor,
+            PCodeHandler,
+            InstructionMatcher,
             "print instruction pseudocode",
         ),
         "extras": (
-            ExtrasVisitor,
+            ExtrasHandler,
+            InstructionMatcher,
             "print instruction extras (SVP64)",
         ),
     }
@@ -136,10 +128,10 @@ def main():
         default=False)
     main_subparser = main_parser.add_subparsers(dest="command", required=True)
 
-    for (command, (visitor, help)) in commands.items():
+    for (command, (handler, matcher, help)) in commands.items():
         parser = main_subparser.add_parser(command, help=help)
-        if issubclass(visitor, InstructionVisitor):
-            if issubclass(visitor, SVP64InstructionVisitor):
+        if issubclass(matcher, InstructionMatcher):
+            if issubclass(matcher, SVP64InstructionMatcher):
                 arg_cls = SVP64Instruction
             else:
                 arg_cls = Instruction
@@ -151,10 +143,11 @@ def main():
     log = args.pop("log")
     if not log:
         os.environ["SILENCELOG"] = "true"
-    visitor = commands[command][0](**args)
+    handler = commands[command][0](**args)
+    matcher = commands[command][1](**args)
 
     db = Database(find_wiki_dir())
-    visit(visitor=visitor, node=db)
+    visit(handler=handler, matcher=matcher, node=db)
 
 
 if __name__ == "__main__":
