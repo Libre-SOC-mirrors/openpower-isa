@@ -61,6 +61,10 @@ class Node:
         return ()
 
 
+class String(Node, str):
+    pass
+
+
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Dataclass:
     def subnodes(self, match=None):
@@ -280,9 +284,9 @@ class PPCRecord:
             return super().__new__(cls, sorted(flags))
 
     opcode: Opcode
-    comment: str
+    comment: String
     flags: Flags = Flags()
-    comment2: str = ""
+    comment2: String = String()
     function: _Function = _Function.NONE
     intop: _MicrOp = _MicrOp.OP_ILLEGAL
     in1: _In1Sel = _In1Sel.NONE
@@ -297,7 +301,7 @@ class PPCRecord:
     upd: _LDSTMode = _LDSTMode.NONE
     Rc: _RCOE = _RCOE.NONE
     form: _Form = _Form.NONE
-    conditions: str = ""
+    conditions: String = String()
     unofficial: bool = False
 
     __KEYMAP = {
@@ -390,7 +394,7 @@ class SVP64Record:
         def __repr__(self):
             return repr({index:self[index] for index in range(0, 4)})
 
-    name: str
+    name: String
     ptype: _SVPType = _SVPType.NONE
     etype: _SVEType = _SVEType.NONE
     msrc: _SVMaskSrc = _SVMaskSrc.NO # MASK_SRC is active
@@ -403,7 +407,7 @@ class SVP64Record:
     cr_in2: _CRIn2Sel = _CRIn2Sel.NONE
     cr_out: _CROutSel = _CROutSel.NONE
     extra: ExtraMap = ExtraMap()
-    conditions: str = ""
+    conditions: String = String()
     mode: _SVMode = _SVMode.NORMAL
 
     __KEYMAP = {
@@ -848,7 +852,7 @@ class MarkdownRecord:
 
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Extra(Node):
-    name: str
+    name: String
     sel: _typing.Union[
         _In1Sel, _In2Sel, _In3Sel, _CRInSel, _CRIn2Sel,
         _OutSel, _CROutSel,
@@ -861,7 +865,7 @@ class Extra(Node):
 @_functools.total_ordering
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Record(Node):
-    name: str
+    name: String
     section: Section
     ppc: PPCRecord
     fields: Fields
