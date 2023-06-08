@@ -8,7 +8,10 @@ from openpower.decoder.power_enums import (
 )
 from openpower.insndb.core import (
     Database,
+    Extra,
+    Record,
     Visitor,
+    visit,
 )
 
 
@@ -35,65 +38,54 @@ class SVP64Instruction(Instruction):
         return self
 
 
-class RecordNameVisitor(Visitor):
-    def __init__(self, name):
-        self.__name = name
-        self.__records = set()
-        return super().__init__()
-
-    @contextlib.contextmanager
-    def Record(self, node):
-        if node.name == self.__name:
-            self.__records.add(node)
-        yield node
-
-    def __iter__(self):
-        yield from self.__records
-
-
 class ListVisitor(Visitor):
     @contextlib.contextmanager
-    def Record(self, node):
-        print(node.name)
+    def __call__(self, node):
+        if isinstance(node, Record):
+            print(node.name)
         yield node
 
 
 class OpcodesVisitor(Visitor):
     @contextlib.contextmanager
-    def Record(self, node):
-        for opcode in node.opcodes:
-            print(opcode)
+    def __call__(self, node):
+        if isinstance(node, Record):
+            for opcode in node.opcodes:
+                print(opcode)
         yield node
 
 
 class OperandsVisitor(Visitor):
     @contextlib.contextmanager
-    def Record(self, node):
-        for operand in node.dynamic_operands:
-            print(operand.name, ",".join(map(str, operand.span)))
-        for operand in node.static_operands:
-            if operand.name not in ("PO", "XO"):
-                desc = f"{operand.name}={operand.value}"
-                print(desc, ",".join(map(str, operand.span)))
+    def __call__(self, node):
+        if isinstance(node, Record):
+            for operand in node.dynamic_operands:
+                print(operand.name, ",".join(map(str, operand.span)))
+            for operand in node.static_operands:
+                if operand.name not in ("PO", "XO"):
+                    desc = f"{operand.name}={operand.value}"
+                    print(desc, ",".join(map(str, operand.span)))
         yield node
 
 
 class PCodeVisitor(Visitor):
     @contextlib.contextmanager
-    def Record(self, node):
-        for line in node.pcode:
-            print(line)
+    def __call__(self, node):
+        if isinstance(node, Record):
+            for line in node.pcode:
+                print(line)
         yield node
 
 
 class ExtrasVisitor(Visitor):
     @contextlib.contextmanager
-    def Extra(self, node):
-        print(node.name)
-        print("    sel", node.sel)
-        print("    reg", node.reg)
-        print("    seltype", node.seltype)
-        print("    idx", node.idx)
+    def __call__(self, node):
+        if isinstance(node, Extra):
+            print(node.name)
+            print("    sel", node.sel)
+            print("    reg", node.reg)
+            print("    seltype", node.seltype)
+            print("    idx", node.idx)
         yield node
 
 
@@ -147,15 +139,14 @@ def main():
 
     db = Database(find_wiki_dir())
     if command in ("list",):
-        nodes = (db,)
+        match = None
     else:
-        match = RecordNameVisitor(name=args["insn"])
-        with match(node=db):
-            nodes = frozenset(match)
+        insn = args.pop("insn")
+        def match(record):
+            return (isinstance(record, Record) and (record.name == insn))
 
-    for node in nodes:
-        with visitor(node=node):
-            pass
+    for node in db.subnodes(match=match):
+        visit(visitor=visitor, node=node)
 
 
 if __name__ == "__main__":

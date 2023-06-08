@@ -56,32 +56,41 @@ from openpower.decoder.power_fields import (
 from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 
-class Visitor:
-    def __call__(self, node):
-        method = node.__class__.__name__
-        method = getattr(self, method, self.Node)
-        return method(node=node)
+class Node:
+    def subnodes(self, match=None):
+        return ()
 
+
+@_dataclasses.dataclass(eq=True, frozen=True)
+class Dataclass:
+    def subnodes(self, match=None):
+        if match is None:
+            match = lambda subnode: True
+
+        def subnode(field):
+            return getattr(self, field.name)
+
+        yield from filter(match, map(subnode, _dataclasses.fields()))
+
+
+class Visitor:
     @_contextlib.contextmanager
-    def Node(self, node):
-        for subnode in node.subnodes:
-            with self(subnode):
-                pass
+    def __call__(self, node):
         yield node
 
 
-class Node:
-    @property
-    def subnodes(self):
-        yield from ()
-
-
-def walk(root):
+def walk(root, match=None):
     nodes = _collections.deque([root])
     while nodes:
         node = nodes.popleft()
-        nodes.extend(node.subnodes)
+        nodes.extend(node.subnodes(match=match))
         yield node
+
+
+def visit(visitor, node):
+    with visitor(node=node):
+        for subnode in node.subnodes():
+            visit(visitor=visitor, node=subnode)
 
 
 @_functools.total_ordering
@@ -859,10 +868,11 @@ class Record(Node):
     mdwn: MarkdownRecord
     svp64: SVP64Record = None
 
-    @property
-    def subnodes(self):
+    def subnodes(self, match=None):
+        extras = []
         for (name, fields) in self.extras.items():
-            yield Extra(name=name, **fields)
+            extras.append(Extra(name=name, **fields))
+        yield from filter(match, extras)
 
     @property
     def extras(self):
@@ -3745,9 +3755,11 @@ class Database(Node):
 
         return super().__init__()
 
-    @property
-    def subnodes(self):
-        yield from self
+    def subnodes(self, match=None):
+        if match is None:
+            match = lambda subnode: True
+
+        yield from filter(match, self)
 
     def __repr__(self):
         return repr(self.__db)
