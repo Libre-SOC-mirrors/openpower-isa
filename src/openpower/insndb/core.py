@@ -57,7 +57,7 @@ from openpower.decoder.pseudo.pagereader import ISA as _ISA
 
 
 class Node:
-    def subnodes(self, match=None):
+    def walk(self, match=None):
         return ()
 
 
@@ -76,7 +76,7 @@ class DataclassMeta(type):
 
 
 class Dataclass(metaclass=DataclassMeta):
-    def subnodes(self, match=None):
+    def walk(self, match=None):
         if match is None:
             match = lambda subnode: True
 
@@ -96,14 +96,14 @@ def walk(root, match=None):
     nodes = _collections.deque([root])
     while nodes:
         node = nodes.popleft()
-        nodes.extend(node.subnodes(match=match))
+        nodes.extend(node.walk(match=match))
         yield node
 
 
 def visit(visitor, node):
     with visitor(node=node):
-        if hasattr(node, "subnodes"):
-            for subnode in node.subnodes():
+        if hasattr(node, "walk"):
+            for subnode in node.walk():
                 visit(visitor=visitor, node=subnode)
 
 
@@ -3724,7 +3724,7 @@ class Records(tuple):
     def __new__(cls, records):
         return super().__new__(cls, sorted(records))
 
-    def subnodes(self, match=None):
+    def walk(self, match=None):
         if match is None:
             match = lambda subnode: True
 
@@ -3767,7 +3767,7 @@ class Database(Node):
 
         return super().__init__()
 
-    def subnodes(self, match=None):
+    def walk(self, match=None):
         if match is None:
             match = lambda subnode: True
 

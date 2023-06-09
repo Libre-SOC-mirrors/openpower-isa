@@ -139,7 +139,7 @@ def main():
     visitor = commands[command][0]()
 
     db = Database(find_wiki_dir())
-    records = next(db.subnodes(match=lambda node: isinstance(node, Records)))
+    records = next(db.walk(match=lambda node: isinstance(node, Records)))
     if command in ("list",):
         match = None
     else:
@@ -147,7 +147,7 @@ def main():
         def match(record):
             return (isinstance(record, Record) and (record.name == insn))
 
-    for node in records.subnodes(match=match):
+    for node in records.walk(match=match):
         visit(visitor=visitor, node=node)
 
 
