@@ -3720,6 +3720,19 @@ class SVP64Database:
         return None
 
 
+class Records(tuple):
+    def __new__(cls, records):
+        return super().__new__(cls, sorted(records))
+
+    def subnodes(self, match=None):
+        if match is None:
+            match = lambda subnode: True
+
+        for record in self:
+            if match(record):
+                yield record
+
+
 class Database(Node):
     def __init__(self, root):
         root = _pathlib.Path(root)
@@ -3748,7 +3761,7 @@ class Database(Node):
             names[record.name] = record
             opcodes[section][record.PO].add(record)
 
-        self.__db = sorted(db)
+        self.__db = Records(db)
         self.__names = dict(sorted(names.items()))
         self.__opcodes = dict(sorted(opcodes.items()))
 
@@ -3758,7 +3771,8 @@ class Database(Node):
         if match is None:
             match = lambda subnode: True
 
-        yield from filter(match, self)
+        if match(self.__db):
+            yield self.__db
 
     def __repr__(self):
         return repr(self.__db)

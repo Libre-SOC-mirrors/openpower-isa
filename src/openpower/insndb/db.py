@@ -10,6 +10,7 @@ from openpower.insndb.core import (
     Database,
     Extra,
     Record,
+    Records,
     Visitor,
     visit,
 )
@@ -138,6 +139,7 @@ def main():
     visitor = commands[command][0]()
 
     db = Database(find_wiki_dir())
+    records = next(db.subnodes(match=lambda node: isinstance(node, Records)))
     if command in ("list",):
         match = None
     else:
@@ -145,7 +147,7 @@ def main():
         def match(record):
             return (isinstance(record, Record) and (record.name == insn))
 
-    for node in db.subnodes(match=match):
+    for node in records.subnodes(match=match):
         visit(visitor=visitor, node=node)
 
 
