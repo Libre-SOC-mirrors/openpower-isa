@@ -65,6 +65,10 @@ class String(Node, str):
     pass
 
 
+class Path(Node, type(_pathlib.Path())):
+    pass
+
+
 @_dataclasses.dataclass(eq=True, frozen=True)
 class Dataclass:
     def subnodes(self, match=None):
@@ -609,7 +613,7 @@ class Section:
         def __repr__(self):
             return (bin(self) if self else "None")
 
-    path: _pathlib.Path
+    path: Path
     bitsel: BitSel
     suffix: Suffix
     mode: Mode
