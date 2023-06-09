@@ -69,8 +69,13 @@ class Path(Node, type(_pathlib.Path())):
     pass
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Dataclass:
+class DataclassMeta(type):
+    def __new__(metacls, name, bases, ns):
+        cls = super().__new__(metacls, name, bases, ns)
+        return _dataclasses.dataclass(cls, eq=True, frozen=True)
+
+
+class Dataclass(metaclass=DataclassMeta):
     def subnodes(self, match=None):
         if match is None:
             match = lambda subnode: True
@@ -78,7 +83,7 @@ class Dataclass:
         def subnode(field):
             return getattr(self, field.name)
 
-        yield from filter(match, map(subnode, _dataclasses.fields()))
+        yield from filter(match, map(subnode, _dataclasses.fields(self)))
 
 
 class Visitor:
@@ -97,8 +102,9 @@ def walk(root, match=None):
 
 def visit(visitor, node):
     with visitor(node=node):
-        for subnode in node.subnodes():
-            visit(visitor=visitor, node=subnode)
+        if hasattr(node, "subnodes"):
+            for subnode in node.subnodes():
+                visit(visitor=visitor, node=subnode)
 
 
 @_functools.total_ordering
@@ -162,8 +168,7 @@ def dataclass(cls, record, keymap=None, typemap=None):
 
 
 @_functools.total_ordering
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Opcode:
+class Opcode(Dataclass):
     class Integer(int):
         def __new__(cls, value):
             if isinstance(value, str):
@@ -224,7 +229,6 @@ class Opcode:
 
 
 @_functools.total_ordering
-@_dataclasses.dataclass(eq=True, frozen=True)
 class IntegerOpcode(Opcode):
     def __init__(self, value):
         if value.startswith("0b"):
@@ -239,7 +243,6 @@ class IntegerOpcode(Opcode):
 
 
 @_functools.total_ordering
-@_dataclasses.dataclass(eq=True, frozen=True)
 class PatternOpcode(Opcode):
     def __init__(self, pattern):
         if not isinstance(pattern, str):
@@ -262,8 +265,7 @@ class PatternOpcode(Opcode):
         return super().__init__(value=value, mask=mask)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class PPCRecord:
+class PPCRecord(Dataclass):
     class FlagsMeta(type):
         def __iter__(cls):
             yield from (
@@ -359,8 +361,7 @@ class PPCMultiRecord(tuple):
         return getattr(self[0], attr)
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class SVP64Record:
+class SVP64Record(Dataclass):
     class ExtraMap(tuple):
         class Extra(tuple):
             @_dataclasses.dataclass(eq=True, frozen=True)
@@ -583,8 +584,7 @@ class BitSel:
         return self.__end
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Section:
+class Section(Dataclass):
     class Mode(_enum.Enum):
         INTEGER = _enum.auto()
         PATTERN = _enum.auto()
@@ -848,14 +848,12 @@ class PCode:
         return self.__pcode.__repr__()
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class MarkdownRecord:
+class MarkdownRecord(Dataclass):
     pcode: PCode
     operands: Operands
 
 
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Extra(Node):
+class Extra(Dataclass):
     name: String
     sel: _typing.Union[
         _In1Sel, _In2Sel, _In3Sel, _CRInSel, _CRIn2Sel,
@@ -867,20 +865,13 @@ class Extra(Node):
 
 
 @_functools.total_ordering
-@_dataclasses.dataclass(eq=True, frozen=True)
-class Record(Node):
+class Record(Dataclass):
     name: String
     section: Section
     ppc: PPCRecord
     fields: Fields
     mdwn: MarkdownRecord
     svp64: SVP64Record = None
-
-    def subnodes(self, match=None):
-        extras = []
-        for (name, fields) in self.extras.items():
-            extras.append(Extra(name=name, **fields))
-        yield from filter(match, extras)
 
     @property
     def extras(self):
