@@ -937,7 +937,7 @@ class MarkdownRecord(Dataclass):
 class Record(Dataclass):
     name: str
     section: Section
-    ppc: PPCRecord
+    ppc: PPCMultiRecord
     fields: Fields
     mdwn: MarkdownRecord
     svp64: SVP64Record = None
