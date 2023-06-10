@@ -368,7 +368,7 @@ class PPCRecord(Dataclass):
                 "sgl pipe",
             )
 
-    class Flags(tuple, metaclass=FlagsMeta):
+    class Flags(Tuple, datatype=str, metaclass=FlagsMeta):
         def __new__(cls, flags=frozenset()):
             flags = frozenset(flags)
             diff = (flags - frozenset(cls))
