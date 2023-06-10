@@ -14,8 +14,6 @@ from openpower.test.runner import TestRunnerBase
 @lru_cache()
 def make_cases():
     # cache globally, so we only have to create test_data once per process
-    # XXX disable utf-8 tests entirely, it is taking up 58 GB of memory
-    return []
     return SVP64UTF8ValidationTestCase().test_data
 
 
