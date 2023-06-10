@@ -682,7 +682,7 @@ class Section(Dataclass):
         def __repr__(self):
             return (bin(self) if self else "None")
 
-    path: _pathlib.Path
+    csv: _pathlib.Path
     bitsel: BitSel
     suffix: Suffix
     mode: Mode
@@ -696,11 +696,12 @@ class Section(Dataclass):
 
     @classmethod
     def CSV(cls, record):
+        keymap = {"path": "csv"}
         typemap = {field.name:field.type for field in _dataclasses.fields(cls)}
         if record["opcode"] == "NONE":
             typemap["opcode"] = lambda _: None
 
-        return dataclass(cls, record, typemap=typemap)
+        return dataclass(cls, record, typemap=typemap, keymap=keymap)
 
 
 class Fields:
@@ -3664,7 +3665,7 @@ class PPCDatabase:
         path = (root / "insndb.csv")
         with open(path, "r", encoding="UTF-8") as stream:
             for section in sorted(parse(stream, Section.CSV)):
-                path = (root / section.path)
+                path = (root / section.csv)
                 opcode_cls = {
                     section.Mode.INTEGER: IntegerOpcode,
                     section.Mode.PATTERN: PatternOpcode,
