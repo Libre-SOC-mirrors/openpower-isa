@@ -39,6 +39,20 @@ class SVP64Instruction(Instruction):
         return self
 
 
+class TreeVisitor(Visitor):
+    def __init__(self):
+        self.__depth = 0
+        return super().__init__()
+
+    @contextlib.contextmanager
+    def __call__(self, node):
+        with super().__call__(node) as node:
+            print((" " * (self.__depth * 4)), repr(node))
+            self.__depth += 1
+            yield node
+            self.__depth -= 1
+
+
 class ListVisitor(Visitor):
     @visitormethod(Record)
     def Record(self, node):
@@ -98,6 +112,10 @@ class ExtrasVisitor(SVP64InstructionVisitor):
 
 def main():
     commands = {
+        "tree": (
+            TreeVisitor,
+            "list all records",
+        ),
         "list": (
             ListVisitor,
             "list available instructions",
