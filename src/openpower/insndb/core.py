@@ -440,7 +440,7 @@ class PPCRecord(Dataclass):
         return frozenset(self.comment.split("=")[-1].split("/"))
 
 
-class PPCMultiRecord(tuple):
+class PPCMultiRecord(Tuple, datatype=PPCRecord):
     def __getattr__(self, attr):
         if attr == "opcode":
             if len(self) != 1:
