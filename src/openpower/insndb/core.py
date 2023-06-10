@@ -81,7 +81,7 @@ class DataclassMeta(type):
         return _dataclasses.dataclass(cls, eq=True, frozen=True)
 
 
-class Dataclass(metaclass=DataclassMeta):
+class Dataclass(Node, metaclass=DataclassMeta):
     @walkmethod
     def walk(clsself, match=None):
         if match is None:
@@ -171,7 +171,7 @@ def walk(root, match=None):
 
 def visit(visitor, node):
     with visitor(node=node):
-        if hasattr(node, "walk"):
+        if isinstance(node, Node):
             for subnode in node.walk():
                 visit(visitor=visitor, node=subnode)
 
