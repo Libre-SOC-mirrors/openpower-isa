@@ -13,6 +13,7 @@ from openpower.insndb.core import (
     Records,
     Visitor,
     visit,
+    visitormethod,
 )
 
 
@@ -40,25 +41,23 @@ class SVP64Instruction(Instruction):
 
 
 class ListVisitor(Visitor):
-    @contextlib.contextmanager
-    def __call__(self, node):
-        if isinstance(node, Record):
-            print(node.name)
+    @visitormethod(Record)
+    def Record(self, node):
+        print(node.name)
         yield node
 
 
 class OpcodesVisitor(Visitor):
-    @contextlib.contextmanager
-    def __call__(self, node):
-        if isinstance(node, Record):
-            for opcode in node.opcodes:
-                print(opcode)
+    @visitormethod(Record)
+    def Record(self, node):
+        for opcode in node.opcodes:
+            print(opcode)
         yield node
 
 
 class OperandsVisitor(Visitor):
-    @contextlib.contextmanager
-    def __call__(self, node):
+    @visitormethod(Record)
+    def Record(self, node):
         if isinstance(node, Record):
             for operand in node.dynamic_operands:
                 print(operand.name, ",".join(map(str, operand.span)))
@@ -70,8 +69,8 @@ class OperandsVisitor(Visitor):
 
 
 class PCodeVisitor(Visitor):
-    @contextlib.contextmanager
-    def __call__(self, node):
+    @visitormethod(Record)
+    def Record(self, node):
         if isinstance(node, Record):
             for line in node.pcode:
                 print(line)
@@ -79,14 +78,14 @@ class PCodeVisitor(Visitor):
 
 
 class ExtrasVisitor(Visitor):
-    @contextlib.contextmanager
-    def __call__(self, node):
-        if isinstance(node, Extra):
-            print(node.name)
-            print("    sel", node.sel)
-            print("    reg", node.reg)
-            print("    seltype", node.seltype)
-            print("    idx", node.idx)
+    @visitormethod(Record)
+    def Record(self, node):
+        for (name, extra) in node.extras.items():
+            print(name)
+            print("    sel", extra["sel"])
+            print("    reg", extra["reg"])
+            print("    seltype", extra["seltype"])
+            print("    idx", extra["idx"])
         yield node
 
 
