@@ -930,17 +930,6 @@ class MarkdownRecord(Dataclass):
     operands: Operands
 
 
-class Extra(Dataclass):
-    name: String
-    sel: _typing.Union[
-        _In1Sel, _In2Sel, _In3Sel, _CRInSel, _CRIn2Sel,
-        _OutSel, _CROutSel,
-    ]
-    reg: _Reg
-    seltype: _SelType
-    idx: _SVExtra
-
-
 @_functools.total_ordering
 class Record(Dataclass):
     name: String
