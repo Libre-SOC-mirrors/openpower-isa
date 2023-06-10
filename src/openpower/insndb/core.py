@@ -98,6 +98,24 @@ class Dataclass(Node, metaclass=DataclassMeta):
         yield from filter(match, map(field, _dataclasses.fields(clsself)))
 
 
+class Tuple(Node, tuple):
+    def __init_subclass__(cls, datatype):
+        cls.__datatype = datatype
+        return super().__init_subclass__()
+
+    @walkmethod
+    def walk(clsself, match=None):
+        if match is None:
+            match = lambda subnode: True
+
+        if isinstance(clsself, type):
+            yield clsself.__datatype
+        else:
+            for item in clsself:
+                if match(item):
+                    yield item
+
+
 class VisitorMethod:
     def __init__(self, nodecls, method):
         self.__nodecls = nodecls
@@ -3779,21 +3797,9 @@ class SVP64Database:
         return None
 
 
-class Records(tuple):
+class Records(Tuple, datatype=Record):
     def __new__(cls, records):
         return super().__new__(cls, sorted(records))
-
-    @walkmethod
-    def walk(clsself, match=None):
-        if match is None:
-            match = lambda subnode: True
-
-        if isinstance(clsself, type):
-            yield Record
-        else:
-            for record in clsself:
-                if match(record):
-                    yield record
 
 
 class Database(Node):
