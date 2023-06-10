@@ -119,6 +119,24 @@ class Tuple(Node, tuple):
                     yield (str(index), item)
 
 
+class Dict(Node, dict):
+    def __init_subclass__(cls, datatype):
+        cls.__datatype = datatype
+        return super().__init_subclass__()
+
+    @walkmethod
+    def walk(clsself, match=None):
+        if match is None:
+            match = lambda subnode: True
+
+        if isinstance(clsself, type):
+            yield ("{}", clsself.__datatype)
+        else:
+            for (key, value) in clsself.items():
+                if match(value):
+                    yield (key, value)
+
+
 class VisitorMethod:
     def __init__(self, nodecls, method):
         self.__nodecls = nodecls

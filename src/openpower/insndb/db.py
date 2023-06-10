@@ -9,6 +9,7 @@ from openpower.decoder.power_enums import (
 from openpower.insndb.core import (
     Database,
     Dataclass,
+    Dict,
     Record,
     Records,
     Tuple,
@@ -52,7 +53,7 @@ class TreeVisitor(Visitor):
         with super().__call__(path=path, node=node):
             self.__path.append(path)
             print("/".join(self.__path))
-            if not isinstance(node, (Dataclass, Tuple)):
+            if not isinstance(node, (Dataclass, Tuple, Dict)):
                 print("    ", repr(node), sep="")
             self.__depth += 1
             yield node
