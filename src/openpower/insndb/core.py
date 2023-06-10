@@ -743,7 +743,7 @@ class Section(Dataclass):
         return dataclass(cls, record, typemap=typemap, keymap=keymap)
 
 
-class Fields:
+class Fields(Dict, datatype=type("Bits", (Tuple,), {}, datatype=int)):
     def __init__(self, items):
         if isinstance(items, dict):
             items = items.items()
@@ -752,21 +752,15 @@ class Fields:
             (name, bitrange) = item
             return (name, tuple(bitrange.values()))
 
-        self.__mapping = dict(map(transform, items))
+        mapping = dict(map(transform, items))
 
-        return super().__init__()
+        return super().__init__(mapping)
 
-    def __repr__(self):
-        return repr(self.__mapping)
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
 
     def __iter__(self):
         yield from self.__mapping.items()
-
-    def __contains__(self, key):
-        return self.__mapping.__contains__(key)
-
-    def __getitem__(self, key):
-        return self.__mapping.get(key, None)
 
 
 class Operands:
