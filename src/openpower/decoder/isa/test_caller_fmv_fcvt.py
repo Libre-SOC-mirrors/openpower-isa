@@ -14,9 +14,6 @@ from openpower.test.runner import TestRunnerBase
 @lru_cache()
 def make_cases():
     # cache globally, so we only have to create test_data once per process
-    # XXX far too many - 20 gigabyte per process and it is killing machines.
-    # it is NOT ok to assume vast resources
-    return []
     return FMvFCvtCases().test_data
 
 
