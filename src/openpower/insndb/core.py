@@ -924,16 +924,8 @@ class Arguments(tuple):
         return super().__new__(cls, items)
 
 
-class PCode:
-    def __init__(self, iterable):
-        self.__pcode = tuple(iterable)
-        return super().__init__()
-
-    def __iter__(self):
-        yield from self.__pcode
-
-    def __repr__(self):
-        return self.__pcode.__repr__()
+class PCode(Tuple, datatype=str):
+    pass
 
 
 class MarkdownRecord(Dataclass):
