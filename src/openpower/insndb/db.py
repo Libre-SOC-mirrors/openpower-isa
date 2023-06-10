@@ -45,9 +45,9 @@ class TreeVisitor(Visitor):
         return super().__init__()
 
     @contextlib.contextmanager
-    def __call__(self, node):
-        with super().__call__(node) as node:
-            print((" " * (self.__depth * 4)), repr(node))
+    def __call__(self, path, node):
+        with super().__call__(path=path, node=node):
+            print((" " * (self.__depth * 4)), path)
             self.__depth += 1
             yield node
             self.__depth -= 1
@@ -55,7 +55,7 @@ class TreeVisitor(Visitor):
 
 class ListVisitor(Visitor):
     @visitormethod(Record)
-    def Record(self, node):
+    def Record(self, path, node):
         print(node.name)
         yield node
 
@@ -70,7 +70,7 @@ class SVP64InstructionVisitor(InstructionVisitor):
 
 class OpcodesVisitor(InstructionVisitor):
     @visitormethod(Record)
-    def Record(self, node):
+    def Record(self, path, node):
         for opcode in node.opcodes:
             print(opcode)
         yield node
@@ -78,7 +78,7 @@ class OpcodesVisitor(InstructionVisitor):
 
 class OperandsVisitor(InstructionVisitor):
     @visitormethod(Record)
-    def Record(self, node):
+    def Record(self, path, node):
         if isinstance(node, Record):
             for operand in node.dynamic_operands:
                 print(operand.name, ",".join(map(str, operand.span)))
@@ -91,7 +91,7 @@ class OperandsVisitor(InstructionVisitor):
 
 class PCodeVisitor(InstructionVisitor):
     @visitormethod(Record)
-    def Record(self, node):
+    def Record(self, path, node):
         if isinstance(node, Record):
             for line in node.pcode:
                 print(line)
@@ -100,7 +100,7 @@ class PCodeVisitor(InstructionVisitor):
 
 class ExtrasVisitor(SVP64InstructionVisitor):
     @visitormethod(Record)
-    def Record(self, node):
+    def Record(self, path, node):
         for (name, extra) in node.extras.items():
             print(name)
             print("    sel", extra["sel"])
@@ -163,7 +163,7 @@ def main():
     visitor = commands[command][0]()
 
     db = Database(find_wiki_dir())
-    records = next(db.walk(match=lambda node: isinstance(node, Records)))
+    (path, records) = next(db.walk(match=lambda node: isinstance(node, Records)))
     if not isinstance(visitor, InstructionVisitor):
         match = None
     else:
@@ -171,8 +171,8 @@ def main():
         def match(record):
             return (isinstance(record, Record) and (record.name == insn))
 
-    for node in records.walk(match=match):
-        visit(visitor=visitor, node=node)
+    for (subpath, node) in records.walk(match=match):
+        visit(visitor=visitor, node=node, path=subpath)
 
 
 if __name__ == "__main__":

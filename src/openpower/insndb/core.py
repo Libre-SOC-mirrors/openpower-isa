@@ -72,7 +72,7 @@ class walkmethod:
 class Node:
     @walkmethod
     def walk(clsself, match=None):
-        return ()
+        yield from ()
 
 
 class DataclassMeta(type):
@@ -93,9 +93,12 @@ class Dataclass(Node, metaclass=DataclassMeta):
         def field_value(field):
             return getattr(clsself, field.name)
 
-        field = (field_type if isinstance(clsself, type) else field_value)
+        field_node = (field_type if isinstance(clsself, type) else field_value)
 
-        yield from filter(match, map(field, _dataclasses.fields(clsself)))
+        for field in _dataclasses.fields(clsself):
+            path = field.name
+            node = field_node(field)
+            yield (path, node)
 
 
 class Tuple(Node, tuple):
@@ -109,11 +112,11 @@ class Tuple(Node, tuple):
             match = lambda subnode: True
 
         if isinstance(clsself, type):
-            yield clsself.__datatype
+            yield ("[]", clsself.__datatype)
         else:
-            for item in clsself:
+            for (index, item) in enumerate(clsself):
                 if match(item):
-                    yield item
+                    yield (str(index), item)
 
 
 class VisitorMethod:
@@ -127,8 +130,8 @@ class VisitorMethod:
         return self.__nodecls
 
     @_contextlib.contextmanager
-    def __call__(self, node):
-        return self.__method(self=self, node=node)
+    def __call__(self, path, node):
+        return self.__method(self=self, path=path, node=node)
 
 
 class VisitorMeta(type):
@@ -156,11 +159,11 @@ class VisitorMeta(type):
 
 class Visitor(metaclass=VisitorMeta):
     @_contextlib.contextmanager
-    def __call__(self, node):
+    def __call__(self, path, node):
         (visitorcls, nodecls) = map(type, (self, node))
         if nodecls in visitorcls:
             handler = visitorcls[nodecls]
-            with handler(node=node) as ctx:
+            with handler(path=path, node=node) as ctx:
                 yield ctx
         else:
             yield node
@@ -180,18 +183,18 @@ class visitormethod:
 
 
 def walk(root, match=None):
-    nodes = _collections.deque([root])
-    while nodes:
-        node = nodes.popleft()
-        nodes.extend(node.walk(match=match))
-        yield node
+    pairs = _collections.deque([root])
+    while pairs:
+        (path, node) = pairs.popleft()
+        pairs.extend(node.walk(match=match))
+        yield (path, node)
 
 
-def visit(visitor, node):
-    with visitor(node=node):
+def visit(visitor, node, path="/"):
+    with visitor(path=path, node=node):
         if isinstance(node, Node):
-            for subnode in node.walk():
-                visit(visitor=visitor, node=subnode)
+            for (subpath, subnode) in node.walk():
+                visit(visitor=visitor, path=subpath, node=subnode)
 
 
 @_functools.total_ordering
@@ -3834,10 +3837,10 @@ class Database(Node):
             match = lambda subnode: True
 
         if isinstance(clsself, type):
-            yield Records
+            yield ("records", Records)
         else:
             if match(clsself.__db):
-                yield clsself.__db
+                yield ("records", clsself.__db)
 
     def __repr__(self):
         return repr(self.__db)
