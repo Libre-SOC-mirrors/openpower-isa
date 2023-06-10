@@ -124,6 +124,27 @@ class Dict(Node, dict):
         cls.__datatype = datatype
         return super().__init_subclass__()
 
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
+    def clear(self):
+        raise NotImplementedError()
+
+    def __delitem__(self, key):
+        raise NotImplementedError()
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError()
+
+    def popitem(self) -> tuple:
+        raise NotImplementedError()
+
+    def pop(self, key, default=None):
+        raise NotImplementedError()
+
+    def update(self, entry, **kwargs):
+        raise NotImplementedError()
+
     @walkmethod
     def walk(clsself, match=None):
         if match is None:
@@ -755,9 +776,6 @@ class Fields(Dict, datatype=type("Bits", (Tuple,), {}, datatype=int)):
         mapping = dict(map(transform, items))
 
         return super().__init__(mapping)
-
-    def __hash__(self):
-        return hash(tuple(sorted(self.items())))
 
     def __iter__(self):
         yield from self.__mapping.items()
