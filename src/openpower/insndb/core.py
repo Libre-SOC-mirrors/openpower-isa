@@ -71,7 +71,7 @@ class walkmethod:
 
 class Node:
     @walkmethod
-    def walk(clsself, match=None):
+    def walk(clsself, match=lambda _: True):
         yield from ()
 
 
@@ -83,10 +83,7 @@ class DataclassMeta(type):
 
 class Dataclass(Node, metaclass=DataclassMeta):
     @walkmethod
-    def walk(clsself, match=None):
-        if match is None:
-            match = lambda subnode: True
-
+    def walk(clsself, match=lambda _: True):
         def field_type(field):
             return field.type
 
@@ -107,10 +104,7 @@ class Tuple(Node, tuple):
         return super().__init_subclass__()
 
     @walkmethod
-    def walk(clsself, match=None):
-        if match is None:
-            match = lambda subnode: True
-
+    def walk(clsself, match=lambda _: True):
         if isinstance(clsself, type):
             yield ("[]", clsself.__datatype)
         else:
@@ -146,10 +140,7 @@ class Dict(Node, dict):
         raise NotImplementedError()
 
     @walkmethod
-    def walk(clsself, match=None):
-        if match is None:
-            match = lambda subnode: True
-
+    def walk(clsself, match=lambda _: True):
         if isinstance(clsself, type):
             yield ("{}", clsself.__datatype)
         else:
@@ -221,7 +212,7 @@ class visitormethod:
         return VisitorMethod(nodecls=self.__nodecls, method=method)
 
 
-def walk(root, match=None):
+def walk(root, match=lambda _: True):
     pairs = _collections.deque([root])
     while pairs:
         (path, node) = pairs.popleft()
@@ -229,10 +220,10 @@ def walk(root, match=None):
         yield (path, node)
 
 
-def visit(visitor, node, path="/"):
+def visit(visitor, node, path="/", match=lambda _: True):
     with visitor(path=path, node=node):
         if isinstance(node, Node):
-            for (subpath, subnode) in node.walk():
+            for (subpath, subnode) in node.walk(match=match):
                 visit(visitor=visitor, path=subpath, node=subnode)
 
 
@@ -882,7 +873,7 @@ class Operands(Dict, datatype=object):
         return super().__init__(mapping)
 
     @walkmethod
-    def walk(clsself, match=None):
+    def walk(clsself, match=lambda _: True):
         for (key, (cls, pairs)) in clsself.items():
             yield ("/".join((key, "class")), cls.__name__)
             for (subkey, value) in pairs:
@@ -3851,10 +3842,7 @@ class Database(Node):
         return super().__init__()
 
     @walkmethod
-    def walk(clsself, match=None):
-        if match is None:
-            match = lambda subnode: True
-
+    def walk(clsself, match=lambda _: True):
         if isinstance(clsself, type):
             yield ("records", Records)
         else:
