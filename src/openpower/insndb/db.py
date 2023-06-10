@@ -8,8 +8,10 @@ from openpower.decoder.power_enums import (
 )
 from openpower.insndb.core import (
     Database,
+    Dataclass,
     Record,
     Records,
+    Tuple,
     Visitor,
     visit,
     visitormethod,
@@ -42,14 +44,19 @@ class SVP64Instruction(Instruction):
 class TreeVisitor(Visitor):
     def __init__(self):
         self.__depth = 0
+        self.__path = [""]
         return super().__init__()
 
     @contextlib.contextmanager
     def __call__(self, path, node):
         with super().__call__(path=path, node=node):
-            print((" " * (self.__depth * 4)), path)
+            self.__path.append(path)
+            print("/".join(self.__path))
+            if not isinstance(node, (Dataclass, Tuple)):
+                print("    ", repr(node), sep="")
             self.__depth += 1
             yield node
+            self.__path.pop(-1)
             self.__depth -= 1
 
 
@@ -163,7 +170,7 @@ def main():
     visitor = commands[command][0]()
 
     db = Database(find_wiki_dir())
-    (path, records) = next(db.walk(match=lambda node: isinstance(node, Records)))
+    (path, records) = next(db.walk(match=lambda pair: isinstance(pair, Records)))
     if not isinstance(visitor, InstructionVisitor):
         match = None
     else:
