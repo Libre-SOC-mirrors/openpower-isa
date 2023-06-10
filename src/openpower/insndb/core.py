@@ -75,14 +75,6 @@ class Node:
         return ()
 
 
-class String(Node, str):
-    pass
-
-
-class Path(Node, type(_pathlib.Path())):
-    pass
-
-
 class DataclassMeta(type):
     def __new__(metacls, name, bases, ns):
         cls = super().__new__(metacls, name, bases, ns)
@@ -367,9 +359,9 @@ class PPCRecord(Dataclass):
             return super().__new__(cls, sorted(flags))
 
     opcode: Opcode
-    comment: String
+    comment: str
     flags: Flags = Flags()
-    comment2: String = String()
+    comment2: str = ""
     function: _Function = _Function.NONE
     intop: _MicrOp = _MicrOp.OP_ILLEGAL
     in1: _In1Sel = _In1Sel.NONE
@@ -384,7 +376,7 @@ class PPCRecord(Dataclass):
     upd: _LDSTMode = _LDSTMode.NONE
     Rc: _RCOE = _RCOE.NONE
     form: _Form = _Form.NONE
-    conditions: String = String()
+    conditions: str = ""
     unofficial: bool = False
 
     __KEYMAP = {
@@ -476,7 +468,7 @@ class SVP64Record(Dataclass):
         def __repr__(self):
             return repr({index:self[index] for index in range(0, 4)})
 
-    name: String
+    name: str
     ptype: _SVPType = _SVPType.NONE
     etype: _SVEType = _SVEType.NONE
     msrc: _SVMaskSrc = _SVMaskSrc.NO # MASK_SRC is active
@@ -489,7 +481,7 @@ class SVP64Record(Dataclass):
     cr_in2: _CRIn2Sel = _CRIn2Sel.NONE
     cr_out: _CROutSel = _CROutSel.NONE
     extra: ExtraMap = ExtraMap()
-    conditions: String = String()
+    conditions: str = ""
     mode: _SVMode = _SVMode.NORMAL
 
     __KEYMAP = {
@@ -690,7 +682,7 @@ class Section(Dataclass):
         def __repr__(self):
             return (bin(self) if self else "None")
 
-    path: Path
+    path: _pathlib.Path
     bitsel: BitSel
     suffix: Suffix
     mode: Mode
@@ -932,7 +924,7 @@ class MarkdownRecord(Dataclass):
 
 @_functools.total_ordering
 class Record(Dataclass):
-    name: String
+    name: str
     section: Section
     ppc: PPCRecord
     fields: Fields
