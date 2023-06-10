@@ -108,9 +108,8 @@ class Tuple(Node, tuple):
         if isinstance(clsself, type):
             yield ("[]", clsself.__datatype)
         else:
-            for (index, item) in enumerate(clsself):
-                if match(item):
-                    yield (str(index), item)
+            for (index, item) in enumerate(filter(match, clsself)):
+                yield (str(index), item)
 
 
 class Dict(Node, dict):
@@ -144,9 +143,7 @@ class Dict(Node, dict):
         if isinstance(clsself, type):
             yield ("{}", clsself.__datatype)
         else:
-            for (key, value) in clsself.items():
-                if match(value):
-                    yield (key, value)
+            yield from filter(lambda kv: match(kv[0]), clsself.items())
 
 
 class VisitorMethod:
