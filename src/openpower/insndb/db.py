@@ -8,7 +8,6 @@ from openpower.decoder.power_enums import (
 )
 from openpower.insndb.core import (
     Database,
-    Extra,
     Record,
     Records,
     Visitor,
@@ -47,7 +46,15 @@ class ListVisitor(Visitor):
         yield node
 
 
-class OpcodesVisitor(Visitor):
+# No use other than checking issubclass and adding an argument.
+class InstructionVisitor(Visitor):
+    pass
+
+class SVP64InstructionVisitor(InstructionVisitor):
+    pass
+
+
+class OpcodesVisitor(InstructionVisitor):
     @visitormethod(Record)
     def Record(self, node):
         for opcode in node.opcodes:
@@ -55,7 +62,7 @@ class OpcodesVisitor(Visitor):
         yield node
 
 
-class OperandsVisitor(Visitor):
+class OperandsVisitor(InstructionVisitor):
     @visitormethod(Record)
     def Record(self, node):
         if isinstance(node, Record):
@@ -68,7 +75,7 @@ class OperandsVisitor(Visitor):
         yield node
 
 
-class PCodeVisitor(Visitor):
+class PCodeVisitor(InstructionVisitor):
     @visitormethod(Record)
     def Record(self, node):
         if isinstance(node, Record):
@@ -77,7 +84,7 @@ class PCodeVisitor(Visitor):
         yield node
 
 
-class ExtrasVisitor(Visitor):
+class ExtrasVisitor(SVP64InstructionVisitor):
     @visitormethod(Record)
     def Record(self, node):
         for (name, extra) in node.extras.items():
@@ -122,7 +129,7 @@ def main():
 
     for (command, (visitor, helper)) in commands.items():
         parser = main_subparser.add_parser(command, help=helper)
-        if command not in ("list",):
+        if issubclass(visitor, InstructionVisitor):
             if command in ("extras",):
                 arg_cls = SVP64Instruction
             else:
@@ -139,7 +146,7 @@ def main():
 
     db = Database(find_wiki_dir())
     records = next(db.walk(match=lambda node: isinstance(node, Records)))
-    if command in ("list",):
+    if not isinstance(visitor, InstructionVisitor):
         match = None
     else:
         insn = args.pop("insn")
