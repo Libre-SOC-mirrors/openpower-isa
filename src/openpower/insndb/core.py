@@ -781,7 +781,7 @@ class Fields(Dict, datatype=type("Bits", (Tuple,), {}, datatype=int)):
         yield from self.__mapping.items()
 
 
-class Operands:
+class Operands(Dict, datatype=object):
     __GPR_PAIRS = (
         _Reg.RTp,
         _Reg.RSp,
@@ -839,10 +839,10 @@ class Operands:
 
             if "=" in operand:
                 (name, value) = operand.split("=")
-                mapping[name] = (StaticOperand, {
-                    "name": name,
-                    "value": int(value),
-                })
+                mapping[name] = (StaticOperand, (
+                    ("name", name),
+                    ("value", int(value)),
+                ))
             else:
                 name = operand
                 if name.endswith(")"):
@@ -876,48 +876,37 @@ class Operands:
                             cls = CR5Operand
 
                 if imm_name is not None:
-                    mapping[imm_name] = (imm_cls, {"name": imm_name})
-                mapping[name] = (cls, {"name": name})
+                    mapping[imm_name] = (imm_cls, (("name", imm_name),))
+                mapping[name] = (cls, (("name", name),))
 
-        static = []
-        dynamic = []
-        for (name, (cls, kwargs)) in mapping.items():
-            kwargs = dict(kwargs)
-            kwargs["name"] = name
-            if issubclass(cls, StaticOperand):
-                static.append((cls, kwargs))
-            elif issubclass(cls, DynamicOperand):
-                dynamic.append((cls, kwargs))
-            else:
-                raise ValueError(name)
+        return super().__init__(mapping)
 
-        self.__mapping = mapping
-        self.__static = tuple(static)
-        self.__dynamic = tuple(dynamic)
-
-        return super().__init__()
+    @walkmethod
+    def walk(clsself, match=None):
+        for (key, (cls, pairs)) in clsself.items():
+            yield ("/".join((key, "class")), cls.__name__)
+            for (subkey, value) in pairs:
+                if subkey == "name":
+                    continue
+                path = "/".join((key, subkey))
+                yield (path, value)
 
     def __iter__(self):
-        for (_, items) in self.__mapping.items():
+        for (key, items) in self.items():
             (cls, kwargs) = items
-            yield (cls, kwargs)
+            yield (cls, dict(kwargs))
 
-    def __repr__(self):
-        return self.__mapping.__repr__()
+    @staticmethod
+    def filter(cls):
+        return lambda pair: isinstance(pair[0], cls)
 
-    def __contains__(self, key):
-        return self.__mapping.__contains__(key)
-
-    def __getitem__(self, key):
-        return self.__mapping.__getitem__(key)
-
-    @property
+    @cached_property
     def static(self):
-        return self.__static
+        return filter(self.__class__.filter(StaticOperand), self)
 
     @property
     def dynamic(self):
-        return self.__dynamic
+        return filter(self.__class__.filter(DynamicOperand), self)
 
 
 class Arguments(tuple):
