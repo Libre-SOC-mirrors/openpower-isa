@@ -63,7 +63,9 @@ class walkmethod:
         return super().__init__()
 
     def __get__(self, instance, owner):
-        entity = owner if instance is None else instance
+        entity = instance
+        if instance is None:
+            entity = owner
         return _functools.partial(self.__walk, entity)
 
 
