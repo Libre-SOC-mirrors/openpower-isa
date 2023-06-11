@@ -884,7 +884,7 @@ class Operands(Dict, datatype=object):
 
     @staticmethod
     def filter(cls):
-        return lambda pair: issubclass(pair[0], cls)
+        return lambda pair: isinstance(pair[0], cls)
 
     @cached_property
     def static(self):
