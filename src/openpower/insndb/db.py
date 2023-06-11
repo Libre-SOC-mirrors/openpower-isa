@@ -173,7 +173,7 @@ def main():
     db = Database(find_wiki_dir())
     (path, records) = next(db.walk(match=lambda pair: isinstance(pair, Records)))
     if not isinstance(visitor, InstructionVisitor):
-        match = lambda _: True
+        match = None
     else:
         insn = args.pop("insn")
         def match(record):
