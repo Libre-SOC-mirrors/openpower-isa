@@ -46,7 +46,7 @@ build:
         - export CCACHE_COMPILERCHECK=content
         - ccache --zero-stats || true
         - ccache --show-stats || true
-        - python3 -m pip install --user pytest-xdist
+        - python3 -m pip install --user pytest-xdist==3.3.1 pytest==7.3.1
     script:
         - git clone --depth 1 -b yosys-0.17 https://github.com/YosysHQ/yosys.git yosys
         - pushd yosys
@@ -90,8 +90,14 @@ build:
         - python3 setup.py develop
         - popd
 
+        - git clone --depth 1 https://git.libre-soc.org/git/pytest-output-to-files.git pytest-output-to-files
+        - pushd pytest-output-to-files
+        - git rev-parse HEAD
+        - python3 setup.py develop
+        - popd
+
         - python3 setup.py develop
 
         - make generate &> generate.log || { cat generate.log; false; }
 
-        - SILENCELOG='!*,default' pytest -n auto -v src/openpower --maxfail=10
+        - SILENCELOG='!*,default' pytest -v --maxfail=10

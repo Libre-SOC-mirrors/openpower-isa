@@ -3,7 +3,7 @@
 
 import unittest
 from functools import lru_cache
-
+import os
 from openpower.test.fmv_fcvt.fmv_fcvt import (FMvFCvtCases,
                                               SVP64FMvFCvtCases)
 from openpower.test.runner import TestRunnerBase
@@ -14,9 +14,6 @@ from openpower.test.runner import TestRunnerBase
 @lru_cache()
 def make_cases():
     # cache globally, so we only have to create test_data once per process
-    # XXX far too many - 20 gigabyte per process and it is killing machines.
-    # it is NOT ok to assume vast resources
-    return []
     return FMvFCvtCases().test_data
 
 
@@ -29,6 +26,7 @@ class TestFMvFCvtBase(TestRunnerBase):
 
     def __init__(self, test):
         assert test == 'test', f"test={test!r}"
+        self.__old_silence_log = os.environ.get("SILENCELOG")
         cases = make_cases()
         assert self.SPLIT_INDEX != -1, "must be overridden"
         # split cases evenly over tests
@@ -44,6 +42,16 @@ class TestFMvFCvtBase(TestRunnerBase):
                 end = start + 1
         # can't do raise SkipTest if `start == end`, it makes unittest break
         super().__init__(cases[start:end], fp=True)
+
+    def setUp(self):
+        super().setUp()
+        if self.__old_silence_log is None:
+            os.environ["SILENCELOG"] = "!*,default"
+
+    def tearDown(self):
+        super().tearDown()
+        if self.__old_silence_log is None:
+            del os.environ["SILENCELOG"]
 
     @classmethod
     def make_split_classes(cls):

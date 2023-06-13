@@ -3,7 +3,7 @@
 
 import unittest
 from functools import lru_cache
-
+import os
 from openpower.test.algorithms.svp64_utf_8_validation import \
     SVP64UTF8ValidationTestCase
 from openpower.test.runner import TestRunnerBase
@@ -14,8 +14,6 @@ from openpower.test.runner import TestRunnerBase
 @lru_cache()
 def make_cases():
     # cache globally, so we only have to create test_data once per process
-    # XXX disable utf-8 tests entirely, it is taking up 58 GB of memory
-    return []
     return SVP64UTF8ValidationTestCase().test_data
 
 
@@ -28,6 +26,7 @@ class TestSVP64UTF8ValidationBase(TestRunnerBase):
 
     def __init__(self, test):
         assert test == 'test', f"test={test!r}"
+        self.__old_silence_log = os.environ.get("SILENCELOG")
         cases = make_cases()
         assert self.SPLIT_INDEX != -1, "must be overridden"
         # split cases evenly over tests
@@ -43,6 +42,16 @@ class TestSVP64UTF8ValidationBase(TestRunnerBase):
                 end = start + 1
         # can't do raise SkipTest if `start == end`, it makes unittest break
         super().__init__(cases[start:end])
+
+    def setUp(self):
+        super().setUp()
+        if self.__old_silence_log is None:
+            os.environ["SILENCELOG"] = "!*,default"
+
+    def tearDown(self):
+        super().tearDown()
+        if self.__old_silence_log is None:
+            del os.environ["SILENCELOG"]
 
     @classmethod
     def make_split_classes(cls):

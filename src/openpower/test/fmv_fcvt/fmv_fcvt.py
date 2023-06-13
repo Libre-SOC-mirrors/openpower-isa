@@ -285,7 +285,6 @@ class FMvFCvtCases(TestAccumulatorBase):
         self.toint(max_fraction, 0)
         self.toint(-max_fraction, 0)
 
-    @skip_case("far too many unit tests, causing thrashing")
     def case_js_touint32(self):
         min_value = pow(2, -1074)
         # test cases from:
@@ -572,7 +571,6 @@ class FMvFCvtCases(TestAccumulatorBase):
 
 class SVP64FMvFCvtCases(TestAccumulatorBase):
     @skip_case("FIXME: rewrite to fmv/fcvt tests")
-    @skip_case("far too many unit tests, causing thrashing")
     def case_sv_fmaxmag19(self):
         lst = list(SVP64Asm(["sv.fmaxmag19 *32,*64,*96"]))
         gprs = [0] * 128
