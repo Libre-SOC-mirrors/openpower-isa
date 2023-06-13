@@ -777,7 +777,7 @@ _insns = [
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "fmvis",                                            # FP load immediate
     "fishmv",                                           # Float Replace Lower-Half Single, Immediate
-    "fcvttg", "fcvttgo", "fcvttgs", "fcvttgso",
+    "fcvttg", "fcvttgo",
     "fmvtg", "fmvtgs",
     "fcvtfg", "fcvtfgs",
     "fmvfg", "fmvfgs",

@@ -1955,7 +1955,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        'fmvis', 'fishmv', 'pcdec', "maddedu", "divmod2du",
                        "dsld", "dsrd", "maddedus",
                        "sadd", "saddw", "sadduw",
-                       "fcvttg", "fcvttgo", "fcvttgs", "fcvttgso",
+                       "fcvttg", "fcvttgo",
                        "fmvtg", "fmvtgs",
                        "fcvtfg", "fcvtfgs",
                        "fmvfg", "fmvfgs",
