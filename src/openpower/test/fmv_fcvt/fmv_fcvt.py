@@ -450,6 +450,23 @@ class FMvFCvtCases(TestAccumulatorBase):
         self.toint(-(2**64), 0, signed=False, _32bit=False)
         self.toint(-fp_bits_add(2**64, 1), signed=False, _32bit=False)
 
+    @staticmethod
+    @functools.lru_cache(maxsize=None)
+    def _fcvtfg_fpscr(RN, set_XX, FR, FPRF, fpscr_unmodified):
+        """ cached FPSCR computation for fcvtfg_one since that part is slow """
+        initial_fpscr = FPSCRState()
+        initial_fpscr.RN = RN
+        fpscr = FPSCRState(initial_fpscr)
+        if set_XX:
+            fpscr.XX = 1
+            fpscr.FX = 1
+            fpscr.FI = 1
+            fpscr.FR = FR
+        fpscr.FPRF = FPRF
+        if fpscr_unmodified:
+            fpscr = FPSCRState(initial_fpscr)
+        return initial_fpscr, fpscr
+
     def fcvtfg_one(self, inp, bfp32, IT, Rc, RN):
         inp %= 2 ** 64
         inp_width = 64 if IT & 0b10 else 32
@@ -505,24 +522,24 @@ class FMvFCvtCases(TestAccumulatorBase):
             else:
                 expected_fp = next_fp
         expected_bits = bitcast_fp_to_int(expected_fp, bfp32=False)
-        initial_fpscr = FPSCRState()
-        initial_fpscr.RN = RN
-        fpscr = FPSCRState(initial_fpscr)
+        set_XX = FR = False
         if expected_fp != inp_value:
-            fpscr.XX = 1
-            fpscr.FX = 1
-            fpscr.FI = 1
-            fpscr.FR = abs(expected_fp) > abs(inp_value)
+            set_XX = True
+            FR = abs(expected_fp) > abs(inp_value)
         if expected_fp < 0:
-            fpscr.FPRF = "- Normal Number"
+            FPRF = "- Normal Number"
         elif expected_fp > 0:
-            fpscr.FPRF = "+ Normal Number"
+            FPRF = "+ Normal Number"
         else:
             # integer conversion never gives -0.0
-            fpscr.FPRF = "+ Zero"
-        if inp_width == 32 and not bfp32:
-            # defined to not modify FPSCR since the conversion is always exact
-            fpscr = FPSCRState(initial_fpscr)
+            FPRF = "+ Zero"
+
+        # defined to not modify FPSCR since the conversion is always exact
+        fpscr_unmodified = inp_width == 32 and not bfp32
+
+        initial_fpscr, fpscr = self._fcvtfg_fpscr(
+            RN=RN, set_XX=set_XX, FR=FR, FPRF=FPRF,
+            fpscr_unmodified=fpscr_unmodified)
         if Rc:
             cr1 = int(fpscr.FX) << 3
             cr1 |= int(fpscr.FEX) << 2
