@@ -136,9 +136,7 @@ class FPSCRState(SelectableInt):
         offs = 0
         # set up sub-fields from Record layout
         self.fsi = {}
-        l = deepcopy(FPSCRRecord.layout)
-        l.reverse()
-        for field, width in l:
+        for field, width in reversed(FPSCRRecord.layout):
             if field == "FPRF":
                 v = FPSCR_FPRF(self, tuple(range(47, 52)))
                 end = 52
