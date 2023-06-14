@@ -1679,6 +1679,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         pc, insn = self.get_next_insn()
         yield from self.setup_next_insn(pc, insn)
 
+    # cache since it's really slow to construct
+    __PREFIX_CACHE = SVP64Instruction.Prefix(SelectableInt(value=0, bits=32))
+
+    def __decode_prefix(self, opcode):
+        pfx = self.__PREFIX_CACHE
+        pfx.storage.eq(opcode)
+        return pfx
+
     def setup_next_insn(self, pc, ins):
         """set up next instruction
         """
@@ -1698,7 +1706,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         yield Settle()
         opcode = yield self.dec2.dec.opcode_in
         opcode = SelectableInt(value=opcode, bits=32)
-        pfx = SVP64Instruction.Prefix(opcode)
+        pfx = self.__decode_prefix(opcode)
         log("prefix test: opcode:", pfx.PO, bin(pfx.PO), pfx.id)
         self.is_svp64_mode = bool((pfx.PO == 0b000001) and (pfx.id == 0b11))
         self.pc.update_nia(self.is_svp64_mode)
