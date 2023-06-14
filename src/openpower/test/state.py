@@ -66,9 +66,13 @@ class StateRunner:
 
 class StateSPRs:
     KEYS = tuple(i for i in SPRfull if i != SPRfull.XER)
+    __EMPTY_VALUES = {k: 0 for k in KEYS}
 
     def __init__(self, values=None):
-        self.__values = {k: 0 for k in StateSPRs.KEYS}
+        if isinstance(values, StateSPRs):
+            self.__values = values.__values.copy()
+            return
+        self.__values = self.__EMPTY_VALUES.copy()
         if values is not None:
             for k, v in values.items():
                 self[k] = v
