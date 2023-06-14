@@ -496,7 +496,8 @@ class PowerDecoder(Elaboratable):
 
         #print("submodules", self.pname, submodules)
 
-        gc.collect()
+        # GC collection is really slow and shouldn't be needed
+        # gc.collect()
         return self.actually_does_something
 
     def handle_subdecoders(self, switch_case, submodules, d):
