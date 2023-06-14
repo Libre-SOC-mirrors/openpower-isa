@@ -40,6 +40,12 @@ def find_wiki_file(name):
 
 
 def get_csv(name):
+    retval = _get_csv(name)
+    return [i.copy() for i in retval]
+
+
+@functools.lru_cache()
+def _get_csv(name):
     """gets a not-entirely-csv-file-formatted database, which allows comments
     """
     file_path = find_wiki_file(name)
