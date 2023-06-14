@@ -446,19 +446,34 @@ class ExpectedState(State):
             fp_regs = 32
         if isinstance(fp_regs, int):
             fp_regs = [0] * fp_regs
-        self.fpregs = deepcopy(fp_regs)
+        else:
+            assert isinstance(fp_regs, list), \
+                "fp_regs must be int | list[int] | None"
+            # don't use deepcopy, it's slow
+            fp_regs = fp_regs.copy()
+        self.fpregs = fp_regs
         self.fpscr = fpscr
         if int_regs is None:
             int_regs = 32
         if isinstance(int_regs, int):
             int_regs = [0] * int_regs
-        self.intregs = deepcopy(int_regs)
+        else:
+            assert isinstance(int_regs, list), \
+                "int_regs must be int | list[int] | None"
+            # don't use deepcopy, it's slow
+            int_regs = int_regs.copy()
+        self.intregs = int_regs
         self.pc = pc
         if crregs is None:
             crregs = 8
         if isinstance(crregs, int):
             crregs = [0] * crregs
-        self.crregs = deepcopy(crregs)
+        else:
+            assert isinstance(crregs, list), \
+                "crregs must be int | list[int] | None"
+            # don't use deepcopy, it's slow
+            crregs = crregs.copy()
+        self.crregs = crregs
         self.so = so
         self.ov = ov
         self.ca = ca
