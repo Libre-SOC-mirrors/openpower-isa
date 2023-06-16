@@ -641,50 +641,253 @@ class FMvFCvtCases(TestAccumulatorBase):
 
 
 class SVP64FMvFCvtCases(TestAccumulatorBase):
-    @skip_case("FIXME: rewrite to fmv/fcvt tests")
-    def case_sv_fmaxmag19(self):
-        lst = list(SVP64Asm(["sv.fmaxmag19 *32,*64,*96"]))
-        gprs = [0] * 128
-        fprs = [0] * 128
+    def case_sv_fmvfg(self):
+        lst = list(SVP64Asm(["sv.fmvfg *3, *3"]))
+        gprs = [0] * 32
+        fprs = [0] * 32
         svstate = SVP64State()
-        svstate.vl = 32
-        svstate.maxvl = 32
-        r = range(svstate.vl)
-        for i, rev_i in zip(r, reversed(r)):
-            fprs[64 + i] = struct.unpack("<Q", struct.pack("<d", i))[0]
-            fprs[96 + i] = struct.unpack("<Q", struct.pack("<d", rev_i))[0]
+        svstate.vl = 10
+        svstate.maxvl = 10
+        gprs[3] = 0xa2f77210b3759b72  # -3.0762581375623643e-140
+        gprs[4] = 0xbb6c6f98d5f1165  # 3.106739523264776e-252
+        gprs[5] = 0x4d94f81cb94383fe  # 5.520783182773991e+65
+        gprs[6] = 0xbabd64f913a550c0  # -9.497851164560019e-26
+        gprs[7] = 0x946ee3df50c8b3c9  # -2.9362479271656598e-210
+        gprs[8] = 0xc04c4950eeac2bf8  # -56.57278235823463
+        gprs[9] = 0x94aadc76d0641448  # -4.0852462310367517e-209
+        gprs[10] = 0x183ff479cd3c162a  # 7.0039231684450285e-192
+        gprs[11] = 0xa07f1f2626c68dad  # -3.7138570072369393e-152
+        gprs[12] = 0xc8f3eeb4b229348f  # -2.778177315415125e+43
         e = ExpectedState(pc=8, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[32] = 0x403f000000000000
-        e.fpregs[33] = 0x403e000000000000
-        e.fpregs[34] = 0x403d000000000000
-        e.fpregs[35] = 0x403c000000000000
-        e.fpregs[36] = 0x403b000000000000
-        e.fpregs[37] = 0x403a000000000000
-        e.fpregs[38] = 0x4039000000000000
-        e.fpregs[39] = 0x4038000000000000
-        e.fpregs[40] = 0x4037000000000000
-        e.fpregs[41] = 0x4036000000000000
-        e.fpregs[42] = 0x4035000000000000
-        e.fpregs[43] = 0x4034000000000000
-        e.fpregs[44] = 0x4033000000000000
-        e.fpregs[45] = 0x4032000000000000
-        e.fpregs[46] = 0x4031000000000000
-        e.fpregs[47] = 0x4030000000000000
-        e.fpregs[48] = 0x4030000000000000
-        e.fpregs[49] = 0x4031000000000000
-        e.fpregs[50] = 0x4032000000000000
-        e.fpregs[51] = 0x4033000000000000
-        e.fpregs[52] = 0x4034000000000000
-        e.fpregs[53] = 0x4035000000000000
-        e.fpregs[54] = 0x4036000000000000
-        e.fpregs[55] = 0x4037000000000000
-        e.fpregs[56] = 0x4038000000000000
-        e.fpregs[57] = 0x4039000000000000
-        e.fpregs[58] = 0x403a000000000000
-        e.fpregs[59] = 0x403b000000000000
-        e.fpregs[60] = 0x403c000000000000
-        e.fpregs[61] = 0x403d000000000000
-        e.fpregs[62] = 0x403e000000000000
-        e.fpregs[63] = 0x403f000000000000
+        e.fpregs[3] = 0xa2f77210b3759b72  # -3.0762581375623643e-140
+        e.fpregs[4] = 0xbb6c6f98d5f1165  # 3.106739523264776e-252
+        e.fpregs[5] = 0x4d94f81cb94383fe  # 5.520783182773991e+65
+        e.fpregs[6] = 0xbabd64f913a550c0  # -9.497851164560019e-26
+        e.fpregs[7] = 0x946ee3df50c8b3c9  # -2.9362479271656598e-210
+        e.fpregs[8] = 0xc04c4950eeac2bf8  # -56.57278235823463
+        e.fpregs[9] = 0x94aadc76d0641448  # -4.0852462310367517e-209
+        e.fpregs[10] = 0x183ff479cd3c162a  # 7.0039231684450285e-192
+        e.fpregs[11] = 0xa07f1f2626c68dad  # -3.7138570072369393e-152
+        e.fpregs[12] = 0xc8f3eeb4b229348f  # -2.778177315415125e+43
+        self.add_case(Program(lst, False), gprs, fpregs=fprs,
+                      initial_svstate=svstate, expected=e)
+
+    def case_sv_fmvtg(self):
+        lst = list(SVP64Asm(["sv.fmvtg *3, *3"]))
+        gprs = [0] * 32
+        fprs = [0] * 32
+        svstate = SVP64State()
+        svstate.vl = 10
+        svstate.maxvl = 10
+        fprs[3] = 0x4a467f81df2c49c2  # 6.576194817283066e+49
+        fprs[4] = 0xad9e2a873ed027e4  # -5.923533316236948e-89
+        fprs[5] = 0xd5e965376a6c56b6  # -7.28053270057725e+105
+        fprs[6] = 0xa58d0a3abb7d83e3  # -8.378916175016297e-128
+        fprs[7] = 0x22a5d28a80cebc2  # 3.1493721884183893e-298
+        fprs[8] = 0xcf0249c06893a97c  # -4.039032746538712e+72
+        fprs[9] = 0x58bfa28e7438dce1  # 3.1909937185457982e+119
+        fprs[10] = 0x8e4cb0a3d0022bc6  # -8.605260192425176e-240
+        fprs[11] = 0xdff979f581d80ae5  # -2.134891937663687e+154
+        fprs[12] = 0x4b45b570cd46b00b  # 4.158570794713441e+54
+        e = ExpectedState(pc=8, int_regs=gprs, fp_regs=fprs)
+        e.intregs[3] = 0x4a467f81df2c49c2  # 6.576194817283066e+49
+        e.intregs[4] = 0xad9e2a873ed027e4  # -5.923533316236948e-89
+        e.intregs[5] = 0xd5e965376a6c56b6  # -7.28053270057725e+105
+        e.intregs[6] = 0xa58d0a3abb7d83e3  # -8.378916175016297e-128
+        e.intregs[7] = 0x22a5d28a80cebc2  # 3.1493721884183893e-298
+        e.intregs[8] = 0xcf0249c06893a97c  # -4.039032746538712e+72
+        e.intregs[9] = 0x58bfa28e7438dce1  # 3.1909937185457982e+119
+        e.intregs[10] = 0x8e4cb0a3d0022bc6  # -8.605260192425176e-240
+        e.intregs[11] = 0xdff979f581d80ae5  # -2.134891937663687e+154
+        e.intregs[12] = 0x4b45b570cd46b00b  # 4.158570794713441e+54
+        self.add_case(Program(lst, False), gprs, fpregs=fprs,
+                      initial_svstate=svstate, expected=e)
+
+    def case_sv_fmvfgs(self):
+        lst = list(SVP64Asm(["sv.fmvfgs *3, *3"]))
+        gprs = [0] * 32
+        fprs = [0] * 32
+        svstate = SVP64State()
+        svstate.vl = 10
+        svstate.maxvl = 10
+        gprs[3] = 0x3388bdb0b2a9e320  # 0x3388bdb0 || -1.9777473880822072e-08
+        gprs[4] = 0x8719509941543782  # 0x87195099 || 13.263551712036133
+        gprs[5] = 0xaae3fe31cd28d549  # 0xaae3fe31 || -177034384.0
+        gprs[6] = 0xcc89e2fc3834d36e  # 0xcc89e2fc || 4.3112253479193896e-05
+        gprs[7] = 0xf2ae167344013f0  # 0xf2ae167 || 1.7888646652863827e-07
+        gprs[8] = 0x6ea3c0a2a2f641ea  # 0x6ea3c0a2 || -6.674822283613962e-18
+        gprs[9] = 0x4645527fdab1ee2f  # 0x4645527f || -2.5041478254329856e+16
+        gprs[10] = 0x6aa03fc062dcbe1e  # 0x6aa03fc0 || 2.0359915416663045e+21
+        gprs[11] = 0x489c6f48871f0169  # 0x489c6f48 || -1.196224492164401e-34
+        gprs[12] = 0x6a92d0d40070bb60  # 0x6a92d0d4 || 1.0352793054431749e-38
+        e = ExpectedState(pc=8, int_regs=gprs, fp_regs=fprs)
+        e.fpregs[3] = 0xbe553c6400000000  # -1.9777473880822072e-08
+        e.fpregs[4] = 0x402a86f040000000  # 13.263551712036133
+        e.fpregs[5] = 0xc1a51aa920000000  # -177034384.0
+        e.fpregs[6] = 0x3f069a6dc0000000  # 4.3112253479193896e-05
+        e.fpregs[7] = 0x3e88027e00000000  # 1.7888646652863827e-07
+        e.fpregs[8] = 0xbc5ec83d40000000  # -6.674822283613962e-18
+        e.fpregs[9] = 0xc3563dc5e0000000  # -2.5041478254329856e+16
+        e.fpregs[10] = 0x445b97c3c0000000  # 2.0359915416663045e+21
+        e.fpregs[11] = 0xb8e3e02d20000000  # -1.196224492164401e-34
+        e.fpregs[12] = 0x380c2ed800000000  # 1.0352793054431749e-38
+        self.add_case(Program(lst, False), gprs, fpregs=fprs,
+                      initial_svstate=svstate, expected=e)
+
+    def case_sv_fmvtgs(self):
+        lst = list(SVP64Asm(["sv.fmvtgs *3, *3"]))
+        gprs = [0] * 32
+        fprs = [0] * 32
+        svstate = SVP64State()
+        svstate.vl = 10
+        svstate.maxvl = 10
+        fprs[3] = 0xb848c47620000000  # f64 -1.4556985522680637e-37
+        fprs[4] = 0x3d6e75f2a0000000  # f64 8.657461141210743e-13
+        fprs[5] = 0x47b89e7a80000000  # f64 3.272433939766293e+37
+        fprs[6] = 0xc02ef02820000000  # f64 -15.469056129455566
+        fprs[7] = 0xc619b3dc00000000  # f64 -5.090919608237361e+29
+        fprs[8] = 0xc794867ba0000000  # f64 -6.820708776907309e+36
+        fprs[9] = 0x3f49827860000000  # f64 0.0007784927147440612
+        fprs[10] = 0xbaf7107e40000000  # f64 -1.1924028985020467e-24
+        fprs[11] = 0x43aa3150a0000000  # f64 9.43689183484969e+17
+        fprs[12] = 0xbed08ab060000000  # f64 -3.943861429434037e-06
+        e = ExpectedState(pc=8, int_regs=gprs, fp_regs=fprs)
+        e.intregs[3] = 0x824623b1  # f32 -1.4556985522680637e-37
+        e.intregs[4] = 0x2b73af95  # f32 8.657461141210743e-13
+        e.intregs[5] = 0x7dc4f3d4  # f32 3.272433939766293e+37
+        e.intregs[6] = 0xc1778141  # f32 -15.469056129455566
+        e.intregs[7] = 0xf0cd9ee0  # f32 -5.090919608237361e+29
+        e.intregs[8] = 0xfca433dd  # f32 -6.820708776907309e+36
+        e.intregs[9] = 0x3a4c13c3  # f32 0.0007784927147440612
+        e.intregs[10] = 0x97b883f2  # f32 -1.1924028985020467e-24
+        e.intregs[11] = 0x5d518a85  # f32 9.43689183484969e+17
+        e.intregs[12] = 0xb6845583  # f32 -3.943861429434037e-06
+        self.add_case(Program(lst, False), gprs, fpregs=fprs,
+                      initial_svstate=svstate, expected=e)
+
+    def case_sv_fcvtfg(self):
+        lst = list(SVP64Asm(["sv.fcvtfg *3, *3, 0"]))
+        gprs = [0] * 32
+        fprs = [0] * 32
+        svstate = SVP64State()
+        svstate.vl = 10
+        svstate.maxvl = 10
+        gprs[3] = 0xa2f77210b3759b72  # 0xa2f77210 || -1284138126
+        gprs[4] = 0xbb6c6f98d5f1165  # 0xbb6c6f9 || -1923149467
+        gprs[5] = 0x4d94f81cb94383fe  # 0x4d94f81c || -1186757634
+        gprs[6] = 0xbabd64f913a550c0  # 0xbabd64f9 || 329601216
+        gprs[7] = 0x946ee3df50c8b3c9  # 0x946ee3df || 1355330505
+        gprs[8] = 0xc04c4950eeac2bf8  # 0xc04c4950 || -290706440
+        gprs[9] = 0x94aadc76d0641448  # 0x94aadc76 || -798747576
+        gprs[10] = 0x183ff479cd3c162a  # 0x183ff479 || -851700182
+        gprs[11] = 0xa07f1f2626c68dad  # 0xa07f1f26 || 650546605
+        gprs[12] = 0xc8f3eeb4b229348f  # 0xc8f3eeb4 || -1305922417
+        e = ExpectedState(pc=8, int_regs=gprs, fp_regs=fprs)
+        e.fpregs[3] = 0xc1d3229923800000  # f64 -1284138126.0
+        e.fpregs[4] = 0xc1dca83ba6c00000  # f64 -1923149467.0
+        e.fpregs[5] = 0xc1d1af1f00800000  # f64 -1186757634.0
+        e.fpregs[6] = 0x41b3a550c0000000  # f64 329601216.0
+        e.fpregs[7] = 0x41d4322cf2400000  # f64 1355330505.0
+        e.fpregs[8] = 0xc1b153d408000000  # f64 -290706440.0
+        e.fpregs[9] = 0xc1c7cdf5dc000000  # f64 -798747576.0
+        e.fpregs[10] = 0xc1c961f4eb000000  # f64 -851700182.0
+        e.fpregs[11] = 0x41c36346d6800000  # f64 650546605.0
+        e.fpregs[12] = 0xc1d375b2dc400000  # f64 -1305922417.0
+        self.add_case(Program(lst, False), gprs, fpregs=fprs,
+                      initial_svstate=svstate, expected=e)
+
+    def case_sv_fcvttg_js(self):
+        lst = list(SVP64Asm(["sv.fcvttg *3, *3, 5, 0"]))
+        gprs = [0] * 32
+        fprs = [0] * 32
+        svstate = SVP64State()
+        svstate.vl = 10
+        svstate.maxvl = 10
+        fprs[3] = 0xc11b409582aac6c2  # f64 -446501.37760458526
+        fprs[4] = 0x40311164f59f97ba  # f64 17.067946769202287
+        fprs[5] = 0x4179786c25161402  # f64 26707650.317890175
+        fprs[6] = 0x77a2d30d30aedc37  # f64 1.9423512004394842e+268
+        fprs[7] = 0xfcc691390ace2fbe  # f64 -1.1260170101142855e+293
+        fprs[8] = 0xc145328877d66458  # f64 -2778384.9362302236
+        fprs[9] = 0xc0e6c2048e0540f9  # f64 -46608.14233648958
+        fprs[10] = 0xc1497c2a90a71511  # f64 -3340373.130098947
+        fprs[11] = 0x2aaabda57b592051  # f64 3.731006400911987e-103
+        fprs[12] = 0x40839fff57931a98  # f64 627.9996787540904
+        e = ExpectedState(pc=8, int_regs=gprs, fp_regs=fprs)
+        e.intregs[3] = 0xfffffffffff92fdb  # -446501
+        e.intregs[4] = 0x11  # 17
+        e.intregs[5] = 0x19786c2  # 26707650
+        e.intregs[6] = 0
+        e.intregs[7] = 0
+        e.intregs[8] = 0xffffffffffd59af0  # -2778384
+        e.intregs[9] = 0xffffffffffff49f0  # -46608
+        e.intregs[10] = 0xffffffffffcd07ab  # -3340373
+        e.intregs[11] = 0
+        e.intregs[12] = 0x273  # 627
+        e.fpscr = 0xa2020100
+        self.add_case(Program(lst, False), gprs, fpregs=fprs,
+                      initial_svstate=svstate, expected=e)
+
+    def case_sv_fcvttg_sat(self):
+        lst = list(SVP64Asm(["sv.fcvttg *3, *3, 3, 0"]))
+        gprs = [0] * 32
+        fprs = [0] * 32
+        svstate = SVP64State()
+        svstate.vl = 10
+        svstate.maxvl = 10
+        fprs[3] = 0x41d6317a0c07f8c2  # f64 1489365040.124558
+        fprs[4] = 0xc12fca9889a15f42  # f64 -1041740.2688092964
+        fprs[5] = 0x2d7709c8cb530878  # f64 1.1309677587699661e-89
+        fprs[6] = 0x4c653162f75415d0  # f64 1.0642407361512732e+60
+        fprs[7] = 0xc106f58246849979  # f64 -188080.28443260098
+        fprs[8] = 0x3fc86e10067c6b85  # f64 0.1908588439626692
+        fprs[9] = 0xc04998b922650ff1  # f64 -51.19314985212976
+        fprs[10] = 0xc0bf8d2648f0d00b  # f64 -8077.149550486366
+        fprs[11] = 0xcac1f352558671c8  # f64 -1.3432140136107625e+52
+        fprs[12] = 0xc1799318e724a0a8  # f64 -26816910.446442276
+        e = ExpectedState(pc=8, int_regs=gprs, fp_regs=fprs)
+        e.intregs[3] = 0x58c5e830  # 1489365040
+        e.intregs[4] = 0xfffffffffff01ab4  # -1041740
+        e.intregs[5] = 0
+        e.intregs[6] = 0x7fffffff  # 2147483647
+        e.intregs[7] = 0xfffffffffffd2150  # -188080
+        e.intregs[8] = 0
+        e.intregs[9] = 0xffffffffffffffcd  # -51
+        e.intregs[10] = 0xffffffffffffe073  # -8077
+        e.intregs[11] = 0xffffffff80000000  # -2147483648
+        e.intregs[12] = 0xfffffffffe66ce72  # -26816910
+        e.fpscr = 0xa2020100
+        self.add_case(Program(lst, False), gprs, fpregs=fprs,
+                      initial_svstate=svstate, expected=e)
+
+    def case_sv_fcvtfgs(self):
+        lst = list(SVP64Asm(["sv.fcvtfgs *3, *3, 0"]))
+        gprs = [0] * 32
+        fprs = [0] * 32
+        svstate = SVP64State()
+        svstate.vl = 10
+        svstate.maxvl = 10
+        gprs[3] = 0x3388bdb0b2a9e320  # 0x3388bdb0 || -1297489120
+        gprs[4] = 0x8719509941543782  # 0x87195099 || 1096038274
+        gprs[5] = 0xaae3fe31cd28d549  # 0xaae3fe31 || -852961975
+        gprs[6] = 0xcc89e2fc3834d36e  # 0xcc89e2fc || 942986094
+        gprs[7] = 0xf2ae167344013f0  # 0xf2ae167 || 876614640
+        gprs[8] = 0x6ea3c0a2a2f641ea  # 0x6ea3c0a2 || -1560919574
+        gprs[9] = 0x4645527fdab1ee2f  # 0x4645527f || -625873361
+        gprs[10] = 0x6aa03fc062dcbe1e  # 0x6aa03fc0 || 1658633758
+        gprs[11] = 0x489c6f48871f0169  # 0x489c6f48 || -2028011159
+        gprs[12] = 0x6a92d0d40070bb60  # 0x6a92d0d4 || 7388000
+        e = ExpectedState(pc=8, int_regs=gprs, fp_regs=fprs)
+        e.fpregs[3] = 0xc1d3558740000000  # f64 -1297489152.0
+        e.fpregs[4] = 0x41d0550de0000000  # f64 1096038272.0
+        e.fpregs[5] = 0xc1c96b9560000000  # f64 -852961984.0
+        e.fpregs[6] = 0x41cc1a69c0000000  # f64 942986112.0
+        e.fpregs[7] = 0x41ca200a00000000  # f64 876614656.0
+        e.fpregs[8] = 0xc1d7426f80000000  # f64 -1560919552.0
+        e.fpregs[9] = 0xc1c2a708e0000000  # f64 -625873344.0
+        e.fpregs[10] = 0x41d8b72f80000000  # f64 1658633728.0
+        e.fpregs[11] = 0xc1de383fa0000000  # f64 -2028011136.0
+        e.fpregs[12] = 0x415c2ed800000000  # f64 7388000.0
+        e.fpscr = 0x82004000
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
