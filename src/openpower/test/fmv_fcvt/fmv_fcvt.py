@@ -585,6 +585,60 @@ class FMvFCvtCases(TestAccumulatorBase):
         for i in sorted(inp_values):
             self.fcvtfg(i)
 
+    def fmv(self, gpr_bits, bfp32, Rc):
+        if bfp32:
+            gpr_bits %= 2 ** 32
+            if gpr_bits & 0x7f80_0000 == 0x7f80_0000:  # inf or nan
+                fpr_bits = (gpr_bits & 0x8000_0000) << 32
+                fpr_bits |= 0x7ff0_0000_0000_0000
+                fpr_bits |= (gpr_bits & 0x7f_ffff) << 29
+            else:
+                fpr_bits = bitcast_fp_to_int(bitcast_int_to_fp(
+                    gpr_bits, bfp32=True), bfp32=False)
+        else:
+            gpr_bits %= 2 ** 64
+            fpr_bits = gpr_bits
+        with self.subTest(gpr_bits=hex(gpr_bits), fpr_bits=hex(fpr_bits),
+                          bfp32=bfp32, Rc=Rc):
+            s = "s" if bfp32 else ""
+            rc_str = "." if Rc else ""
+            tg_p = _cached_program(f"fmvtg{s}{rc_str} 3, 0")
+            # fmvfg[s]. shouldn't exist since Rc=1 is basically useless due to
+            # fmv* not changing any FPSCR bits
+            fg_p = _cached_program(f"fmvfg{s} 0, 3")
+            tg_gprs = [0] * 32
+            fg_gprs = [0] * 32
+            tg_fprs = [0] * 32
+            fg_fprs = [0] * 32
+            tg_fprs[0] = fpr_bits
+            fg_gprs[3] = gpr_bits
+            tg_e = ExpectedState(pc=4, int_regs=tg_gprs, fp_regs=tg_fprs)
+            fg_e = ExpectedState(pc=4, int_regs=fg_gprs, fp_regs=fg_fprs)
+            tg_lt = bool(gpr_bits & (1 << 63))
+            tg_gt = not tg_lt and gpr_bits != 0
+            tg_eq = gpr_bits == 0
+            if Rc:
+                tg_e.crregs[0] = (
+                    (tg_lt << 3) | (tg_gt << 2) | (tg_eq << 1) | tg_e.so)
+            fg_e.fpregs[0] = fpr_bits
+            tg_e.intregs[3] = gpr_bits
+            self.add_case(fg_p, fg_gprs, fpregs=fg_fprs, expected=fg_e)
+            self.add_case(tg_p, tg_gprs, fpregs=tg_fprs, expected=tg_e)
+
+    def case_fmv(self):
+        inp_values = {0}
+        for sh in (0, 22, 23, 24, 31, 52, 53, 54, 63):
+            for offset in range(-2, 3):
+                for offset_sh in range(64):
+                    v = 1 << sh
+                    v += offset << offset_sh
+                    v %= 2 ** 64
+                    inp_values.add(v)
+        for i in sorted(inp_values):
+            for bfp32 in (False, True):
+                for Rc in (False, True):
+                    self.fmv(i, bfp32, Rc)
+
 
 class SVP64FMvFCvtCases(TestAccumulatorBase):
     @skip_case("FIXME: rewrite to fmv/fcvt tests")
