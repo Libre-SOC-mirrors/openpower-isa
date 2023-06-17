@@ -536,8 +536,7 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
             res['1'] = 's:RA'  # RS: Rsrc1_EXTRA3
         else:
-            res['0'] = 'TODO'
-            print("regs TODO", insn_name, regs)
+            raise NotImplementedError(insn_name)
 
     elif value == 'RM-1P-2S1D':
         res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
@@ -596,7 +595,7 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['1'] = 's:RA'  # RA: Rsrc1_EXTRA2
             res['2'] = 's:RB'  # RT: Rsrc2_EXTRA2
         else:
-            res['0'] = 'TODO'
+            raise NotImplementedError(insn_name)
 
     elif value == 'RM-2P-2S1D':
         res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
@@ -605,7 +604,7 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['1'] = 's:RS'  # RS: Rsrc1_EXTRA2
             res['2'] = 's:CR'  # CR: Rsrc2_EXTRA2
         else:
-            res['0'] = 'TODO'
+            raise NotImplementedError(insn_name)
 
     elif value == 'RM-1P-3S1D':
         res['Etype'] = 'EXTRA2'  # RM EXTRA2 type
