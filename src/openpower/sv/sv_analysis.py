@@ -525,6 +525,9 @@ def extra_classifier(insn_name, value, name, res, regs):
         elif regs == ['', 'RB', '', 'FRT', '', 'CR1']:
             res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA3
             res['1'] = 's:RB'  # RB: Rsrc1_EXTRA3
+        elif regs == ['', 'RB', '', 'FRT', '', '']:
+            res['0'] = 'd:FRT'  # FRT: Rdest1_EXTRA3
+            res['1'] = 's:RB'  # RB: Rsrc1_EXTRA3
         elif regs == ['', 'FRB', '', 'RT', '', 'CR0']:
             res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA3
             res['1'] = 's:FRB'  # FRB: Rsrc1_EXTRA3

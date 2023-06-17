@@ -111,8 +111,7 @@ Special Registers Altered:
 
 X-Form
 
-* fmvfg FRT,RB (Rc=0)
-* fmvfg. FRT,RB (Rc=1)
+* fmvfg FRT,RB
 
 Pseudo-code:
 
@@ -120,14 +119,13 @@ Pseudo-code:
 
 Special Registers Altered:
 
-    CR1          (if Rc=1)
+    None
 
 # [DRAFT] Floating Move From GPR Single
 
 X-Form
 
-* fmvfgs FRT,RB (Rc=0)
-* fmvfgs. FRT,RB (Rc=1)
+* fmvfgs FRT,RB
 
 Pseudo-code:
 
@@ -135,4 +133,4 @@ Pseudo-code:
 
 Special Registers Altered:
 
-    CR1          (if Rc=1)
+    None

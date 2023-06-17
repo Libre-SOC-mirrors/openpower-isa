@@ -603,7 +603,7 @@ class FMvFCvtCases(TestAccumulatorBase):
             s = "s" if bfp32 else ""
             rc_str = "." if Rc else ""
             tg_p = _cached_program(f"fmvtg{s}{rc_str} 3, 0")
-            # fmvfg[s]. shouldn't exist since Rc=1 is basically useless due to
+            # fmvfg[s]. doesn't exist since Rc=1 is basically useless due to
             # fmv* not changing any FPSCR bits
             fg_p = _cached_program(f"fmvfg{s} 0, 3")
             tg_gprs = [0] * 32
