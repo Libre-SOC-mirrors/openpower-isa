@@ -131,7 +131,7 @@ def dataclass(cls, record, keymap=None, typemap=None):
 
 
 @_functools.total_ordering
-class Opcode(Dataclass):
+class Opcode:
     class Integer(int):
         def __new__(cls, value):
             if isinstance(value, str):
@@ -161,8 +161,18 @@ class Opcode(Dataclass):
     class Mask(Integer):
         pass
 
-    value: Value
-    mask: Mask
+    def __init__(self, value, mask):
+        self.__value = value
+        self.__mask = mask
+        return super().__init__()
+
+    @property
+    def value(self):
+        return self.__value
+
+    @property
+    def mask(self):
+        return self.__mask
 
     def __lt__(self, other):
         if not isinstance(other, Opcode):
@@ -578,11 +588,14 @@ class Section(Dataclass):
         def __repr__(self):
             return (bin(self) if self else "None")
 
+    class Opcode(IntegerOpcode):
+        pass
+
     csv: Path
     bitsel: BitSel
     suffix: Suffix
     mode: Mode
-    opcode: IntegerOpcode = None
+    opcode: Opcode = None
     priority: Priority = Priority.NORMAL
 
     def __lt__(self, other):
@@ -3533,8 +3546,8 @@ class PPCDatabase:
                     section.Mode.INTEGER: IntegerOpcode,
                     section.Mode.PATTERN: PatternOpcode,
                 }[section.mode]
-                factory = _functools.partial(
-                    PPCRecord.CSV, opcode_cls=opcode_cls)
+                factory = _functools.partial(PPCRecord.CSV,
+                    opcode_cls=opcode_cls)
                 with open(path, "r", encoding="UTF-8") as stream:
                     for insn in parse(stream, factory):
                         for name in insn.names:
