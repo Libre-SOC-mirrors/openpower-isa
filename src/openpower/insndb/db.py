@@ -14,6 +14,7 @@ from openpower.insndb.core import (
     PCode,
     Operands,
     Record,
+    Section,
     SVP64Record,
     Walker,
 )
@@ -139,6 +140,44 @@ class PTypeVisitor(SVP64InstructionVisitor):
         yield node
 
 
+class SectionVisitor(InstructionVisitor):
+    @mdis.dispatcher.Hook(Section.Path)
+    @contextlib.contextmanager
+    def dispatch_path(self, node):
+        print("path", node)
+        yield node
+
+    @mdis.dispatcher.Hook(Section.BitSel)
+    @contextlib.contextmanager
+    def dispatch_bitsel(self, node):
+        print("bitsel", node)
+        yield node
+
+    @mdis.dispatcher.Hook(Section.Suffix)
+    @contextlib.contextmanager
+    def dispatch_suffix(self, node):
+        print("suffix", node)
+        yield node
+
+    @mdis.dispatcher.Hook(Section.Mode)
+    @contextlib.contextmanager
+    def dispatch_mode(self, node):
+        print("mode", node)
+        yield node
+
+    @mdis.dispatcher.Hook(Section.Opcode)
+    @contextlib.contextmanager
+    def dispatch_opcode(self, node):
+        print("opcode", int(node))
+        yield node
+
+    @mdis.dispatcher.Hook(Section.Priority)
+    @contextlib.contextmanager
+    def dispatch_priority(self, node):
+        print("priority", node)
+        yield node
+
+
 class ExtrasVisitor(SVP64InstructionVisitor, SelectorsVisitor):
     @mdis.dispatcher.Hook(SVP64Record.ExtraMap)
     @contextlib.contextmanager
@@ -194,6 +233,10 @@ def main():
         "ptype": (
             PTypeVisitor,
             "print instruction ptype",
+        ),
+        "section": (
+            SectionVisitor,
+            "print instruction section",
         ),
         "extras": (
             ExtrasVisitor,
