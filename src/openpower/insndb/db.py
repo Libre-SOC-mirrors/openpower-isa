@@ -1,7 +1,6 @@
 import argparse
 import contextlib
 import os
-import types
 
 import mdis.dispatcher
 import mdis.visitor
@@ -15,7 +14,18 @@ from openpower.insndb.core import (
     PCode,
     Operands,
     Record,
+    SVP64Record,
     Walker,
+)
+from openpower.decoder.power_enums import (
+    SVExtra,
+    In1Sel,
+    In2Sel,
+    In3Sel,
+    OutSel,
+    CRInSel,
+    CRIn2Sel,
+    CROutSel,
 )
 
 
@@ -97,15 +107,41 @@ class PCodeVisitor(InstructionVisitor):
 
 
 class ExtrasVisitor(SVP64InstructionVisitor):
-    @mdis.dispatcher.Hook(Record)
+    @mdis.dispatcher.Hook(
+            In1Sel, In2Sel, In3Sel, CRInSel, CRIn2Sel,
+            OutSel, CROutSel,
+        )
     @contextlib.contextmanager
-    def dispatch_record(self, node):
-        for (name, extra) in node.extras.items():
-            print(name)
-            print("    sel", extra["sel"])
-            print("    reg", extra["reg"])
-            print("    seltype", extra["seltype"])
-            print("    idx", extra["idx"])
+    def dispatch_selector(self, node):
+        typename = node.__class__.__name__
+        typename = typename.replace("CR", "CR_")
+        typename = typename.replace("Sel", "")
+        typename = typename.lower()
+        print(typename, node)
+        yield node
+
+    @mdis.dispatcher.Hook(SVP64Record.ExtraMap)
+    @contextlib.contextmanager
+    def dispatch_extramap(self, node):
+        self.__index = -1
+        yield node
+
+    @mdis.dispatcher.Hook(SVP64Record.ExtraMap.Extra)
+    @contextlib.contextmanager
+    def dispatch_extramap_extra(self, node):
+        self.__index += 1
+        yield node
+
+    @mdis.dispatcher.Hook(SVP64Record.ExtraMap.Extra.Entry)
+    @contextlib.contextmanager
+    def dispatch_extramap_extra_entry(self, node):
+        idxmap = (
+            SVExtra.Idx0,
+            SVExtra.Idx1,
+            SVExtra.Idx2,
+            SVExtra.Idx3,
+        )
+        print(idxmap[self.__index], node)
         yield node
 
 
