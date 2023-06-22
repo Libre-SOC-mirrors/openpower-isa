@@ -3,19 +3,19 @@ import contextlib
 import os
 import types
 
+import mdis.dispatcher
+import mdis.visitor
+import mdis.walker
+
 from openpower.decoder.power_enums import (
     find_wiki_dir,
 )
 from openpower.insndb.core import (
     Database,
-    Dataclass,
-    Dict,
+    PCode,
+    Operands,
     Record,
-    Records,
-    Tuple,
-    Visitor,
-    visit,
-    visitormethod,
+    Walker,
 )
 
 
@@ -42,34 +42,16 @@ class SVP64Instruction(Instruction):
         return self
 
 
-class TreeVisitor(Visitor):
-    def __init__(self):
-        self.__depth = 0
-        self.__path = [""]
-        return super().__init__()
-
+class ListVisitor(mdis.visitor.ContextVisitor):
+    @mdis.dispatcher.Hook(Record)
     @contextlib.contextmanager
-    def __call__(self, path, node):
-        with super().__call__(path=path, node=node):
-            self.__path.append(path)
-            print("/".join(self.__path))
-            if not isinstance(node, (Dataclass, Tuple, Dict)):
-                print("    ", repr(node), sep="")
-            self.__depth += 1
-            yield node
-            self.__path.pop(-1)
-            self.__depth -= 1
-
-
-class ListVisitor(Visitor):
-    @visitormethod(Record)
-    def Record(self, path, node):
+    def dispatch_record(self, node):
         print(node.name)
         yield node
 
 
 # No use other than checking issubclass and adding an argument.
-class InstructionVisitor(Visitor):
+class InstructionVisitor(mdis.visitor.ContextVisitor):
     pass
 
 class SVP64InstructionVisitor(InstructionVisitor):
@@ -77,38 +59,47 @@ class SVP64InstructionVisitor(InstructionVisitor):
 
 
 class OpcodesVisitor(InstructionVisitor):
-    @visitormethod(Record)
-    def Record(self, path, node):
+    @mdis.dispatcher.Hook(Record)
+    @contextlib.contextmanager
+    def dispatch_record(self, node):
         for opcode in node.opcodes:
             print(opcode)
         yield node
 
 
 class OperandsVisitor(InstructionVisitor):
-    @visitormethod(Record)
-    def Record(self, path, node):
-        if isinstance(node, Record):
-            for operand in node.dynamic_operands:
-                print(operand.name, ",".join(map(str, operand.span)))
-            for operand in node.static_operands:
-                if operand.name not in ("PO", "XO"):
-                    desc = f"{operand.name}={operand.value}"
-                    print(desc, ",".join(map(str, operand.span)))
+    def __init__(self):
+        self.__record = None
+        return super().__init__()
+
+    @mdis.dispatcher.Hook(Record)
+    @contextlib.contextmanager
+    def dispatch_record(self, node):
+        self.__record = node
+        yield node
+
+    @mdis.dispatcher.Hook(Operands)
+    @contextlib.contextmanager
+    def dispatch_operands(self, node):
+        for (cls, kwargs) in node:
+            operand = cls(record=self.__record, **kwargs)
+            print(operand.name, ", ".join(map(str, operand.span)))
         yield node
 
 
 class PCodeVisitor(InstructionVisitor):
-    @visitormethod(Record)
-    def Record(self, path, node):
-        if isinstance(node, Record):
-            for line in node.pcode:
-                print(line)
+    @mdis.dispatcher.Hook(PCode)
+    @contextlib.contextmanager
+    def dispatch_record(self, node):
+        for line in node:
+            print(line)
         yield node
 
 
 class ExtrasVisitor(SVP64InstructionVisitor):
-    @visitormethod(Record)
-    def Record(self, path, node):
+    @mdis.dispatcher.Hook(Record)
+    @contextlib.contextmanager
+    def dispatch_record(self, node):
         for (name, extra) in node.extras.items():
             print(name)
             print("    sel", extra["sel"])
@@ -120,10 +111,6 @@ class ExtrasVisitor(SVP64InstructionVisitor):
 
 def main():
     commands = {
-        "tree": (
-            TreeVisitor,
-            "list all records",
-        ),
         "list": (
             ListVisitor,
             "list available instructions",
@@ -171,16 +158,15 @@ def main():
     visitor = commands[command][0]()
 
     db = Database(find_wiki_dir())
-    (path, records) = next(db.walk(match=lambda pair: isinstance(pair, Records)))
     if not isinstance(visitor, InstructionVisitor):
-        match = lambda _: True
+        root = db
     else:
-        insn = args.pop("insn")
-        def match(record):
-            return (isinstance(record, Record) and (record.name == insn))
+        root = [db[args.pop("insn")]]
 
-    for (subpath, node) in records.walk(match=match):
-        visit(visitor=visitor, node=node, path=subpath)
+    walker = Walker()
+    for (node, *_) in walker(root):
+        with visitor(node):
+            pass
 
 
 if __name__ == "__main__":
