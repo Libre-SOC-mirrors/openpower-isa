@@ -548,6 +548,9 @@ class BitSel:
 
 
 class Section(Dataclass):
+    class Path(type(_pathlib.Path("."))):
+        pass
+
     class Mode(_enum.Enum):
         INTEGER = _enum.auto()
         PATTERN = _enum.auto()
@@ -576,7 +579,7 @@ class Section(Dataclass):
         def __repr__(self):
             return (bin(self) if self else "None")
 
-    csv: _pathlib.Path
+    csv: Path
     bitsel: BitSel
     suffix: Suffix
     mode: Mode
