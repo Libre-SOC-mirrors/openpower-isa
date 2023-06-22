@@ -12,6 +12,9 @@ import re as _re
 import types as _types
 import typing as _typing
 
+import mdis.dispatcher
+import mdis.walker
+
 try:
     from functools import cached_property
 except ImportError:
@@ -3707,3 +3710,9 @@ class Database:
             return self.__names.get(key)
 
         raise ValueError("instruction or name expected")
+
+
+class Walker(mdis.walker.Walker):
+    @mdis.dispatcher.Hook(Database)
+    def dispatch_database(self, node):
+        yield from self(tuple(node))
