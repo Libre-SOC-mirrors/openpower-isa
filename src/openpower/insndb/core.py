@@ -83,29 +83,6 @@ class Style(_enum.Enum):
         return (self.value < other.value)
 
 
-@_functools.total_ordering
-class Priority(_enum.Enum):
-    LOW = -1
-    NORMAL = 0
-    HIGH = +1
-
-    @classmethod
-    def _missing_(cls, value):
-        if isinstance(value, str):
-            value = value.upper()
-        try:
-            return cls[value]
-        except ValueError:
-            return super()._missing_(value)
-
-    def __lt__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-
-        # NOTE: the order is inversed, LOW < NORMAL < HIGH
-        return (self.value > other.value)
-
-
 def dataclass(cls, record, keymap=None, typemap=None):
     if keymap is None:
         keymap = {}
@@ -590,6 +567,28 @@ class Section(Dataclass):
 
     class Opcode(IntegerOpcode):
         pass
+
+    @_functools.total_ordering
+    class Priority(_enum.Enum):
+        LOW = -1
+        NORMAL = 0
+        HIGH = +1
+
+        @classmethod
+        def _missing_(cls, value):
+            if isinstance(value, str):
+                value = value.upper()
+            try:
+                return cls[value]
+            except ValueError:
+                return super()._missing_(value)
+
+        def __lt__(self, other):
+            if not isinstance(other, self.__class__):
+                return NotImplemented
+
+            # NOTE: the order is inversed, LOW < NORMAL < HIGH
+            return (self.value > other.value)
 
     csv: Path
     bitsel: BitSel
