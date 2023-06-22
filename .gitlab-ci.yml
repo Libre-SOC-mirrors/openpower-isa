@@ -84,6 +84,12 @@ build:
         - python3 setup.py develop
         - popd
 
+        - git clone --depth 1 https://git.libre-soc.org/git/mdis.git mdis
+        - pushd mdis
+        - git rev-parse HEAD
+        - python3 setup.py develop
+        - popd
+
         - git clone --depth 1 https://git.libre-soc.org/git/nmutil.git nmutil
         - pushd nmutil
         - git rev-parse HEAD
