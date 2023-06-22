@@ -106,7 +106,7 @@ class PCodeVisitor(InstructionVisitor):
         yield node
 
 
-class ExtrasVisitor(SVP64InstructionVisitor):
+class SelectorsVisitor(InstructionVisitor):
     @mdis.dispatcher.Hook(
             In1Sel, In2Sel, In3Sel, CRInSel, CRIn2Sel,
             OutSel, CROutSel,
@@ -120,6 +120,8 @@ class ExtrasVisitor(SVP64InstructionVisitor):
         print(typename, node)
         yield node
 
+
+class ExtrasVisitor(SVP64InstructionVisitor, SelectorsVisitor):
     @mdis.dispatcher.Hook(SVP64Record.ExtraMap)
     @contextlib.contextmanager
     def dispatch_extramap(self, node):
@@ -162,6 +164,10 @@ def main():
         "pcode": (
             PCodeVisitor,
             "print instruction pseudocode",
+        ),
+        "selectors": (
+            SelectorsVisitor,
+            "print instruction selectors",
         ),
         "extras": (
             ExtrasVisitor,
