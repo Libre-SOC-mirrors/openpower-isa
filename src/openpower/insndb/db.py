@@ -18,6 +18,7 @@ from openpower.insndb.core import (
     Walker,
 )
 from openpower.decoder.power_enums import (
+    SVEType,
     SVPType,
     SVExtra,
     In1Sel,
@@ -122,6 +123,14 @@ class SelectorsVisitor(InstructionVisitor):
         yield node
 
 
+class ETypeVisitor(SVP64InstructionVisitor):
+    @mdis.dispatcher.Hook(SVEType)
+    @contextlib.contextmanager
+    def dispatch_ptype(self, node):
+        print(node)
+        yield node
+
+
 class PTypeVisitor(SVP64InstructionVisitor):
     @mdis.dispatcher.Hook(SVPType)
     @contextlib.contextmanager
@@ -177,6 +186,10 @@ def main():
         "selectors": (
             SelectorsVisitor,
             "print instruction selectors",
+        ),
+        "etype": (
+            ETypeVisitor,
+            "print instruction etype",
         ),
         "ptype": (
             PTypeVisitor,
