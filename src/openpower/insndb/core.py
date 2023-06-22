@@ -512,44 +512,43 @@ class SVP64Record(Dataclass):
         return (_RegType(self.extra_CR.reg) is _RegType.CR_3BIT)
 
 
-class BitSel:
-    def __init__(self, value=(0, 32)):
-        if isinstance(value, str):
-            (start, end) = map(int, value.split(":"))
-        else:
-            (start, end) = value
-        if start < 0 or end < 0 or start >= end:
-            raise ValueError(value)
-
-        self.__start = start
-        self.__end = end
-
-        return super().__init__()
-
-    def __len__(self):
-        return (self.__end - self.__start + 1)
-
-    def __repr__(self):
-        return f"[{self.__start}:{self.__end}]"
-
-    def __iter__(self):
-        yield from range(self.start, (self.end + 1))
-
-    def __reversed__(self):
-        return tuple(reversed(tuple(self)))
-
-    @property
-    def start(self):
-        return self.__start
-
-    @property
-    def end(self):
-        return self.__end
-
-
 class Section(Dataclass):
     class Path(type(_pathlib.Path("."))):
         pass
+
+    class BitSel:
+        def __init__(self, value=(0, 32)):
+            if isinstance(value, str):
+                (start, end) = map(int, value.split(":"))
+            else:
+                (start, end) = value
+            if start < 0 or end < 0 or start >= end:
+                raise ValueError(value)
+
+            self.__start = start
+            self.__end = end
+
+            return super().__init__()
+
+        def __len__(self):
+            return (self.__end - self.__start + 1)
+
+        def __repr__(self):
+            return f"[{self.__start}:{self.__end}]"
+
+        def __iter__(self):
+            yield from range(self.start, (self.end + 1))
+
+        def __reversed__(self):
+            return tuple(reversed(tuple(self)))
+
+        @property
+        def start(self):
+            return self.__start
+
+        @property
+        def end(self):
+            return self.__end
 
     class Mode(_enum.Enum):
         INTEGER = _enum.auto()
