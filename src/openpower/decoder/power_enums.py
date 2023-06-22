@@ -202,7 +202,7 @@ class SVPType(Enum):
     def _missing_(cls, desc):
         return {"1P": SVPType.P1, "2P": SVPType.P2, "2PM": SVPType.P2M}.get(desc)
 
-    def __repr__(self):
+    def __str__(self):
         return {
             SVPType.NONE: "NONE",
             SVPType.P1: "1P",
