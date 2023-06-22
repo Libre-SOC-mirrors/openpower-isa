@@ -211,7 +211,7 @@ def main():
     for (command, (visitor, helper)) in commands.items():
         parser = main_subparser.add_parser(command, help=helper)
         if issubclass(visitor, InstructionVisitor):
-            if command in ("extras",):
+            if issubclass(visitor, SVP64InstructionVisitor):
                 arg_cls = SVP64Instruction
             else:
                 arg_cls = Instruction
