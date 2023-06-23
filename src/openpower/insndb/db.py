@@ -182,14 +182,14 @@ class ExtrasVisitor(SVP64InstructionVisitor, SelectorsVisitor):
     @mdis.dispatcher.Hook(SVP64Record.ExtraMap)
     @contextlib.contextmanager
     def dispatch_extramap(self, node):
-        self.__index = -1
+        self.__index = 0
         yield node
 
     @mdis.dispatcher.Hook(SVP64Record.ExtraMap.Extra)
     @contextlib.contextmanager
     def dispatch_extramap_extra(self, node):
-        self.__index += 1
         yield node
+        self.__index += 1
 
     @mdis.dispatcher.Hook(SVP64Record.ExtraMap.Extra.Entry)
     @contextlib.contextmanager
@@ -272,12 +272,14 @@ def main():
     if not isinstance(visitor, InstructionVisitor):
         root = db
     else:
-        root = [db[args.pop("insn")]]
+        root = db[args.pop("insn")]
 
-    walker = Walker()
-    for (node, *_) in walker(root):
-        with visitor(node):
-            pass
+    def traverse(root, visitor, walker):
+        with visitor(root):
+            for (node, *_) in walker(root):
+                traverse(root=node, visitor=visitor, walker=walker)
+
+    traverse(root=root, visitor=visitor, walker=Walker())
 
 
 if __name__ == "__main__":
