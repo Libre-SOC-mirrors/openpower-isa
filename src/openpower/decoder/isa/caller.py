@@ -2255,8 +2255,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         return True, vli_
 
     def do_rc_ov(self, ins_name, result, overflow, cr0, cr1, output_names):
-        if ins_name.startswith("f") and "RT" not in output_names:
-            rc_reg = "CR1"  # not calculated correctly yet for FP compares
+        cr_out = yield self.dec2.op.cr_out
+        if cr_out == CROutSel.CR1.value:
+            rc_reg = "CR1"
         else:
             rc_reg = "CR0"
         regnum, is_vec = yield from get_cr_out(self.dec2, rc_reg)
