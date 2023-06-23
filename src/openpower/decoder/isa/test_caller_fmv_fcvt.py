@@ -1,4 +1,4 @@
-""" fmv/fcvt tests
+""" [mc][ft]fpr* tests
 """
 
 import unittest

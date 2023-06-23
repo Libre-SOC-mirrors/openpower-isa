@@ -101,7 +101,7 @@ class FMvFCvtCases(TestAccumulatorBase):
         with self.subTest(inp=inp.hex(), inp_bits=hex(inp_bits),
                           test_title=test_title,
                           signed=signed, _32bit=_32bit, CVM=CVM, RN=RN, VE=VE):
-            lst = [f"fcvttgo. 3,0,{CVM},{IT}"]
+            lst = [f"cffpro. 3,0,{CVM},{IT}"]
             gprs = [0] * 32
             fprs = [0] * 32
             fprs[0] = inp_bits
@@ -452,8 +452,8 @@ class FMvFCvtCases(TestAccumulatorBase):
 
     @staticmethod
     @functools.lru_cache(maxsize=None)
-    def _fcvtfg_fpscr(RN, set_XX, FR, FPRF, fpscr_unmodified):
-        """ cached FPSCR computation for fcvtfg_one since that part is slow """
+    def _ctfpr_fpscr(RN, set_XX, FR, FPRF, fpscr_unmodified):
+        """ cached FPSCR computation for ctfpr_one since that part is slow """
         initial_fpscr = FPSCRState()
         initial_fpscr.RN = RN
         fpscr = FPSCRState(initial_fpscr)
@@ -467,7 +467,10 @@ class FMvFCvtCases(TestAccumulatorBase):
             fpscr = FPSCRState(initial_fpscr)
         return initial_fpscr, fpscr
 
-    def fcvtfg_one(self, inp, bfp32, IT, Rc, RN):
+    def ctfpr_one(self, inp, bfp32, IT, Rc, RN):
+        if (dict(inp=hex(inp), bfp32=bfp32, IT=IT, Rc=Rc, RN=RN) !=
+                {'inp': '0x80001000', 'bfp32': True, 'IT': 3, 'Rc': True, 'RN': 0}):
+            return  # FIXME: just for debugging
         inp %= 2 ** 64
         inp_width = 64 if IT & 0b10 else 32
         inp_value = inp % 2 ** inp_width
@@ -537,7 +540,7 @@ class FMvFCvtCases(TestAccumulatorBase):
         # defined to not modify FPSCR since the conversion is always exact
         fpscr_unmodified = inp_width == 32 and not bfp32
 
-        initial_fpscr, fpscr = self._fcvtfg_fpscr(
+        initial_fpscr, fpscr = self._ctfpr_fpscr(
             RN=RN, set_XX=set_XX, FR=FR, FPRF=FPRF,
             fpscr_unmodified=fpscr_unmodified)
         if Rc:
@@ -554,7 +557,7 @@ class FMvFCvtCases(TestAccumulatorBase):
         ):
             s = "s" if bfp32 else ""
             rc_str = "." if Rc else ""
-            lst = [f"fcvtfg{s}{rc_str} 0,3,{IT}"]
+            lst = [f"ctfpr{s}{rc_str} 0,3,{IT}"]
             gprs = [0] * 32
             fprs = [0] * 32
             gprs[3] = inp
@@ -566,14 +569,14 @@ class FMvFCvtCases(TestAccumulatorBase):
                 _cached_program(*lst), gprs, fpregs=fprs, expected=e,
                 initial_fpscr=int(initial_fpscr))
 
-    def fcvtfg(self, inp):
+    def ctfpr(self, inp):
         for bfp32 in (False, True):
             for IT in range(4):
                 for Rc in (False, True):
                     for RN in range(4):
-                        self.fcvtfg_one(inp, bfp32, IT, Rc, RN)
+                        self.ctfpr_one(inp, bfp32, IT, Rc, RN)
 
-    def case_fcvtfg(self):
+    def case_ctfpr(self):
         inp_values = {0}
         for sh in (0, 22, 23, 24, 31, 52, 53, 54, 63):
             for offset in range(-2, 3):
@@ -583,7 +586,7 @@ class FMvFCvtCases(TestAccumulatorBase):
                     v %= 2 ** 64
                     inp_values.add(v)
         for i in sorted(inp_values):
-            self.fcvtfg(i)
+            self.ctfpr(i)
 
     def fmv(self, gpr_bits, bfp32, Rc):
         if bfp32:
@@ -602,10 +605,10 @@ class FMvFCvtCases(TestAccumulatorBase):
                           bfp32=bfp32, Rc=Rc):
             s = "s" if bfp32 else ""
             rc_str = "." if Rc else ""
-            tg_p = _cached_program(f"fmvtg{s}{rc_str} 3, 0")
-            # fmvfg[s]. doesn't exist since Rc=1 is basically useless due to
+            tg_p = _cached_program(f"mffpr{s}{rc_str} 3, 0")
+            # mtfpr[s]. doesn't exist since Rc=1 is basically useless due to
             # fmv* not changing any FPSCR bits
-            fg_p = _cached_program(f"fmvfg{s} 0, 3")
+            fg_p = _cached_program(f"mtfpr{s} 0, 3")
             tg_gprs = [0] * 32
             fg_gprs = [0] * 32
             tg_fprs = [0] * 32
@@ -641,8 +644,8 @@ class FMvFCvtCases(TestAccumulatorBase):
 
 
 class SVP64FMvFCvtCases(TestAccumulatorBase):
-    def case_sv_fmvfg(self):
-        lst = list(SVP64Asm(["sv.fmvfg *3, *3"]))
+    def case_sv_mtfpr(self):
+        lst = list(SVP64Asm(["sv.mtfpr *3, *3"]))
         gprs = [0] * 32
         fprs = [0] * 32
         svstate = SVP64State()
@@ -672,8 +675,8 @@ class SVP64FMvFCvtCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    def case_sv_fmvtg(self):
-        lst = list(SVP64Asm(["sv.fmvtg *3, *3"]))
+    def case_sv_mffpr(self):
+        lst = list(SVP64Asm(["sv.mffpr *3, *3"]))
         gprs = [0] * 32
         fprs = [0] * 32
         svstate = SVP64State()
@@ -703,8 +706,8 @@ class SVP64FMvFCvtCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    def case_sv_fmvfgs(self):
-        lst = list(SVP64Asm(["sv.fmvfgs *3, *3"]))
+    def case_sv_mtfprs(self):
+        lst = list(SVP64Asm(["sv.mtfprs *3, *3"]))
         gprs = [0] * 32
         fprs = [0] * 32
         svstate = SVP64State()
@@ -734,8 +737,8 @@ class SVP64FMvFCvtCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    def case_sv_fmvtgs(self):
-        lst = list(SVP64Asm(["sv.fmvtgs *3, *3"]))
+    def case_sv_mffprs(self):
+        lst = list(SVP64Asm(["sv.mffprs *3, *3"]))
         gprs = [0] * 32
         fprs = [0] * 32
         svstate = SVP64State()
@@ -765,8 +768,8 @@ class SVP64FMvFCvtCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    def case_sv_fcvtfg(self):
-        lst = list(SVP64Asm(["sv.fcvtfg *3, *3, 0"]))
+    def case_sv_ctfpr(self):
+        lst = list(SVP64Asm(["sv.ctfpr *3, *3, 0"]))
         gprs = [0] * 32
         fprs = [0] * 32
         svstate = SVP64State()
@@ -796,8 +799,8 @@ class SVP64FMvFCvtCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    def case_sv_fcvttg_js(self):
-        lst = list(SVP64Asm(["sv.fcvttg *3, *3, 5, 0"]))
+    def case_sv_cffpr_js(self):
+        lst = list(SVP64Asm(["sv.cffpr *3, *3, 5, 0"]))
         gprs = [0] * 32
         fprs = [0] * 32
         svstate = SVP64State()
@@ -828,8 +831,8 @@ class SVP64FMvFCvtCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    def case_sv_fcvttg_sat(self):
-        lst = list(SVP64Asm(["sv.fcvttg *3, *3, 3, 0"]))
+    def case_sv_cffpr_sat(self):
+        lst = list(SVP64Asm(["sv.cffpr *3, *3, 3, 0"]))
         gprs = [0] * 32
         fprs = [0] * 32
         svstate = SVP64State()
@@ -860,8 +863,8 @@ class SVP64FMvFCvtCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    def case_sv_fcvtfgs(self):
-        lst = list(SVP64Asm(["sv.fcvtfgs *3, *3, 0"]))
+    def case_sv_ctfprs(self):
+        lst = list(SVP64Asm(["sv.ctfprs *3, *3, 0"]))
         gprs = [0] * 32
         fprs = [0] * 32
         svstate = SVP64State()

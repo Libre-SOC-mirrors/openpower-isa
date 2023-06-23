@@ -23,8 +23,8 @@ Special Registers Altered:
 
 X-Form
 
-* fcvtfg FRT,RB,IT (Rc=0)
-* fcvtfg. FRT,RB,IT (Rc=1)
+* ctfpr FRT,RB,IT (Rc=0)
+* ctfpr. FRT,RB,IT (Rc=1)
 
 Pseudo-code:
 
@@ -66,8 +66,8 @@ Special Registers Altered:
 
 X-Form
 
-* fcvtfgs FRT,RB,IT (Rc=0)
-* fcvtfgs. FRT,RB,IT (Rc=1)
+* ctfprs FRT,RB,IT (Rc=0)
+* ctfprs. FRT,RB,IT (Rc=1)
 
 Pseudo-code:
 
@@ -103,10 +103,10 @@ Special Registers Altered:
 
 XO-Form
 
-* fcvttg RT,FRB,CVM,IT (OE=0 Rc=0)
-* fcvttg. RT,FRB,CVM,IT (OE=0 Rc=1)
-* fcvttgo RT,FRB,CVM,IT (OE=1 Rc=0)
-* fcvttgo. RT,FRB,CVM,IT (OE=1 Rc=1)
+* cffpr RT,FRB,CVM,IT (OE=0 Rc=0)
+* cffpr. RT,FRB,CVM,IT (OE=0 Rc=1)
+* cffpro RT,FRB,CVM,IT (OE=1 Rc=0)
+* cffpro. RT,FRB,CVM,IT (OE=1 Rc=1)
 
 Pseudo-code:
 

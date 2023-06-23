@@ -783,10 +783,10 @@ _insns = [
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "fmvis",                                            # FP load immediate
     "fishmv",                                           # Float Replace Lower-Half Single, Immediate
-    "fcvttg", "fcvttgo",
-    "fmvtg", "fmvtgs",
-    "fcvtfg", "fcvtfgs",
-    "fmvfg", "fmvfgs",
+    "cffpr", "cffpro",
+    "mffpr", "mffprs",
+    "ctfpr", "ctfprs",
+    "mtfpr", "mtfprs",
     'grev', 'grev.', 'grevi', 'grevi.',
     'grevw', 'grevw.', 'grevwi', 'grevwi.',
     "hrfid", "icbi", "icbt", "isel", "isync",

@@ -1,6 +1,6 @@
 # binary-floating-point helper functions
 
-`bfp_*` and related functions as needed by fcvt* from PowerISA v3.1B Book I
+`bfp_*` and related functions as needed by c[ft]fpr* from PowerISA v3.1B Book I
 section 7.6.2.2
 
     def reset_xflags():

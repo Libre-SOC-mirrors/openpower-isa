@@ -1963,10 +1963,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        'fmvis', 'fishmv', 'pcdec', "maddedu", "divmod2du",
                        "dsld", "dsrd", "maddedus",
                        "sadd", "saddw", "sadduw",
-                       "fcvttg", "fcvttgo",
-                       "fmvtg", "fmvtgs",
-                       "fcvtfg", "fcvtfgs",
-                       "fmvfg", "fmvfgs",
+                       "cffpr", "cffpro",
+                       "mffpr", "mffprs",
+                       "ctfpr", "ctfprs",
+                       "mtfpr", "mtfprs",
                        "maddsubrs", "maddrs"
                        ]:
             illegal = False

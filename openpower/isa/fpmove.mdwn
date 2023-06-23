@@ -81,8 +81,8 @@ Special Registers Altered:
 
 X-Form
 
-* fmvtg RT,FRB (Rc=0)
-* fmvtg. RT,FRB (Rc=1)
+* mffpr RT,FRB (Rc=0)
+* mffpr. RT,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -96,8 +96,8 @@ Special Registers Altered:
 
 X-Form
 
-* fmvtgs RT,FRB (Rc=0)
-* fmvtgs. RT,FRB (Rc=1)
+* mffprs RT,FRB (Rc=0)
+* mffprs. RT,FRB (Rc=1)
 
 Pseudo-code:
 
@@ -111,7 +111,7 @@ Special Registers Altered:
 
 X-Form
 
-* fmvfg FRT,RB
+* mtfpr FRT,RB
 
 Pseudo-code:
 
@@ -125,7 +125,7 @@ Special Registers Altered:
 
 X-Form
 
-* fmvfgs FRT,RB
+* mtfprs FRT,RB
 
 Pseudo-code:
 
