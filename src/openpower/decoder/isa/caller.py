@@ -256,8 +256,8 @@ class SPR(dict):
             self[key] = v
 
     def __getitem__(self, key):
-        log("get spr", key)
-        log("dict", self.items())
+        #log("get spr", key)
+        #log("dict", self.items())
         # if key in special_sprs get the special spr, otherwise return key
         if isinstance(key, SelectableInt):
             key = key.value
@@ -277,7 +277,7 @@ class SPR(dict):
                 info = spr_byname[key]
             self[key] = SelectableInt(0, info.length)
             res = dict.__getitem__(self, key)
-        log("spr returning", key, res)
+        #log("spr returning", key, res)
         return res
 
     def __setitem__(self, key, value):
