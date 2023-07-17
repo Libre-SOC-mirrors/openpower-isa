@@ -537,7 +537,7 @@
         are to be updated by the mtfsf instruction.
         Formats: XFL
     FMM (21:24)
-        Field used to specify minimum/maximum mode for fminmax[s].
+        Field used to specify minimum/maximum mode for fminmax.
         Formats: MM
     fmap (22:25)
         Field used to specify the CR Field set/clear map for CR Weird

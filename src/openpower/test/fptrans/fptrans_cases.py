@@ -3,6 +3,7 @@ from openpower.insndb.asm import SVP64Asm
 from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.power_enums import FMinMaxMode
 import struct
 
 
@@ -1479,31 +1480,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3fe193ea7aad030a
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fminnum08s(self):
-        lst = list(SVP64Asm(["fminnum08s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fminnum08s_(self):
-        lst = list(SVP64Asm(["fminnum08s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fminnum08(self):
-        lst = list(SVP64Asm(["fminnum08 3,4,5"]))
+        FMM = FMinMaxMode.fminnum08.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1512,9 +1491,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fminnum08_(self):
-        lst = list(SVP64Asm(["fminnum08. 3,4,5"]))
+        FMM = FMinMaxMode.fminnum08.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1523,31 +1502,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxnum08s(self):
-        lst = list(SVP64Asm(["fmaxnum08s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxnum08s_(self):
-        lst = list(SVP64Asm(["fmaxnum08s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxnum08(self):
-        lst = list(SVP64Asm(["fmaxnum08 3,4,5"]))
+        FMM = FMinMaxMode.fmaxnum08.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1556,9 +1513,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxnum08_(self):
-        lst = list(SVP64Asm(["fmaxnum08. 3,4,5"]))
+        FMM = FMinMaxMode.fmaxnum08.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1567,31 +1524,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmin19s(self):
-        lst = list(SVP64Asm(["fmin19s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmin19s_(self):
-        lst = list(SVP64Asm(["fmin19s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmin19(self):
-        lst = list(SVP64Asm(["fmin19 3,4,5"]))
+        FMM = FMinMaxMode.fmin19.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1600,9 +1535,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmin19_(self):
-        lst = list(SVP64Asm(["fmin19. 3,4,5"]))
+        FMM = FMinMaxMode.fmin19.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1611,31 +1546,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmax19s(self):
-        lst = list(SVP64Asm(["fmax19s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmax19s_(self):
-        lst = list(SVP64Asm(["fmax19s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmax19(self):
-        lst = list(SVP64Asm(["fmax19 3,4,5"]))
+        FMM = FMinMaxMode.fmax19.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1644,9 +1557,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmax19_(self):
-        lst = list(SVP64Asm(["fmax19. 3,4,5"]))
+        FMM = FMinMaxMode.fmax19.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1655,31 +1568,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fminnum19s(self):
-        lst = list(SVP64Asm(["fminnum19s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fminnum19s_(self):
-        lst = list(SVP64Asm(["fminnum19s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fminnum19(self):
-        lst = list(SVP64Asm(["fminnum19 3,4,5"]))
+        FMM = FMinMaxMode.fminnum19.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1688,9 +1579,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fminnum19_(self):
-        lst = list(SVP64Asm(["fminnum19. 3,4,5"]))
+        FMM = FMinMaxMode.fminnum19.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1699,31 +1590,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxnum19s(self):
-        lst = list(SVP64Asm(["fmaxnum19s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxnum19s_(self):
-        lst = list(SVP64Asm(["fmaxnum19s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxnum19(self):
-        lst = list(SVP64Asm(["fmaxnum19 3,4,5"]))
+        FMM = FMinMaxMode.fmaxnum19.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1732,9 +1601,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxnum19_(self):
-        lst = list(SVP64Asm(["fmaxnum19. 3,4,5"]))
+        FMM = FMinMaxMode.fmaxnum19.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1743,31 +1612,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmincs(self):
-        lst = list(SVP64Asm(["fmincs 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmincs_(self):
-        lst = list(SVP64Asm(["fmincs. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fminc(self):
-        lst = list(SVP64Asm(["fminc 3,4,5"]))
+        FMM = FMinMaxMode.fminc.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1776,9 +1623,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fminc_(self):
-        lst = list(SVP64Asm(["fminc. 3,4,5"]))
+        FMM = FMinMaxMode.fminc.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1787,31 +1634,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxcs(self):
-        lst = list(SVP64Asm(["fmaxcs 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxcs_(self):
-        lst = list(SVP64Asm(["fmaxcs. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxc(self):
-        lst = list(SVP64Asm(["fmaxc 3,4,5"]))
+        FMM = FMinMaxMode.fmaxc.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1820,9 +1645,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxc_(self):
-        lst = list(SVP64Asm(["fmaxc. 3,4,5"]))
+        FMM = FMinMaxMode.fmaxc.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1831,31 +1656,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fminmagnum08s(self):
-        lst = list(SVP64Asm(["fminmagnum08s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fminmagnum08s_(self):
-        lst = list(SVP64Asm(["fminmagnum08s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fminmagnum08(self):
-        lst = list(SVP64Asm(["fminmagnum08 3,4,5"]))
+        FMM = FMinMaxMode.fminmagnum08.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1864,9 +1667,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fminmagnum08_(self):
-        lst = list(SVP64Asm(["fminmagnum08. 3,4,5"]))
+        FMM = FMinMaxMode.fminmagnum08.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1875,31 +1678,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxmagnum08s(self):
-        lst = list(SVP64Asm(["fmaxmagnum08s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxmagnum08s_(self):
-        lst = list(SVP64Asm(["fmaxmagnum08s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxmagnum08(self):
-        lst = list(SVP64Asm(["fmaxmagnum08 3,4,5"]))
+        FMM = FMinMaxMode.fmaxmagnum08.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1908,9 +1689,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxmagnum08_(self):
-        lst = list(SVP64Asm(["fmaxmagnum08. 3,4,5"]))
+        FMM = FMinMaxMode.fmaxmagnum08.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1919,31 +1700,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fminmag19s(self):
-        lst = list(SVP64Asm(["fminmag19s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fminmag19s_(self):
-        lst = list(SVP64Asm(["fminmag19s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fminmag19(self):
-        lst = list(SVP64Asm(["fminmag19 3,4,5"]))
+        FMM = FMinMaxMode.fminmag19.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1952,9 +1711,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fminmag19_(self):
-        lst = list(SVP64Asm(["fminmag19. 3,4,5"]))
+        FMM = FMinMaxMode.fminmag19.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1963,31 +1722,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxmag19s(self):
-        lst = list(SVP64Asm(["fmaxmag19s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxmag19s_(self):
-        lst = list(SVP64Asm(["fmaxmag19s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxmag19(self):
-        lst = list(SVP64Asm(["fmaxmag19 3,4,5"]))
+        FMM = FMinMaxMode.fmaxmag19.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -1996,9 +1733,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxmag19_(self):
-        lst = list(SVP64Asm(["fmaxmag19. 3,4,5"]))
+        FMM = FMinMaxMode.fmaxmag19.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2007,31 +1744,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fminmagnum19s(self):
-        lst = list(SVP64Asm(["fminmagnum19s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fminmagnum19s_(self):
-        lst = list(SVP64Asm(["fminmagnum19s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fminmagnum19(self):
-        lst = list(SVP64Asm(["fminmagnum19 3,4,5"]))
+        FMM = FMinMaxMode.fminmagnum19.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2040,9 +1755,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fminmagnum19_(self):
-        lst = list(SVP64Asm(["fminmagnum19. 3,4,5"]))
+        FMM = FMinMaxMode.fminmagnum19.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2051,31 +1766,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxmagnum19s(self):
-        lst = list(SVP64Asm(["fmaxmagnum19s 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxmagnum19s_(self):
-        lst = list(SVP64Asm(["fmaxmagnum19s. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxmagnum19(self):
-        lst = list(SVP64Asm(["fmaxmagnum19 3,4,5"]))
+        FMM = FMinMaxMode.fmaxmagnum19.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2084,9 +1777,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxmagnum19_(self):
-        lst = list(SVP64Asm(["fmaxmagnum19. 3,4,5"]))
+        FMM = FMinMaxMode.fmaxmagnum19.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2095,31 +1788,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fminmagcs(self):
-        lst = list(SVP64Asm(["fminmagcs 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fminmagcs_(self):
-        lst = list(SVP64Asm(["fminmagcs. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fminmagc(self):
-        lst = list(SVP64Asm(["fminmagc 3,4,5"]))
+        FMM = FMinMaxMode.fminmagc.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2128,9 +1799,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fminmagc_(self):
-        lst = list(SVP64Asm(["fminmagc. 3,4,5"]))
+        FMM = FMinMaxMode.fminmagc.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2139,31 +1810,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxmagcs(self):
-        lst = list(SVP64Asm(["fmaxmagcs 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
-    def case_fmaxmagcs_(self):
-        lst = list(SVP64Asm(["fmaxmagcs. 3,4,5"]))
-        gprs = [0] * 32
-        fprs = [0] * 32
-        fprs[4] = 0x3ff0000000000000  # 1.0
-        fprs[5] = 0x3ff0000000000000  # 1.0
-        e = ExpectedState(pc=4, int_regs=gprs, fp_regs=fprs)
-        e.fpregs[3] = 0x3ff0000000000000
-        self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
-
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxmagc(self):
-        lst = list(SVP64Asm(["fmaxmagc 3,4,5"]))
+        FMM = FMinMaxMode.fmaxmagc.value
+        lst = list(SVP64Asm([f"fminmax 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2172,9 +1821,9 @@ class FPTransCases(TestAccumulatorBase):
         e.fpregs[3] = 0x3ff0000000000000
         self.add_case(Program(lst, False), gprs, fpregs=fprs, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_fmaxmagc_(self):
-        lst = list(SVP64Asm(["fmaxmagc. 3,4,5"]))
+        FMM = FMinMaxMode.fmaxmagc.value
+        lst = list(SVP64Asm([f"fminmax. 3,4,5,{FMM}"]))
         gprs = [0] * 32
         fprs = [0] * 32
         fprs[4] = 0x3ff0000000000000  # 1.0
@@ -2451,9 +2100,9 @@ class SVP64FPTransCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_sv_fminc(self):
-        lst = list(SVP64Asm(["sv.fminc *32,*64,*96"]))
+        FMM = FMinMaxMode.fminc.value
+        lst = list(SVP64Asm([f"sv.fminmax *32,*64,*96,{FMM}"]))
         gprs = [0] * 128
         fprs = [0] * 128
         svstate = SVP64State()
@@ -2499,9 +2148,9 @@ class SVP64FPTransCases(TestAccumulatorBase):
         self.add_case(Program(lst, False), gprs, fpregs=fprs,
                       initial_svstate=svstate, expected=e)
 
-    @skip_case("need to be updated to use fminmax")
     def case_sv_fmaxmag19(self):
-        lst = list(SVP64Asm(["sv.fmaxmag19 *32,*64,*96"]))
+        FMM = FMinMaxMode.fmaxmag19.value
+        lst = list(SVP64Asm([f"sv.fminmax *32,*64,*96,{FMM}"]))
         gprs = [0] * 128
         fprs = [0] * 128
         svstate = SVP64State()

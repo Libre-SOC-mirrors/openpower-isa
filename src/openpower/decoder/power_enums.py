@@ -716,25 +716,7 @@ FPTRANS_INSNS = (
     "fasinh", "fasinhs",
     "facosh", "facoshs",
     "fatanh", "fatanhs",
-    # fmin*/fmax* need to be replaced with fminmax
-    # https://bugs.libre-soc.org/show_bug.cgi?id=1057
-    # commented for now to make space for fmv/cvt
-    # "fminnum08", "fminnum08s",
-    # "fmaxnum08", "fmaxnum08s",
-    # "fmin19", "fmin19s",
-    # "fmax19", "fmax19s",
-    # "fminnum19", "fminnum19s",
-    # "fmaxnum19", "fmaxnum19s",
-    # "fminc", "fmincs",
-    # "fmaxc", "fmaxcs",
-    # "fminmagnum08", "fminmagnum08s",
-    # "fmaxmagnum08", "fmaxmagnum08s",
-    # "fminmag19", "fminmag19s",
-    # "fmaxmag19", "fmaxmag19s",
-    # "fminmagnum19", "fminmagnum19s",
-    # "fmaxmagnum19", "fmaxmagnum19s",
-    # "fminmagc", "fminmagcs",
-    # "fmaxmagc", "fmaxmagcs",
+    "fminmax",
     "fmod", "fmods",
     "fremainder", "fremainders",
 )
@@ -1255,6 +1237,29 @@ BFP_FLAG_NAMES = (
     'zx_flag',
     'inc_flag',
 )
+
+
+@unique
+class FMinMaxMode(Enum):
+    """ FMM field for fminmax instruction.
+    enumerant names match assembly aliases.
+    """
+    fminnum08 = 0b0000
+    fmin19 = 0b0001
+    fminnum19 = 0b0010
+    fminc = 0b0011
+    fminmagnum08 = 0b0100
+    fminmag19 = 0b0101
+    fminmagnum19 = 0b0110
+    fminmagc = 0b0111
+    fmaxnum08 = 0b1000
+    fmax19 = 0b1001
+    fmaxnum19 = 0b1010
+    fmaxc = 0b1011
+    fmaxmagnum08 = 0b1100
+    fmaxmag19 = 0b1101
+    fmaxmagnum19 = 0b1110
+    fmaxmagc = 0b1111
 
 if __name__ == '__main__':
     # find out what the heck is in SPR enum :)
