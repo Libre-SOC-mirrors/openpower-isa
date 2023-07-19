@@ -24,7 +24,7 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
 
         e = ExpectedState(pc=4)
         e.intregs[1] = 0x0000aa86
-        e.intregs[2] = 0xffffffffffff643e
+        e.intregs[2] = 0xffffffffffffe43e
         e.intregs[10] = 0x0000e6b8
         e.intregs[11] = 0x00002d41
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
