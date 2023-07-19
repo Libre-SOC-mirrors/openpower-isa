@@ -1462,9 +1462,9 @@ Pseudo-code:
     b_is_snan <- b_is_nan & (b[12] = 0)
     any_snan <- a_is_snan | b_is_snan
     a_quieted <- a
-    a_quieted[12] = 1
+    a_quieted[12] <- 1
     b_quieted <- b
-    b_quieted[12] = 1
+    b_quieted[12] <- 1
     if a_is_nan | b_is_nan then
         if FMM[2:3] = 0b00 then  # min/maxnum08
             if a_is_snan then result <- a_quieted
@@ -1505,7 +1505,7 @@ Pseudo-code:
         else if cmp_l <u cmp_r then result <- a
         else result <- b
     if any_snan then SetFX(FPSCR.VXSNAN)
-    if (FPSCR.VE = 0) & ¬any_snan then (FRT) <- result
+    if (FPSCR.VE = 0) | ¬any_snan then (FRT) <- result
 
 Special Registers Altered:
 
