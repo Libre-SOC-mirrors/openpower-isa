@@ -258,7 +258,7 @@ class PPCRecord(Dataclass):
     Rc: _RCOE = _RCOE.NONE
     form: _Form = _Form.NONE
     conditions: str = ""
-    unofficial: bool = False
+    unofficial: str = ""
 
     __KEYMAP = {
         "unit": "function",
@@ -1812,7 +1812,8 @@ class WordInstruction(Instruction):
                 if isinstance(operand, (GPRPairOperand, FPRPairOperand)):
                     paired = True
 
-        if style is Style.LEGACY and (paired or record.ppc.unofficial):
+        # unofficial == "0" means an official instruction that needs .long
+        if style is Style.LEGACY and (paired or record.ppc.unofficial != ""):
             yield f"{blob}.long 0x{int(self):08x}"
         else:
             operands = tuple(map(_operator.itemgetter(1),
