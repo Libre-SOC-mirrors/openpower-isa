@@ -4,6 +4,7 @@ from openpower.endian import bigendian
 from openpower.simulator.program import Program
 from openpower.test.state import ExpectedState
 from nmutil.sim_util import hash_256
+import struct
 
 
 class BitManipTestCase(TestAccumulatorBase):
@@ -116,3 +117,20 @@ class BitManipTestCase(TestAccumulatorBase):
     @skip_case("invalid, replaced by grevlut")
     def case_grevi_3(self):
         self.do_case_grev(True, True, 0xFFFF_FFFF_0000_0000, 6)
+
+    def case_byterev(self):
+        """ brh/brw/brd """
+        for pack_str, mnemonic in ("HHHH", "brh"), ("LL", "brw"), ("Q", "brd"):
+            prog = Program(list(SVP64Asm([f"{mnemonic} 3,4"])), bigendian)
+            for RS in 0x0123456789ABCDEF, 0xFEDCBA9876543210:
+                chunks = struct.unpack("<" + pack_str, struct.pack("<Q", RS))
+                expected = struct.unpack(
+                    "<Q", struct.pack(">" + pack_str, *chunks))[0]
+                with self.subTest(
+                    mnemonic=mnemonic, RS=hex(RS), expected=hex(expected),
+                ):
+                    gprs = [0] * 32
+                    gprs[4] = RS
+                    e = ExpectedState(pc=4, int_regs=gprs)
+                    e.intregs[3] = expected
+                    self.add_case(prog, gprs, expected=e)

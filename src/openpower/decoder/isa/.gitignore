@@ -4,6 +4,7 @@
 /bitmanip.py
 /branch.py
 /butterfly.py
+/byterev.py
 /comparefixed.py
 /condition.py
 /fixedarith.py

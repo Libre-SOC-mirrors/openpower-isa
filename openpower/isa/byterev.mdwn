@@ -1,0 +1,54 @@
+<!-- This defines instructions described in PowerISA Version 3.1B Book I -->
+<!-- Section 3.3.16 Byte-Reverse Instructions page 119 (145) -->
+
+# Byte-Reverse Halfword
+
+X-Form
+
+* brh RA,RS
+
+Pseudo-code:
+
+    RA <- ((RS)[8:15]  || (RS)[0:7]   ||
+           (RS)[24:31] || (RS)[16:23] ||
+           (RS)[40:47] || (RS)[32:39] ||
+           (RS)[56:63] || (RS)[48:55])
+
+Special Registers Altered:
+
+    None
+
+# Byte-Reverse Word
+
+X-Form
+
+* brw RA,RS
+
+Pseudo-code:
+
+    RA <- ((RS)[24:31] || (RS)[16:23] ||
+           (RS)[8:15]  || (RS)[0:7]   ||
+           (RS)[56:63] || (RS)[48:55] ||
+           (RS)[40:47] || (RS)[32:39])
+
+Special Registers Altered:
+
+    None
+
+# Byte-Reverse Doubleword
+
+X-Form
+
+* brd RA,RS
+
+Pseudo-code:
+
+    RA <- ((RS)[56:63] || (RS)[48:55] ||
+           (RS)[40:47] || (RS)[32:39] ||
+           (RS)[24:31] || (RS)[16:23] ||
+           (RS)[8:15]  || (RS)[0:7])
+
+Special Registers Altered:
+
+    None
+

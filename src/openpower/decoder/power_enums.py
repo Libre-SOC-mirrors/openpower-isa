@@ -736,6 +736,7 @@ _insns = [
     "absdacs", "absdacu",                     # AV bitmanip
     "avgadd",                                 # AV bitmanip
     "b", "bc", "bcctr", "bclr", "bctar",
+    "brh", "brw", "brd",
     "bmask",                                  # AV bitmanip
     "bpermd",
     "cbcdtd",
@@ -953,6 +954,7 @@ class MicrOp(Enum):
     OP_SHADD = 103
     OP_MADDSUBRS = 104
     OP_MADDRS = 105
+    OP_BYTEREV = 106
 
 
 class SelType(Enum):

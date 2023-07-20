@@ -1956,6 +1956,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        *LDST_UPDATE_INSNS,
                        'ffmadds', 'fdmadds', 'ffadds',
                        'minmax',
+                       "brh", "brw", "brd",
                        'setvl', 'svindex', 'svremap', 'svstep',
                        'svshape', 'svshape2',
                        'grev', 'ternlogi', 'bmask', 'cprop',
