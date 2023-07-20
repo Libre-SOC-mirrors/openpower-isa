@@ -11,6 +11,7 @@ from openpower.test.state import ExpectedState
 import unittest
 import math
 
+
 class MADDSUBRSTestCase(TestAccumulatorBase):
 
     def case_0_maddsubrs(self):
@@ -55,10 +56,10 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x10000000
 
         e = ExpectedState(pc=4)
-        e.intregs[1] = 0x40000000c000000;
-        e.intregs[2] = 0x3fffffff4000000;
+        e.intregs[1] = 0x40000000c000000
+        e.intregs[2] = 0x3fffffff4000000
         e.intregs[10] = 0x00000003
-        e.intregs[11] = 0x10000000;
+        e.intregs[11] = 0x10000000
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_3_maddsubrs(self):
@@ -71,10 +72,10 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
         initial_regs[11] = 0x10000000
 
         e = ExpectedState(pc=4)
-        e.intregs[1] = 0x100000003000;
-        e.intregs[2] = 0x0fffffffd000;
+        e.intregs[1] = 0x100000003000
+        e.intregs[2] = 0x0fffffffd000
         e.intregs[10] = 0x00000003
-        e.intregs[11] = 0x10000000;
+        e.intregs[11] = 0x10000000
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_4_maddsubrs(self):
@@ -87,10 +88,10 @@ class MADDSUBRSTestCase(TestAccumulatorBase):
         initial_regs[11] = 0xff0000000
 
         e = ExpectedState(pc=4)
-        e.intregs[1] = 0xf8000017e8000000;
-        e.intregs[2] = 0xf7ffffe818000000;
+        e.intregs[1] = 0xf8000017e8000000
+        e.intregs[2] = 0xf7ffffe818000000
         e.intregs[10] = 0x000000003
-        e.intregs[11] = 0xff0000000;
+        e.intregs[11] = 0xff0000000
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
     def case_maddsubrs_16bit_s14(self):
