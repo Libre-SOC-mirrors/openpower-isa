@@ -6,7 +6,6 @@ import random
 
 
 class LogicalTestCase(TestAccumulatorBase):
-
     def case_complement(self):
         insns = ["andc", "orc", "nand", "nor"]
         for i in range(40):
@@ -38,7 +37,7 @@ class LogicalTestCase(TestAccumulatorBase):
                 initial_regs[1] = random.randint(0, (1 << 64)-1)
                 initial_regs[2] = random.randint(0, (1 << 64)-1)
                 self.add_case(Program(lst, bigendian), initial_regs,
-                                initial_sprs = {'XER': XER})
+                              initial_sprs={'XER': XER})
 
     def case_rand_imm_so(self):
         insns = ["andi.", "andis."]
@@ -122,7 +121,6 @@ class LogicalTestCase(TestAccumulatorBase):
         lst = ["bpermd 3, 1, 2"]
         for i in range(100):
             initial_regs = [0] * 32
-            initial_regs[1] = random.randint(0, (1<<64)-1)
-            initial_regs[2] = random.randint(0, (1<<64)-1)
+            initial_regs[1] = random.randint(0, (1 << 64)-1)
+            initial_regs[2] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
-
