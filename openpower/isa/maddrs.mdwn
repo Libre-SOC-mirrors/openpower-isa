@@ -1,0 +1,27 @@
+<!-- SVP64 Butterfly DCT Instructions here described are based on -->
+
+<!-- PLEASE NOTE THESE ARE UNAPPROVED AND DRAFT, NOT SUBMITTED TO OPF ISA WG -->
+
+# [DRAFT] Integer Butterfly Multiply Add and Accumulate FFT/DCT
+
+A-Form
+
+* maddrs  RT,RA,RB,SH
+
+Pseudo-code:
+
+    n <- SH
+    prod <- MULS(RB, RA)
+    if n = 0 then
+        prod_lo <- prod[XLEN:(XLEN*2) - 1]
+        RT <- (RT) + prod_lo
+    else
+        res[0:XLEN*2-1] <- (EXTSXL((RT)[0], 1) || (RT)) + prod
+        round <- [0]*XLEN*2
+        round[XLEN*2 - n] <- 1
+        res <- res + round
+        RT <- res[XLEN - n:XLEN*2 - n -1]
+
+Special Registers Altered:
+
+    None

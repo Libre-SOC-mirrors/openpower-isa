@@ -3,7 +3,6 @@
 /bcd.py
 /bitmanip.py
 /branch.py
-/butterfly.py
 /byterev.py
 /comparefixed.py
 /condition.py
@@ -21,6 +20,9 @@
 /fpmove.py
 /fpstore.py
 /fptrans.py
+/maddsubrs.py
+/maddrs.py
+/msubrs.py
 /pifixedload.py
 /pifixedstore.py
 /sprset.py

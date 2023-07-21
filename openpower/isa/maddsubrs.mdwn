@@ -1,0 +1,35 @@
+<!-- SVP64 Butterfly DCT Instructions here described are based on -->
+
+<!-- PLEASE NOTE THESE ARE UNAPPROVED AND DRAFT, NOT SUBMITTED TO OPF ISA WG -->
+
+# [DRAFT] Integer Butterfly Multiply Add/Sub Round Shift for FFT/DCT
+
+A-Form
+
+* maddsubrs  RT,RA,RB,SH
+
+Pseudo-code:
+
+    n <- SH
+    sum <- (RT[0] || RT) + (RA[0] || RA)
+    diff <- (RT[0] || RT) - (RA[0] || RA)
+    prod1 <- MULS(RB, sum)
+    prod2 <- MULS(RB, diff)
+    if n = 0 then
+        prod1_lo <- prod1[XLEN+1:(XLEN*2)]
+        prod2_lo <- prod2[XLEN+1:(XLEN*2)]
+        RT <- prod1_lo
+        RS <- prod2_lo
+    else
+        round <- [0]*(XLEN*2 + 1)
+        round[XLEN*2 - n + 1] <- 1
+        prod1 <- prod1 + round
+        prod2 <- prod2 + round
+        res1 <- prod1[XLEN - n + 1:XLEN*2 - n]
+        res2 <- prod2[XLEN - n + 1:XLEN*2 - n]
+        RT <- res1
+        RS <- res2
+
+Special Registers Altered:
+
+    None
