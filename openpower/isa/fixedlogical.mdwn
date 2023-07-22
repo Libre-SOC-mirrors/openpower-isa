@@ -535,3 +535,49 @@ Pseudo-code:
 Special Registers Altered:
 
     None
+
+# Parallel Bits Extract Doubleword
+
+X-Form
+
+* pextd RA,RS,RB
+
+Pseudo-code:
+
+    result[0:63] <- 0
+    mask <- (RB)
+    m <- 0
+    k <- 0
+    do while m < 64
+        if (RB)[63-m] = 1 then
+            result[63-k] <- (RS)[63-m]
+            k <- k + 1
+        m <- m + 1
+    RA <- result
+
+Special Registers Altered:
+
+    None
+
+# Parallel Bits Deposit Doubleword
+
+X-Form
+
+* pdepd RA,RS,RB
+
+Pseudo-code:
+
+    result[0:63] <- 0
+    mask <- (RB)
+    m <- 0
+    k <- 0
+    do while m < 64
+        if (RB)[63-m] = 1 then
+            result[63-m] <- (RS)[63-k]
+            k <- k + 1
+        m <- m + 1
+    RA <- result
+
+Special Registers Altered:
+
+    None

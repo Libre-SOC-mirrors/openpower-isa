@@ -190,3 +190,43 @@ class LogicalTestCase(TestAccumulatorBase):
                     case_idx=case_idx, RS_in=hex(gprs[4]),
                     RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
                 self.add_case(prog, gprs, expected=e)
+
+    def case_pdepd(self):
+        prog = Program(list(SVP64Asm(["pdepd 3,4,5"])), bigendian)
+        for case_idx in range(200):
+            gprs = [0] * 32
+            gprs[4] = hash_256(f"pdepd {case_idx} r4") % 2**64
+            gprs[5] = hash_256(f"pdepd {case_idx} r5") % 2**64
+            e = ExpectedState(pc=4, int_regs=gprs)
+            e.intregs[3] = 0
+            j = 0
+            for i in range(64):
+                bit = 1 << i
+                if gprs[5] & bit:
+                    if gprs[4] & (1 << j):
+                        e.intregs[3] |= bit
+                    j += 1
+            with self.subTest(
+                    case_idx=case_idx, RS_in=hex(gprs[4]),
+                    RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
+                self.add_case(prog, gprs, expected=e)
+
+    def case_pextd(self):
+        prog = Program(list(SVP64Asm(["pextd 3,4,5"])), bigendian)
+        for case_idx in range(200):
+            gprs = [0] * 32
+            gprs[4] = hash_256(f"pextd {case_idx} r4") % 2**64
+            gprs[5] = hash_256(f"pextd {case_idx} r5") % 2**64
+            e = ExpectedState(pc=4, int_regs=gprs)
+            e.intregs[3] = 0
+            j = 0
+            for i in range(64):
+                bit = 1 << i
+                if gprs[5] & bit:
+                    if gprs[4] & bit:
+                        e.intregs[3] |= 1 << j
+                    j += 1
+            with self.subTest(
+                    case_idx=case_idx, RS_in=hex(gprs[4]),
+                    RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
+                self.add_case(prog, gprs, expected=e)

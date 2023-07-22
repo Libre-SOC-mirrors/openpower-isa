@@ -804,6 +804,7 @@ _insns = [
     "nop",
     "nor", "or", "orc", "ori", "oris",
     "pcdec",
+    "pdepd", "pextd",
     "popcntb", "popcntd", "popcntw",
     "prtyd", "prtyw",
     "rfid",
@@ -959,6 +960,8 @@ class MicrOp(Enum):
     OP_MSUBRS = 106
     OP_BYTEREV = 107
     OP_CFUGE = 108
+    OP_PDEP = 109
+    OP_PEXT = 110
 
 
 class SelType(Enum):

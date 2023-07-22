@@ -1969,7 +1969,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        "ctfpr", "ctfprs",
                        "mtfpr", "mtfprs",
                        "maddsubrs", "maddrs", "msubrs",
-                       "cfuged", "cntlzdm", "cnttzdm",
+                       "cfuged", "cntlzdm", "cnttzdm", "pdepd", "pextd",
                        ]:
             illegal = False
             ins_name = dotstrp
