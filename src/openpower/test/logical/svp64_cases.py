@@ -1,3 +1,5 @@
+from nmutil.sim_util import hash_256
+from openpower.test.state import ExpectedState
 from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.endian import bigendian
 from openpower.simulator.program import Program
@@ -387,3 +389,157 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
+
+    def case_cfuged(self):
+        prog = Program(list(SVP64Asm(["sv.cfuged *10,*20,*30"])), bigendian)
+        for case_idx in range(50):
+            VL = 5
+            svstate = SVP64State()
+            svstate.vl = VL
+            svstate.maxvl = VL
+            gprs = [0] * 128
+            for elidx in range(VL):
+                k = f"sv.cfuged {case_idx} {elidx}"
+                gprs[20 + elidx] = hash_256(f"{k} r20") % 2**64
+                gprs[30 + elidx] = hash_256(f"{k} r30") % 2**64
+            e = ExpectedState(pc=8, int_regs=gprs)
+            for elidx in range(VL):
+                zeros = []
+                ones = []
+                for i in range(64):
+                    bit = 1 << i
+                    if gprs[30 + elidx] & bit:
+                        ones.append(bool(gprs[20 + elidx] & bit))
+                    else:
+                        zeros.append(bool(gprs[20 + elidx] & bit))
+                bits = ones + zeros
+                e.intregs[10 + elidx] = 0
+                for i, v in enumerate(bits):
+                    e.intregs[10 + elidx] |= v << i
+            with self.subTest(
+                case_idx=case_idx,
+                RS_in=[hex(gprs[20 + i]) for i in range(VL)],
+                RB_in=[hex(gprs[30 + i]) for i in range(VL)],
+                expected_RA=[hex(e.intregs[10 + i]) for i in range(VL)],
+            ):
+                self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def case_cntlzdm(self):
+        prog = Program(list(SVP64Asm(["sv.cntlzdm *10,*20,*30"])), bigendian)
+        for case_idx in range(200):
+            VL = 5
+            svstate = SVP64State()
+            svstate.vl = VL
+            svstate.maxvl = VL
+            gprs = [0] * 128
+            for elidx in range(VL):
+                k = f"sv.cntlzdm {case_idx} {elidx}"
+                gprs[20 + elidx] = hash_256(f"{k} r20") % 2**64
+                gprs[30 + elidx] = hash_256(f"{k} r30") % 2**64
+            e = ExpectedState(pc=8, int_regs=gprs)
+            for elidx in range(VL):
+                count = 0
+                for i in reversed(range(64)):
+                    bit = 1 << i
+                    if gprs[30 + elidx] & bit:
+                        if gprs[20 + elidx] & bit:
+                            break
+                        count += 1
+                e.intregs[10 + elidx] = count
+            with self.subTest(
+                case_idx=case_idx,
+                RS_in=[hex(gprs[20 + i]) for i in range(VL)],
+                RB_in=[hex(gprs[30 + i]) for i in range(VL)],
+                expected_RA=[hex(e.intregs[10 + i]) for i in range(VL)],
+            ):
+                self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def case_cnttzdm(self):
+        prog = Program(list(SVP64Asm(["sv.cnttzdm *10,*20,*30"])), bigendian)
+        for case_idx in range(200):
+            VL = 5
+            svstate = SVP64State()
+            svstate.vl = VL
+            svstate.maxvl = VL
+            gprs = [0] * 128
+            for elidx in range(VL):
+                k = f"sv.cnttzdm {case_idx} {elidx}"
+                gprs[20 + elidx] = hash_256(f"{k} r20") % 2**64
+                gprs[30 + elidx] = hash_256(f"{k} r30") % 2**64
+            e = ExpectedState(pc=8, int_regs=gprs)
+            for elidx in range(VL):
+                count = 0
+                for i in range(64):
+                    bit = 1 << i
+                    if gprs[30 + elidx] & bit:
+                        if gprs[20 + elidx] & bit:
+                            break
+                        count += 1
+                e.intregs[10 + elidx] = count
+            with self.subTest(
+                case_idx=case_idx,
+                RS_in=[hex(gprs[20 + i]) for i in range(VL)],
+                RB_in=[hex(gprs[30 + i]) for i in range(VL)],
+                expected_RA=[hex(e.intregs[10 + i]) for i in range(VL)],
+            ):
+                self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def case_pdepd(self):
+        prog = Program(list(SVP64Asm(["sv.pdepd *10,*20,*30"])), bigendian)
+        for case_idx in range(200):
+            VL = 5
+            svstate = SVP64State()
+            svstate.vl = VL
+            svstate.maxvl = VL
+            gprs = [0] * 128
+            for elidx in range(VL):
+                k = f"sv.pdepd {case_idx} {elidx}"
+                gprs[20 + elidx] = hash_256(f"{k} r20") % 2**64
+                gprs[30 + elidx] = hash_256(f"{k} r30") % 2**64
+            e = ExpectedState(pc=8, int_regs=gprs)
+            for elidx in range(VL):
+                e.intregs[10 + elidx] = 0
+                j = 0
+                for i in range(64):
+                    bit = 1 << i
+                    if gprs[30 + elidx] & bit:
+                        if gprs[20 + elidx] & (1 << j):
+                            e.intregs[10 + elidx] |= bit
+                        j += 1
+            with self.subTest(
+                case_idx=case_idx,
+                RS_in=[hex(gprs[20 + i]) for i in range(VL)],
+                RB_in=[hex(gprs[30 + i]) for i in range(VL)],
+                expected_RA=[hex(e.intregs[10 + i]) for i in range(VL)],
+            ):
+                self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def case_pextd(self):
+        prog = Program(list(SVP64Asm(["sv.pextd *10,*20,*30"])), bigendian)
+        for case_idx in range(200):
+            VL = 5
+            svstate = SVP64State()
+            svstate.vl = VL
+            svstate.maxvl = VL
+            gprs = [0] * 128
+            for elidx in range(VL):
+                k = f"sv.pextd {case_idx} {elidx}"
+                gprs[20 + elidx] = hash_256(f"{k} r20") % 2**64
+                gprs[30 + elidx] = hash_256(f"{k} r30") % 2**64
+            e = ExpectedState(pc=8, int_regs=gprs)
+            for elidx in range(VL):
+                e.intregs[10 + elidx] = 0
+                j = 0
+                for i in range(64):
+                    bit = 1 << i
+                    if gprs[30 + elidx] & bit:
+                        if gprs[20 + elidx] & bit:
+                            e.intregs[10 + elidx] |= 1 << j
+                        j += 1
+            with self.subTest(
+                case_idx=case_idx,
+                RS_in=[hex(gprs[20 + i]) for i in range(VL)],
+                RB_in=[hex(gprs[30 + i]) for i in range(VL)],
+                expected_RA=[hex(e.intregs[10 + i]) for i in range(VL)],
+            ):
+                self.add_case(prog, gprs, expected=e, initial_svstate=svstate)

@@ -568,6 +568,10 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['0'] = 'd:FRT;d:CR1'  # FRT,CR1: Rdest1_EXTRA3
             res['1'] = 's:FRA'  # FRA: Rsrc1_EXTRA3
             res['2'] = 's:RB'  # RB: Rsrc1_EXTRA3
+        elif regs == ['RS', 'RB', '', 'RA', '', '']:
+            res['0'] = 'd:RA'  # RA: Rdest1_EXTRA3
+            res['1'] = 's:RS'  # RS: Rsrc1_EXTRA3
+            res['2'] = 's:RB'  # RB: Rsrc1_EXTRA3
         elif name == '2R-1W' or insn_name == 'cmpb':  # cmpb
             if insn_name in ['bpermd', 'cmpb']:
                 res['0'] = 'd:RA'  # RA: Rdest1_EXTRA3
