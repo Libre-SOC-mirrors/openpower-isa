@@ -127,6 +127,30 @@ class LogicalTestCase(TestAccumulatorBase):
             initial_regs[2] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
 
+    def case_cfuged(self):
+        prog = Program(list(SVP64Asm(["cfuged 3,4,5"])), bigendian)
+        for case_idx in range(200):
+            gprs = [0] * 32
+            gprs[4] = hash_256(f"cfuged {case_idx} r4") % 2**64
+            gprs[5] = hash_256(f"cfuged {case_idx} r5") % 2**64
+            e = ExpectedState(pc=4, int_regs=gprs)
+            zeros = []
+            ones = []
+            for i in range(64):
+                bit = 1 << i
+                if gprs[5] & bit:
+                    ones.append(bool(gprs[4] & bit))
+                else:
+                    zeros.append(bool(gprs[4] & bit))
+            bits = ones + zeros
+            e.intregs[3] = 0
+            for i, v in enumerate(bits):
+                e.intregs[3] |= v << i
+            with self.subTest(
+                    case_idx=case_idx, RS_in=hex(gprs[4]),
+                    RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
+                self.add_case(prog, gprs, expected=e)
+
     def case_cntlzdm(self):
         prog = Program(list(SVP64Asm(["cntlzdm 3,4,5"])), bigendian)
         for case_idx in range(200):

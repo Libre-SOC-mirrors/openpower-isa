@@ -512,4 +512,26 @@ Special Registers Altered:
 
     None
 
-<!-- Checked March 2021 -->
+# Centrifuge Doubleword
+
+X-Form
+
+* cfuged RA,RS,RB
+
+Pseudo-code:
+
+    ptr0 <- 0
+    ptr1 <- 0
+    result[0:63] <- 0
+    do i = 0 to 63
+        if (RB)[i] = 0 then
+            result[ptr0] <- (RS)[i]
+            ptr0 <- ptr0 + 1
+        if (RB)[63-i] = 1 then
+            result[63-ptr1] <- (RS)[63-i]
+            ptr1 <- ptr1 + 1
+    RA <- result
+
+Special Registers Altered:
+
+    None

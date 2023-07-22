@@ -741,6 +741,7 @@ _insns = [
     "bpermd",
     "cbcdtd",
     "cdtbcd",
+    "cfuged",
     "cmp", "cmpb", "cmpeqb", "cmpi", "cmpl", "cmpli", "cmprb",
     "cntlzd", "cntlzdm", "cntlzw", "cnttzd", "cnttzdm", "cnttzw",
     "cprop", # AV bitmanip
@@ -957,6 +958,7 @@ class MicrOp(Enum):
     OP_MADDRS = 105
     OP_MSUBRS = 106
     OP_BYTEREV = 107
+    OP_CFUGE = 108
 
 
 class SelType(Enum):
