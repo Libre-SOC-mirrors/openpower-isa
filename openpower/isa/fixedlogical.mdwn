@@ -453,6 +453,44 @@ Special Registers Altered:
 
     CR0                    (if Rc=1)
 
+# Count Leading Zeros Doubleword under bit Mask
+
+X-Form
+
+* cntlzdm RA,RS,RB
+
+Pseudo-code:
+
+    count <- 0
+    do i = 0 to 63
+        if (RB)[i] = 1 then
+            if (RS)[i] = 1 then leave
+            count <- count + 1
+    RA <- EXTZ64(count)
+
+Special Registers Altered:
+
+    None
+
+# Count Trailing Zeros Doubleword under bit Mask
+
+X-Form
+
+* cnttzdm RA,RS,RB
+
+Pseudo-code:
+
+    count <- 0
+    do i = 0 to 63
+        if (RB)[63-i] = 1 then
+            if (RS)[63-i] = 1 then leave
+            count <- count + 1
+    RA <- EXTZ64(count)
+
+Special Registers Altered:
+
+    None
+
 # Bit Permute Doubleword
 
 X-Form

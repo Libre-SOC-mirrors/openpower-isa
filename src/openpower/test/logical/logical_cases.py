@@ -1,7 +1,9 @@
-import unittest
+from nmutil.sim_util import hash_256
+from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.endian import bigendian
-from openpower.test.common import TestAccumulatorBase
+from openpower.insndb.asm import SVP64Asm
+from openpower.test.common import TestAccumulatorBase, skip_case
 import random
 
 
@@ -124,3 +126,43 @@ class LogicalTestCase(TestAccumulatorBase):
             initial_regs[1] = random.randint(0, (1 << 64)-1)
             initial_regs[2] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
+
+    def case_cntlzdm(self):
+        prog = Program(list(SVP64Asm(["cntlzdm 3,4,5"])), bigendian)
+        for case_idx in range(200):
+            gprs = [0] * 32
+            gprs[4] = hash_256(f"cntlzdm {case_idx} r4") % 2**64
+            gprs[5] = hash_256(f"cntlzdm {case_idx} r5") % 2**64
+            e = ExpectedState(pc=4, int_regs=gprs)
+            count = 0
+            for i in reversed(range(64)):
+                bit = 1 << i
+                if gprs[5] & bit:
+                    if gprs[4] & bit:
+                        break
+                    count += 1
+            e.intregs[3] = count
+            with self.subTest(
+                    case_idx=case_idx, RS_in=hex(gprs[4]),
+                    RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
+                self.add_case(prog, gprs, expected=e)
+
+    def case_cnttzdm(self):
+        prog = Program(list(SVP64Asm(["cnttzdm 3,4,5"])), bigendian)
+        for case_idx in range(200):
+            gprs = [0] * 32
+            gprs[4] = hash_256(f"cnttzdm {case_idx} r4") % 2**64
+            gprs[5] = hash_256(f"cnttzdm {case_idx} r5") % 2**64
+            e = ExpectedState(pc=4, int_regs=gprs)
+            count = 0
+            for i in range(64):
+                bit = 1 << i
+                if gprs[5] & bit:
+                    if gprs[4] & bit:
+                        break
+                    count += 1
+            e.intregs[3] = count
+            with self.subTest(
+                    case_idx=case_idx, RS_in=hex(gprs[4]),
+                    RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
+                self.add_case(prog, gprs, expected=e)

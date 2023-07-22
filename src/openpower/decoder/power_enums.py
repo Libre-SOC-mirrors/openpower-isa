@@ -742,7 +742,7 @@ _insns = [
     "cbcdtd",
     "cdtbcd",
     "cmp", "cmpb", "cmpeqb", "cmpi", "cmpl", "cmpli", "cmprb",
-    "cntlzd", "cntlzw", "cnttzd", "cnttzw",
+    "cntlzd", "cntlzdm", "cntlzw", "cnttzd", "cnttzdm", "cnttzw",
     "cprop", # AV bitmanip
     "crand", "crandc", "creqv",
     "crnand", "crnor", "cror", "crorc", "crxor",
