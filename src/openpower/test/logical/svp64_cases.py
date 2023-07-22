@@ -1,4 +1,4 @@
-from openpower.test.common import (TestAccumulatorBase, skip_case)
+from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.endian import bigendian
 from openpower.simulator.program import Program
 from openpower.decoder.isa.caller import SVP64State, CRFields
@@ -6,7 +6,6 @@ from openpower.insndb.asm import SVP64Asm
 
 
 class SVP64LogicalTestCase(TestAccumulatorBase):
-
     def case_9_sv_extsw_intpred(self):
         """>>> lst = ['sv.extsb/sm=~r3/dm=r3 *5, *9']
 
@@ -369,23 +368,22 @@ class SVP64LogicalTestCase(TestAccumulatorBase):
         predicate dest mask bit is also zero.
         """
         isa = SVP64Asm(['sv.extsb/dm=r3/dz *5, *9'
-                       ])
+                        ])
         lst = list(isa)
-        print ("listing", lst)
+        print("listing", lst)
 
         # initial values in GPR regfile
         initial_regs = [0] * 32
         initial_regs[3] = 0b01   # predicate mask (dest)
-        initial_regs[5] = 0xfeed # going to be overwritten
-        initial_regs[6] = 0xbeef # going to be overwritten (with zero)
+        initial_regs[5] = 0xfeed  # going to be overwritten
+        initial_regs[6] = 0xbeef  # going to be overwritten (with zero)
         initial_regs[9] = 0x91   # dest r3 is 0b01 so this will be used
         initial_regs[10] = 0x90  # this gets read but the output gets zero'd
         # SVSTATE (in this case, VL=2)
         svstate = SVP64State()
-        svstate.vl = 2 # VL
-        svstate.maxvl = 2 # MAXVL
-        print ("SVSTATE", bin(svstate.asint()))
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
 
         self.add_case(Program(lst, bigendian), initial_regs,
                       initial_svstate=svstate)
-
