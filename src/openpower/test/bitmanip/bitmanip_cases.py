@@ -6,6 +6,7 @@ from openpower.test.state import ExpectedState
 from nmutil.sim_util import hash_256
 from openpower.decoder.isa.caller import SVP64State
 import struct
+import itertools
 
 
 class BitManipTestCase(TestAccumulatorBase):
@@ -121,45 +122,42 @@ class BitManipTestCase(TestAccumulatorBase):
 
     def case_byterev(self):
         """ brh/brw/brd """
-        for pack_str, mnemonic in ("HHHH", "brh"), ("LL", "brw"), ("Q", "brd"):
-            prog = Program(list(SVP64Asm([f"{mnemonic} 3,4"])), bigendian)
-            for RS in 0x0123456789ABCDEF, 0xFEDCBA9876543210:
-                chunks = struct.unpack("<" + pack_str, struct.pack("<Q", RS))
-                expected = struct.unpack(
-                    "<Q", struct.pack(">" + pack_str, *chunks))[0]
-                with self.subTest(
-                    mnemonic=mnemonic, RS=hex(RS), expected=hex(expected),
-                ):
-                    gprs = [0] * 32
-                    gprs[4] = RS
-                    e = ExpectedState(pc=4, int_regs=gprs)
-                    e.intregs[3] = expected
-                    self.add_case(prog, gprs, expected=e)
+        options = (("HHHH", "brh"), ("LL", "brw"), ("Q", "brd"))
+        values = (0x0123456789ABCDEF, 0xFEDCBA9876543210)
+        for RS, (pack_str, mnemonic) in itertools.product(values, options):
+            prog = Program(list(SVP64Asm(["%s 3,4" % mnemonic])), bigendian)
+            chunks = struct.unpack("<" + pack_str, struct.pack("<Q", RS))
+            res = struct.unpack("<Q", struct.pack(">" + pack_str, *chunks))[0]
+            with self.subTest(mnemonic=mnemonic, RS=hex(RS), expected=hex(res)):
+                gprs = [0] * 32
+                gprs[4] = RS
+                e = ExpectedState(pc=4, int_regs=gprs)
+                e.intregs[3] = res
+                self.add_case(prog, gprs, expected=e)
 
     def case_sv_byterev(self):
         """ sv.brh/brw/brd """
-        for pack_str, mnemonic in ("HHHH", "brh"), ("LL", "brw"), ("Q", "brd"):
-            prog = Program(list(SVP64Asm([
-                f"sv.{mnemonic} *10,*20"])), bigendian)
-            for case_idx in range(10):
-                VL = 5
-                svstate = SVP64State()
-                svstate.vl = VL
-                svstate.maxvl = VL
-                gprs = [0] * 128
-                for elidx in range(VL):
-                    k = f"sv.{mnemonic} {case_idx} {elidx} r20"
-                    gprs[20 + elidx] = hash_256(k) % 2**64
-                e = ExpectedState(pc=8, int_regs=gprs)
-                for elidx in range(VL):
-                    chunks = struct.unpack(
-                        "<" + pack_str, struct.pack("<Q", gprs[20 + elidx]))
-                    e.intregs[10 + elidx] = struct.unpack(
-                        "<Q", struct.pack(">" + pack_str, *chunks))[0]
-                with self.subTest(
-                    case_idx=case_idx,
-                    RS_in=[hex(gprs[20 + i]) for i in range(VL)],
-                    expected_RA=[hex(e.intregs[10 + i]) for i in range(VL)],
-                ):
-                    self.add_case(prog, gprs, expected=e,
-                                  initial_svstate=svstate)
+        options = (("HHHH", "brh"), ("LL", "brw"), ("Q", "brd"))
+        values = range(10)
+        for idx, (pack_str, mnemonic) in itertools.product(values, options):
+            listing = list(SVP64Asm(["sv.%s *10,*20" % mnemonic]))
+            prog = Program(listing, bigendian)
+            VL = 5
+            svstate = SVP64State()
+            svstate.vl = VL
+            svstate.maxvl = VL
+            gprs = [0] * 128
+            for elidx in range(VL):
+                k = "sv.%s %d %d r20" % (mnemonic, idx, elidx)
+                gprs[20 + elidx] = hash_256(k) % 2**64
+            e = ExpectedState(pc=8, int_regs=gprs)
+            for elidx in range(VL):
+                packed = struct.pack("<Q", gprs[20 + elidx])
+                chunks = struct.unpack( "<" + pack_str, packed)
+                packed = struct.pack(">" + pack_str, *chunks)
+                res = struct.unpack("<Q", packed)[0]
+                e.intregs[10 + elidx] = res
+            RS = [hex(gprs[20 + i]) for i in range(VL)],
+            res =[hex(e.intregs[10 + i]) for i in range(VL)]
+            with self.subTest(case_idx=idx, RS_in=RS, expected_RA=res):
+                self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
