@@ -820,8 +820,12 @@ class PowerParser:
     #  as I don't support 'and', 'or', and 'not' this works down to 'comparison'
 
     def p_test(self, p):
-        "test : comparison"
-        p[0] = p[1]
+        """test : comparison
+                | comparison QMARK test COLON test"""
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = ast.IfExp(test=p[1], body=p[3], orelse=p[5])
 
     # arglist: (argument ',')* (argument [',']| '*' test [',' '**' test]
     # | '**' test)

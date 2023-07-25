@@ -363,6 +363,7 @@ class PowerLexer:
         'WS',
         'NEWLINE',
         'COMMA',
+        'QMARK',
         'PERIOD',
         'SEMICOLON',
         'INDENT',
@@ -424,6 +425,7 @@ class PowerLexer:
     t_BITOR = r'\|'
     t_BITAND = r'\&'
     t_BITXOR = r'\^'
+    t_QMARK = r'\?'
 
     # Ply nicely documented how to do this.
 
