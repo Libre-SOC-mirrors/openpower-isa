@@ -28,6 +28,7 @@ import ast
 regs = ['RA', 'RS', 'RB', 'RC', 'RT']
 fregs = ['FRA', 'FRS', 'FRB', 'FRC', 'FRT', 'FRS']
 SPECIAL_HELPERS = {'concat', 'MEM', 'GPR', 'FPR', 'SPR', 'pow'}
+SUBS_TO_ATTR_EXCEPTIONS = SPECIAL_HELPERS | {'CR'}
 
 
 # I implemented INDENT / DEDENT generation as a post-processing filter
@@ -945,7 +946,7 @@ class PowerParser:
         if trailer[0] != "SUBS":
             return None
         base_name = self.try_extract_uppercase_name(atom)
-        if base_name is None or base_name in SPECIAL_HELPERS:
+        if base_name is None or base_name in SUBS_TO_ATTR_EXCEPTIONS:
             return None
         if len(trailer[1]) != 1:
             return None
