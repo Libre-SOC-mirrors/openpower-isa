@@ -811,6 +811,7 @@ _insns = [
     "rldcl", "rldcr", "rldic", "rldicl", "rldicr", "rldimi",
     "rlwimi", "rlwinm",    "rlwnm",
     "setb",
+    "setbc", "setbcr", "setnbc", "setnbcr",
     "setvl",  # https://libre-soc.org/openpower/sv/setvl
     "svindex",  # https://libre-soc.org/openpower/sv/remap
     "svremap",  # https://libre-soc.org/openpower/sv/remap - TEMPORARY
@@ -962,6 +963,7 @@ class MicrOp(Enum):
     OP_CFUGE = 108
     OP_PDEP = 109
     OP_PEXT = 110
+    OP_SETBC = 111
 
 
 class SelType(Enum):

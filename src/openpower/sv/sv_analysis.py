@@ -491,6 +491,9 @@ def extra_classifier(insn_name, value, name, res, regs):
         elif 'mfcr' in insn_name or 'mfocrf' in insn_name:
             res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
             res['1'] = 's:CR'  # CR: Rsrc1_EXTRA3
+        elif regs == ['', '', '', 'RT', 'BI', '']:
+            res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
+            res['1'] = 's:BI'  # BI: Rsrc1_EXTRA3
         elif insn_name == 'setb':
             res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
             res['1'] = 's:BFA'  # BFA: Rsrc1_EXTRA3

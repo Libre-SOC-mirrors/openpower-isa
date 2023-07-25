@@ -75,6 +75,7 @@
     | PO   |       RT      |     ///     |    RB       |   XO |  / |
     | PO   |       RT      |     ///     |    RB       |   XO | 1  |
     | PO   |       RT      |     ///     |     ///     |   XO |  / |
+    | PO   |       RT      |    BI       |     ///     |   XO |  / |
     | PO   |       RS      |    RA       |    RB       |   XO |Rc  |
     | PO   |       RT      |    RA       |    RB       |   XO |Rc  |
     | PO   |       RS      |    RA       |    RB       |   XO | 1  |

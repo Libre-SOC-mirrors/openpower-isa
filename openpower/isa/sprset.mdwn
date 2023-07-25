@@ -175,6 +175,62 @@ Special Registers Altered:
 
     None
 
+# Set Boolean Condition
+
+X-Form
+
+* setbc RT,BI
+
+Pseudo-code:
+
+    RT <- (CR[BI] = 1) ? 1 : 0
+
+Special Registers Altered:
+
+    None
+
+# Set Boolean Condition Reverse
+
+X-Form
+
+* setbcr RT,BI
+
+Pseudo-code:
+
+    RT <- (CR[BI] = 1) ? 0 : 1
+
+Special Registers Altered:
+
+    None
+
+# Set Negative Boolean Condition
+
+X-Form
+
+* setnbc RT,BI
+
+Pseudo-code:
+
+    RT <- (CR[BI] = 1) ? -1 : 0
+
+Special Registers Altered:
+
+    None
+
+# Set Negative Boolean Condition Reverse
+
+X-Form
+
+* setnbcr RT,BI
+
+Pseudo-code:
+
+    RT <- (CR[BI] = 1) ? 0 : -1
+
+Special Registers Altered:
+
+    None
+
 <!-- Out of order from the PDF. Page 977 -->
 
 # Move To Machine State Register

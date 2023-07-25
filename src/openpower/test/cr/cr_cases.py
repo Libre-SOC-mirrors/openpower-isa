@@ -1,10 +1,11 @@
-import unittest
-from openpower.simulator.program import Program
+from nmutil.sim_util import hash_256
+from openpower.test.state import ExpectedState
+from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.endian import bigendian
-
-from openpower.test.common import TestAccumulatorBase
-from openpower.util import mask_extend
+from openpower.simulator.program import Program
+from openpower.insndb.asm import SVP64Asm
 import random
+import itertools
 
 
 class CRTestCase(TestAccumulatorBase):
@@ -193,3 +194,28 @@ class CRTestCase(TestAccumulatorBase):
         lst = [f"setb 1, 6"]
         cr = random.randint(0, 0x66f6b106)
         self.add_case(Program(lst, bigendian), initial_cr=cr)
+
+    def case_setbc(self):
+        bools = False, True
+        for negate, rev in itertools.product(bools, bools):
+            neg_s = "n" * negate
+            rev_s = "r" * rev
+            mnemonic = f"set{neg_s}bc{rev_s}"
+            prog = Program(list(SVP64Asm([mnemonic + " 3, 10"])), bigendian)
+            for case_idx in range(200):
+                gprs = [0] * 32
+                gprs[3] = 0x123456789ABCDEF
+                cr = hash_256(f"{mnemonic} {case_idx} r4") % 2**32
+                crregs = [(cr >> i) & 0xF for i in reversed(range(0, 32, 4))]
+                e = ExpectedState(pc=4, int_regs=gprs, crregs=crregs)
+                if bool(cr & (1 << 10)) != rev:
+                    if negate:
+                        e.intregs[3] = 2**64 - 1
+                    else:
+                        e.intregs[3] = 1
+                else:
+                    e.intregs[3] = 0
+                with self.subTest(
+                        case_idx=case_idx, CR_in=hex(cr),
+                        expected_RT=hex(e.intregs[3])):
+                    self.add_case(prog, gprs, initial_cr=cr, expected=e)
