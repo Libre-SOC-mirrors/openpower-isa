@@ -208,7 +208,7 @@ class CRTestCase(TestAccumulatorBase):
                 cr = hash_256(f"{mnemonic} {case_idx} r4") % 2**32
                 crregs = [(cr >> i) & 0xF for i in reversed(range(0, 32, 4))]
                 e = ExpectedState(pc=4, int_regs=gprs, crregs=crregs)
-                if bool(cr & (1 << 10)) != rev:
+                if bool(cr & (1 << (31 - 10))) != rev:
                     if negate:
                         e.intregs[3] = 2**64 - 1
                     else:

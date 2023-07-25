@@ -183,7 +183,7 @@ X-Form
 
 Pseudo-code:
 
-    RT <- (CR[BI] = 1) ? 1 : 0
+    RT <- (CR[BI + 32] = 1) ? 1 : 0
 
 Special Registers Altered:
 
@@ -197,7 +197,7 @@ X-Form
 
 Pseudo-code:
 
-    RT <- (CR[BI] = 1) ? 0 : 1
+    RT <- (CR[BI + 32] = 1) ? 0 : 1
 
 Special Registers Altered:
 
@@ -211,7 +211,7 @@ X-Form
 
 Pseudo-code:
 
-    RT <- (CR[BI] = 1) ? -1 : 0
+    RT <- (CR[BI + 32] = 1) ? -1 : 0
 
 Special Registers Altered:
 
@@ -225,7 +225,7 @@ X-Form
 
 Pseudo-code:
 
-    RT <- (CR[BI] = 1) ? 0 : -1
+    RT <- (CR[BI + 32] = 1) ? 0 : -1
 
 Special Registers Altered:
 

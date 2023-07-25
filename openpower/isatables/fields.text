@@ -430,7 +430,7 @@
     BI (11:15)
          Field used to specify a bit in the CR to be tested by
          a Branch Conditional instruction.
-         Formats: B, XL
+         Formats: B, X, XL
     bm (21:25)
          Field used to specify the Bit-mask Mode for bmask
          Formats: BM2
