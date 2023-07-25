@@ -8,7 +8,6 @@ import random
 
 
 class CRTestCase(TestAccumulatorBase):
-
     def case_crop(self):
         insns = ["crand", "cror", "crnand", "crnor", "crxor", "creqv",
                  "crandc", "crorc"]
@@ -71,7 +70,7 @@ class CRTestCase(TestAccumulatorBase):
         """another bad hack!
         """
         dis = ["cror 28, 5, 11"]
-        lst = bytes([0x83, 0x5b, 0x75, 0x4f]) # 4f855b83
+        lst = bytes([0x83, 0x5b, 0x75, 0x4f])  # 4f855b83
         cr = 0x35055058
         p = Program(lst, bigendian)
         p.assembly = '\n'.join(dis)+'\n'
@@ -84,7 +83,7 @@ class CRTestCase(TestAccumulatorBase):
         """
         mask = 0b10000111
         dis = [f"mfocrf 2, {mask}"]
-        lst = bytes([0x26, 0x78, 0xb8, 0x7c]) # 0x7cb87826
+        lst = bytes([0x26, 0x78, 0xb8, 0x7c])  # 0x7cb87826
         cr = 0x5F9E080E
         p = Program(lst, bigendian)
         p.assembly = '\n'.join(dis)+'\n'
@@ -96,7 +95,7 @@ class CRTestCase(TestAccumulatorBase):
         """
         mask = 0b01101101
         dis = [f"mtocrf 12, {mask}"]
-        lst = bytes([0x21, 0xd9, 0x96, 0x7d]) # 0x7d96d921
+        lst = bytes([0x21, 0xd9, 0x96, 0x7d])  # 0x7d96d921
         cr = 0x529e08fe
         initial_regs = [0] * 32
         initial_regs[12] = 0xffffffffffffffff
@@ -109,7 +108,7 @@ class CRTestCase(TestAccumulatorBase):
            mtocrf 0,16     14928:   21 09 10 7e     .long 0x7e100921
         """
         dis = ["mtocrf 16, 0"]
-        lst = bytes([0x21, 0x09, 0x10, 0x7e]) # 0x7e100921
+        lst = bytes([0x21, 0x09, 0x10, 0x7e])  # 0x7e100921
         cr = 0x3F089F7F
         initial_regs = [0] * 32
         initial_regs[16] = 0x0001C020
@@ -130,43 +129,43 @@ class CRTestCase(TestAccumulatorBase):
             self.add_case(Program(lst, bigendian), initial_cr=cr)
 
     def case_isel_0(self):
-        lst = [ "isel 4, 1, 2, 31"
+        lst = ["isel 4, 1, 2, 31"
                ]
         initial_regs = [0] * 32
         initial_regs[1] = 0x1004
         initial_regs[2] = 0x1008
-        cr= 0x1ee
+        cr = 0x1ee
         self.add_case(Program(lst, bigendian),
                       initial_regs=initial_regs, initial_cr=cr)
 
     def case_isel_1(self):
-        lst = [ "isel 4, 1, 2, 30"
+        lst = ["isel 4, 1, 2, 30"
                ]
         initial_regs = [0] * 32
         initial_regs[1] = 0x1004
         initial_regs[2] = 0x1008
-        cr= 0x1ee
+        cr = 0x1ee
         self.add_case(Program(lst, bigendian),
                       initial_regs=initial_regs, initial_cr=cr)
 
     def case_isel_2(self):
-        lst = [ "isel 4, 1, 2, 2"
+        lst = ["isel 4, 1, 2, 2"
                ]
         initial_regs = [0] * 32
         initial_regs[1] = 0x1004
         initial_regs[2] = 0x1008
-        cr= 0x1ee
+        cr = 0x1ee
         self.add_case(Program(lst, bigendian),
                       initial_regs=initial_regs, initial_cr=cr)
 
     def case_isel_3(self):
-        lst = [ "isel 1, 2, 3, 13"
+        lst = ["isel 1, 2, 3, 13"
                ]
         initial_regs = [0] * 32
         initial_regs[2] = 0x1004
         initial_regs[3] = 0x1008
-        cr= 0x5d677571b8229f1
-        cr= 0x1b8229f1
+        cr = 0x5d677571b8229f1
+        cr = 0x1b8229f1
         self.add_case(Program(lst, bigendian),
                       initial_regs=initial_regs, initial_cr=cr)
 
@@ -194,4 +193,3 @@ class CRTestCase(TestAccumulatorBase):
         lst = [f"setb 1, 6"]
         cr = random.randint(0, 0x66f6b106)
         self.add_case(Program(lst, bigendian), initial_cr=cr)
-
