@@ -52,16 +52,48 @@ iinfo_template = """instruction_info(func=%s,
                 asmregs=%s)"""
 
 
+OLD_GENERATED_FILES_EXCEPTIONS = {
+    "example_exception.py",
+}
+
 class PyISAWriter(ISA):
     def __init__(self):
         ISA.__init__(self)
         self.pages_written = []
 
+    def check_for_old_generated_files(self, pagenames):
+        isadir = get_isasrc_dir()
+        found = []
+        first_fname = None
+        for pagename in sorted(pagenames):
+            fbasename = pagename + ".py"
+            if fbasename in OLD_GENERATED_FILES_EXCEPTIONS:
+                continue
+            old_fname = os.path.join(isadir, fbasename)
+            if os.path.exists(old_fname):
+                if first_fname is None:
+                    first_fname = os.path.join(isadir, "generated", fbasename)
+                found.append(fbasename)
+        for first_old_fname in found:
+            found_str = " ".join(f"'{i}'" for i in found)
+            lines = [
+                f"found likely old generated file: {first_old_fname!r}",
+                f"new location: {first_fname!r}",
+                "please remove the old generated files or add to:",
+                ("openpower.decoder.pseudo.pywriter."
+                 "OLD_GENERATED_FILES_EXCEPTIONS"),
+                "commands to remove all likely old generated files:",
+                f"(cd {isadir}; rm -v {found_str})",
+            ]
+            raise ValueError(
+                "\n".join(lines)
+            )
+
     def write_pysource(self, pagename):
         self.pages_written.append(pagename)
         instrs = self.page[pagename]
         isadir = get_isasrc_dir()
-        fname = os.path.join(isadir, "%s.py" % pagename)
+        fname = os.path.join(isadir, "generated", pagename + ".py")
         check_in_gitignore(fname)
         with open(fname, "w") as f:
             iinf = ''
@@ -122,7 +154,7 @@ class PyISAWriter(ISA):
 
     def patch_if_needed(self, source):
         isadir = get_isasrc_dir()
-        fname = os.path.join(isadir, "%s.py" % source)
+        fname = os.path.join(isadir, "generated", "%s.py" % source)
         patchname = os.path.join(isadir, "%s.patch" % source)
 
         try:
@@ -145,7 +177,7 @@ class PyISAWriter(ISA):
             f.write('from openpower.decoder.isafunctions.all '
                     'import ISACallerFnHelper\n')
             for page in self.pages_written:
-                f.write('from openpower.decoder.isa.%s ' \
+                f.write('from openpower.decoder.isa.generated.%s '
                         'import %s\n' % (page, page))
             f.write('\n')
 
@@ -172,7 +204,8 @@ def pywriter():
         if sources[0] == "noall": # don't rewrite all.py
             write_isa_class = False
             sources.pop(0)
-    print ("sources", write_isa_class, sources)
+    print("sources", write_isa_class, sources)
+    isa.check_for_old_generated_files(sources)
     for source in sources:
         isa.write_pysource(source)
         isa.patch_if_needed(source)
