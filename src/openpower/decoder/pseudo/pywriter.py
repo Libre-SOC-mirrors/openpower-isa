@@ -79,7 +79,8 @@ class PyISAWriter(ISA):
             lines = [
                 f"found likely old generated file: {first_old_fname!r}",
                 f"new location: {first_fname!r}",
-                "please remove the old generated files or add to:",
+                ("please remove the old generated files to avoid committing "
+                 "them or add to:"),
                 ("openpower.decoder.pseudo.pywriter."
                  "OLD_GENERATED_FILES_EXCEPTIONS"),
                 "commands to remove all likely old generated files:",
