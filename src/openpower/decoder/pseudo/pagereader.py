@@ -98,7 +98,8 @@ class ISA:
             if "swp" in pth:
                 continue
             if not pth.endswith(".mdwn"):
-                log ("warning, file not .mdwn, skipping", pth)
+                if not os.path.isdir(os.path.join(get_isa_dir(), pth)):
+                    log("warning, file not .mdwn, skipping", pth)
                 continue
             self.read_file(pth)
             continue
