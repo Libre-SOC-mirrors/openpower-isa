@@ -112,9 +112,8 @@ class PyISAWriter(ISA):
                 pcode = '\n'.join(d.pcode) + '\n'
                 print(pcode)
                 incl_carry = pagename == 'fixedshift'
-                filename = os.path.join(get_isa_dir(), pagename + ".mdwn")
                 pycode, rused = convert_to_python(pcode, d.form, incl_carry,
-                                                  filename=filename)
+                                                  filename=d.pcode_fname)
                 rused['uninit_regs'] |= d.extra_uninit_regs
                 # create list of arguments to call
                 regs = list(rused['read_regs']) + list(rused['uninit_regs'])
