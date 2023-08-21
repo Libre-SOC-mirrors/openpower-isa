@@ -89,18 +89,21 @@ def read_file(fname):
     if not is_file:
         fname.close()
 
-    # TODO: Determine from Hazard() object
-def get_input_regs(hazard):
-    if hazard.action == 'r':
-        # return the reg to be read
-        return (hazard.target, hazard.ident)
-    return None
+def get_input_regs(hazards):
+    input_regs = set()
+    for hazard in hazards:
+        if hazard.action == 'r':
+            # return the reg to be read
+            input_regs.update([(hazard.target, hazard.ident)])
+    return input_regs
 
-def get_output_regs(hazard):
-    if hazard.action == 'w':
-        # return the reg to be read
-        return (hazard.target, hazard.ident)
-    return None
+def get_output_regs(hazards):
+    output_regs = set()
+    for hazard in hazards:
+        if hazard.action == 'w':
+            # return the reg to be read
+            output_regs.update([(hazard.target, hazard.ident)])
+    return output_regs
 
 
 class RegisterWrite:
@@ -136,7 +139,9 @@ class Execute:
         self.cpu = cpu
 
     def add_stage(self, cycles_away, stage):
-        while cycles_away > len(self.stages):
+        # if add_instruction cycle_away=2 means there are three entries,
+        # [0], [1], [2], need to append one more entry.
+        while cycles_away > len(self.stages) - 1:
             self.stages.append([])
         self.stages[cycles_away].append(stage)
 
@@ -144,22 +149,24 @@ class Execute:
         self.add_stage(2, {'insn': insn, 'writes': writeregs})
 
     def tick(self):
-        self.stages.pop(0) # tick drops anything at time "zero"
+        if len(self.stages) > 0:
+            self.stages.pop(0) # tick drops anything at time "zero"
 
     def process_instructions(self, stall):
-        instructions = self.stages[0] # get list of instructions
-        to_write = set()              # need to know total writes
-        for instruction in instructions:
-            to_write.update(instruction['writes'])
-        # see if all writes can be done, otherwise stall
-        writes_possible = self.cpu.writes_possible(to_write)
-        if writes_possible != to_write:
-            stall = True
-        # retire the writes that are possible in this cycle (regfile writes)
-        self.cpu.regs.retire_write(writes_possible)
-        # and now go through the instructions, removing those regs written
-        for instruction in instructions:
-            instruction['writes'].difference_update(writes_possible)
+        if len(self.stages) > 0:
+            instructions = self.stages[0] # get list of instructions
+            to_write = set()              # need to know total writes
+            for instruction in instructions:
+                to_write.update(instruction['writes'])
+            # see if all writes can be done, otherwise stall
+            writes_possible = self.cpu.writes_possible(to_write)
+            if writes_possible != to_write:
+                stall = True
+            # retire the writes that are possible in this cycle (regfile writes)
+            self.cpu.regs.retire_write(writes_possible)
+            # and now go through the instructions, removing those regs written
+            for instruction in instructions:
+                instruction['writes'].difference_update(writes_possible)
         return stall
 
 
@@ -170,18 +177,22 @@ class Fetch:
     def __init__(self, cpu):
         self.stages = [None] # only ever going to be 1 long but hey
         self.cpu = cpu
+        # Flag which indicates if fetch should be pushing insn to decode,
+        # else there won't be an initial one-clock delay between fetch and dec
+        self.pushed_to_decode = False
 
     def tick(self):
-        self.stages[0] = None
+        # only clear stage if the instruction has actually been pushed to decode
+        if self.pushed_to_decode:
+            self.stages[0] = None
 
-    #TODO: rename 'trace', temp name
-    def process_instructions(self, stall, trace):
+    def process_instructions(self, stall, insn_trace):
         if stall: return stall
         insn = self.stages[0] # get current instruction
         if insn is not None:
             self.cpu.decode.add_instruction(insn) # pass on instruction
         # read from log file, write into self.stages[0]
-        self.stages[0] = trace
+        self.stages[0] = insn_trace
         return stall
 
 
@@ -195,10 +206,11 @@ class Decode:
         self.stages = [None] # only ever going to be 1 long but hey
         self.cpu = cpu
 
-    def add_instruction(self, insn):
+    def add_instruction(self, insn_trace):
         # get the read and write regs
-        writeregs = get_input_regs(insn)
-        readregs = get_output_regs(insn)
+        insn = insn_trace[0]
+        readregs = get_input_regs(insn_trace[1:])
+        writeregs = get_output_regs(insn_trace[1:])
         assert self.stages[0] is None # must be empty (tick or stall)
         self.stages[0] = (insn, writeregs, readregs)
 
@@ -207,17 +219,19 @@ class Decode:
 
     def process_instructions(self, stall):
         if stall: return stall
-        # get current instruction
-        insn, writeregs, readregs = self.stages[0]
-        # check that the readregs are all available
-        reads_possible = self.cpu.reads_possible(readregs)
-        stall = reads_possible != readregs
-        # perform the "reads" that are possible in this cycle
-        readregs.difference_update(reads_possible)
-        # and "Reserves" the writes
-        self.cpu.expect_write(writeregs)
-        # now pass the instruction on to Issue
-        self.cpu.issue.add_instruction(insn, writeregs)
+
+        if self.stages[0] is not None:
+            # get current instruction
+            insn, writeregs, readregs = self.stages[0]
+            # check that the readregs are all available
+            reads_possible = self.cpu.reads_possible(readregs)
+            stall = reads_possible != readregs
+            # perform the "reads" that are possible in this cycle
+            readregs.difference_update(reads_possible)
+            # and "Reserves" the writes
+            self.cpu.regs.expect_write(writeregs)
+            # now pass the instruction on to Issue
+            self.cpu.issue.add_instruction(insn, writeregs)
         return stall
 
 class Issue:
@@ -239,7 +253,10 @@ class Issue:
 
     def process_instructions(self, stall):
         if stall: return stall
-        self.cpu.execute.add_instructions(self.stages[0])
+
+        if self.stages[0] is not None:
+            insn, writeregs = self.stages[0]
+            self.cpu.exe.add_instruction(insn, writeregs)
         return stall
 
 
@@ -256,6 +273,7 @@ class CPU:
         self.issue = Issue(self)
         self.exe = Execute(self)
         self.stall = False
+        self.curr_clk = 0
 
     def reads_possible(self, regs):
         # TODO: subdivide this down by GPR FPR CR-field.
@@ -275,19 +293,56 @@ class CPU:
             possible.add(r.pop())
         return possible
 
-    def process_instructions(self):
+    def process_instructions(self, insn_trace):
+        #print("Start of CPU cycle, clk=%d" % self.curr_clk)
         stall = self.stall
-        stall = self.fetch.process_instructions(stall)
+        stall = self.fetch.process_instructions(stall, insn_trace)
         stall = self.decode.process_instructions(stall)
         stall = self.issue.process_instructions(stall)
         stall = self.exe.process_instructions(stall)
         self.stall = stall
+        self.print_cur_state()
         if not stall:
             self.fetch.tick()
             self.decode.tick()
             self.issue.tick()
             self.exe.tick()
+        self.curr_clk += 1
+        #print("---------------")
 
+    # TODO: Make formatting prettier, and conform to markdown table format
+    # TODO: Adjust based on actual number of pipeline stages.
+    def print_headings(self):
+        print("| clk # | fetch | decode | issue | exec |")
+
+    def print_cur_state(self):
+        string = "| %d | " % self.curr_clk
+        if self.stall:
+            string += " STALL "
+        else:
+            if self.fetch.stages[0] is not None:
+                string += self.fetch.stages[0][0]
+            else:
+                string += "     "
+        string += "| "
+        if self.decode.stages[0] is not None:
+            string += self.decode.stages[0][0]
+        else:
+            string += "      "
+        string += "| "
+        if self.issue.stages[0] is not None:
+            string += self.issue.stages[0][0]
+        else:
+            string += "     "
+        string += "| "
+        if len(self.exe.stages) > 0 and len(self.exe.stages[0]) > 0:
+            #print("Execute stages: ", self.exe.stages)
+            #print(type(self.exe.stages[0]), self.exe.stages[0])
+            string += self.exe.stages[0][0]['insn']
+        else:
+            string += "    "
+        string += "|"
+        print(string)
 
 class TestTrace(unittest.TestCase):
 
@@ -306,12 +361,10 @@ class TestTrace(unittest.TestCase):
         )
         f = io.StringIO("\n".join(lines))
         lines = read_file(f)
+        basic_cpu.print_headings()
         for trace in lines:
-            print(trace)
-            # TODO: Only checking the fetch step,
-            # change to cpu.process_instructions() once working
-            #basic_cpu.stall = basic_cpu.fetch.process_instructions(
-            #                  basic_cpu.stall, trace)
+            #print(trace)
+            basic_cpu.process_instructions(trace)
 
 def help():
     print ("-t             runs unit tests")
