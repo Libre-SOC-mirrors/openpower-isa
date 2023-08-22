@@ -293,13 +293,15 @@ class CPU:
             possible.add(r.pop())
         return possible
 
+    # Inverting the stage order ensures that instructions already in the
+    # pipeline get processed first.
     def process_instructions(self, insn_trace):
         #print("Start of CPU cycle, clk=%d" % self.curr_clk)
         stall = self.stall
-        stall = self.fetch.process_instructions(stall, insn_trace)
-        stall = self.decode.process_instructions(stall)
-        stall = self.issue.process_instructions(stall)
         stall = self.exe.process_instructions(stall)
+        stall = self.issue.process_instructions(stall)
+        stall = self.decode.process_instructions(stall)
+        stall = self.fetch.process_instructions(stall, insn_trace)
         self.stall = stall
         self.print_cur_state()
         if not stall:
