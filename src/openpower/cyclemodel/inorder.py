@@ -153,20 +153,21 @@ class Execute:
             self.stages.pop(0) # tick drops anything at time "zero"
 
     def process_instructions(self, stall):
-        if len(self.stages) > 0:
-            instructions = self.stages[0] # get list of instructions
-            to_write = set()              # need to know total writes
-            for instruction in instructions:
-                to_write.update(instruction['writes'])
-            # see if all writes can be done, otherwise stall
-            writes_possible = self.cpu.writes_possible(to_write)
-            if writes_possible != to_write:
-                stall = True
-            # retire the writes that are possible in this cycle (regfile writes)
-            self.cpu.regs.retire_write(writes_possible)
-            # and now go through the instructions, removing those regs written
-            for instruction in instructions:
-                instruction['writes'].difference_update(writes_possible)
+        if len(self.stages) == 0: return stall
+
+        instructions = self.stages[0] # get list of instructions
+        to_write = set()              # need to know total writes
+        for instruction in instructions:
+            to_write.update(instruction['writes'])
+        # see if all writes can be done, otherwise stall
+        writes_possible = self.cpu.writes_possible(to_write)
+        if writes_possible != to_write:
+            stall = True
+        # retire the writes that are possible in this cycle (regfile writes)
+        self.cpu.regs.retire_write(writes_possible)
+        # and now go through the instructions, removing those regs written
+        for instruction in instructions:
+            instruction['writes'].difference_update(writes_possible)
         return stall
 
 
@@ -220,18 +221,19 @@ class Decode:
     def process_instructions(self, stall):
         if stall: return stall
 
-        if self.stages[0] is not None:
-            # get current instruction
-            insn, writeregs, readregs = self.stages[0]
-            # check that the readregs are all available
-            reads_possible = self.cpu.reads_possible(readregs)
-            stall = reads_possible != readregs
-            # perform the "reads" that are possible in this cycle
-            readregs.difference_update(reads_possible)
-            # and "Reserves" the writes
-            self.cpu.regs.expect_write(writeregs)
-            # now pass the instruction on to Issue
-            self.cpu.issue.add_instruction(insn, writeregs)
+        if self.stages[0] is None: return stall
+
+        # get current instruction
+        insn, writeregs, readregs = self.stages[0]
+        # check that the readregs are all available
+        reads_possible = self.cpu.reads_possible(readregs)
+        stall = reads_possible != readregs
+        # perform the "reads" that are possible in this cycle
+        readregs.difference_update(reads_possible)
+        # and "Reserves" the writes
+        self.cpu.regs.expect_write(writeregs)
+        # now pass the instruction on to Issue
+        self.cpu.issue.add_instruction(insn, writeregs)
         return stall
 
 class Issue:
@@ -254,9 +256,10 @@ class Issue:
     def process_instructions(self, stall):
         if stall: return stall
 
-        if self.stages[0] is not None:
-            insn, writeregs = self.stages[0]
-            self.cpu.exe.add_instruction(insn, writeregs)
+        if self.stages[0] is None: return stall
+
+        insn, writeregs = self.stages[0]
+        self.cpu.exe.add_instruction(insn, writeregs)
         return stall
 
 
