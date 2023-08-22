@@ -69,10 +69,6 @@ def read_file(fname):
     this function is a generator, it yields a list comprising each line:
     ["insn", Hazard(...), Hazard(....), ....]
 
-    The ["insn", Hazard(...), Hazard(....), ....] format has been given the
-    name 'insn_trace', because 'insn' already refers to the assembler
-    instruction string.
-
     fname may be a *file* (an object) with a function named "read",
     in which case the Contract is that it is the *CALLER* that must
     take responsibility for the file: opening, closing, seeking.
@@ -86,10 +82,10 @@ def read_file(fname):
 
     for line in fname.readlines():
         (specs, insn) = map(str.strip, line.strip().split("#"))
-        insn_trace = [insn]
+        line = [insn]
         for spec in specs.split(" "):
-            insn_trace.append(Hazard._make(spec.split(":")))
-        yield insn_trace
+            line.append(Hazard._make(spec.split(":")))
+        yield line
     if not is_file:
         fname.close()
 
@@ -364,11 +360,11 @@ class TestTrace(unittest.TestCase):
             "r:GPR:3:0:64 r:GPR:2:0:64 w:GPR:1:0:64 # add  1, 3, 2",
         )
         f = io.StringIO("\n".join(lines))
-        insn_traces = list(read_file(f))
+        lines = read_file(f)
         basic_cpu.print_headings()
-        for insn_trace in insn_traces:
-            #print(insn_trace)
-            basic_cpu.process_instructions(insn_trace)
+        for trace in lines:
+            #print(trace)
+            basic_cpu.process_instructions(trace)
 
 def help():
     print ("-t             runs unit tests")
