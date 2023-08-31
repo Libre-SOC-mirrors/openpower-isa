@@ -188,7 +188,8 @@ class Fetch:
             self.stages[0] = None
 
     def process_instructions(self, stall, insn_trace):
-        if stall: return stall
+        if stall:
+            return stall
         insn = self.stages[0] # get current instruction
         if insn is not None:
             self.cpu.decode.add_instruction(insn) # pass on instruction
@@ -219,7 +220,8 @@ class Decode:
         self.stages[0] = None
 
     def process_instructions(self, stall):
-        if stall: return stall
+        if stall:
+            return stall
 
         if self.stages[0] is None: return stall
 
@@ -254,7 +256,8 @@ class Issue:
         self.stages[0] = None
 
     def process_instructions(self, stall):
-        if stall: return stall
+        if stall:
+            return stall
 
         if self.stages[0] is None: return stall
 
