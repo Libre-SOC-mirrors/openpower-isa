@@ -2,3 +2,4 @@
 *.elf
 *.bin
 *.out
+test-chacha20
