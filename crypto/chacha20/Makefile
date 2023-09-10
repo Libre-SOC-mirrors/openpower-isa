@@ -34,7 +34,10 @@ $(BINDIR)/%.bin: $(BINDIR)/%.elf
 	$(CROSSOBJCOPY) -I elf64-little -O binary $< $@
 
 .PHONY: all clean remove
-all: ${TARGET}
+all: ${BINDIR} ${TARGET}
+
+$(BINDIR):
+	mkdir -p ${BINDIR}
 
 $(TARGET): $(OBJECTS) $(SVP64OBJECTS) $(ELFFILES) $(BINFILES)
 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
