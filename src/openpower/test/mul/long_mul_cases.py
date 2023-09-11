@@ -1,7 +1,7 @@
 import unittest
 from openpower.simulator.program import Program
 from openpower.endian import bigendian
-from openpower.test.common import TestAccumulatorBase
+from openpower.test.common import TestAccumulatorBase, skip_case_if_flag
 import random
 
 
@@ -191,10 +191,11 @@ MUL_3_ARG_TEST_VALUES = [
 
 
 class MulTestCases3Arg(TestAccumulatorBase):
-    def __init__(self, subtest_index):
+    def __init__(self, subtest_index, *args, **kwargs):
         self.subtest_index = subtest_index
-        super().__init__()
+        super().__init__(*args, **kwargs)
 
+    @skip_case_if_flag('soc')
     def case_all(self):
         instrs = ["maddhd", "maddhdu", "maddld"]
 
