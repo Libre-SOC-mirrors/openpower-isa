@@ -39,7 +39,7 @@ def _id(obj):
     return obj
 
 
-def skip_case(reason):
+def skip_case(reason, *, __condition=True):
     """
     Unconditionally skip a test case.
 
@@ -54,13 +54,19 @@ def skip_case(reason):
 
     For use with TestAccumulatorBase
     """
+    if not callable(__condition):
+        def __condition(ta, *, __retval=bool(__condition)):
+            return __retval
     def decorator(item):
         assert not isinstance(item, type), \
             "can't use skip_case to decorate types"
 
         @functools.wraps(item)
-        def wrapper(*args, **kwargs):
-            raise SkipCase(reason)
+        def wrapper(self, *args, **kwargs):
+            if __condition(self):
+                raise SkipCase(reason)
+            else:
+                return item(self, *args, **kwargs)
         return wrapper
     if isinstance(reason, types.FunctionType):
         item = reason
@@ -78,18 +84,53 @@ def skip_case_if(condition, reason):
         def case_abc(self):
             ...
 
+    Or:
+        # ta is the TestAccumulatorBase instance
+        @skip_case_if(lambda ta: ta.has_case_abc(), "my reason for skipping")
+        def case_abc(self):
+            ...
+
     For use with TestAccumulatorBase
     """
-    if condition:
-        return skip_case(reason)
-    return _id
+    return skip_case(reason, __condition=condition)
+
+
+def skip_case_if_flag(flag_name):
+    """
+    Skip a test case if `flag_name in TestAccumulatorBase.flags`.
+
+    Use like:
+        @skip_if_flag("foo")
+        def case_not_on_foo(self):
+            ...
+
+    For use with TestAccumulatorBase
+    """
+    return skip_case_if(lambda ta: flag_name in ta.flags,
+                        flag_name + " is in flags")
+
+
+def skip_case_if_not_flag(flag_name):
+    """
+    Skip a test case if `flag_name not in TestAccumulatorBase.flags`.
+
+    Use like:
+        @skip_if_not_flag("foo")
+        def case_only_on_foo(self):
+            ...
+
+    For use with TestAccumulatorBase
+    """
+    return skip_case_if(lambda ta: flag_name not in ta.flags,
+                        flag_name + " isn't in flags")
 
 
 class TestAccumulatorBase:
     __test__ = False  # pytest should ignore this class
 
-    def __init__(self):
+    def __init__(self, flags=()):
         self.__subtest_args = {}
+        self.flags = frozenset(flags)
 
         self.test_data = []
         # automatically identifies anything starting with "case_" and
