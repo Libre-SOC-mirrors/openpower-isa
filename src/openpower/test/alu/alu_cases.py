@@ -1,5 +1,6 @@
 import random
-from openpower.test.common import TestAccumulatorBase, skip_case
+from openpower.test.common import \
+    TestAccumulatorBase, skip_case, skip_case_if_flag
 from openpower.endian import bigendian
 from openpower.simulator.program import Program
 from openpower.decoder.selectable_int import SelectableInt
@@ -87,6 +88,7 @@ def check_addmeo_subfmeo_matches_reference(instr, case_filter, out):
 
 
 class ALUTestCase(TestAccumulatorBase):
+    @skip_case_if_flag('soc')
     def case_addex(self):
         lst = [f"addex 3, 4, 5, 0"]
         program = Program(lst, bigendian)
@@ -708,6 +710,8 @@ class ALUTestCase(TestAccumulatorBase):
             'addco.', 'subfco.', 'addeo.', 'subfeo.', 'addmeo.', 'subfmeo.',
             'addzeo.', 'subfzeo.', 'addex', 'nego.',
         }
+        if 'soc' in self.flags:
+            wanted_instrs.remove('addex')
         unary_inputs = {
             '0x0', '0x1', '0x2',
             '0xFFFFFFFFFFFFFFFF', '0xFFFFFFFFFFFFFFFE',
