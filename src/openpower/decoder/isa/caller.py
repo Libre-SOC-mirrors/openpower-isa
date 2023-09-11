@@ -2172,17 +2172,22 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         ca32 = outs.get("CA32")
 
         log("carry already done?", ca, ca32, output_names)
-        carry_en = yield self.dec2.e.do.output_carry
+        # soc test_pipe_caller tests don't have output_carry
+        has_output_carry = hasattr(self.dec2.e.do, "output_carry")
+        carry_en = has_output_carry and (yield self.dec2.e.do.output_carry)
         if carry_en:
             yield from self.handle_carry_(
                 inputs, results[0], ca, ca32, inp_ca_ov=inp_ca_ov)
 
-        # get outout named "overflow" and "CR0"
+        # get output named "overflow" and "CR0"
         overflow = outs.get('overflow')
         cr0 = outs.get('CR0')
         cr1 = outs.get('CR1')
 
-        if not self.is_svp64_mode:  # yeah just no. not in parallel processing
+        # soc test_pipe_caller tests don't have oe
+        has_oe = hasattr(self.dec2.e.do, "oe")
+        # yeah just no. not in parallel processing
+        if has_oe and not self.is_svp64_mode:
             # detect if overflow was in return result
             ov_en = yield self.dec2.e.do.oe.oe
             ov_ok = yield self.dec2.e.do.oe.ok
