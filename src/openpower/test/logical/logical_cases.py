@@ -3,7 +3,8 @@ from openpower.test.state import ExpectedState
 from openpower.simulator.program import Program
 from openpower.endian import bigendian
 from openpower.insndb.asm import SVP64Asm
-from openpower.test.common import TestAccumulatorBase, skip_case
+from openpower.test.common import \
+    TestAccumulatorBase, skip_case, skip_case_if_flag
 import random
 
 
@@ -127,6 +128,7 @@ class LogicalTestCase(TestAccumulatorBase):
             initial_regs[2] = random.randint(0, (1 << 64)-1)
             self.add_case(Program(lst, bigendian), initial_regs)
 
+    @skip_case_if_flag('soc')
     def case_cfuged(self):
         prog = Program(list(SVP64Asm(["cfuged 3,4,5"])), bigendian)
         for case_idx in range(200):
@@ -151,6 +153,7 @@ class LogicalTestCase(TestAccumulatorBase):
                     RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
                 self.add_case(prog, gprs, expected=e)
 
+    @skip_case_if_flag('soc')
     def case_cntlzdm(self):
         prog = Program(list(SVP64Asm(["cntlzdm 3,4,5"])), bigendian)
         for case_idx in range(200):
@@ -171,6 +174,7 @@ class LogicalTestCase(TestAccumulatorBase):
                     RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
                 self.add_case(prog, gprs, expected=e)
 
+    @skip_case_if_flag('soc')
     def case_cnttzdm(self):
         prog = Program(list(SVP64Asm(["cnttzdm 3,4,5"])), bigendian)
         for case_idx in range(200):
@@ -191,6 +195,7 @@ class LogicalTestCase(TestAccumulatorBase):
                     RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
                 self.add_case(prog, gprs, expected=e)
 
+    @skip_case_if_flag('soc')
     def case_pdepd(self):
         prog = Program(list(SVP64Asm(["pdepd 3,4,5"])), bigendian)
         for case_idx in range(200):
@@ -211,6 +216,7 @@ class LogicalTestCase(TestAccumulatorBase):
                     RB_in=hex(gprs[5]), expected_RA=hex(e.intregs[3])):
                 self.add_case(prog, gprs, expected=e)
 
+    @skip_case_if_flag('soc')
     def case_pextd(self):
         prog = Program(list(SVP64Asm(["pextd 3,4,5"])), bigendian)
         for case_idx in range(200):
