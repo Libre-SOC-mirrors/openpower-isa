@@ -167,7 +167,7 @@ class Form(Enum):
     SVM2 = 33  # Simple-V SHAPE2 mode - fits into SVM
     SVRM = 34  # Simple-V REMAP mode
     TLI = 35  # ternlogi
-    XB = 36
+    # 36 available
     BM2 = 37 # bmask
     SVI = 38  # Simple-V Index Mode
     VA2 = 39
@@ -771,8 +771,6 @@ _insns = [
     "mffpr", "mffprs",
     "ctfpr", "ctfprs",
     "mtfpr", "mtfprs",
-    'grev', 'grev.', 'grevi', 'grevi.',
-    'grevw', 'grevw.', 'grevwi', 'grevwi.',
     "hrfid", "icbi", "icbt", "isel", "isync",
     "lbarx", "lbz", "lbzcix", "lbzu", "lbzux", "lbzx",  # load byte
     "ld", "ldarx", "ldbrx", "ldu", "ldux", "ldx",       # load double
@@ -940,7 +938,7 @@ class MicrOp(Enum):
     OP_CBCDTD = 85
     OP_TERNLOG = 86
     OP_FETCH_FAILED = 87
-    OP_GREV = 88
+    # 88 available
     OP_MINMAX = 89
     OP_AVGADD = 90
     OP_ABSDIFF = 91
@@ -1026,7 +1024,7 @@ class In2Sel(Enum):
     FRBp = FRB
     CONST_SVD = 15  # for SVD-Form
     CONST_SVDS = 16  # for SVDS-Form
-    CONST_XBI = 17
+    # 17 available
     CONST_DXHI4 = 18 # for addpcis
     CONST_DQ = 19 # for ld/st-quad
 

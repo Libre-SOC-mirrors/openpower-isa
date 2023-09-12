@@ -200,10 +200,6 @@
     |0     |6    |11    |16    |21    |30|31 |
     | PO   |  RS |   RA |   sh |   XO |sh|Rc |
 
-# 1.6.15 XB-FORM
-    |0     |6    |11    |16    |22    |31 |
-    | PO   |  RT |   RA |  XBI |   XO |Rc |
-
 # 1.6.16 XO-FORM
     |0   |6   |11  |13   |16   |21  |22  |31  |
     | PO | RT | RA       | RB  | OE | XO | Rc |
@@ -766,7 +762,7 @@
     RA (11:15)
         Field used to specify a GPR to be used as a
         source or as a target.
-        Formats: A, BM2, D, DQ, DQE, DS, M, MD, MDS, MM, TX, VA, VA2, VX, X, XO, XS, SVL, XB, TLI, Z23
+        Formats: A, BM2, D, DQ, DQE, DS, M, MD, MDS, MM, TX, VA, VA2, VX, X, XO, XS, SVL, TLI, Z23
     RB (16:20)
         Field used to specify a GPR to be used as a
         source.
@@ -788,7 +784,7 @@
         1    Set Condition Register Field 0 or Field 1 as
              described in Section 2.3.1, 'Condition Regis-
              ter' on page 30.
-        Formats: A, M, MD, MDS, MM, VA2, X, XFL, XO, XS, Z22, Z23, SVL, XB, TLI, DCT
+        Formats: A, M, MD, MDS, MM, VA2, X, XFL, XO, XS, Z22, Z23, SVL, TLI, DCT
     RIC (12:13)
         Field used to specify what types of entries to inval-
         idate for tlbie[l].
@@ -817,7 +813,7 @@
         Formats: DS, X
     RT (6:10)
         Field used to specify a GPR to be used as a target.
-        Formats: A, BM2, D, DQE, DS, DX, MM, VA, VA2, VX, X, XFX, XO, XX2, SVL, XB, TLI, Z23
+        Formats: A, BM2, D, DQE, DS, DX, MM, VA, VA2, VX, X, XFX, XO, XX2, SVL, TLI, Z23
     RTp (6:10)
         Field used to specify an even/odd pair of GPRs to
         be concatenated and used as a target.
@@ -1047,10 +1043,6 @@
     XBI (21:24)
         Field used to specify a bit in the XER.
         Formats: MDS, MDS, TX
-    XBI (16:21)
-        Field used to specify a 6-bit unsigned immediate for bit manipulation
-        instructions, such as grevi.
-        Formats: XB
     XO (21:23,26:31)
         Extended opcode field.
         Formats: SVM2
@@ -1077,7 +1069,7 @@
         Formats: VX
     XO (22:30)
         Extended opcode field.
-        Formats: XO, XX3, Z22, XB
+        Formats: XO, XX3, Z22
     XO (22:31)
         Extended opcode field.
         Formats: VC

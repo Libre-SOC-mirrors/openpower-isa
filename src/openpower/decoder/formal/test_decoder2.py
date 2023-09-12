@@ -109,8 +109,6 @@ class Driver(Elaboratable):
                     comb += Assert(pdecode2.e.imm_data.data == dec.sh)
                 with m.Case(In2Sel.CONST_SH32):
                     comb += Assert(pdecode2.e.imm_data.data == dec.SH32)
-                with m.Case(In2Sel.CONST_XBI):
-                    comb += Assert(pdecode2.e.imm_data.data == dec.FormXB.XBI)
                 with m.Default():
                     comb += Assert(0)
 
