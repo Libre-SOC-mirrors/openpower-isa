@@ -2,12 +2,9 @@
 # Copyright 2022 Jacob Lifshay
 
 import enum
-import re
-from openpower.decoder.selectable_int import SelectableInt
-from openpower.simulator.program import Program
 from openpower.test.common import TestAccumulatorBase, skip_case
+from openpower.test.util import assemble
 from openpower.test.state import ExpectedState
-from openpower.insndb.asm import SVP64Asm
 from cached_property import cached_property
 
 
@@ -283,47 +280,6 @@ def svp64_utf8_validation_asm():
         f"addi 3, 0, 1",
         f"bclr 20, 0, 0 # blr",
     ]
-
-
-def assemble(instructions, start_pc=0):
-    pc = start_pc
-    labels = {}
-    out_instructions = []
-    for instr in instructions:
-        m = re.fullmatch(r" *([a-zA-Z0-9_]+): *(#.*)?", instr)
-        if m is not None:
-            name = m.group(1)
-            if name in labels:
-                raise ValueError(f"label {name!r} defined multiple times")
-            labels[name] = pc
-            continue
-        m = re.fullmatch(r" *sv\.[a-zA-Z0-9_].*", instr)
-        if m is not None:
-            pc += 8
-        else:
-            pc += 4
-        out_instructions.append((pc, instr))
-    last_pc = pc
-
-    for (idx, (pc, instr)) in enumerate(tuple(out_instructions)):
-        for (label, target) in labels.items():
-            if label in instr:
-                if pc < target:
-                    sign = ""
-                    addr = (target - pc + 4)
-                else:
-                    sign = "-"
-                    addr = (pc - target - 4)
-
-                origin = instr
-                instr = instr.replace(label, f"{sign}0x{addr:X}")
-                break
-        out_instructions[idx] = instr
-
-    for k, v in labels.items():
-        out_instructions.append(f".set {k}, . - 0x{last_pc - v:X} # 0x{v:X}")
-
-    return Program(list(SVP64Asm(out_instructions)), 0)
 
 
 class SVP64UTF8ValidationTestCase(TestAccumulatorBase):
