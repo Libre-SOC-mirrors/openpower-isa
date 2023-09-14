@@ -1,0 +1,20 @@
+
+MEMORY
+{
+    ram  : ORIGIN = 0x20001000, LENGTH = 512M
+    fixedaddr  : ORIGIN = 0x20000000, LENGTH = 0x1000
+}
+
+
+SECTIONS
+{
+    .fixedaddr :
+    {
+    . = ALIGN(4);
+    __fixedaddr_start__ = .;
+    *(.fixedaddr*)
+    __fixedaddr_end__ = .;
+    } > fixedaddr
+   .text : { *(.text*) } > ram
+   .bss  : { *(.text*) } > ram
+}
