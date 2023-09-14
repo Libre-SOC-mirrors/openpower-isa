@@ -24,6 +24,10 @@ from pathlib import Path
 # See PowerISA 3.1b Book III, Chapter 4,
 # section 4.3.1 System Linkage Instructions, page 1186/1160
 # Book III, chapter 7, section 7.5 Interrupt Definitions, page 1300/1274
+# PowerISA ABI calling convention doc:
+# https://git.libre-soc.org/?p=openpower-isa.git;a=blob;f=media/calling-conv;hb=HEAD
+# 'write' syscall Linux man page:
+# https://man7.org/linux/man-pages/man2/write.2.html
 
 class SysCallTestCase(TestAccumulatorBase):
     def case_sc(self):
