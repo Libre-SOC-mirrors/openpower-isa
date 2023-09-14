@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: LGPL-3-or-later
+# Copyright 2023 Andrey Miroshnikov
+# Thanks to NLnet, EU Grant NLnet 2021 cavatools proposal 2021-08-071
+
 import random
 from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.endian import bigendian
