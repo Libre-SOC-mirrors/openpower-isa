@@ -42,11 +42,11 @@ static pypowersim_state_t *pypowersim_prepare(void) {
       Py_Initialize();
 
       // To construct directory based on username, need $HOME
-      char homeIsaDir[100];
+      char homeIsaDir[100] = {0};
       const char *homeDir = getenv("HOME"); // user specific - /home/[USER NAME]
       strcat(homeIsaDir, homeDir);
       strcat(homeIsaDir, "/src/openpower-isa/src/openpower/decoder/isa/");
-      printf(homeIsaDir);
+      printf("homeIsaDir: %s\n", homeIsaDir);
 
       PyObject* sysPath = PySys_GetObject((char*)"path");
       PyObject* curDir = PyUnicode_FromString(homeIsaDir);
