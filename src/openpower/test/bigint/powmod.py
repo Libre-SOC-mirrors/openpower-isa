@@ -87,6 +87,7 @@ class PowModCases(TestAccumulatorBase):
     def call_case(self, instructions, expected, initial_regs, src_loc_at=0):
         stop_at_pc = 0x10000000
         sprs = {8: stop_at_pc}
+        expected.intregs[1] = initial_regs[1] = 0x1000000  # set stack pointer
         expected.pc = stop_at_pc
         expected.sprs['LR'] = None
         self.add_case(assemble(instructions),
