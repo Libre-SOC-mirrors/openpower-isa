@@ -17,27 +17,28 @@ from openpower.test.util import assemble
 from nmutil.sim_util import hash_256
 
 
+# broken -- blocked on https://bugs.libre-soc.org/show_bug.cgi?id=1161
 MUL_256_X_256_TO_512_ASM = [
     "mul_256_to_512:",
     # a is in r4-7, b is in r8-11
     "setvl 0, 0, 8, 0, 1, 1",  # set VL to 8
-    "sv.or *12, *4, *4",  # move args to r12-19
-    # a is now in r12-15, b is in r16-19
+    "sv.or *32, *4, *4",  # move args to r32-39
+    # a is now in r32-35, b is in r36-39, y is in r4-11, t is in r40-44
     "sv.addi *4, 0, 0",  # clear output
     "setvl 0, 0, 4, 0, 1, 1",  # set VL to 4
-    "sv.maddedu *4, *12, 16, 8",  # first partial-product a * b[0]
-    "addi 24, 0, 0",
-    "sv.maddedu *20, *12, 17, 24",  # second partial-product a * b[1]
-    "addc 5, 5, 20",
-    "sv.adde *6, *6, *21",
-    "addi 24, 0, 0",
-    "sv.maddedu *20, *12, 18, 24",  # third partial-product a * b[2]
-    "addc 6, 6, 20",
-    "sv.adde *7, *7, *21",
-    "addi 24, 0, 0",
-    "sv.maddedu *20, *12, 19, 24",  # final partial-product a * b[3]
-    "addc 7, 7, 20",
-    "sv.adde *8, *8, *21",
+    "sv.maddedu *4, *32, 36, 8",  # first partial-product a * b[0]
+    "sv.addi 44, 0, 0",
+    "sv.maddedu *40, *32, 37, 44",  # second partial-product a * b[1]
+    "sv.addc 5, 5, 40",
+    "sv.adde *6, *6, *41",
+    "sv.addi 44, 0, 0",
+    "sv.maddedu *40, *32, 38, 44",  # third partial-product a * b[2]
+    "sv.addc 6, 6, 40",
+    "sv.adde *7, *7, *41",
+    "sv.addi 44, 0, 0",
+    "sv.maddedu *40, *32, 39, 44",  # final partial-product a * b[3]
+    "sv.addc 7, 7, 40",
+    "sv.adde *8, *8, *41",
     "bclr 20, 0, 0 # blr",
 ]
 
