@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: LGPL-3-or-later
+# Copyright 2023 Jacob Lifshay programmerjake@gmail.com
+
+# Funded by NLnet Assure Programme 2021-02-052, https://nlnet.nl/assure part
+# of Horizon 2020 EU Programme 957073.
+
 """ modular exponentiation (`pow(x, y, z)`) tests
 
 related bugs:
