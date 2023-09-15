@@ -2397,12 +2397,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             log('reading reg %s %s' % (name, str(regnum)), is_vec)
             if name in fregs:
                 reg_val = SelectableInt(self.fpr(base, is_vec, offs, ew_src))
-                log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
+                log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value),
+                    kind=LogKind.InstrInOuts)
                 self.trace("r:FPR:%d:%d:%d " % (base, offs, ew_src))
             elif name is not None:
                 reg_val = SelectableInt(self.gpr(base, is_vec, offs, ew_src))
                 self.trace("r:GPR:%d:%d:%d " % (base, offs, ew_src))
-                log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value))
+                log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value),
+                    kind=LogKind.InstrInOuts)
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)
             reg_val = SelectableInt(0, ew_src)
@@ -2494,7 +2496,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # write special SPRs
         if name in info.special_regs:
             log('writing special %s' % name, output, special_sprs)
-            log("write reg %s 0x%x" % (name, output.value))
+            log("write reg %s 0x%x" % (name, output.value),
+                kind=LogKind.InstrInOuts)
             if name in special_sprs:
                 self.spr[name] = output
             else:
