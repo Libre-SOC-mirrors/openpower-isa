@@ -105,8 +105,11 @@ class SVP64RegExtra(SVP64ExtraSpec):
         with m.If(self.isvec):
             # Vector: shifted up, extra in LSBs (RA << 2) | spec[1:2]
             comb += self.reg_out.eq(Cat(spec_aug, self.reg_in))
-        with m.Else():
-            # Scalar: not shifted up, extra in MSBs RA | (spec[1:2] << 5)
+        with m.Elif(self.etype == SVEType.EXTRA2):
+            # Scalar EXTRA2: not shifted up, extra in MSBs RA | (spec[1] << 5)
+            comb += self.reg_out.eq(Cat(self.reg_in, spec_aug[1]))
+        with m.Elif(self.etype == SVEType.EXTRA3):
+            # Scalar EXTRA3: not shifted up, extra in MSBs RA | (spec[1:2] << 5)
             comb += self.reg_out.eq(Cat(self.reg_in, spec_aug))
 
         return m
