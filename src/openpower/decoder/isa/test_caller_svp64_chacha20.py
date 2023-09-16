@@ -19,27 +19,37 @@ from openpower.insndb.asm import SVP64Asm
 
 
 # originally from https://github.com/pts/chacha20
+# the functtion is turned into a "schedule" of the
+# operations to be applied, where the add32 xor32 rotl32
+# are actually carried out by the sthth_round
+# higher-order-function. this "split-out" (code-morph)
+# of the original code by pts@fazekas.hu allows us to
+# share the "schedule" between the pure-python chacha20
+# and the SVP64 implementation. the schedule is static:
+# it can be printed out and loaded as "magic constants"
+# into registers. more details:
+# https://libre-soc.org/openpower/sv/cookbook/chacha20/
 def quarter_round_schedule(x, a, b, c, d):
     """collate list of reg-offsets for use with svindex/svremap
     """
-    #x[a] = (x[a] + x[b]) & 0xffffffff
-    #x[d] = x[d] ^ x[a]
-    #x[d] = rotate(x[d], 16)
+    #x[a] = (x[a] + x[b]) & 0xffffffff   - add32
+    #x[d] = x[d] ^ x[a]                  - xor32
+    #x[d] = rotate(x[d], 16)             - rotl32
     x.append((a, b, d, 16))
 
-    #x[c] = (x[c] + x[d]) & 0xffffffff
-    #x[b] = x[b] ^ x[c]
-    #x[b] = rotate(x[b], 12)
+    #x[c] = (x[c] + x[d]) & 0xffffffff   - add32
+    #x[b] = x[b] ^ x[c]                  - xor32
+    #x[b] = rotate(x[b], 12)             - rotl32
     x.append((c, d, b, 12))
 
-    #x[a] = (x[a] + x[b]) & 0xffffffff
-    #x[d] = x[d] ^ x[a]
-    #x[d] = rotate(x[d], 8)
+    #x[a] = (x[a] + x[b]) & 0xffffffff   - add32
+    #x[d] = x[d] ^ x[a]                  - xor32
+    #x[d] = rotate(x[d], 8)             - rotl32
     x.append((a, b, d, 8))
 
-    #x[c] = (x[c] + x[d]) & 0xffffffff
-    #x[b] = x[b] ^ x[c]
-    #x[b] = rotate(x[b], 7)
+    #x[c] = (x[c] + x[d]) & 0xffffffff   - add32
+    #x[b] = x[b] ^ x[c]                  - xor32
+    #x[b] = rotate(x[b], 7)             - rotl32
     x.append((c, d, b, 7))
 
 
@@ -50,24 +60,28 @@ def rotl32(v, c):
     return res
 
 
-def add(a, b):
+def add32(a, b):
     res = (a + b) & 0xffffffff
-    print("op add", hex(res), hex(a), hex(b))
+    print("op add32", hex(res), hex(a), hex(b))
     return res
 
 
-def xor(a, b):
+def xor32(a, b):
     res = a ^ b
-    print("op xor", hex(res), hex(a), hex(b))
+    print("op xor32", hex(res), hex(a), hex(b))
     return res
 
 
+# originally in pts's code there were 4 of these, explicitly loop-unrolled.
+# the common constants were extracted (a,b,c,d,rot) and this is what is left
 def sthth_round(x, a, b, d, rot):
-    x[a] = add(x[a], x[b])
-    x[d] = xor(x[d], x[a])
+    x[a] = add32 (x[a], x[b])
+    x[d] = xor32 (x[d], x[a])
     x[d] = rotl32(x[d], rot)
 
-
+# pts's version of quarter_round has the add/xor/rot explicitly
+# loop-unrolled four times. instead we call the 16th-round function
+# with the appropriate offsets/rot-magic-constants.
 def quarter_round(x, a, b, c, d):
     """collate list of reg-offsets for use with svindex/svremap
     """
@@ -77,6 +91,11 @@ def quarter_round(x, a, b, c, d):
     sthth_round(x, c, d, b, 7)
 
 
+# again in pts's version, this is what was originally
+# the loop around quarter_round. we can either pass in
+# a function that simply collates the indices *or*
+# actually do the same job as pts's original code,
+# just by passing in a different fn.
 def chacha_idx_schedule(x, fn=quarter_round_schedule):
     fn(x, 0, 4,  8, 12)
     fn(x, 1, 5,  9, 13)
@@ -189,6 +208,7 @@ class SVSTATETestCase(FHDLTestCase):
         x[14] = 0x75f0fcc0
         x[15] = 0x5f868c74
 
+        # use packing function which emulates element-width overrides @ 32-bit
         for i in range(16):
             set_masked_reg(initial_regs, block, i, ew_bits=32, value=x[i])
 
@@ -203,6 +223,8 @@ class SVSTATETestCase(FHDLTestCase):
         expected_regs[ctr] = 0  # reaches zero
         #expected_regs[vl] = 32  # gets set to MAXVL
         expected = deepcopy(x)
+        # use the pts-derived quarter_round function to
+        # compute a pure-python version of chacha20
         for i in range(nrounds):
             chacha_idx_schedule(expected, fn=quarter_round)
         for i in range(16):
