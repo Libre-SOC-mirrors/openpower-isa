@@ -1,6 +1,12 @@
-"""SVP64 unit test for svindex
-svindex SVG,rmm,SVd,ew,yx,mm,sk
+"""Implementation of chacha20 core in SVP64
+Copyright (C) 2022,2023 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
+Licensed under the LGPLv3+
+Funded by NLnet NGI-ASSURE under EU grant agreement No 957073.
+* https://nlnet.nl/project/LibreSOC-GigabitRouter/
+* https://bugs.libre-soc.org/show_bug.cgi?id=965
+* https://libre-soc.org/openpower/sv/cookbook/chacha20/
 """
+
 import unittest
 from copy import deepcopy
 
