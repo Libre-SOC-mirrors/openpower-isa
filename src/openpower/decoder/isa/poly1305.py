@@ -47,8 +47,13 @@ class Poly1305(object):
         return self.num_to_16_le_bytes(self.acc)
 
 
-# quick usage demo
+# quick usage demo, make identical to poly1305-donna/example-poly1305.c
 if __name__ == '__main__':
-    key = list(range(223, 255))
-    mac = Poly1305(key).create_tag(bytearray(range(0,32)))
-    print (mac)
+    key = list(range(221, 253))
+    mac = Poly1305(key).create_tag(bytearray(range(121,121+73)))
+    for byte in mac:
+        print(hex(byte)[2:], sep='', end='')
+    print()
+    expected = [0xdd,0xb9,0xda,0x7d,0xdd,0x5e,0x52,0x79,
+                0x27,0x30,0xed,0x5c,0xda,0x5f,0x90,0xa4]
+    assert mac == bytearray(expected)
