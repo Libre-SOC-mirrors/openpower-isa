@@ -107,13 +107,8 @@ default amd64-64-24k / amd64-51-32k behaviour
 
 
 /* batch test */
-#ifndef ED25519_SVP64
 #define test_batch_count 64
 #define test_batch_rounds 96
-#else
-#define test_batch_count 1
-#define test_batch_rounds 1
-#endif
 
 typedef enum batch_test_t {
 	batch_no_errors = 0,
@@ -266,7 +261,9 @@ test_main(void) {
 
 int
 main(void) {
+#ifndef ED25519_SVP64
 	test_main();
+#endif
 	test_batch();
 	return 0;
 }

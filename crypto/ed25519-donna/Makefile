@@ -8,13 +8,13 @@ CROSSOBJCOPY = powerpc64le-linux-gnu-objcopy
 CROSSLD = powerpc64le-linux-gnu-ld
 
 #compiler flags here
-CFLAGS = -DED25519_SVP64 -DED25519_TEST -g3 -O -Wall -I../../media/pypowersim_wrapper -I/usr/include/python3.7m
+CFLAGS = -DED25519_SVP64 -DED25519_TEST -DED25519_REFHASH -g3 -O -Wall -I../../media/pypowersim_wrapper -I/usr/include/python3.7m
 
 # assembler flags here
 ASFLAGS= -mlibresoc -mregnames -Isrc
 
 #linker flags here
-LDFLAGS = -Wall -pthread -lpython3.7m -lssl -lcrypto
+LDFLAGS = -Wall -pthread -lpython3.7m
 
 SRCDIR	= src
 BINDIR  = bin
