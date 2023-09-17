@@ -158,14 +158,38 @@ class Poly1305Donna(object):
 
         print("finish %x %x %x" % (h0, h1, h2))
 
-        c = 0
-        h1 += c;     c = (h1 >> 44); h1 &= ff;
-        h2 += c;     c = (h2 >> 42); h2 &= f3;
-        h0 += c * 5; c = (h0 >> 44); h0 &= ff;
-        h1 += c;     c = (h1 >> 44); h1 &= ff;
-        h2 += c;     c = (h2 >> 42); h2 &= f3;
-        h0 += c * 5; c = (h0 >> 44); h0 &= ff;
-        h1 += c;
+        # commented-out from the original (left in for comparison),
+        # see https://bugs.libre-soc.org/show_bug.cgi?id=1157#c3
+        # as to what is going on here
+
+        #c = 0
+        #h1 += c;     c = (h1 >> 44); h1 &= ff;
+        #h2 += c;     c = (h2 >> 42); h2 &= f3;
+        #h0 += c * 5; c = (h0 >> 44); h0 &= ff;
+        #h1 += c;     c = (h1 >> 44); h1 &= ff;
+        #h2 += c;     c = (h2 >> 42); h2 &= f3;
+        #h0 += c * 5; c = (h0 >> 44); h0 &= ff;
+        #h1 += c;
+
+        # okaaay, first "preparation" for conversion to SVP64 REMAP/Indexed:
+        # extract the constants/indices from the original above and look for the
+        # common pattern, which is:
+        # h? += c * ?; c = (h? >> ??); h? &= ??;
+
+        # these appear to be repeated twice
+        idxconsts = [ # hN c* shf
+                       [1, 1, 44],
+                       [2, 1, 42],
+                       [0, 4, 44]
+                    ]
+        c = 0 # start with carry=0
+        for hidx, cmul, shf in idxconsts*2: # repeat the pattern twice
+            self.h[hidx] += c * cmul        # don't worry about *1
+            c = self.h[hidx] >> shf         # these two could use dsrd
+            self.h[hidx] &= (1<<shf) - 1    # (one instruction)
+        self.h[1] += c; # can't have everything...
+
+        h0, h1, h2 = self.h
 
         print("    h0-2 %x %x %x" % (h0, h1, h2))
 
