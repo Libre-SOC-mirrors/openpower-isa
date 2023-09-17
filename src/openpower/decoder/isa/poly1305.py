@@ -46,3 +46,9 @@ class Poly1305(object):
         self.acc += self.s
         return self.num_to_16_le_bytes(self.acc)
 
+
+# quick usage demo
+if __name__ == '__main__':
+    key = list(range(223, 255))
+    mac = Poly1305(key).create_tag(bytearray(range(0,32)))
+    print (mac)
