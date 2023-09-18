@@ -114,6 +114,8 @@ class BigIntCases(TestAccumulatorBase):
                 gprs[4] = 0xFEDCBA9876543210
                 gprs[5] = sh % 2 ** 64
                 e = ExpectedState(pc=4, int_regs=gprs)
+                # XXX the function here should be extracted to a library,
+                # see poly1305_donna.py
                 v = (gprs[4] << 64)
                 v >>= sh % 64
                 mask = ~((2 ** 64 - 1) >> (sh % 64))

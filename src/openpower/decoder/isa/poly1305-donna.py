@@ -17,6 +17,21 @@ def ADDLO(out, i): return (out + (i & mask64))
 def SHR(i, shift): out = (i >> shift) & mask64; print("shr %x>>%d=%x mask %x" % (i,shift,out,mask64)); return out 
 def LO(i): return i & mask64
 
+
+# this function is extracted from bigint_cases.py (should be in a library)
+# it is a python implementation of dsrd, see pseudocode in
+# https://libre-soc.org/openpower/isa/svfixedarith/
+def dsrd(lo, hi, sh):
+    sh = sh % 64
+    v = lo << 64
+    v >>= sh
+    mask = ~((2 ** 64 - 1) >> sh)
+    v |= (hi & mask) << 64
+    hi = (v >> 64) % (2 ** 64)
+    lo == v % (2 ** 64)
+    return lo, hi
+
+
 class Poly1305Donna(object):
 
     """Poly1305 authenticator"""
@@ -180,7 +195,7 @@ class Poly1305Donna(object):
         idxconsts = [ # hN c* shf
                        [1, 1, 44],
                        [2, 1, 42],
-                       [0, 4, 44]
+                       [0, 5, 44]
                     ]
         c = 0 # start with carry=0
         for hidx, cmul, shf in idxconsts*2: # repeat the pattern twice
@@ -194,7 +209,8 @@ class Poly1305Donna(object):
         print("    h0-2 %x %x %x" % (h0, h1, h2))
 
         #/* compute h + -p */
-        g0 = h0 + 5; c = (g0 >> 44); g0 &= ff;
+        c = 5
+        g0 = h0 + c; c = (g0 >> 44); g0 &= ff;
         g1 = h1 + c; c = (g1 >> 44); g1 &= ff;
         g2 = (h2 + c - (1 << 42)) & mask64
 
