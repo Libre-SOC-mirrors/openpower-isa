@@ -60,7 +60,9 @@ def collect_sysargs(tree):
                     match = match.group(2).replace("\t", "").replace("\n", "")
                     (name, *arguments) = map(str.strip, match.split(","))
                     if compat:
-                        name = f"compat_{name}"
+                        name = f"compat_sys_{name}"
+                    else:
+                        name = f"sys_{name}"
                     yield (name, dict(zip(arguments[1::2], arguments[0::2])))
 
 
