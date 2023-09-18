@@ -55,9 +55,9 @@ class Dispatcher:
         return super().__init__()
 
     def __getattr__(self, identifier):
-        return functools.partial(self.__call__, identifier=identifier)
+        return functools.partial(self.__call__, identifier)
 
-    def __call__(self, *arguments, identifier=None):
+    def __call__(self, identifier, *arguments):
         if isinstance(identifier, int):
             identifier = str(identifier)
             if identifier not in self.__guest:
