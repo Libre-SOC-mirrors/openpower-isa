@@ -1,7 +1,5 @@
 import argparse
 import collections
-import enum
-import functools
 import json
 import os
 import pathlib
@@ -77,11 +75,11 @@ def main():
 
     tree = arguments.pop("tree")
     tree = tree.expanduser()
-    sysnums = dict(collect_sysnums(tree=tree))
-    sysargs = dict(collect_sysargs(tree=tree))
-
-    print("SYSNUMS", "=", json.dumps(sysnums, indent=4))
-    print("SYSARGS", "=", json.dumps(sysargs, indent=4))
+    table = {
+        "sysnums": dict(collect_sysnums(tree=tree)),
+        "sysargs": dict(collect_sysargs(tree=tree)),
+    }
+    print(json.dumps(table, indent=4))
 
 
 if __name__ == "__main__":
