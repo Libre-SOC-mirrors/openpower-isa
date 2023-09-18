@@ -54,44 +54,53 @@ class Dispatcher:
 
         return super().__init__()
 
-    def __getattr__(self, identifier):
-        return functools.partial(self.__call__, identifier)
+    def __getattr__(self, entry):
+        if entry.startswith("compat_sys_"):
+            identifier = entry[len("compat_sys_"):]
+        elif entry.startswith("sys_"):
+            identifier = entry[len("sys_"):]
+        else:
+            raise AttributeError(entry)
+
+        if entry not in self.__parameters:
+            raise AttributeError(entry)
+
+        if identifier not in self.__guest:
+            raise AttributeError(entry)
+        identifier = int(self.__guest[identifier])
+
+        def syscall(identifier, *arguments):
+            parameters = tuple(self.__parameters[entry].items())
+            if len(arguments) != len(parameters):
+                raise ValueError("conflict between arguments and parameters")
+
+            identifier = str(identifier)
+            identifier = self.__guest[identifier][0]
+            guest = int(self.__guest[identifier])
+            host = int(self.__host[identifier])
+            self.__logger(f"{identifier} {guest} => {host}")
+            for index in range(len(arguments)):
+                value = arguments[index]
+                if not isinstance(value, int):
+                    raise ValueError("integer argument expected")
+                name = parameters[index][0]
+                ctype = parameters[index][1]
+                self.__logger(f"    0x{value:016x} {name} ({ctype})")
+
+            syscall = self.__libc.syscall
+            syscall.restype = ctypes.c_long
+            syscall.argtypes = ([ctypes.c_long] * len(arguments))
+
+            return int(syscall(ctypes.c_ulong(host)))
+
+        return functools.partial(syscall, identifier)
 
     def __call__(self, identifier, *arguments):
-        if isinstance(identifier, int):
-            identifier = str(identifier)
-            if identifier not in self.__guest:
-                raise KeyError(identifier)
-            entry = self.__guest[identifier][1][0]
-            identifier = self.__guest[identifier][0]
-        else:
-            if not isinstance(identifier, str):
-                raise ValueError(identifier)
-            entry = identifier
-            if not entry.startswith(("compat_sys_", "sys_")):
-                entry = f"sys_{entry}"
+        if not isinstance(identifier, int):
+            raise ValueError(identifier)
 
-        if ((identifier not in self.__guest) or
-                (identifier not in self.__host)):
-            raise KeyError(identifier)
+        identifier = str(identifier)
+        entry = self.__guest[identifier][1][0]
+        syscall = getattr(self, entry)
 
-        parameters = tuple(self.__parameters[entry].items())
-        if len(arguments) != len(parameters):
-            raise ValueError("conflict between arguments and parameters")
-
-        guest = int(self.__guest[identifier])
-        host = int(self.__host[identifier])
-        self.__logger(f"{identifier} {guest} => {host}")
-        for index in range(len(arguments)):
-            value = arguments[index]
-            if not isinstance(value, int):
-                raise ValueError("integer argument expected")
-            name = parameters[index][0]
-            ctype = parameters[index][1]
-            self.__logger(f"    0x{value:016x} {name} ({ctype})")
-
-        syscall = self.__libc.syscall
-        syscall.restype = ctypes.c_long
-        syscall.argtypes = ([ctypes.c_long] * len(arguments))
-
-        return int(syscall(ctypes.c_ulong(host)))
+        return syscall(*arguments)
