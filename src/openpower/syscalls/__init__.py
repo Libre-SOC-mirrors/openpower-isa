@@ -69,7 +69,7 @@ class Dispatcher:
             raise AttributeError(entry)
         identifier = int(self.__guest[identifier])
 
-        def syscall(identifier, *arguments):
+        def syscall(*arguments, identifier=identifier):
             parameters = tuple(self.__parameters[entry].items())
             if len(arguments) != len(parameters):
                 raise ValueError("conflict between arguments and parameters")
@@ -93,7 +93,9 @@ class Dispatcher:
 
             return int(syscall(ctypes.c_ulong(host)))
 
-        return functools.partial(syscall, identifier)
+        syscall.__name__ = syscall.__qualname__ = entry
+
+        return syscall
 
     def __call__(self, identifier, *arguments):
         if not isinstance(identifier, int):
