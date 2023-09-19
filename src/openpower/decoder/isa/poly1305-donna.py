@@ -28,7 +28,7 @@ def dsrd(lo, hi, sh):
     mask = ~((2 ** 64 - 1) >> sh)
     v |= (hi & mask) << 64
     hi = (v >> 64) % (2 ** 64)
-    lo == v % (2 ** 64)
+    lo = v % (2 ** 64)
     return lo, hi
 
 
