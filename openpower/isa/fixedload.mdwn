@@ -76,6 +76,12 @@ Pseudo-code:
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
     RA <- EA
 
+Description:Let the effective address (EA) be the sum (RA)+ D. The
+byte in storage addressed by EA is loaded into RT 56:63.
+RT0:55 are set to 0.
+EA is placed into register RA.
+If RA=0 or RA=RT, the instruction form is invalid.
+
 Special Registers Altered:
 
     None
