@@ -54,6 +54,12 @@ class Dispatcher:
 
         return super().__init__()
 
+    def __iter__(self):
+        identifiers = sorted(map(int, filter(str.isnumeric, self.__guest)))
+        for identifier in identifiers:
+            entry = self.__guest[str(identifier)][1][0]
+            yield (identifier, entry)
+
     def __getitem__(self, identifier):
         if not isinstance(identifier, int):
             raise ValueError(identifier)
