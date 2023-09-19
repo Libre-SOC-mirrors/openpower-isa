@@ -54,6 +54,15 @@ class Dispatcher:
 
         return super().__init__()
 
+    def __getitem__(self, identifier):
+        if not isinstance(identifier, int):
+            raise ValueError(identifier)
+
+        identifier = str(identifier)
+        entry = self.__guest[identifier][1][0]
+
+        return getattr(self, entry)
+
     def __getattr__(self, entry):
         if entry.startswith("compat_sys_"):
             identifier = entry[len("compat_sys_"):]
@@ -98,11 +107,6 @@ class Dispatcher:
         return syscall
 
     def __call__(self, identifier, *arguments):
-        if not isinstance(identifier, int):
-            raise ValueError(identifier)
-
-        identifier = str(identifier)
-        entry = self.__guest[identifier][1][0]
-        syscall = getattr(self, entry)
+        syscall = self[identifier]
 
         return syscall(*arguments)
