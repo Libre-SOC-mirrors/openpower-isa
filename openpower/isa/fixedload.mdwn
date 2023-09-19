@@ -38,6 +38,12 @@ Pseudo-code:
     EA <- b + EXTS(D)
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
 
+Description:
+
+Let the effective address (EA) be the sum (RA|0)+ D.
+The byte in storage addressed by EA is loaded into
+RT[56:63]. RT[0:55] are set to 0.
+
 Special Registers Altered:
 
     None
