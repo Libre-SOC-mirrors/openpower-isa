@@ -106,7 +106,7 @@ class Dispatcher:
             syscall.restype = ctypes.c_long
             syscall.argtypes = ([ctypes.c_long] * len(arguments))
 
-            return int(syscall(ctypes.c_ulong(host)))
+            return int(syscall(ctypes.c_ulong(host), *map(ctypes.c_ulong, arguments)))
 
         syscall.__name__ = syscall.__qualname__ = entry
 
