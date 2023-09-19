@@ -5,6 +5,71 @@ import json
 import pathlib
 
 
+class Syscall:
+    def __init__(self, entry, guest, host, parameters):
+        if not isinstance(entry, str):
+            raise ValueError(entry)
+        if not isinstance(guest, int):
+            raise ValueError(guest)
+        if not isinstance(parameters, tuple):
+            raise ValueError(parameters)
+
+        self.__entry = entry
+        self.__guest = guest
+        self.__host = host
+        self.__parameters = parameters
+
+        return super().__init__()
+
+    @property
+    def entry(self):
+        return self.__entry
+
+    @property
+    def guest(self):
+        return self.__guest
+
+    @property
+    def host(self):
+        return self.__host
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.entry} {self.guest}=>{self.host})"
+
+    def __call__(self, *arguments):
+        if len(arguments) != len(self.__parameters):
+            raise ValueError("conflict between arguments and parameters")
+
+        for index in range(len(arguments)):
+            value = arguments[index]
+            if not isinstance(value, int):
+                raise ValueError("integer argument expected")
+
+        libc = ctypes.CDLL(None)
+        syscall = libc.syscall
+        restype = syscall.restype
+        argtypes = syscall.argtypes
+        syscall.restype = ctypes.c_long
+        syscall.argtypes = ([ctypes.c_long] * len(arguments))
+        res = int(syscall(ctypes.c_ulong(self.host), *map(ctypes.c_ulong, arguments)))
+        syscall.restype = restype
+        syscall.argtypes = argtypes
+        return res
+
+
+class UnimplementedSyscall(Syscall):
+    def __init__(self, guest):
+        return super().__init__(entry="sys_ni_syscall", guest=guest, host=-1, parameters=tuple())
+
+
+class UnknownSyscall(Syscall):
+    def __init__(self, entry, guest):
+        return super().__init__(entry=entry, guest=guest, host=-1, parameters=tuple())
+
+    def __call__(self, *arguments):
+        raise NotImplemented
+
+
 class Dispatcher:
     def __init__(self, guest, host, logger=None, table=None):
         if table is None:
@@ -58,7 +123,14 @@ class Dispatcher:
         identifiers = sorted(map(int, filter(str.isnumeric, self.__guest)))
         for identifier in identifiers:
             entry = self.__guest[str(identifier)][1][0]
-            yield (identifier, entry)
+            name = self.__guest[str(identifier)][0]
+            syscall = getattr(self, entry, None)
+            if syscall is None:
+                if entry == "sys_ni_syscall":
+                    syscall = UnimplementedSyscall(guest=identifier)
+                else:
+                    syscall = UnknownSyscall(entry=entry, guest=identifier)
+            yield syscall
 
     def __getitem__(self, identifier):
         if not isinstance(identifier, int):
@@ -82,35 +154,15 @@ class Dispatcher:
 
         if identifier not in self.__guest:
             raise AttributeError(entry)
-        identifier = int(self.__guest[identifier])
 
-        def syscall(*arguments, identifier=identifier):
-            parameters = tuple(self.__parameters[entry].items())
-            if len(arguments) != len(parameters):
-                raise ValueError("conflict between arguments and parameters")
+        if identifier not in self.__host:
+            raise AttributeError(entry)
 
-            identifier = str(identifier)
-            identifier = self.__guest[identifier][0]
-            guest = int(self.__guest[identifier])
-            host = int(self.__host[identifier])
-            self.__logger(f"{identifier} {guest} => {host}")
-            for index in range(len(arguments)):
-                value = arguments[index]
-                if not isinstance(value, int):
-                    raise ValueError("integer argument expected")
-                name = parameters[index][0]
-                ctype = parameters[index][1]
-                self.__logger(f"    0x{value:016x} {name} ({ctype})")
+        guest = int(self.__guest[identifier])
+        host = int(self.__host[identifier])
+        parameters = tuple(self.__parameters[entry].items())
 
-            syscall = self.__libc.syscall
-            syscall.restype = ctypes.c_long
-            syscall.argtypes = ([ctypes.c_long] * len(arguments))
-
-            return int(syscall(ctypes.c_ulong(host), *map(ctypes.c_ulong, arguments)))
-
-        syscall.__name__ = syscall.__qualname__ = entry
-
-        return syscall
+        return Syscall(entry=entry, guest=guest, host=host, parameters=parameters)
 
     def __call__(self, identifier, *arguments):
         syscall = self[identifier]
