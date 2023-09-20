@@ -38,19 +38,25 @@ class SVP64ExtraSpec(Elaboratable):
         with m.Switch(self.etype):
             # 2-bit index selection mode
             with m.Case(SVEType.EXTRA2):
+                extra2_lsb = Signal(1)
                 with m.Switch(self.idx):
                     with m.Case(SVEXTRA.Idx0):  # 1st 2 bits [0:1]
                         comb += spec[SPEC.VEC].eq(extra[EXTRA2.IDX0_VEC])
-                        comb += spec[SPEC.MSB].eq(extra[EXTRA2.IDX0_MSB])
+                        comb += extra2_lsb.eq(extra[EXTRA2.IDX0_MSB])
                     with m.Case(SVEXTRA.Idx1):  # 2nd 2 bits [2:3]
                         comb += spec[SPEC.VEC].eq(extra[EXTRA2.IDX1_VEC])
-                        comb += spec[SPEC.MSB].eq(extra[EXTRA2.IDX1_MSB])
+                        comb += extra2_lsb.eq(extra[EXTRA2.IDX1_MSB])
                     with m.Case(SVEXTRA.Idx2):  # 3rd 2 bits [4:5]
                         comb += spec[SPEC.VEC].eq(extra[EXTRA2.IDX2_VEC])
-                        comb += spec[SPEC.MSB].eq(extra[EXTRA2.IDX2_MSB])
+                        comb += extra2_lsb.eq(extra[EXTRA2.IDX2_MSB])
                     with m.Case(SVEXTRA.Idx3):  # 4th 2 bits [6:7]
                         comb += spec[SPEC.VEC].eq(extra[EXTRA2.IDX3_VEC])
-                        comb += spec[SPEC.MSB].eq(extra[EXTRA2.IDX3_MSB])
+                        comb += extra2_lsb.eq(extra[EXTRA2.IDX3_MSB])
+                with m.If(spec[SPEC.VEC]):  # vector mode
+                    # can express reg numbers range(0, 127, 2)
+                    comb += spec[SPEC.MSB].eq(extra2_lsb)
+                with m.Else():  # scalar mode: can express r0-63
+                    comb += spec[SPEC.LSB].eq(extra2_lsb)
             # 3-bit index selection mode
             with m.Case(SVEType.EXTRA3):
                 with m.Switch(self.idx):
