@@ -8,7 +8,7 @@ from nmutil.util import sel
 
 from openpower.decoder.power_enums import (SVEXTRA, SVEType)
 from openpower.consts import (SPEC, EXTRA2, EXTRA3, SVP64P, field,
-                        SPEC_SIZE, SPECb, SPEC_AUG_SIZE, SVP64CROffs)
+                              SPEC_SIZE, SPECb, SPEC_AUG_SIZE, SVP64CROffs)
 
 
 class SVP64ExtraSpec(Elaboratable):
@@ -18,11 +18,12 @@ class SVP64ExtraSpec(Elaboratable):
 
     see https://libre-soc.org/openpower/sv/svp64/
     """
+
     def __init__(self):
-        self.extra   = Signal(9, reset_less=True)
-        self.etype   = Signal(SVEType, reset_less=True) # 2 or 3 bits
-        self.idx     = Signal(SVEXTRA, reset_less=True) # which part of extra
-        self.spec  = Signal(3) # EXTRA spec for the register
+        self.extra = Signal(9, reset_less=True)
+        self.etype = Signal(SVEType, reset_less=True)  # 2 or 3 bits
+        self.idx = Signal(SVEXTRA, reset_less=True)  # which part of extra
+        self.spec = Signal(3)  # EXTRA spec for the register
 
     def elaborate(self, platform):
         m = Module()
@@ -78,14 +79,15 @@ class SVP64RegExtra(SVP64ExtraSpec):
 
     see https://libre-soc.org/openpower/sv/svp64/
     """
+
     def __init__(self):
         SVP64ExtraSpec.__init__(self)
-        self.reg_in  = Signal(5) # incoming reg number (5 bits, RA, RB)
-        self.reg_out = Signal(7) # extra-augmented output (7 bits)
-        self.isvec   = Signal(1) # reg is marked as vector if true
+        self.reg_in = Signal(5)  # incoming reg number (5 bits, RA, RB)
+        self.reg_out = Signal(7)  # extra-augmented output (7 bits)
+        self.isvec = Signal(1)  # reg is marked as vector if true
 
     def elaborate(self, platform):
-        m = super().elaborate(platform) # select required EXTRA2/3
+        m = super().elaborate(platform)  # select required EXTRA2/3
         comb = m.d.comb
 
         # first get the spec.  if not changed it's "scalar identity behaviour"
@@ -125,14 +127,15 @@ class SVP64CRExtra(SVP64ExtraSpec):
 
     see https://libre-soc.org/openpower/sv/svp64/appendix
     """
+
     def __init__(self):
         SVP64ExtraSpec.__init__(self)
-        self.cr_in  = Signal(3) # incoming CR number (3 bits, BA[0:2], BFA)
-        self.cr_out = Signal(7) # extra-augmented CR output (7 bits)
-        self.isvec  = Signal(1) # reg is marked as vector if true
+        self.cr_in = Signal(3)  # incoming CR number (3 bits, BA[0:2], BFA)
+        self.cr_out = Signal(7)  # extra-augmented CR output (7 bits)
+        self.isvec = Signal(1)  # reg is marked as vector if true
 
     def elaborate(self, platform):
-        m = super().elaborate(platform) # select required EXTRA2/3
+        m = super().elaborate(platform)  # select required EXTRA2/3
         comb = m.d.comb
 
         # first get the spec.  if not changed it's "scalar identity behaviour"
