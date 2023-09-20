@@ -37,6 +37,7 @@ build:
             python3-dev
             python3-pip
             python3-setuptools
+            python3-setuptools-scm
             python3-wheel
             qemu-system-ppc
             tcl-dev
