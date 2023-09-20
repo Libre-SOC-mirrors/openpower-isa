@@ -7,9 +7,83 @@ import re
 
 
 def collect_sysnums(tree):
+    whitespace = re.compile(r"\s+")
+
+    number = r"[0-9]+"
+    name = r"[A-Za-z0-9_]+"
+    identifier = rf"__NR(?:3264)?_{name}"
+
+    def transform(macro_nr_args):
+        (macro, nr_args) = macro_nr_args
+        args = r",\s*\\*\s*".join([f"({name})"] * nr_args)
+        return rf"(?:({macro})\(({identifier}),\s*\\*\s*{args}\))"
+
+    pattern0 = re.compile(rf"^#define\s+({identifier})\s+({number})$", re.M)
+    pattern1 = re.compile("|".join(map(transform, {
+        "__SC_COMP_3264": 3,
+        "__SC_3264": 2,
+        "__SC_COMP": 2,
+        "__SYSCALL": 1,
+    }.items())))
+
+    path = (tree / "include/uapi/asm-generic/unistd.h")
+    with open(path, mode="r", encoding="UTF-8") as stream:
+        identifiers = {}
+        data = stream.read()
+
+        for match in pattern0.finditer(data):
+            identifier = match.group(1)
+            number = int(match.group(2))
+            identifiers[identifier] = number
+
+        for match in pattern1.finditer(data):
+            groups = (group for group in match.groups() if group is not None)
+            (category, identifier, *entries) = groups
+            number = identifiers[identifier]
+            identifiers[identifier] = (category, number, tuple(entries))
+
+    for identifier in ("__NR_arch_specific_syscall", "__NR_syscalls"):
+        del identifiers[identifier]
+
+    table = {
+        "arch32": collections.defaultdict(),
+        "arch64": collections.defaultdict(),
+    }
+    for (identifier, (category, number, entries)) in identifiers.items():
+        name = identifier.replace("__NR3264_", "").replace("__NR_", "")
+        (entry, entry32, entry64, compat) = ([None] * 4)
+        if category == "__SC_COMP_3264":
+            (entry32, entry64, compat) = entries
+        elif category == "__SC_3264":
+            (entry32, entry64) = entries
+        elif category == "__SC_COMP":
+            (entry, compat) = entries
+        else:
+            (entry,) = entries
+
+        for abi in table:
+            table[abi][number] = (name, [])
+            table[abi][name] = number
+
+        if entry32 is not None:
+            table["arch32"][number][1].append(entry32)
+        if entry64 is not None:
+            table["arch64"][number][1].append(entry64)
+        if compat is not None:
+            table["arch64"][number][1].append(compat)
+        if entry is not None:
+            table["arch32"][number][1].append(entry)
+            table["arch64"][number][1].append(entry)
+
+        for abi in dict(table):
+            if not table[abi][number][1]:
+                del table[abi][number]
+                del table[abi][name]
+
+        yield ("generic", table)
+
     def parse(path):
         table = collections.defaultdict(dict)
-        whitespace = re.compile(r"\s+")
         with open(path, mode="r", encoding="UTF-8") as stream:
             lines = filter(lambda line: not line.strip().startswith("#"), stream)
             for line in filter(bool, map(str.strip, lines)):
