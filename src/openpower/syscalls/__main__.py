@@ -6,6 +6,10 @@ import pathlib
 import re
 
 
+from . import Dispatcher
+from . import UnknownSyscall
+
+
 def rename_entry(entry):
     if entry == "sys_newuname":
         return "sys_uname"
@@ -157,6 +161,91 @@ def generate_json(tree):
     print(json.dumps(table, indent=4))
 
 
+class ECallGenerator:
+    def __init__(self, **arguments):
+        self.__level = 0
+
+        return super().__init__()
+
+    def __enter__(self):
+        self.__level += 1
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.__level -= 1
+
+    def print(self, message):
+        indent = ((" " * 4 * self.__level) if message else "")
+        print(f"{indent}{message}")
+
+    def __call__(self, guest, host):
+        conventions = {
+            "riscv64": (17, 10, 11, 12, 13, 14, 15),
+        }
+
+        limit = -1
+        syscalls = {}
+        dispatcher = Dispatcher(guest=guest, host=host)
+        for syscall in dispatcher:
+            limit = max(limit, syscall.guest)
+            syscalls[syscall.guest] = syscall
+
+        self.print("#include <sys/syscall.h>")
+        self.print("")
+        self.print("struct ecall_entry {")
+        with self:
+            self.print("long number;")
+            self.print("char const *name;")
+        self.print("};")
+        self.print("")
+
+        self.print("static inline struct ecall_entry const *")
+        self.print("ecall_entry(long id)")
+        self.print("{")
+        with self:
+            (identifier, *_) = conventions[guest]
+            self.print("static struct ecall_entry const table[] = {")
+            with self:
+                for index in range(limit + 1):
+                    syscall = syscalls.get(index, UnknownSyscall(guest=index, entry=f"nil"))
+                    self.print(f"[{index}] = {{")
+                    with self:
+                        self.print(f".number = {syscall.host},")
+                        self.print(f".name = \"{syscall.entry}\",")
+                    self.print(f"}},")
+            self.print("};")
+            self.print("")
+            self.print(f"if (id > {limit})")
+            with self:
+                self.print(f"return NULL;")
+            self.print("")
+            self.print("return &table[(size_t)id];")
+        self.print("}")
+        self.print("")
+
+        self.print("static inline long")
+        self.print("ecall_fetch(struct core_t const *cpu, long arguments[6])")
+        self.print("{")
+        with self:
+            (identifier, *arguments) = conventions[guest]
+            for (index, argument) in enumerate(arguments):
+                self.print(f"arguments[{index}] = cpu->reg[{argument}].l;")
+            self.print("")
+            self.print(f"return cpu->reg[{identifier}].l;")
+        self.print("}")
+        self.print("")
+
+        self.print("static inline void")
+        self.print("ecall_store(long const arguments[6], struct core_t *cpu)")
+        self.print("{")
+        with self:
+            (identifier, *arguments) = conventions[guest]
+            for (index, argument) in enumerate(arguments):
+                self.print(f"cpu->reg[{argument}].l = arguments[{index}];")
+        self.print("}")
+
+
+
 def main():
     main_parser = argparse.ArgumentParser("lscmg",
         description="Linux system calls mapping generator")
@@ -167,6 +256,15 @@ def main():
         help="path to kernel source tree",
         type=pathlib.Path)
     json_parser.set_defaults(generate=generate_json)
+
+    ecall_parser = main_subparsers.add_parser("ecall")
+    ecall_parser.add_argument("guest",
+        help="guest architecture",
+        choices=("riscv64",))
+    ecall_parser.add_argument("host",
+        help="amd64 architecture",
+        choices=("amd64",))
+    ecall_parser.set_defaults(generate=ECallGenerator())
 
     arguments = dict(vars(main_parser.parse_args()))
     generate = arguments.pop("generate")
