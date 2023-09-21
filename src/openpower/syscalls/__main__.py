@@ -65,15 +65,15 @@ def collect_sysnums(tree):
             table[abi][number] = (name, [])
             table[abi][name] = number
 
-        if entry32 is not None:
-            table["arch32"][number][1].append(entry32)
-        if entry64 is not None:
-            table["arch64"][number][1].append(entry64)
-        if compat is not None:
-            table["arch64"][number][1].append(compat)
         if entry is not None:
             table["arch32"][number][1].append(entry)
             table["arch64"][number][1].append(entry)
+        if entry64 is not None:
+            table["arch64"][number][1].append(entry64)
+        if entry32 is not None:
+            table["arch32"][number][1].append(entry32)
+        if compat is not None:
+            table["arch64"][number][1].append(compat)
 
         for abi in dict(table):
             if not table[abi][number][1]:
