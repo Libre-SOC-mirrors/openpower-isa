@@ -140,22 +140,30 @@ def collect_sysargs(tree):
                     yield (name, dict(zip(arguments[1::2], arguments[0::2])))
 
 
-def main():
-    parser = argparse.ArgumentParser("lscmg",
-        description="Linux system calls mapping generator")
-    parser.add_argument("tree",
-        help="path to kernel source tree",
-        type=pathlib.Path)
-
-    arguments = dict(vars(parser.parse_args()))
-
-    tree = arguments.pop("tree")
+def generate_json(tree):
     tree = tree.expanduser()
     table = {
         "sysnums": dict(collect_sysnums(tree=tree)),
         "sysargs": dict(collect_sysargs(tree=tree)),
     }
     print(json.dumps(table, indent=4))
+
+
+def main():
+    main_parser = argparse.ArgumentParser("lscmg",
+        description="Linux system calls mapping generator")
+    main_subparsers = main_parser.add_subparsers(dest="generate", required=True)
+
+    json_parser = main_subparsers.add_parser("json")
+    json_parser.add_argument("tree",
+        help="path to kernel source tree",
+        type=pathlib.Path)
+    json_parser.set_defaults(generate=generate_json)
+
+    arguments = dict(vars(main_parser.parse_args()))
+    generate = arguments.pop("generate")
+
+    return generate(**arguments)
 
 
 if __name__ == "__main__":
