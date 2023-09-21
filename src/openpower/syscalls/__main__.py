@@ -6,6 +6,12 @@ import pathlib
 import re
 
 
+def rename_entry(entry):
+    if entry == "sys_newuname":
+        return "sys_uname"
+    return entry
+
+
 def collect_sysnums(tree):
     whitespace = re.compile(r"\s+")
 
@@ -39,8 +45,9 @@ def collect_sysnums(tree):
         for match in pattern1.finditer(data):
             groups = (group for group in match.groups() if group is not None)
             (category, identifier, *entries) = groups
+            entries = tuple(map(rename_entry, entries))
             number = identifiers[identifier]
-            identifiers[identifier] = (category, number, tuple(entries))
+            identifiers[identifier] = (category, number, entries)
 
     for identifier in ("__NR_arch_specific_syscall", "__NR_syscalls"):
         del identifiers[identifier]
@@ -49,6 +56,7 @@ def collect_sysnums(tree):
         "arch32": collections.defaultdict(),
         "arch64": collections.defaultdict(),
     }
+
     for (identifier, (category, number, entries)) in identifiers.items():
         name = identifier.replace("__NR3264_", "").replace("__NR_", "")
         (entry, entry32, entry64, compat) = ([None] * 4)
@@ -88,7 +96,7 @@ def collect_sysnums(tree):
             lines = filter(lambda line: not line.strip().startswith("#"), stream)
             for line in filter(bool, map(str.strip, lines)):
                 (number, abi, name, *entries) = map(str.strip, whitespace.split(line))
-                entries = tuple(entries)
+                entries = tuple(map(rename_entry, entries))
                 if len(entries) > 2:
                     raise ValueError(line)
                 table[abi][number] = (name, entries)
