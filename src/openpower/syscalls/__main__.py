@@ -181,6 +181,8 @@ class ECallGenerator:
     def __call__(self, guest, host):
         conventions = {
             "riscv64": (17, 10, 11, 12, 13, 14, 15),
+            "ppc": (0, 3, 4, 5, 6, 7, 8),
+            "ppc64": (0, 3, 4, 5, 6, 7, 8),
         }
 
         limit = -1
@@ -260,7 +262,7 @@ def main():
     ecall_parser = main_subparsers.add_parser("ecall")
     ecall_parser.add_argument("guest",
         help="guest architecture",
-        choices=("riscv64",))
+        choices=("riscv64", "ppc", "ppc64"))
     ecall_parser.add_argument("host",
         help="amd64 architecture",
         choices=("amd64",))
