@@ -102,11 +102,19 @@ class Dispatcher:
             yield from sysnums["ppc"]["common"].items()
             yield from sysnums["ppc"]["64"].items()
 
+        def riscv32(sysnums):
+            yield from sysnums["generic"]["arch32"].items()
+
+        def riscv64(sysnums):
+            yield from sysnums["generic"]["arch64"].items()
+
         arch = {
             "i386": i386,
             "amd64": amd64,
             "ppc": ppc,
             "ppc64": ppc64,
+            "riscv32": riscv32,
+            "riscv64": riscv64,
         }
         sysnums = table["sysnums"]
         sysargs = table["sysargs"]
