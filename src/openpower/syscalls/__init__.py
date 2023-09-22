@@ -54,7 +54,7 @@ class Syscall:
         argtypes = syscall.argtypes
         syscall.restype = ctypes.c_long
         syscall.argtypes = ([ctypes.c_long] * len(arguments))
-        res = int(syscall(ctypes.c_ulong(self.host), *map(ctypes.c_ulong, arguments)))
+        res = int(syscall(ctypes.c_long(self.host), *map(ctypes.c_long, arguments)))
         syscall.restype = restype
         syscall.argtypes = argtypes
         return res
