@@ -27,6 +27,7 @@ def swap_order(x, nbytes):
 class MemException(Exception):
     pass
 
+
 def process_mem(initial_mem, row_bytes=8):
     res = {}
     # different types of memory data structures recognised (for convenience)
@@ -42,8 +43,8 @@ def process_mem(initial_mem, row_bytes=8):
         if isinstance(val, tuple):
             (val, width) = val
         else:
-            width = row_bytes # assume same width
-        #val = swap_order(val, width)
+            width = row_bytes  # assume same width
+        # val = swap_order(val, width)
         res[addr] = (val, width)
 
     return res
@@ -63,7 +64,7 @@ class Mem:
             return
 
         for addr, (val, width) in process_mem(initial_mem, row_bytes).items():
-            #val = swap_order(val, width)
+            # val = swap_order(val, width)
             self.st(addr, val, width, swap=False)
 
     def _get_shifter_mask(self, wid, remainder):
@@ -78,17 +79,17 @@ class Mem:
 
     # TODO: Implement ld/st of lesser width
     def ld(self, address, width=8, swap=True, check_in_mem=False,
-                 instr_fetch=False):
+           instr_fetch=False):
         log("ld from addr 0x%x width %d" % (address, width),
-                swap, check_in_mem, instr_fetch)
-        self.last_ld_addr = address # record last load
+            swap, check_in_mem, instr_fetch)
+        self.last_ld_addr = address  # record last load
         ldaddr = address
         remainder = address & (self.bytes_per_word - 1)
         address = address >> self.word_log2
         if remainder & (width - 1) != 0:
             exc = MemException("unaligned",
-                  "Unaligned access: remainder %x width %d" % \
-                  (remainder, width))
+                               "Unaligned access: remainder %x width %d" %
+                               (remainder, width))
             exc.dar = ldaddr
             raise exc
         if address in self.mem:
@@ -113,12 +114,12 @@ class Mem:
         staddr = addr
         remainder = addr & (self.bytes_per_word - 1)
         addr = addr >> self.word_log2
-        log("Writing 0x%x to ST 0x%x memaddr 0x%x/%x swap %s" % \
+        log("Writing 0x%x to ST 0x%x memaddr 0x%x/%x swap %s" %
             (v, staddr, addr, remainder, str(swap)))
         if not self.misaligned_ok and remainder & (width - 1) != 0:
             exc = MemException("unaligned",
-                  "Unaligned access: remainder %x width %d" % \
-                  (remainder, width))
+                               "Unaligned access: remainder %x width %d" %
+                               (remainder, width))
             exc.dar = staddr
             raise exc
         if swap:
@@ -137,7 +138,7 @@ class Mem:
         log("mem @ 0x%x: 0x%x" % (staddr, self.mem[addr]))
 
     def st(self, st_addr, v, width=8, swap=True):
-        self.last_st_addr = st_addr # record last store
+        self.last_st_addr = st_addr  # record last store
         # misaligned not allowed: pass straight to Mem._st
         if not self.misaligned_ok:
             return self._st(st_addr, v, width, swap)
@@ -157,7 +158,7 @@ class Mem:
         val2 = v >> ((width-misaligned)*8)
         addr2 = (st_addr >> self.word_log2) << self.word_log2
         addr2 += self.bytes_per_word
-        print ("v, val2", hex(v), hex(val2), "ad", addr2)
+        print("v, val2", hex(v), hex(val2), "ad", addr2)
         self._st(addr2, val2, width=width-misaligned, swap=False)
 
     def __call__(self, addr, sz):
@@ -180,12 +181,12 @@ class Mem:
             s = ""
             if asciidump:
                 for i in range(8):
-                    c = chr(self.mem[k]>>(i*8) & 0xff)
+                    c = chr(self.mem[k] >> (i*8) & 0xff)
                     if not c.isprintable():
                         c = "."
                     s += c
-            print ("%016x: %016x" % ((k*8) & 0xffffffffffffffff,
-                                     self.mem[k]), s)
+            print("%016x: %016x" % ((k*8) & 0xffffffffffffffff,
+                                    self.mem[k]), s)
         return res
 
     def log_fancy(self, *, kind=LogKind.Default, name="Memory",
