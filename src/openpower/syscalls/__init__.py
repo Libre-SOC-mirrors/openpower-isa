@@ -1,5 +1,4 @@
 import ctypes
-import functools
 import inspect
 import json
 import pathlib
@@ -73,8 +72,7 @@ class UnknownSyscall(Syscall):
 class Dispatcher:
     def __init__(self, guest, host, logger=None, table=None):
         if table is None:
-            path = pathlib.Path(inspect.getfile(self.__class__))
-            path = (path.parent / "syscalls.json")
+            path = (pathlib.Path(__file__).parent / "syscalls.json")
             with open(path, "r", encoding="UTF-8") as stream:
                 table = json.load(stream)
         if not isinstance(table, dict):
