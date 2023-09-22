@@ -33,11 +33,14 @@ class Syscall:
     def host(self):
         return self.__host
 
+    def __len__(self):
+        return len(self.__parameters)
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.entry} {self.guest}=>{self.host})"
 
     def __call__(self, *arguments):
-        if len(arguments) != len(self.__parameters):
+        if len(arguments) < len(self):
             raise ValueError("conflict between arguments and parameters")
 
         for index in range(len(arguments)):
