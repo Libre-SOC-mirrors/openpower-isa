@@ -423,7 +423,7 @@ class SimState(State):
         mem = self.sim.mem
         if isinstance(mem, RADIX):
             mem = mem.mem
-        keys = list(mem.mem.keys())
+        keys = list(mem.word_idxs())
         self.mem = {}
         # from each address in the underlying mem-simulated dictionary
         # issue a 64-bit LD (with no byte-swapping)
