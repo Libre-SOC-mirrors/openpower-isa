@@ -811,6 +811,7 @@ _insns = [
     "setb",
     "setbc", "setbcr", "setnbc", "setnbcr",
     "setvl",  # https://libre-soc.org/openpower/sv/setvl
+    "sc", "scv",
     "svindex",  # https://libre-soc.org/openpower/sv/remap
     "svremap",  # https://libre-soc.org/openpower/sv/remap - TEMPORARY
     "svshape",  # https://libre-soc.org/openpower/sv/remap/#svshape
