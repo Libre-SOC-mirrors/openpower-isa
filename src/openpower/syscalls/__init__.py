@@ -1,4 +1,5 @@
 import ctypes
+import errno
 import inspect
 import json
 import pathlib
@@ -59,6 +60,9 @@ class Syscall:
 class UnimplementedSyscall(Syscall):
     def __init__(self, guest):
         return super().__init__(entry="sys_ni_syscall", guest=guest, host=-1, parameters=tuple())
+
+    def __call__(self, *arguments):
+        return -errno.ENOSYS
 
 
 class UnknownSyscall(Syscall):
