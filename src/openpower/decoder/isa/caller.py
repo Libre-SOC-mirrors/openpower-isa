@@ -18,6 +18,8 @@ from copy import deepcopy
 from functools import wraps
 
 from nmigen.sim import Settle
+from os import uname
+import openpower.syscalls
 from openpower.consts import (MSRb, PIb,  # big-endian (PowerISA versions)
                               SVP64CROffs, SVP64MODEb)
 from openpower.decoder.helpers import (ISACallerHelper, ISAFPHelpers, exts,
@@ -1131,6 +1133,22 @@ class StepLoop:
         log("    new dststep", dststep)
 
 
+class SyscallEmulator(openpower.syscalls.Dispatcher):
+    def __init__(self, isacaller):
+        machine = uname().machine
+        host = {
+            "x86_64": "amd64",
+        }.get(machine, machine)
+
+        self.__isacaller = isacaller
+
+        return super().__init__(guest="ppc64", host=host)
+
+    def __call__(self, identifier, *arguments):
+        (identifier, *arguments) = map(int, (identifier, *arguments))
+        return super().__call__(identifier, *arguments)
+
+
 class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     # decoder2 - an instance of power_decoder2
     # regfile - a list of initial values for the registers
@@ -1152,6 +1170,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  use_mmap_mem=False):
 
         # trace log file for model output. if None do nothing
+        self.syscall = SyscallEmulator(isacaller=self)
         self.insnlog = insnlog
         self.insnlog_is_file = hasattr(insnlog, "write")
         if not self.insnlog_is_file and self.insnlog:
@@ -1930,6 +1949,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         asmop = yield from self.get_assembly_name()
         log("call", ins_name, asmop,
             kind=LogKind.InstrInOuts)
+
+        if not self.is_svp64_mode and asmop in ("sc", "scv"):
+            identifier = self.gpr(0)
+            arguments = map(self.gpr, range(3, 9))
+            result = self.syscall(identifier, *arguments)
+            self.gpr.write(3, result, False, self.namespace["XLEN"])
+            self.update_pc_next()
+            return
 
         # sv.setvl is *not* a loop-function. sigh
         log("is_svp64_mode", self.is_svp64_mode, asmop)
