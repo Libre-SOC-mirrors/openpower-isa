@@ -13,6 +13,7 @@ poly1305_block_size = 16
 mask128 = (1<<128)-1
 mask64 = (1<<64)-1
 def MUL(x, y): out = (x&mask64) * (y&mask64); print("mul %x*%x=%x" % (x, y, out)); return out
+def ADD(out, i): return (out + i)
 def ADDLO(out, i): return (out + (i & mask64))
 def SHR(i, shift): out = (i >> shift) & mask64; print("shr %x>>%d=%x mask %x" % (i,shift,out,mask64)); return out 
 def LO(i): return i & mask64
@@ -132,8 +133,8 @@ class Poly1305Donna(object):
             d0=MUL(h0,r0); d=MUL(h1,s2);
             print("      h*=r d0 d %x %x" % (d0, d))
             d0+=d; d=MUL(h2,s1); d0+=d;
-            d1=MUL(h0,r1); d=MUL(h1,r0); d1+=d; d=MUL(h2,s2); d1+=d;
-            d2=MUL(h0,r2); d=MUL(h1,r1); d2+=d; d=MUL(h2,r0); d2+=d;
+            d1=MUL(h0,r1);d=MUL(h1,r0);d1=ADD(d1,d);d=MUL(h2,s2);d1=ADD(d1,d);
+            d2=MUL(h0,r2);d=MUL(h1,r1);d2=ADD(d2,d);d=MUL(h2,r0);d2=ADD(d2,d);
             print("      after h*=r d0 d1 d2 %x %x %x %x" % (d0, d1, d2, d))
 
             #/* (partial) h %= p */
@@ -141,8 +142,8 @@ class Poly1305Donna(object):
             d0 = ADDLO(d0,c); c = SHR(d0, 44); h0 = LO(d0) & 0xfffffffffff;
             d1 = ADDLO(d1,c); c = SHR(d1, 44); h1 = LO(d1) & 0xfffffffffff;
             d2 = ADDLO(d2,c); c = SHR(d2, 42); h2 = LO(d2) & 0x3ffffffffff;
-            h0 += c * 5     ; c = (h0 >> 44) ; h0 =    h0  & 0xfffffffffff;
-            h1 += c;
+            h0 += MUL(c, 5);  c = (h0 >> 44) ; h0 =    h0  & 0xfffffffffff;
+            h1 += MUL(c, 1);
 
             m = m[poly1305_block_size:]
 
@@ -199,7 +200,7 @@ class Poly1305Donna(object):
                     ]
         c = 0 # start with carry=0
         for hidx, cmul, shf in idxconsts*2: # repeat the pattern twice
-            self.h[hidx] += c * cmul        # don't worry about *1
+            self.h[hidx] += MUL(c, cmul)    # don't worry about *1
             c = self.h[hidx] >> shf         # these two could use dsrd
             self.h[hidx] &= (1<<shf) - 1    # (one instruction)
         self.h[1] += c; # can't have everything...
@@ -210,9 +211,9 @@ class Poly1305Donna(object):
 
         #/* compute h + -p */
         c = 5
-        g0 = h0 + c; c = (g0 >> 44); g0 &= ff;
-        g1 = h1 + c; c = (g1 >> 44); g1 &= ff;
-        g2 = (h2 + c - (1 << 42)) & mask64
+        g0 = ADD(h0, c); c = (g0 >> 44); g0 &= ff;
+        g1 = ADD(h1, c); c = (g1 >> 44); g1 &= ff;
+        g2 = (ADD(h2, c) - (1 << 42)) & mask64
 
         print("    g0-2 %x %x %x" % (g0, g1, g2))
 
@@ -231,9 +232,9 @@ class Poly1305Donna(object):
         t0 = self.pad[0];
         t1 = self.pad[1];
 
-        h0 += (( t0                    ) & ff)    ; c = (h0 >> 44); h0 &= ff;
-        h1 += (((t0 >> 44) | (t1 << 20)) & ff) + c; c = (h1 >> 44); h1 &= ff;
-        h2 += (((t1 >> 24)             ) & f3) + c;                 h2 &= f3;
+        h0 += ADD(( t0                    ) & ff, 0); c = (h0 >> 44); h0 &= ff;
+        h1 += ADD(((t0 >> 44) | (t1 << 20)) & ff, c); c = (h1 >> 44); h1 &= ff;
+        h2 += ADD(((t1 >> 24)             ) & f3, c);                 h2 &= f3;
 
         #/* mac = h % (2^128) */
         h0 = ((h0      ) | (h1 << 44));
