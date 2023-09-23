@@ -12,11 +12,11 @@ poly1305_block_size = 16
 
 mask128 = (1<<128)-1
 mask64 = (1<<64)-1
-def MUL(x, y): out = (x&mask64) * (y&mask64); print("mul %x*%x=%x" % (x, y, out)); return out
-def ADD(out, i): return (out + i)
-def ADDLO(out, i): return (out + (i & mask64))
-def SHR(i, shift): out = (i >> shift) & mask64; print("shr %x>>%d=%x mask %x" % (i,shift,out,mask64)); return out 
-def LO(i): return i & mask64
+def _MUL(x, y): out = (x&mask64) * (y&mask64); print("mul %x*%x=%x" % (x, y, out)); return out
+def _ADD(out, i): return (out + i)
+def _ADDLO(out, i): return (out + (i & mask64))
+def _SHR(i, shift): out = (i >> shift) & mask64; print("shr %x>>%d=%x mask %x" % (i,shift,out,mask64)); return out
+def _LO(i): return i & mask64
 
 
 # this function is extracted from bigint_cases.py (should be in a library)
@@ -38,6 +38,14 @@ class Poly1305Donna(object):
     """Poly1305 authenticator"""
 
     P = 0x3fffffffffffffffffffffffffffffffb # 2^130-5
+
+    # suite of primitives (128-bit and 64-bit) which can be intercepted
+    # here in order to analyse carry-roll-over
+    def MUL(self, x, y): return _MUL(x, y)
+    def ADD(self, out, i): return _ADD(out, i)
+    def ADDLO(self, out, i): return _ADDLO(out, i)
+    def SHR(self, i, shift): return _SHR(i, shift)
+    def LO(self, i): return _LO(i)
 
     @staticmethod
     def le_bytes_to_num(data):
@@ -92,6 +100,11 @@ class Poly1305Donna(object):
         self.final = 0
 
     def poly1305_blocks(self, m):
+
+        # get local-names for math-primitives to look like poly1305-donna-64.h
+        MUL, ADD, ADDLO, SHR, LO = \
+            self.MUL, self.ADD, self.ADDLO, self.SHR, self.LO
+
         hibit = 0 if self.final else 1 << 40 # 1 << 128
         #unsigned long long r0,r1,r2;
         #unsigned long long s1,s2;
@@ -152,6 +165,11 @@ class Poly1305Donna(object):
         self.h[2] = h2;
 
     def poly1305_finish(self):
+
+        # get local-names for math-primitives to look like poly1305-donna-64.h
+        MUL, ADD, ADDLO, SHR, LO = \
+            self.MUL, self.ADD, self.ADDLO, self.SHR, self.LO
+
         #unsigned long long h0,h1,h2,c;
         #unsigned long long g0,g1,g2;
         #unsigned long long t0,t1;
