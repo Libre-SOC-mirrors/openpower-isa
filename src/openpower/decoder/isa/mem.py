@@ -18,6 +18,9 @@ from openpower.util import log, LogKind
 import math
 import enum
 from cached_property import cached_property
+import mmap
+from pickle import PicklingError
+import ctypes
 
 
 def swap_order(x, nbytes):
@@ -65,6 +68,12 @@ class _ReadReason(enum.Enum):
             return 0
         return None
 
+    @cached_property
+    def needed_mmap_page_flag(self):
+        if self is self.Execute:
+            return _MMapPageFlags.X
+        return _MMapPageFlags.R
+
 
 class MemCommon:
     def __init__(self, row_bytes, initial_mem, misaligned_ok):
@@ -77,6 +86,9 @@ class MemCommon:
         if not initial_mem:
             return
 
+        self.initialize(row_bytes, initial_mem)
+
+    def initialize(self, row_bytes, initial_mem):
         for addr, (val, width) in process_mem(initial_mem, row_bytes).items():
             # val = swap_order(val, width)
             self.st(addr, val, width, swap=False)
@@ -270,3 +282,129 @@ class Mem(MemCommon):
 
     def word_idxs(self):
         return self.mem.keys()
+
+
+class _MMapPageFlags(enum.IntFlag):
+    """ flags on each mmap-ped page
+
+    Note: these are *not* PowerISA MMU pages, but instead internal to Mem so
+    it can detect invalid accesses and assert rather than segfaulting.
+    """
+    R = 1
+    W = 2
+    X = 4
+    "readable when instr_fetch=True"
+
+    RWX = R | W | X
+
+
+_MMAP_PAGE_SIZE = 1 << 16  # size of chunk that we track
+_PAGE_COUNT = (1 << 48) // _MMAP_PAGE_SIZE  # 48-bit address space
+_NEG_PG_IDX_START = _PAGE_COUNT // 2  # start of negative half of address space
+BLOCK_SIZE = 1 << 32  # code assumes it's a power of two
+assert BLOCK_SIZE % _MMAP_PAGE_SIZE == 0
+DEFAULT_BLOCK_ADDRS = (
+    0,  # low end of user space
+    2 ** 47 - BLOCK_SIZE,  # high end of user space
+)
+
+
+class MemMMap(MemCommon):
+    def __init__(self, row_bytes=8, initial_mem=None, misaligned_ok=False,
+                 block_addrs=DEFAULT_BLOCK_ADDRS, emulating_mmap=False):
+        # we can't allocate the entire 2 ** 47 byte address space, so split
+        # it into smaller blocks
+        self.mem_blocks = {
+            addr: mmap.mmap(-1, BLOCK_SIZE) for addr in block_addrs}
+        assert all(addr % BLOCK_SIZE == 0 for addr in self.mem_blocks), \
+            "misaligned block address not supported"
+        self.page_flags = {}
+        self.modified_pages = set()
+        if not emulating_mmap:
+            # mark blocks as readable/writable
+            for addr, block in self.mem_blocks.items():
+                start_page_idx = addr // _MMAP_PAGE_SIZE
+                end_page_idx = start_page_idx + len(block) // _MMAP_PAGE_SIZE
+                for page_idx in range(start_page_idx, end_page_idx):
+                    self.page_flags[page_idx] = _MMapPageFlags.RWX
+
+        super().__init__(row_bytes, initial_mem, misaligned_ok)
+
+    def mmap_page_idx_to_addr(self, page_idx):
+        assert 0 <= page_idx < _PAGE_COUNT
+        if page_idx >= _NEG_PG_IDX_START:
+            page_idx -= _PAGE_COUNT
+        return (page_idx * _MMAP_PAGE_SIZE) % 2 ** 64
+
+    def addr_to_mmap_page_idx(self, addr):
+        page_idx, offset = divmod(addr, _MMAP_PAGE_SIZE)
+        page_idx %= _PAGE_COUNT
+        expected = self.mmap_page_idx_to_addr(page_idx) + offset
+        if addr != expected:
+            exc = MemException("not sign extended",
+                               f"address not sign extended: 0x{addr:X} "
+                               f"expected 0x{expected:X}")
+            exc.dar = addr
+            raise exc
+        return page_idx
+
+    def __reduce_ex__(self, protocol):
+        raise PicklingError("MemMMap can't be deep-copied or pickled")
+
+    def __access_addr_range_err(self, start_addr, size, needed_flag):
+        assert needed_flag != _MMapPageFlags.W, \
+            f"can't write to address 0x{start_addr:X} size 0x{size:X}"
+        return None, 0
+
+    def __access_addr_range(self, start_addr, size, needed_flag):
+        assert size > 0, "invalid size"
+        page_idx = self.addr_to_mmap_page_idx(start_addr)
+        last_addr = start_addr + size - 1
+        last_page_idx = self.addr_to_mmap_page_idx(last_addr)
+        block_addr = start_addr % BLOCK_SIZE
+        block_k = start_addr - block_addr
+        last_block_addr = last_addr % BLOCK_SIZE
+        last_block_k = last_addr - last_block_addr
+        if block_k != last_block_k:
+            return self.__access_addr_range_err(start_addr, size, needed_flag)
+        for i in range(page_idx, last_page_idx + 1):
+            flags = self.page_flags.get(i, 0)
+            if flags & needed_flag == 0:
+                return self.__access_addr_range_err(
+                    start_addr, size, needed_flag)
+            if needed_flag is _MMapPageFlags.W:
+                self.modified_pages.add(page_idx)
+        return self.mem_blocks[block_k], block_addr
+
+    def get_ctypes(self, start_addr, size, is_write):
+        """ returns a ctypes ubyte array referring to the memory at
+        `start_addr` with size `size`
+        """
+        flag = _MMapPageFlags.W if is_write else _MMapPageFlags.R
+        block, block_addr = self.__access_addr_range(start_addr, size, flag)
+        assert block is not None, \
+            f"can't read from address 0x{start_addr:X} size 0x{size:X}"
+        return (ctypes.c_ubyte * size).from_buffer(block, block_addr)
+
+    def _read_word(self, word_idx, reason):
+        block, block_addr = self.__access_addr_range(
+            word_idx * self.bytes_per_word, self.bytes_per_word,
+            reason.needed_mmap_page_flag)
+        if block is None:
+            return reason.read_default
+        bytes_ = block[block_addr:block_addr + self.bytes_per_word]
+        return int.from_bytes(bytes_, 'little')
+
+    def _write_word(self, word_idx, value):
+        block, block_addr = self.__access_addr_range(
+            word_idx * self.bytes_per_word, self.bytes_per_word,
+            _MMapPageFlags.W)
+        bytes_ = value.to_bytes(self.bytes_per_word, 'little')
+        block[block_addr:block_addr + self.bytes_per_word] = bytes_
+
+    def word_idxs(self):
+        for page_idx in self.modified_pages:
+            start = self.mmap_page_idx_to_addr(page_idx)
+            end = start + _MMAP_PAGE_SIZE
+            yield from range(start // self.bytes_per_word,
+                             end // self.bytes_per_word)

@@ -22,7 +22,7 @@ from openpower.consts import (MSRb, PIb,  # big-endian (PowerISA versions)
                               SVP64CROffs, SVP64MODEb)
 from openpower.decoder.helpers import (ISACallerHelper, ISAFPHelpers, exts,
                                        gtu, undefined)
-from openpower.decoder.isa.mem import Mem, MemException
+from openpower.decoder.isa.mem import Mem, MemMMap, MemException
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.decoder.isa.svshape import SVSHAPE
 from openpower.decoder.isa.svstate import SVP64State
@@ -1148,7 +1148,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  mmu=False,
                  icachemmu=False,
                  initial_fpscr=0,
-                 insnlog=None):
+                 insnlog=None,
+                 use_mmap_mem=False):
 
         # trace log file for model output. if None do nothing
         self.insnlog = insnlog
@@ -1214,9 +1215,18 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.last_op_svshape = False
 
         # "raw" memory
-        self.mem = Mem(row_bytes=8, initial_mem=initial_mem, misaligned_ok=True)
-        self.mem.log_fancy(kind=LogKind.InstrInOuts)
-        self.imem = Mem(row_bytes=4, initial_mem=initial_insns)
+        if use_mmap_mem:
+            self.mem = MemMMap(row_bytes=8,
+                               initial_mem=initial_mem,
+                               misaligned_ok=True)
+            self.imem = self.mem
+            self.mem.initialize(row_bytes=4, initial_mem=initial_insns)
+            self.mem.log_fancy(kind=LogKind.InstrInOuts)
+        else:
+            self.mem = Mem(row_bytes=8, initial_mem=initial_mem,
+                           misaligned_ok=True)
+            self.mem.log_fancy(kind=LogKind.InstrInOuts)
+            self.imem = Mem(row_bytes=4, initial_mem=initial_insns)
         # MMU mode, redirect underlying Mem through RADIX
         if mmu:
             self.mem = RADIX(self.mem, self)

@@ -43,7 +43,7 @@ class SimRunner(StateRunner):
     running of tests using ISACaller simulation
     """
 
-    def __init__(self, dut, m, pspec):
+    def __init__(self, dut, m, pspec, use_mmap_mem=False):
         super().__init__("sim", SimRunner)
         self.dut = dut
 
@@ -53,6 +53,7 @@ class SimRunner(StateRunner):
         self.simdec2 = simdec2 = PowerDecode2(
             None, regreduce_en=regreduce_en, fp_en=fp_en)
         m.submodules.simdec2 = simdec2  # pain in the neck
+        self.use_mmap_mem = use_mmap_mem
 
     def prepare_for_test(self, test):
         self.test = test
@@ -75,7 +76,8 @@ class SimRunner(StateRunner):
                   initial_svstate=test.svstate,
                   mmu=self.mmu,
                   fpregfile=test.fpregs,
-                  initial_fpscr=test.initial_fpscr)
+                  initial_fpscr=test.initial_fpscr,
+                  use_mmap_mem=self.use_mmap_mem)
 
         # run the loop of the instructions on the current test
         index = sim.pc.CIA.value//4
@@ -131,7 +133,8 @@ class TestRunnerBase(FHDLTestCase):
 
     def __init__(self, tst_data, microwatt_mmu=False, rom=None,
                  svp64=True, run_hdl=None, run_sim=True,
-                 allow_overlap=False, inorder=False, fp=False):
+                 allow_overlap=False, inorder=False, fp=False,
+                 use_mmap_mem=False):
         super().__init__("run_all")
         self.test_data = tst_data
         self.microwatt_mmu = microwatt_mmu
@@ -142,6 +145,7 @@ class TestRunnerBase(FHDLTestCase):
         self.run_hdl = run_hdl
         self.run_sim = run_sim
         self.fp = fp
+        self.use_mmap_mem = use_mmap_mem
 
     def run_all(self):
         m = Module()
@@ -195,7 +199,7 @@ class TestRunnerBase(FHDLTestCase):
             state_list.append(hdlrun)
 
         if self.run_sim:
-            simrun = SimRunner(self, m, pspec)
+            simrun = SimRunner(self, m, pspec, use_mmap_mem=self.use_mmap_mem)
             state_list.append(simrun)
 
         # run core clock at same rate as test clock
