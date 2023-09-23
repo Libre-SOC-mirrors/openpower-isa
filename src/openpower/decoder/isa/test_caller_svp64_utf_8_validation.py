@@ -41,7 +41,7 @@ class TestSVP64UTF8ValidationBase(TestRunnerBase):
                 start = self.SPLIT_INDEX
                 end = start + 1
         # can't do raise SkipTest if `start == end`, it makes unittest break
-        super().__init__(cases[start:end])
+        super().__init__(cases[start:end], use_mmap_mem=True)
 
     def setUp(self):
         super().setUp()
