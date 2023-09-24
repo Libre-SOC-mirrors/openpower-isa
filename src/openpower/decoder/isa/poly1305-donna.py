@@ -35,6 +35,30 @@ def _DSRD(lo, hi, sh):
     lo = v % (2 ** 64)
     return lo, hi
 
+# interception function which allows analysis of carry-roll-over
+intercepts = {}
+
+def log(p1305, fn, result, args):
+    """intercept of mathematical primitives is recorded, so that
+    analysis is possible to find any carry-roll-over occurrences.
+    these we *assume* are when one of the add arguments is between
+    0 and say... 7?
+    """
+    name = fn.__name__[1:]
+    if name not in ['ADD', 'ADDLO']: # only interested in adds for now
+        return
+    phash = hash(p1305)
+    info = (name, result, args)
+    key = hash(info)
+    logreport = "%5s %x <= " % (name, result)
+    logreport = logreport + " ".join(list(map(lambda x: "%x" % x, args)))
+    intercepts[key] = logreport
+
+def intercept(p1305, args, fn):
+    result = fn(*args)
+    log(p1305, fn, result, args)
+    return result
+
 
 class Poly1305Donna(object):
 
@@ -44,12 +68,12 @@ class Poly1305Donna(object):
 
     # suite of primitives (128-bit and 64-bit) which can be intercepted
     # here in order to analyse carry-roll-over
-    def MUL(self, x, y): return _MUL(x, y)
-    def ADD(self, out, i): return _ADD(out, i)
-    def ADDLO(self, out, i): return _ADDLO(out, i)
-    def SHR(self, i, shift): return _SHR(i, shift)
-    def LO(self, i): return _LO(i)
-    def DSRD(self, lo, hi, sh): return _DSRD(lo, hi, sh)
+    def MUL(self, *args): return intercept(self, args, _MUL) # x,y
+    def ADD(self, *args): return intercept(self, args, _ADD) # out,i
+    def ADDLO(self, *args): return intercept(self, args, _ADDLO) # out,i
+    def SHR(self, *args): return intercept(self, args, _SHR) # i,shift
+    def LO(self, *args): return intercept(self, args, _LO) # i
+    def DSRD(self, *args): return intercept(self, args, _DSRD) # lo,hi,sh
 
     @staticmethod
     def le_bytes_to_num(data):
@@ -321,3 +345,7 @@ if __name__ == '__main__':
     expected = [0xdd,0xb9,0xda,0x7d,0xdd,0x5e,0x52,0x79,
                 0x27,0x30,0xed,0x5c,0xda,0x5f,0x90,0xa4]
     assert mac == bytearray(expected)
+
+    # print out the intercepts
+    for intercept in intercepts.values():
+        print (intercept)
