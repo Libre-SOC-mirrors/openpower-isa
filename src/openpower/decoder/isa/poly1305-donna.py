@@ -4,7 +4,10 @@
 # * https://nlnet.nl/project/LibreSOC-GigabitRouter/
 # * https://bugs.libre-soc.org/show_bug.cgi?id=1157
 # * Based on https://github.com/floodyberry/poly1305-donna (Public Domain)
-"""Implementation of Poly1305 authenticator for RFC 7539"""
+"""Implementation of Poly1305 authenticator for RFC 7539
+Design principles are well-documented at:
+https://loup-vaillant.fr/tutorials/poly1305-design
+"""
 
 def divceil(a, b): return -(a // -b)
 
