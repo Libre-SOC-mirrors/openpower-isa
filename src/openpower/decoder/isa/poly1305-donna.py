@@ -346,13 +346,16 @@ class Poly1305Donna(object):
 if __name__ == '__main__':
     key = list(range(221, 253))
     mac = Poly1305Donna(key).create_tag(bytearray(range(121,121+73)))
+    print("result hash:", end=" ")
     for byte in mac:
         print(hex(byte)[2:], sep='', end='')
     print()
-    expected = [0xdd,0xb9,0xda,0x7d,0xdd,0x5e,0x52,0x79,
-                0x27,0x30,0xed,0x5c,0xda,0x5f,0x90,0xa4]
-    assert mac == bytearray(expected)
 
     # print out the intercepts
     for intercept in intercepts.values():
         print (intercept)
+
+    expected = [0xdd,0xb9,0xda,0x7d,0xdd,0x5e,0x52,0x79,
+                0x27,0x30,0xed,0x5c,0xda,0x5f,0x90,0xa4]
+    assert mac == bytearray(expected)
+
