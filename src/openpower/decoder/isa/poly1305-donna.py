@@ -45,8 +45,15 @@ def log(p1305, fn, result, args):
     0 and say... 7?
     """
     name = fn.__name__[1:]
-    if name not in ['ADD', 'ADDLO']: # only interested in adds for now
+    if name in ['ADD', 'ADDLO']:
+        # rright. the 2nd parameter, if between the values 0 and 7,
+        # is assumed to be some sort of carry. everything else is ignored
+        arg1, arg2 = args
+        if arg2 > 7:
+            return
+    else: # only interested in adds for now
         return
+    # begin hashing and adding this operation into the intercepts log
     phash = hash(p1305)
     info = (name, result, args)
     key = hash(info)
