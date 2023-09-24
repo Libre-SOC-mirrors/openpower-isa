@@ -22,7 +22,7 @@ def _LO(i): return i & mask64
 # this function is extracted from bigint_cases.py (should be in a library)
 # it is a python implementation of dsrd, see pseudocode in
 # https://libre-soc.org/openpower/isa/svfixedarith/
-def dsrd(lo, hi, sh):
+def _DSRD(lo, hi, sh):
     sh = sh % 64
     v = lo << 64
     v >>= sh
@@ -46,6 +46,7 @@ class Poly1305Donna(object):
     def ADDLO(self, out, i): return _ADDLO(out, i)
     def SHR(self, i, shift): return _SHR(i, shift)
     def LO(self, i): return _LO(i)
+    def DSRD(self, lo, hi, sh): return _DSRD(lo, hi, sh)
 
     @staticmethod
     def le_bytes_to_num(data):
