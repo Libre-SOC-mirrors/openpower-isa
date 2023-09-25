@@ -40,9 +40,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA|0)+ D.
-The byte in storage addressed by EA is loaded into
-RT[56:63]. RT[0:55] are set to 0.
+    Let the effective address (EA) be the sum (RA|0)+ D.
+    The byte in storage addressed by EA is loaded into
+    RT[56:63]. RT[0:55] are set to 0.
 
 Special Registers Altered:
 
