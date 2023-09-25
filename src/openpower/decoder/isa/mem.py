@@ -403,8 +403,16 @@ class MemMMap(MemCommon):
         block[block_addr:block_addr + self.bytes_per_word] = bytes_
 
     def word_idxs(self):
+        zeros = bytes(self.bytes_per_word)
         for page_idx in self.modified_pages:
             start = self.mmap_page_idx_to_addr(page_idx)
+            block, block_addr = self.__access_addr_range(
+                start, _MMAP_PAGE_SIZE, _MMapPageFlags.R)
             end = start + _MMAP_PAGE_SIZE
-            yield from range(start // self.bytes_per_word,
-                             end // self.bytes_per_word)
+            for word_idx in range(start // self.bytes_per_word,
+                                    end // self.bytes_per_word):
+                next_block_addr = block_addr + self.bytes_per_word
+                bytes_ = block[block_addr:next_block_addr]
+                block_addr = next_block_addr
+                if bytes_ != zeros:
+                    yield word_idx
