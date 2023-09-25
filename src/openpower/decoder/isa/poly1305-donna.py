@@ -67,6 +67,31 @@ def intercept(p1305, args, fn):
     return result
 
 
+class Ctx:
+    """A ContextManager for noting the inputs and outputs for interception.
+    The idea is to create unit tests with these same inputs and record
+    the expected outputs
+    """
+
+    def __init__(self, log, variables, inputs, outputs):
+        self.log = log
+        self.variables = variables
+        self.inputs = inputs
+        self.outputs = outputs
+
+    def print_vars(self, varnames):
+        for v in varnames:
+            print("    %s %s" % (v, repr(self.variables[v])))
+
+    def __enter__(self):
+        print("enter")
+        self.print_vars(self.inputs)
+
+    def __exit__(self, *args):
+        print("exit", args, self.outputs)
+        self.print_vars(self.outputs)
+
+
 class Poly1305Donna(object):
 
     """Poly1305 authenticator"""
@@ -119,9 +144,10 @@ class Poly1305Donna(object):
         print ("init t %x %x" % (t[0], t[1]))
 
         r = self.r = [0]*3
-        r[0] = ( t[0]                      ) & 0xffc0fffffff
-        r[1] = ((t[0] >> 44) | (t[1] << 20)) & 0xfffffc0ffff
-        r[2] = ((t[1] >> 24)               ) & 0x00ffffffc0f
+        with Ctx("init r<-t", locals(), ["r"], ["t"]):
+            r[0] = ( t[0]                      ) & 0xffc0fffffff
+            r[1] = ((t[0] >> 44) | (t[1] << 20)) & 0xfffffc0ffff
+            r[2] = ((t[1] >> 24)               ) & 0x00ffffffc0f
 
         # h = 0 */
         h = self.h = [0]*3
