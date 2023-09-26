@@ -330,6 +330,11 @@ Pseudo-code:
     EA <- b + EXTS(D)
     RT <- [0] * 32 || MEM(EA, 4)
 
+Description:
+    Let the effective address (EA) be the sum (RA|0)+ D.
+    The word in storage addressed by EA is loaded into
+    RT[32:63]. RT[0:31] are set to 0.
+
 Special Registers Altered:
 
     None
