@@ -160,7 +160,7 @@ Description:
 
     Let the effective address (EA) be the sum
     (RA|0)+ (RB). The halfword in storage addressed by
-    EA is loaded into RT[48:63]. RT 0:47 are set to 0.
+    EA is loaded into RT[48:63]. RT[0:47] are set to 0.
 
 Special Registers Altered:
 
