@@ -520,6 +520,12 @@ Pseudo-code:
     EA <- b + (RB)
     RT <- MEM(EA, 8)
 
+Description:
+
+    Let the effective address (EA) be the sum
+    (RA|0)+ (RB). The doubleword in storage addressed by
+    EA is loaded into RT.
+
 Special Registers Altered:
 
     None
