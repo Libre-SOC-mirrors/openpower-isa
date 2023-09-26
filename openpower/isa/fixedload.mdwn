@@ -619,6 +619,28 @@ Pseudo-code:
     EA <- b + EXTS(DQ || 0b0000)
     RTp <- MEM(EA, 16)
 
+Description
+
+    Let the effective address (EA) be the sum (RA|0)+
+    (DQ||0b0000). The quadword in storage addressed by
+    EA is loaded into register pair RTp.
+
+    If RTp is odd or RTp=RA, the instruction form is invalid.
+    If RTp=RA, an attempt to execute this instruction will
+    invoke the system illegal instruction error handler. (The
+    RTp=RA case includes the case of RTp=RA=0.)
+
+    The quadword in storage addressed by EA is loaded
+    into an even-odd pair of GPRs as follows. In
+    Big-Endian mode, the even-numbered GPR is loaded
+    with the doubleword from storage addressed by EA
+    and the odd-numbered GPR is loaded with the double-
+    word addressed by EA+8. In Little-Endian mode, the
+    even-numbered GPR is loaded with the byte-reversed
+    doubleword from storage addressed by EA+8 and the
+    odd-numbered GPR is loaded with the byte-reversed
+    doubleword addressed by EA.
+
 Special Registers Altered:
 
     None
