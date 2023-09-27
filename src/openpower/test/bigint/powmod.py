@@ -97,6 +97,9 @@ def python_mul_algorithm2(a, b):
 
     y = [0] * 8
     t = [0] * 5
+    y[0], ca = addc(y[0], t[0])
+    for i in range(4):
+        y[1 + i], ca = adde(y[1 + i], t[1 + i], ca)
     for i in range(4):
         y[i], y[4] = maddedu(a[0], b[i], y[4])
     t[4] = 0
@@ -277,7 +280,7 @@ if __name__ == "__main__":
     # now test python_mul_algorithm2 *against* python_mul_algorithm
     import random
     random.seed(0) # reproducible values
-    for i in range(10):
+    for i in range(10000):
         a = []
         b = []
         for j in range(4):
