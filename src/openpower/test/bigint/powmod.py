@@ -97,29 +97,13 @@ def python_mul_algorithm2(a, b):
 
     y = [0] * 8
     t = [0] * 5
-    y[0], ca = addc(y[0], t[0])
-    for i in range(4):
-        y[1 + i], ca = adde(y[1 + i], t[1 + i], ca)
-    for i in range(4):
-        y[i], y[4] = maddedu(a[0], b[i], y[4])
-    t[4] = 0
-    for i in range(4):
-        t[i], t[4] = maddedu(a[1], b[i], t[4])
-    y[1], ca = addc(y[1], t[0])
-    for i in range(4):
-        y[2 + i], ca = adde(y[2 + i], t[1 + i], ca)
-    t[4] = 0
-    for i in range(4):
-        t[i], t[4] = maddedu(a[2], b[i], t[4])
-    y[2], ca = addc(y[2], t[0])
-    for i in range(4):
-        y[3 + i], ca = adde(y[3 + i], t[1 + i], ca)
-    t[4] = 0
-    for i in range(4):
-        t[i], t[4] = maddedu(a[3], b[i], t[4])
-    y[3], ca = addc(y[3], t[0])
-    for i in range(4):
-        y[4 + i], ca = adde(y[4 + i], t[1 + i], ca)
+    for iy in range(4):
+        t[4] = 0
+        for i in range(4):
+            t[i], t[4] = maddedu(a[iy], b[i], t[4])
+        y[iy], ca = addc(y[iy], t[0])
+        for i in range(4):
+            y[1 + iy + i], ca = adde(y[1 + iy + i], t[1 + i], ca)
     return y
 
 
