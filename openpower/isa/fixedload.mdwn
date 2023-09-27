@@ -720,6 +720,22 @@ Pseudo-code:
         || load_data[24:31] || load_data[16:23]
         || load_data[8:15]  || load_data[0:7])
 
+Description:
+
+    Let the effective address (EA) be the sum (RA|0)+(RB).
+    Bits 0:7 of the doubleword in storage addressed by EA
+    are loaded into RT[56:63] . Bits 8:15 of the doubleword in
+    storage addressed by EA are loaded into RT[48:55] . Bits
+    16:23 of the doubleword in storage addressed by EA
+    are loaded into RT[40:47]. Bits 24:31 of the doubleword in
+    storage addressed by EA are loaded into RT 32:39 . Bits
+    32:39 of the doubleword in storage addressed by EA
+    are loaded into RT[24:31]. Bits 40:47 of the doubleword in
+    storage addressed by EA are loaded into RT[16:23] . Bits
+    48:55 of the doubleword in storage addressed by EA
+    are loaded into RT[8:15] . Bits 56:63 of the doubleword in
+    storage addressed by EA are loaded into RT[0:7] .
+
 Special Registers Altered:
 
     None
