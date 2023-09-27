@@ -1535,10 +1535,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 # TODO: if 32-bit mode, set ov to ov32
                 self.spr['XER'][XER_bits['OV']] = ov
                 self.spr['XER'][XER_bits['OV32']] = ov32
+                log(f"write OV/OV32 OV={ov} OV32={ov32}",
+                    kind=LogKind.InstrInOuts)
             else:
                 # TODO: if 32-bit mode, set ca to ca32
                 self.spr['XER'][XER_bits['CA']] = ca
                 self.spr['XER'][XER_bits['CA32']] = ca32
+                log(f"write CA/CA32 CA={ca} CA32={ca32}",
+                    kind=LogKind.InstrInOuts)
             return
         inv_a = yield self.dec2.e.do.invert_in
         if inv_a:
