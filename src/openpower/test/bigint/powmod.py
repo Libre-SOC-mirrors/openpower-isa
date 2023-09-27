@@ -83,6 +83,48 @@ def _python_mul_algorithm(a, b):
     return y
 
 
+def _python_mul_algorithm2(a, b):
+    # version of the MUL_256_X_256_TO_512_ASM algorithm using base 100 rather
+    # than 2^64, since that's easier to read.
+    # the idea here is that it will "morph" into something more akin to
+    # using REMAP bigmul (first using REMAP Indexed)
+    def maddedu(a, b, c):
+        y = a * b + c
+        return y % 100, y // 100
+
+    def adde(a, b, c):
+        y = a + b + c
+        return y % 100, y // 100
+
+    def addc(a, b):
+        y = a + b
+        return y % 100, y // 100
+
+    y = [0] * 8
+    t = [0] * 5
+    for i in range(4):
+        y[i], y[4] = maddedu(a[0], b[i], y[4])
+    t[4] = 0
+    for i in range(4):
+        t[i], t[4] = maddedu(a[1], b[i], t[4])
+    y[1], ca = addc(y[1], t[0])
+    for i in range(4):
+        y[2 + i], ca = adde(y[2 + i], t[1 + i], ca)
+    t[4] = 0
+    for i in range(4):
+        t[i], t[4] = maddedu(a[2], b[i], t[4])
+    y[2], ca = addc(y[2], t[0])
+    for i in range(4):
+        y[3 + i], ca = adde(y[3 + i], t[1 + i], ca)
+    t[4] = 0
+    for i in range(4):
+        t[i], t[4] = maddedu(a[3], b[i], t[4])
+    y[3], ca = addc(y[3], t[0])
+    for i in range(4):
+        y[4 + i], ca = adde(y[4 + i], t[1 + i], ca)
+    return y
+
+
 DIVMOD_512x256_TO_256x256_ASM = (
     # extremely slow and simplistic shift and subtract algorithm.
     # a future task is to rewrite to use Knuth's Algorithm D,
@@ -231,5 +273,22 @@ class PowModCases(TestAccumulatorBase):
 
 
 if __name__ == "__main__":
-    a = b = 99, 99, 99, 99
-    assert _python_mul_algorithm(a, b) == [1, 0, 0, 0, 98, 99, 99, 99]
+    a = b = (99, 99, 99, 99)
+    expected = [1, 0, 0, 0, 98, 99, 99, 99]
+    assert _python_mul_algorithm(a, b) == expected
+
+    import random
+    random.seed(0) # reproducible values
+    for i in range(10):
+        a = []
+        b = []
+        for j in range(4):
+            a.append(random.randint(0,99))
+            b.append(random.randint(0,99))
+        expected = _python_mul_algorithm(a, b)
+        testing = _python_mul_algorithm2(a, b)
+        report = "%+17s * %-17s = %s\n" \
+                 "                                       (%s)" % \
+                    (repr(a), repr(b), repr(expected), repr(testing))
+        print(report)
+        assert expected == testing
