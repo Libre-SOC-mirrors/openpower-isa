@@ -17,7 +17,6 @@ from openpower.test.util import assemble
 from nmutil.sim_util import hash_256
 
 
-# broken -- blocked on https://bugs.libre-soc.org/show_bug.cgi?id=1161
 MUL_256_X_256_TO_512_ASM = [
     "mul_256_to_512:",
     # a is in r4-7, b is in r8-11
