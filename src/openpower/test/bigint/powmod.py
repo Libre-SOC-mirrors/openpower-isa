@@ -101,9 +101,9 @@ def python_mul_algorithm2(a, b):
         t[4] = 0
         for i in range(4):
             t[i], t[4] = maddedu(a[iy], b[i], t[4])
-        y[iy], ca = addc(y[iy], t[0])
-        for i in range(4):
-            y[1 + iy + i], ca = adde(y[1 + iy + i], t[1 + i], ca)
+        ca = 0
+        for i in range(5):
+            y[iy + i], ca = adde(y[iy + i], t[i], ca)
     return y
 
 
