@@ -660,6 +660,14 @@ Pseudo-code:
     load_data <- MEM(EA, 2)
     RT <- [0]*48 || load_data[8:15] || load_data[0:7]
 
+Description:
+
+    Let the effective address (EA) be the sum (RA|0)+(RB).
+    Bits 0:7 of the halfword in storage addressed by EA are
+    loaded into RT 56:63 . Bits 8:15 of the halfword in storage
+    addressed by EA are loaded into RT[48:55] . RT[0:47] are
+    set to 0.
+
 Special Registers Altered:
 
     None
