@@ -17,7 +17,7 @@ from openpower.test.util import assemble
 from nmutil.sim_util import hash_256
 
 
-MUL_256_X_256_TO_512_ASM = [
+MUL_256_X_256_TO_512_ASM = (
     "mul_256_to_512:",
     # a is in r4-7, b is in r8-11
     "setvl 0, 0, 8, 0, 1, 1",  # set VL to 8
@@ -39,7 +39,7 @@ MUL_256_X_256_TO_512_ASM = [
     "sv.addc 7, 7, 40",
     "sv.adde *8, *8, *41",
     "bclr 20, 0, 0 # blr",
-]
+)
 
 
 def _python_mul_algorithm(a, b):
@@ -83,6 +83,68 @@ def _python_mul_algorithm(a, b):
     return y
 
 
+DIVMOD_512x256_TO_256x256_ASM = (
+    # extremely slow and simplistic shift and subtract algorithm.
+    # a future task is to rewrite to use Knuth's Algorithm D,
+    # which is generally an order of magnitude faster
+    "divmod_512_by_256:",
+    # n is in r4-11, d is in r32-35
+    "addi 3, 0, 256 # li 3, 256",
+    "mtspr 9, 3 # mtctr 3",  # set CTR to 256
+    "setvl 0, 0, 8, 0, 1, 1",  # set VL to 8
+    # r is in r40-47
+    "sv.or *40, *4, *4",  # assign n to r, in r40-47
+    # shifted_d is in r32-39
+    "setvl 0, 0, 4, 0, 1, 1",  # set VL to 4
+    "addi 3, 0, 1 # li 3, 1",  # shift amount
+    "addi 0, 0, 0 # li 0, 0",  # dsrd carry
+    "sv.dsrd/mrr *36, *32, 3, 0",  # shifted_d = d << (256 - 1)
+    "sv.addi *32, 0, 0",  # clear lsb half
+    "sv.or 35, 0, 0",  # move carry to correct location
+    # q is in r4-7
+    "sv.addi *4, 0, 0",  # clear q
+    "divmod_loop:",
+    "setvl 0, 0, 8, 0, 1, 1",  # set VL to 8
+    "subfc 0, 0, 0",  # set CA
+    # diff is in r48-55
+    "sv.subfe *48, *32, *40",  # diff = r - shifted_d
+    # not borrowed is in CA
+    "mcrxrx 0",  # move CA to CR0.eq
+    "setvl 0, 0, 4, 0, 1, 1",  # set VL to 4
+    "addi 0, 0, 0 # li 0, 0",  # dsld carry
+    "sv.dsld *4, *4, 3, 0",  # q <<= 1 (1 is in r3)
+    "setvl 0, 0, 8, 0, 1, 1",  # set VL to 8
+    "bc 4, 2, divmod_else # bne divmod_else",  # if borrowed goto divmod_else
+    "ori 4, 4, 1",  # q |= 1
+    "sv.or *40, *48, *48",  # r = diff
+    "divmod_else:",
+    "addi 0, 0, 0 # li 0, 0",  # dsld carry
+    "sv.dsld *40, *40, 3, 0",  # r <<= 1 (1 is in r3)
+    "bc 16, 0, divmod_loop # bdnz divmod_loop",
+    "setvl 0, 0, 4, 0, 1, 1",  # set VL to 4
+    # r is in r40-47
+    "sv.or *8, *44, 44",  # r >>= 256
+    # q is in r4-7, r is in r8-11
+    "bclr 20, 0, 0 # blr",
+)
+
+
+def python_divmod_algorithm(n, d, width=256):
+    assert n >= 0 and d > 0 and width > 0 and n < (d << width), "invalid input"
+    r = n
+    shifted_d = d << (width - 1)
+    q = 0
+    for _ in range(width):
+        diff = r - shifted_d
+        borrowed = diff < 0
+        q <<= 1
+        if not borrowed:
+            q |= 1
+            r = diff
+        r <<= 1
+    return q, r >> width
+
+
 class PowModCases(TestAccumulatorBase):
     def call_case(self, instructions, expected, initial_regs, src_loc_at=0):
         stop_at_pc = 0x10000000
@@ -122,7 +184,49 @@ class PowModCases(TestAccumulatorBase):
 
                 self.call_case(MUL_256_X_256_TO_512_ASM, e, initial_regs)
 
-    # TODO: add 512x256-bit divrem
+    @skip_case("FIXME: wip -- currently broken")
+    def case_divmod_512x256_to_256x256(self):
+        for i in range(10):
+            n = hash_256(f"divmod256 input n msb {i}")
+            n <<= 256
+            n |= hash_256(f"divmod256 input n lsb {i}")
+            d = hash_256(f"divmod256 input d {i}")
+            if i == 0:
+                # use known values:
+                n = 2 ** (256 - 1)
+                d = 1
+            elif i == 1:
+                # use known values:
+                n = 2 ** (512 - 1) - 1
+                d = 2 ** 256 - 1
+            if d == 0:
+                d = 1
+            if n >= d << 256:
+                n -= d << 256
+            q, r = divmod(n, d)
+            with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
+                              q=f"{q:#_x}", r=f"{r:#_x}"):
+                # registers start filled with junk
+                initial_regs = [0xABCDEF] * 128
+                for i in range(8):
+                    # write n in LE order to regs 4-11
+                    initial_regs[4 + i] = (n >> (64 * i)) % 2**64
+                for i in range(4):
+                    # write d in LE order to regs 32-35
+                    initial_regs[32 + i] = (d >> (64 * i)) % 2**64
+                # only check regs up to r11 since that's where the output is.
+                # don't check CR
+                e = ExpectedState(int_regs=initial_regs[:12], crregs=0)
+                e.intregs[0] = 0  # leftovers -- ignore
+                e.intregs[3] = 1  # leftovers -- ignore
+                for i in range(4):
+                    # write q in LE order to regs 4-7
+                    e.intregs[4 + i] = (q >> (64 * i)) % 2**64
+                    # write r in LE order to regs 8-11
+                    e.intregs[8 + i] = (r >> (64 * i)) % 2**64
+
+                self.call_case(DIVMOD_512x256_TO_256x256_ASM, e, initial_regs)
+
     # TODO: add 256-bit modular exponentiation
 
 
