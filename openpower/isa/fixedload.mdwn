@@ -744,7 +744,7 @@ Special Registers Altered:
 
 # Load Multiple Word
 
-DQ-Form
+D-Form
 
 * lmw RT,D(RA)
 
@@ -757,6 +757,22 @@ Pseudo-code:
         GPR(r) <- [0]*32 || MEM(EA, 4)
         r <- r + 1
         EA <- EA + 4
+
+Description:
+
+    Let n = (32-RT). Let the effective address (EA) be the
+    sum (RA|0)+ D.
+
+    n consecutive words starting at EA are loaded into the
+    low-order 32 bits of GPRs RT through 31. The
+    high-order 32 bits of these GPRs are set to zero.
+
+    If RA is in the range of registers to be loaded, including
+    the case in which RA=0, the instruction form is invalid.
+
+    This instruction is not supported in Little-Endian mode.
+    If it is executed in Little-Endian mode, the system align-
+    ment error handler is invoked.
 
 Special Registers Altered:
 
