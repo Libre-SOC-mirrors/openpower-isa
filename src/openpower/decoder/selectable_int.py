@@ -562,7 +562,11 @@ def selectconcat(*args, repeat=1):
         for i in range(repeat):
             tmp += args
         args = tmp
-    res = copy(args[0])
+    if isinstance(args[0], FieldSelectableInt):
+        res = args[0].get_range()
+    else:
+        assert isinstance(args[0], SelectableInt), "can only concat SIs, sorry"
+        res = SelectableInt(args[0])
     for i in args[1:]:
         if isinstance(i, FieldSelectableInt):
             i = i.get_range()
