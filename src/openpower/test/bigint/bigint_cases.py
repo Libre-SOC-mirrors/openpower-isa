@@ -163,7 +163,7 @@ class SVP64BigIntCases(TestAccumulatorBase):
         0x0000_0000_0500_0000 0x2800_0800_0800_0800 0x1fff_ffff_ffff_ffff
 
         with the 4-bit part that drops out of the 4 LSBs of r16 ending up
-        in r0
+        in r5
         """
         prog = Program(list(SVP64Asm(["sv.dsrd/mrr *16,*16,3,5"])), False)
         gprs = [0] * 32
