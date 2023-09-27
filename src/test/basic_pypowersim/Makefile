@@ -6,8 +6,7 @@ AFLAGS=-mpwr9
 all: sim
 
 sim: kernel.bin
-	echo -n -e \\0060\\0000\\0061\\0000 > test.bin
-	echo -n -e \\0060\\0000\\0061\\0000 >> test.bin
+	./writeint.sh
 	pypowersim --load test.bin:0 \
 	              -p 0x20000000 \
                   --dump testout.bin:0:8 \
