@@ -819,3 +819,26 @@ class ALUTestCase(TestAccumulatorBase):
                     programs[asm] = Program([asm], bigendian)
                 self.add_case(programs[asm], initial_regs,
                               initial_sprs=initial_sprs, expected=e)
+
+    def case_mcrxrx(self):
+        p = Program(["mcrxrx 3"], bigendian)
+        for i in range(16):
+            initial_sprs = {}
+            xer = SelectableInt(0, 64)
+            ov = bool(i & 8)
+            ov32 = bool(i & 4)
+            ca = bool(i & 2)
+            ca32 = bool(i & 1)
+            xer[XER_bits['OV']] = ov
+            xer[XER_bits['OV32']] = ov32
+            xer[XER_bits['CA']] = ca
+            xer[XER_bits['CA32']] = ca32
+            initial_sprs[special_sprs['XER']] = xer
+            # now construct the state
+            e = ExpectedState(pc=4)
+            e.ca = (ca32 << 1) | ca
+            e.ov = (ov32 << 1) | ov
+            e.crregs[3] = i
+
+            with self.subTest(ov=ov, ov32=ov32, ca=ca, ca32=ca32):
+                self.add_case(p, initial_sprs=initial_sprs, expected=e)
