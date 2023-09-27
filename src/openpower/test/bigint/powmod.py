@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: LGPL-3-or-later
 # Copyright 2023 Jacob Lifshay programmerjake@gmail.com
+# Copyright 2023 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
 
 # Funded by NLnet Assure Programme 2021-02-052, https://nlnet.nl/assure part
 # of Horizon 2020 EU Programme 957073.
+# 
+# * https://bugs.libre-soc.org/show_bug.cgi?id=1044
 
 """ modular exponentiation (`pow(x, y, z)`)
 
@@ -41,23 +44,26 @@ MUL_256_X_256_TO_512_ASM = (
     "bclr 20, 0, 0 # blr",
 )
 
+# TODO: these really need to go into a common util file, see
+# openpower/decoder/isa/poly1305-donna.py:def _DSRD(lo, hi, sh)
+# okok they are modulo 100 but you get the general idea
+def maddedu(a, b, c):
+    y = a * b + c
+    return y % 100, y // 100
 
-def _python_mul_algorithm(a, b):
+def adde(a, b, c):
+    y = a + b + c
+    return y % 100, y // 100
+
+def addc(a, b):
+    y = a + b
+    return y % 100, y // 100
+
+
+def python_mul_algorithm(a, b):
     # version of the MUL_256_X_256_TO_512_ASM algorithm using base 100 rather
     # than 2^64, since that's easier to read.
     # run this file in a debugger to see all the intermediate values.
-    def maddedu(a, b, c):
-        y = a * b + c
-        return y % 100, y // 100
-
-    def adde(a, b, c):
-        y = a + b + c
-        return y % 100, y // 100
-
-    def addc(a, b):
-        y = a + b
-        return y % 100, y // 100
-
     y = [0] * 8
     t = [0] * 5
     for i in range(4):
@@ -83,22 +89,11 @@ def _python_mul_algorithm(a, b):
     return y
 
 
-def _python_mul_algorithm2(a, b):
-    # version of the MUL_256_X_256_TO_512_ASM algorithm using base 100 rather
+def python_mul_algorithm2(a, b):
+    # version 2 of the MUL_256_X_256_TO_512_ASM algorithm using base 100 rather
     # than 2^64, since that's easier to read.
     # the idea here is that it will "morph" into something more akin to
     # using REMAP bigmul (first using REMAP Indexed)
-    def maddedu(a, b, c):
-        y = a * b + c
-        return y % 100, y // 100
-
-    def adde(a, b, c):
-        y = a + b + c
-        return y % 100, y // 100
-
-    def addc(a, b):
-        y = a + b
-        return y % 100, y // 100
 
     y = [0] * 8
     t = [0] * 5
@@ -272,11 +267,14 @@ class PowModCases(TestAccumulatorBase):
     # TODO: add 256-bit modular exponentiation
 
 
+# for running "quick" simple investigations
 if __name__ == "__main__":
+    # first check if python_mul_algorithm works
     a = b = (99, 99, 99, 99)
     expected = [1, 0, 0, 0, 98, 99, 99, 99]
-    assert _python_mul_algorithm(a, b) == expected
+    assert python_mul_algorithm(a, b) == expected
 
+    # now test python_mul_algorithm2 *against* python_mul_algorithm
     import random
     random.seed(0) # reproducible values
     for i in range(10):
@@ -285,10 +283,9 @@ if __name__ == "__main__":
         for j in range(4):
             a.append(random.randint(0,99))
             b.append(random.randint(0,99))
-        expected = _python_mul_algorithm(a, b)
-        testing = _python_mul_algorithm2(a, b)
-        report = "%+17s * %-17s = %s\n" \
-                 "                                       (%s)" % \
-                    (repr(a), repr(b), repr(expected), repr(testing))
+        expected = python_mul_algorithm(a, b)
+        testing = python_mul_algorithm2(a, b)
+        report = "%+17s * %-17s = %s\n" % (repr(a), repr(b), repr(expected))
+        report += "                                       (%s)" % repr(testing)
         print(report)
         assert expected == testing
