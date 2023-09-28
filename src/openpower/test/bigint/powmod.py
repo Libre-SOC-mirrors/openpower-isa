@@ -152,7 +152,7 @@ DIVMOD_512x256_TO_256x256_ASM = (
     "bc 16, 0, divmod_loop # bdnz divmod_loop",
     "setvl 0, 0, 4, 0, 1, 1",  # set VL to 4
     # r is in r40-47
-    "sv.or *8, *44, 44",  # r >>= 256
+    "sv.or *8, *44, *44",  # r >>= 256
     # q is in r4-7, r is in r8-11
     "bclr 20, 0, 0 # blr",
 )
@@ -316,7 +316,6 @@ class PowModCases(TestAccumulatorBase):
                 n -= d << 256
             yield (n, d)
 
-    @skip_case("FIXME: wip -- currently broken")
     def case_divmod_512x256_to_256x256(self):
         for n, d in self.divmod_512x256_to_256x256_test_inputs():
             q, r = divmod(n, d)
@@ -335,6 +334,7 @@ class PowModCases(TestAccumulatorBase):
                 e = ExpectedState(int_regs=initial_regs[:12], crregs=0)
                 e.intregs[0] = 0  # leftovers -- ignore
                 e.intregs[3] = 1  # leftovers -- ignore
+                e.ca = None  # ignored
                 for i in range(4):
                     # write q in LE order to regs 4-7
                     e.intregs[4 + i] = (q >> (64 * i)) % 2**64
