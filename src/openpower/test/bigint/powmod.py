@@ -18,6 +18,7 @@ from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.test.state import ExpectedState
 from openpower.test.util import assemble
 from nmutil.sim_util import hash_256
+from openpower.util import log
 
 
 MUL_256_X_256_TO_512_ASM = (
@@ -157,20 +158,102 @@ DIVMOD_512x256_TO_256x256_ASM = (
 )
 
 
-def python_divmod_algorithm(n, d, width=256):
+class _DivModRegsRegexLogger:
+    """ logger that logs a regex that matches the expected register dump for
+    the currently tracked `locals` -- quite useful for debugging
+    """
+
+    def __init__(self, enabled=True):
+        self.__tracked = {}
+        self.enabled = enabled
+
+    def log(self, locals_, **changes):
+        """ use like so:
+        ```
+        # create a variable `a`:
+        a = ...
+
+        # we invoke `locals()` each time since python doesn't guarantee
+        # it's up-to-date otherwise
+        logger.log(locals(), a=(4, 6))  # `a` starts at r4 and uses 6 registers
+
+        a += 3
+
+        logger.log(locals())  # keeps using `a`
+
+        b = a + 5
+
+        logger.log(locals(), a=None, b=(4, 6))  # remove `a` and add `b`
+        ```
+        """
+
+        for k, v in changes.items():
+            if v is None:
+                del self.__tracked[k]
+            else:
+                self.__tracked[k] = v
+
+        gprs = [None] * 128
+        for name, (start_gpr, size) in self.__tracked.items():
+            value = locals_[name]
+            for i in range(size):
+                assert gprs[start_gpr + i] is None, "overlapping values"
+                gprs[start_gpr + i] = (value >> 64 * i) % 2 ** 64
+
+        if not self.enabled:
+            # after building `gprs` so we catch any missing/invalid locals
+            return
+
+        segments = []
+
+        for i in range(0, 128, 8):
+            segments.append(f"reg +{i}")
+            for value in gprs[i:i + 8]:
+                if value is None:
+                    segments.append(" +[0-9a-f]+")
+                else:
+                    segments.append(f" +{value:08x}")
+            segments.append("\\n")
+        log("DIVMOD REGEX:", "".join(segments))
+
+
+def python_divmod_algorithm(n, d, width=256, log_regex=False):
     assert n >= 0 and d > 0 and width > 0 and n < (d << width), "invalid input"
+    do_log = _DivModRegsRegexLogger(enabled=log_regex).log
+
+    do_log(locals(), n=(4, 8), d=(32, 4))
+
     r = n
+    do_log(locals(), n=None, r=(40, 8))
+
     shifted_d = d << (width - 1)
+    do_log(locals(), d=None, shifted_d=(32, 8))
+
     q = 0
+    do_log(locals(), q=(4, 4))
+
     for _ in range(width):
         diff = r - shifted_d
         borrowed = diff < 0
+        do_log(locals(), diff=(48, 8))
+
         q <<= 1
+        do_log(locals())
+
         if not borrowed:
             q |= 1
+            do_log(locals())
+
             r = diff
+            do_log(locals())
+
         r <<= 1
-    return q, r >> width
+        do_log(locals())
+
+    r >>= width
+    do_log(locals(), r=(8, 4))
+
+    return q, r
 
 
 class PowModCases(TestAccumulatorBase):

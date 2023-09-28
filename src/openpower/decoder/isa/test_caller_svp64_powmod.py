@@ -24,7 +24,9 @@ class TestPythonAlgorithms(unittest.TestCase):
             q, r = divmod(n, d)
             with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
                               q=f"{q:#_x}", r=f"{r:#_x}"):
-                out_q, out_r = python_divmod_algorithm(n, d)
+                log_regex = n == 2 ** 511 - 1 and d == 2 ** 256 - 1
+                out_q, out_r = python_divmod_algorithm(
+                    n, d, log_regex=log_regex)
                 with self.subTest(out_q=f"{out_q:#_x}", out_r=f"{out_r:#_x}"):
                     self.assertEqual(out_q, q)
                     self.assertEqual(out_r, r)
