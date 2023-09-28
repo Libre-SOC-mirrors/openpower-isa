@@ -4,7 +4,7 @@
 
 # Funded by NLnet Assure Programme 2021-02-052, https://nlnet.nl/assure part
 # of Horizon 2020 EU Programme 957073.
-# 
+#
 # * https://bugs.libre-soc.org/show_bug.cgi?id=1044
 
 """ modular exponentiation (`pow(x, y, z)`)
@@ -47,13 +47,17 @@ MUL_256_X_256_TO_512_ASM = (
 # TODO: these really need to go into a common util file, see
 # openpower/decoder/isa/poly1305-donna.py:def _DSRD(lo, hi, sh)
 # okok they are modulo 100 but you get the general idea
+
+
 def maddedu(a, b, c):
     y = a * b + c
     return y % 100, y // 100
 
+
 def adde(a, b, c):
     y = a + b + c
     return y % 100, y // 100
+
 
 def addc(a, b):
     y = a + b
@@ -263,13 +267,13 @@ if __name__ == "__main__":
 
     # now test python_mul_algorithm2 *against* python_mul_algorithm
     import random
-    random.seed(0) # reproducible values
+    random.seed(0)  # reproducible values
     for i in range(10000):
         a = []
         b = []
         for j in range(4):
-            a.append(random.randint(0,99))
-            b.append(random.randint(0,99))
+            a.append(random.randint(0, 99))
+            b.append(random.randint(0, 99))
         expected = python_mul_algorithm(a, b)
         testing = python_mul_algorithm2(a, b)
         report = "%+17s * %-17s = %s\n" % (repr(a), repr(b), repr(expected))
