@@ -1926,7 +1926,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # TODO, asmregs is from the spec, e.g. add RT,RA,RB
         # see http://bugs.libre-riscv.org/show_bug.cgi?id=282
         asmop = yield from self.get_assembly_name()
-        log("call", ins_name, asmop)
+        log("call", ins_name, asmop,
+            kind=LogKind.InstrInOuts)
 
         # sv.setvl is *not* a loop-function. sigh
         log("is_svp64_mode", self.is_svp64_mode, asmop)
