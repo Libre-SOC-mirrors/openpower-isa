@@ -212,8 +212,8 @@ class PowModCases(TestAccumulatorBase):
 
                 self.call_case(MUL_256_X_256_TO_512_ASM, e, initial_regs)
 
-    @skip_case("FIXME: wip -- currently broken")
-    def case_divmod_512x256_to_256x256(self):
+    @staticmethod
+    def divmod_512x256_to_256x256_test_inputs():
         for i in range(10):
             n = hash_256(f"divmod256 input n msb {i}")
             n <<= 256
@@ -231,6 +231,11 @@ class PowModCases(TestAccumulatorBase):
                 d = 1
             if n >= d << 256:
                 n -= d << 256
+            yield (n, d)
+
+    @skip_case("FIXME: wip -- currently broken")
+    def case_divmod_512x256_to_256x256(self):
+        for n, d in self.divmod_512x256_to_256x256_test_inputs():
             q, r = divmod(n, d)
             with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
                               q=f"{q:#_x}", r=f"{r:#_x}"):

@@ -14,8 +14,21 @@ related bugs:
 import unittest
 from functools import lru_cache
 import os
-from openpower.test.bigint.powmod import PowModCases
+from openpower.test.bigint.powmod import PowModCases, python_divmod_algorithm
 from openpower.test.runner import TestRunnerBase
+
+
+class TestPythonAlgorithms(unittest.TestCase):
+    def test_python_divmod_algorithm(self):
+        for n, d in PowModCases.divmod_512x256_to_256x256_test_inputs():
+            q, r = divmod(n, d)
+            with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
+                              q=f"{q:#_x}", r=f"{r:#_x}"):
+                out_q, out_r = python_divmod_algorithm(n, d)
+                with self.subTest(out_q=f"{out_q:#_x}", out_r=f"{out_r:#_x}"):
+                    self.assertEqual(out_q, q)
+                    self.assertEqual(out_r, r)
+
 
 # writing the test_caller invocation this way makes it work with pytest
 
