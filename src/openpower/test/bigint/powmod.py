@@ -100,6 +100,17 @@ def python_mul_algorithm2(a, b):
     # the idea here is that it will "morph" into something more akin to
     # using REMAP bigmul (first using REMAP Indexed)
 
+    # create a schedule for use below. the "end of inner loop" marker is 0b01
+    iyl = []
+    il = []
+    for iy in range(4):
+        for i in range(4):
+            iyl.append((iy+i, i==3))
+            il.append(i)
+        for i in range(5):
+            iyl.append((iy+i, i==4))
+            il.append(i)
+
     y = [0] * 8
     t = [0] * 5
     for iy in range(4):
