@@ -112,14 +112,13 @@ def python_mul_algorithm2(a, b):
             il.append(i)
 
     y = [0] * 8
-    t = [0] * 5
+    t = [0] * 8
     for iy in range(4):
-        t[4] = 0
         for i in range(4):
-            t[i], t[4] = maddedu(a[iy], b[i], t[4])
+            t[iy+i], t[iy+4] = maddedu(a[iy], b[i], t[iy+4])
         ca = 0
         for i in range(5):
-            y[iy + i], ca = adde(y[iy + i], t[i], ca)
+            y[iy + i], ca = adde(y[iy + i], t[iy+i], ca)
     return y
 
 
