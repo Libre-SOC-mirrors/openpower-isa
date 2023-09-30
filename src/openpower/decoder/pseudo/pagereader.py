@@ -426,7 +426,8 @@ class ISA:
         for k, v in self.instr.items():
             print("# %s %s" % (v.opcode, v.desc))
             print("Form: %s Regs: %s" % (v.form, v.regs))
-            print('\n'.join(map(lambda x: "    %s" % x, v.pcode)))
+            pcode = filter(lambda x : len(x.strip()), v.pcode) # skip blank
+            print('\n'.join(map(lambda x: "    %s" % x, pcode)))
             print("Specials")
             print('\n'.join(map(lambda x: "    %s" % x, v.sregs)))
             print()
