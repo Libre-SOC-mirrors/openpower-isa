@@ -52,7 +52,7 @@ import os
 import re
 
 opfields = ("desc", "form", "opcode", "regs", "pcode", "sregs", "page",
-            "extra_uninit_regs", "pcode_fname")
+            "extra_uninit_regs")
 Ops = namedtuple("Ops", opfields)
 
 
@@ -223,7 +223,6 @@ class ISA:
         l = lines.pop(0).rstrip()  # get first line
         prefix_lines = 0
         while lines:
-            pcode_fname = fname
             if self.verbose:
                 print(l)
             # look for HTML comment, if starting, skip line.
@@ -312,7 +311,8 @@ class ISA:
 
             # fix parser line numbers by prepending the right number of
             # blank lines to the parser input
-            li = [""] * (prefix_lines + 1)
+            li = [""] * prefix_lines
+            li += [l[4:]]  # first line detected with 4-space
             while True:
                 l = lines.pop(0).rstrip()
                 prefix_lines += 1
@@ -326,50 +326,13 @@ class ISA:
                             extra_uninit_regs.add(i)
                     li.append("")
                     continue
-                if l.startswith("[[!inline "):
-                    li.append(l)
-                    continue
                 if l.strip().startswith('<!--'):
                     li.append("")
                     continue
                 assert l.startswith('    '), ("4spcs not found in line %s" % l)
                 l = l[4:]  # lose 4 spaces
                 li.append(l)
-            inline_line = None
-            other = False
-            for l in li:
-                if l.startswith("[[!inline "):
-                    assert inline_line is None, \
-                        "can't use multiple [[!inline]] directives"
-                    inline_line = l
-                elif l != "":
-                    other = True
-            if inline_line is not None:
-                assert not other, \
-                    "can't use [[!inline]] directive with other content"
-
-                re_match = re.fullmatch(
-                    r'\[\[!inline pagenames="openpower/isa/([^" ]*[^"/ ])" '
-                    r'raw="yes"]]', inline_line)
-                assert re_match, (
-                    'invalid [[!inline]] directive, must be of the form:\n'
-                    '[[!inline pagenames="openpower/isa/foo/bar" '
-                    'raw="yes"]]')
-                pcode_fname = re_match[1] + ".mdwn"
-                pcode_fname = os.path.join(get_isa_dir(), pcode_fname)
-                with open(pcode_fname) as f:
-                    li = f.readlines()
-                for i, l in enumerate(li):
-                    l = l.rstrip()
-                    if l.startswith("<!--"):
-                        l = ""
-                    elif l != "":
-                        assert l.startswith("    "), \
-                            "line must start with 4 spaces"
-                        l = l[4:]
-                    li[i] = l
             d['pcode'] = li
-            d['pcode_fname'] = pcode_fname
             d['extra_uninit_regs'] = extra_uninit_regs
 
             # "Special Registers Altered" expected
