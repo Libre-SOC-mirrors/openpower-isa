@@ -361,7 +361,7 @@ class ISA:
                     li = f.readlines()
                 for i, l in enumerate(li):
                     l = l.rstrip()
-                    if l.strip().startswith("<!--"):
+                    if l.startswith("<!--"):
                         l = ""
                     elif l != "":
                         assert l.startswith("    "), \
