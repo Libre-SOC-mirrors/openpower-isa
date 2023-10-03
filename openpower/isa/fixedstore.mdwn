@@ -463,6 +463,14 @@ Pseudo-code:
     EA <- b + (RB)
     MEM(EA, 2) <- (RS) [56:63] || (RS)[48:55]
 
+Description:
+
+    Let the effective address (EA) be the sum
+    (RA|0)+ (RB). (RS)56:63 are stored into bits 0:7 of the
+    halfword in storage addressed by EA. (RS) 48:55 are
+    stored into bits 8:15 of the halfword in storage
+    addressed by EA.
+
 Special Registers Altered:
 
     None
