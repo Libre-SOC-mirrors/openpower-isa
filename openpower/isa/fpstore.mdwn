@@ -214,6 +214,25 @@ Pseudo-code:
     EA <- b + (RB)
     MEM(EA, 8)<- (FRS)[32:63]
 
+Description:
+
+    Let the effective address (EA) be the sum (RA|0)+(RB).
+
+    (FRS)[32:63] are stored, without conversion, into the word
+    in storage addressed by EA.
+
+    If the contents of register FRS were produced, either
+    directly or indirectly, by a Load Floating-Point Single
+    instruction, a single-precision Arithmetic instruction, or
+    frsp, then the value stored is undefined. (The contents
+    of register FRS are produced directly by such an
+    instruction if FRS is the target register for the instruc-
+    tion. The contents of register FRS are produced indi-
+    rectly by such an instruction if FRS is the final target
+    register of a sequence of one or more Floating-Point
+    Move instructions, with the input to the sequence hav-
+    ing been produced directly by such an instruction.)
+
 Special Registers Altered:
 
     None
