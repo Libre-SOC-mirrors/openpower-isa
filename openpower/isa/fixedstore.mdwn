@@ -519,6 +519,23 @@ Pseudo-code:
                     || (RS)[24:31] || (RS)[16:23]
                     || (RS)[8:15]  || (RS)[0:7])
 
+Description:
+
+    Let the effective address (EA) be the sum
+    (RA|0)+ (RB). (RS)[56:63] are stored into bits 0:7 of the
+    doubleword in storage addressed by EA. (RS) [48:55] are
+    stored into bits 8:15 of the doubleword in storage
+    addressed by EA. (RS) [40:47] are stored into bits 16:23 of
+    the doubleword in storage addressed by EA. (RS) [32:39]
+    are stored into bits 23:31 of the doubleword in storage
+    addressed by EA. (RS) [24:31] are stored into bits 32:39 of
+    the doubleword in storage addressed by EA. (RS) [16:23]
+    are stored into bits 40:47 of the doubleword in storage
+    addressed by EA. (RS)[8:15] are stored into bits 48:55 of
+    the doubleword in storage addressed by EA. (RS) [0:7]
+    are stored into bits 56:63 of the doubleword in storage
+    addressed by EA.
+
 Special Registers Altered:
 
     None
