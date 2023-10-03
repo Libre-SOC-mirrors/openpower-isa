@@ -166,6 +166,16 @@ Pseudo-code:
     MEM(EA, 2) <- (RS)[XLEN-16:XLEN-1]
     RA <- EA
 
+Description:
+
+Let the effective address (EA) be the sum (RA)+ D.
+RS[48:63] are stored into the halfword in storage
+addressed by EA.
+
+EA is placed into register RA.
+
+If RA=0, the instruction form is invalid.
+
 Special Registers Altered:
 
     None
