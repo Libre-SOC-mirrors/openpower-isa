@@ -339,7 +339,8 @@ class ISA:
 
             # "Special Registers Altered" expected
             l = lines.pop(0).rstrip()
-            assert l.startswith("Special"), ("special not found %s" % l)
+            assert l.startswith("Special"), \
+                    ("special not found %s (%s)" % (l, d['desc']))
 
             # whitespace expected
             l = lines.pop(0).strip()
