@@ -70,6 +70,12 @@ Pseudo-code:
     MEM(ea, 2) <- (RS)[XLEN-16:XLEN-1]
     RA <- EA
 
+Description:
+
+Let the effective address (EA) be the sum (RA|0)+ D.
+(RS)[48:63] are stored into the halfword in storage
+addressed by EA.
+
 Special Registers Altered:
 
     None
