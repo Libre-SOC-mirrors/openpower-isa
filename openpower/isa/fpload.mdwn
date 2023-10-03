@@ -239,6 +239,13 @@ Pseudo-code:
     EA <- (RA|0) + (RB)
     FRT <- [0]*32 || MEM(EA, 4)
 
+Description:
+
+    Let the effective address (EA) be the sum (RA|0)+(RB).
+
+    The word in storage addressed by EA is loaded into
+    FRT [32:63]. FRT [0:31] are set to 0.
+
 Special Registers Altered:
 
     None
