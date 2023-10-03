@@ -88,6 +88,18 @@ Pseudo-code:
     MEM(EA, 4)<- SINGLE( (FRS) )
     RA <- EA
 
+Description:
+
+    Let the effective address (EA) be the sum (RA) +(RB).
+
+    The contents of register FRS are converted to single
+    format (see page 142) and stored into the word in stor-
+    age addressed by EA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
 Special Registers Altered:
 
     None
