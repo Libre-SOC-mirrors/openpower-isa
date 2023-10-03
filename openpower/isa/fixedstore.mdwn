@@ -488,6 +488,16 @@ Pseudo-code:
     MEM(EA, 4) <- ((RS)[56:63] || (RS)[48:55] || (RS)[40:47]
                    ||(RS)[32:39])
 
+Description:
+
+    Let the effective address (EA) be the sum
+    (RA|0)+ (RB). (RS)[56:63] are stored into bits 0:7 of the
+    word in storage addressed by EA. (RS) [48:55] are stored
+    into bits 8:15 of the word in storage addressed by EA.
+    (RS)[40:47] are stored into bits 16:23 of the word in stor-
+    age addressed by EA. (RS) [32:39] are stored into bits
+    24:31 of the word in storage addressed by EA.
+
 Special Registers Altered:
 
     None
