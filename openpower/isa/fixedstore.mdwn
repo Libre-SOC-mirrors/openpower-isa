@@ -559,6 +559,18 @@ Pseudo-code:
         r <-  r + 1
         EA <-  EA + 4
 
+Description:
+
+    Let n = (32-RS). Let the effective address (EA) be the
+    sum (RA|0)+ D.
+
+    n consecutive words starting at EA are stored from the
+    low-order 32 bits of GPRs RS through 31.
+
+    This instruction is not supported in Little-Endian mode.
+    If it is executed in Little-Endian mode, the system align-
+    ment error handler is invoked.
+
 Special Registers Altered:
 
     None
