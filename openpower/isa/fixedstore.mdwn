@@ -318,6 +318,12 @@ Pseudo-code:
     EA <- b + EXTS(DS || 0b00)
     MEM(EA, 8) <- (RS)
 
+Description:
+
+Let the effective address (EA) be the sum
+(RA|0)+ (DS||0b00). (RS) is stored into the doubleword
+in storage addressed by EA.
+
 Special Registers Altered:
 
     None
