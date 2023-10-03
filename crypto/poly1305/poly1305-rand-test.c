@@ -24,7 +24,7 @@ int main(int argc, char **argv){
 
     for (int i = 0; i < msg_size; i++) msg[i] = random() & 0x000000FF;
 
-    poly1305_auth(mac, msg, sizeof(msg), key);
+    poly1305_auth(mac, msg, msg_size, key);
 
     for (int i = 0; i < msg_size; i++)
         printf("%u%s", msg[i], (i == msg_size-1) ? "\n" : "," );
