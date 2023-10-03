@@ -13,6 +13,14 @@ Pseudo-code:
     EA <- (RA|0) + EXTS(D)
     MEM(EA, 4)<- SINGLE( (FRS) )
 
+Description:
+
+    Let the effective address (EA) be the sum (RA|0)+D.
+
+    The contents of register FRS are converted to single
+    format (see page 142) and stored into the word in stor-
+    age addressed by EA.
+
 Special Registers Altered:
 
     None
