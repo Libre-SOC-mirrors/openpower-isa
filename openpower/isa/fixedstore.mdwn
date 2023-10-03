@@ -218,6 +218,12 @@ Pseudo-code:
     EA <- b + EXTS(D)
     MEM(EA, 4) <- (RS)[XLEN-32:XLEN-1]
 
+Description:
+
+Let the effective address (EA) be the sum (RA|0)+ D.
+RS[32:63] are stored into the word in storage addressed
+by EA.
+
 Special Registers Altered:
 
     None
