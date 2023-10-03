@@ -28,9 +28,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA|0)+ D.
-RS[56:63] are stored into the byte in storage addressed
-by EA.
+    Let the effective address (EA) be the sum (RA|0)+ D.
+    RS[56:63] are stored into the byte in storage addressed
+    by EA.
 
 Special Registers Altered:
 
@@ -50,9 +50,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum
-(RA|0)+ (RB). RS [56:63] are stored into the byte in stor-
-age addressed by EA.
+    Let the effective address (EA) be the sum
+    (RA|0)+ (RB). RS [56:63] are stored into the byte in stor-
+    age addressed by EA.
 
 Special Registers Altered:
 
@@ -72,15 +72,15 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA)+ D.
-RS[56:63] are stored into the byte in storage addressed
-by EA.
+    Let the effective address (EA) be the sum (RA)+ D.
+    RS[56:63] are stored into the byte in storage addressed
+    by EA.
 
-EA is placed into register RA.
+    EA is placed into register RA.
 
-If RA=0, the instruction form is invalid.
+    If RA=0, the instruction form is invalid.
 
-Special Registers Altered:
+    Special Registers Altered:
 
     None
 
@@ -98,15 +98,15 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA)+ (RB).
-RS[56:63] are stored into the byte in storage addressed
-by EA.
+    Let the effective address (EA) be the sum (RA)+ (RB).
+    RS[56:63] are stored into the byte in storage addressed
+    by EA.
 
-EA is placed into register RA.
+    EA is placed into register RA.
 
-If RA=0, the instruction form is invalid.
+    If RA=0, the instruction form is invalid.
 
-Special Registers Altered:
+    Special Registers Altered:
 
     None
 
@@ -124,9 +124,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA|0)+ D.
-RS[48:63] are stored into the halfword in storage
-addressed by EA.
+    Let the effective address (EA) be the sum (RA|0)+ D.
+    RS[48:63] are stored into the halfword in storage
+    addressed by EA.
 
 Special Registers Altered:
 
@@ -146,9 +146,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum
-(RA|0)+ (RB). RS[48:63] are stored into the halfword in
-storage addressed by EA.
+    Let the effective address (EA) be the sum
+    (RA|0)+ (RB). RS[48:63] are stored into the halfword in
+    storage addressed by EA.
 
 Special Registers Altered:
 
@@ -168,15 +168,15 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA)+ D.
-RS[48:63] are stored into the halfword in storage
-addressed by EA.
+    Let the effective address (EA) be the sum (RA)+ D.
+    RS[48:63] are stored into the halfword in storage
+    addressed by EA.
 
-EA is placed into register RA.
+    EA is placed into register RA.
 
-If RA=0, the instruction form is invalid.
+    If RA=0, the instruction form is invalid.
 
-Special Registers Altered:
+    Special Registers Altered:
 
     None
 
@@ -194,15 +194,15 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA)+ (RB).
-RS[48:63] are stored into the halfword in storage
-addressed by EA.
+    Let the effective address (EA) be the sum (RA)+ (RB).
+    RS[48:63] are stored into the halfword in storage
+    addressed by EA.
 
-EA is placed into register RA.
+    EA is placed into register RA.
 
-If RA=0, the instruction form is invalid.
+    If RA=0, the instruction form is invalid.
 
-Special Registers Altered:
+    Special Registers Altered:
 
     None
 
@@ -220,9 +220,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA|0)+ D.
-RS[32:63] are stored into the word in storage addressed
-by EA.
+    Let the effective address (EA) be the sum (RA|0)+ D.
+    RS[32:63] are stored into the word in storage addressed
+    by EA.
 
 Special Registers Altered:
 
@@ -242,9 +242,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum
-(RA|0)+ (RB). RS[32:63] are stored into the word in stor-
-age addressed by EA.
+    Let the effective address (EA) be the sum
+    (RA|0)+ (RB). RS[32:63] are stored into the word in stor-
+    age addressed by EA.
 
 Special Registers Altered:
 
@@ -264,15 +264,15 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA)+ D.
-RS[32:63] are stored into the word in storage addressed
-by EA.
+    Let the effective address (EA) be the sum (RA)+ D.
+    RS[32:63] are stored into the word in storage addressed
+    by EA.
 
-EA is placed into register RA.
+    EA is placed into register RA.
 
-If RA=0, the instruction form is invalid.
+    If RA=0, the instruction form is invalid.
 
-Special Registers Altered:
+    Special Registers Altered:
 
     None
 
@@ -290,15 +290,15 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum (RA)+ (RB).
-RS[32:63] are stored into the word in storage addressed
-by EA.
+    Let the effective address (EA) be the sum (RA)+ (RB).
+    RS[32:63] are stored into the word in storage addressed
+    by EA.
 
-EA is placed into register RA.
+    EA is placed into register RA.
 
-If RA=0, the instruction form is invalid.
+    If RA=0, the instruction form is invalid.
 
-Special Registers Altered:
+    Special Registers Altered:
 
     None
 
@@ -320,9 +320,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum
-(RA|0)+ (DS||0b00). (RS) is stored into the doubleword
-in storage addressed by EA.
+    Let the effective address (EA) be the sum
+    (RA|0)+ (DS||0b00). (RS) is stored into the doubleword
+    in storage addressed by EA.
 
 Special Registers Altered:
 
@@ -342,9 +342,9 @@ Pseudo-code:
 
 Description:
 
-Let the effective address (EA) be the sum
-(RA|0)+ (RB). (RS) is stored into the doubleword in
-storage addressed by EA.
+    Let the effective address (EA) be the sum
+    (RA|0)+ (RB). (RS) is stored into the doubleword in
+    storage addressed by EA.
 
 Special Registers Altered:
 
