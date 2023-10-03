@@ -85,6 +85,17 @@ def operands(opcode, desc):
         if operand:
             yield operand
 
+def get_indented_lines(lines):
+    li = []
+    while lines:
+        l = lines.pop(0).rstrip()
+        if len(l) == 0:
+            break
+        assert l.startswith('    '), ("4spcs not found in line %s" % l)
+        l = l[4:]  # lose 4 spaces
+        li.append(l)
+    return li
+
 
 class ISA:
     def __init__(self):
@@ -328,14 +339,7 @@ class ISA:
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # get special regs
-            li = []
-            while lines:
-                l = lines.pop(0).rstrip()
-                if len(l) == 0:
-                    break
-                assert l.startswith('    '), ("4spcs not found in line %s" % l)
-                l = l[4:]  # lose 4 spaces
-                li.append(l)
+            li = get_indented_lines(lines)
             d['sregs'] = li
 
             # add in opcode
