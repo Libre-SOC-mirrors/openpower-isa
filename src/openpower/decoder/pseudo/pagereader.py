@@ -86,6 +86,8 @@ def operands(opcode, desc):
             yield operand
 
 def get_indented_lines(lines):
+    """gets a set of indented lines, plus a blank line as termination
+    """
     li = []
     while lines:
         l = lines.pop(0).rstrip()
@@ -329,6 +331,11 @@ class ISA:
                 li.append(l)
             d['pcode'] = li
             d['extra_uninit_regs'] = extra_uninit_regs
+
+            # check if (temporarily) optional "Description" exists
+            if lines[0].startswith("Description:"):
+                l = lines.pop(0).rstrip() # skip "Description"
+                d['description'] = get_indented_lines(lines)
 
             # "Special Registers Altered" expected
             l = lines.pop(0).rstrip()
