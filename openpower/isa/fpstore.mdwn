@@ -187,6 +187,17 @@ Pseudo-code:
     MEM(EA, 8)<- (FRS) 
     RA <- EA
 
+Description:
+
+    Let the effective address (EA) be the sum (RA)+(RB).
+
+    The contents of register FRS are stored into the dou-
+    bleword in storage addressed by EA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
 Special Registers Altered:
 
     None
