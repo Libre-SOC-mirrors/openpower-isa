@@ -95,7 +95,13 @@ Pseudo-code:
 
 Description:
 
+    Let the effective address (EA) be the sum (RA)+ (RB).
+    (RS)[56:63] are stored into the byte in storage addressed
+    by EA.
 
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid
 
 Special Registers Altered:
 
