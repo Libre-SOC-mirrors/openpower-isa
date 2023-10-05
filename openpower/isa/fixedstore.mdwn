@@ -80,7 +80,7 @@ Description:
 
     If RA=0, the instruction form is invalid.
 
-    Special Registers Altered:
+Special Registers Altered:
 
     None
 
@@ -106,7 +106,7 @@ Description:
 
     If RA=0, the instruction form is invalid.
 
-    Special Registers Altered:
+Special Registers Altered:
 
     None
 
@@ -176,7 +176,7 @@ Description:
 
     If RA=0, the instruction form is invalid.
 
-    Special Registers Altered:
+Special Registers Altered:
 
     None
 
@@ -202,7 +202,7 @@ Description:
 
     If RA=0, the instruction form is invalid.
 
-    Special Registers Altered:
+Special Registers Altered:
 
     None
 
@@ -272,7 +272,7 @@ Description:
 
     If RA=0, the instruction form is invalid.
 
-    Special Registers Altered:
+Special Registers Altered:
 
     None
 
@@ -298,7 +298,7 @@ Description:
 
     If RA=0, the instruction form is invalid.
 
-    Special Registers Altered:
+Special Registers Altered:
 
     None
 
