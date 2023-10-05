@@ -3,7 +3,7 @@
 <!-- This defines instructions that store from a register to RAM -->
 <!-- Effective Address is always RA, and the usual EA is stored late in RA -->
 
-# Store Byte with Update
+# Store Byte with Post-Update
 
 D-Form
 
@@ -30,7 +30,7 @@ Special Registers Altered:
 
     None
 
-# Store Byte with Update Indexed
+# Store Byte with Post-Update Indexed
 
 X-Form
 
@@ -57,7 +57,7 @@ Special Registers Altered:
 
     None
 
-# Store Halfword with Update
+# Store Halfword with Post-Update
 
 D-Form
 
@@ -80,7 +80,7 @@ Special Registers Altered:
 
     None
 
-# Store Halfword with Update Indexed
+# Store Halfword with Post-Update Indexed
 
 X-Form
 
@@ -107,7 +107,7 @@ Special Registers Altered:
 
     None
 
-# Store Word with Update
+# Store Word with Post-Update
 
 D-Form
 
@@ -134,7 +134,7 @@ Special Registers Altered:
 
     None
 
-# Store Word with Update Indexed
+# Store Word with Post-Update Indexed
 
 X-Form
 
@@ -161,7 +161,7 @@ Special Registers Altered:
 
     None
 
-# Store Doubleword with Update
+# Store Doubleword with Post-Update
 
 DS-Form
 
@@ -188,7 +188,7 @@ Special Registers Altered:
 
     None
 
-# Store Doubleword with Update Indexed
+# Store Doubleword with Post-Update Indexed
 
 X-Form
 
