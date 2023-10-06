@@ -23,7 +23,7 @@ def __cached_assemble(instructions, start_pc, bigendian):
     labels = {}
     out_instructions = []
     for instr in instructions:
-        m = re.fullmatch(r" *([a-zA-Z0-9_]+): *(#.*)?", instr)
+        m = re.fullmatch(r" *([a-zA-Z0-9_.$]+): *(#.*)?", instr)
         if m is not None:
             name = m.group(1)
             if name in labels:
@@ -39,18 +39,31 @@ def __cached_assemble(instructions, start_pc, bigendian):
     last_pc = pc
 
     for (idx, (pc, instr)) in enumerate(tuple(out_instructions)):
-        for (label, target) in labels.items():
-            if label in instr:
+        need_replace = True
+
+        def replace(match):
+            nonlocal need_replace
+            label = match.group(1)
+            target = labels.get(label)
+            if target is not None:
+                need_replace = True
                 if pc < target:
                     sign = ""
                     addr = (target - pc + 4)
                 else:
                     sign = "-"
                     addr = (pc - target - 4)
+                return f"{sign}0x{addr:X}"
+            return label
 
-                origin = instr
-                instr = instr.replace(label, f"{sign}0x{addr:X}")
-                break
+        while need_replace:
+            need_replace = False
+            # gas symbols start with any alphabetic or _ . $
+            start = "[a-zA-Z_.$]"
+            # gas symbols continue with any alphanumeric or _ . $
+            cont = "[a-zA-Z0-9_.$]"
+            # look for symbols that don't have preceding/succeeding `cont`
+            instr = re.sub(f"({start}{cont}*)", replace, instr)
         out_instructions[idx] = instr
 
     for k, v in labels.items():
