@@ -15,18 +15,19 @@ import unittest
 from functools import lru_cache
 import os
 from openpower.test.bigint.powmod import (
-    PowModCases, python_divmod_algorithm, python_powmod_256_algorithm)
+    PowModCases, python_divmod_shift_sub_algorithm,
+    python_powmod_256_algorithm)
 from openpower.test.runner import TestRunnerBase
 
 
 class TestPythonAlgorithms(unittest.TestCase):
-    def test_python_divmod_algorithm(self):
+    def test_python_divmod_shift_sub_algorithm(self):
         for n, d in PowModCases.divmod_512x256_to_256x256_test_inputs():
             q, r = divmod(n, d)
             with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
                               q=f"{q:#_x}", r=f"{r:#_x}"):
                 log_regex = n == 2 ** 511 - 1 and d == 2 ** 256 - 1
-                out_q, out_r = python_divmod_algorithm(
+                out_q, out_r = python_divmod_shift_sub_algorithm(
                     n, d, log_regex=log_regex)
                 with self.subTest(out_q=f"{out_q:#_x}", out_r=f"{out_r:#_x}"):
                     self.assertEqual(out_q, q)

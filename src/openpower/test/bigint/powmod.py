@@ -123,7 +123,7 @@ def python_mul_algorithm2(a, b):
     return y
 
 
-DIVMOD_512x256_TO_256x256_ASM = (
+DIVMOD_SHIFT_SUB_512x256_TO_256x256_ASM = (
     # extremely slow and simplistic shift and subtract algorithm.
     # a future task is to rewrite to use Knuth's Algorithm D,
     # which is generally an order of magnitude faster
@@ -228,7 +228,7 @@ class _DivModRegsRegexLogger:
         log("DIVMOD REGEX:", "".join(segments))
 
 
-def python_divmod_algorithm(n, d, width=256, log_regex=False):
+def python_divmod_shift_sub_algorithm(n, d, width=256, log_regex=False):
     assert n >= 0 and d > 0 and width > 0 and n < (d << width), "invalid input"
     do_log = _DivModRegsRegexLogger(enabled=log_regex).log
 
@@ -332,7 +332,7 @@ POWMOD_256_ASM = (
     "sv.ld *14, -144(1)",  # restore all callee-save registers
     "bclr 20, 0, 0 # blr",
     *MUL_256_X_256_TO_512_ASM,
-    *DIVMOD_512x256_TO_256x256_ASM,
+    *DIVMOD_SHIFT_SUB_512x256_TO_256x256_ASM,
 )
 
 
@@ -409,7 +409,7 @@ class PowModCases(TestAccumulatorBase):
                 n -= d << 256
             yield (n, d)
 
-    def case_divmod_512x256_to_256x256(self):
+    def case_divmod_shift_sub_512x256_to_256x256(self):
         for n, d in self.divmod_512x256_to_256x256_test_inputs():
             q, r = divmod(n, d)
             with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
@@ -434,7 +434,8 @@ class PowModCases(TestAccumulatorBase):
                     # write r in LE order to regs 8-11
                     e.intregs[8 + i] = (r >> (64 * i)) % 2**64
 
-                self.call_case(DIVMOD_512x256_TO_256x256_ASM, e, initial_regs)
+                self.call_case(
+                    DIVMOD_SHIFT_SUB_512x256_TO_256x256_ASM, e, initial_regs)
 
     @staticmethod
     def powmod_256_test_inputs():
