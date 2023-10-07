@@ -267,6 +267,125 @@ def python_divmod_shift_sub_algorithm(n, d, width=256, log_regex=False):
     return q, r
 
 
+def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False):
+    do_log = _DivModRegsRegexLogger(enabled=log_regex).log
+
+    # switch to names used by Knuth's algorithm D
+    u = list(n)  # dividend
+    m = len(u)  # length of dividend
+    v = list(d)  # divisor
+    del d  # less confusing to debug
+    n = len(v)  # length of divisor
+
+    assert m >= n, "the dividend's length must be >= the divisor's length"
+    assert word_size > 0
+
+    # allocate outputs/temporaries -- before any normalization so
+    # the outputs/temporaries can be fixed-length in the assembly version.
+
+    # quotient length from original algorithm is m - n + 1,
+    # but that assumes v[-1] != 0 -- since we support smaller divisors the
+    # quotient must be larger.
+    q = [0] * m  # quotient
+    r = [0] * n  # remainder
+    vn = [0] * n  # normalized divisor
+    un = [0] * (m + 1)  # normalized dividend
+    product = [0] * (n + 1)
+
+    # get non-zero length of dividend
+    while m > 0 and u[m - 1] == 0:
+        m -= 1
+
+    # get non-zero length of divisor
+    while n > 0 and v[n - 1] == 0:
+        n -= 1
+
+    if n == 0:
+        raise ZeroDivisionError
+
+    if n == 1:
+        # Knuth's algorithm D requires the divisor to have length >= 2
+        # handle single-word divisors separately
+        t = 0
+        for i in reversed(range(m)):
+            # divmod2du
+            t <<= word_size
+            t += u[i]
+            q[i] = t // v[0]
+            t %= v[0]
+        r[0] = t
+        return q, r
+
+    # Knuth's algorithm D starts here:
+
+    # Step D1: normalize
+
+    # calculate amount to shift by -- count leading zeros
+    s = 0
+    while (v[n - 1] << s) >> (word_size - 1) == 0:
+        s += 1
+
+    # vn = v << s
+    t = 0
+    for i in range(n):
+        # dsld
+        t |= v[i] << s
+        vn[i] = t % 2 ** word_size
+        t >>= word_size
+
+    # un = u << s
+    t = 0
+    for i in range(m):
+        # dsld
+        t |= u[i] << s
+        un[i] = t % 2 ** word_size
+        t >>= word_size
+    un[m] = t
+
+    # Step D2 and Step D7: loop
+    for j in range(m - n, -1, -1):
+        # Step D3: calculate q̂
+
+        t = un[j + n]
+        t <<= word_size
+        t += un[j + n - 1]
+        if un[j + n] >= vn[n - 1]:
+            # division overflows word
+            qhat = 2 ** word_size - 1
+            rhat = t - qhat * vn[n - 1]
+        else:
+            # divmod2du
+            qhat = t // vn[n - 1]
+            rhat = t % vn[n - 1]
+
+        while rhat < 2 ** word_size:
+            if qhat * vn[n - 2] > (rhat << word_size) + un[j + n - 2]:
+                qhat -= 1
+                rhat += vn[n - 1]
+            else:
+                break
+
+        # Step D4: multiply and subtract
+
+        t = 0
+        for i in range(n):
+            # maddedu
+            t += vn[i] * qhat
+            product[i] = t % 2 ** word_size
+            t >>= word_size
+        product[n] = t
+
+        t = 1
+        for i in range(n + 1):
+            # subfe
+            t += ~product[i] + un[j + i]
+            un[j + i] = t % 2 ** word_size
+            t = int(t >= 2 ** word_size)
+        need_fixup = not t
+
+        # FIXME(jacob): finish
+
+
 POWMOD_256_ASM = (
     # base is in r4-7, exp is in r8-11, mod is in r32-35
     "powmod_256:",
