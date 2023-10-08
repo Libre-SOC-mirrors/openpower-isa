@@ -63,6 +63,7 @@ def iterate_indices(SVSHAPE):
                         result = SVSHAPE.postprocess(result, step)
                     yield result + SVSHAPE.offset, loopends
                     step += 1
+
 def demo():
     # set the dimension sizes here
     xdim = 3
