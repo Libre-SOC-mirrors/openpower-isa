@@ -16,7 +16,7 @@ from functools import lru_cache
 import os
 from openpower.test.bigint.powmod import (
     PowModCases, python_divmod_shift_sub_algorithm,
-    python_powmod_256_algorithm)
+    python_divmod_knuth_algorithm_d, python_powmod_256_algorithm)
 from openpower.test.runner import TestRunnerBase
 
 
@@ -32,6 +32,36 @@ class TestPythonAlgorithms(unittest.TestCase):
                 with self.subTest(out_q=f"{out_q:#_x}", out_r=f"{out_r:#_x}"):
                     self.assertEqual(out_q, q)
                     self.assertEqual(out_r, r)
+
+    def test_python_divmod_knuth_algorithm_d(self):
+        seen_corner_cases = set()
+        for n, d in PowModCases.divmod_512x256_to_256x256_test_inputs():
+            log_regex = n == 2 ** 511 - 1 and d == 2 ** 256 - 1
+            q, r = divmod(n, d)
+            n = [(n >> 64 * i) % 2 ** 64 for i in range(8)]
+            d = [(d >> 64 * i) % 2 ** 64 for i in range(4)]
+            q = [(q >> 64 * i) % 2 ** 64 for i in range(4)]
+            r = [(r >> 64 * i) % 2 ** 64 for i in range(4)]
+            with self.subTest(n=[f"{i:#_x}" for i in n],
+                              d=[f"{i:#_x}" for i in d],
+                              q=[f"{i:#_x}" for i in q],
+                              r=[f"{i:#_x}" for i in r]):
+                out_q, out_r = python_divmod_knuth_algorithm_d(
+                    n, d, log_regex=log_regex,
+                    on_corner_case=seen_corner_cases.add)
+                with self.subTest(out_q=[f"{i:#_x}" for i in out_q],
+                                  out_r=[f"{i:#_x}" for i in out_r]):
+                    self.assertEqual(out_q, q + [0] * 4)
+                    self.assertEqual(out_r, r)
+
+        # ensure our testing actually covers all the corner cases
+        self.assertEqual(seen_corner_cases, {
+            "single-word divisor",
+            "non-zero shift",
+            "qhat overflows word",
+            "qhat adjustment",
+            "add back",
+        })
 
     def test_python_powmod_algorithm(self):
         for base, exp, mod in PowModCases.powmod_256_test_inputs():

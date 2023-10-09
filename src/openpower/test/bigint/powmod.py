@@ -267,7 +267,8 @@ def python_divmod_shift_sub_algorithm(n, d, width=256, log_regex=False):
     return q, r
 
 
-def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False):
+def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False,
+                                    on_corner_case=lambda desc: None):
     do_log = _DivModRegsRegexLogger(enabled=log_regex).log
 
     # switch to names used by Knuth's algorithm D
@@ -304,6 +305,7 @@ def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False):
         raise ZeroDivisionError
 
     if n == 1:
+        on_corner_case("single-word divisor")
         # Knuth's algorithm D requires the divisor to have length >= 2
         # handle single-word divisors separately
         t = 0
@@ -316,6 +318,12 @@ def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False):
         r[0] = t
         return q, r
 
+    if m < n:
+        # dividend < divisor
+        for i in range(m):
+            r[i] = u[i]
+        return q, r
+
     # Knuth's algorithm D starts here:
 
     # Step D1: normalize
@@ -324,6 +332,9 @@ def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False):
     s = 0
     while (v[n - 1] << s) >> (word_size - 1) == 0:
         s += 1
+
+    if s != 0:
+        on_corner_case("non-zero shift")
 
     # vn = v << s
     t = 0
@@ -351,6 +362,7 @@ def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False):
         t += un[j + n - 1]
         if un[j + n] >= vn[n - 1]:
             # division overflows word
+            on_corner_case("qhat overflows word")
             qhat = 2 ** word_size - 1
             rhat = t - qhat * vn[n - 1]
         else:
@@ -360,6 +372,7 @@ def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False):
 
         while rhat < 2 ** word_size:
             if qhat * vn[n - 2] > (rhat << word_size) + un[j + n - 2]:
+                on_corner_case("qhat adjustment")
                 qhat -= 1
                 rhat += vn[n - 1]
             else:
@@ -378,13 +391,43 @@ def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False):
         t = 1
         for i in range(n + 1):
             # subfe
-            t += ~product[i] + un[j + i]
+            not_product = ~product[i] % 2 ** word_size
+            t += not_product + un[j + i]
             un[j + i] = t % 2 ** word_size
             t = int(t >= 2 ** word_size)
         need_fixup = not t
 
-        # FIXME(jacob): finish
+        # Step D5: test remainder
 
+        q[j] = qhat
+        if need_fixup:
+
+            # Step D6: add back
+
+            on_corner_case("add back")
+
+            q[j] -= 1
+
+            t = 0
+            for i in range(n):
+                # adde
+                t += un[j + i] + vn[i]
+                un[j + i] = t % 2 ** word_size
+                t = int(t >= 2 ** word_size)
+            un[j + n] += t
+
+    # Step D8: un-normalize
+
+    # r = un >> s
+    t = 0
+    for i in reversed(range(n)):
+        # dsrd
+        t <<= word_size
+        t |= (un[i] << word_size) >> s
+        r[i] = t >> word_size
+        t %= 2 ** word_size
+
+    return q, r
 
 POWMOD_256_ASM = (
     # base is in r4-7, exp is in r8-11, mod is in r32-35
@@ -509,19 +552,26 @@ class PowModCases(TestAccumulatorBase):
 
     @staticmethod
     def divmod_512x256_to_256x256_test_inputs():
-        for i in range(10):
+        yield (2 ** (256 - 1), 1)
+        yield (2 ** (512 - 1) - 1, 2 ** 256 - 1)
+
+        # test qhat overflow
+        yield (0x8000 << 128 | 0xFFFE << 64, 0x8000 << 64 | 0xFFFF)
+
+        # tests where add back is required
+        yield (8 << (192 - 4) | 3, 2 << (192 - 4) | 1)
+        yield (0x8000 << 128 | 3, 0x2000 << 128 | 1)
+        yield (0x7FFF << 192 | 0x8000 << 128, 0x8000 << 128 | 1)
+
+        for i in range(20):
             n = hash_256(f"divmod256 input n msb {i}")
             n <<= 256
             n |= hash_256(f"divmod256 input n lsb {i}")
+            n_shift = hash_256(f"divmod256 input n shift {i}") % 512
+            n >>= n_shift
             d = hash_256(f"divmod256 input d {i}")
-            if i == 0:
-                # use known values:
-                n = 2 ** (256 - 1)
-                d = 1
-            elif i == 1:
-                # use known values:
-                n = 2 ** (512 - 1) - 1
-                d = 2 ** 256 - 1
+            d_shift = hash_256(f"divmod256 input d shift {i}") % 256
+            d >>= d_shift
             if d == 0:
                 d = 1
             n %= d << 256
