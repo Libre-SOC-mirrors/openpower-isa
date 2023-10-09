@@ -524,8 +524,7 @@ class PowModCases(TestAccumulatorBase):
                 d = 2 ** 256 - 1
             if d == 0:
                 d = 1
-            if n >= d << 256:
-                n -= d << 256
+            n %= d << 256
             yield (n, d)
 
     def case_divmod_shift_sub_512x256_to_256x256(self):
