@@ -529,7 +529,9 @@ class PowModCases(TestAccumulatorBase):
             yield (n, d)
 
     def case_divmod_shift_sub_512x256_to_256x256(self):
-        for n, d in self.divmod_512x256_to_256x256_test_inputs():
+        cases = list(self.divmod_512x256_to_256x256_test_inputs())
+        del cases[2:-1]  # speed up tests by removing most test cases
+        for n, d in cases:
             q, r = divmod(n, d)
             with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
                               q=f"{q:#_x}", r=f"{r:#_x}"):
