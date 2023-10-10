@@ -308,7 +308,28 @@ class DivModKnuthAlgorithmD:
             q_size = num_size
 
         if regs is None:
-            regs = {}
+            regs = {
+                "n_0": 4,
+                "d_0": 32,
+                "u": 36,
+                "m": 3,
+                "v": 32,
+                "n_scalar": 8,
+                "q": 4,
+                "vn": 32,
+                "un": 36,
+                "product": 46,
+                "r": 8,
+                "t_single": 8,
+                "s_scalar": 10,
+                "t_for_uv_shift": 0,
+                "n_for_unnorm": 32,
+                "t_for_unnorm": 3,
+                "s_for_unnorm": 34,
+                "qhat": 12,
+                "rhat": 0,
+                "t_for_prod": 0,
+            }
 
         self.num_size = num_size
         self.denom_size = denom_size
@@ -335,30 +356,44 @@ class DivModKnuthAlgorithmD:
     def python(self, n, d, log_regex=False, on_corner_case=lambda desc: None):
         do_log = _DivModRegsRegexLogger(enabled=log_regex, regs=self.regs).log
 
+        do_log(locals(), n=("n_0", self.num_size), d=("d_0", self.denom_size))
+
         # switch to names used by Knuth's algorithm D
         u = list(n)  # dividend
         assert len(u) == self.num_size, "numerator has wrong size"
+        do_log(locals(), n=None, u=("u", self.num_size))
         m = len(u)  # length of dividend
+        do_log(locals(), m="m")
         v = list(d)  # divisor
         assert len(v) == self.denom_size, "denominator has wrong size"
         del d  # less confusing to debug
+        do_log(locals(), d=None, v=("v", self.denom_size))
         n = len(v)  # length of divisor
+        do_log(locals(), n="n_scalar")
 
         # allocate outputs/temporaries -- before any normalization so
         # the outputs/temporaries can be fixed-length in the assembly version.
 
         q = [0] * self.q_size  # quotient
+        do_log(locals(), q=("q", self.q_size))
         vn = [None] * self.vn_size  # normalized divisor
+        do_log(locals(), vn=("vn", self.vn_size))
         un = [None] * self.un_size  # normalized dividend
+        do_log(locals(), un=("un", self.un_size))
         product = [None] * self.product_size
+        do_log(locals(), product=("product", self.product_size))
 
         # get non-zero length of dividend
         while m > 0 and u[m - 1] == 0:
             m -= 1
 
+        do_log(locals())
+
         # get non-zero length of divisor
         while n > 0 and v[n - 1] == 0:
             n -= 1
+
+        do_log(locals())
 
         if n == 0:
             raise ZeroDivisionError
@@ -371,21 +406,26 @@ class DivModKnuthAlgorithmD:
             if m > self.q_size:
                 t = u[self.q_size]
                 m = self.q_size
+            do_log(locals(), t="t_single", n=None)
             for i in reversed(range(m)):
                 # divmod2du
                 t <<= self.word_size
                 t += u[i]
                 q[i] = t // v[0]
                 t %= v[0]
+                do_log(locals())
             r = [0] * self.r_size  # remainder
             r[0] = t
+            do_log(locals(), t=None, r=("r", self.r_size))
             return q, r
 
         if m < n:
             r = [None] * self.r_size  # remainder
+            do_log(locals(), r=("r", self.r_size), n=None)
             # dividend < divisor
             for i in range(self.r_size):
                 r[i] = u[i]
+            do_log(locals())
             return q, r
 
         # Knuth's algorithm D starts here:
@@ -397,25 +437,35 @@ class DivModKnuthAlgorithmD:
         while (v[n - 1] << s) >> (self.word_size - 1) == 0:
             s += 1
 
+        do_log(locals(), s="s_scalar")
+
         if s != 0:
             on_corner_case("non-zero shift")
 
         # vn = v << s
         t = 0
+        do_log(locals(), t="t_for_uv_shift")
         for i in range(n):
             # dsld
             t |= v[i] << s
+            v[i] = None  # mark reg as unused
             vn[i] = t % 2 ** self.word_size
             t >>= self.word_size
+            do_log(locals())
 
         # un = u << s
         t = 0
+        do_log(locals(), v=None)
         for i in range(m):
             # dsld
             t |= u[i] << s
+            u[i] = None  # mark reg as unused
             un[i] = t % 2 ** self.word_size
             t >>= self.word_size
+            do_log(locals())
         un[m] = t
+
+        do_log(locals(), u=None, t=None)
 
         # Step D2 and Step D7: loop
         for j in range(min(m - n, self.q_size - 1), -1, -1):
@@ -434,23 +484,31 @@ class DivModKnuthAlgorithmD:
                 qhat = t // vn[n - 1]
                 rhat = t % vn[n - 1]
 
+            do_log(locals(), qhat="qhat", rhat="rhat")
+
             while rhat < 2 ** self.word_size:
                 if qhat * vn[n - 2] > (rhat << self.word_size) + un[j + n - 2]:
                     on_corner_case("qhat adjustment")
                     qhat -= 1
                     rhat += vn[n - 1]
+                    do_log(locals())
                 else:
                     break
+
+            do_log(locals(), rhat=None)
 
             # Step D4: multiply and subtract
 
             t = 0
+            do_log(locals(), t="t_for_prod")
             for i in range(n):
                 # maddedu
                 t += vn[i] * qhat
                 product[i] = t % 2 ** self.word_size
                 t >>= self.word_size
+                do_log(locals())
             product[n] = t
+            do_log(locals(), t=None)
 
             t = 1
             for i in range(n + 1):
@@ -459,6 +517,7 @@ class DivModKnuthAlgorithmD:
                 t += not_product + un[j + i]
                 un[j + i] = t % 2 ** self.word_size
                 t = int(t >= 2 ** self.word_size)
+                do_log(locals())
             need_fixup = not t
 
             # Step D5: test remainder
@@ -470,6 +529,7 @@ class DivModKnuthAlgorithmD:
                 on_corner_case("add back")
 
                 qhat -= 1
+                do_log(locals())
 
                 t = 0
                 for i in range(n):
@@ -477,20 +537,27 @@ class DivModKnuthAlgorithmD:
                     t += un[j + i] + vn[i]
                     un[j + i] = t % 2 ** self.word_size
                     t = int(t >= 2 ** self.word_size)
+                    do_log(locals())
                 un[j + n] += t
+                do_log(locals())
 
             q[j] = qhat
+            do_log(locals())
 
         # Step D8: un-normalize
+        do_log(locals(), s="s_for_unnorm", vn=None)
         r = [0] * self.r_size  # remainder
+        do_log(locals(), r=("r", self.r_size), n="n_for_unnorm")
         # r = un >> s
         t = 0
+        do_log(locals(), t="t_for_unnorm", m=None)
         for i in reversed(range(n)):
             # dsrd
             t <<= self.word_size
             t |= (un[i] << self.word_size) >> s
             r[i] = t >> self.word_size
             t %= 2 ** self.word_size
+            do_log(locals())
 
         return q, r
 
