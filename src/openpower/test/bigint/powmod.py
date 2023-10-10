@@ -19,6 +19,7 @@ from openpower.test.state import ExpectedState
 from openpower.test.util import assemble
 from nmutil.sim_util import hash_256
 from openpower.util import log
+from nmutil.plain_data import plain_data
 
 
 MUL_256_X_256_TO_512_ASM = (
@@ -265,6 +266,20 @@ def python_divmod_shift_sub_algorithm(n, d, width=256, log_regex=False):
     do_log(locals(), r=(8, 4))
 
     return q, r
+
+
+@plain_data()
+class DivModKnuthAlgorithmD:
+    __slots__ = "n_size", "d_size", "word_size",
+
+    def __init__(self, n_size=8, d_size=4, word_size=64):
+        assert n_size >= d_size, \
+            "the dividend's length must be >= the divisor's length"
+        assert word_size > 0
+
+        self.n_size = n_size
+        self.d_size = d_size
+        self.word_size = word_size
 
 
 def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False,
