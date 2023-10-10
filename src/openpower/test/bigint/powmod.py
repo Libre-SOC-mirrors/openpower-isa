@@ -105,19 +105,19 @@ def python_mul_algorithm2(a, b):
     il = []
     for iy in range(4):
         for i in range(4):
-            iyl.append((iy+i, i==3))
+            iyl.append((iy+i, i == 3))
             il.append(i)
         for i in range(5):
-            iyl.append((iy+i, i==4))
+            iyl.append((iy+i, i == 4))
             il.append(i)
 
-    y = [0] * 8 # result y and temp t of same size
-    t = [0] * 8 # no need after this to set t[4] to zero
+    y = [0] * 8  # result y and temp t of same size
+    t = [0] * 8  # no need after this to set t[4] to zero
     for iy in range(4):
-        for i in range(4): # use t[iy+4] as a 64-bit carry
+        for i in range(4):  # use t[iy+4] as a 64-bit carry
             t[iy+i], t[iy+4] = maddedu(a[iy], b[i], t[iy+4])
         ca = 0
-        for i in range(5): # add vec t to y with 1-bit carry
+        for i in range(5):  # add vec t to y with 1-bit carry
             idx = iy + i
             y[idx], ca = adde(y[idx], t[idx], ca)
     return y
@@ -429,6 +429,7 @@ def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False,
 
     return q, r
 
+
 POWMOD_256_ASM = (
     # base is in r4-7, exp is in r8-11, mod is in r32-35
     "powmod_256:",
@@ -648,6 +649,7 @@ class PowModCases(TestAccumulatorBase):
                     e.intregs[4 + i] = (expected >> (64 * i)) % 2**64
 
                 self.call_case(POWMOD_256_ASM, e, initial_regs)
+
 
 # for running "quick" simple investigations
 if __name__ == "__main__":
