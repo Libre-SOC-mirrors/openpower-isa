@@ -292,41 +292,65 @@ def python_divmod_shift_sub_algorithm(n, d, width=256, log_regex=False):
 
 @plain_data()
 class DivModKnuthAlgorithmD:
-    __slots__ = "n_size", "d_size", "word_size",
+    __slots__ = "num_size", "denom_size", "q_size", "word_size", "regs"
 
-    def __init__(self, n_size=8, d_size=4, word_size=64):
-        assert n_size >= d_size, \
+    def __init__(self, num_size=8, denom_size=4, q_size=4,
+                 word_size=64, regs=None):
+        # type: (int, int, int | None, int, None | dict[str, int]) -> None
+        assert num_size >= denom_size, \
             "the dividend's length must be >= the divisor's length"
         assert word_size > 0
 
-        self.n_size = n_size
-        self.d_size = d_size
+        if q_size is None:
+            # quotient length from original algorithm is m - n + 1,
+            # but that assumes v[-1] != 0 -- since we support smaller divisors
+            # the quotient must be larger.
+            q_size = num_size
+
+        if regs is None:
+            regs = {}
+
+        self.num_size = num_size
+        self.denom_size = denom_size
+        self.q_size = q_size
         self.word_size = word_size
+        self.regs = regs
+
+    @property
+    def r_size(self):
+        return self.denom_size
+
+    @property
+    def un_size(self):
+        return self.num_size + 1
+
+    @property
+    def vn_size(self):
+        return self.denom_size
+
+    @property
+    def product_size(self):
+        return self.num_size + 1
 
     def python(self, n, d, log_regex=False, on_corner_case=lambda desc: None):
-        do_log = _DivModRegsRegexLogger(enabled=log_regex).log
+        do_log = _DivModRegsRegexLogger(enabled=log_regex, regs=self.regs).log
 
         # switch to names used by Knuth's algorithm D
         u = list(n)  # dividend
+        assert len(u) == self.num_size, "numerator has wrong size"
         m = len(u)  # length of dividend
         v = list(d)  # divisor
+        assert len(v) == self.denom_size, "denominator has wrong size"
         del d  # less confusing to debug
         n = len(v)  # length of divisor
-
-        assert m == self.n_size and n == self.d_size, \
-            "inputs don't match expected size"
 
         # allocate outputs/temporaries -- before any normalization so
         # the outputs/temporaries can be fixed-length in the assembly version.
 
-        # quotient length from original algorithm is m - n + 1,
-        # but that assumes v[-1] != 0 -- since we support smaller divisors the
-        # quotient must be larger.
-        q = [0] * m  # quotient
-        r = [0] * n  # remainder
-        vn = [0] * n  # normalized divisor
-        un = [0] * (m + 1)  # normalized dividend
-        product = [0] * (n + 1)
+        q = [0] * self.q_size  # quotient
+        vn = [None] * self.vn_size  # normalized divisor
+        un = [None] * self.un_size  # normalized dividend
+        product = [None] * self.product_size
 
         # get non-zero length of dividend
         while m > 0 and u[m - 1] == 0:
@@ -344,18 +368,23 @@ class DivModKnuthAlgorithmD:
             # Knuth's algorithm D requires the divisor to have length >= 2
             # handle single-word divisors separately
             t = 0
+            if m > self.q_size:
+                t = u[self.q_size]
+                m = self.q_size
             for i in reversed(range(m)):
                 # divmod2du
                 t <<= self.word_size
                 t += u[i]
                 q[i] = t // v[0]
                 t %= v[0]
+            r = [0] * self.r_size  # remainder
             r[0] = t
             return q, r
 
         if m < n:
+            r = [None] * self.r_size  # remainder
             # dividend < divisor
-            for i in range(m):
+            for i in range(self.r_size):
                 r[i] = u[i]
             return q, r
 
@@ -389,7 +418,7 @@ class DivModKnuthAlgorithmD:
         un[m] = t
 
         # Step D2 and Step D7: loop
-        for j in range(m - n, -1, -1):
+        for j in range(min(m - n, self.q_size - 1), -1, -1):
             # Step D3: calculate q̂
 
             t = un[j + n]
@@ -434,14 +463,13 @@ class DivModKnuthAlgorithmD:
 
             # Step D5: test remainder
 
-            q[j] = qhat
             if need_fixup:
 
                 # Step D6: add back
 
                 on_corner_case("add back")
 
-                q[j] -= 1
+                qhat -= 1
 
                 t = 0
                 for i in range(n):
@@ -451,8 +479,10 @@ class DivModKnuthAlgorithmD:
                     t = int(t >= 2 ** self.word_size)
                 un[j + n] += t
 
-        # Step D8: un-normalize
+            q[j] = qhat
 
+        # Step D8: un-normalize
+        r = [0] * self.r_size  # remainder
         # r = un >> s
         t = 0
         for i in reversed(range(n)):

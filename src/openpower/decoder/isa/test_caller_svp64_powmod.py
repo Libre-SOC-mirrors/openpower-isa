@@ -52,7 +52,7 @@ class TestPythonAlgorithms(unittest.TestCase):
                     on_corner_case=seen_corner_cases.add)
                 with self.subTest(out_q=[f"{i:#_x}" for i in out_q],
                                   out_r=[f"{i:#_x}" for i in out_r]):
-                    self.assertEqual(out_q, q + [0] * 4)
+                    self.assertEqual(out_q, q)
                     self.assertEqual(out_r, r)
 
         # ensure our testing actually covers all the corner cases
