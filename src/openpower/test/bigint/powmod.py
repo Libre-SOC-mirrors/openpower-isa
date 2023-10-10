@@ -175,8 +175,9 @@ class _DivModRegsRegexLogger:
     the currently tracked `locals` -- quite useful for debugging
     """
 
-    def __init__(self, enabled=True):
+    def __init__(self, enabled=True, regs=None):
         self.__tracked = {}
+        self.__regs = regs if regs is not None else {}
         self.enabled = enabled
 
     def log(self, locals_, **changes):
@@ -203,14 +204,34 @@ class _DivModRegsRegexLogger:
             if v is None:
                 del self.__tracked[k]
             else:
-                self.__tracked[k] = v
+                if isinstance(v, (tuple, list)):
+                    start_gpr, size = v
+                else:
+                    start_gpr = v
+                    size = 1
+                if not isinstance(start_gpr, int):
+                    start_gpr = self.__regs[start_gpr]
+                self.__tracked[k] = start_gpr, size
 
         gprs = [None] * 128
         for name, (start_gpr, size) in self.__tracked.items():
             value = locals_[name]
+            if value is None:
+                continue
+            elif not isinstance(value, (list, tuple)):
+                value = [(value >> 64 * i) % 2 ** 64 for i in range(size)]
+            else:
+                assert len(value) == size, "value has wrong len"
             for i in range(size):
-                assert gprs[start_gpr + i] is None, "overlapping values"
-                gprs[start_gpr + i] = (value >> 64 * i) % 2 ** 64
+                if value[i] is None:
+                    continue
+                reg = start_gpr + i
+                if gprs[reg] is not None:
+                    other_value, other_name, other_i = gprs[reg]
+                    raise AssertionError(f"overlapping values at r{reg}: "
+                                         f"{name}[{i}] overlaps with "
+                                         f"{other_name}[{other_i}]")
+                gprs[reg] = value[i], name, i
 
         if not self.enabled:
             # after building `gprs` so we catch any missing/invalid locals
@@ -224,6 +245,7 @@ class _DivModRegsRegexLogger:
                 if value is None:
                     segments.append(" +[0-9a-f]+")
                 else:
+                    value, name, i = value
                     segments.append(f" +{value:08x}")
             segments.append("\\n")
         log("DIVMOD REGEX:", "".join(segments))
