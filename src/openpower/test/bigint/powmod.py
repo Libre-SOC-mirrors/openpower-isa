@@ -281,9 +281,7 @@ class DivModKnuthAlgorithmD:
         self.d_size = d_size
         self.word_size = word_size
 
-
-    def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False,
-                                        on_corner_case=lambda desc: None):
+    def python(self, n, d, log_regex=False, on_corner_case=lambda desc: None):
         do_log = _DivModRegsRegexLogger(enabled=log_regex).log
 
         # switch to names used by Knuth's algorithm D
@@ -293,8 +291,8 @@ class DivModKnuthAlgorithmD:
         del d  # less confusing to debug
         n = len(v)  # length of divisor
 
-        assert m >= n, "the dividend's length must be >= the divisor's length"
-        assert word_size > 0
+        assert m == self.n_size and n == self.d_size, \
+            "inputs don't match expected size"
 
         # allocate outputs/temporaries -- before any normalization so
         # the outputs/temporaries can be fixed-length in the assembly version.
@@ -326,7 +324,7 @@ class DivModKnuthAlgorithmD:
             t = 0
             for i in reversed(range(m)):
                 # divmod2du
-                t <<= word_size
+                t <<= self.word_size
                 t += u[i]
                 q[i] = t // v[0]
                 t %= v[0]
@@ -345,7 +343,7 @@ class DivModKnuthAlgorithmD:
 
         # calculate amount to shift by -- count leading zeros
         s = 0
-        while (v[n - 1] << s) >> (word_size - 1) == 0:
+        while (v[n - 1] << s) >> (self.word_size - 1) == 0:
             s += 1
 
         if s != 0:
@@ -356,16 +354,16 @@ class DivModKnuthAlgorithmD:
         for i in range(n):
             # dsld
             t |= v[i] << s
-            vn[i] = t % 2 ** word_size
-            t >>= word_size
+            vn[i] = t % 2 ** self.word_size
+            t >>= self.word_size
 
         # un = u << s
         t = 0
         for i in range(m):
             # dsld
             t |= u[i] << s
-            un[i] = t % 2 ** word_size
-            t >>= word_size
+            un[i] = t % 2 ** self.word_size
+            t >>= self.word_size
         un[m] = t
 
         # Step D2 and Step D7: loop
@@ -373,20 +371,20 @@ class DivModKnuthAlgorithmD:
             # Step D3: calculate q̂
 
             t = un[j + n]
-            t <<= word_size
+            t <<= self.word_size
             t += un[j + n - 1]
             if un[j + n] >= vn[n - 1]:
                 # division overflows word
                 on_corner_case("qhat overflows word")
-                qhat = 2 ** word_size - 1
+                qhat = 2 ** self.word_size - 1
                 rhat = t - qhat * vn[n - 1]
             else:
                 # divmod2du
                 qhat = t // vn[n - 1]
                 rhat = t % vn[n - 1]
 
-            while rhat < 2 ** word_size:
-                if qhat * vn[n - 2] > (rhat << word_size) + un[j + n - 2]:
+            while rhat < 2 ** self.word_size:
+                if qhat * vn[n - 2] > (rhat << self.word_size) + un[j + n - 2]:
                     on_corner_case("qhat adjustment")
                     qhat -= 1
                     rhat += vn[n - 1]
@@ -399,17 +397,17 @@ class DivModKnuthAlgorithmD:
             for i in range(n):
                 # maddedu
                 t += vn[i] * qhat
-                product[i] = t % 2 ** word_size
-                t >>= word_size
+                product[i] = t % 2 ** self.word_size
+                t >>= self.word_size
             product[n] = t
 
             t = 1
             for i in range(n + 1):
                 # subfe
-                not_product = ~product[i] % 2 ** word_size
+                not_product = ~product[i] % 2 ** self.word_size
                 t += not_product + un[j + i]
-                un[j + i] = t % 2 ** word_size
-                t = int(t >= 2 ** word_size)
+                un[j + i] = t % 2 ** self.word_size
+                t = int(t >= 2 ** self.word_size)
             need_fixup = not t
 
             # Step D5: test remainder
@@ -427,8 +425,8 @@ class DivModKnuthAlgorithmD:
                 for i in range(n):
                     # adde
                     t += un[j + i] + vn[i]
-                    un[j + i] = t % 2 ** word_size
-                    t = int(t >= 2 ** word_size)
+                    un[j + i] = t % 2 ** self.word_size
+                    t = int(t >= 2 ** self.word_size)
                 un[j + n] += t
 
         # Step D8: un-normalize
@@ -437,10 +435,10 @@ class DivModKnuthAlgorithmD:
         t = 0
         for i in reversed(range(n)):
             # dsrd
-            t <<= word_size
-            t |= (un[i] << word_size) >> s
-            r[i] = t >> word_size
-            t %= 2 ** word_size
+            t <<= self.word_size
+            t |= (un[i] << self.word_size) >> s
+            r[i] = t >> self.word_size
+            t %= 2 ** self.word_size
 
         return q, r
 

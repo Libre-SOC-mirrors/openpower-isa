@@ -16,7 +16,7 @@ from functools import lru_cache
 import os
 from openpower.test.bigint.powmod import (
     PowModCases, python_divmod_shift_sub_algorithm,
-    python_divmod_knuth_algorithm_d, python_powmod_256_algorithm)
+    DivModKnuthAlgorithmD, python_powmod_256_algorithm)
 from openpower.test.runner import TestRunnerBase
 
 
@@ -35,6 +35,7 @@ class TestPythonAlgorithms(unittest.TestCase):
 
     def test_python_divmod_knuth_algorithm_d(self):
         seen_corner_cases = set()
+        algo = DivModKnuthAlgorithmD()
         for n, d in PowModCases.divmod_512x256_to_256x256_test_inputs():
             log_regex = n == 2 ** 511 - 1 and d == 2 ** 256 - 1
             q, r = divmod(n, d)
@@ -46,7 +47,7 @@ class TestPythonAlgorithms(unittest.TestCase):
                               d=[f"{i:#_x}" for i in d],
                               q=[f"{i:#_x}" for i in q],
                               r=[f"{i:#_x}" for i in r]):
-                out_q, out_r = python_divmod_knuth_algorithm_d(
+                out_q, out_r = algo.python(
                     n, d, log_regex=log_regex,
                     on_corner_case=seen_corner_cases.add)
                 with self.subTest(out_q=[f"{i:#_x}" for i in out_q],
