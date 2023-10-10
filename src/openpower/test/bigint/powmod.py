@@ -20,6 +20,7 @@ from openpower.test.util import assemble
 from nmutil.sim_util import hash_256
 from openpower.util import log
 from nmutil.plain_data import plain_data
+from cached_property import cached_property
 
 
 MUL_256_X_256_TO_512_ASM = (
@@ -560,6 +561,55 @@ class DivModKnuthAlgorithmD:
             do_log(locals())
 
         return q, r
+
+    def __asm_iter(self):
+        if self.word_size != 64:
+            raise NotImplementedError("only word_size == 64 is implemented")
+        n_0 = self.regs["n_0"]
+        d_0 = self.regs["d_0"]
+        u = self.regs["u"]
+        m = self.regs["m"]
+        v = self.regs["v"]
+        n_scalar = self.regs["n_scalar"]
+        q = self.regs["q"]
+        vn = self.regs["vn"]
+        un = self.regs["un"]
+        product = self.regs["product"]
+        r = self.regs["r"]
+        t_single = self.regs["t_single"]
+        s_scalar = self.regs["s_scalar"]
+        t_for_uv_shift = self.regs["t_for_uv_shift"]
+        n_for_unnorm = self.regs["n_for_unnorm"]
+        t_for_unnorm = self.regs["t_for_unnorm"]
+        s_for_unnorm = self.regs["s_for_unnorm"]
+        qhat = self.regs["qhat"]
+        rhat = self.regs["rhat"]
+        t_for_prod = self.regs["t_for_prod"]
+        num_size = self.num_size
+        denom_size = self.denom_size
+        q_size = self.q_size
+
+        yield "divmod_512_by_256:"
+        # n in n_0 size num_size
+        # d in d_0 size denom_size
+
+        # switch to names used by Knuth's algorithm D
+        yield f"setvl 0, 0, {num_size}, 0, 1, 1"  # set VL to num_size
+        yield f"sv.or *{u}, *{n_0}, *{n_0}"  # u = n
+        yield f"addi {m}, 0, {num_size}"  # m = len(u)
+        assert v == d_0, "v and d_0 must be in the same regs"  # v = d
+        yield f"addi {n_scalar}, 0, {denom_size}"  # n = len(v)
+
+        # allocate outputs/temporaries
+        yield f"setvl 0, 0, {q_size}, 0, 1, 1"  # set VL to q_size
+        yield f"sv.addi *{q}, 0, 0"  # q = [0] * q_size
+
+        raise NotImplementedError("FIXME: finish")
+        yield "bclr 20, 0, 0 # blr"
+
+    @cached_property
+    def asm(self):
+        return tuple(self.__asm_iter())
 
 
 POWMOD_256_ASM = (
