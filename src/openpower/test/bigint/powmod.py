@@ -282,167 +282,167 @@ class DivModKnuthAlgorithmD:
         self.word_size = word_size
 
 
-def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False,
-                                    on_corner_case=lambda desc: None):
-    do_log = _DivModRegsRegexLogger(enabled=log_regex).log
+    def python_divmod_knuth_algorithm_d(n, d, word_size=64, log_regex=False,
+                                        on_corner_case=lambda desc: None):
+        do_log = _DivModRegsRegexLogger(enabled=log_regex).log
 
-    # switch to names used by Knuth's algorithm D
-    u = list(n)  # dividend
-    m = len(u)  # length of dividend
-    v = list(d)  # divisor
-    del d  # less confusing to debug
-    n = len(v)  # length of divisor
+        # switch to names used by Knuth's algorithm D
+        u = list(n)  # dividend
+        m = len(u)  # length of dividend
+        v = list(d)  # divisor
+        del d  # less confusing to debug
+        n = len(v)  # length of divisor
 
-    assert m >= n, "the dividend's length must be >= the divisor's length"
-    assert word_size > 0
+        assert m >= n, "the dividend's length must be >= the divisor's length"
+        assert word_size > 0
 
-    # allocate outputs/temporaries -- before any normalization so
-    # the outputs/temporaries can be fixed-length in the assembly version.
+        # allocate outputs/temporaries -- before any normalization so
+        # the outputs/temporaries can be fixed-length in the assembly version.
 
-    # quotient length from original algorithm is m - n + 1,
-    # but that assumes v[-1] != 0 -- since we support smaller divisors the
-    # quotient must be larger.
-    q = [0] * m  # quotient
-    r = [0] * n  # remainder
-    vn = [0] * n  # normalized divisor
-    un = [0] * (m + 1)  # normalized dividend
-    product = [0] * (n + 1)
+        # quotient length from original algorithm is m - n + 1,
+        # but that assumes v[-1] != 0 -- since we support smaller divisors the
+        # quotient must be larger.
+        q = [0] * m  # quotient
+        r = [0] * n  # remainder
+        vn = [0] * n  # normalized divisor
+        un = [0] * (m + 1)  # normalized dividend
+        product = [0] * (n + 1)
 
-    # get non-zero length of dividend
-    while m > 0 and u[m - 1] == 0:
-        m -= 1
+        # get non-zero length of dividend
+        while m > 0 and u[m - 1] == 0:
+            m -= 1
 
-    # get non-zero length of divisor
-    while n > 0 and v[n - 1] == 0:
-        n -= 1
+        # get non-zero length of divisor
+        while n > 0 and v[n - 1] == 0:
+            n -= 1
 
-    if n == 0:
-        raise ZeroDivisionError
+        if n == 0:
+            raise ZeroDivisionError
 
-    if n == 1:
-        on_corner_case("single-word divisor")
-        # Knuth's algorithm D requires the divisor to have length >= 2
-        # handle single-word divisors separately
-        t = 0
-        for i in reversed(range(m)):
-            # divmod2du
-            t <<= word_size
-            t += u[i]
-            q[i] = t // v[0]
-            t %= v[0]
-        r[0] = t
-        return q, r
+        if n == 1:
+            on_corner_case("single-word divisor")
+            # Knuth's algorithm D requires the divisor to have length >= 2
+            # handle single-word divisors separately
+            t = 0
+            for i in reversed(range(m)):
+                # divmod2du
+                t <<= word_size
+                t += u[i]
+                q[i] = t // v[0]
+                t %= v[0]
+            r[0] = t
+            return q, r
 
-    if m < n:
-        # dividend < divisor
-        for i in range(m):
-            r[i] = u[i]
-        return q, r
+        if m < n:
+            # dividend < divisor
+            for i in range(m):
+                r[i] = u[i]
+            return q, r
 
-    # Knuth's algorithm D starts here:
+        # Knuth's algorithm D starts here:
 
-    # Step D1: normalize
+        # Step D1: normalize
 
-    # calculate amount to shift by -- count leading zeros
-    s = 0
-    while (v[n - 1] << s) >> (word_size - 1) == 0:
-        s += 1
+        # calculate amount to shift by -- count leading zeros
+        s = 0
+        while (v[n - 1] << s) >> (word_size - 1) == 0:
+            s += 1
 
-    if s != 0:
-        on_corner_case("non-zero shift")
+        if s != 0:
+            on_corner_case("non-zero shift")
 
-    # vn = v << s
-    t = 0
-    for i in range(n):
-        # dsld
-        t |= v[i] << s
-        vn[i] = t % 2 ** word_size
-        t >>= word_size
-
-    # un = u << s
-    t = 0
-    for i in range(m):
-        # dsld
-        t |= u[i] << s
-        un[i] = t % 2 ** word_size
-        t >>= word_size
-    un[m] = t
-
-    # Step D2 and Step D7: loop
-    for j in range(m - n, -1, -1):
-        # Step D3: calculate q̂
-
-        t = un[j + n]
-        t <<= word_size
-        t += un[j + n - 1]
-        if un[j + n] >= vn[n - 1]:
-            # division overflows word
-            on_corner_case("qhat overflows word")
-            qhat = 2 ** word_size - 1
-            rhat = t - qhat * vn[n - 1]
-        else:
-            # divmod2du
-            qhat = t // vn[n - 1]
-            rhat = t % vn[n - 1]
-
-        while rhat < 2 ** word_size:
-            if qhat * vn[n - 2] > (rhat << word_size) + un[j + n - 2]:
-                on_corner_case("qhat adjustment")
-                qhat -= 1
-                rhat += vn[n - 1]
-            else:
-                break
-
-        # Step D4: multiply and subtract
-
+        # vn = v << s
         t = 0
         for i in range(n):
-            # maddedu
-            t += vn[i] * qhat
-            product[i] = t % 2 ** word_size
+            # dsld
+            t |= v[i] << s
+            vn[i] = t % 2 ** word_size
             t >>= word_size
-        product[n] = t
 
-        t = 1
-        for i in range(n + 1):
-            # subfe
-            not_product = ~product[i] % 2 ** word_size
-            t += not_product + un[j + i]
-            un[j + i] = t % 2 ** word_size
-            t = int(t >= 2 ** word_size)
-        need_fixup = not t
+        # un = u << s
+        t = 0
+        for i in range(m):
+            # dsld
+            t |= u[i] << s
+            un[i] = t % 2 ** word_size
+            t >>= word_size
+        un[m] = t
 
-        # Step D5: test remainder
+        # Step D2 and Step D7: loop
+        for j in range(m - n, -1, -1):
+            # Step D3: calculate q̂
 
-        q[j] = qhat
-        if need_fixup:
+            t = un[j + n]
+            t <<= word_size
+            t += un[j + n - 1]
+            if un[j + n] >= vn[n - 1]:
+                # division overflows word
+                on_corner_case("qhat overflows word")
+                qhat = 2 ** word_size - 1
+                rhat = t - qhat * vn[n - 1]
+            else:
+                # divmod2du
+                qhat = t // vn[n - 1]
+                rhat = t % vn[n - 1]
 
-            # Step D6: add back
+            while rhat < 2 ** word_size:
+                if qhat * vn[n - 2] > (rhat << word_size) + un[j + n - 2]:
+                    on_corner_case("qhat adjustment")
+                    qhat -= 1
+                    rhat += vn[n - 1]
+                else:
+                    break
 
-            on_corner_case("add back")
-
-            q[j] -= 1
+            # Step D4: multiply and subtract
 
             t = 0
             for i in range(n):
-                # adde
-                t += un[j + i] + vn[i]
+                # maddedu
+                t += vn[i] * qhat
+                product[i] = t % 2 ** word_size
+                t >>= word_size
+            product[n] = t
+
+            t = 1
+            for i in range(n + 1):
+                # subfe
+                not_product = ~product[i] % 2 ** word_size
+                t += not_product + un[j + i]
                 un[j + i] = t % 2 ** word_size
                 t = int(t >= 2 ** word_size)
-            un[j + n] += t
+            need_fixup = not t
 
-    # Step D8: un-normalize
+            # Step D5: test remainder
 
-    # r = un >> s
-    t = 0
-    for i in reversed(range(n)):
-        # dsrd
-        t <<= word_size
-        t |= (un[i] << word_size) >> s
-        r[i] = t >> word_size
-        t %= 2 ** word_size
+            q[j] = qhat
+            if need_fixup:
 
-    return q, r
+                # Step D6: add back
+
+                on_corner_case("add back")
+
+                q[j] -= 1
+
+                t = 0
+                for i in range(n):
+                    # adde
+                    t += un[j + i] + vn[i]
+                    un[j + i] = t % 2 ** word_size
+                    t = int(t >= 2 ** word_size)
+                un[j + n] += t
+
+        # Step D8: un-normalize
+
+        # r = un >> s
+        t = 0
+        for i in reversed(range(n)):
+            # dsrd
+            t <<= word_size
+            t |= (un[i] << word_size) >> s
+            r[i] = t >> word_size
+            t %= 2 ** word_size
+
+        return q, r
 
 
 POWMOD_256_ASM = (
