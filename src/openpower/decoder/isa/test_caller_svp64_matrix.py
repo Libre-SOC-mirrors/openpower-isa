@@ -59,6 +59,7 @@ class DecoderTestCase(FHDLTestCase):
         Y = Y1
 
         expected = matmult(X, Y)
+        expected = flatten(expected)
         print("expected-matrix:")
         print(expected)
 
