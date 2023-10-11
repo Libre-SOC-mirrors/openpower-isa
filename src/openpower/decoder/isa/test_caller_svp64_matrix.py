@@ -65,9 +65,10 @@ class DecoderTestCase(FHDLTestCase):
 
         xf = reduce(operator.add, X)
         yf = reduce(operator.add, Y)
-        print("flattened X,Y")
+        print("flattened X,Y,expected")
         print("\t", xf)
         print("\t", yf)
+        print("\t", expected)
 
         # and create a linear result2, same scheme
         #result1 = [0] * (ydim1*xdim2)
