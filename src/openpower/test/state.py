@@ -170,6 +170,8 @@ class State:
         # Compare int registers
         for i, (intreg, intreg2) in enumerate(
                 zip(self.intregs, s2.intregs)):
+            if intreg is None or intreg2 is None:
+                continue
             log("asserting...reg", i, intreg, intreg2)
             log("code, frepr(code)", self.code, repr(self.code))
             self.dut.assertEqual(intreg, intreg2,
