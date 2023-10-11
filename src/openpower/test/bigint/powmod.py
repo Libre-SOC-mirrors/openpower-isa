@@ -21,6 +21,9 @@ from nmutil.sim_util import hash_256
 from openpower.util import log
 from nmutil.plain_data import plain_data
 from cached_property import cached_property
+from openpower.decoder.isa.svshape import SVSHAPE
+from openpower.decoder.power_enums import SPRfull
+from openpower.decoder.selectable_int import SelectableInt
 
 
 MUL_256_X_256_TO_512_ASM = (
@@ -588,6 +591,10 @@ class DivModKnuthAlgorithmD:
         num_size = self.num_size
         denom_size = self.denom_size
         q_size = self.q_size
+        r_size = self.r_size
+        un_size = self.un_size
+        vn_size = self.vn_size
+        product_size = self.product_size
 
         yield "divmod_512_by_256:"
         # n in n_0 size num_size
@@ -604,7 +611,61 @@ class DivModKnuthAlgorithmD:
         yield f"setvl 0, 0, {q_size}, 0, 1, 1"  # set VL to q_size
         yield f"sv.addi *{q}, 0, 0"  # q = [0] * q_size
 
-        raise NotImplementedError("FIXME: finish")
+        # get non-zero length of dividend
+        yield f"setvl 0, 0, {num_size}, 0, 1, 1"  # set VL to num_size
+        # create SVSHAPE that reverses order
+        svshape = SVSHAPE(0)
+        svshape.zdimsz = num_size
+        svshape.invxyz = SelectableInt(0b1, 3)  # invert Z
+        svshape_low = int(svshape) % 2 ** 16
+        svshape_high = int(svshape) >> 16
+        SVSHAPE0 = SPRfull.SVSHAPE0.value
+        yield f"addis 0, 0, {svshape_high}"
+        yield f"ori 0, 0, {svshape_low}"
+        yield f"mtspr {SVSHAPE0}, 0 # mtspr SVSHAPE0, 0"
+        yield f"svremap 0o01, 0, 0, 0, 0, 0, 0"  # enable SVSHAPE0 for RA
+        yield f"sv.cmpi/ff=ne *0, 1, *{u}, 0"
+        yield f"setvl {m}, 0, 1, 0, 0, 0 # getvl {m}"  # m = VL
+        yield f"subfic {m}, {m}, {num_size}"  # m = num_size - m
+
+        # get non-zero length of divisor
+        yield f"setvl 0, 0, {denom_size}, 0, 1, 1"  # set VL to denom_size
+        # create SVSHAPE that reverses order
+        svshape = SVSHAPE(0)
+        svshape.zdimsz = denom_size
+        svshape.invxyz = SelectableInt(0b1, 3)  # invert Z
+        svshape_low = int(svshape) % 2 ** 16
+        svshape_high = int(svshape) >> 16
+        yield f"addis 0, 0, {svshape_high}"
+        yield f"ori 0, 0, {svshape_low}"
+        yield f"mtspr {SVSHAPE0}, 0 # mtspr SVSHAPE0, 0"
+        yield f"svremap 0o01, 0, 0, 0, 0, 0, 0"  # enable SVSHAPE0 for RA
+        yield f"sv.cmpi/ff=ne *0, 1, *{v}, 0"
+        yield f"setvl {n_scalar}, 0, 1, 0, 0, 0 # getvl {n_scalar}"  # n = VL
+        # n = denom_size - n
+        yield f"subfic {n_scalar}, {n_scalar}, {denom_size}"
+
+        yield f"cmpi 0, 1, {n_scalar}, 1  # cmpi {n_scalar}, 1"
+        yield "bc 4, 2, divmod_skip_sw_divisor # bne divmod_skip_sw_divisor"
+
+        # Knuth's algorithm D requires the divisor to have length >= 2
+        # handle single-word divisors separately
+        yield f"addi {t_single}, 0, 0"
+        yield f"setvl. {m}, {m}, {q_size}, 0, 1, 1"  # m = VL = min(m, q_size)
+        # if CR0.SO: t = u[q_size]
+        yield f"sv.isel {t_single}, {u + q_size}, {t_single}, 3"
+        # div loop
+        yield f"sv.divmod2du/mrr *{q}, *{u}, {v}, {t_single}"
+        # r[0] = t
+        assert r == t_single, "r[0] and t_single must be in the same regs"
+        yield f"setvl 0, 0, {r_size - 1}, 0, 1, 1"  # set VL to r_size - 1
+        yield f"sv.addi *{r + 1}, 0, 0"  # r[1:] = [0] * (r_size - 1)
+
+        yield "bclr 20, 0, 0 # blr"
+
+        yield "divmod_skip_sw_divisor:"
+
+        # FIXME: finish
         yield "bclr 20, 0, 0 # blr"
 
     @cached_property
@@ -738,6 +799,12 @@ class PowModCases(TestAccumulatorBase):
         yield (2 ** (256 - 1), 1)
         yield (2 ** (512 - 1) - 1, 2 ** 256 - 1)
 
+        # test division by single word
+        yield (((1 << 256) - 1) << 32, 1 << 32)
+        yield (((1 << 192) - 1) << 32, 1 << 32)
+        yield (((1 << 64) - 1) << 32, 1 << 32)
+        yield (1 << 32, 1 << 32)
+
         # test qhat overflow
         yield (0x8000 << 128 | 0xFFFE << 64, 0x8000 << 64 | 0xFFFF)
 
@@ -789,6 +856,40 @@ class PowModCases(TestAccumulatorBase):
 
                 self.call_case(
                     DIVMOD_SHIFT_SUB_512x256_TO_256x256_ASM, e, initial_regs)
+
+    def case_divmod_knuth_algorithm_d_512x256_to_256x256(self):
+        cases = list(self.divmod_512x256_to_256x256_test_inputs())
+        asm = DivModKnuthAlgorithmD().asm
+        for n, d in cases:
+            if d >= 2 ** 64:
+                # FIXME: only single-word part of algorithm implemented,
+                # so we skip the ones that we expect to fail
+                continue
+            q, r = divmod(n, d)
+            with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
+                              q=f"{q:#_x}", r=f"{r:#_x}"):
+                # registers start filled with junk
+                initial_regs = [0xABCDEF] * 128
+                for i in range(8):
+                    # write n in LE order to regs 4-11
+                    initial_regs[4 + i] = (n >> (64 * i)) % 2**64
+                for i in range(4):
+                    # write d in LE order to regs 32-35
+                    initial_regs[32 + i] = (d >> (64 * i)) % 2**64
+                # only check regs up to r11 since that's where the output is.
+                # don't check CR
+                e = ExpectedState(int_regs=initial_regs[:12], crregs=0)
+                e.intregs[0] = None  # ignored
+                e.intregs[3] = None  # ignored
+                e.ca = None  # ignored
+                e.sprs['SVSHAPE0'] = None
+                for i in range(4):
+                    # write q in LE order to regs 4-7
+                    e.intregs[4 + i] = (q >> (64 * i)) % 2**64
+                    # write r in LE order to regs 8-11
+                    e.intregs[8 + i] = (r >> (64 * i)) % 2**64
+
+                self.call_case(asm, e, initial_regs)
 
     @staticmethod
     def powmod_256_test_inputs():
