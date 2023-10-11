@@ -250,8 +250,9 @@ class GPR(dict):
 
 
 class SPR(dict):
-    def __init__(self, dec2, initial_sprs={}):
+    def __init__(self, dec2, initial_sprs={}, gpr=None):
         self.sd = dec2
+        self.gpr = gpr  # for SVSHAPE[0-3]
         dict.__init__(self)
         for key, v in initial_sprs.items():
             if isinstance(key, SelectableInt):
@@ -303,6 +304,8 @@ class SPR(dict):
             self.__setitem__('SRR1', value)
         if key == 1:
             value = XERState(value)
+        if key in ('SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3'):
+            value = SVSHAPE(value, self.gpr)
         log("setting spr", key, value)
         dict.__setitem__(self, key, value)
 
@@ -1239,14 +1242,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         initial_sprs = deepcopy(initial_sprs)  # so as not to get modified
         self.gpr = GPR(decoder2, self, self.svstate, regfile)
         self.fpr = GPR(decoder2, self, self.svstate, fpregfile)
-        self.spr = SPR(decoder2, initial_sprs)  # initialise SPRs before MMU
+        # initialise SPRs before MMU
+        self.spr = SPR(decoder2, initial_sprs, gpr=self.gpr)
 
         # set up 4 dummy SVSHAPEs if they aren't already set up
         for i in range(4):
             sname = 'SVSHAPE%d' % i
             val = self.spr.get(sname, 0)
-            # make sure it's an SVSHAPE
-            self.spr[sname] = SVSHAPE(val, self.gpr)
+            # make sure it's an SVSHAPE -- conversion done by SPR.__setitem__
+            self.spr[sname] = val
         self.last_op_svshape = False
 
         # "raw" memory
