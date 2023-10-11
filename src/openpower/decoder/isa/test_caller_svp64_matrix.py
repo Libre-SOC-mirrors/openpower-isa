@@ -15,9 +15,7 @@ from openpower.insndb.asm import SVP64Asm
 # x = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
 # y = [[1,2],[1,2],[3,4]]
 def matmult(a, b):
-    zip_b = zip(*b)
-    # uncomment next line if python 3 :
-    zip_b = list(zip_b)
+    zip_b = list(zip(*b)) # transpose b matrix
     return [[sum(ele_a*ele_b for ele_a, ele_b in zip(row_a, col_b))
              for col_b in zip_b] for row_a in a]
 
