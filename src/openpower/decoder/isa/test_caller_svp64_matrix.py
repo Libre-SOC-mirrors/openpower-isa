@@ -73,17 +73,11 @@ class DecoderTestCase(FHDLTestCase):
         #result1 = [0] * (ydim1*xdim2)
 
         res = []
-        # store FPs
+        # store GPR x-flattened and y-flattened in GPRs
         for i, x in enumerate(xf):
             gprs[i+16] = x  # X matrix
         for i, y in enumerate(yf):
             gprs[i+32] = y  # Y matrix
-            continue
-            # t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
-            # u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
-            #res.append((t, u))
-            # print ("FFT", i, "in", a, b, "coeff", c, "mul",
-            #       mul, "res", t, u)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs=gprs)
