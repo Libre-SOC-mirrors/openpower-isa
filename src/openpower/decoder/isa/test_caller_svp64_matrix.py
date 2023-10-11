@@ -94,9 +94,7 @@ class DecoderTestCase(FHDLTestCase):
             for i in range(4):
                 print("maddld-matrix i", i, results[i])
             # confirm that the results are as expected
-            # for i, (t, u) in enumerate(res):
-            #    self.assertEqual(sim.fpr(i+2), t)
-            #    self.assertEqual(sim.fpr(i+6), u)
+            self.assertEqual(results, expected)
 
     def test_sv_remap1(self):
         """>>> lst = ["svshape 2, 2, 3, 0, 0",
