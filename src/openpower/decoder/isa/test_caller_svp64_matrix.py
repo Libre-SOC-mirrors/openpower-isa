@@ -16,6 +16,72 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
+    def test_sv_maddld_remap1(self):
+        """perform an integer matrix multiply using maddld
+                lst = ["svshape 2, 2, 3, 0, 0",
+                        "svremap 31, 1, 2, 3, 0, 0, 0",
+                       "sv.maddld *0, *8, *16, *0"
+                        ]
+                REMAP maddld RT, RA, RB, RC
+        """
+        lst = SVP64Asm(["svshape 2, 2, 3, 0, 0",
+                        "svremap 31, 1, 2, 3, 0, 0, 0",
+                        "sv.maddld *0, *16, *32, *0"
+                        ])
+        lst = list(lst)
+
+        gprs = [0] * 64
+        # 3x2 matrix
+        X1 = [[1, 2, 3],
+              [3, 4, 5],
+              ]
+        # 2x3 matrix
+        Y1 = [[6, 7],
+              [8, 9],
+              [10, 11],
+              ]
+
+        X = X1
+        Y = Y1
+
+        xf = reduce(operator.add, X)
+        yf = reduce(operator.add, Y)
+        print("flattened X,Y")
+        print("\t", xf)
+        print("\t", yf)
+
+        # and create a linear result2, same scheme
+        #result1 = [0] * (ydim1*xdim2)
+
+        res = []
+        # store FPs
+        for i, x in enumerate(xf):
+            gprs[i+16] = fp64toselectable(float(x))  # X matrix
+        for i, y in enumerate(yf):
+            gprs[i+32] = fp64toselectable(float(y))  # Y matrix
+            continue
+            # t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
+            # u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
+            #res.append((t, u))
+            # print ("FFT", i, "in", a, b, "coeff", c, "mul",
+            #       mul, "res", t, u)
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=gprs)
+            print("spr svshape0", sim.spr['SVSHAPE0'])
+            print("    xdimsz", sim.spr['SVSHAPE0'].xdimsz)
+            print("    ydimsz", sim.spr['SVSHAPE0'].ydimsz)
+            print("    zdimsz", sim.spr['SVSHAPE0'].zdimsz)
+            print("spr svshape1", sim.spr['SVSHAPE1'])
+            print("spr svshape2", sim.spr['SVSHAPE2'])
+            print("spr svshape3", sim.spr['SVSHAPE3'])
+            for i in range(4):
+                print("i", i, float(sim.fpr(i)))
+            # confirm that the results are as expected
+            # for i, (t, u) in enumerate(res):
+            #    self.assertEqual(sim.fpr(i+2), t)
+            #    self.assertEqual(sim.fpr(i+6), u)
+
     def test_sv_remap1(self):
         """>>> lst = ["svshape 2, 2, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
