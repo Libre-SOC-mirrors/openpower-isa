@@ -56,9 +56,9 @@ class DecoderTestCase(FHDLTestCase):
         res = []
         # store FPs
         for i, x in enumerate(xf):
-            gprs[i+16] = fp64toselectable(float(x))  # X matrix
+            gprs[i+16] = x  # X matrix
         for i, y in enumerate(yf):
-            gprs[i+32] = fp64toselectable(float(y))  # Y matrix
+            gprs[i+32] = y  # Y matrix
             continue
             # t = DOUBLE2SINGLE(fp64toselectable(t)) # convert to Power single
             # u = DOUBLE2SINGLE(fp64toselectable(u)) # from double
@@ -76,7 +76,7 @@ class DecoderTestCase(FHDLTestCase):
             print("spr svshape2", sim.spr['SVSHAPE2'])
             print("spr svshape3", sim.spr['SVSHAPE3'])
             for i in range(4):
-                print("i", i, float(sim.fpr(i)))
+                print("maddld-matrix i", i, sim.gpr(i).asint())
             # confirm that the results are as expected
             # for i, (t, u) in enumerate(res):
             #    self.assertEqual(sim.fpr(i+2), t)
@@ -141,7 +141,7 @@ class DecoderTestCase(FHDLTestCase):
             print("spr svshape2", sim.spr['SVSHAPE2'])
             print("spr svshape3", sim.spr['SVSHAPE3'])
             for i in range(4):
-                print("i", i, float(sim.fpr(i)))
+                print("ffmadds-matrix i", i, float(sim.fpr(i)))
             # confirm that the results are as expected
             # for i, (t, u) in enumerate(res):
             #    self.assertEqual(sim.fpr(i+2), t)
