@@ -16,7 +16,7 @@ class DecoderTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def tst_sv_remap1(self):
+    def test_sv_remap1(self):
         """>>> lst = ["svshape 2, 2, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
                        "sv.fmadds *0, *8, *16, *0"
@@ -81,7 +81,7 @@ class DecoderTestCase(FHDLTestCase):
             #    self.assertEqual(sim.fpr(i+2), t)
             #    self.assertEqual(sim.fpr(i+6), u)
 
-    def tst_sv_remap2(self):
+    def test_sv_remap2(self):
         """>>> lst = ["svshape 5, 4, 3, 0, 0",
                         "svremap 31, 1, 2, 3, 0, 0, 0",
                        "sv.fmadds *0, *8, *16, *0"
