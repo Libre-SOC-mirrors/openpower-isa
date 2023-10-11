@@ -9,6 +9,7 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
 from openpower.insndb.asm import SVP64Asm
 
+
 # Pure Python implementation of matrix multiply
 # Example values
 # x = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
@@ -19,6 +20,7 @@ def matmult(a,b):
     zip_b = list(zip_b)
     return [[sum(ele_a*ele_b for ele_a, ele_b in zip(row_a, col_b))
              for col_b in zip_b] for row_a in a]
+
 
 class DecoderTestCase(FHDLTestCase):
 
