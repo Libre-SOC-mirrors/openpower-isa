@@ -85,8 +85,11 @@ class DecoderTestCase(FHDLTestCase):
             print("spr svshape1", sim.spr['SVSHAPE1'])
             print("spr svshape2", sim.spr['SVSHAPE2'])
             print("spr svshape3", sim.spr['SVSHAPE3'])
+            expected = []
             for i in range(4):
-                print("maddld-matrix i", i, sim.gpr(i).asint())
+                expected.append(sim.gpr(i).asint())
+            for i in range(4):
+                print("maddld-matrix i", i, expected[i])
             # confirm that the results are as expected
             # for i, (t, u) in enumerate(res):
             #    self.assertEqual(sim.fpr(i+2), t)
