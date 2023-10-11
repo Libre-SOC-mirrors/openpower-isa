@@ -19,10 +19,6 @@ def matmult(a, b):
     return [[sum(ele_a*ele_b for ele_a, ele_b in zip(row_a, col_b))
              for col_b in zip_b] for row_a in a]
 
-# Flatten list of lists matrix down to single list
-def flatten(l):
-    return [item for sublist in l for item in sublist]
-
 
 class DecoderTestCase(FHDLTestCase):
 
@@ -59,12 +55,12 @@ class DecoderTestCase(FHDLTestCase):
         Y = Y1
 
         expected = matmult(X, Y)
-        expected = flatten(expected)
         print("expected-matrix:")
         print(expected)
 
         xf = reduce(operator.add, X)
         yf = reduce(operator.add, Y)
+        expected = reduce(operator.add, expected)
         print("flattened X,Y,expected")
         print("\t", xf)
         print("\t", yf)
