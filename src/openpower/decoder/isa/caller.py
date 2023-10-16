@@ -245,7 +245,7 @@ class GPR(dict):
                 for j in range(8):
                     s.append("%08x" % res[i+j])
                 s = ' '.join(s)
-                print("reg", "%2d" % i, s)
+                log("reg", "%2d" % i, s, kind=LogType.InstrInOuts)
         return res
 
 
