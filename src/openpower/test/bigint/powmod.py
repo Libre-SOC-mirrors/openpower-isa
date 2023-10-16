@@ -1053,7 +1053,7 @@ POWMOD_256_ASM = (
     "sv.ld *14, -144(1)",  # restore all callee-save registers
     "bclr 20, 0, 0 # blr",
     *MUL_256_X_256_TO_512_ASM,
-    *DIVMOD_SHIFT_SUB_512x256_TO_256x256_ASM,
+    *DivModKnuthAlgorithmD().asm,
 )
 
 
