@@ -380,6 +380,10 @@ class DivModKnuthAlgorithmD:
         return self.num_size + 1
 
     def python(self, n, d, log_regex=False, on_corner_case=lambda desc: None):
+        # IMPORTANT: do_log calls match up with the expected register values
+        # in the assembly version at that point in the algorithm, please don't
+        # "simplify" all the seemingly-redundant local variable assignments,
+        # they match what actually happens in the assembly version.
         do_log = _DivModRegsRegexLogger(enabled=log_regex, regs=self.regs).log
 
         do_log(locals(), "start",
@@ -649,6 +653,8 @@ class DivModKnuthAlgorithmD:
         return q, r
 
     def __asm_iter(self):
+        # IMPORTANT: the assembly matches up with the python version, if you
+        # make any changes, change the python version to match.
         if self.word_size != 64:
             raise NotImplementedError("only word_size == 64 is implemented")
         n_0 = self.regs["n_0"]
