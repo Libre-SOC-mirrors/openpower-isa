@@ -615,11 +615,15 @@ class DivModKnuthAlgorithmD:
                     un[j + i] = t % 2 ** self.word_size
                     t = int(t >= 2 ** self.word_size)
                     do_log(locals(), "add back: step")
-                un[j + n] += t
-                do_log(locals(), "add back: un[j + n] += t")
+                index = j + n
+                do_log(locals(), "add back: index = j + n", index="index")
+                un[index] += t
+                do_log(locals(), "add back: un[index] += t", index=None)
 
-            q[j] = qhat
-            do_log(locals(), "q[j] = qhat", index=None)
+            index = j
+            do_log(locals(), "assign q: index = j", index="index")
+            q[index] = qhat
+            do_log(locals(), "q[index] = qhat", index=None)
 
         # Step D8: un-normalize
 
@@ -817,6 +821,7 @@ class DivModKnuthAlgorithmD:
         yield f"setvl 0, 0, {un_size}, 0, 1, 1"  # VL = un_size
         assert index == 3, "index must be r3"
         yield f"sv.divmod2du/m=1<<r3 {qhat}, *{un}, {qhat_denom}, {rhat_lo}"
+        yield f"addi {rhat_hi}, 0, 0"  # rhat_hi = 0
         yield f"mcrxrx 0"  # move OV to CR0.lt
         yield "bc 4, 0, divmod_skip_qhat_overflow # bge divmod_..."
         # if ov:
@@ -885,7 +890,7 @@ class DivModKnuthAlgorithmD:
         # product[:n] = vn[:n] * qhat
         yield f"sv.maddedu *{product}, *{vn}, {qhat}, {t_for_prod}"
         yield f"or {index}, {n_scalar}, {n_scalar}"  # index = n
-        yield f"setvl 0, 0, {vn_size}, 0, 1, 1"  # VL = vn_size
+        yield f"setvl 0, 0, {product_size}, 0, 1, 1"  # VL = product_size
         # product[index] = t
         assert index == 3, "index must be r3"
         yield f"sv.or/m=1<<r3 *{product}, {t_for_prod}, {t_for_prod}"
@@ -895,7 +900,7 @@ class DivModKnuthAlgorithmD:
         yield f"setvl 0, {sub_len}, {product_size}, 0, 1, 1"  # VL = sub_len
         # create svshape that offsets by `j`
         svshape = SVSHAPE(0)
-        svshape.zdimsz = q_size
+        svshape.zdimsz = q_size + 1
         svshape_low = int(svshape) % 2 ** 16
         svshape_high = int(svshape) >> 16
         offset_field = svshape.fsi['offset']
@@ -910,7 +915,8 @@ class DivModKnuthAlgorithmD:
         # or in all the other bits
         if svshape_high != 0:
             yield f"oris 0, 0, {svshape_high}"
-        yield f"ori 0, 0, {svshape_low}"
+        if svshape_low != 0:
+            yield f"ori 0, 0, {svshape_low}"
         yield f"mtspr {SVSHAPE0}, 0 # mtspr SVSHAPE0, 0"
         yield f"svremap 0o12, 0, 0, 0, 0, 0, 0"  # enable SVSHAPE0 for RB & RT
         # un[j:] -= product
@@ -921,7 +927,7 @@ class DivModKnuthAlgorithmD:
 
         yield f"mcrxrx 0"  # move CA to CR0.eq
         # if need_fixup:
-        yield "bc 4, 2, divmod_skip_fixup # bne divmod_skip_fixup"
+        yield "bc 12, 2, divmod_skip_fixup # beq divmod_skip_fixup"
 
         # Step D6: add back
 
@@ -931,15 +937,18 @@ class DivModKnuthAlgorithmD:
         yield f"svremap 0o11, 0, 0, 0, 0, 0, 0"  # enable SVSHAPE0 for RA & RT
         # un[j:] += vn
         yield f"sv.adde *{un}, *{un}, *{vn}"
-        yield f"svremap 0o11, 0, 0, 0, 0, 0, 0"  # enable SVSHAPE0 for RA & RT
-        # un[j + n] += t
-        yield f"sv.addze *{un}, *{un}"
+        yield f"add {index}, {j}, {n_scalar}"  # index = j + n
+        # un[index] += t
+        yield f"setvl 0, 0, {un_size}, 0, 1, 1"  # VL = un_size
+        assert index == 3, "index must be r3"
+        yield f"sv.addze/m=1<<r3 *{un}, *{un}"
 
         yield "divmod_skip_fixup:"
-        yield f"setvl 0, 0, {q_size}, 0, 1, 1"  # VL = q_size
-        yield f"svremap 0o10, 0, 0, 0, 0, 0, 0"  # enable SVSHAPE0 for RT
+
+        yield f"or {index}, {j}, {j}"  # index = j
         # q[j] = qhat
-        yield f"sv.or {q}, {qhat}, {qhat}"
+        yield f"setvl 0, 0, {q_size}, 0, 1, 1"  # VL = q_size
+        yield f"sv.or/m=1<<r3 *{q}, {qhat}, {qhat}"
 
         # Step D2 and Step D7: loop
         yield f"addic. {j}, {j}, -1"  # j -= 1
@@ -1161,13 +1170,6 @@ class PowModCases(TestAccumulatorBase):
         cases = list(self.divmod_512x256_to_256x256_test_inputs())
         asm = DivModKnuthAlgorithmD().asm
         for n, d in cases:
-            skip = d >= 2 ** 64
-            if n << 64 < n:
-                skip = False
-            if skip:
-                # FIXME: only part of the algorithm works,
-                # so we skip the cases that we know fail
-                continue
             q, r = divmod(n, d)
             with self.subTest(n=f"{n:#_x}", d=f"{d:#_x}",
                               q=f"{q:#_x}", r=f"{r:#_x}"):
