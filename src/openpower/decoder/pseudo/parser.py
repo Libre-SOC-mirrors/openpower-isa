@@ -256,7 +256,13 @@ class PowerParser:
 
     def p_funcdef(self, p):
         "funcdef : DEF NAME parameters COLON suite"
-        p[0] = ast.FunctionDef(p[2], p[3], p[5], (), lineno=p.lineno(2))
+        # pypy workaround
+        p[0] = ast.FunctionDef()
+        p[0].name = p[2]
+        p[0].args = p[3]
+        p[0].body = p[5]
+        p[0].decorator_list = []
+        p[0].lineno = p.lineno(2)
         # reset function parameters after suite is identified
         self.fnparm_vars = set()
 
@@ -819,7 +825,9 @@ class PowerParser:
                 p[0] = [p[1]]
         # Convert into a tuple?
         if isinstance(p[0], list):
-            p[0] = ast.Tuple(p[0])
+            v = ast.Tuple()  # pypy workaround
+            v.elts = p[0]
+            p[0] = v
 
     def p_testlist_multi(self, p):
         """testlist_multi : testlist_multi COMMA test
@@ -887,7 +895,9 @@ class PowerParser:
                         eq_tok.lineno, eq_tok.lexpos, self.input_text)
                 names.append(child.id)
             ass_list = [ast.Name(name, ast.Store()) for name in names]
-            return ast.Assign([ast.Tuple(ass_list)], right)
+            v = ast.Tuple()  # pypy workaround
+            v.elts = ass_list
+            return ast.Assign([v], right)
         elif isinstance(left, ast.Attribute):
             return ast.Assign([
                 ast.Attribute(left.value, left.attr, ast.Store())], right)
@@ -1055,8 +1065,13 @@ class GardenSnakeParser(PowerParser):
         self.lexer.filename = self.filename
         result = self.parser.parse(code, lexer=self.lexer, debug=self.debug)
         if self.helper:
-            result = [ast.ClassDef("ISACallerFnHelper", [
-                                   "ISACallerHelper"], [], result, decorator_list=[])]
+            v = ast.ClassDef()  # pypy workaround
+            v.name = "ISACallerFnHelper"
+            v.bases = ["ISACallerHelper"]
+            v.keywords = []
+            v.body = result
+            v.decorator_list = []
+            result = [v]
         return ast.Module(result)
 
 
