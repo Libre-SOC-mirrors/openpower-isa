@@ -18,7 +18,7 @@ from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.test.state import ExpectedState
 from openpower.test.util import assemble
 from nmutil.sim_util import hash_256
-from openpower.util import log
+from openpower.util import log, LogType
 from nmutil.plain_data import plain_data
 from cached_property import cached_property
 from openpower.decoder.isa.svshape import SVSHAPE
@@ -252,7 +252,7 @@ class _DivModRegsRegexLogger:
                     value, name, i = value
                     segments.append(f" +{value:08x}")
             segments.append("\\n")
-        log("DIVMOD REGEX:", "".join(segments))
+        log("DIVMOD REGEX:", "".join(segments), kind=LogType.OutputMatching)
 
 
 def python_divmod_shift_sub_algorithm(n, d, width=256, log_regex=False):

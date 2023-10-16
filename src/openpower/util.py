@@ -97,6 +97,7 @@ class LogType(Enum):
     Default = "default"
     InstrInOuts = "instr_in_outs"
     SkipCase = "skip_case"
+    OutputMatching = "output_matching"
 
 
 @lru_cache(typed=True)
