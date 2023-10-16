@@ -184,7 +184,7 @@ class _DivModRegsRegexLogger:
         self.__regs = regs if regs is not None else {}
         self.enabled = enabled
 
-    def log(self, locals_, **changes):
+    def log(self, locals_, label=None, **changes):
         """ use like so:
         ```
         # create a variable `a`:
@@ -252,7 +252,9 @@ class _DivModRegsRegexLogger:
                     value, name, i = value
                     segments.append(f" +{value:08x}")
             segments.append("\\n")
-        log("DIVMOD REGEX:", "".join(segments), kind=LogType.OutputMatching)
+        prefix = "" if label is None else f"At: {label}\n"
+        log(prefix + "DIVMOD REGEX:", "".join(segments),
+            kind=LogType.OutputMatching)
 
 
 def python_divmod_shift_sub_algorithm(n, d, width=256, log_regex=False):
@@ -380,44 +382,46 @@ class DivModKnuthAlgorithmD:
     def python(self, n, d, log_regex=False, on_corner_case=lambda desc: None):
         do_log = _DivModRegsRegexLogger(enabled=log_regex, regs=self.regs).log
 
-        do_log(locals(), n=("n_0", self.num_size), d=("d_0", self.denom_size))
+        do_log(locals(), "start",
+               n=("n_0", self.num_size), d=("d_0", self.denom_size))
 
         # switch to names used by Knuth's algorithm D
         u = list(n)  # dividend
         assert len(u) == self.num_size, "numerator has wrong size"
-        do_log(locals(), n=None, u=("u", self.num_size))
+        do_log(locals(), "u = n", n=None, u=("u", self.num_size))
         m = len(u)  # length of dividend
-        do_log(locals(), m="m")
+        do_log(locals(), "m = len(u)", m="m")
         v = list(d)  # divisor
         assert len(v) == self.denom_size, "denominator has wrong size"
         del d  # less confusing to debug
-        do_log(locals(), d=None, v=("v", self.denom_size))
+        do_log(locals(), "v = d", d=None, v=("v", self.denom_size))
         n = len(v)  # length of divisor
-        do_log(locals(), n="n_scalar")
+        do_log(locals(), "n = len(v)", n="n_scalar")
 
         # allocate outputs/temporaries -- before any normalization so
         # the outputs/temporaries can be fixed-length in the assembly version.
 
         q = [0] * self.q_size  # quotient
-        do_log(locals(), q=("q", self.q_size))
+        do_log(locals(), "q = [0...]", q=("q", self.q_size))
         vn = [None] * self.vn_size  # normalized divisor
-        do_log(locals(), vn=("vn", self.vn_size))
+        do_log(locals(), "vn = [None...]", vn=("vn", self.vn_size))
         un = [None] * self.un_size  # normalized dividend
-        do_log(locals(), un=("un", self.un_size))
+        do_log(locals(), "un = [None...]", un=("un", self.un_size))
         product = [None] * self.product_size
-        do_log(locals(), product=("product", self.product_size))
+        do_log(locals(), "product = [None...]",
+               product=("product", self.product_size))
 
         # get non-zero length of dividend
         while m > 0 and u[m - 1] == 0:
             m -= 1
 
-        do_log(locals())
+        do_log(locals(), "get non-zero dividend len")
 
         # get non-zero length of divisor
         while n > 0 and v[n - 1] == 0:
             n -= 1
 
-        do_log(locals())
+        do_log(locals(), "get non-zero divisor len")
 
         if n == 0:
             raise ZeroDivisionError
@@ -430,23 +434,25 @@ class DivModKnuthAlgorithmD:
             if m > self.q_size:
                 t = u[self.q_size]
                 m = self.q_size
-            do_log(locals(), t="t_single", n=None)
-            do_log(locals(), m=None)  # VL = m, so we don't need it in a GPR
+            do_log(locals(), "t = u[q_size]", t="t_single", n=None)
+            # VL = m, so we don't need it in a GPR
+            do_log(locals(), "VL = m", m=None)
             for i in reversed(range(m)):
                 q[i], t, _ = divmod2du(u[i], v[0], t)
-                do_log(locals())
+                do_log(locals(), "divide step")
             r = [0] * self.r_size  # remainder
             r[0] = t
-            do_log(locals(), t=None, r=("r", self.r_size))
+            do_log(locals(), "finished single-word divisor",
+                   t=None, r=("r", self.r_size))
             return q, r
 
         if m < n:
             r = [None] * self.r_size  # remainder
-            do_log(locals(), r=("r", self.r_size), m=None, n=None)
+            do_log(locals(), "m < n", r=("r", self.r_size), m=None, n=None)
             # dividend < divisor
             for i in range(self.r_size):
                 r[i] = u[i]
-            do_log(locals())
+            do_log(locals(), "finished m < n")
             return q, r
 
         # Knuth's algorithm D starts here:
@@ -456,131 +462,139 @@ class DivModKnuthAlgorithmD:
         # calculate amount to shift by -- count leading zeros
         s = 0
         index = n - 1
-        do_log(locals(), index="index")
+        do_log(locals(), "index = n - 1", index="index")
         while (v[index] << s) >> (self.word_size - 1) == 0:
             s += 1
 
-        do_log(locals(), s="s_scalar", index=None)
+        do_log(locals(), "s = clz64", s="s_scalar", index=None)
 
         if s != 0:
             on_corner_case("non-zero shift")
 
         # vn = v << s
         t = 0
-        do_log(locals(), t="t_for_uv_shift")
+        do_log(locals(), "vn = v << s: t = 0", t="t_for_uv_shift")
         for i in range(n):
             # dsld
             t |= v[i] << s
             v[i] = None  # mark reg as unused
             vn[i] = t % 2 ** self.word_size
             t >>= self.word_size
-            do_log(locals())
+            do_log(locals(), "vn = v << s: step")
 
         # un = u << s
         t = 0
-        do_log(locals(), v=None)
+        do_log(locals(), "un = u << s: t = 0", v=None)
         for i in range(m):
             # dsld
             t |= u[i] << s
             u[i] = None  # mark reg as unused
             un[i] = t % 2 ** self.word_size
             t >>= self.word_size
-            do_log(locals())
+            do_log(locals(), "un = u << s: step")
         index = m
-        do_log(locals(), index="index")
+        do_log(locals(), "un = u << s: index = m", index="index")
         un[index] = t
 
-        do_log(locals(), u=None, t=None, index=None)
+        do_log(locals(), "un = u << s: un[index] = t",
+               u=None, t=None, index=None)
 
         # Step D2 and Step D7: loop
         for j in range(min(m - n, self.q_size - 1), -1, -1):
-            do_log(locals(), j="j")
+            do_log(locals(), "start of j loop", j="j")
             # Step D3: calculate q̂
 
             index = j + n
-            do_log(locals(), index="index")
+            do_log(locals(), "qhat: index = j + n", index="index")
             qhat_num_hi = un[index]
-            do_log(locals(), qhat_num_hi="qhat_num_hi")
+            do_log(locals(), "qhat_num_hi = un[index]",
+                   qhat_num_hi="qhat_num_hi")
             index = n - 1
-            do_log(locals())
+            do_log(locals(), "qhat: index = n - 1")
             qhat_denom = vn[index]
-            do_log(locals(), qhat_denom="qhat_denom")
+            do_log(locals(), "qhat_denom = vn[index]",
+                   qhat_denom="qhat_denom")
             index = j + n - 1
-            do_log(locals())
+            do_log(locals(), "qhat: index = j + n - 1")
             qhat, rhat_lo, ov = divmod2du(un[index], qhat_denom, qhat_num_hi)
             rhat_hi = 0
-            do_log(locals(), qhat="qhat", rhat_lo="rhat_lo", rhat_hi="rhat_hi")
+            do_log(locals(), "qhat: initial divmod2du",
+                   qhat="qhat", rhat_lo="rhat_lo", rhat_hi="rhat_hi")
             if ov:
                 # division overflows word
                 on_corner_case("qhat overflows word")
                 assert qhat_num_hi == qhat_denom
                 rhat_lo = (qhat * qhat_denom) % 2 ** self.word_size
                 rhat_hi = (qhat * qhat_denom) >> self.word_size
-                do_log(locals())
+                do_log(locals(), "qhat ov: rhat = qhat * qhat_denom")
                 borrow = un[index] < rhat_lo
                 rhat_lo = (un[index] - rhat_lo) % 2 ** self.word_size
-                do_log(locals())
+                do_log(locals(), "qhat ov: un[index] - rhat_lo")
                 rhat_hi = qhat_num_hi - rhat_hi - borrow
-            do_log(locals(), qhat_num_hi=None, qhat_denom=None)
+            do_log(locals(), "qhat: after overflow check",
+                   qhat_num_hi=None, qhat_denom=None)
 
             while rhat_hi == 0:
                 index = n - 2
-                do_log(locals())
+                do_log(locals(), "qhat adj loop: index = n - 2")
                 qhat_prod_lo = (qhat * vn[index]) % 2 ** self.word_size
-                do_log(locals(), qhat_prod_lo="qhat_prod_lo", rhat_hi=None)
+                do_log(locals(), "qhat adj loop: prod_lo",
+                       qhat_prod_lo="qhat_prod_lo", rhat_hi=None)
                 qhat_prod_hi = (qhat * vn[index]) >> self.word_size
-                do_log(locals(), qhat_prod_hi="qhat_prod_hi")
+                do_log(locals(), "qhat adj loop: prod_hi",
+                       qhat_prod_hi="qhat_prod_hi")
                 if qhat_prod_hi < rhat_lo:
                     break
                 index = j + n - 2
-                do_log(locals())
+                do_log(locals(), "qhat adj loop: index = j + n - 2")
                 if qhat_prod_hi == rhat_lo:
                     if qhat_prod_lo <= un[index]:
                         break
                 on_corner_case("qhat adjustment")
-                do_log(locals(), index=None,
+                do_log(locals(), "qhat adj loop: adj needed", index=None,
                        qhat_prod_lo=None, qhat_prod_hi=None)
                 qhat -= 1
-                do_log(locals(), index="index")
+                do_log(locals(), "qhat adj loop: qhat -= 1", index="index")
                 index = n - 1
-                do_log(locals())
+                do_log(locals(), "qhat adj loop: index = n - 1")
                 carry = (rhat_lo + vn[index]) >= 2 ** self.word_size
                 rhat_lo = (rhat_lo + vn[index]) % 2 ** self.word_size
-                do_log(locals())
+                do_log(locals(), "qhat adj loop: rhat_lo += vn[index]")
                 rhat_hi = carry
-                do_log(locals(), rhat_hi="rhat_hi")
+                do_log(locals(), "qhat adj loop: rhat_hi = CA",
+                       rhat_hi="rhat_hi")
 
-            do_log(locals(), rhat_lo=None, rhat_hi=None, index=None,
-                   qhat_prod_lo=None, qhat_prod_hi=None)
+            do_log(locals(), "computed qhat", rhat_lo=None, rhat_hi=None,
+                   index=None, qhat_prod_lo=None, qhat_prod_hi=None)
 
             # Step D4: multiply and subtract
 
             t = 0
-            do_log(locals(), t="t_for_prod")
+            do_log(locals(), "product: t = 0", t="t_for_prod")
             for i in range(n):
                 # maddedu
                 t += vn[i] * qhat
                 product[i] = t % 2 ** self.word_size
                 t >>= self.word_size
-                do_log(locals())
+                do_log(locals(), "product: step")
             index = n
-            do_log(locals(), index="index")
+            do_log(locals(), "product: index = n", index="index")
             product[index] = t
-            do_log(locals(), t=None, index=None)
+            do_log(locals(), "product[index] = t", t=None, index=None)
 
             t = 1
-            do_log(locals())
+            do_log(locals(), "subtract: t = 1")
             sub_len = n + 1
-            do_log(locals(), sub_len="sub_len")
+            do_log(locals(), "subtract: sub_len = n + 1", sub_len="sub_len")
             VL = sub_len
-            do_log(locals(), sub_len=None)
+            do_log(locals(), "VL = sub_len", sub_len=None)
             for i in range(VL):
                 # subfe
                 not_product = ~product[i] % 2 ** self.word_size
                 t += not_product + un[j + i]
                 un[j + i] = t % 2 ** self.word_size
                 t = int(t >= 2 ** self.word_size)
-                do_log(locals())
+                do_log(locals(), "subtract: step")
             need_fixup = not t
 
             # Step D5: test remainder
@@ -592,7 +606,7 @@ class DivModKnuthAlgorithmD:
                 on_corner_case("add back")
 
                 qhat -= 1
-                do_log(locals())
+                do_log(locals(), "add back: qhat -= 1")
 
                 t = 0
                 for i in range(n):
@@ -600,31 +614,33 @@ class DivModKnuthAlgorithmD:
                     t += un[j + i] + vn[i]
                     un[j + i] = t % 2 ** self.word_size
                     t = int(t >= 2 ** self.word_size)
-                    do_log(locals())
+                    do_log(locals(), "add back: step")
                 un[j + n] += t
-                do_log(locals())
+                do_log(locals(), "add back: un[j + n] += t")
 
             q[j] = qhat
-            do_log(locals(), index=None)
+            do_log(locals(), "q[j] = qhat", index=None)
 
         # Step D8: un-normalize
 
         # move s and n
-        do_log(locals(), s="s_for_unnorm", n="n_for_unnorm",
+        do_log(locals(), "un-normalize", s="s_for_unnorm", n="n_for_unnorm",
                vn=None, m=None, j=None)
 
         r = [0] * self.r_size  # remainder
-        do_log(locals(), r=("r", self.r_size))
+        do_log(locals(), "un-normalize: r = [0...]", r=("r", self.r_size))
         # r = un >> s
         t = 0
-        do_log(locals(), t="t_for_unnorm")
+        do_log(locals(), "un-normalize: t = 0", t="t_for_unnorm")
         for i in reversed(range(n)):
             # dsrd
             t <<= self.word_size
             t |= (un[i] << self.word_size) >> s
             r[i] = t >> self.word_size
             t %= 2 ** self.word_size
-            do_log(locals())
+            do_log(locals(), "un-normalize: step")
+
+        do_log(locals(), "finished un-normalize")
 
         return q, r
 
