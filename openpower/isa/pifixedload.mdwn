@@ -186,7 +186,6 @@ Description:
 
     If RA=0 or RA=RT, the instruction form is invalid.
 
-
 Special Registers Altered:
 
     None
