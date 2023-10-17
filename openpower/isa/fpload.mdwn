@@ -16,6 +16,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA|0)+D.
+
     The word in storage addressed by EA is interpreted as
     a floating-point single-precision operand. This word is
     converted to floating-point double format (see
