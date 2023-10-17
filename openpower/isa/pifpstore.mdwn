@@ -2,52 +2,6 @@
 
 <!-- Section 4.6.3 Floating-point store instructions. P 144 - 147 -->
 
-# Store Floating-Point Single
-
-D-Form
-
-* stfs FRS,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA|0) + EXTS(D)
-    MEM(EA, 4)<- SINGLE( (FRS) )
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+D.
-
-    The contents of register FRS are converted to single
-    format (see page 142) and stored into the word in stor-
-    age addressed by EA.
-
-Special Registers Altered:
-
-    None
-
-# Store Floating-Point Single Indexed
-
-X-Form
-
-* stfsx FRS,RA,RB
-
-Pseudo-code:
-
-    EA <- (RA|0) + (RB)
-    MEM(EA, 4)<- SINGLE( (FRS) )
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+(RB).
-
-    The contents of register FRS are converted to single
-    format (see page 142) and stored into the word in stor-
-    age addressed by EA.
-
-Special Registers Altered:
-
-    None
-
 # Store Floating-Point Single with Update
 
 D-Form
@@ -99,50 +53,6 @@ Description:
     EA is placed into register RA.
 
     If RA=0, the instruction form is invalid.
-
-Special Registers Altered:
-
-    None
-
-# Store Floating-Point Double
-
-D-Form
-
-* stfd FRS,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA|0) + EXTS(D)
-    MEM(EA, 8)<- (FRS) 
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+D.
-
-    The contents of register FRS are stored into the dou-
-    bleword in storage addressed by EA.
-
-Special Registers Altered:
-
-    None
-
-# Store Floating-Point Double Indexed
-
-X-Form
-
-* stfdx FRS,RA,RB
-
-Pseudo-code:
-
-    EA <- (RA|0) + (RB)
-    MEM(EA, 8)<- (FRS) 
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+(RB).
-
-    The contents of register FRS are stored into the dou-
-    bleword in storage addressed by EA.
 
 Special Registers Altered:
 
@@ -202,37 +112,3 @@ Special Registers Altered:
 
     None
 
-# Store Floating-Point as Integer Word Indexed 
-
-X-Form
-
-* stfiwx FRS,RA,RB
-
-Pseudo-code:
-
-    b <- (RA|0)
-    EA <- b + (RB)
-    MEM(EA, 8)<- (FRS)[32:63]
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+(RB).
-
-    (FRS)[32:63] are stored, without conversion, into the word
-    in storage addressed by EA.
-
-    If the contents of register FRS were produced, either
-    directly or indirectly, by a Load Floating-Point Single
-    instruction, a single-precision Arithmetic instruction, or
-    frsp, then the value stored is undefined. (The contents
-    of register FRS are produced directly by such an
-    instruction if FRS is the target register for the instruc-
-    tion. The contents of register FRS are produced indi-
-    rectly by such an instruction if FRS is the final target
-    register of a sequence of one or more Floating-Point
-    Move instructions, with the input to the sequence hav-
-    ing been produced directly by such an instruction.)
-
-Special Registers Altered:
-
-    None
