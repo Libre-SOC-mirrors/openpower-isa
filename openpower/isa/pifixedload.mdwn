@@ -22,8 +22,8 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be register RA. The
-    byte in storage addressed by EA is loaded into RT[56:63].
+    Let the effective address (EA) be register RA. 
+    The byte in storage addressed by EA is loaded into RT[56:63].
     RT[0:55] are set to 0.
 
     The sum (RA) + D is placed into register RA.
@@ -49,8 +49,8 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be register RA.
-    The byte in storage addressed by EA is loaded into
-    RT[56:63]. RT[0:55] are set to 0.
+    The byte in storage addressed by EA is loaded into RT[56:63]. 
+    RT[0:55] are set to 0.
 
     The sum (RA) + (RB) is placed into register RA.
 
@@ -74,9 +74,9 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be register RA. The
-    halfword in storage addressed by EA is loaded into
-    RT[48:63]. RT[0:47] are set to 0.
+    Let the effective address (EA) be register RA. 
+    The halfword in storage addressed by EA is loaded into RT[48:63]. 
+    RT[0:47] are set to 0.
 
     The sum (RA) + D is placed into register RA.
 
@@ -101,8 +101,8 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be register RA.
-    The halfword in storage addressed by EA is loaded into
-    RT[48:63]. RT[0:47] are set to 0.
+    The halfword in storage addressed by EA is loaded into RT[48:63]. 
+    RT[0:47] are set to 0.
 
     The sum (RA) + (RB) is placed into register RA.
 
