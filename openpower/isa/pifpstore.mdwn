@@ -11,7 +11,7 @@ D-Form
 Pseudo-code:
 
     EA <- (RA) + EXTS(D)
-    MEM(EA, 4)<- SINGLE( (FRS) )
+    MEM(RA, 4)<- SINGLE( (FRS) )
     RA <- EA
 
 Description:
@@ -39,7 +39,7 @@ X-Form
 Pseudo-code:
 
     EA <- (RA) + (RB)
-    MEM(EA, 4)<- SINGLE( (FRS) )
+    MEM(RA, 4)<- SINGLE( (FRS) )
     RA <- EA
 
 Description:
@@ -67,7 +67,7 @@ D-Form
 Pseudo-code:
 
     EA <- (RA) + EXTS(D)
-    MEM(EA, 8)<- (FRS) 
+    MEM(RA, 8)<- (FRS)
     RA <- EA
 
 Description:
@@ -94,7 +94,7 @@ X-Form
 Pseudo-code:
 
     EA <- (RA) + (RB)
-    MEM(EA, 8)<- (FRS) 
+    MEM(RA, 8)<- (FRS)
     RA <- EA
 
 Description:
