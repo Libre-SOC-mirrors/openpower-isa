@@ -146,6 +146,12 @@ Pseudo-code:
     RT <- EXTS(MEM(EA, 2))
     RA <- (RA) + (RB)
 
+Description:
+
+    Let the effective address (EA) be the register RA.
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are filled with a copy of bit 0 of the loaded halfword.
+
 Special Registers Altered:
 
     None
