@@ -11,7 +11,7 @@ D-Form
 Pseudo-code:
 
     EA <- (RA) + EXTS(D)
-    FRT <- DOUBLE(MEM(EA, 4))
+    FRT <- DOUBLE(MEM(RA, 4))
     RA <- EA
 
 Description:
@@ -40,7 +40,7 @@ X-Form
 Pseudo-code:
 
     EA <- (RA) + (RB)
-    FRT <- DOUBLE(MEM(EA, 4))
+    FRT <- DOUBLE(MEM(RA, 4))
     RA <- EA
 
 Description:
@@ -69,7 +69,7 @@ D-Form
 Pseudo-code:
 
     EA <- (RA) + EXTS(D)
-    FRT <- MEM(EA, 8)
+    FRT <- MEM(RA, 8)
     RA <- EA
 
 Description:
@@ -96,7 +96,7 @@ X-Form
 Pseudo-code:
 
     EA <- (RA) + (RB)
-    FRT <- MEM(EA, 8)
+    FRT <- MEM(RA, 8)
     RA <- EA
 
 Description:
