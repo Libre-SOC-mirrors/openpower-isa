@@ -269,6 +269,16 @@ Pseudo-code:
     RT <- MEM(EA, 8)
     RA <- (RA) + (RB)
 
+Description:
+
+    Let the effective address (EA) be the register RA.
+    The doubleword in storage addressed by EA is loaded
+    into RT.
+
+    The sum (RA) + (RB) is placed into register RA.
+
+    If RA=0 or RA=RT, the instruction form is invalid.
+
 Special Registers Altered:
 
     None
