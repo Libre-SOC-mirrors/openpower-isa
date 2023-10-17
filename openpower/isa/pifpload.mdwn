@@ -2,11 +2,11 @@
 
 <!-- Section 4.6.1 Floating-point storage access instructions. P 140 - 143 -->
 
-# Load Floating-Point Single with Update
+# Load Floating-Point Single with Post-Update
 
 D-Form
 
-* lfsu FRT,D(RA)
+* lfsup FRT,D(RA)
 
 Pseudo-code:
 
@@ -31,11 +31,11 @@ Special Registers Altered:
 
     None
 
-# Load Floating-Point Single with Update Indexed
+# Load Floating-Point Single with Post-Update Indexed
 
 X-Form
 
-* lfsux FRT,RA,RB
+* lfsupx FRT,RA,RB
 
 Pseudo-code:
 
@@ -60,11 +60,11 @@ Special Registers Altered:
 
     None
 
-# Load Floating-Point Double with Update
+# Load Floating-Point Double with Post-Update
 
 D-Form
 
-* lfdu FRT,D(RA)
+* lfdup FRT,D(RA)
 
 Pseudo-code:
 
@@ -87,11 +87,11 @@ Special Registers Altered:
 
     None
 
-# Load Floating-Point Double with Update Indexed
+# Load Floating-Point Double with Post-Update Indexed
 
 X-Form
 
-* lfdux FRT,RA,RB
+* lfduxp FRT,RA,RB
 
 Pseudo-code:
 
