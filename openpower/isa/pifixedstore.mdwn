@@ -20,7 +20,7 @@ Description:
 
     Let the effective address (EA) be the sum (RA)+ D.
     (RS)[56:63] are stored into the byte in storage addressed
-    by EA.
+    by RA.
 
     EA is placed into register RA.
 
@@ -151,7 +151,7 @@ Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
     (RS)[32:63] are stored into the word in storage addressed
-    by EA.
+    by RA.
 
     EA is placed into register RA.
 
@@ -178,7 +178,7 @@ Description:
 
     Let the effective address (EA) be the sum
     (RA)+ (DS||0b00). (RS) is stored into the doubleword in
-    storage addressed by EA.
+    storage addressed by RA.
 
     EA is placed into register RA.
 
@@ -205,7 +205,7 @@ Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
     (RS) is stored into the doubleword in storage
-    addressed by EA.
+    addressed by RA.
 
     EA is placed into register RA.
 
