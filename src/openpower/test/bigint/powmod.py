@@ -1217,7 +1217,6 @@ class PowModCases(TestAccumulatorBase):
             base %= mod
             yield (base, exp, mod)
 
-    @skip_case("FIXME: divmod is too slow to test powmod")
     def case_powmod_256(self):
         for base, exp, mod in PowModCases.powmod_256_test_inputs():
             expected = pow(base, exp, mod)
@@ -1234,10 +1233,15 @@ class PowModCases(TestAccumulatorBase):
                 for i in range(4):
                     # write d in LE order to regs 32-35
                     initial_regs[32 + i] = (mod >> (64 * i)) % 2**64
-                # only check regs up to r7 since that's where the output is.
                 # don't check CR
-                e = ExpectedState(int_regs=initial_regs[:8], crregs=0)
+                e = ExpectedState(int_regs=initial_regs, crregs=0)
+                for i in range(128):
+                    nonvolatile = 14 <= i <= 31
+                    if nonvolatile or i in (1, 2, 13):
+                        continue
+                    e.intregs[i] = None
                 e.ca = None  # ignored
+                e.sprs['SVSHAPE0'] = None
                 for i in range(4):
                     # write output in LE order to regs 4-7
                     e.intregs[4 + i] = (expected >> (64 * i)) % 2**64
