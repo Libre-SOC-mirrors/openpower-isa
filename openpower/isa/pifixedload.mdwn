@@ -158,6 +158,8 @@ Description:
 
     The sum (RA) + (RB) is placed into register RA.
 
+    If RA=0 or RA=RT, the instruction form is invalid.
+
 Special Registers Altered:
 
     None
