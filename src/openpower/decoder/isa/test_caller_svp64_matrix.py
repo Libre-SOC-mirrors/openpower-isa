@@ -9,15 +9,41 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
 from openpower.insndb.asm import SVP64Asm
 
+def setup_result_matrix(rows, cols):
+    result = []
+    for i in range(0, rows):
+        result.append([])
+        for k in range(0, cols):
+            result[-1].append(0)
+    return result
 
-# Pure Python implementation of matrix multiply
-# Example values
-# x = [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-# y = [[1,2],[1,2],[3,4]]
-def matmult(a, b):
-    zip_b = list(zip(*b)) # transpose b matrix
-    return [[sum(ele_a*ele_b for ele_a, ele_b in zip(row_a, col_b))
-             for col_b in zip_b] for row_a in a]
+# Outer product - normal method learned at school
+def matmult_outer(a,b):
+    # Result matrix has same number of rows as matrix a
+    # and same number of columns as matrix b
+    result = setup_result_matrix(len(a), len(b[0]))
+
+    for i in range(len(a)): # Number of rows in matrix a
+        for k in range(len(b[0])): # Number of columns in matrix b
+            # Number of columns in matrix a or rows in mat b
+            for j in range(0, len(a[0])):
+                result[i][k] += a[i][j] * b[j][k]
+
+    return result
+
+# Inner product - slight re-arrangement to reduce stalling
+# on cpu pipeline
+def matmult_inner(a,b):
+    result = setup_result_matrix(len(a), len(b[0]))
+
+    for i in range(len(a)): # Number of rows in matrix a
+        # Number of columns in matrix a or rows in mat b
+        for j in range(0, len(a[0])):
+            for k in range(len(b[0])): # Number of columns in matrix b
+                result[i][k] += a[i][j] * b[j][k]
+
+    return result
+
 
 
 class DecoderTestCase(FHDLTestCase):
@@ -54,9 +80,14 @@ class DecoderTestCase(FHDLTestCase):
         X = X1
         Y = Y1
 
-        expected = matmult(X, Y)
-        print("expected-matrix:")
+        expected = matmult_outer(X, Y)
+        expected2 = matmult_inner(X, Y)
+        expected = flatten(expected)
+        expected2 = flatten(expected2)
+        print("expected-matrix (outer):")
         print(expected)
+        print("expected-matrix (inner):")
+        print(expected2)
 
         xf = reduce(operator.add, X)
         yf = reduce(operator.add, Y)
@@ -86,9 +117,10 @@ class DecoderTestCase(FHDLTestCase):
             print("spr svshape2", sim.spr['SVSHAPE2'])
             print("spr svshape3", sim.spr['SVSHAPE3'])
             results = []
-            for i in range(4):
+            total = len(X)*len(Y[0])
+            for i in range(total):
                 results.append(sim.gpr(i).asint())
-            for i in range(4):
+            for i in range(total):
                 print("maddld-matrix i", i, results[i])
             # confirm that the results are as expected
             self.assertEqual(results, expected)
