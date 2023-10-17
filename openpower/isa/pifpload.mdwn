@@ -2,53 +2,6 @@
 
 <!-- Section 4.6.1 Floating-point storage access instructions. P 140 - 143 -->
 
-# Load Floating-Point Single
-
-D-Form
-
-* lfs FRT,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA|0) + EXTS(D)
-    FRT <- DOUBLE(MEM(EA, 4))
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+D.
-    The word in storage addressed by EA is interpreted as
-    a floating-point single-precision operand. This word is
-    converted to floating-point double format (see
-    page 138) and placed into register FRT.
-
-Special Registers Altered:
-
-    None
-
-# Load Floating-Point Single Indexed
-
-X-Form
-
-* lfsx FRT,RA,RB
-
-Pseudo-code:
-
-    EA <- (RA|0) + (RB)
-    FRT <- DOUBLE(MEM(EA, 4))
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+(RB).
-
-    The word in storage addressed by EA is interpreted as
-    a floating-point single-precision operand. This word is
-    converted to floating-point double format (see
-    page 138) and placed into register FRT.
-
-Special Registers Altered:
-
-    None
-
 # Load Floating-Point Single with Update
 
 D-Form
@@ -102,50 +55,6 @@ Description:
     EA is placed into register RA.
 
     If RA=0, the instruction form is invalid.
-
-Special Registers Altered:
-
-    None
-
-# Load Floating-Point Double
-
-D-Form
-
-* lfd FRT,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA|0) + EXTS(D)
-    FRT <- MEM(EA, 8)
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+D.
-
-    The doubleword in storage addressed by EA is loaded
-    into register FRT.
-
-Special Registers Altered:
-
-    None
-
-# Load Floating-Point Double Indexed
-
-X-Form
-
-* lfdx FRT,RA,RB
-
-Pseudo-code:
-
-    EA <- (RA|0) + (RB)
-    FRT <- MEM(EA, 8)
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+(RB).
-
-    The doubleword in storage addressed by EA is loaded
-    into register FRT.
 
 Special Registers Altered:
 
@@ -228,24 +137,3 @@ Special Registers Altered:
 
     None
 
-# Load Floating-Point as Integer Word Zero Indexed 
-
-X-Form
-
-* lfiwzx FRT,RA,RB
-
-Pseudo-code:
-
-    EA <- (RA|0) + (RB)
-    FRT <- [0]*32 || MEM(EA, 4)
-
-Description:
-
-    Let the effective address (EA) be the sum (RA|0)+(RB).
-
-    The word in storage addressed by EA is loaded into
-    FRT [32:63]. FRT [0:31] are set to 0.
-
-Special Registers Altered:
-
-    None
