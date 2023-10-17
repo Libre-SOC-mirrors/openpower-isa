@@ -20,7 +20,7 @@ Description:
 
     The contents of register FRS are converted to single
     format (see page 142) and stored into the word in stor-
-    age addressed by EA.
+    age addressed by RA.
 
     EA is placed into register RA.
 
@@ -48,7 +48,7 @@ Description:
 
     The contents of register FRS are converted to single
     format (see page 142) and stored into the word in stor-
-    age addressed by EA.
+    age addressed by RA.
 
     EA is placed into register RA.
 
@@ -75,7 +75,7 @@ Description:
     Let the effective address (EA) be the sum (RA)+D.
 
     The contents of register FRS are stored into the dou-
-    bleword in storage addressed by EA.
+    bleword in storage addressed by RA.
 
     EA is placed into register RA.
 
@@ -102,7 +102,7 @@ Description:
     Let the effective address (EA) be the sum (RA)+(RB).
 
     The contents of register FRS are stored into the dou-
-    bleword in storage addressed by EA.
+    bleword in storage addressed by RA.
 
     EA is placed into register RA.
 
