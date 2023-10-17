@@ -19,6 +19,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ D.
+
     (RS)[56:63] are stored into the byte in storage addressed
     by RA.
 
@@ -46,6 +47,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
+
     (RS)[56:63] are stored into the byte in storage addressed
     by EA.
 
@@ -73,6 +75,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA|0)+ D.
+
     (RS)[48:63] are stored into the halfword in storage
     addressed by EA.
 
@@ -96,6 +99,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
+
     (RS)[56:63] are stored into the byte in storage addressed
     by EA.
 
@@ -123,6 +127,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ D.
+
     (RS)[32:63] are stored into the word in storage addressed
     by EA.
 
@@ -150,6 +155,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
+
     (RS)[32:63] are stored into the word in storage addressed
     by RA.
 
@@ -176,7 +182,8 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
+    Let the effective address (EA) be the sum.
+
     (RA)+ (DS||0b00). (RS) is stored into the doubleword in
     storage addressed by RA.
 
@@ -204,6 +211,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
+
     (RS) is stored into the doubleword in storage
     addressed by RA.
 
