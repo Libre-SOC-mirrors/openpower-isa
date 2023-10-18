@@ -51,6 +51,16 @@ class TrapTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs)
 
+    def case_1_sc(self):
+        lst = ["sc 0"]
+        initial_regs = [0] * 32
+        initial_regs[1] = 1
+        initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0x5678}
+        e = ExpectedState(pc=0xc00)
+        e.intregs[1] = 1
+        self.add_case(Program(lst, bigendian),
+                      initial_regs, initial_sprs)
+
     def case_1_rfid(self):
         lst = ["rfid"]
         initial_regs = [0] * 32
