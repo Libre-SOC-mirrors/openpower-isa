@@ -94,11 +94,17 @@ def check_regs(dut, sim, expected, test, code):
     yield from teststate_check_regs(dut, testdic, test, code)
 
 
-def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
-                                     initial_cr=0, mem=None,
-                                     initial_fprs=None,
-                                     pdecode2=None,
-                                     state=None): # (dut, code)
+def run_tst(generator, initial_regs,
+            initial_sprs=None,
+            svstate=0,
+            mmu=False,
+            initial_cr=0,
+            mem=None,
+            initial_fprs=None,
+            pdecode2=None,
+            state=None,
+            use_mmap_mem=False,
+            use_syscall_emu=False): # (dut, code)
     if initial_sprs is None:
         initial_sprs = {}
     m = Module()
@@ -121,7 +127,9 @@ def run_tst(generator, initial_regs, initial_sprs=None, svstate=0, mmu=False,
                     fpregfile=initial_fprs,
                     disassembly=insncode,
                     bigendian=0,
-                    mmu=mmu)
+                    mmu=mmu,
+                    use_mmap_mem=use_mmap_mem,
+                    use_syscall_emu=use_syscall_emu)
     comb += pdecode2.dec.raw_opcode_in.eq(instruction)
     sim = Simulator(m)
 
