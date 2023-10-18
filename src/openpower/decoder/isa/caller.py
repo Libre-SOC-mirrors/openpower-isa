@@ -1950,7 +1950,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("call", ins_name, asmop,
             kind=LogKind.InstrInOuts)
 
-        if not self.is_svp64_mode and asmop in ("sc", "scv"):
+        if asmop in ("sc", "scv"):
             identifier = self.gpr(0)
             arguments = map(self.gpr, range(3, 9))
             result = self.syscall(identifier, *arguments)
