@@ -1322,6 +1322,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         hence the default arguments.  when calling from inside ISACaller
         it is best to use call_trap()
         """
+        if isinstance(trap_addr, SelectableInt):
+            trap_addr = trap_addr.value
         # https://bugs.libre-soc.org/show_bug.cgi?id=859
         kaivb = self.spr['KAIVB'].value
         msr = self.namespace['MSR'].value

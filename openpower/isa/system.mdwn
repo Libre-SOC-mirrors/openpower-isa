@@ -18,8 +18,7 @@ Pseudo-code:
     SRR1[0:32]  <- MSR[0:32]
     SRR1[37:41] <- MSR[37:41]
     SRR1[48:63] <- MSR[48:63]
-    MSR <- new_value
-    NIA <- 0x0000_0000_0000_0C00
+    TRAP(0xC00)
 
 Special Registers Altered:
 
