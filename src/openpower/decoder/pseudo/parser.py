@@ -401,13 +401,7 @@ class PowerParser:
                     self.read_regs.add(toname)
             if name and name in self.gprs:
                 self.write_regs.add(name)  # add to list of regs to write
-
-            # copy rhs -- see openpower.decoder.helpers.copy_assign_rhs()'s
-            # documentation for why we need this
-            copy_fn = ast.Name("copy_assign_rhs", ast.Load())
-            rhs = ast.Call(copy_fn, (p[3],), [])
-            p[0] = self.Assign(autoassign, name, p[1], rhs, iea_mode,
-                               p.slice[2])
+            p[0] = Assign(autoassign, name, p[1], p[3], iea_mode)
             if name:
                 self.declared_vars.add(name)
 
