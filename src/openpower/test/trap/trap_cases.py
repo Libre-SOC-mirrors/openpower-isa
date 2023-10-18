@@ -55,11 +55,16 @@ class TrapTestCase(TestAccumulatorBase):
         lst = ["sc 0"]
         initial_regs = [0] * 32
         initial_regs[1] = 1
-        initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0x5678}
+        initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0x5678} # to overwrite
+        # expected results: PC should be at 0xc00 (sc address)
         e = ExpectedState(pc=0xc00)
         e.intregs[1] = 1
+        e.sprs['SRR0'] = 4                  # PC to return to: CIA+4
+        e.sprs['SRR1'] = 0x9000000000022903 # MSR to restore after sc return
+        e.msr = 0x9000000000000001          # MSR changed to this by sc/trap
         self.add_case(Program(lst, bigendian),
-                      initial_regs, initial_sprs)
+                      initial_regs, initial_sprs,
+                      expected=e)
 
     def case_1_rfid(self):
         lst = ["rfid"]
