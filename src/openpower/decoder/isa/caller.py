@@ -1169,7 +1169,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  insnlog=None,
                  use_mmap_mem=False,
                  use_syscall_emu=False):
-        self.syscall = SyscallEmulator(isacaller=self)
+        if use_syscall_emu:
+            self.syscall = SyscallEmulator(isacaller=self)
+            if not use_mmap_mem:
+                log("forcing use_mmap_mem due to use_syscall_emu active")
+                use_mmap_mem = True
+        else:
+            self.syscall = None
 
         # trace log file for model output. if None do nothing
         self.insnlog = insnlog
