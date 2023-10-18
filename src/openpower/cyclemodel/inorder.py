@@ -192,6 +192,7 @@ class Fetch:
             return stall
         insn = self.stages[0] # get current instruction
         if insn is not None:
+            self.pushed_to_decode = True
             self.cpu.decode.add_instruction(insn) # pass on instruction
         # read from log file, write into self.stages[0]
         self.stages[0] = insn_trace
