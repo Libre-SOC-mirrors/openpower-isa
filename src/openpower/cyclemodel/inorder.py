@@ -170,6 +170,9 @@ class Execute:
             instruction['writes'].difference_update(writes_possible)
         return stall
 
+    def is_idle(self):
+        return len(self.stages) == 0
+
 
 class Fetch:
     """
@@ -197,6 +200,9 @@ class Fetch:
         # read from log file, write into self.stages[0]
         self.stages[0] = insn_trace
         return stall
+
+    def is_idle(self):
+        return self.stages[0] is None
 
 
 class Decode:
@@ -239,6 +245,10 @@ class Decode:
         self.cpu.issue.add_instruction(insn, writeregs)
         return stall
 
+    def is_idle(self):
+        return True
+
+
 class Issue:
     """
     Issue phase: if not stalled will place the instruction into execute.
@@ -265,6 +275,9 @@ class Issue:
         insn, writeregs = self.stages[0]
         self.cpu.exe.add_instruction(insn, writeregs)
         return stall
+
+    def is_idle(self):
+        return True
 
 
 class CPU:
@@ -318,6 +331,12 @@ class CPU:
             self.exe.tick()
         self.curr_clk += 1
         #print("---------------")
+
+    def is_idle(self):
+        return (self.fetch.is_idle() and
+                self.decode.is_idle() and
+                self.issue.is_idle() and
+                self.exe.is_idle())
 
     # TODO: Make formatting prettier, and conform to markdown table format
     # TODO: Adjust based on actual number of pipeline stages.
@@ -374,6 +393,9 @@ class TestTrace(unittest.TestCase):
         for trace in lines:
             #print(trace)
             basic_cpu.process_instructions(trace)
+        # wait for all instructions to finish
+        while not basic_cpu.is_idle():
+            basic_cpu.process_instructions(None)
 
     def test_trace1(self): # TODO, assert this is valid
         basic_cpu = CPU()
@@ -388,6 +410,10 @@ class TestTrace(unittest.TestCase):
         for trace in lines:
             #print(trace)
             basic_cpu.process_instructions(trace)
+        # wait for all instructions to finish
+        while not basic_cpu.is_idle():
+            basic_cpu.process_instructions(None)
+
 
 def help():
     print ("-t             runs unit tests")
