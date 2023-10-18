@@ -345,6 +345,8 @@ class PowerParser:
             p[0] = p[1]
         else:
             iea_mode = p[2] == '<-iea'
+            if iea_mode:
+                print ("iea_mode")
             name = None
             autoassign = False
             if isinstance(p[1], ast.Name):
@@ -355,6 +357,7 @@ class PowerParser:
                       self.fnparm_vars,
                       self.special_regs)
                 print(astor.dump_tree(p[1]))
+                print(astor.dump_tree(p[3]))
                 if isinstance(p[1].value, ast.Name):
                     name = p[1].value.id
                     print("assign subscript value to name", name)
@@ -395,6 +398,7 @@ class PowerParser:
                                    p.slice[2].lineno, p.slice[2].lexpos,
                                    self.input_text)
             print("expr assign", name, p[1], "to", p[3])
+            print(astor.dump_tree(p[3]))
             if isinstance(p[3], ast.Name):
                 toname = p[3].id
                 if toname in self.gprs:
@@ -664,7 +668,7 @@ class PowerParser:
             if name in ['CA', 'CA32']:
                 self.write_regs.add(name)
         if name in ['CR', 'LR', 'CTR', 'TAR', 'FPSCR', 'MSR',
-                    'SVSTATE', 'SVREMAP',
+                    'SVSTATE', 'SVREMAP', 'SRR0', 'SRR1',
                     'SVSHAPE0', 'SVSHAPE1', 'SVSHAPE2', 'SVSHAPE3']:
             self.special_regs.add(name)
             self.write_regs.add(name)  # and add to list to write
