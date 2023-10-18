@@ -374,6 +374,20 @@ class TestTrace(unittest.TestCase):
             #print(trace)
             basic_cpu.process_instructions(trace)
 
+    def test_trace1(self): # TODO, assert this is valid
+        basic_cpu = CPU()
+
+        lines = (
+            "r:GPR:0:0:64 w:GPR:1:0:64              # addi 1, 0, 0x0010",
+            "r:GPR:1:0:64 w:GPR:2:0:64              # addi 2, 1, 0x1234",
+        )
+        f = io.StringIO("\n".join(lines))
+        lines = read_file(f)
+        basic_cpu.print_headings()
+        for trace in lines:
+            #print(trace)
+            basic_cpu.process_instructions(trace)
+
 def help():
     print ("-t             runs unit tests")
     print ("-h --help      prints this message")
