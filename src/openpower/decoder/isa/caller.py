@@ -1167,10 +1167,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  icachemmu=False,
                  initial_fpscr=0,
                  insnlog=None,
-                 use_mmap_mem=False):
+                 use_mmap_mem=False,
+                 use_syscall_emu=False):
+        self.syscall = SyscallEmulator(isacaller=self)
 
         # trace log file for model output. if None do nothing
-        self.syscall = SyscallEmulator(isacaller=self)
         self.insnlog = insnlog
         self.insnlog_is_file = hasattr(insnlog, "write")
         if not self.insnlog_is_file and self.insnlog:
@@ -1951,12 +1952,16 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             kind=LogKind.InstrInOuts)
 
         if asmop in ("sc", "scv"):
-            identifier = self.gpr(0)
-            arguments = map(self.gpr, range(3, 9))
-            result = self.syscall(identifier, *arguments)
-            self.gpr.write(3, result, False, self.namespace["XLEN"])
-            self.update_pc_next()
-            return
+            if self.syscall is not None:
+                identifier = self.gpr(0)
+                arguments = map(self.gpr, range(3, 9))
+                result = self.syscall(identifier, *arguments)
+                self.gpr.write(3, result, False, self.namespace["XLEN"])
+                self.update_pc_next()
+                return
+            else:
+                self.call_trap(0x700, PIb.ILLEG)
+                return
 
         # sv.setvl is *not* a loop-function. sigh
         log("is_svp64_mode", self.is_svp64_mode, asmop)
