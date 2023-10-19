@@ -44,10 +44,6 @@ def matmult_inner(a,b):
 
     return result
 
-# Flatten list of lists matrix down to single list
-def flatten(l):
-    return [item for sublist in l for item in sublist]
-
 
 class DecoderTestCase(FHDLTestCase):
 
@@ -83,22 +79,16 @@ class DecoderTestCase(FHDLTestCase):
         X = X1
         Y = Y1
 
-        expected = matmult_outer(X, Y)
-        expected2 = matmult_inner(X, Y)
-        expected = flatten(expected)
-        expected2 = flatten(expected2)
-        print("expected-matrix (outer):")
-        print(expected)
-        print("expected-matrix (inner):")
-        print(expected2)
 
         xf = reduce(operator.add, X)
         yf = reduce(operator.add, Y)
-        expected = reduce(operator.add, expected)
-        print("flattened X,Y,expected")
+        expected = reduce(operator.add, matmult_outer(X, Y))
+        expected2 = reduce(operator.add, matmult_inner(X, Y))
+        print("flattened X,Y,expected (outer), expected (inner)")
         print("\t", xf)
         print("\t", yf)
         print("\t", expected)
+        print("\t", expected2)
 
         # and create a linear result2, same scheme
         #result1 = [0] * (ydim1*xdim2)
