@@ -237,16 +237,16 @@ Special Registers Altered:
 
     None
 
-# Load Word Byte-Reverse Indexed
+# Load Word Byte-Reverse Shifted Indexed
 
 X-Form
 
-* lwbrx RT,RA,RB
+* lwbrsx RT,RA,RB,sm
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) (sm+1)
     load_data <- MEM(EA, 4)
     RT <- ([0] * 32 || load_data[24:31] || load_data[16:23]
                     || load_data[8:15]  || load_data[0:7])
