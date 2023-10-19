@@ -132,15 +132,15 @@ Special Registers Altered:
 
     None
 
-# Store Word with Update Indexed
+# Store Word Shifted with Update Indexed
 
 X-Form
 
-* stwux RS,RA,RB
+* stwsux RS,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (SH+1)
     MEM(EA, 4) <- (RS)[XLEN-32:XLEN-1]
     RA <- EA
 
