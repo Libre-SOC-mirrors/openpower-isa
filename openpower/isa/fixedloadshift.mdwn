@@ -106,15 +106,15 @@ Special Registers Altered:
 
     None
 
-# Load Halfword Algebraic with Update Indexed
+# Load Halfword Algebraic Shifted with Update Indexed
 
 X-Form
 
-* lhaux RT,RA,RB
+* lhasux RT,RA,RB,sm
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (sm+1)
     RT <- EXTS(MEM(EA, 2))
     RA <- EA
 
