@@ -220,16 +220,16 @@ Special Registers Altered:
 
 <!-- byte-reverse shifted -->
 
-# Load Halfword Byte-Reverse Indexed
+# Load Halfword Byte-Reverse Shifted Indexed
 
 X-Form
 
-* lhbrx RT,RA,RB
+* lhbrsx RT,RA,RB,sm
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (sm+1)
     load_data <- MEM(EA, 2)
     RT <- [0]*48 || load_data[8:15] || load_data[0:7]
 
