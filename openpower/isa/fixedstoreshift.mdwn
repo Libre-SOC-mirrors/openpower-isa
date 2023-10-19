@@ -62,16 +62,16 @@ Special Registers Altered:
 
     None
 
-# Store Halfword Indexed
+# Store Halfword Shifted Indexed
 
 X-Form
 
-* sthx RS,RA,RB
+* sthsx RS,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (SH+1)
     MEM(EA, 2) <- (RS)[XLEN-16:XLEN-1]
 
 Description:
