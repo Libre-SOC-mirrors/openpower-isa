@@ -26,31 +26,31 @@
 <!-- halfword, word, or doubleword) addressed by EA is loaded into RT. -->
 
 
-# Load Byte and Zero Indexed
+# Load Byte and Zero Shifted Indexed 
 
 X-Form
 
-* lbzx RT,RA,RB
+* lbzsx RT,RA,RB,sh
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (sh+1)
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
 
 Special Registers Altered:
 
     None
 
-# Load Byte and Zero with Update Indexed
+# Load Byte and Zero Shifted with Update Indexed
 
 X-Form
 
-* lbzux RT,RA,RB
+* lbzsux RT,RA,RB,sh
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (sh+1)
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
     RA <- EA
 
