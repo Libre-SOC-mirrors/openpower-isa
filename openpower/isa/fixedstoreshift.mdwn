@@ -266,16 +266,16 @@ Special Registers Altered:
 
 <!-- Section 3.3.5.1 64-Bit Load and Store with Byte Reversal Instructions page 61 -->
 
-# Store Doubleword Byte-Reverse Indexed
+# Store Doubleword Byte-Reverse Shifted Indexed
 
 X-Form
 
-* stdbrx RS,RA,RB
+* stdbrsx RS,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (SH+1)
     MEM(EA, 8) <- ((RS) [56:63] || (RS)[48:55]
                     || (RS)[40:47] || (RS)[32:39]
                     || (RS)[24:31] || (RS)[16:23]
