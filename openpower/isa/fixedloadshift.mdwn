@@ -67,22 +67,22 @@ X-Form
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) (sm+1)
+    EA <- b + (RB) << (sm+1)
     RT <- ([0] * (XLEN-16)) || MEM(EA, 2)
 
 Special Registers Altered:
 
     None
 
-# Load Halfword and Zero with Update Indexed
+# Load Halfword and Zero Shifted with Update Indexed
 
 X-Form
 
-* lhzux RT,RA,RB
+* lhzsux RT,RA,RB,sm
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (sm+1)
     RT <- ([0] * (XLEN-16)) || MEM(EA, 2)
     RA <- EA
 
