@@ -84,6 +84,8 @@ class DecoderTestCase(FHDLTestCase):
         yf = reduce(operator.add, Y)
         expected = reduce(operator.add, matmult_outer(X, Y))
         expected2 = reduce(operator.add, matmult_inner(X, Y))
+        # Check that outer/inner methods match
+        assert expected == expected2
         print("flattened X,Y,expected (outer), expected (inner)")
         print("\t", xf)
         print("\t", yf)
