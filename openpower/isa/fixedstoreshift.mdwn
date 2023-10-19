@@ -84,15 +84,15 @@ Special Registers Altered:
 
     None
 
-# Store Halfword with Update Indexed
+# Store Halfword Shifted with Update Indexed
 
 X-Form
 
-* sthux RS,RA,RB
+* sthsux RS,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (SH+1)
     MEM(EA, 2) <- (RS)[XLEN-16:XLEN-1]
     RA <- EA
 
