@@ -18,7 +18,7 @@
 
 X-Form
 
-* stbx RS,RA,RB,SH
+* stbsx RS,RA,RB,SH
 
 Pseudo-code:
 
