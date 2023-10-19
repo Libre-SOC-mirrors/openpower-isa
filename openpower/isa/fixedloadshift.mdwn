@@ -246,7 +246,7 @@ X-Form
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) (sm+1)
+    EA <- b + (RB) << (sm+1)
     load_data <- MEM(EA, 4)
     RT <- ([0] * 32 || load_data[24:31] || load_data[16:23]
                     || load_data[8:15]  || load_data[0:7])
@@ -258,16 +258,16 @@ Special Registers Altered:
 
 <!-- Section 3.3.5.1 64-Bit Load and Store with Byte Reversal Instructions page 61 -->
 
-# Load Doubleword Byte-Reverse Indexed
+# Load Doubleword Byte-Reverse Shifted Indexed
 
 X-Form
 
-* ldbrx RT,RA,RB
+* ldbrsx RT,RA,RB,sm
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (sm+1)
     load_data <- MEM(EA, 8)
     RT <- (load_data[56:63] || load_data[48:55]
         || load_data[40:47] || load_data[32:39]
