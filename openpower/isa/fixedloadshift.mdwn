@@ -154,16 +154,16 @@ Special Registers Altered:
 
     None
 
-# Load Word Algebraic Indexed
+# Load Word Algebraic Shifted Indexed
 
 X-Form
 
-* lwax RT,RA,RB
+* lwasx RT,RA,RB,sm
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (sm+1)
     RT <- EXTS(MEM(EA, 4))
 
 Special Registers Altered:
