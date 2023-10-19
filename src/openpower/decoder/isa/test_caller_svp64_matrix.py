@@ -44,6 +44,9 @@ def matmult_inner(a,b):
 
     return result
 
+# Flatten list of lists matrix down to single list
+def flatten(l):
+    return [item for sublist in l for item in sublist]
 
 
 class DecoderTestCase(FHDLTestCase):
