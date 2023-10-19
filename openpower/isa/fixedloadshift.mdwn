@@ -122,16 +122,16 @@ Special Registers Altered:
 
     None
 
-# Load Word and Zero Indexed
+# Load Word and Zero Shifted Indexed
 
 X-Form
 
-* lwzx RT,RA,RB
+* lwzsx RT,RA,RB,sm
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (sm+1)
     RT <- [0] * 32 || MEM(EA, 4)
 
 Special Registers Altered:
