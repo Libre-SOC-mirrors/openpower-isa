@@ -184,15 +184,15 @@ Special Registers Altered:
 
     None
 
-# Store Doubleword with Update Indexed
+# Store Doubleword Shifted with Update Indexed
 
 X-Form
 
-* stdux RS,RA,RB
+* stdsux RS,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (SH+1)
     MEM(EA, 8) <- (RS)
     RA <- EA
 
