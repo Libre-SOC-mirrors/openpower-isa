@@ -170,15 +170,15 @@ Special Registers Altered:
 
     None
 
-# Load Word Algebraic with Update Indexed
+# Load Word Algebraic Shifted with Update Indexed
 
 X-Form
 
-* lwaux RT,RA,RB
+* lwasux RT,RA,RB,sm
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (sm+1)
     RT <- EXTS(MEM(EA, 4))
     RA <- EA
 
