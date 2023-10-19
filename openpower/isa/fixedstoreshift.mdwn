@@ -36,15 +36,15 @@ Special Registers Altered:
 
     None
 
-# Store Byte with Update Indexed
+# Store Byte Shifted with Update Indexed
 
 X-Form
 
-* stbux RS,RA,RB
+* stbsux RS,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (SH+1)
     MEM(EA, 1) <- (RS)[XLEN-8:XLEN-1]
     RA <- EA
 
