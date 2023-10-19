@@ -202,15 +202,15 @@ Special Registers Altered:
 
     None
 
-# Load Doubleword with Update Indexed
+# Load Doubleword Shifted with Update Indexed
 
 X-Form
 
-* ldux RT,RA,RB
+* ldsux RT,RA,RB,sm
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB) << (sm+1)
     RT <- MEM(EA, 8)
     RA <- EA
 
