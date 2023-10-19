@@ -14,16 +14,16 @@
 
 <!-- Section 3.3.3 Fixed-Point Store Instructions pages 54 - 57 -->
 
-# Store Byte Indexed
+# Store Byte Shifted Indexed
 
 X-Form
 
-* stbx RS,RA,RB
+* stbx RS,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (SH+1)
     MEM(EA, 1) <- (RS)[XLEN-8:XLEN-1]
 
 Description:
