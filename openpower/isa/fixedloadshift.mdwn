@@ -30,12 +30,12 @@
 
 X-Form
 
-* lbzsx RT,RA,RB,sh
+* lbzsx RT,RA,RB,sm
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sh+1)
+    EA <- b + (RB) << (sm+1)
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
 
 Special Registers Altered:
@@ -46,11 +46,11 @@ Special Registers Altered:
 
 X-Form
 
-* lbzsux RT,RA,RB,sh
+* lbzsux RT,RA,RB,sm
 
 Pseudo-code:
 
-    EA <- (RA) + (RB) << (sh+1)
+    EA <- (RA) + (RB) << (sm+1)
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
     RA <- EA
 
@@ -58,16 +58,16 @@ Special Registers Altered:
 
     None
 
-# Load Halfword and Zero Indexed
+# Load Halfword and Zero Shifted Indexed
 
 X-Form
 
-* lhzx RT,RA,RB
+* lhzsx RT,RA,RB,sm
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) (sm+1)
     RT <- ([0] * (XLEN-16)) || MEM(EA, 2)
 
 Special Registers Altered:
