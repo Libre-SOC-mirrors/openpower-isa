@@ -110,16 +110,16 @@ Special Registers Altered:
 
     None
 
-# Store Word Indexed
+# Store Word Shifted Indexed
 
 X-Form
 
-* stwx RS,RA,RB
+* stwsx RS,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (SH+1)
     MEM(EA, 4) <- (RS)[XLEN-32:XLEN-1]
 
 Description:
