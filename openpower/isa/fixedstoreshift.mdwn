@@ -213,16 +213,16 @@ Special Registers Altered:
 
 <!-- Section 3.3.5 Fixed-Point Load and Store with Byte Reversal Instructions page 60 -->
 
-# Store Halfword Byte-Reverse Indexed
+# Store Halfword Byte-Reverse Shifted Indexed
 
 X-Form
 
-* sthbrx RS,RA,RB
+* sthbrsx RS,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (SH+1)
     MEM(EA, 2) <- (RS) [56:63] || (RS)[48:55]
 
 Description:
