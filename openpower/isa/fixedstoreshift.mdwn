@@ -162,16 +162,16 @@ Special Registers Altered:
 
 <!-- Section 3.3.3.1 64-bit Fixed-Point Store Instructions page 57 -->
 
-# Store Doubleword Indexed
+# Store Doubleword Shifted Indexed
 
 X-Form
 
-* stdx RS,RA,RB
+* stdsx RS,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (SH+1)
     MEM(EA, 8) <- (RS)
 
 Description:
