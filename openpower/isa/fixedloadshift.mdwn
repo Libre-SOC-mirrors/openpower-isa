@@ -26,7 +26,7 @@
 <!-- halfword, word, or doubleword) addressed by EA is loaded into RT. -->
 
 
-# Load Byte and Zero Shifted Indexed 
+# Load Byte and Zero Shifted Indexed
 
 X-Form
 
@@ -90,16 +90,16 @@ Special Registers Altered:
 
     None
 
-# Load Halfword Algebraic Indexed
+# Load Halfword Algebraic Shifted Indexed
 
 X-Form
 
-* lhax RT,RA,RB
+* lhasx RT,RA,RB,sm
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (sm+1)
     RT <- EXTS(MEM(EA, 2))
 
 Special Registers Altered:
