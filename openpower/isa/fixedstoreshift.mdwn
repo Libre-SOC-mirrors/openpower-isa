@@ -237,16 +237,16 @@ Special Registers Altered:
 
     None
 
-# Store Word Byte-Reverse Indexed
+# Store Word Byte-Reverse Shifted Indexed
 
 X-Form
 
-* stwbrx RS,RA,RB
+* stwbrsx RS,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB)
+    EA <- b + (RB) << (SH+1)
     MEM(EA, 4) <- ((RS)[56:63] || (RS)[48:55] || (RS)[40:47]
                    ||(RS)[32:39])
 
