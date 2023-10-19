@@ -30,12 +30,12 @@
 
 X-Form
 
-* lbzsx RT,RA,RB,sm
+* lbzsx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
 
 Special Registers Altered:
@@ -46,11 +46,11 @@ Special Registers Altered:
 
 X-Form
 
-* lbzsux RT,RA,RB,sm
+* lbzsux RT,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB) << (sm+1)
+    EA <- (RA) + (RB) << (SH+1)
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
     RA <- EA
 
@@ -62,12 +62,12 @@ Special Registers Altered:
 
 X-Form
 
-* lhzsx RT,RA,RB,sm
+* lhzsx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     RT <- ([0] * (XLEN-16)) || MEM(EA, 2)
 
 Special Registers Altered:
@@ -78,11 +78,11 @@ Special Registers Altered:
 
 X-Form
 
-* lhzsux RT,RA,RB,sm
+* lhzsux RT,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB) << (sm+1)
+    EA <- (RA) + (RB) << (SH+1)
     RT <- ([0] * (XLEN-16)) || MEM(EA, 2)
     RA <- EA
 
@@ -94,12 +94,12 @@ Special Registers Altered:
 
 X-Form
 
-* lhasx RT,RA,RB,sm
+* lhasx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     RT <- EXTS(MEM(EA, 2))
 
 Special Registers Altered:
@@ -110,11 +110,11 @@ Special Registers Altered:
 
 X-Form
 
-* lhasux RT,RA,RB,sm
+* lhasux RT,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB) << (sm+1)
+    EA <- (RA) + (RB) << (SH+1)
     RT <- EXTS(MEM(EA, 2))
     RA <- EA
 
@@ -126,12 +126,12 @@ Special Registers Altered:
 
 X-Form
 
-* lwzsx RT,RA,RB,sm
+* lwzsx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     RT <- [0] * 32 || MEM(EA, 4)
 
 Special Registers Altered:
@@ -142,11 +142,11 @@ Special Registers Altered:
 
 X-Form
 
-* lwzsux RT,RA,RB,sm
+* lwzsux RT,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB) << (sm+1)
+    EA <- (RA) + (RB) << (SH+1)
     RT <- [0] * 32 || MEM(EA, 4)
     RA <- EA
 
@@ -158,12 +158,12 @@ Special Registers Altered:
 
 X-Form
 
-* lwasx RT,RA,RB,sm
+* lwasx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     RT <- EXTS(MEM(EA, 4))
 
 Special Registers Altered:
@@ -174,11 +174,11 @@ Special Registers Altered:
 
 X-Form
 
-* lwasux RT,RA,RB,sm
+* lwasux RT,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB) << (sm+1)
+    EA <- (RA) + (RB) << (SH+1)
     RT <- EXTS(MEM(EA, 4))
     RA <- EA
 
@@ -190,12 +190,12 @@ Special Registers Altered:
 
 X-Form
 
-* ldsx RT,RA,RB,sm
+* ldsx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     RT <- MEM(EA, 8)
 
 Special Registers Altered:
@@ -206,11 +206,11 @@ Special Registers Altered:
 
 X-Form
 
-* ldsux RT,RA,RB,sm
+* ldsux RT,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB) << (sm+1)
+    EA <- (RA) + (RB) << (SH+1)
     RT <- MEM(EA, 8)
     RA <- EA
 
@@ -224,12 +224,12 @@ Special Registers Altered:
 
 X-Form
 
-* lhbrsx RT,RA,RB,sm
+* lhbrsx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     load_data <- MEM(EA, 2)
     RT <- [0]*48 || load_data[8:15] || load_data[0:7]
 
@@ -241,12 +241,12 @@ Special Registers Altered:
 
 X-Form
 
-* lwbrsx RT,RA,RB,sm
+* lwbrsx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     load_data <- MEM(EA, 4)
     RT <- ([0] * 32 || load_data[24:31] || load_data[16:23]
                     || load_data[8:15]  || load_data[0:7])
@@ -262,12 +262,12 @@ Special Registers Altered:
 
 X-Form
 
-* ldbrsx RT,RA,RB,sm
+* ldbrsx RT,RA,RB,SH
 
 Pseudo-code:
 
     b <- (RA|0)
-    EA <- b + (RB) << (sm+1)
+    EA <- b + (RB) << (SH+1)
     load_data <- MEM(EA, 8)
     RT <- (load_data[56:63] || load_data[48:55]
         || load_data[40:47] || load_data[32:39]
