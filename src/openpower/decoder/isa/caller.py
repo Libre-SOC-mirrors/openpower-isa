@@ -1957,18 +1957,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("call", ins_name, asmop,
             kind=LogKind.InstrInOuts)
 
-        if asmop in ("sc", "scv"):
-            if self.syscall is not None:
-                identifier = self.gpr(0)
-                arguments = map(self.gpr, range(3, 9))
-                result = self.syscall(identifier, *arguments)
-                self.gpr.write(3, result, False, self.namespace["XLEN"])
-                self.update_pc_next()
-                return
-            else:
-                self.call_trap(0x700, PIb.ILLEG)
-                return
-
         # sv.setvl is *not* a loop-function. sigh
         log("is_svp64_mode", self.is_svp64_mode, asmop)
 
@@ -2064,6 +2052,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if ins_name == 'nop':
             self.update_pc_next()
             return
+
+        # Usermode system call emulation
+        if asmop in ("sc", "scv") and self.syscall is not None:
+            identifier = self.gpr(0)
+            arguments = map(self.gpr, range(3, 9))
+            result = self.syscall(identifier, *arguments)
+            self.gpr.write(3, result, False, self.namespace["XLEN"])
 
         # get elwidths, defaults to 64
         xlen = 64
