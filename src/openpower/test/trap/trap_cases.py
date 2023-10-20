@@ -36,7 +36,10 @@ class TrapTestCase(TestAccumulatorBase):
         msr = 0xa000000000000003
         e = ExpectedState(pc=0x2700)
         e.intregs[1] = 1 << 13
-        e.msr = 0xa000000000000003  # TODO, not actually checked
+        e.sprs['SRR0'] = 0x4
+        e.sprs['SRR1'] = 0xa000000000080003
+        e.sprs['KAIVB'] = 0x2000
+        e.msr = 0xa000000000000001
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
                       initial_msr=msr,
