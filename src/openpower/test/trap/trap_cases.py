@@ -3,7 +3,7 @@ from openpower.endian import bigendian
 from openpower.consts import MSR
 from openpower.test.state import ExpectedState
 
-from openpower.test.common import TestAccumulatorBase
+from openpower.test.common import TestAccumulatorBase, skip_case
 import random
 
 
@@ -102,6 +102,8 @@ class TrapTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs)
 
+    @skip_case("FIXME: add rest of expected state, expected pc looks wrong"
+               "see https://bugs.libre-soc.org/show_bug.cgi?id=1193")
     def case_2_rfid(self):
         lst = ["rfid"]
         initial_regs = [0] * 32
