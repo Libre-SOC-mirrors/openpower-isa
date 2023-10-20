@@ -11,9 +11,15 @@ from openpower.simulator.program import Program
 
 class SyscallTestCase(FHDLTestCase):
     def run_tst_program(self, prog, initial_regs=[0] * 32):
-        simulator = run_tst(prog, initial_regs, use_syscall_emu=True)
-        simulator.gpr.dump()
-        return simulator
+        initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0x5678}
+        sim = run_tst(prog, initial_regs,
+            initial_sprs=initial_sprs,
+            use_syscall_emu=True)
+        sim.gpr.dump()
+        self.assertEqual(sim.spr['SRR0'], 4)                  # PC to return to: CIA+4
+        # self.assertEqual(sim.spr['SRR1'], 0x9000000000022903) # MSR to restore after sc return
+        # self.assertEqual(sim.msr, 0x9000000000000001)          # MSR changed to this by sc/trap
+        return sim
 
     def test_sc_getpid(self):
         lst = ["sc 0"]
