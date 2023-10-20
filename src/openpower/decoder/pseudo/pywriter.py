@@ -23,7 +23,7 @@ header = """\
 from openpower.decoder.isa.caller import inject, instruction_info
 from openpower.decoder.helpers import (
                                  ne, eq, gt, ge, lt, le, ltu, gtu, length,
-                                 RANGE,
+                                 RANGE, copy_assign_rhs,
                                  ISACallerHelper,
                                 )
 from openpower.decoder.selectable_int import SelectableInt

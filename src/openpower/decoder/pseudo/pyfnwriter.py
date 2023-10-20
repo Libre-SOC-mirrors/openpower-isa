@@ -21,7 +21,7 @@ header = """\
 from openpower.decoder.isa.caller import inject
 from openpower.decoder.helpers import (ISACallerHelper,
                                  ne, eq, gt, ge, lt, le, ltu, gtu, length,
-                                 trunc_divs, trunc_rems,
+                                 trunc_divs, trunc_rems, copy_assign_rhs,
                                 )
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.decoder.selectable_int import selectconcat as concat
