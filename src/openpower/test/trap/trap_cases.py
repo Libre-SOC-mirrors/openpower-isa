@@ -66,6 +66,31 @@ class TrapTestCase(TestAccumulatorBase):
                       initial_regs, initial_sprs,
                       expected=e)
 
+    def case_1_sc_rfid(self):
+        lst = ["ba 3080" ]      # branch to 0xc08
+        lst += ["addi 0,0,0"] * (0xbfc//4) # 0x004 to 0xbfc all NOP
+        lst += ["addi 3,0,3",  # 0xc00
+                "rfid",        # 0xc04
+                "sc 0",        # 0xc08
+                "addi 0,0,2",  # 0xc0c
+                ]
+        initial_regs = [0] * 32
+        initial_regs[1] = 1
+        initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0x5678} # to overwrite
+        # expected results: PC should be at 0xc00 (sc address)
+        e = ExpectedState(pc=0xc00)
+        e.intregs[3] = 3 # due to instruction at 0xc00
+        e.intregs[1] = 1 # should be unaltered
+        e.intregs[0] = 2 # due to instruction at 0xc0c
+        e.sprs['SRR0'] = 0xc0c              # PC to return to: CIA+4 (0xc0c)
+        e.sprs['SRR1'] = 0xffff_ffff_ffff_ffff # MSR after rfid return
+        e.msr = 0xffffffffffffffff          # MSR is restored (by rfid)
+        e.pc = 0xc10                        # should stop after addi 0,0,2
+        self.add_case(Program(lst, bigendian),
+                      initial_regs, initial_sprs,
+                      initial_msr=0xffff_ffff_ffff_ffff,
+                      expected=e)
+
     def case_1_rfid(self):
         lst = ["rfid"]
         initial_regs = [0] * 32
