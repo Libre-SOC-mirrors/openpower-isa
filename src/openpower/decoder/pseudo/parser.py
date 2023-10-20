@@ -405,8 +405,7 @@ class PowerParser:
                     self.read_regs.add(toname)
             if name and name in self.gprs:
                 self.write_regs.add(name)  # add to list of regs to write
-            p[0] = self.Assign(autoassign, name, p[1], p[3], iea_mode,
-                               p.slice[2])
+            p[0] = Assign(autoassign, name, p[1], p[3], iea_mode)
             if name:
                 self.declared_vars.add(name)
 
