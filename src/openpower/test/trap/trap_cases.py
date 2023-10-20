@@ -8,7 +8,6 @@ import random
 
 
 class TrapTestCase(TestAccumulatorBase):
-
     def case_1_kaivb(self):
         # https://bugs.libre-soc.org/show_bug.cgi?id=859
         lst = ["mtspr 850, 1",  # KAIVB
@@ -21,7 +20,7 @@ class TrapTestCase(TestAccumulatorBase):
         msr = 0xa000000000000003
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
-                                    initial_msr=msr)
+                      initial_msr=msr)
 
     def case_2_kaivb_test(self):
         # https://bugs.libre-soc.org/show_bug.cgi?id=859
@@ -31,17 +30,17 @@ class TrapTestCase(TestAccumulatorBase):
                "tbegin.",       # deliberately use illegal instruction
                ]
         initial_regs = [0] * 32
-        initial_regs[1] = 1<<13
+        initial_regs[1] = 1 << 13
         initial_sprs = {'KAIVB': 0x12345678,
                         }
         msr = 0xa000000000000003
         e = ExpectedState(pc=0x2700)
-        e.intregs[1] = 1<<13
-        e.msr = 0xa000000000000003 # TODO, not actually checked
+        e.intregs[1] = 1 << 13
+        e.msr = 0xa000000000000003  # TODO, not actually checked
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
-                                    initial_msr=msr,
-                                    expected=e)
+                      initial_msr=msr,
+                      expected=e)
 
     def case_0_hrfid(self):
         lst = ["hrfid"]
@@ -55,12 +54,12 @@ class TrapTestCase(TestAccumulatorBase):
         lst = ["sc 0"]
         initial_regs = [0] * 32
         initial_regs[1] = 1
-        initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0x5678} # to overwrite
+        initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0x5678}  # to overwrite
         # expected results: PC should be at 0xc00 (sc address)
         e = ExpectedState(pc=0xc00)
         e.intregs[1] = 1
         e.sprs['SRR0'] = 4                  # PC to return to: CIA+4
-        e.sprs['SRR1'] = 0x9000000000022903 # MSR to restore after sc return
+        e.sprs['SRR1'] = 0x9000000000022903  # MSR to restore after sc return
         e.msr = 0x9000000000000001          # MSR changed to this by sc/trap
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
@@ -107,11 +106,11 @@ class TrapTestCase(TestAccumulatorBase):
         initial_sprs = {'SRR0': 0x12345678, 'SRR1': 0xb000000000001033}
         e = ExpectedState(pc=0x700)
         e.intregs[1] = 1
-        e.msr = 0xb000000000001033 # TODO, not actually checked
+        e.msr = 0xb000000000001033  # TODO, not actually checked
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
-                                    initial_msr=0xa000000000000003,
-                                    expected=e)
+                      initial_msr=0xa000000000000003,
+                      expected=e)
 
     def case_0_trap_eq_imm(self):
         insns = ["twi", "tdi"]
@@ -149,7 +148,7 @@ class TrapTestCase(TestAccumulatorBase):
         initial_regs = [0] * 32
         initial_regs[1] = 0xb000000000001033
         self.add_case(Program(lst, bigendian), initial_regs,
-                                    initial_msr=0xa000000000000003)
+                      initial_msr=0xa000000000000003)
 
     def case_4_mtmsrd_0(self):
         lst = ["mtmsrd 1,0"]
@@ -202,4 +201,3 @@ class TrapTestCase(TestAccumulatorBase):
                "mtmsr 1,1"]  # should not get executed
         initial_regs = [0] * 32
         self.add_case(Program(lst, bigendian), initial_regs)
-
