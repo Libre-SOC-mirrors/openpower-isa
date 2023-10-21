@@ -67,12 +67,13 @@ class TrapTestCase(TestAccumulatorBase):
                       expected=e)
 
     def case_1_sc_rfid(self):
+        # https://bugs.libre-soc.org/show_bug.cgi?id=982#c104
         lst = ["ba 3080" ]      # branch to 0xc08
         lst += ["addi 0,0,0"] * (0xbfc//4) # 0x004 to 0xbfc all NOP
-        lst += ["addi 3,0,3",  # 0xc00
+        lst += ["addi 3,0,3",  # 0xc00 set r3=3 as return result from sc
                 "rfid",        # 0xc04
-                "sc 0",        # 0xc08
-                "addi 0,0,2",  # 0xc0c
+                "sc 0",        # 0xc08 make syscall here
+                "addi 0,0,2",  # 0xc0c checks that we returned here
                 ]
         initial_regs = [0] * 32
         initial_regs[1] = 1
