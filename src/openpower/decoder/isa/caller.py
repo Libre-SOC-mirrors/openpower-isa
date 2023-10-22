@@ -1940,7 +1940,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         dec_insn = yield self.dec2.e.do.insn
         return dec_insn & (1 << 20) != 0  # sigh - XFF.spr[-1]?
 
-    def call(self, name):
+    def call(self, name, syscall_emu_active=False):
         """call(opcode) - the primary execution point for instructions
         """
         self.last_st_addr = None  # reset the last known store address
@@ -1987,6 +1987,35 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if ins_name == 'attn':
             self.halted = True
             return
+
+        # User mode system call emulation consists of several steps:
+        # 1. Detect whether instruction is sc or scv.
+        # 2. Call the HDL implementation which invokes trap.
+        # 3. Reroute the guest system call to host system call.
+        # 4. Force return from the interrupt as if we had guest OS.
+        if ((asmop in ("sc", "scv")) and
+                (self.syscall is not None) and
+                not syscall_emu_active):
+            # Memoize PC and trigger an interrupt
+            if self.respect_pc:
+                pc = self.pc.CIA.value
+            else:
+                pc = self.fake_pc
+            yield from self.call(asmop, syscall_emu_active=True)
+
+            # Reroute the syscall to host OS
+            identifier = self.gpr(0)
+            arguments = map(self.gpr, range(3, 9))
+            result = self.syscall(identifier, *arguments)
+            self.gpr.write(3, result, False, self.namespace["XLEN"])
+
+            # Return from interrupt
+            backup = self.imem.ld(pc, 4, False, True, instr_fetch=True)
+            self.imem.st(pc, 0x4c000024, width=4, swap=True)
+            yield from self.call("rfid", syscall_emu_active=True)
+            self.imem.st(pc, backup, width=4, swap=True)
+        elif ((name in ("rfid", "hrfid")) and syscall_emu_active):
+            asmop = "rfid"
 
         # check illegal instruction
         illegal = False
@@ -2052,13 +2081,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if ins_name == 'nop':
             self.update_pc_next()
             return
-
-        # Usermode system call emulation
-        if asmop in ("sc", "scv") and self.syscall is not None:
-            identifier = self.gpr(0)
-            arguments = map(self.gpr, range(3, 9))
-            result = self.syscall(identifier, *arguments)
-            self.gpr.write(3, result, False, self.namespace["XLEN"])
 
         # get elwidths, defaults to 64
         xlen = 64
