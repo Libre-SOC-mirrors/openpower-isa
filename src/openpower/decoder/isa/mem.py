@@ -301,7 +301,11 @@ class _MMapPageFlags(enum.IntFlag):
 _MMAP_PAGE_SIZE = 1 << 16  # size of chunk that we track
 _PAGE_COUNT = (1 << 48) // _MMAP_PAGE_SIZE  # 48-bit address space
 _NEG_PG_IDX_START = _PAGE_COUNT // 2  # start of negative half of address space
-BLOCK_SIZE = 1 << 32  # code assumes it's a power of two
+
+# code assumes BLOCK_SIZE is a power of two
+# BLOCK_SIZE = 1 << 32
+BLOCK_SIZE = 1 << 28  # reduced so it works on armv7a
+
 assert BLOCK_SIZE % _MMAP_PAGE_SIZE == 0
 DEFAULT_BLOCK_ADDRS = (
     0,  # low end of user space
