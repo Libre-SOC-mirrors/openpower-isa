@@ -6,6 +6,7 @@ import pathlib
 import re
 
 
+from . import ARCH
 from . import Dispatcher
 from . import UnknownSyscall
 
@@ -247,7 +248,6 @@ class ECallGenerator:
         self.print("}")
 
 
-
 def main():
     main_parser = argparse.ArgumentParser("lscmg",
         description="Linux system calls mapping generator")
@@ -262,10 +262,10 @@ def main():
     ecall_parser = main_subparsers.add_parser("ecall")
     ecall_parser.add_argument("guest",
         help="guest architecture",
-        choices=("riscv64", "ppc", "ppc64"))
+        type=lambda arch: ARCH.get(arch, arch))
     ecall_parser.add_argument("host",
         help="amd64 architecture",
-        choices=("amd64", "arm", "aarch64"))
+        type=lambda arch: ARCH.get(arch, arch))
     ecall_parser.set_defaults(generate=ECallGenerator())
 
     arguments = dict(vars(main_parser.parse_args()))

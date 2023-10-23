@@ -5,6 +5,21 @@ import json
 import pathlib
 
 
+
+ARCH = {
+    "powerpc": "ppc",
+    "powerpc64": "ppc64",
+    "ppc64le": "ppc64",
+    "i686": "i386",
+    "x86_64": "amd64",
+    "x64": "amd64",
+    "arm64": "aarch64",
+    "aarch64_be": "aarch64",
+    "armv8b": "aarch64",
+    "armv8l": "aarch64",
+}
+
+
 class Syscall:
     def __init__(self, entry, guest, host, parameters):
         if not isinstance(entry, str):
@@ -89,6 +104,9 @@ class Dispatcher:
 
         if logger is None:
             logger = lambda *args, **kwargs: None
+
+        guest = ARCH.get(guest, guest)
+        host = ARCH.get(host, host)
 
         def i386(sysnums):
             yield from sysnums["x86-32"]["i386"].items()
