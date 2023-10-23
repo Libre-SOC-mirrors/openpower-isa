@@ -265,7 +265,7 @@ def main():
         choices=("riscv64", "ppc", "ppc64"))
     ecall_parser.add_argument("host",
         help="amd64 architecture",
-        choices=("amd64",))
+        choices=("amd64", "arm", "aarch64"))
     ecall_parser.set_defaults(generate=ECallGenerator())
 
     arguments = dict(vars(main_parser.parse_args()))

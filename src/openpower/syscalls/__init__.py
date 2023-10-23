@@ -97,6 +97,12 @@ class Dispatcher:
             yield from sysnums["x86-64"]["common"].items()
             yield from sysnums["x86-64"]["64"].items()
 
+        def arm(sysnums):
+            yield from sysnums["arm"]["common"].items()
+
+        def aarch64(sysnums):
+            yield from sysnums["generic"]["arch64"].items()
+
         def ppc(sysnums):
             yield from sysnums["ppc"]["nospu"].items()
             yield from sysnums["ppc"]["common"].items()
@@ -116,6 +122,8 @@ class Dispatcher:
         arch = {
             "i386": i386,
             "amd64": amd64,
+            "arm": arm,
+            "aarch64": aarch64,
             "ppc": ppc,
             "ppc64": ppc64,
             "riscv32": riscv32,
