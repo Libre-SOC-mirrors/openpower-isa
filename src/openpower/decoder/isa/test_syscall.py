@@ -70,7 +70,7 @@ class SyscallTestCase(FHDLTestCase):
         self.assertEqual(sim.msr, MSR)          # MSR changed to this by sc/trap
 
         print("SYSCALL SRR1", hex(int(SRR1)), hex(int(sim.spr['SRR1'])))
-        print("SYSCALL  MSR", hex(int(MSR)), hex(int(sim.msr)), hex(DEFAULT_MSR))
+        print("SYSCALL MSR", hex(int(MSR)), hex(int(sim.msr)), hex(DEFAULT_MSR))
         return sim
 
     def test_sc_getpid(self):
