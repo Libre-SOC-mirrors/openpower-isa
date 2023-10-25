@@ -6,9 +6,9 @@ import pathlib
 import re
 
 
-from . import ARCH
-from . import Dispatcher
-from . import UnknownSyscall
+from openpower.syscalls import architecture
+from openpower.syscalls import Dispatcher
+from openpower.syscalls import UnknownSyscall
 
 
 def rename_entry(entry):
@@ -262,10 +262,10 @@ def main():
     ecall_parser = main_subparsers.add_parser("ecall")
     ecall_parser.add_argument("guest",
         help="guest architecture",
-        type=lambda arch: ARCH.get(arch, arch))
+        type=architecture)
     ecall_parser.add_argument("host",
         help="amd64 architecture",
-        type=lambda arch: ARCH.get(arch, arch))
+        type=architecture)
     ecall_parser.set_defaults(generate=ECallGenerator())
 
     arguments = dict(vars(main_parser.parse_args()))

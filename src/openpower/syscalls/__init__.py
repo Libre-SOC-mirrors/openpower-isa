@@ -6,18 +6,27 @@ import pathlib
 
 
 
-ARCH = {
-    "powerpc": "ppc",
-    "powerpc64": "ppc64",
-    "ppc64le": "ppc64",
-    "i686": "i386",
-    "x86_64": "amd64",
-    "x64": "amd64",
-    "arm64": "aarch64",
-    "aarch64_be": "aarch64",
-    "armv8b": "aarch64",
-    "armv8l": "aarch64",
-}
+def architecture(arch, bits=0):
+    assert bits in (0, 32, 64)
+    multilib = {
+        ("aarch64", 32): "arm",
+        ("amd64", 32): "i386",
+        ("ppc64", 32): "ppc",
+    }
+    arch = {
+        "powerpc": "ppc",
+        "powerpc64": "ppc64",
+        "ppc64le": "ppc64",
+        "i686": "i386",
+        "x86_64": "amd64",
+        "x64": "amd64",
+        "arm64": "aarch64",
+        "aarch64_be": "aarch64",
+        "armv8b": "aarch64",
+        "armv8l": "aarch64",
+    }.get(arch, arch)
+
+    return multilib.get((arch, bits), arch)
 
 
 class Syscall:
@@ -105,9 +114,6 @@ class Dispatcher:
         if logger is None:
             logger = lambda *args, **kwargs: None
 
-        guest = ARCH.get(guest, guest)
-        host = ARCH.get(host, host)
-
         def i386(sysnums):
             yield from sysnums["x86-32"]["i386"].items()
 
@@ -147,6 +153,11 @@ class Dispatcher:
             "riscv32": riscv32,
             "riscv64": riscv64,
         }
+        if guest not in arch:
+            raise ValueError(guest)
+        if host not in arch:
+            raise ValueError(host)
+
         sysnums = table["sysnums"]
         sysargs = table["sysargs"]
 

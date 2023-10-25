@@ -16,9 +16,10 @@ related bugs:
 from collections import namedtuple
 from copy import deepcopy
 from functools import wraps
+import os
+import sys
 
 from nmigen.sim import Settle
-from os import uname
 import openpower.syscalls
 from openpower.consts import (MSRb, PIb,  # big-endian (PowerISA versions)
                               SVP64CROffs, SVP64MODEb)
@@ -1135,12 +1136,11 @@ class StepLoop:
 
 class SyscallEmulator(openpower.syscalls.Dispatcher):
     def __init__(self, isacaller):
-        machine = uname().machine
-        host = {
-            "x86_64": "amd64",
-        }.get(machine, machine)
-
         self.__isacaller = isacaller
+
+        host = os.uname().machine
+        bits = (64 if (sys.maxsize > (2**32)) else 32)
+        host = openpower.syscalls.architecture(arch=host, bits=bits)
 
         return super().__init__(guest="ppc64", host=host)
 
