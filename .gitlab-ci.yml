@@ -4,6 +4,7 @@ cache:
     when: always
     paths:
         - ccache
+        - linux.bundle
 
 build:
     stage: build
@@ -12,6 +13,7 @@ build:
         # one package per line to simplify sorting, git diff, etc.
         - >-
             apt-get -y install --no-install-recommends
+            aria2
             autoconf
             binutils-powerpc64-linux-gnu
             binutils-powerpc64le-linux-gnu
@@ -103,8 +105,19 @@ build:
         - python3 setup.py develop
         - popd
 
+        # kernel.org recommends cloning from a bundle in CI since that uses a CDN
+        - if [[ ! -f linux.bundle ]]; then aria2c -x 16 -s 16 -o linux.bundle https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/clone.bundle || { rm -f linux.bundle; exit 1; }; fi
+        - git clone linux.bundle
+        - pushd linux
+        - git remote set-url origin https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+        - git remote update origin
+        - git checkout v6.5.8
+        - popd
+
         - python3 setup.py develop
 
         - make generate &> generate.log || { cat generate.log; false; }
+
+        - python3 -m openpower.syscalls json linux > src/openpower/syscalls/syscalls.json
 
         - SILENCELOG='!*,default' pytest -v --maxfail=10
