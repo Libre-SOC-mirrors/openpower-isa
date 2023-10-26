@@ -157,7 +157,7 @@ class TestAccumulatorBase:
             self.__subtest_args = old_subtest_args
 
     def add_case(self, prog, initial_regs=None, initial_sprs=None,
-                 initial_cr=0, initial_msr=DEFAULT_MSR,
+                 initial_cr=0, initial_msr=None,
                  initial_mem=None,
                  initial_svstate=0,
                  expected=None,

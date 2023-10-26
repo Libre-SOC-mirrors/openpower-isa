@@ -43,6 +43,7 @@ from openpower.decoder.power_svp64 import SVP64RM, decode_extra
 from openpower.decoder.selectable_int import (FieldSelectableInt,
                                               SelectableInt, selectconcat,
                                               EFFECTIVELY_UNLIMITED)
+from openpower.consts import DEFAULT_MSR
 from openpower.fpscr import FPSCRState
 from openpower.xer import XERState
 from openpower.util import LogKind, log
@@ -1196,6 +1197,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if initial_insns is None:
             initial_insns = {}
             assert self.respect_pc == False, "instructions required to honor pc"
+        if initial_msr is None:
+            initial_msr = DEFAULT_MSR
 
         log("ISACaller insns", respect_pc, initial_insns, disassembly)
         log("ISACaller initial_msr", initial_msr)
