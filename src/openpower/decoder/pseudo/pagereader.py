@@ -66,14 +66,6 @@ def get_isa_dir():
     return os.path.join(fdir, "openpower", "isa")
 
 
-pattern_opcode = r"[A-Za-z0-9_\.]+\.?"
-pattern_dynamic = r"[A-Za-z0-9_]+(?:\([A-Za-z0-9_]+\))*"
-pattern_static = r"[A-Za-z0-9]+\=[01]"
-regex_opcode = re.compile(f"^{pattern_opcode}$")
-regex_dynamic = re.compile(f"^{pattern_dynamic}(?:,{pattern_dynamic})*$")
-regex_static = re.compile(f"^\({pattern_static}(?:\s{pattern_static})*\)$")
-
-
 def operands(opcode, desc):
     if desc is None:
         return
@@ -281,19 +273,13 @@ class ISA:
                 rest = l[1:].strip()
 
                 (opcode, _, rest) = map(str.strip, rest.partition(" "))
-                if regex_opcode.match(opcode) is None:
-                    raise IOError(repr(opcode))
                 opcode = [opcode]
 
                 (dynamic, _, rest) = map(str.strip, rest.partition(" "))
-                if regex_dynamic.match(dynamic) is None and dynamic:
-                    raise IOError(f"{l!r}: {dynamic!r}")
                 if dynamic:
                     opcode.append(dynamic.split(","))
 
                 static = rest
-                if regex_static.match(static) is None and static:
-                    raise IOError(f"{l!r}: {static!r}")
                 if static:
                     opcode.extend(static[1:-1].split(" "))
 
