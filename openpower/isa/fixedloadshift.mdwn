@@ -99,8 +99,6 @@ Description:
     The halfword in storage addressed by EA is loaded into
     RT[48:63]. RT[0:47] are set to 0.
 
-
-
 Special Registers Altered:
 
     None
@@ -116,6 +114,18 @@ Pseudo-code:
     EA <- (RA) + (RB) << (SH+1)
     RT <- ([0] * (XLEN-16)) || MEM(EA, 2)
     RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and (RA).
+
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are set to 0.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
 
 Special Registers Altered:
 
