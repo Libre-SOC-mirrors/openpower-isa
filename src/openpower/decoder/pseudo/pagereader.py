@@ -52,7 +52,7 @@ import os
 import re
 
 opfields = ("desc", "form", "opcode", "regs", "pcode", "sregs", "page",
-            "extra_uninit_regs")
+            "extra_uninit_regs", "english")
 Ops = namedtuple("Ops", opfields)
 
 
@@ -77,15 +77,37 @@ def operands(opcode, desc):
         if operand:
             yield operand
 
-def get_indented_lines(lines):
-    """gets a set of indented lines, plus a blank line as termination
+
+def get_indented_lines(lines, pagename, expect=None):
+    """gets a set of indented lines, plus a blank line as termination.
+    blank lines are permitted inside the block, but this requires a lookahead
+    at the next line to see if the next section is coming up (expected).
+    but... Description is currently *optional* sigh therefore it is
+    necessary to look for *either* "Special" *or* "Description" sigh
+    TODO: simplify once all Descriptions are added
     """
     li = []
     while lines:
         l = lines.pop(0).rstrip()
+        # grrrr skip comments
+        if l.strip().startswith('<!--'):
+            continue
+        # blank line check
         if len(l) == 0:
-            break
-        assert l.startswith('    '), ("4spcs not found in line %s" % l)
+            # if not at the end of the block, add the extra 4 spaces
+            if expect and len(lines) >= 1:
+                found = False
+                for e in expect:
+                    if lines[0].startswith(e):
+                        found = True
+                if found:
+                    break
+                else:
+                    l = '    '
+            else:
+                break
+        assert l.startswith('    '), ("4spcs not found in line %s" % l +
+                                      "page %s" % pagename)
         l = l[4:]  # lose 4 spaces
         li.append(l)
     return li
@@ -218,8 +240,8 @@ class ISA:
         with open(fname) as f:
             lines = f.readlines()
 
-        # set up dict with current page name
-        d = {'page': pagename}
+        # set up dict with current page name and blank english description
+        d = {'page': pagename, 'english': None}
 
         # line-by-line lexer/parser, quite straightforward: pops one
         # line off the list and checks it.  nothing complicated needed,
@@ -299,29 +321,15 @@ class ISA:
 
             # get pseudocode
             li = []
-            while True:
-                l = lines.pop(0).rstrip()
-                re_match = re.fullmatch(r" *<!-- EXTRA_UNINIT_REGS:(.*)-->", l)
-                if re_match:
-                    for i in re_match[1].split(' '):
-                        if i != "":
-                            extra_uninit_regs.add(i)
-                    li.append("")
-                    continue
-                if l.strip().startswith('<!--'):
-                    continue
-                if len(l) == 0:
-                    break
-                assert l.startswith('    '), ("4spcs not found in line %s" % l)
-                l = l[4:]  # lose 4 spaces
-                li.append(l)
-            d['pcode'] = li
+            d['pcode'] = get_indented_lines(lines, pagename,
+                                            ['Description', 'Special'])
             d['extra_uninit_regs'] = extra_uninit_regs
 
             # check if (temporarily) optional "Description" exists
             if lines[0].startswith("Description:"):
                 l = lines.pop(0).rstrip() # skip "Description"
-                d['description'] = get_indented_lines(lines)
+                d['english'] = get_indented_lines(lines, pagename,
+                                                      ["Special"])
 
             # "Special Registers Altered" expected
             l = lines.pop(0).rstrip()
@@ -333,7 +341,7 @@ class ISA:
             assert len(l) == 0, ("blank line not found %s" % l)
 
             # get special regs
-            li = get_indented_lines(lines)
+            li = get_indented_lines(lines, pagename)
             d['sregs'] = li
 
             # add in opcode
