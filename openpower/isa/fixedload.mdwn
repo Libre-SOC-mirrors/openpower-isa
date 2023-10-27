@@ -41,8 +41,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA|0)+ D.
-    The byte in storage addressed by EA is loaded into
-    RT[56:63]. RT[0:55] are set to 0.
+
+    The byte in storage addressed by EA is loaded into RT[56:63].
+    RT[0:55] are set to 0.
 
 Special Registers Altered:
 
@@ -62,9 +63,10 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (RB). The byte in storage addressed by EA is
-    loaded into RT[56:63] . RT[0:55] are set to 0.
+    Let the effective address (EA) be the sum (RA|0)+ (RB).
+
+    The byte in storage addressed by EA is loaded into RT[56:63].
+    RT[0:55] are set to 0.
 
 Special Registers Altered:
 
@@ -84,8 +86,9 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ D. The
-    byte in storage addressed by EA is loaded into RT[56:63].
+    Let the effective address (EA) be the sum (RA)+ D.
+
+    The byte in storage addressed by EA is loaded into RT[56:63].
     RT[0:55] are set to 0.
 
     EA is placed into register RA.
@@ -111,8 +114,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
-    The byte in storage addressed by EA is loaded into
-    RT[56:63]. RT[0:55] are set to 0.
+
+    The byte in storage addressed by EA is loaded into RT[56:63].
+    RT[0:55] are set to 0.
 
     EA is placed into register RA.
 
@@ -137,8 +141,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA|0)+ D.
-    The halfword in storage addressed by EA is loaded into
-    RT[48:63]. RT[0:47] are set to 0.
+
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are set to 0.
 
 Special Registers Altered:
 
@@ -158,9 +163,10 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (RB). The halfword in storage addressed by
-    EA is loaded into RT[48:63]. RT[0:47] are set to 0.
+    Let the effective address (EA) be the sum (RA|0)+ (RB).
+
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are set to 0.
 
 Special Registers Altered:
 
@@ -180,9 +186,10 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ D. The
-    halfword in storage addressed by EA is loaded into
-    RT[48:63]. RT[0:47] are set to 0.
+    Let the effective address (EA) be the sum (RA)+ D.
+
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are set to 0.
 
     EA is placed into register RA.
 
@@ -207,8 +214,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
-    The halfword in storage addressed by EA is loaded into
-    RT[48:63]. RT[0:47] are set to 0.
+
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are set to 0.
 
     EA is placed into register RA.
 
@@ -233,9 +241,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA|0)+ D.
-    The halfword in storage addressed by EA is loaded into
-    RT[48:63]. RT[0:47] are filled with a copy of bit 0 of the
-    loaded halfword.
+
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are filled with a copy of bit 0 of the loaded halfword.
 
 Special Registers Altered:
 
@@ -255,10 +263,10 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (RB). The halfword in storage addressed by
-    EA is loaded into RT[48:63] . RT[0:47] are filled with a copy
-    of bit 0 of the loaded halfword.
+    Let the effective address (EA) be the sum (RA|0)+ (RB).
+
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are filled with a copy of bit 0 of the loaded halfword.
 
 Special Registers Altered:
 
@@ -278,10 +286,9 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ D. The
-    halfword in storage addressed by EA is loaded into
-    RT[48:63]. RT[0:47] are filled with a copy of bit 0 of the
-    loaded halfword.
+    Let the effective address (EA) be the sum (RA)+ D.
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are filled with a copy of bit 0 of the loaded halfword.
 
     EA is placed into register RA.
 
@@ -306,9 +313,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
-    The halfword in storage addressed by EA is loaded into
-    RT[48:63]. RT[0:47] are filled with a copy of bit 0 of the
-    loaded halfword.
+
+    The halfword in storage addressed by EA is loaded into RT[48:63].
+    RT[0:47] are filled with a copy of bit 0 of the loaded halfword.
 
     EA is placed into register RA.
 
@@ -333,8 +340,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA|0)+ D.
-    The word in storage addressed by EA is loaded into
-    RT[32:63]. RT[0:31] are set to 0.
+
+    The word in storage addressed by EA is loaded into RT[32:63].
+    RT[0:31] are set to 0.
 
 Special Registers Altered:
 
@@ -354,9 +362,10 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (RB). The word in storage addressed by EA is
-    loaded into RT[32:63] . RT[0:31] are set to 0.
+    Let the effective address (EA) be the sum (RA|0)+ (RB).
+
+    The word in storage addressed by EA is loaded into RT[32:63].
+    RT[0:31] are set to 0.
 
 Special Registers Altered:
 
@@ -376,9 +385,10 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ D. The
-    word in storage addressed by EA is loaded into
-    RT[32:63]. RT[0:31] are set to 0.
+    Let the effective address (EA) be the sum (RA)+ D.
+
+    The word in storage addressed by EA is loaded into RT[32:63].
+    RT[0:31] are set to 0.
 
     EA is placed into register RA.
 
@@ -403,8 +413,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
-    The word in storage addressed by EA is loaded into
-    RT[32:63]. RT[0:31] are set to 0.
+
+    The word in storage addressed by EA is loaded into RT[32:63].
+    RT[0:31] are set to 0.
 
     EA is placed into register RA.
 
@@ -428,10 +439,10 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (DS||0b00). The word in storage addressed by
-    EA is loaded into RT[32:63] . RT[0:31] are filled with a copy
-    of bit 0 of the loaded word.
+    Let the effective address (EA) be the sum (RA|0)+ (DS||0b00).
+
+    The word in storage addressed by EA is loaded into RT[32:63].
+    RT[0:31] are filled with a copy of bit 0 of the loaded word.
 
 Special Registers Altered:
 
@@ -451,10 +462,10 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (RB). The word in storage addressed by EA is
-    loaded into RT[32:63] . RT[0:31] are filled with a copy of bit 0
-    of the loaded word.
+    Let the effective address (EA) be the sum (RA|0)+ (RB).
+
+    The word in storage addressed by EA is loaded into RT[32:63].
+    RT[0:31] are filled with a copy of bit 0 of the loaded word.
 
 Special Registers Altered:
 
@@ -475,9 +486,9 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
-    The word in storage addressed by EA is loaded into
-    RT[32:63]. RT[0:31] are filled with a copy of bit 0 of the
-    loaded word.
+
+    The word in storage addressed by EA is loaded into RT[32:63].
+    RT[0:31] are filled with a copy of bit 0 of the loaded word.
 
     EA is placed into register RA.
 
@@ -501,9 +512,9 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (DS||0b00). The doubleword in storage
-    addressed by EA is loaded into RT.
+    Let the effective address (EA) be the sum (RA|0)+ (DS||0b00).
+
+    The doubleword in storage addressed by EA is loaded into RT.
 
 Special Registers Altered:
 
@@ -523,9 +534,9 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (RB). The doubleword in storage addressed by
-    EA is loaded into RT.
+    Let the effective address (EA) be the sum (RA|0)+ (RB).
+
+    The doubleword in storage addressed by EA is loaded into RT.
 
 Special Registers Altered:
 
@@ -545,9 +556,9 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA)+ (DS||0b00). The doubleword in storage
-    addressed by EA is loaded into RT.
+    Let the effective address (EA) be the sum (RA)+ (DS||0b00).
+
+    The doubleword in storage addressed by EA is loaded into RT.
 
     EA is placed into register RA.
 
@@ -572,8 +583,8 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA)+ (RB).
-    The doubleword in storage addressed by EA is loaded
-    into RT.
+
+    The doubleword in storage addressed by EA is loaded into RT.
 
     EA is placed into register RA.
 
@@ -622,9 +633,8 @@ Pseudo-code:
 
 Description
 
-    Let the effective address (EA) be the sum (RA|0)+
-    (DQ||0b0000). The quadword in storage addressed by
-    EA is loaded into register pair RTp.
+    Let the effective address (EA) be the sum (RA|0)+ (DQ||0b0000).
+    The quadword in storage addressed by EA is loaded into register pair RTp.
 
     If RTp is odd or RTp=RA, the instruction form is invalid.
     If RTp=RA, an attempt to execute this instruction will
@@ -664,10 +674,11 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA|0)+(RB).
+
     Bits 0:7 of the halfword in storage addressed by EA are
     loaded into RT 56:63 . Bits 8:15 of the halfword in storage
-    addressed by EA are loaded into RT[48:55] . RT[0:47] are
-    set to 0.
+    addressed by EA are loaded into RT[48:55].
+    RT[0:47] are set to 0.
 
 Special Registers Altered:
 
@@ -689,14 +700,15 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (RB). Bits 0:7 of the word in storage addressed
+    Let the effective address (EA) be the sum (RA|0)+ (RB).
+
+    Bits 0:7 of the word in storage addressed
     by EA are loaded into RT[56:63]. Bits 8:15 of the word in
-    storage addressed by EA are loaded into RT[48:55] . Bits
+    storage addressed by EA are loaded into RT[48:55]. Bits
     16:23 of the word in storage addressed by EA are
     loaded into RT[40:47]. Bits 24:31 of the word in storage
-    addressed by EA are loaded into RT 32:39 . RT[0:31] are
-    set to 0.
+    addressed by EA are loaded into RT 32:39.
+    RT[0:31] are set to 0.
 
 Special Registers Altered:
 
@@ -724,6 +736,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum (RA|0)+(RB).
+
     Bits 0:7 of the doubleword in storage addressed by EA
     are loaded into RT[56:63] . Bits 8:15 of the doubleword in
     storage addressed by EA are loaded into RT[48:55] . Bits
