@@ -340,6 +340,18 @@ Pseudo-code:
     load_data <- MEM(EA, 2)
     RT <- [0]*48 || load_data[8:15] || load_data[0:7]
 
+Description:
+
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and (RA|0).
+
+    The doubleword in storage addressed by EA is loaded into RT.
+
+    EA is placed into register RA.
+
+    If RA=0 or RA=RT, the instruction form is invalid.
+
+
 Special Registers Altered:
 
     None
