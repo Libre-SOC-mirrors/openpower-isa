@@ -6,17 +6,18 @@
 
 X-Form
 
-* stfsux FRS,RA,RB
+* stfsux FRS,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB)<<(SH+1)
     MEM(RA, 4)<- SINGLE( (FRS) )
     RA <- EA
 
 Description:
 
-    Let the effective address (EA) be the sum (RA) +(RB).
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and the contents of register RA.
 
     The contents of register FRS are converted to single
     format (see page 142) and stored into the word in stor-
