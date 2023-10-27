@@ -356,13 +356,10 @@ Description:
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA|0).
 
-    Bits 0:7 of the word in storage addressed
-    by EA are loaded into RT[56:63]. Bits 8:15 of the word in
-    storage addressed by EA are loaded into RT[48:55]. Bits
-    16:23 of the word in storage addressed by EA are
-    loaded into RT[40:47]. Bits 24:31 of the word in storage
-    addressed by EA are loaded into RT 32:39.
-    RT[0:31] are set to 0.
+    Bits 0:7 of the halfword in storage addressed by EA are
+    loaded into RT 56:63. Bits 8:15 of the halfword in storage
+    addressed by EA are loaded into RT[48:55].
+    RT[0:47] are set to 0.
 
 
 Special Registers Altered:
