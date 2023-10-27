@@ -1,0 +1,225 @@
+<!-- This defines DRAFT instructions described in SV -->
+
+<!-- This defines instructions that store from a register to RAM -->
+<!-- Effective Address is always RA, and the usual EA is stored late in RA -->
+
+# Store Byte with Post-Update
+
+D-Form
+
+* stbup RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    ea <- (RA)
+    MEM(ea, 1) <- (RS)[XLEN-8:XLEN-1]
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA)+ D.
+
+    (RS)[56:63] are stored into the byte in storage addressed
+    by RA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Store Byte with Post-Update Indexed
+
+X-Form
+
+* stbupx RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    ea <- (RA)
+    MEM(ea, 1) <- (RS)[XLEN-8:XLEN-1]
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA)+ (RB).
+
+    (RS)[56:63] are stored into the byte in storage addressed
+    by EA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword with Post-Update
+
+D-Form
+
+* sthup RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    ea <- (RA)
+    MEM(ea, 2) <- (RS)[XLEN-16:XLEN-1]
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA|0)+ D.
+
+    (RS)[48:63] are stored into the halfword in storage
+    addressed by EA.
+
+Special Registers Altered:
+
+    None
+
+# Store Halfword with Post-Update Indexed
+
+X-Form
+
+* sthupx RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    ea <- (RA)
+    MEM(ea, 2) <- (RS)[XLEN-16:XLEN-1]
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA)+ (RB).
+
+    (RS)[56:63] are stored into the byte in storage addressed
+    by EA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid
+
+Special Registers Altered:
+
+    None
+
+# Store Word with Post-Update
+
+D-Form
+
+* stwup RS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    ea <- (RA)
+    MEM(ea, 4) <- (RS)[XLEN-32:XLEN-1]
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA)+ D.
+
+    (RS)[32:63] are stored into the word in storage addressed
+    by EA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Store Word with Post-Update Indexed
+
+X-Form
+
+* stwupx RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    ea <- (RA)
+    MEM(ea, 4) <- (RS)[XLEN-32:XLEN-1]
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA)+ (RB).
+
+    (RS)[32:63] are stored into the word in storage addressed
+    by RA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Store Doubleword with Post-Update
+
+DS-Form
+
+* stdup RS,DS(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(DS || 0b00)
+    ea <- (RA)
+    MEM(ea, 8) <- (RS)
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum.
+
+    (RA)+ (DS||0b00). (RS) is stored into the doubleword in
+    storage addressed by RA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Store Doubleword with Post-Update Indexed
+
+X-Form
+
+* stdupx RS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    ea <- (RA)
+    MEM(ea, 8) <- (RS)
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA)+ (RB).
+
+    (RS) is stored into the doubleword in storage
+    addressed by RA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
