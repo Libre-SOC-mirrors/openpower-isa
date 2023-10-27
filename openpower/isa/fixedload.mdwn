@@ -631,7 +631,7 @@ Pseudo-code:
     EA <- b + EXTS(DQ || 0b0000)
     RTp <- MEM(EA, 16)
 
-Description
+Description:
 
     Let the effective address (EA) be the sum (RA|0)+ (DQ||0b0000).
     The quadword in storage addressed by EA is loaded into register pair RTp.
