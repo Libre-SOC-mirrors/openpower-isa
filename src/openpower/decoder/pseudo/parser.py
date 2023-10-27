@@ -87,6 +87,8 @@ binary_ops = {
     "|": ast.BitOr(),
     "+": ast.Add(),
     "-": ast.Sub(),
+    "<<": ast.LShift(),
+    ">>": ast.RShift(),
     "*": ast.Mult(),
     "/": ast.FloorDiv(),
     "%": ast.Mod(),
@@ -184,6 +186,7 @@ class PowerParser:
         ("left", "BITOR"),
         ("left", "BITXOR"),
         ("left", "BITAND"),
+        ("left", "LSHIFT", "RSHIFT"),
         ("left", "PLUS", "MINUS"),
         ("left", "MULT", "DIV", "MOD"),
         ("left", "INVERT"),
@@ -575,6 +578,8 @@ class PowerParser:
         """comparison : comparison PLUS comparison
                       | comparison MINUS comparison
                       | comparison MULT comparison
+                      | comparison LSHIFT comparison
+                      | comparison RSHIFT comparison
                       | comparison DIV comparison
                       | comparison MOD comparison
                       | comparison EQ comparison

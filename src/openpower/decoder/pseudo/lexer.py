@@ -343,6 +343,8 @@ class PowerLexer:
         'GTU',
         'NE',
         'LE',
+        'LSHIFT',
+        'RSHIFT',
         'GE',
         'LT',
         'GT',
@@ -410,6 +412,8 @@ class PowerLexer:
     t_NE = r'!='
     t_LE = r'<='
     t_GE = r'>='
+    t_LSHIFT = r'<<'
+    t_RSHIFT = r'>>'
     t_LT = r'<'
     t_GT = r'>'
     t_PLUS = r'\+'
