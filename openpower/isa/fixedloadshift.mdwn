@@ -117,7 +117,7 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum of the contents of
-    register RB shifted by (SH+1), and (RA).
+    register RB shifted by (SH+1), and the contents of register RA.
 
     The halfword in storage addressed by EA is loaded into RT[48:63].
     RT[0:47] are set to 0.
