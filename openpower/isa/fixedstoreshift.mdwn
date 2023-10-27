@@ -30,6 +30,7 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA|0).
+
     RS [56:63] are stored into the byte in storage addressed by EA.
 
 Special Registers Altered:
@@ -52,8 +53,8 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA).
-    RS[56:63] are stored into the byte in storage addressed
-    by EA.
+
+    RS[56:63] are stored into the byte in storage addressed by EA.
 
     EA is placed into register RA.
 
@@ -79,8 +80,8 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA|0).
-    RS[48:63] are stored into the halfword in
-    storage addressed by EA.
+
+    RS[48:63] are stored into the halfword in storage addressed by EA.
 
 Special Registers Altered:
 
@@ -102,8 +103,8 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA).
-    RS[48:63] are stored into the halfword in storage
-    addressed by EA.
+
+    RS[48:63] are stored into the halfword in storage addressed by EA.
 
     EA is placed into register RA.
 
@@ -129,8 +130,8 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA|0).
-    RS[32:63] are stored into the word in storage
-    addressed by EA.
+
+    RS[32:63] are stored into the word in storage addressed by EA.
 
 Special Registers Altered:
 
@@ -152,8 +153,8 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA).
-    RS[32:63] are stored into the word in storage addressed
-    by EA.
+
+    RS[32:63] are stored into the word in storage addressed by EA.
 
     EA is placed into register RA.
 
@@ -183,8 +184,8 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA|0).
-    (RS) is stored into the doubleword in
-    storage addressed by EA.
+
+    (RS) is stored into the doubleword in storage addressed by EA.
 
 Special Registers Altered:
 
@@ -206,8 +207,8 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register (RB) shifted by (SH+1), and (RA).
-    (RS) is stored into the doubleword in storage
-    addressed by EA.
+
+    (RS) is stored into the doubleword in storage addressed by EA.
 
     EA is placed into register RA.
 
@@ -239,6 +240,8 @@ Description:
     (RS)56:63 are stored into bits 0:7 of the
     halfword in storage addressed by EA. (RS) 48:55 are
     stored into bits 8:15 of the halfword in storage
+
+    (RS)[48:55] are stored into bits 8:15 of the halfword in storage
     addressed by EA.
 
 Special Registers Altered:
@@ -262,9 +265,11 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA|0).
+
     (RS)[56:63] are stored into bits 0:7 of the
     word in storage addressed by EA. (RS) [48:55] are stored
     into bits 8:15 of the word in storage addressed by EA.
+
     (RS)[40:47] are stored into bits 16:23 of the word in stor-
     age addressed by EA. (RS) [32:39] are stored into bits
     24:31 of the word in storage addressed by EA.
@@ -294,17 +299,18 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1), and (RA|0).
+
     (RS)[56:63] are stored into bits 0:7 of the
-    doubleword in storage addressed by EA. (RS) [48:55] are
+    doubleword in storage addressed by EA. (RS)[48:55] are
     stored into bits 8:15 of the doubleword in storage
     addressed by EA. (RS) [40:47] are stored into bits 16:23 of
-    the doubleword in storage addressed by EA. (RS) [32:39]
+    the doubleword in storage addressed by EA. (RS)[32:39]
     are stored into bits 23:31 of the doubleword in storage
     addressed by EA. (RS) [24:31] are stored into bits 32:39 of
-    the doubleword in storage addressed by EA. (RS) [16:23]
+    the doubleword in storage addressed by EA. (RS)[16:23]
     are stored into bits 40:47 of the doubleword in storage
     addressed by EA. (RS)[8:15] are stored into bits 48:55 of
-    the doubleword in storage addressed by EA. (RS) [0:7]
+    the doubleword in storage addressed by EA. (RS)[0:7]
     are stored into bits 56:63 of the doubleword in storage
     addressed by EA.
 
