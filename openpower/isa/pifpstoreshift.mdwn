@@ -1,0 +1,114 @@
+<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
+
+<!-- Section 4.6.3 Floating-point store instructions. P 144 - 147 -->
+
+# Store Floating-Point Single with Update
+
+D-Form
+
+* stfsu FRS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    MEM(RA, 4)<- SINGLE( (FRS) )
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA) +D.
+
+    The contents of register FRS are converted to single
+    format (see page 142) and stored into the word in stor-
+    age addressed by RA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Single with Update Indexed
+
+X-Form
+
+* stfsux FRS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    MEM(RA, 4)<- SINGLE( (FRS) )
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA) +(RB).
+
+    The contents of register FRS are converted to single
+    format (see page 142) and stored into the word in stor-
+    age addressed by RA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Double with Update
+
+D-Form
+
+* stfdu FRS,D(RA)
+
+Pseudo-code:
+
+    EA <- (RA) + EXTS(D)
+    MEM(RA, 8)<- (FRS)
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA)+D.
+
+    The contents of register FRS are stored into the dou-
+    bleword in storage addressed by RA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Store Floating-Point Double with Update Indexed
+
+X-Form
+
+* stfdux FRS,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)
+    MEM(RA, 8)<- (FRS)
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum (RA)+(RB).
+
+    The contents of register FRS are stored into the dou-
+    bleword in storage addressed by RA.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
