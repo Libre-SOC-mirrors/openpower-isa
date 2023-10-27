@@ -65,10 +65,10 @@ Pseudo-code:
 Description:
 
     Let the effective address (EA) be the sum of the contents of
-    register RB shifted by (SH+1), and (RA).
+    register RB shifted by (SH+1), and the contents of register RA.
 
-    The byte in storage addressed by EA is
-    loaded into RT[56:63] . RT[0:55] are set to 0.
+    The byte in storage addressed by EA is loaded into RT[56:63].
+    RT[0:55] are set to 0.
 
     EA is placed into register RA.
 
