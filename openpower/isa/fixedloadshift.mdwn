@@ -230,7 +230,6 @@ Description:
 
     If RA=0 or RA=RT, the instruction form is invalid.
 
-
 Special Registers Altered:
 
     None
@@ -246,6 +245,14 @@ Pseudo-code:
     b <- (RA|0)
     EA <- b + (RB) << (SH+1)
     RT <- EXTS(MEM(EA, 4))
+
+Description:
+
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and (RA|0).
+
+    The word in storage addressed by EA is loaded into RT[32:63].
+    RT[0:31] are filled with a copy of bit 0 of the loaded word.
 
 Special Registers Altered:
 
