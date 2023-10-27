@@ -129,8 +129,8 @@ Description:
 
     Let the effective address (EA) be the sum of the contents of
     register RB shifted by (SH+1) and (RA|0).
-    RS[32:63] are stored into the word in stor-
-    age addressed by EA.
+    RS[32:63] are stored into the word in storage
+    addressed by EA.
 
 Special Registers Altered:
 
@@ -150,7 +150,8 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ (RB).
+    Let the effective address (EA) be the sumof the contents of
+    register RB shifted by (SH+1) and (RB).
     RS[32:63] are stored into the word in storage addressed
     by EA.
 
