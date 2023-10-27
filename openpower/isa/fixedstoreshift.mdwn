@@ -50,7 +50,8 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ (RB).
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1) and (RA).
     RS[56:63] are stored into the byte in storage addressed
     by EA.
 
