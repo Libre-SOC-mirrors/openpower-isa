@@ -38,6 +38,14 @@ Pseudo-code:
     EA <- b + (RB) << (SH+1)
     RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
 
+Description:
+
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and (RA|0).
+    The byte in storage addressed by EA is loaded into
+    RT[56:63]. RT[0:55] are set to 0.
+
+
 Special Registers Altered:
 
     None
