@@ -357,7 +357,7 @@ Description:
     register RB shifted by (SH+1), and (RA|0).
 
     Bits 0:7 of the halfword in storage addressed by EA are
-    loaded into RT 56:63. Bits 8:15 of the halfword in storage
+    loaded into RT[56:63]. Bits 8:15 of the halfword in storage
     addressed by EA are loaded into RT[48:55].
     RT[0:47] are set to 0.
 
