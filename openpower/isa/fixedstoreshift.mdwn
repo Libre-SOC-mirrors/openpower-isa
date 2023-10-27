@@ -77,8 +77,9 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be the sum
-    (RA|0)+ (RB). RS[48:63] are stored into the halfword in
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1) and (RA|0).
+    RS[48:63] are stored into the halfword in
     storage addressed by EA.
 
 Special Registers Altered:
