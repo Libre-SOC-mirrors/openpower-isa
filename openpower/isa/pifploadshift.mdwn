@@ -2,35 +2,6 @@
 
 <!-- Section 4.6.1 Floating-point storage access instructions. P 140 - 143 -->
 
-# Load Floating-Point Single with Post-Update
-
-D-Form
-
-* lfsup FRT,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA) + EXTS(D)
-    FRT <- DOUBLE(MEM(RA, 4))
-    RA <- EA
-
-Description:
-
-    Let the effective address (EA) be the sum (RA)+D.
-
-    The word in storage addressed by EA is interpreted as
-    a floating-point single-precision operand. This word is
-    converted to floating-point double format (see
-    page 138) and placed into register FRT.
-
-    EA is placed into register RA.
-
-    If RA=0, the instruction form is invalid.
-
-Special Registers Altered:
-
-    None
-
 # Load Floating-Point Single with Post-Update Indexed
 
 X-Form
@@ -51,33 +22,6 @@ Description:
     a floating-point single-precision operand. This word is
     converted to floating-point double format (see
     page 138) and placed into register FRT.
-
-    EA is placed into register RA.
-
-    If RA=0, the instruction form is invalid.
-
-Special Registers Altered:
-
-    None
-
-# Load Floating-Point Double with Post-Update
-
-D-Form
-
-* lfdup FRT,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA) + EXTS(D)
-    FRT <- MEM(RA, 8)
-    RA <- EA
-
-Description:
-
-    Let the effective address (EA) be the sum (RA)+D.
-
-    The doubleword in storage addressed by EA is loaded
-    into register FRT.
 
     EA is placed into register RA.
 

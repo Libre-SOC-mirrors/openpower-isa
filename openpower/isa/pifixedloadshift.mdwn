@@ -8,32 +8,6 @@
 
 
 
-# Load Byte and Zero with Post-Update
-
-D-Form
-
-* lbzup RT,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA)
-    RT <- ([0] * (XLEN-8)) || MEM(EA, 1)
-    RA <- (RA) + EXTS(D)
-
-Description:
-
-    Let the effective address (EA) be register RA. 
-    The byte in storage addressed by EA is loaded into RT[56:63].
-    RT[0:55] are set to 0.
-
-    The sum (RA) + D is placed into register RA.
-
-    If RA=0 or RA=RT, the instruction form is invalid.
-
-Special Registers Altered:
-
-    None
-
 # Load Byte and Zero with Post-Update Indexed
 
 X-Form
@@ -53,32 +27,6 @@ Description:
     RT[0:55] are set to 0.
 
     The sum (RA) + (RB) is placed into register RA.
-
-    If RA=0 or RA=RT, the instruction form is invalid.
-
-Special Registers Altered:
-
-    None
-
-# Load Halfword and Zero with Post-Update
-
-D-Form
-
-* lhzup RT,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA)
-    RT <- ([0] * (XLEN-16)) || MEM(EA, 2)
-    RA <- (RA) + EXTS(D)
-
-Description:
-
-    Let the effective address (EA) be register RA. 
-    The halfword in storage addressed by EA is loaded into RT[48:63]. 
-    RT[0:47] are set to 0.
-
-    The sum (RA) + D is placed into register RA.
 
     If RA=0 or RA=RT, the instruction form is invalid.
 
@@ -164,32 +112,6 @@ Special Registers Altered:
 
     None
 
-# Load Word and Zero with Post-Update
-
-D-Form
-
-* lwzup RT,D(RA)
-
-Pseudo-code:
-
-    EA <- (RA)
-    RT <- [0]*32 || MEM(EA, 4)
-    RA <- (RA) + EXTS(D)
-
-Description:
-
-    Let the effective address (EA) be the register RA.
-    The halfword in storage addressed by EA is loaded into RT[48:63].
-    RT[0:47] are filled with a copy of bit 0 of the loaded halfword.
-
-    The sum (RA) + D is placed into register RA.
-
-    If RA=0 or RA=RT, the instruction form is invalid.
-
-Special Registers Altered:
-
-    None
-
 # Load Word and Zero with Post-Update Indexed
 
 X-Form
@@ -235,31 +157,6 @@ Description:
     RT[0:31] are filled with a copy of bit 0 of the loaded word.
 
     The sum (RA) + (RB) is placed into register RA.
-
-    If RA=0 or RA=RT, the instruction form is invalid.
-
-Special Registers Altered:
-
-    None
-
-# Load Doubleword with Post-Update Indexed
-
-DS-Form
-
-* ldup RT,DS(RA)
-
-Pseudo-code:
-
-    EA <- (RA)
-    RT <- MEM(EA, 8)
-    RA <- (RA) + EXTS(DS || 0b00)
-
-Description:
-
-    Let the effective address (EA) be the register RA.
-    The doubleword in storage addressed by EA is loaded into RT.
-
-    The sum (RA)+ (DS||0b00) is placed into register RA.
 
     If RA=0 or RA=RT, the instruction form is invalid.
 
