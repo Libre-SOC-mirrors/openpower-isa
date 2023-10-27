@@ -2,7 +2,7 @@
 
 <!-- Section 4.6.3 Floating-point store instructions. P 144 - 147 -->
 
-# Store Floating-Point Single with Update Indexed
+# Store Floating-Point Single with Update Shifted Indexed
 
 X-Form
 

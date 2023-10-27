@@ -2,7 +2,7 @@
 
 <!-- Section 4.6.1 Floating-point storage access instructions. P 140 - 143 -->
 
-# Load Floating-Point Single with Post-Update Indexed
+# Load Floating-Point Single with Post-Update Shifted Indexed
 
 X-Form
 
