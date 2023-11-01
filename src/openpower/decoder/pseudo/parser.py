@@ -53,32 +53,32 @@ SUBS_TO_ATTR_EXCEPTIONS = SPECIAL_HELPERS | {'CR'}
 
 def make_le_compare(arg):
     (left, right) = arg
-    return ast.Call(ast.Name("le", ast.Load()), (left, right), [])
+    return ast.Call(ast.Name("le", ast.Load()), [left, right], [])
 
 
 def make_ge_compare(arg):
     (left, right) = arg
-    return ast.Call(ast.Name("ge", ast.Load()), (left, right), [])
+    return ast.Call(ast.Name("ge", ast.Load()), [left, right], [])
 
 
 def make_lt_compare(arg):
     (left, right) = arg
-    return ast.Call(ast.Name("lt", ast.Load()), (left, right), [])
+    return ast.Call(ast.Name("lt", ast.Load()), [left, right], [])
 
 
 def make_gt_compare(arg):
     (left, right) = arg
-    return ast.Call(ast.Name("gt", ast.Load()), (left, right), [])
+    return ast.Call(ast.Name("gt", ast.Load()), [left, right], [])
 
 
 def make_eq_compare(arg):
     (left, right) = arg
-    return ast.Call(ast.Name("eq", ast.Load()), (left, right), [])
+    return ast.Call(ast.Name("eq", ast.Load()), [left, right], [])
 
 
 def make_ne_compare(arg):
     (left, right) = arg
-    return ast.Call(ast.Name("ne", ast.Load()), (left, right), [])
+    return ast.Call(ast.Name("ne", ast.Load()), [left, right], [])
 
 
 binary_ops = {
@@ -329,7 +329,9 @@ class PowerParser:
             fname = p[1].id
             name = ast.Name("self", ast.Load())
             name = ast.Attribute(name, fname, ast.Load())
-            p[0] = ast.Call(name, [], [])
+            p[0] = ast.Expr(ast.Call(name, [], []))
+        elif isinstance(p[1], ast.expr):
+            p[0] = ast.Expr(p[1])
         else:
             p[0] = p[1]
 
@@ -693,6 +695,12 @@ class PowerParser:
                 | NUMBER
                 | HEX
                 | STRING"""
+        # SelectableInt isn't a valid ast.Constant,
+        # but we use it anyway since it produces nicer source (hex constants):
+        # if not isinstance(p[1], (str, int)):
+        #     # SelectableInt isn't a valid ast.Constant
+        #     p[0] = ast.parse(repr(p[1]), mode='eval').body
+        #     return
         p[0] = ast.Constant(p[1])
 
     # '[' [listmaker] ']' |
@@ -984,12 +992,12 @@ class PowerParser:
                 arg = trailer[1][0]
                 args = [arg.value, ast.Str(arg.attr)]
                 name = ast.Name("self", ast.Load())
-                atom = ast.Attribute(name, atom, ast.Load())
+                atom = ast.Attribute(name, atom.id, ast.Load())
                 return ast.Call(atom, args, [])
             # special-case, these functions must NOT be made "self.xxxx"
             if atom.id not in SPECIAL_HELPERS:
                 name = ast.Name("self", ast.Load())
-                atom = ast.Attribute(name, atom, ast.Load())
+                atom = ast.Attribute(name, atom.id, ast.Load())
             return ast.Call(atom, trailer[1], [])
             # if p[1].id == 'print':
             #    p[0] = ast.Printnl(ast.Tuple(p[2][1]), None, None)
