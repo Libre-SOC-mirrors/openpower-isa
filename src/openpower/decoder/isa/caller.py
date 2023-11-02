@@ -573,9 +573,9 @@ def get_cr_out(dec2, name):
     if RC1:
         log("get_cr_out RC1 mode")
         if name == 'CR0':
-            return 0, True # XXX TODO: offset CR0 from SVSTATE SPR
+            return 0, True  # XXX TODO: offset CR0 from SVSTATE SPR
         if name == 'CR1':
-            return 1, True # XXX TODO: offset CR1 from SVSTATE SPR
+            return 1, True  # XXX TODO: offset CR1 from SVSTATE SPR
     # nope - not found.
     log("get_cr_out not found", name)
     return None, False
@@ -1325,7 +1325,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         super().__init__(XLEN=self.namespace["XLEN"], FPSCR=self.fpscr)
 
     def trace(self, out):
-        if self.insnlog is None: return
+        if self.insnlog is None:
+            return
         self.insnlog.write(out)
 
     @property
@@ -1690,10 +1691,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         else:
             SO = self.spr['XER'][XER_bits['SO']]
         log("handle_comparison SO", SO.value,
-                    "overflow", overflow,
-                    "zero", zero.value,
-                    "+ve", positive.value,
-                     "-ve", negative.value)
+            "overflow", overflow,
+            "zero", zero.value,
+            "+ve", positive.value,
+            "-ve", negative.value)
         # alternative overflow checking (setvl mainly at the moment)
         if overflow is not None and overflow == 1:
             SO = SelectableInt(1, 1)
@@ -2295,7 +2296,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # check if a FP Exception occurred. TODO for DD-FFirst, check VLi
         # and raise the exception *after* if VLi=1 but if VLi=0 then
-        # truncate and make the exception "disappear". 
+        # truncate and make the exception "disappear".
         if self.FPSCR.FEX and (self.msr[MSRb.FE0] or self.msr[MSRb.FE1]):
             self.call_trap(0x700, PIb.FP)
             return
@@ -2350,7 +2351,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         is_setvl = ins_name in ('svstep', 'setvl')
         if is_setvl:
             result = SelectableInt(result.vl, 64)
-        #else:
+        # else:
         #    overflow = None  # do not override overflow except in setvl
 
         if rc_reg == "CR1":
