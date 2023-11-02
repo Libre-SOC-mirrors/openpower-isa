@@ -14,7 +14,7 @@ related bugs:
 
 from collections import defaultdict
 from openpower.decoder.selectable_int import SelectableInt
-from openpower.util import log, LogKind
+from openpower.util import log, LogType
 import math
 import enum
 from cached_property import cached_property
@@ -225,7 +225,7 @@ class MemCommon:
             print("%016x: %016x" % ((k*8) & 0xffffffffffffffff, v), s)
         return res
 
-    def log_fancy(self, *, kind=LogKind.Default, name="Memory",
+    def log_fancy(self, *, kind=LogType.Default, name="Memory",
                   log2_line_size=4, log2_column_chunk_size=3, log=log):
         line_size = 1 << log2_line_size
         subline_mask = line_size - 1

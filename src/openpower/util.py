@@ -93,7 +93,7 @@ def log_rand(n, min_val=1):
     return random.randint(min_val, (1 << logrange)-1)
 
 
-class LogKind(Enum):
+class LogType(Enum):
     Default = "default"
     InstrInOuts = "instr_in_outs"
     SkipCase = "skip_case"
@@ -102,18 +102,18 @@ class LogKind(Enum):
 @lru_cache(typed=True)
 def __parse_log_env_var(silencelog_raw):
     if silencelog_raw is None:
-        return {k: False for k in LogKind}
+        return {k: False for k in LogType}
     silencelog = os.environ.decodevalue(silencelog_raw)
     silencelog = silencelog.lower().split(",")
     for i, v in enumerate(silencelog):
         silencelog[i] = v.strip()
-    retval = {k: True for k in LogKind}
+    retval = {k: True for k in LogType}
     if len(silencelog) > 1 and silencelog[-1] == "":
         # allow trailing comma
         silencelog.pop()
     if len(silencelog) == 1:
         if silencelog[0] in ("0", "false"):
-            for k in LogKind:
+            for k in LogType:
                 retval[k] = False
             silencelog.pop()
         if silencelog[0] in ("1", "true", ""):
@@ -124,12 +124,12 @@ def __parse_log_env_var(silencelog_raw):
             v = v[1:]
             silenced = False
         matches = False
-        for k in LogKind:
+        for k in LogType:
             if fnmatchcase(k.value, v):
                 matches = True
                 retval[k] = silenced
-        assert matches, (f"SILENCELOG: {v!r} did not match any known LogKind: "
-                         f"LogKinds: {' '.join(i.value for i in LogKind)}")
+        assert matches, (f"SILENCELOG: {v!r} did not match any known LogType: "
+                         f"LogTypes: {' '.join(i.value for i in LogType)}")
     # for k, v in retval.items():
     #    print(repr(k), "silenced" if v else "active")
     return retval
@@ -138,7 +138,7 @@ def __parse_log_env_var(silencelog_raw):
 __ENCODED_SILENCELOG = os.environ.encodekey("SILENCELOG")
 
 
-def log(*args, kind=LogKind.Default, **kwargs):
+def log(*args, kind=LogType.Default, **kwargs):
     """verbose printing, can be disabled by setting env var "SILENCELOG".
     """
     # look up in os.environ._data since it is a dict and hence won't raise

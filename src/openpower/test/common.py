@@ -10,7 +10,7 @@ import types
 import os
 
 from openpower.decoder.power_enums import XER_bits, CryIn, spr_dict
-from openpower.util import LogKind, log, \
+from openpower.util import LogType, log, \
     fast_reg_to_spr, slow_reg_to_spr  # HACK!
 from openpower.consts import XERRegsEnum, DEFAULT_MSR
 
@@ -144,7 +144,7 @@ class TestAccumulatorBase:
                     # TODO(programmerjake): translate to final test sending
                     # skip signal to unittest. for now, just print the skipped
                     # reason and ignore
-                    log(f"SKIPPED({n}):", str(e), kind=LogKind.SkipCase)
+                    log(f"SKIPPED({n}):", str(e), kind=LogType.SkipCase)
 
     @contextmanager
     def subTest(self, **kwargs):

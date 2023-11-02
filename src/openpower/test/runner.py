@@ -35,7 +35,7 @@ from nmutil.util import wrap
 from openpower.test.wb_get import wb_get
 import openpower.test.wb_get as wbget
 from openpower.test.state import TestState, StateRunner, ExpectedState
-from openpower.util import log, LogKind
+from openpower.util import log, LogType
 
 
 class SimRunner(StateRunner):
@@ -91,7 +91,7 @@ class SimRunner(StateRunner):
             # extra new-line so it's easier to visually separate each
             # instruction in output
             log(f"\n0x{sim.pc.CIA.value:04X}: {ins % (1 << 32):08X} {code}",
-                kind=LogKind.InstrInOuts)
+                kind=LogType.InstrInOuts)
 
             log("sim instr: 0x{:X} pc=0x{:X}".format(ins & 0xffffffff,
                                                      sim.pc.CIA.value))
@@ -114,7 +114,7 @@ class SimRunner(StateRunner):
             state = yield from TestState("sim", sim, dut, code)
             sim_states.append(state)
 
-        log(f"final pc: 0x{sim.pc.CIA.value:X}", kind=LogKind.InstrInOuts)
+        log(f"final pc: 0x{sim.pc.CIA.value:X}", kind=LogType.InstrInOuts)
 
         if self.dut.allow_overlap:
             # get last state, at end of run
@@ -251,7 +251,7 @@ class TestRunnerBase(FHDLTestCase):
                         yield from runner.prepare_for_test(test)
 
                     log("running test: ", test.name, test.subtest_args,
-                        kind=LogKind.InstrInOuts)
+                        kind=LogType.InstrInOuts)
                     program = test.program
 
                     def format_regs(regs):
@@ -269,11 +269,11 @@ class TestRunnerBase(FHDLTestCase):
                             out.append(f"r{i} = 0x{v:X} {values}")
                         return "\n".join(out)
                     log("regs:", format_regs(test.regs),
-                        kind=LogKind.InstrInOuts)
-                    log("sprs", test.sprs, kind=LogKind.InstrInOuts)
-                    log("cr", test.cr, kind=LogKind.InstrInOuts)
+                        kind=LogType.InstrInOuts)
+                    log("sprs", test.sprs, kind=LogType.InstrInOuts)
+                    log("cr", test.cr, kind=LogType.InstrInOuts)
                     log("mem", test.mem)
-                    log("msr", test.msr, kind=LogKind.InstrInOuts)
+                    log("msr", test.msr, kind=LogType.InstrInOuts)
 
                     def format_assembly(assembly):
                         # type: (str) -> str
@@ -286,7 +286,7 @@ class TestRunnerBase(FHDLTestCase):
                                 pc += 4
                         return "\n".join(out)
                     log("assembly:\n" + format_assembly(program.assembly),
-                        kind=LogKind.InstrInOuts)
+                        kind=LogType.InstrInOuts)
                     gen = list(program.generate_instructions())
                     insncode = program.assembly.splitlines()
                     instructions = list(zip(gen, insncode))

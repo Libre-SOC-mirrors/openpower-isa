@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from nmutil.plain_data import plain_data
-from openpower.util import LogKind
+from openpower.util import LogType
 
 RAINBOW_SMILEY = Path(__file__).with_name("rainbow_smiley.jpg").read_bytes()
 
@@ -348,5 +348,5 @@ if __name__ == "__main__":
     mem = Mem()
     for i, b in enumerate(mem_bytes):
         mem.st(0x10000000 + i, b, 1)
-    mem.log_fancy(log=lambda *args, kind=LogKind.Default, **kwargs:
+    mem.log_fancy(log=lambda *args, kind=LogType.Default, **kwargs:
                   print(*args, **kwargs))

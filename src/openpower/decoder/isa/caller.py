@@ -46,7 +46,7 @@ from openpower.decoder.selectable_int import (FieldSelectableInt,
 from openpower.consts import DEFAULT_MSR
 from openpower.fpscr import FPSCRState
 from openpower.xer import XERState
-from openpower.util import LogKind, log
+from openpower.util import LogType, log
 
 LDST_UPDATE_INSNS = ['ldu', 'lwzu', 'lbzu', 'lhzu', 'lhau', 'lfsu', 'lfdu',
                      'stwu', 'stbu', 'sthu', 'stfsu', 'stfdu', 'stdu',
@@ -1250,11 +1250,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                                misaligned_ok=True)
             self.imem = self.mem
             self.mem.initialize(row_bytes=4, initial_mem=initial_insns)
-            self.mem.log_fancy(kind=LogKind.InstrInOuts)
+            self.mem.log_fancy(kind=LogType.InstrInOuts)
         else:
             self.mem = Mem(row_bytes=8, initial_mem=initial_mem,
                            misaligned_ok=True)
-            self.mem.log_fancy(kind=LogKind.InstrInOuts)
+            self.mem.log_fancy(kind=LogType.InstrInOuts)
             self.imem = Mem(row_bytes=4, initial_mem=initial_insns)
         # MMU mode, redirect underlying Mem through RADIX
         if mmu:
@@ -1567,13 +1567,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 self.spr['XER'][XER_bits['OV']] = ov
                 self.spr['XER'][XER_bits['OV32']] = ov32
                 log(f"write OV/OV32 OV={ov} OV32={ov32}",
-                    kind=LogKind.InstrInOuts)
+                    kind=LogType.InstrInOuts)
             else:
                 # TODO: if 32-bit mode, set ca to ca32
                 self.spr['XER'][XER_bits['CA']] = ca
                 self.spr['XER'][XER_bits['CA32']] = ca32
                 log(f"write CA/CA32 CA={ca} CA32={ca32}",
-                    kind=LogKind.InstrInOuts)
+                    kind=LogType.InstrInOuts)
             return
         inv_a = yield self.dec2.e.do.invert_in
         if inv_a:
@@ -1958,7 +1958,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # see http://bugs.libre-riscv.org/show_bug.cgi?id=282
         asmop = yield from self.get_assembly_name()
         log("call", ins_name, asmop,
-            kind=LogKind.InstrInOuts)
+            kind=LogType.InstrInOuts)
 
         # sv.setvl is *not* a loop-function. sigh
         log("is_svp64_mode", self.is_svp64_mode, asmop)
@@ -2149,7 +2149,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.is_svp64_mode and vl == 0:
             self.pc.update(self.namespace, self.is_svp64_mode)
             log("SVP64: VL=0, end of call", self.namespace['CIA'],
-                self.namespace['NIA'], kind=LogKind.InstrInOuts)
+                self.namespace['NIA'], kind=LogType.InstrInOuts)
             return
 
         # for when SVREMAP is active, using pre-arranged schedule.
@@ -2475,13 +2475,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             if name in fregs:
                 reg_val = SelectableInt(self.fpr(base, is_vec, offs, ew_src))
                 log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value),
-                    kind=LogKind.InstrInOuts)
+                    kind=LogType.InstrInOuts)
                 self.trace("r:FPR:%d:%d:%d " % (base, offs, ew_src))
             elif name is not None:
                 reg_val = SelectableInt(self.gpr(base, is_vec, offs, ew_src))
                 self.trace("r:GPR:%d:%d:%d " % (base, offs, ew_src))
                 log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value),
-                    kind=LogKind.InstrInOuts)
+                    kind=LogType.InstrInOuts)
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)
             reg_val = SelectableInt(0, ew_src)
@@ -2574,7 +2574,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if name in info.special_regs:
             log('writing special %s' % name, output, special_sprs)
             log("write reg %s 0x%x" % (name, output.value),
-                kind=LogKind.InstrInOuts)
+                kind=LogType.InstrInOuts)
             if name in special_sprs:
                 self.spr[name] = output
             else:
@@ -2601,7 +2601,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             output = SelectableInt(0, EFFECTIVELY_UNLIMITED)
         log("write reg %s%s 0x%x ew %d" % (reg_prefix, str(regnum),
                                            output.value, ew_dst),
-            kind=LogKind.InstrInOuts)
+            kind=LogType.InstrInOuts)
         # zero-extend tov64 bit begore storing (should use EXT oh well)
         if output.bits > 64:
             output = SelectableInt(output.value, 64)
