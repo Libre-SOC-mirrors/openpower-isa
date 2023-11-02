@@ -1996,6 +1996,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # 2. Call the HDL implementation which invokes trap.
         # 3. Reroute the guest system call to host system call.
         # 4. Force return from the interrupt as if we had guest OS.
+        #    "executing" rfid requires putting 0x4c000024 temporarily
+        #    into the program at the PC. TODO investigate and remove
         if ((asmop in ("sc", "scv")) and
                 (self.syscall is not None) and
                 not syscall_emu_active):
