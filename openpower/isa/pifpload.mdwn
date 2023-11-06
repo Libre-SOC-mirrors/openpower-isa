@@ -91,7 +91,7 @@ Special Registers Altered:
 
 X-Form
 
-* lfduxp FRT,RA,RB
+* lfdupx FRT,RA,RB
 
 Pseudo-code:
 

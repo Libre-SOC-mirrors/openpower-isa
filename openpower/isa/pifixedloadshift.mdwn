@@ -12,7 +12,7 @@
 
 X-Form
 
-* lbzupx RT,RA,RB
+* lbzuspx RT,RA,RB
 
 Pseudo-code:
 
@@ -39,7 +39,7 @@ Special Registers Altered:
 
 X-Form
 
-* lhzupx RT,RA,RB
+* lhzuspx RT,RA,RB
 
 Pseudo-code:
 
@@ -65,7 +65,7 @@ Special Registers Altered:
 
 X-Form
 
-* lhaupx RT,RA,RB
+* lhauspx RT,RA,RB
 
 Pseudo-code:
 
@@ -92,7 +92,7 @@ Special Registers Altered:
 
 X-Form
 
-* lwzupx RT,RA,RB
+* lwzuspx RT,RA,RB
 
 Pseudo-code:
 
@@ -119,7 +119,7 @@ Special Registers Altered:
 
 X-Form
 
-* lwaupx RT,RA,RB
+* lwauspx RT,RA,RB
 
 Pseudo-code:
 
@@ -146,7 +146,7 @@ Special Registers Altered:
 
 X-Form
 
-* ldupx RT,RA,RB
+* lduspx RT,RA,RB
 
 Pseudo-code:
 

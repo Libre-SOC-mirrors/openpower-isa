@@ -6,7 +6,7 @@
 
 X-Form
 
-* lfsupx FRT,RA,RB,SH
+* lfsupsx FRT,RA,RB,SH
 
 Pseudo-code:
 
@@ -36,7 +36,7 @@ Special Registers Altered:
 
 X-Form
 
-* lfduxp FRT,RA,RB
+* lfdupsx FRT,RA,RB
 
 Pseudo-code:
 
