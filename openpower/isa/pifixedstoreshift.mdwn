@@ -7,7 +7,7 @@
 
 X-Form
 
-* stbuspx RS,RA,RB
+* stbupsx RS,RA,RB
 
 Pseudo-code:
 
@@ -34,7 +34,7 @@ Special Registers Altered:
 
 X-Form
 
-* sthuspx RS,RA,RB
+* sthupsx RS,RA,RB
 
 Pseudo-code:
 
@@ -61,7 +61,7 @@ Special Registers Altered:
 
 X-Form
 
-* stwuspx RS,RA,RB
+* stwupsx RS,RA,RB
 
 Pseudo-code:
 
@@ -88,7 +88,7 @@ Special Registers Altered:
 
 X-Form
 
-* stduspx RS,RA,RB
+* stdupsx RS,RA,RB
 
 Pseudo-code:
 
