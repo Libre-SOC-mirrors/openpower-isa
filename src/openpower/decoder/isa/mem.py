@@ -199,11 +199,11 @@ class MemCommon:
 
     def __call__(self, addr, sz):
         val = self.ld(addr.value, sz, swap=False)
-        log("memread", addr, sz, val)
+        log("memread", addr, sz, hex(val), kind=LogType.InstrInOuts)
         return SelectableInt(val, sz*8)
 
     def memassign(self, addr, sz, val):
-        log("memassign", addr, sz, val)
+        log("memassign", addr, sz, val, kind=LogType.InstrInOuts)
         self.st(addr.value, val.value, sz, swap=False)
 
     def dump(self, printout=True, asciidump=False):
