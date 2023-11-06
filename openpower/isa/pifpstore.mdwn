@@ -6,7 +6,7 @@
 
 D-Form
 
-* stfsu FRS,D(RA)
+* stfsup FRS,D(RA)
 
 Pseudo-code:
 
@@ -34,7 +34,7 @@ Special Registers Altered:
 
 X-Form
 
-* stfsux FRS,RA,RB
+* stfsupx FRS,RA,RB
 
 Pseudo-code:
 
@@ -62,7 +62,7 @@ Special Registers Altered:
 
 D-Form
 
-* stfdu FRS,D(RA)
+* stfdup FRS,D(RA)
 
 Pseudo-code:
 
@@ -89,7 +89,7 @@ Special Registers Altered:
 
 X-Form
 
-* stfdux FRS,RA,RB
+* stfdupx FRS,RA,RB
 
 Pseudo-code:
 
