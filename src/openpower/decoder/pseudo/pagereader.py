@@ -359,6 +359,9 @@ class ISA:
         op = copy(d)
         op['regs'] = regs
         op['opcode'] = opcode
+        if opcode in self.instr:
+            raise IOError("Duplicate instruction: %s\nin both %s and %s" % (
+                opcode, self.instr[opcode].page, op['page']))
         self.instr[opcode] = Ops(**op)
 
         # create list of instructions by form
