@@ -2256,9 +2256,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         results = info.func(self, *inputs)
         output_names = create_args(info.write_regs)
         outs = {}
+        # record .ok before anything after the pseudo-code can modify it
+        outs_ok = {}
         for out, n in zip(results or [], output_names):
             outs[n] = out
+            outs_ok[n] = True
+            if isinstance(out, SelectableInt):
+                outs_ok[n] = out.ok
         log("results", outs)
+        log("results ok", outs_ok)
 
         # "inject" decorator takes namespace from function locals: we need to
         # overwrite NIA being overwritten (sigh)
@@ -2327,6 +2333,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             chk = rc_en or is_cr
             ffirst_hit = (yield from self.check_ffirst(info, chk, srcstep))
 
+        # any modified return results?
+        yield from self.do_outregs(
+            info, outs, carry_en, ffirst_hit, ew_dst, outs_ok)
+
         # check if a FP Exception occurred. TODO for DD-FFirst, check VLi
         # and raise the exception *after* if VLi=1 but if VLi=0 then
         # truncate and make the exception "disappear".
@@ -2334,9 +2344,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.call_trap(0x700, PIb.FP)
             return
 
-        # any modified return results?
-        yield from self.do_outregs_nia(asmop, ins_name, info, outs,
-                                       carry_en, rc_en, ffirst_hit, ew_dst)
+        yield from self.do_nia(asmop, ins_name, rc_en, ffirst_hit)
 
     def check_ffirst(self, info, rc_en, srcstep):
         """fail-first mode: checks a bit of Rc Vector, truncates VL
@@ -2406,19 +2414,23 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             log("explicit rc0", cr0)
             self.crl[regnum].eq(cr0)
 
-    def do_outregs_nia(self, asmop, ins_name, info, outs,
-                       ca_en, rc_en, ffirst_hit, ew_dst):
+    def do_outregs(self, info, outs, ca_en, ffirst_hit, ew_dst, outs_ok):
         ffirst_hit, vli = ffirst_hit
         # write out any regs for this instruction, but only if fail-first is ok
         # XXX TODO: allow CR-vector to be written out even if ffirst fails
         if not ffirst_hit or vli:
             for name, output in outs.items():
+                if not outs_ok[name]:
+                    log("skipping writing output with .ok=False", name, output)
+                    continue
                 yield from self.check_write(info, name, output, ca_en, ew_dst)
         # restore the CR value on non-VLI failfirst (from sv.cmp and others
         # which write directly to CR in the pseudocode (gah, what a mess)
         # if ffirst_hit and not vli:
         #    self.cr.value = self.cr_backup
 
+    def do_nia(self, asmop, ins_name, rc_en, ffirst_hit):
+        ffirst_hit, vli = ffirst_hit
         if ffirst_hit:
             self.svp64_reset_loop()
             nia_update = True
