@@ -53,9 +53,9 @@ class FMinMaxCases(TestAccumulatorBase):
     # _FILTER is for debugging
     _FILTER = None
     # _FILTER = {
-    #     'RA': '0x0', 'RB': '0x0',
+    #     'RA': '0x0', 'RB': '0xfff0000000000001',
     #     'FMM': 'FMinMaxMode.fminnum08', 'VE': False, 'initial_VXSNAN': False,
-    #     'expected': '0x0', 'any_snan': False, 'CR1': 0,
+    #     'expected': '0xfff8000000000001', 'any_snan': True, 'CR1': 10,
     # }
 
     def reference_fminmax(self, FMM, RA, RB):

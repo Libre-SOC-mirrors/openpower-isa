@@ -1564,6 +1564,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         return ca64, ca32, ov64, ov32
 
     def handle_carry_(self, inputs, output, ca, ca32, inp_ca_ov):
+        if ca is not None and ca32 is not None:
+            return
         op = yield self.dec2.e.do.insn_type
         if op == MicrOp.OP_ADD.value and ca is None and ca32 is None:
             retval = yield from self.get_kludged_op_add_ca_ov(
@@ -2323,8 +2325,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # XXX TODO: now that CR0 is supported, sort out svstep's pseudocode
         # to write directly to CR0 instead of in ISACaller. hooyahh.
         if rc_en and ins_name not in ['svstep']:
+            if outs_ok.get('FPSCR', False):
+                FPSCR = outs['FPSCR']
+            else:
+                FPSCR = self.FPSCR
             yield from self.do_rc_ov(
-                ins_name, results[0], overflow, cr0, cr1, output_names)
+                ins_name, results[0], overflow, cr0, cr1, FPSCR)
 
         # check failfirst
         ffirst_hit = False, False
@@ -2332,6 +2338,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             sv_mode = yield self.dec2.rm_dec.sv_mode
             is_cr = sv_mode == SVMode.CROP.value
             chk = rc_en or is_cr
+            if outs_ok.get('CR', False):
+                # early write so check_ffirst can see value
+                self.namespace['CR'].eq(outs['CR'])
             ffirst_hit = (yield from self.check_ffirst(info, chk, srcstep))
 
         # any modified return results?
@@ -2382,7 +2391,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         yield Settle()  # let decoder update
         return True, vli_
 
-    def do_rc_ov(self, ins_name, result, overflow, cr0, cr1, output_names):
+    def do_rc_ov(self, ins_name, result, overflow, cr0, cr1, FPSCR):
         cr_out = yield self.dec2.op.cr_out
         if cr_out == CROutSel.CR1.value:
             rc_reg = "CR1"
@@ -2398,10 +2407,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         if rc_reg == "CR1":
             if cr1 is None:
-                cr1 = int(self.FPSCR.FX) << 3
-                cr1 |= int(self.FPSCR.FEX) << 2
-                cr1 |= int(self.FPSCR.VX) << 1
-                cr1 |= int(self.FPSCR.OX)
+                cr1 = int(FPSCR.FX) << 3
+                cr1 |= int(FPSCR.FEX) << 2
+                cr1 |= int(FPSCR.VX) << 1
+                cr1 |= int(FPSCR.OX)
                 log("default fp cr1", cr1)
             else:
                 log("explicit cr1", cr1)
@@ -2437,8 +2446,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             nia_update = True
         else:
             # check advancement of src/dst/sub-steps and if PC needs updating
-            nia_update = (yield from self.check_step_increment(rc_en,
-                                                               asmop, ins_name))
+            nia_update = (yield from self.check_step_increment(
+                rc_en, asmop, ins_name))
         if nia_update:
             self.update_pc_next()
 
@@ -2883,7 +2892,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # not an SVP64 branch, so fix PC (NIA==CIA) for next loop
         # (by default, NIA is CIA+4 if v3.0B or CIA+8 if SVP64)
         # this way we keep repeating the same instruction (with new steps)
-        self.pc.NIA.value = self.pc.CIA.value
+        self.pc.NIA.eq(self.pc.CIA)
         self.namespace['NIA'] = self.pc.NIA
         log("end of sub-pc call", self.namespace['CIA'], self.namespace['NIA'])
         return False  # DO NOT allow PC update whilst Sub-PC loop running
