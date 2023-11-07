@@ -1372,7 +1372,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if self.is_svp64_mode:
             self.spr['SVSRR0'] = self.namespace['SVSTATE'].value
         self.trap_nia = SelectableInt(trap_addr | (kaivb & ~0x1fff), 64)
-        self.spr['SRR1'][trap_bit] = 1  # change *copy* of MSR in SRR1
+        if trap_bit is not None:
+            self.spr['SRR1'][trap_bit] = 1  # change *copy* of MSR in SRR1
 
         # set exception bits.  TODO: this should, based on the address
         # in figure 66 p1065 V3.0B and the table figure 65 p1063 set these
