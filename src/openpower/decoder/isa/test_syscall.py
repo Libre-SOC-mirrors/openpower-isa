@@ -42,7 +42,8 @@ class SyscallTestCase(FHDLTestCase):
         SRR1[0:33] = MSR[0:33]
         SRR1[37:42] = MSR[37:42]
         SRR1[48:64] = MSR[48:64]
-        SRR1[PIb.TRAP] = 1
+        # PowerISA v3.1B Book III 7.5.14 specifies TRAP is set to zero
+        SRR1[PIb.TRAP] = 0
 
         # rfid instruction
         MSR[51] = MSR[3] & SRR1[51] | ~MSR[3] & MSR[51]

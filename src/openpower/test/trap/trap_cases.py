@@ -2,7 +2,7 @@ from openpower.simulator.program import Program
 from openpower.endian import bigendian
 from openpower.consts import MSR
 from openpower.test.state import ExpectedState
-
+from openpower.decoder.selectable_int import SelectableInt
 from openpower.test.common import TestAccumulatorBase
 import random
 
@@ -62,7 +62,7 @@ class TrapTestCase(TestAccumulatorBase):
         e = ExpectedState(pc=0xc00)
         e.intregs[1] = 1
         e.sprs['SRR0'] = 4                  # PC to return to: CIA+4
-        e.sprs['SRR1'] = 0x9000000000022903  # MSR to restore after sc return
+        e.sprs['SRR1'] = 0x9000000000002903  # MSR to restore after sc return
         e.msr = 0x9000000000000001          # MSR changed to this by sc/trap
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
@@ -86,9 +86,12 @@ class TrapTestCase(TestAccumulatorBase):
         e.intregs[1] = 1 # should be unaltered
         e.intregs[0] = 2 # due to instruction at 0xc0c
         e.sprs['SRR0'] = 0xc0c              # PC to return to: CIA+4 (0xc0c)
-        e.sprs['SRR1'] = 0xffff_ffff_ffff_ffff # MSR after rfid return
-        e.msr = 0xffffffffffffffff          # MSR is restored (by rfid)
-        e.pc = 0xc10                        # should stop after addi 0,0,2
+        SRR1 = SelectableInt(-1, 64)
+        SRR1[33:37] = 0 # sc clears bits 33:36
+        SRR1[42:48] = 0 # sc clears bits 42:47
+        e.sprs['SRR1'] = int(SRR1)         # MSR after rfid return
+        e.msr = 0xffff_ffff_ffff_ffff      # MSR is restored (by rfid)
+        e.pc = 0xc10                       # should stop after addi 0,0,2
         self.add_case(Program(lst, bigendian),
                       initial_regs, initial_sprs,
                       initial_msr=0xffff_ffff_ffff_ffff,
