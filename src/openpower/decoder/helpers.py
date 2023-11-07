@@ -10,6 +10,9 @@ from openpower.decoder.selectable_int import selectltu as ltu
 from openpower.decoder.selectable_int import selectgtu as gtu
 from openpower.decoder.selectable_int import check_extsign
 from openpower.fpscr import FPSCRState
+from openpower.xer import XERState
+from openpower.decoder.isa.svshape import SVSHAPE
+from openpower.decoder.isa.svstate import SVP64State
 from openpower.decoder.fp_working_format import (
     BFPState, SelectableMSB0Fraction)
 
@@ -87,6 +90,14 @@ def copy_assign_rhs(inp):
     """
     if isinstance(inp, (str, int)):
         return inp
+    if isinstance(inp, FPSCRState):
+        return FPSCRState(inp)
+    if isinstance(inp, XERState):
+        return XERState(inp)
+    if isinstance(inp, SVSHAPE):
+        return SVSHAPE(inp)
+    if isinstance(inp, SVP64State):
+        return SVP64State(inp)
     if isinstance(inp, (SelectableInt, FieldSelectableInt)):
         return SelectableInt(inp)
     if isinstance(inp, BFPState):
