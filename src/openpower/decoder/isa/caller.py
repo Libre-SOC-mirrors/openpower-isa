@@ -24,7 +24,7 @@ import openpower.syscalls
 from openpower.consts import (MSRb, PIb,  # big-endian (PowerISA versions)
                               SVP64CROffs, SVP64MODEb)
 from openpower.decoder.helpers import (ISACallerHelper, ISAFPHelpers, exts,
-                                       gtu, undefined)
+                                       gtu, undefined, copy_assign_rhs)
 from openpower.decoder.isa.mem import Mem, MemMMap, MemException
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.decoder.isa.svshape import SVSHAPE
@@ -2117,9 +2117,16 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         yield from self.prep_namespace(ins_name, info.form, info.op_fields,
                                        xlen)
 
+        # dict retains order
+        inputs = dict.fromkeys(create_full_args(
+            read_regs=info.read_regs, special_regs=info.special_regs,
+            uninit_regs=info.uninit_regs, write_regs=info.write_regs))
+
         # preserve order of register names
-        input_names = create_args(list(info.read_regs) +
-                                  list(info.uninit_regs))
+        write_without_special_regs = OrderedSet(info.write_regs)
+        write_without_special_regs -= OrderedSet(info.special_regs)
+        input_names = create_args([
+            *info.read_regs, *info.uninit_regs, *write_without_special_regs])
         log("input names", input_names)
 
         # get SVP64 entry for the current instruction
@@ -2181,11 +2188,21 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("remap active", bin(remap_active))
 
         # main input registers (RT, RA ...)
-        inputs = []
         for name in input_names:
-            regval = (yield from self.get_input(name, ew_src))
-            log("regval name", name, regval)
-            inputs.append(regval)
+            if name == "overflow":
+                inputs[name] = SelectableInt(0, 1)
+            elif name == "FPSCR":
+                inputs[name] = self.FPSCR
+            elif name in ("CA", "CA32", "OV", "OV32"):
+                inputs[name] = self.spr['XER'][XER_bits[name]]
+            elif name in "CR0":
+                inputs[name] = self.crl[0]
+            elif name in spr_byname:
+                inputs[name] = self.spr[name]
+            else:
+                regval = (yield from self.get_input(name, ew_src))
+                log("regval name", name, regval)
+                inputs[name] = regval
 
         # arrrrgh, awful hack, to get _RT into namespace
         if ins_name in ['setvl', 'svstep']:
@@ -2206,9 +2223,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # "special" registers
         for special in info.special_regs:
             if special in special_sprs:
-                inputs.append(self.spr[special])
+                inputs[special] = self.spr[special]
             else:
-                inputs.append(self.namespace[special])
+                inputs[special] = self.namespace[special]
 
         # clear trap (trap) NIA
         self.trap_nia = None
@@ -2224,8 +2241,18 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         inp_ca_ov = (self.spr['XER'][XER_bits['CA']].value,
                      self.spr['XER'][XER_bits['OV']].value)
 
+        for k, v in inputs.items():
+            if v is None:
+                v = SelectableInt(0, self.XLEN)
+            # prevent pseudo-code from modifying input registers
+            v = copy_assign_rhs(v)
+            if isinstance(v, SelectableInt):
+                v.ok = False
+            inputs[k] = v
+
         # execute actual instruction here (finally)
         log("inputs", inputs)
+        inputs = list(inputs.values())
         results = info.func(self, *inputs)
         output_names = create_args(info.write_regs)
         outs = {}

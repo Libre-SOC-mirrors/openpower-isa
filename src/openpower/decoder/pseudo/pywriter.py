@@ -8,7 +8,7 @@ from openpower.decoder.pseudo.pagereader import ISA, get_isa_dir
 from openpower.decoder.power_pseudo import (convert_to_python,
                                             check_in_gitignore)
 from openpower.decoder.orderedset import OrderedSet
-from openpower.decoder.isa.caller import create_args
+from openpower.decoder.isa.caller import create_args, create_full_args
 
 
 def get_isasrc_dir():
@@ -117,9 +117,11 @@ class PyISAWriter(ISA):
                                                   filename=filename)
                 rused['uninit_regs'] |= d.extra_uninit_regs
                 # create list of arguments to call
-                regs = list(rused['read_regs']) + list(rused['uninit_regs'])
-                regs += list(rused['special_regs'])
-                args = ', '.join(create_args(regs, 'self'))
+                args = ', '.join(create_full_args(
+                    read_regs=rused['read_regs'],
+                    special_regs=rused['special_regs'],
+                    uninit_regs=rused['uninit_regs'],
+                    write_regs=rused['write_regs'], extra='self'))
                 # create list of arguments to return
                 retargs = ', '.join(create_args(rused['write_regs']))
                 # write out function.  pre-pend "op_" because some instrs are
