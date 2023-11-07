@@ -229,9 +229,19 @@ class SelectableInt:
     FieldSelectableInt can then operate on partial bits, and because there
     is a bit width associated with SelectableInt, slices operate correctly
     including negative start/end points.
+
+    value: int
+        the bits contained by `self`
+    bits: int
+        the number of bits contained by `self`.
+    ok: bool
+        a flag to detect if outputs have been written by pseudo-code
+
+        instruction inputs have `ok` set to `False`, all changed or new
+        SelectableInt instances set `ok` to `True`.
     """
 
-    def __init__(self, value, bits=None):
+    def __init__(self, value, bits=None, *, ok=True):
         if isinstance(value, FieldSelectableInt):
             value = value.get_range()
         if isinstance(value, SelectableInt):
@@ -241,6 +251,7 @@ class SelectableInt:
                     raise ValueError(value)
             bits = value.bits
             value = value.value
+            # intentionally don't copy ok
         else:
             if not isinstance(value, int):
                 raise ValueError(value)
@@ -250,10 +261,12 @@ class SelectableInt:
         self.value = value & mask
         self.bits = bits
         self.overflow = (value & ~mask) != 0
+        self.ok = ok
 
     def eq(self, b):
         self.value = b.value
         self.bits = b.bits
+        self.ok = True
 
     def to_signed_int(self):
         log ("to signed?", self.value & (1<<(self.bits-1)), self.value)
@@ -395,6 +408,7 @@ class SelectableInt:
             return selectconcat(*bits)
 
     def __setitem__(self, key, value):
+        self.ok = True
         if isinstance(key, SelectableInt):
             key = key.value
         if isinstance(key, int):
@@ -487,8 +501,10 @@ class SelectableInt:
         return self.value != 0
 
     def __repr__(self):
-        value = f"value={hex(self.value)}, bits={self.bits}"
-        return f"{self.__class__.__name__}({value})"
+        value = "value=%#x, bits=%d" % (self.value, self.bits)
+        if not self.ok:
+            value += ", ok=False"
+        return "%s(%s)" % (self.__class__.__name__, value)
 
     def __len__(self):
         return self.bits
