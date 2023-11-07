@@ -144,6 +144,12 @@ def create_args(reglist, extra=None):
     return retval
 
 
+def create_full_args(*, read_regs, special_regs, uninit_regs, write_regs,
+                     extra=None):
+    return create_args([
+        *read_regs, *uninit_regs, *write_regs, *special_regs], extra=extra)
+
+
 class GPR(dict):
     def __init__(self, decoder, isacaller, svstate, regfile):
         dict.__init__(self)
