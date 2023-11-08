@@ -1,11 +1,11 @@
 #include<stdio.h>
-#include<limits.h>
-int m2(int * const restrict a, int n) 
+
+int m2(int *a, int n) 
 { 
 	int m, nm; 
   	int i; 
 
- 	m = INT_MIN; 
+ 	m = 0; 
     	nm = -1; 
     	i=0; 
 	while (i<n) { 
