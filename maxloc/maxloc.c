@@ -9,7 +9,10 @@ int m2(int *a, int n)
      nm = -1;
      i=0;
      while (i<n) {
-          while (i<n && a[i]<=m) i++;
+          while (i<n && a[i]<=m) {
+              printf("%d idx %d <= m %d\n", i, a[i], m);
+              i++;
+          }
           if (a[i] > m) { 
                 m = a[i]; 
                 nm = i; 
