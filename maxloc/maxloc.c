@@ -1,6 +1,5 @@
 #include<stdio.h>
 #include<limits.h>
-//#include<cornio.h>
 int m2(int * const restrict a, int n) 
 { 
 	int m, nm; 
