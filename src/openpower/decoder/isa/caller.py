@@ -1357,6 +1357,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         TRAP function is callable from inside the pseudocode itself,
         hence the default arguments.  when calling from inside ISACaller
         it is best to use call_trap()
+
+        trap_addr: int | SelectableInt
+            the address to go to (before any modifications from `KAIVB`)
+        trap_bit: int | None
+            the bit in `SRR1` to set, `None` means don't set any bits.
         """
         if isinstance(trap_addr, SelectableInt):
             trap_addr = trap_addr.value
