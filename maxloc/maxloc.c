@@ -1,23 +1,22 @@
-#include<stdio.h>
+#include <stdio.h>
 
 int m2(int *a, int n)
 {
-     int m, nm;
-     int i;
+     int m = 0;
+     int nm = -1;
+     int i = 0;
 
-     m = 0;
-     nm = -1;
-     i=0;
      while (i<n) {
           while (i<n && a[i]<=m) {
               printf("%d idx %d <= m %d\n", i, a[i], m);
               i++;
           }
-          if (a[i] > m) { 
-                m = a[i]; 
-                nm = i; 
-          } 
-          i++; 
+          while  (i < n && a[i] > m) {
+                printf("%d idx %d > m %d\n", i, a[i], m);
+                m = a[i];
+                nm = i;
+                i++;
+          }
      }
          return nm;
 }
