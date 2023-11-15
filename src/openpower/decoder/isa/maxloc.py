@@ -1,6 +1,6 @@
 def m2(a):
     m = 0;
-    nm = -1;
+    nm = 0;
     i = 0;
     n = len(a)
 
