@@ -190,10 +190,10 @@ class TestCase:
     __test__ = False  # pytest should ignore this class
 
     def __init__(self, program, name, regs=None, sprs=None, cr=0, mem=None,
-                 msr=0,
+                 msr=None,
                  do_sim=True,
                  extra_break_addr=None,
-                 svstate=0,
+                 svstate=None,
                  expected=None,
                  stop_at_pc=None,
                  test_file=None,
