@@ -18,17 +18,18 @@ def m2(a):
 # /*Testbench*/
 
 if __name__ == '__main__':
-     arr = [5,2,8,1,3,7,9,4]
-     print("search list", arr)
-     result = m2(arr)
-     print("Index of the maximum value in an array is: %d" % result)
+    arr = [5,2,8,1,3,7,9,4]
+    print("search list", arr)
+    result = m2(arr)
+    print("Index of the maximum value in an array is: %d" % result)
 
-     arr = [5,2,8,9,9,7,9,4]
-     print("search list", arr)
-     result = m2(arr)
-     print("Index of the maximum value in an array is: %d" % result)
 
-     arr = [0,0,0,0,0,0,0,0]
-     print("search list", arr)
-     result = m2(arr)
-     print("Index of the maximum value in an array is: %d" % result)
+    arr = [5,2,8,9,9,7,9,4]
+    print("search list", arr)
+    result = m2(arr)
+    print("Index of the maximum value in an array is: %d" % result)
+
+    arr = [0,0,0,0,0,0,0,0]
+    print("search list", arr)
+    result = m2(arr)
+    print("Index of the maximum value in an array is: %d" % result)
