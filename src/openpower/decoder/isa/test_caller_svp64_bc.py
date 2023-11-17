@@ -307,6 +307,39 @@ class DecoderTestCase(FHDLTestCase):
             self.assertEqual(CR0, SelectableInt(2, 4))
             self.assertEqual(CR1, SelectableInt(4, 4))
 
+    def test_sv_branch_vertical_first(self):
+        """this is a branch-vertical-first-loop demo which shows an early
+        branch from vertical-first loop based on the value of CR field bit.
+        """
+        maxvl = 2
+        lst = SVP64Asm(
+            [
+                "setvl 0, 0, %d, 1, 1, 1" % maxvl, # VL = MAXVL = 2, vf=1
+                "sv.cmpi *cr0, 1, *10, 0x10", # compare reg val with immediate
+                "sv.bc 0, *2, 0x10", # jmp if CTR!=0 AND reg not equal to imm
+                "svstep. 27, 1, 0",
+                "bc 4, 3, -0x14", # CR_BI=0, jump to start of loop (sv.cmpi)
+                "or 0, 0, 0", # jump to here if terminate VF loop early
+            ]
+        )
+        lst = list(lst)
+
+        gprs = [0] * 32
+
+        # Two registers filled, but only the first one matters
+        gprs[10] = 0x20
+        gprs[11] = 0x10
+
+        sprs = {'CTR': maxvl}
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program,
+                                       initial_sprs=sprs,
+                                       initial_regs=gprs)
+            sim.gpr.dump()
+            sim.spr.dump()
+            self.assertEqual(sim.spr('CTR'), SelectableInt(1, 64))
+
     def run_tst_program(self, prog, initial_regs=None,
                         svstate=None,
                         initial_sprs=None):
