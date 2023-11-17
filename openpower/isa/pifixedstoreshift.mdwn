@@ -94,18 +94,19 @@ Special Registers Altered:
 
 Z23-Form
 
-* stdupsx RS,RA,RB
+* stdupsx RS,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB)<<(SH+1)
     ea <- (RA)
     MEM(ea, 8) <- (RS)
     RA <- EA
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ (RB).
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and the contents of register RA.
 
     (RS) is stored into the doubleword in storage addressed by RA.
 
