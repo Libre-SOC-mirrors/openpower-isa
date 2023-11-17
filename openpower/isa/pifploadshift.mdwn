@@ -1,6 +1,5 @@
-<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
-
-<!-- Section 4.6.1 Floating-point storage access instructions. P 140 - 143 -->
+<!-- https://bugs.libre-soc.org/show_bug.cgi?id=1055 -->
+<!-- https://libre-soc.org/openpower/sv/rfc/ls004/ -->
 
 # Load Floating-Point Single with Post-Update Shifted Indexed
 

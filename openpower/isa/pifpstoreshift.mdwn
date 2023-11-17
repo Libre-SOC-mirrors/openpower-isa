@@ -1,6 +1,5 @@
-<!-- X Instructions here described in PowerISA Version 3.0 B Book 1 -->
-
-<!-- Section 4.6.3 Floating-point store instructions. P 144 - 147 -->
+<!-- https://bugs.libre-soc.org/show_bug.cgi?id=1055 -->
+<!-- https://libre-soc.org/openpower/sv/rfc/ls004/ -->
 
 # Store Floating-Point Single with Update Shifted Indexed
 

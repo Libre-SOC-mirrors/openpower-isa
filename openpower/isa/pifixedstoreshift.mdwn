@@ -3,6 +3,9 @@
 <!-- This defines instructions that store from a register to RAM -->
 <!-- Effective Address is always RA, and the usual EA is stored late in RA -->
 
+<!-- https://bugs.libre-soc.org/show_bug.cgi?id=1055 -->
+<!-- https://libre-soc.org/openpower/sv/rfc/ls004/ -->
+
 # Store Byte with Post-Update Indexed
 
 X-Form

@@ -4,7 +4,10 @@
 <!-- Effective Address is always RA, and the usual EA is stored late in RA -->
 
 <!-- Note that these pages also define equivalent store instructions, -->
-<!-- these are described in pifixedstore.mdwn -->
+<!-- these are described in pifixedstoreshift.mdwn -->
+<!-- https://bugs.libre-soc.org/show_bug.cgi?id=1055 -->
+<!-- https://libre-soc.org/openpower/sv/rfc/ls004/ -->
+
 
 
 
