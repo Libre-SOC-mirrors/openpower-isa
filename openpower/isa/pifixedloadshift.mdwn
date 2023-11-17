@@ -155,17 +155,18 @@ Special Registers Altered:
 
 X-Form
 
-* ldupsx RT,RA,RB
+* ldupsx RT,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA)
+    EA <- (RA)<<(SH+1)
     RT <- MEM(EA, 8)
     RA <- (RA) + (RB)
 
 Description:
 
-    Let the effective address (EA) be the register RA.
+    Let the effective address (EA) be the contents of
+    register RA shifted by (SH+1).
 
     The doubleword in storage addressed by EA is loaded into RT.
 
