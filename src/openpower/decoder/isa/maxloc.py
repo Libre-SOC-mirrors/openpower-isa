@@ -27,3 +27,8 @@ if __name__ == '__main__':
      print("search list", arr)
      result = m2(arr)
      print("Index of the maximum value in an array is: %d" % result)
+
+     arr = [0,0,0,0,0,0,0,0]
+     print("search list", arr)
+     result = m2(arr)
+     print("Index of the maximum value in an array is: %d" % result)
