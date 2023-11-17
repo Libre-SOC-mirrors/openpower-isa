@@ -13,7 +13,7 @@
 
 # Load Byte and Zero with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * lbzupsx RT,RA,RB,SH
 
@@ -41,7 +41,7 @@ Special Registers Altered:
 
 # Load Halfword and Zero with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * lhzupsx RT,RA,RB
 
@@ -67,7 +67,7 @@ Special Registers Altered:
 
 # Load Halfword Algebraic with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * lhaupsx RT,RA,RB
 
@@ -94,7 +94,7 @@ Special Registers Altered:
 
 # Load Word and Zero with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * lwzupsx RT,RA,RB
 
@@ -121,7 +121,7 @@ Special Registers Altered:
 
 # Load Word Algebraic with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * lwaupsx RT,RA,RB
 
@@ -148,7 +148,7 @@ Special Registers Altered:
 
 # Load Doubleword with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * ldupsx RT,RA,RB
 

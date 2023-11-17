@@ -8,7 +8,7 @@
 
 # Store Byte with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * stbupsx RS,RA,RB
 
@@ -35,7 +35,7 @@ Special Registers Altered:
 
 # Store Halfword with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * sthupsx RS,RA,RB
 
@@ -62,7 +62,7 @@ Special Registers Altered:
 
 # Store Word with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * stwupsx RS,RA,RB
 
@@ -89,7 +89,7 @@ Special Registers Altered:
 
 # Store Doubleword with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * stdupsx RS,RA,RB
 

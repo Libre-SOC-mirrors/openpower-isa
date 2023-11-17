@@ -3,7 +3,7 @@
 
 # Load Floating-Point Single with Post-Update Shifted Indexed
 
-X-Form
+Z23-Form
 
 * lfsupsx FRT,RA,RB,SH
 
@@ -33,7 +33,7 @@ Special Registers Altered:
 
 # Load Floating-Point Double with Post-Update Indexed
 
-X-Form
+Z23-Form
 
 * lfdupsx FRT,RA,RB,SH
 
