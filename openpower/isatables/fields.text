@@ -569,7 +569,7 @@
     FRS (6:10)
          Field used to specify an FPR to be used as a
          source.
-         Formats: D, X, DX
+         Formats: D, X, DX, Z23
     FRSp (6:10)
          Field used to specify an even/odd pair of FPRs to
          be concatenated and used as a source.
@@ -577,7 +577,7 @@
     FRT (6:10)
          Field used to specify an FPR to be used as a tar-
          get.
-         Formats: A, D, MM, X, Z22, Z23, DCT
+         Formats: A, D, MM, X, Z22, Z23, DCT, Z23
     FRTp (6:10)
          Field used to specify an even/odd pair of FPRs to
          be concatenated and used as a target.
@@ -813,7 +813,7 @@
     RSp (6:10)
         Field used to specify an even/odd pair of GPRs to
         be concatenated and used as a source.
-        Formats: DS, X
+        Formats: DS, X, Z23
     RT (6:10)
         Field used to specify a GPR to be used as a target.
         Formats: A, BM2, D, DQE, DS, DX, MM, VA, VA2, VX, X, XFX, XO, XX2, SVL, TLI, Z23
