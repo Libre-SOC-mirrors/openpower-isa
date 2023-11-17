@@ -290,6 +290,9 @@
     | PO   |  FRTp|    TE    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRT |   FRA    |   FRB |RMC|   XO |Rc |
     | PO   |  RT  |   RA     |   RB  |SH |   XO |Rc |
+    | PO   |  RS  |   RA     |   RB  |SH |   XO |Rc |
+    | PO   |  FRT |   RA     |   RB  |SH |   XO |Rc |
+    | PO   |  FRS |   RA     |   RB  |SH |   XO |Rc |
     | PO   |  RT  |   RA     |   RB  |CY |   XO |Rc |
     | PO   |  FRTp|   FRA    |  FRBp |RMC|   XO |Rc |
     | PO   |  FRTp|  FRAp    |  FRBp |RMC|   XO |Rc |
