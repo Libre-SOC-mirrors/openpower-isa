@@ -35,7 +35,7 @@ Special Registers Altered:
 
 X-Form
 
-* lfdupsx FRT,RA,RB
+* lfdupsx FRT,RA,RB,SH
 
 Pseudo-code:
 
