@@ -10,18 +10,19 @@
 
 Z23-Form
 
-* stbupsx RS,RA,RB
+* stbupsx RS,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB)<<(SH+1)
     ea <- (RA)
     MEM(ea, 1) <- (RS)[XLEN-8:XLEN-1]
     RA <- EA
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ (RB).
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and the contents of register RA.
 
     (RS)[56:63] are stored into the byte in storage addressed by EA.
 
