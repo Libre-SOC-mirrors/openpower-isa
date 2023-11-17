@@ -13,7 +13,7 @@
 
 # Load Byte and Zero with Post-Update Indexed
 
-Z23-Form
+X-Form
 
 * lbzupsx RT,RA,RB,SH
 
@@ -41,7 +41,7 @@ Special Registers Altered:
 
 # Load Halfword and Zero with Post-Update Indexed
 
-Z23-Form
+X-Form
 
 * lhzupsx RT,RA,RB,SH
 
@@ -53,7 +53,9 @@ Pseudo-code:
 
 Description:
 
-    Let the effective address (EA) be register RA.
+    Let the effective address (EA) be the contents of
+    register RA shifted by (SH+1).
+
     The halfword in storage addressed by EA is loaded into RT[48:63]. 
     RT[0:47] are set to 0.
 
@@ -67,19 +69,20 @@ Special Registers Altered:
 
 # Load Halfword Algebraic with Post-Update Indexed
 
-Z23-Form
+X-Form
 
-* lhaupsx RT,RA,RB
+* lhaupsx RT,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA)
+    EA <- (RA)<<(SH+1)
     RT <- EXTS(MEM(EA, 2))
     RA <- (RA) + (RB)
 
 Description:
 
-    Let the effective address (EA) be the register RA.
+    Let the effective address (EA) be the contents of
+    register RA shifted by (SH+1).
 
     The halfword in storage addressed by EA is loaded into RT[48:63].
     RT[0:47] are filled with a copy of bit 0 of the loaded halfword.
@@ -94,7 +97,7 @@ Special Registers Altered:
 
 # Load Word and Zero with Post-Update Indexed
 
-Z23-Form
+X-Form
 
 * lwzupsx RT,RA,RB
 
@@ -121,7 +124,7 @@ Special Registers Altered:
 
 # Load Word Algebraic with Post-Update Indexed
 
-Z23-Form
+X-Form
 
 * lwaupsx RT,RA,RB
 
@@ -148,7 +151,7 @@ Special Registers Altered:
 
 # Load Doubleword with Post-Update Indexed
 
-Z23-Form
+X-Form
 
 * ldupsx RT,RA,RB
 
