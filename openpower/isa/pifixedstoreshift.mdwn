@@ -66,18 +66,19 @@ Special Registers Altered:
 
 Z23-Form
 
-* stwupsx RS,RA,RB
+* stwupsx RS,RA,RB,SH
 
 Pseudo-code:
 
-    EA <- (RA) + (RB)
+    EA <- (RA) + (RB)<<(SH+1)
     ea <- (RA)
     MEM(ea, 4) <- (RS)[XLEN-32:XLEN-1]
     RA <- EA
 
 Description:
 
-    Let the effective address (EA) be the sum (RA)+ (RB).
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and the contents of register RA.
 
     (RS)[32:63] are stored into the word in storage addressed by RA.
 
