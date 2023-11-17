@@ -35,3 +35,9 @@ if __name__ == '__main__':
     result = m2(arr)
     print("Index of the maximum value in an array is: %d" % result)
     assert (result == 0)
+    
+    arr = [5,5,5,5,5,5,5,5]
+    print("search list", arr)
+    result = m2(arr)
+    print("Index of the maximum value in an array is: %d" % result)
+    assert (result == 0)
