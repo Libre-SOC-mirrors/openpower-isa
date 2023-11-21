@@ -2831,6 +2831,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         vfirst = self.svstate.vfirst
         log("    SV Vertical First", vf, vfirst)
         if not vf and vfirst == 1:
+            if insn_name.startswith("sv.bc"):
+                self.update_pc_next()
+                return False
             self.update_nia()
             return True
 
