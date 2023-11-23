@@ -1457,26 +1457,28 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.cr_backup = self.cr.value
 
         # sv.bc* need some extra fields
-        if self.is_svp64_mode and insn_name.startswith("sv.bc"):
-            # blegh grab bits manually
-            mode = yield self.dec2.rm_dec.rm_in.mode
-            # convert to SelectableInt before test
-            mode = SelectableInt(mode, 5)
-            bc_vlset = mode[SVP64MODEb.BC_VLSET] != 0
-            bc_vli = mode[SVP64MODEb.BC_VLI] != 0
-            bc_snz = mode[SVP64MODEb.BC_SNZ] != 0
-            bc_vsb = yield self.dec2.rm_dec.bc_vsb
-            bc_lru = yield self.dec2.rm_dec.bc_lru
-            bc_gate = yield self.dec2.rm_dec.bc_gate
-            sz = yield self.dec2.rm_dec.pred_sz
-            self.namespace['mode'] = SelectableInt(mode, 5)
-            self.namespace['ALL'] = SelectableInt(bc_gate, 1)
-            self.namespace['VSb'] = SelectableInt(bc_vsb, 1)
-            self.namespace['LRu'] = SelectableInt(bc_lru, 1)
-            self.namespace['VLSET'] = SelectableInt(bc_vlset, 1)
-            self.namespace['VLI'] = SelectableInt(bc_vli, 1)
-            self.namespace['sz'] = SelectableInt(sz, 1)
-            self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
+        if not self.is_svp64_mode or not insn_name.startswith("sv.bc"):
+            return
+
+        # blegh grab bits manually
+        mode = yield self.dec2.rm_dec.rm_in.mode
+        # convert to SelectableInt before test
+        mode = SelectableInt(mode, 5)
+        bc_vlset = mode[SVP64MODEb.BC_VLSET] != 0
+        bc_vli = mode[SVP64MODEb.BC_VLI] != 0
+        bc_snz = mode[SVP64MODEb.BC_SNZ] != 0
+        bc_vsb = yield self.dec2.rm_dec.bc_vsb
+        bc_lru = yield self.dec2.rm_dec.bc_lru
+        bc_gate = yield self.dec2.rm_dec.bc_gate
+        sz = yield self.dec2.rm_dec.pred_sz
+        self.namespace['mode'] = SelectableInt(mode, 5)
+        self.namespace['ALL'] = SelectableInt(bc_gate, 1)
+        self.namespace['VSb'] = SelectableInt(bc_vsb, 1)
+        self.namespace['LRu'] = SelectableInt(bc_lru, 1)
+        self.namespace['VLSET'] = SelectableInt(bc_vlset, 1)
+        self.namespace['VLI'] = SelectableInt(bc_vli, 1)
+        self.namespace['sz'] = SelectableInt(sz, 1)
+        self.namespace['SNZ'] = SelectableInt(bc_snz, 1)
 
     def get_kludged_op_add_ca_ov(self, inputs, inp_ca_ov):
         """ this was not at all necessary to do.  this function massively
