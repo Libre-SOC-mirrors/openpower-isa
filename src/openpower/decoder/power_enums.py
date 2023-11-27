@@ -963,6 +963,7 @@ class MicrOp(Enum):
     OP_PDEP = 109
     OP_PEXT = 110
     OP_SETBC = 111
+    OP_BMAT = 112 # bmatflip/xor/and - known by many names (vgbbd in Power)
 
 
 class SelType(Enum):
