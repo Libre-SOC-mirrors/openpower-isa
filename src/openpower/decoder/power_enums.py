@@ -765,8 +765,8 @@ _insns = [
     "ffmsubs", "ffmadds", "ffnmsubs", "ffnmadds",       # FFT FP 3-arg
     "fmul", "fmuls", "fdiv", "fdivs",                   # FP mul / div
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
-    "fmvis",                                            # FP load immediate
-    "fishmv",                                           # Float Replace Lower-Half Single, Immediate
+    "fmvis",   # FP load immediate
+    "fishmv",  # Float Replace Lower-Half Single, Immediate
     "cffpr", "cffpro",
     "mffpr", "mffprs",
     "ctfpr", "ctfprs",
@@ -788,9 +788,9 @@ _insns = [
     # "lwzbr", "lwzubr", # more load word SVP64 bit-reversed
     "maddedu", "maddedus",
     "maddhd", "maddhdu", "maddld",                      # INT multiply-and-add
-    "maddsubrs",         # Integer DCT Butterfly Add Sub and Round Shift
-    "maddrs",            # Integer DCT Butterfly Add and Accumulate and Round Shift
-    "msubrs",            # Integer DCT Butterfly Subtract from and Round Shift
+    "maddsubrs",         # Int DCT Butterfly Add Sub and Round Shift
+    "maddrs",            # Int DCT Butterfly Add and Accumulate and Round Shift
+    "msubrs",            # Int DCT Butterfly Subtract from and Round Shift
     "mcrf", "mcrxr", "mcrxrx", "mfcr/mfocrf",           # CR mvs
     "mfmsr", "mfspr",
     "minmax",                     # AV bitmanip
