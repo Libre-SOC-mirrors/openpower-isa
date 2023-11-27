@@ -6,6 +6,8 @@ import unittest
 from openpower.decoder.isa.mem import Mem, MemMMap
 from openpower.util import log
 import ctypes
+from openpower.syscalls import ppc_flags
+import tempfile
 
 
 class TestMem(unittest.TestCase):
@@ -135,6 +137,206 @@ Memory:
 *
 0x00000160:  00 11 22 33 44 55 66 77  88 99 AA BB CC DD EE FF  |.."3DUfw........|
 """)
+
+    def make_mmap_with_pattern(self):
+        m = MemMMap(row_bytes=8, emulating_mmap=True)
+
+        prot = ppc_flags.PROT_READ | ppc_flags.PROT_WRITE
+        flags = ppc_flags.MAP_PRIVATE | ppc_flags.MAP_FIXED
+        retval = m.mmap_syscall(addr=1 << 16, length=15 << 16, prot=prot,
+                                flags=flags, fd=-1, offset=0, is_mmap2=False)
+        self.assertEqual(retval, 1 << 16)
+
+        text = self.log_fancy_to_string(m)
+        self.assertEqual(text, """
+Memory:
+
+""")
+
+        for i in range(1, 16):
+            bytes_ = m.get_ctypes(i << 16, 16, True)
+
+            self.assertIsInstance(bytes_, ctypes.c_ubyte * 16)
+
+            for j in range(16):
+                bytes_[j] = i * 0x10 + j
+
+        text = self.log_fancy_to_string(m)
+        self.assertEqual(text, """
+Memory:
+0x00010000:  10 11 12 13 14 15 16 17  18 19 1A 1B 1C 1D 1E 1F  |................|
+*
+0x00020000:  20 21 22 23 24 25 26 27  28 29 2A 2B 2C 2D 2E 2F  | !"#$%&'()*+,-./|
+*
+0x00030000:  30 31 32 33 34 35 36 37  38 39 3A 3B 3C 3D 3E 3F  |0123456789:;<=>?|
+*
+0x00040000:  40 41 42 43 44 45 46 47  48 49 4A 4B 4C 4D 4E 4F  |@ABCDEFGHIJKLMNO|
+*
+0x00050000:  50 51 52 53 54 55 56 57  58 59 5A 5B 5C 5D 5E 5F  |PQRSTUVWXYZ[\]^_|
+*
+0x00060000:  60 61 62 63 64 65 66 67  68 69 6A 6B 6C 6D 6E 6F  |`abcdefghijklmno|
+*
+0x00070000:  70 71 72 73 74 75 76 77  78 79 7A 7B 7C 7D 7E 7F  |pqrstuvwxyz{|}~.|
+*
+0x00080000:  80 81 82 83 84 85 86 87  88 89 8A 8B 8C 8D 8E 8F  |................|
+*
+0x00090000:  90 91 92 93 94 95 96 97  98 99 9A 9B 9C 9D 9E 9F  |................|
+*
+0x000A0000:  A0 A1 A2 A3 A4 A5 A6 A7  A8 A9 AA AB AC AD AE AF  |................|
+*
+0x000B0000:  B0 B1 B2 B3 B4 B5 B6 B7  B8 B9 BA BB BC BD BE BF  |................|
+*
+0x000C0000:  C0 C1 C2 C3 C4 C5 C6 C7  C8 C9 CA CB CC CD CE CF  |................|
+*
+0x000D0000:  D0 D1 D2 D3 D4 D5 D6 D7  D8 D9 DA DB DC DD DE DF  |................|
+*
+0x000E0000:  E0 E1 E2 E3 E4 E5 E6 E7  E8 E9 EA EB EC ED EE EF  |................|
+*
+0x000F0000:  F0 F1 F2 F3 F4 F5 F6 F7  F8 F9 FA FB FC FD FE FF  |................|
+""")
+        return m
+
+    def test_mmap_anon(self):
+        m = self.make_mmap_with_pattern()
+
+        prot = ppc_flags.PROT_READ | ppc_flags.PROT_WRITE
+        flags = ppc_flags.MAP_PRIVATE | ppc_flags.MAP_FIXED
+        retval = m.mmap_syscall(addr=3 << 16, length=2 << 16, prot=prot,
+                                flags=flags, fd=-1, offset=0, is_mmap2=False)
+        self.assertEqual(retval, 3 << 16)
+
+        text = self.log_fancy_to_string(m)
+        self.assertEqual(text, """
+Memory:
+0x00010000:  10 11 12 13 14 15 16 17  18 19 1A 1B 1C 1D 1E 1F  |................|
+*
+0x00020000:  20 21 22 23 24 25 26 27  28 29 2A 2B 2C 2D 2E 2F  | !"#$%&'()*+,-./|
+*
+0x00050000:  50 51 52 53 54 55 56 57  58 59 5A 5B 5C 5D 5E 5F  |PQRSTUVWXYZ[\]^_|
+*
+0x00060000:  60 61 62 63 64 65 66 67  68 69 6A 6B 6C 6D 6E 6F  |`abcdefghijklmno|
+*
+0x00070000:  70 71 72 73 74 75 76 77  78 79 7A 7B 7C 7D 7E 7F  |pqrstuvwxyz{|}~.|
+*
+0x00080000:  80 81 82 83 84 85 86 87  88 89 8A 8B 8C 8D 8E 8F  |................|
+*
+0x00090000:  90 91 92 93 94 95 96 97  98 99 9A 9B 9C 9D 9E 9F  |................|
+*
+0x000A0000:  A0 A1 A2 A3 A4 A5 A6 A7  A8 A9 AA AB AC AD AE AF  |................|
+*
+0x000B0000:  B0 B1 B2 B3 B4 B5 B6 B7  B8 B9 BA BB BC BD BE BF  |................|
+*
+0x000C0000:  C0 C1 C2 C3 C4 C5 C6 C7  C8 C9 CA CB CC CD CE CF  |................|
+*
+0x000D0000:  D0 D1 D2 D3 D4 D5 D6 D7  D8 D9 DA DB DC DD DE DF  |................|
+*
+0x000E0000:  E0 E1 E2 E3 E4 E5 E6 E7  E8 E9 EA EB EC ED EE EF  |................|
+*
+0x000F0000:  F0 F1 F2 F3 F4 F5 F6 F7  F8 F9 FA FB FC FD FE FF  |................|
+""")
+
+    def test_mmap_file(self):
+        m = self.make_mmap_with_pattern()
+        with tempfile.NamedTemporaryFile() as file:
+            file.truncate(5 << 16)
+            file.write(b"Shouldn't see this\n")
+            file.seek(1 << 16)
+            file.write(b"Shouldn't see this #2\n")
+            file.seek(2 << 16)
+            file.write(b"Hello World!\n")
+            file.seek(3 << 16)
+            file.write(b"Foo Bar\n")
+            file.seek(4 << 16)
+            file.write(b"Shouldn't see this #3\n")
+            file.flush()
+            fd = file.file.fileno()
+
+            prot = ppc_flags.PROT_READ | ppc_flags.PROT_WRITE
+            flags = ppc_flags.MAP_PRIVATE | ppc_flags.MAP_FIXED
+            retval = m.mmap_syscall(addr=3 << 16, length=2 << 16, prot=prot,
+                                    flags=flags, fd=fd, offset=2 << 16,
+                                    is_mmap2=False)
+            self.assertEqual(retval, 3 << 16)
+
+            text = self.log_fancy_to_string(m)
+            self.assertEqual(text, """
+Memory:
+0x00010000:  10 11 12 13 14 15 16 17  18 19 1A 1B 1C 1D 1E 1F  |................|
+*
+0x00020000:  20 21 22 23 24 25 26 27  28 29 2A 2B 2C 2D 2E 2F  | !"#$%&'()*+,-./|
+*
+0x00030000:  48 65 6C 6C 6F 20 57 6F  72 6C 64 21 0A 00 00 00  |Hello World!....|
+*
+0x00040000:  46 6F 6F 20 42 61 72 0A  00 00 00 00 00 00 00 00  |Foo Bar.........|
+*
+0x00050000:  50 51 52 53 54 55 56 57  58 59 5A 5B 5C 5D 5E 5F  |PQRSTUVWXYZ[\]^_|
+*
+0x00060000:  60 61 62 63 64 65 66 67  68 69 6A 6B 6C 6D 6E 6F  |`abcdefghijklmno|
+*
+0x00070000:  70 71 72 73 74 75 76 77  78 79 7A 7B 7C 7D 7E 7F  |pqrstuvwxyz{|}~.|
+*
+0x00080000:  80 81 82 83 84 85 86 87  88 89 8A 8B 8C 8D 8E 8F  |................|
+*
+0x00090000:  90 91 92 93 94 95 96 97  98 99 9A 9B 9C 9D 9E 9F  |................|
+*
+0x000A0000:  A0 A1 A2 A3 A4 A5 A6 A7  A8 A9 AA AB AC AD AE AF  |................|
+*
+0x000B0000:  B0 B1 B2 B3 B4 B5 B6 B7  B8 B9 BA BB BC BD BE BF  |................|
+*
+0x000C0000:  C0 C1 C2 C3 C4 C5 C6 C7  C8 C9 CA CB CC CD CE CF  |................|
+*
+0x000D0000:  D0 D1 D2 D3 D4 D5 D6 D7  D8 D9 DA DB DC DD DE DF  |................|
+*
+0x000E0000:  E0 E1 E2 E3 E4 E5 E6 E7  E8 E9 EA EB EC ED EE EF  |................|
+*
+0x000F0000:  F0 F1 F2 F3 F4 F5 F6 F7  F8 F9 FA FB FC FD FE FF  |................|
+""")
+
+            bytes_ = m.get_ctypes(3 << 16, 16, True)
+
+            self.assertIsInstance(bytes_, ctypes.c_ubyte * 16)
+
+            for i in range(16):
+                bytes_[i] = i * 0x11
+
+            text = self.log_fancy_to_string(m)
+            self.assertEqual(text, """
+Memory:
+0x00010000:  10 11 12 13 14 15 16 17  18 19 1A 1B 1C 1D 1E 1F  |................|
+*
+0x00020000:  20 21 22 23 24 25 26 27  28 29 2A 2B 2C 2D 2E 2F  | !"#$%&'()*+,-./|
+*
+0x00030000:  00 11 22 33 44 55 66 77  88 99 AA BB CC DD EE FF  |.."3DUfw........|
+*
+0x00040000:  46 6F 6F 20 42 61 72 0A  00 00 00 00 00 00 00 00  |Foo Bar.........|
+*
+0x00050000:  50 51 52 53 54 55 56 57  58 59 5A 5B 5C 5D 5E 5F  |PQRSTUVWXYZ[\]^_|
+*
+0x00060000:  60 61 62 63 64 65 66 67  68 69 6A 6B 6C 6D 6E 6F  |`abcdefghijklmno|
+*
+0x00070000:  70 71 72 73 74 75 76 77  78 79 7A 7B 7C 7D 7E 7F  |pqrstuvwxyz{|}~.|
+*
+0x00080000:  80 81 82 83 84 85 86 87  88 89 8A 8B 8C 8D 8E 8F  |................|
+*
+0x00090000:  90 91 92 93 94 95 96 97  98 99 9A 9B 9C 9D 9E 9F  |................|
+*
+0x000A0000:  A0 A1 A2 A3 A4 A5 A6 A7  A8 A9 AA AB AC AD AE AF  |................|
+*
+0x000B0000:  B0 B1 B2 B3 B4 B5 B6 B7  B8 B9 BA BB BC BD BE BF  |................|
+*
+0x000C0000:  C0 C1 C2 C3 C4 C5 C6 C7  C8 C9 CA CB CC CD CE CF  |................|
+*
+0x000D0000:  D0 D1 D2 D3 D4 D5 D6 D7  D8 D9 DA DB DC DD DE DF  |................|
+*
+0x000E0000:  E0 E1 E2 E3 E4 E5 E6 E7  E8 E9 EA EB EC ED EE EF  |................|
+*
+0x000F0000:  F0 F1 F2 F3 F4 F5 F6 F7  F8 F9 FA FB FC FD FE FF  |................|
+""")
+
+            # assert file wasn't modified by memory write
+            file.seek(2 << 16)
+            bytes_ = file.read(16)
+            self.assertEqual(bytes_, b"Hello World!\n\0\0\0")
 
 
 if __name__ == '__main__':
