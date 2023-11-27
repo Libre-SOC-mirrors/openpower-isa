@@ -2,6 +2,25 @@
 <!-- https://libre-soc.org/openpower/sv/bitmanip/ -->
 <!-- These instructions are *not yet official* -->
 
+# Gather instruction
+
+X-Form
+
+* gbbd RT,RA
+
+Pseudo-code:
+
+    result <- [0] * 64
+    do j = 0 to 7
+        do k = 0 to 7
+            b <- (RA)[k*8+j]
+            result[j*8+k] <- b
+    RT <- result
+
+Special Registers Altered:
+
+    CR0                    (if Rc=1)
+
 # Ternary Bitwise Logic Immediate
 
 TLI-Form
