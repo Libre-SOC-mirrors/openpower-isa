@@ -38,22 +38,20 @@ class PosPopCountTestCase(FHDLTestCase):
         lst = SVP64Asm(
             [
                 "mtspr 9, 3",                   # move r3 to CTR
+                "setvl. 0,0,8,0,1,1",           # set MVL=VL=8
                 "sv.addi *8, 0, 0",             # initialise r8-r15 to zero
-                # chr-copy loop starts here:
-                #   for (i = 0; i < n && src[i] != '\0'; i++)
-                #        dest[i] = src[i];
                 # VL = MIN(CTR,MAXVL=8), Rc=1 (CR0 set if CTR ends)
-                "setvl. 3,0,8,0,1,1",
+                "setvl. 3,0,2,0,1,1",
                 # load VL bytes (update r4 addr) but compressed (dw=8)
                 "sv.lbzu/pi/dw=8 *16, 1(4)",   # should be /lf here as well
                 # branch back if still CTR
-                "sv.bc 16, 0, -0x10",    # test CTR, stop if cmpi failed
+                "sv.bc/ctr/all 16, *0, -0x18", # CTR mode, reduce VL by CTR
             ]
         )
         lst = list(lst)
 
         tst_array = [23,19,25,189,76,255,32,191,67,205,0,39,107]
-        tst_array = [1,2,3,4,5,6,7,8,9] #8,9,10,11,12,13]
+        tst_array = [1,2,3,] #4,5,6,7,8,9] #8,9,10,11,12,13]
         initial_regs = [0] * 64
         initial_regs[3] = len(tst_array)
         initial_regs[4] = 16  # load address

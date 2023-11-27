@@ -1468,6 +1468,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         bc_vli = mode[SVP64MODEb.BC_VLI] != 0
         bc_snz = mode[SVP64MODEb.BC_SNZ] != 0
         bc_vsb = yield self.dec2.rm_dec.bc_vsb
+        bc_ctrtest = yield self.dec2.rm_dec.bc_ctrtest
         bc_lru = yield self.dec2.rm_dec.bc_lru
         bc_gate = yield self.dec2.rm_dec.bc_gate
         sz = yield self.dec2.rm_dec.pred_sz
@@ -1475,6 +1476,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.namespace['ALL'] = SelectableInt(bc_gate, 1)
         self.namespace['VSb'] = SelectableInt(bc_vsb, 1)
         self.namespace['LRu'] = SelectableInt(bc_lru, 1)
+        self.namespace['CTRtest'] = SelectableInt(bc_ctrtest, 1)
         self.namespace['VLSET'] = SelectableInt(bc_vlset, 1)
         self.namespace['VLI'] = SelectableInt(bc_vli, 1)
         self.namespace['sz'] = SelectableInt(sz, 1)
@@ -2244,7 +2246,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # this is the last check to be made as a loop.  combined with
         # the ALL/ANY mode we can early-exit
         if self.is_svp64_mode and ins_name.startswith("sv.bc"):
+            bc_ctrtest = yield self.dec2.rm_dec.bc_ctrtest
             no_in_vec = yield self.dec2.no_in_vec  # BI is scalar
+            no_in_vec &= not bc_ctrtest            # allow CTR loop on scalar
             end_loop = no_in_vec or srcstep == vl-1 or dststep == vl-1
             self.namespace['end_loop'] = SelectableInt(end_loop, 1)
 
