@@ -24,6 +24,7 @@ build:
             cmake
             curl
             flex
+            g++-powerpc64le-linux-gnu
             gawk
             git
             gperf
