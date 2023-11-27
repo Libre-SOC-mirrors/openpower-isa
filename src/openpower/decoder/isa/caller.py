@@ -2244,12 +2244,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # check if this was an sv.bc* and create an indicator that
         # this is the last check to be made as a loop.  combined with
-        # the ALL/ANY mode we can early-exit
+        # the ALL/ANY mode we can early-exit. note that BI (to test)
+        # is an input so there is no termination if BI is scalar
+        # (because early-termination is for *output* scalars)
         if self.is_svp64_mode and ins_name.startswith("sv.bc"):
-            bc_ctrtest = yield self.dec2.rm_dec.bc_ctrtest
-            no_in_vec = yield self.dec2.no_in_vec  # BI is scalar
-            no_in_vec &= not bc_ctrtest            # allow CTR loop on scalar
-            end_loop = no_in_vec or srcstep == vl-1 or dststep == vl-1
+            end_loop = srcstep == vl-1 or dststep == vl-1
             self.namespace['end_loop'] = SelectableInt(end_loop, 1)
 
         inp_ca_ov = (self.spr['XER'][XER_bits['CA']].value,
