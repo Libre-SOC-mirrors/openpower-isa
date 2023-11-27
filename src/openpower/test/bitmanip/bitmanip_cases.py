@@ -5,11 +5,33 @@ from openpower.simulator.program import Program
 from openpower.test.state import ExpectedState
 from nmutil.sim_util import hash_256
 from openpower.decoder.isa.caller import SVP64State
+from openpower.util import log
 import struct
 import itertools
 
+def bmatflip(ra):
+    result = 0
+    for j in range(8):
+        for k in range(8):
+            b = (ra >> (63-k*8-j)) & 1
+            result |= b << (63-j*8-k)
+    return result
+
 
 class BitManipTestCase(TestAccumulatorBase):
+    def case_gbbd(self):
+        lst = ["gbbd 0, 1"]
+        lst = list(SVP64Asm(lst, bigendian))
+        initial_regs = [0] * 32
+        initial_regs[1] = 0x9231_5897_2083_ffff
+        e = ExpectedState(pc=4)
+        e.intregs[0] = bmatflip(initial_regs[1])
+        e.intregs[1] = initial_regs[1]
+        log("case_gbbd", bin(initial_regs[1]), bin(e.intregs[0]))
+        log("hex", hex(initial_regs[1]), hex(e.intregs[0]))
+
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
     def do_case_ternlogi(self, rc, rt, ra, rb, imm):
         rc_dot = "." if rc else ""
         lst = [f"ternlogi{rc_dot} 3, 4, 5, {imm}"]

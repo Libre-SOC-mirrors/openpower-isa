@@ -2088,7 +2088,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        "brh", "brw", "brd",
                        'setvl', 'svindex', 'svremap', 'svstep',
                        'svshape', 'svshape2',
-                       'ternlogi', 'bmask', 'cprop',
+                       'ternlogi', 'bmask', 'cprop', 'gbbd',
                        'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
                        'fmvis', 'fishmv', 'pcdec', "maddedu", "divmod2du",
                        "dsld", "dsrd", "maddedus",

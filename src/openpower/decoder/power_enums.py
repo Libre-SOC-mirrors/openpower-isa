@@ -767,6 +767,7 @@ _insns = [
     "fmr", "fabs", "fnabs", "fneg", "fcpsgn",           # FP move/abs/neg
     "fmvis",   # FP load immediate
     "fishmv",  # Float Replace Lower-Half Single, Immediate
+    "gbbd",          # bitmanip - (aka bmatflip)
     "cffpr", "cffpro",
     "mffpr", "mffprs",
     "ctfpr", "ctfprs",
