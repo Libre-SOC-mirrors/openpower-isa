@@ -37,23 +37,28 @@ class PosPopCountTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(
             [
-                "mtspr 9, 3",                   # move r3 to CTR
-                "setvl. 0,0,8,0,1,1",           # set MVL=VL=8
-                "sv.addi *8, 0, 0",             # initialise r8-r15 to zero
+                "mtspr 9, 3",               # move r3 to CTR
+                "setvl. 0,0,8,0,1,1",       # set MVL=VL=8 and CR0 (Rc=1)
+                "sv.addi *8, 0, 0",         # initialise r8-r15 to zero
                 # VL = MIN(CTR,MAXVL=8), Rc=1 (CR0 set if CTR ends)
                 "setvl. 3,0,2,0,1,1",
                 # load VL bytes (update r4 addr) but compressed (dw=8)
-                "sv.lbzu/pi/dw=8 *16, 1(4)",   # should be /lf here as well
-                # bpermd performs the transpose (which gets us to positional..)
-                "bpermd 4,4",
+                "sv.lbzu/pi/dw=8 *8, 1(4)", # should be /lf here as well
+                # gather performs the transpose (which gets us to positional..)
+                "gbbd 8,8",
+                # now add each byte to the accumulator vector
+                "setvl 0,0,8,0,1,1",        # set MVL=VL=8, do NOT touch CR0
+                "sv.ori/sw=8 *24,*8,0",     # expand first
+                "sv.add *16,*16,*24",
                 # branch back if still CTR
-                "sv.bc/all 16, *0, -0x1c", # CTR mode, reduce VL by CTR
+                "sv.bc/all 16, *0, -0x30", # CTR mode, reduce VL by CTR
             ]
         )
         lst = list(lst)
 
         tst_array = [23,19,25,189,76,255,32,191,67,205,0,39,107]
-        tst_array = [1,2,3,4] #4,5,6,7,8,9] #8,9,10,11,12,13]
+        #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+        tst_array = [254] * 10
         initial_regs = [0] * 64
         initial_regs[3] = len(tst_array)
         initial_regs[4] = 16  # load address
@@ -68,6 +73,9 @@ class PosPopCountTestCase(FHDLTestCase):
         # overwrite the garbage with the test data
         for i, c in enumerate(tst_array):
             write_byte(initial_mem, 16+i, c)
+
+        for i, c in enumerate(tst_array):
+            print ("array", i, bin(c), c)
 
         # now get the expected results: do a simple pospopcount
         expected = [0]*8
