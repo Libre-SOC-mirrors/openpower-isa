@@ -2154,7 +2154,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             ew_src = 8 << (3-int(ew_src))  # convert to bitlength
             ew_dst = 8 << (3-int(ew_dst))  # convert to bitlength
             xlen = max(ew_src, ew_dst)
-            log("elwdith", ew_src, ew_dst)
+            log("elwidth", ew_src, ew_dst)
         log("XLEN:", self.is_svp64_mode, xlen)
 
         # look up instruction in ISA.instrs, prepare namespace
@@ -2250,7 +2250,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             elif name in spr_byname:
                 inputs[name] = self.spr[name]
             else:
-                regval = (yield from self.get_input(name, ew_src))
+                regval = (yield from self.get_input(name, ew_src, xlen))
                 log("regval name", name, regval)
                 inputs[name] = regval
 
@@ -2550,7 +2550,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             else:
                 self.namespace['D'] = imm
 
-    def get_input(self, name, ew_src):
+    def get_input(self, name, ew_src, xlen):
         # using PowerDecoder2, first, find the decoder index.
         # (mapping name RA RB RC RS to in1, in2, in3)
         regnum, is_vec = yield from get_idx_in(self.dec2, name, True)
@@ -2577,14 +2577,17 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if not self.is_svp64_mode or not self.pred_src_zero:
             log('reading reg %s %s' % (name, str(regnum)), is_vec)
             if name in fregs:
-                reg_val = SelectableInt(self.fpr(base, is_vec, offs, ew_src))
-                log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value),
-                    kind=LogType.InstrInOuts)
+                fval = self.fpr(base, is_vec, offs, ew_src)
+                reg_val = SelectableInt(fval)
+                assert ew_src == XLEN, "TODO fix elwidth conversion"
                 self.trace("r:FPR:%d:%d:%d " % (base, offs, ew_src))
+                log("read fp reg %d/%d: 0x%x" % (base, offs, reg_val.value),
+                    kind=LogType.InstrInOuts)
             elif name is not None:
-                reg_val = SelectableInt(self.gpr(base, is_vec, offs, ew_src))
+                gval = self.gpr(base, is_vec, offs, ew_src)
+                reg_val = SelectableInt(gval.value, bits=xlen)
                 self.trace("r:GPR:%d:%d:%d " % (base, offs, ew_src))
-                log("read reg %d/%d: 0x%x" % (base, offs, reg_val.value),
+                log("read int reg %d/%d: 0x%x" % (base, offs, reg_val.value),
                     kind=LogType.InstrInOuts)
         else:
             log('zero input reg %s %s' % (name, str(regnum)), is_vec)

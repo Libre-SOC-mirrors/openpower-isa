@@ -34,6 +34,33 @@ class SVP64ALUElwidthTestCase(TestAccumulatorBase):
                       initial_svstate=svstate, expected=e)
 
 
+    def case_2_sv_add_sw8(self):
+        """>>> lst = ['sv.add/sw=8 *1, *5, *9']
+        """
+        isa = SVP64Asm(['sv.add/sw=8 *1, *5, *9'])
+        lst = list(isa)
+        print("listing", lst)
+
+        # initial values in GPR regfile
+        initial_regs = [0] * 32
+        initial_regs[9] = 0x1220
+        initial_regs[5] = 0x43ff
+        # SVSTATE (in this case, VL=2)
+        svstate = SVP64State()
+        svstate.vl = 2  # VL
+        svstate.maxvl = 2  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
+
+        # expected: each 8-bit add is completely independent
+        gprs = deepcopy(initial_regs)
+        gprs[1] = 0x11f # 0x20+0xff = 0x11f (64-bit)
+        gprs[2] = 0x55  # 0x12+0x43 = 0x55 (64-bit)
+        e = ExpectedState(pc=8, int_regs=gprs)
+
+        self.add_case(Program(lst, bigendian), initial_regs,
+                      initial_svstate=svstate, expected=e)
+
+
     def case_2_sv_add_ew32(self):
         """>>> lst = ['sv.add/w=32 *1, *5, *9']
         """
