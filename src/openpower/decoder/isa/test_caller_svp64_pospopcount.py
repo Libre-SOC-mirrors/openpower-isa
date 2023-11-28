@@ -38,27 +38,34 @@ class PosPopCountTestCase(FHDLTestCase):
         lst = SVP64Asm(
             [
                 "mtspr 9, 3",               # move r3 to CTR
-                "setvl. 0,0,8,0,1,1",       # set MVL=VL=8 and CR0 (Rc=1)
-                "sv.addi *8, 0, 0",         # initialise r8-r15 to zero
-                # VL = MIN(CTR,MAXVL=8), Rc=1 (CR0 set if CTR ends)
-                "setvl. 3,0,2,0,1,1",
-                # load VL bytes (update r4 addr) but compressed (dw=8)
-                "sv.lbzu/pi/dw=8 *8, 1(4)", # should be /lf here as well
-                # gather performs the transpose (which gets us to positional..)
-                "gbbd 8,8",
-                # now add each byte to the accumulator vector
-                "setvl 0,0,8,0,1,1",        # set MVL=VL=8, do NOT touch CR0
+                "setvl 0,0,8,0,1,1",        # set MVL=VL=8
+                "sv.popcntd/w=8 *8,*8",    # popcount
+                # add each byte to the accumulator vector
                 "sv.ori/sw=8 *24,*8,0",     # expand first
                 "sv.add *16,*16,*24",
+                "sv.addi *8, 0, 0",         # initialise r8-r15 to zero
+                # VL = MIN(CTR,MAXVL=8), Rc=1 (CR0 set if CTR ends)
+                "setvl 3,0,8,0,1,1",        # set MVL=8, VL=CTR and CR0 (Rc=1)
+                # load VL bytes (update r4 addr) but compressed (dw=8)
+                "addi 6, 0, 0",             # initialise r6 to zero
+                "sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
+                # gather performs the transpose (which gets us to positional..)
+                "gbbd 8,6",
                 # branch back if still CTR
-                "sv.bc/all 16, *0, -0x30", # CTR mode, reduce VL by CTR
+                "sv.bc/all 16, *0, -0x38", # CTR mode, reduce VL by CTR
+                # add last byte to the accumulator vector
+                "setvl 0,0,8,0,1,1",        # set MVL=VL=8
+                "sv.popcntd/w=8 *8,*8",    # popcount
+                "sv.ori/sw=8 *24,*8,0",     # expand first
+                "sv.add *16,*16,*24",
             ]
         )
         lst = list(lst)
 
         tst_array = [23,19,25,189,76,255,32,191,67,205,0,39,107]
         #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
-        tst_array = [254] * 10
+        #tst_array = [254] * 10
+        #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
         initial_regs = [0] * 64
         initial_regs[3] = len(tst_array)
         initial_regs[4] = 16  # load address
@@ -94,10 +101,9 @@ class PosPopCountTestCase(FHDLTestCase):
             # therefore, at address 0x10 ==> 0x1234
             # therefore, at address 0x28 ==> 0x1235
             for (k, val) in enumerate(expected):
-                print("idx, count", k, val)
+                print("idx, count, reg", k, val, sim.gpr(k+16).value)
             for (k, val) in enumerate(expected):
-                #self.assertEqual(mem, list(expected_mem.items()))
-                print(sim.gpr(k))
+                self.assertEqual(val, sim.gpr(k+16))
 
     def run_tst_program(self, prog, initial_regs=None,
                         svstate=None, initial_fprs=None,
