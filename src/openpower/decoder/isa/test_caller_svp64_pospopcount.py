@@ -60,21 +60,24 @@ class PosPopCountTestCase(FHDLTestCase):
         #tst_array = [254] * 10
         #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
         #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+        #tst_array = [1,2,3,4,5,6,7,8,9]
         tst_array = list(range(240))
         initial_regs = [0] * 64
         initial_regs[3] = len(tst_array)
-        initial_regs[4] = 16  # load address
+        initial_regs[4] = 256-8  # load address
 
         # some memory with identifying garbage in it
         initial_mem = {16: 0xf0f1_f2f3_f4f5_f6f7,
                        24: 0x4041_4243_4445_4647,
                        40: 0x8081_8283_8485_8687,
                        48: 0x9091_9293_9495_9697,
+                       248: 0xffff_aaaa_cccc_eeee,
+                       256: 0xa0a1_a2a3_a4a5_a6a7,
                        }
 
         # overwrite the garbage with the test data
         for i, c in enumerate(tst_array):
-            write_byte(initial_mem, 16+i, c)
+            write_byte(initial_mem, initial_regs[4]+i, c)
 
         for i, c in enumerate(tst_array):
             print ("array", i, bin(c), c)
