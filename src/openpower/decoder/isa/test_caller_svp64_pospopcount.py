@@ -45,10 +45,10 @@ class PosPopCountTestCase(FHDLTestCase):
                 "sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
                 # gather performs the transpose (which gets us to positional..)
                 "gbbd 8,6",
-                # now those bits have been turned around,
+                # now those bits have been turned around, popcount and sum them
                 "setvl 0,0,8,0,1,1",        # set MVL=VL=8
                 "sv.popcntd/sw=8 *24,*8",   # do the (now transposed) popcount
-                "sv.add *16,*16,*24",
+                "sv.add *16,*16,*24",       # and accumulate in results
                 # branch back if still CTR
                 "sv.bc/all 16, *0, -0x28", # CTR mode, reduce VL by CTR
             ]
