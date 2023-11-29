@@ -38,12 +38,6 @@ class PosPopCountTestCase(FHDLTestCase):
         lst = SVP64Asm(
             [
                 "mtspr 9, 3",               # move r3 to CTR
-                "setvl 0,0,8,0,1,1",        # set MVL=VL=8
-                "sv.popcntd/w=8 *8,*8",    # popcount
-                # add each byte to the accumulator vector
-                "sv.ori/sw=8 *24,*8,0",     # expand first
-                "sv.add *16,*16,*24",
-                "sv.addi *8, 0, 0",         # initialise r8-r15 to zero
                 # VL = MIN(CTR,MAXVL=8), Rc=1 (CR0 set if CTR ends)
                 "setvl 3,0,8,0,1,1",        # set MVL=8, VL=CTR and CR0 (Rc=1)
                 # load VL bytes (update r4 addr) but compressed (dw=8)
@@ -51,13 +45,12 @@ class PosPopCountTestCase(FHDLTestCase):
                 "sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
                 # gather performs the transpose (which gets us to positional..)
                 "gbbd 8,6",
-                # branch back if still CTR
-                "sv.bc/all 16, *0, -0x38", # CTR mode, reduce VL by CTR
-                # add last byte to the accumulator vector
                 "setvl 0,0,8,0,1,1",        # set MVL=VL=8
-                "sv.popcntd/w=8 *8,*8",    # popcount
-                "sv.ori/sw=8 *24,*8,0",     # expand first
+                "sv.addi *24, 0, 0",        # initialise temp r24-r31 to zero
+                "sv.popcntd/sw=8 *24,*8",   # do the (now transposed) popcount
                 "sv.add *16,*16,*24",
+                # branch back if still CTR
+                "sv.bc/all 16, *0, -0x30", # CTR mode, reduce VL by CTR
             ]
         )
         lst = list(lst)
@@ -66,6 +59,8 @@ class PosPopCountTestCase(FHDLTestCase):
         #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
         #tst_array = [254] * 10
         #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+        #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+        tst_array = list(range(240))
         initial_regs = [0] * 64
         initial_regs[3] = len(tst_array)
         initial_regs[4] = 16  # load address
@@ -94,7 +89,7 @@ class PosPopCountTestCase(FHDLTestCase):
             sim = self.run_tst_program(program, initial_mem=initial_mem,
                                        initial_regs=initial_regs)
             mem = sim.mem.dump(printout=True, asciidump=True)
-            #print (mem)
+            print (mem)
             # contents of memory expected at:
             #    element 0:   r1=0x10, D=24, => EA = 0x10+24*0 = 16 (0x10)
             #    element 1:   r1=0x10, D=24, => EA = 0x10+24*1 = 40 (0x28)
