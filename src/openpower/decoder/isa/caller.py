@@ -2239,7 +2239,16 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             remap_active = yield self.dec2.remap_active
         else:
             remap_active = False
-        log("remap active", bin(remap_active))
+        log("remap active", bin(remap_active), self.is_svp64_mode)
+
+        # LDST does *not* allow elwidth overrides on RA (Effective Address).
+        # this has to be detected. XXX TODO: RB for ldst-idx *may* need
+        # conversion (to 64-bit) also.
+        # see write reg this *HAS* to also override XLEN to 64 on LDST/Update
+        sv_mode = yield self.dec2.rm_dec.sv_mode
+        is_ldst = (sv_mode in [SVMode.LDST_IDX.value, SVMode.LDST_IMM.value] \
+                  and self.is_svp64_mode)
+        log("is_ldst", sv_mode, is_ldst)
 
         # main input registers (RT, RA ...)
         for name in input_names:
@@ -2253,6 +2262,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 inputs[name] = self.crl[0]
             elif name in spr_byname:
                 inputs[name] = self.spr[name]
+            elif is_ldst and name == 'RA':
+                regval = (yield from self.get_input(name, ew_src, 64))
+                log("EA (RA) regval name", name, regval)
+                inputs[name] = regval
             else:
                 regval = (yield from self.get_input(name, ew_src, xlen))
                 log("regval name", name, regval)
@@ -2724,9 +2737,24 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if name in fregs:
             self.fpr.write(regnum, output, is_vec, ew_dst)
             self.trace("w:FPR:%d:%d:%d " % (rnum, offset, ew_dst))
-        else:
-            self.gpr.write(regnum, output, is_vec, ew_dst)
-            self.trace("w:GPR:%d:%d:%d " % (rnum, offset, ew_dst))
+            return
+
+        # LDST/Update does *not* allow elwidths on RA (Effective Address).
+        # this has to be detected, and overridden.  see get_input (related)
+        sv_mode = yield self.dec2.rm_dec.sv_mode
+        is_ldst = (sv_mode in [SVMode.LDST_IDX.value, SVMode.LDST_IMM.value] \
+                  and self.is_svp64_mode)
+        if is_ldst and name in ['EA', 'RA']:
+            op = self.dec2.dec.op
+            if hasattr(op, "upd"):
+                # update mode LD/ST uses read-reg A also as an output
+                upd = yield op.upd
+                log("write is_ldst is_update", sv_mode, is_ldst, upd)
+                if upd == LDSTMode.update.value:
+                    ew_dst = 64 # override for RA (EA) to 64-bit
+
+        self.gpr.write(regnum, output, is_vec, ew_dst)
+        self.trace("w:GPR:%d:%d:%d " % (rnum, offset, ew_dst))
 
     def check_step_increment(self, rc_en, asmop, ins_name):
         # check if it is the SVSTATE.src/dest step that needs incrementing
