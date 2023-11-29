@@ -754,7 +754,8 @@ class PowerParser:
                 gprz = ast.Attribute(gprz, "getz", ast.Load())
                 # *sigh* see class GPR.  we need index itself not reg value
                 ridx = ast.Name("_%s" % rid, ast.Load())
-                p[0] = ast.Call(gprz, [ridx], [])
+                rvalue = ast.Name(rid, ast.Load())
+                p[0] = ast.Call(gprz, [ridx, rvalue], [])
                 print("tree", astor.dump_tree(p[0]))
             else:
                 p[0] = p[2]

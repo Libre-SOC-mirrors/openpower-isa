@@ -217,9 +217,13 @@ class GPR(dict):
             rnum = rnum.value
         dict.__setitem__(self, rnum, value)
 
-    def getz(self, rnum):
+    def getz(self, rnum, rvalue=None):
         # rnum = rnum.value # only SelectableInt allowed
-        log("GPR getzero?", rnum)
+        log("GPR getzero?", rnum, rvalue)
+        if rvalue is not None:
+            if rnum == 0:
+                return SelectableInt(0, rvalue.bits)
+            return rvalue
         if rnum == 0:
             return SelectableInt(0, 64)
         return self[rnum]
@@ -2571,8 +2575,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         regname = "_" + name
         if not self.is_svp64_mode or ew_src == 64:
             self.namespace[regname] = regnum
-        elif regname in self.namespace:
-            del self.namespace[regname]
+        else:
+            # FIXME: we're trying to access a sub-register, plain register
+            # numbers don't work for that.  for now, just pass something that
+            # can be compared to 0 and probably will cause an error if misused.
+            # see https://bugs.libre-soc.org/show_bug.cgi?id=1221
+            self.namespace[regname] = regnum * 10000
 
         if not self.is_svp64_mode or not self.pred_src_zero:
             log('reading reg %s %s' % (name, str(regnum)), is_vec)

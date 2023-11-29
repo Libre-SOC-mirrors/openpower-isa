@@ -61,6 +61,32 @@ class SVP64ALUElwidthTestCase(TestAccumulatorBase):
                       initial_svstate=svstate, expected=e)
 
 
+    def case_sv_addi_test_ra_0_sw_8(self):
+        """test of (RA|0) with sw=8"""
+        l = ['sv.addi/sw=8 *4, *12, 0x12',
+             'sv.addi/sw=8 *8, *0, 0xAB']
+        prog = Program(list(SVP64Asm(l)), bigendian)
+
+        initial_regs = [0] * 32
+        initial_regs[12] = 0x123456789ABCDEF
+
+        svstate = SVP64State()
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
+
+        e = ExpectedState(pc=0x10, int_regs=initial_regs)
+        e.intregs[4] = 0xEF + 0x12
+        e.intregs[5] = 0xCD + 0x12
+        e.intregs[6] = 0xAB + 0x12
+        e.intregs[7] = 0x89 + 0x12
+        e.intregs[8] = 0xAB
+        e.intregs[9] = 0xAB
+        e.intregs[10] = 0xAB
+        e.intregs[11] = 0xAB
+
+        self.add_case(prog, initial_regs, initial_svstate=svstate, expected=e)
+
+
     def case_2_sv_add_ew32(self):
         """>>> lst = ['sv.add/w=32 *1, *5, *9']
         """
