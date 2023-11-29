@@ -45,12 +45,12 @@ class PosPopCountTestCase(FHDLTestCase):
                 "sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
                 # gather performs the transpose (which gets us to positional..)
                 "gbbd 8,6",
+                # now those bits have been turned around,
                 "setvl 0,0,8,0,1,1",        # set MVL=VL=8
-                "sv.addi *24, 0, 0",        # initialise temp r24-r31 to zero
                 "sv.popcntd/sw=8 *24,*8",   # do the (now transposed) popcount
                 "sv.add *16,*16,*24",
                 # branch back if still CTR
-                "sv.bc/all 16, *0, -0x30", # CTR mode, reduce VL by CTR
+                "sv.bc/all 16, *0, -0x28", # CTR mode, reduce VL by CTR
             ]
         )
         lst = list(lst)
@@ -61,7 +61,7 @@ class PosPopCountTestCase(FHDLTestCase):
         #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
         #tst_array = [1,2,3,4,5,6,7,8,9,10,11,12,13]
         #tst_array = [1,2,3,4,5,6,7,8,9]
-        tst_array = list(range(240))
+        #tst_array = list(range(240))
         initial_regs = [0] * 64
         initial_regs[3] = len(tst_array)
         initial_regs[4] = 256-8  # load address
