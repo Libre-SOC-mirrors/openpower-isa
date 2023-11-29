@@ -49,8 +49,8 @@ class PosPopCountTestCase(FHDLTestCase):
                 "setvl 0,0,8,0,1,1",        # set MVL=VL=8
                 "sv.popcntd/sw=8 *24,*8",   # do the (now transposed) popcount
                 "sv.add *16,*16,*24",       # and accumulate in results
-                # branch back if still CTR
-                "sv.bc/all 16, *0, -0x28", # CTR mode, reduce VL by CTR
+                # branch back if CTR still non-zero. works even though VL=8
+                "sv.bc/all 16, *0, -0x28", # reduce CTR by VL and stop if -ve
             ]
         )
         lst = list(lst)
