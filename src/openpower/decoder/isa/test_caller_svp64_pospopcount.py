@@ -1,9 +1,9 @@
-"""Implementation of chacha20 core in SVP64
+"""Implementation of pospopcount in SVP64
 Copyright (C) 2022,2023 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
 Licensed under the LGPLv3+
-Funded by NLnet NGI-ASSURE under EU grant agreement No 957073.
+Funded by NLnet NGI0-Entrust under EU grant agreement No 101069594.
 * https://nlnet.nl/project/LibreSOC-GigabitRouter/
-* https://bugs.libre-soc.org/show_bug.cgi?id=965
+* https://bugs.libre-soc.org/show_bug.cgi?id=672
 * https://libre-soc.org/openpower/sv/cookbook/pospopcount/
 """
 
