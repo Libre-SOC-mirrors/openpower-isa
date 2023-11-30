@@ -18,6 +18,9 @@ version = '0.0.3'
 cprop = "git+https://git.libre-soc.org/git/cached-property.git@1.5.2" \
         "#egg=cached-property-1.5.2"
 
+pyelftools = "git+https://git.libre-soc.org/git/pyelftools.git@v0.30" \
+             "#egg=pyelftools-0.30"
+
 # using pip3 for ongoing development is a royal pain.  seriously not
 # recommended.  therefore a number of these dependencies have been
 # commented out.  *they are still required* - they will need installing
@@ -37,11 +40,13 @@ install_requires = [
 
     # git url needed for having `pip3 install -e .` install from libre-soc git
     'cached-property@'+cprop,
+    "pyelftools@" + pyelftools,
 ]
 
 # git url needed for having `setup.py develop` install from libre-soc git
 dependency_links = [
     cprop,
+    pyelftools,
 ]
 
 test_requires = [
