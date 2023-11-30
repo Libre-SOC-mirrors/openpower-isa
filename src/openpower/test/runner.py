@@ -19,6 +19,7 @@ from unittest.mock import Mock
 from nmigen import Module, ClockSignal
 from copy import copy, deepcopy
 from pprint import pformat
+import os
 
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
 # Also, check out the cxxsim nmigen branch, and latest yosys from git
@@ -570,5 +571,8 @@ class TestRunnerBase(FHDLTestCase):
             sim.add_sync_process(wrap(wb_get(icache.ibus,
                                              self.default_mem, "ICACHE")))
 
-        with sim.write_vcd("%s.vcd" % gtkname):
+        if "SIM_NO_VCD" in os.environ:
             sim.run()
+        else:
+            with sim.write_vcd("%s.vcd" % gtkname):
+                sim.run()
