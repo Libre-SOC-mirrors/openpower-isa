@@ -125,4 +125,4 @@ build:
 
         - python3 -m openpower.syscalls json linux > src/openpower/syscalls/syscalls.json
 
-        - SILENCELOG='!*,default' pytest -v --maxfail=10
+        - SILENCELOG=1 SIM_NO_VCD=1 pytest -v --maxfail=10
