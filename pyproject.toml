@@ -8,4 +8,6 @@ addopts = [
     "-n",
     "auto",
     "--shorten-output-dir=test-out",
+    "--dist=load",
+    "--maxschedchunk=1",
 ]
