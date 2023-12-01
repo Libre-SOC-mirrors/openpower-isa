@@ -28,6 +28,7 @@ from nmutil.sim_tmp_alternative import Simulator, Settle
 from nmutil.formaltest import FHDLTestCase
 from nmutil.gtkw import write_gtkw
 from openpower.decoder.isa.all import ISA
+from openpower.decoder.isa.caller import ExitSyscallCalled
 from openpower.endian import bigendian
 
 from openpower.decoder.power_decoder2 import PowerDecode2
@@ -107,7 +108,10 @@ class SimRunner(StateRunner):
 
             # call simulated operation
             log("sim", code)
-            yield from sim.execute_one()
+            try:
+                yield from sim.execute_one()
+            except ExitSyscallCalled:
+                break
             yield Settle()
             index = sim.pc.CIA.value//4
 
@@ -274,7 +278,10 @@ class TestRunnerBase(FHDLTestCase):
                     log("sprs", test.sprs, kind=LogType.InstrInOuts)
                     log("cr", test.cr, kind=LogType.InstrInOuts)
                     log("mem", test.mem)
-                    log("msr", test.msr, kind=LogType.InstrInOuts)
+                    if test.msr is None:
+                        log("msr", "None", kind=LogType.InstrInOuts)
+                    else:
+                        log("msr", hex(test.msr), kind=LogType.InstrInOuts)
 
                     def format_assembly(assembly):
                         # type: (str) -> str

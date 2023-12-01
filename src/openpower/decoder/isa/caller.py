@@ -1144,6 +1144,10 @@ class StepLoop:
         log("    new dststep", dststep)
 
 
+class ExitSyscallCalled(Exception):
+    pass
+
+
 class SyscallEmulator(openpower.syscalls.Dispatcher):
     def __init__(self, isacaller):
         self.__isacaller = isacaller
@@ -1157,6 +1161,10 @@ class SyscallEmulator(openpower.syscalls.Dispatcher):
     def __call__(self, identifier, *arguments):
         (identifier, *arguments) = map(int, (identifier, *arguments))
         return super().__call__(identifier, *arguments)
+
+    def sys_exit_group(self, status, *rest):
+        self.__isacaller.halted = True
+        raise ExitSyscallCalled(status)
 
 
 class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
