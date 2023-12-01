@@ -1,8 +1,8 @@
 """Implementation of pospopcount in SVP64
-Copyright (C) 2022,2023 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
+Copyright (C) 2023 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
 Licensed under the LGPLv3+
 Funded by NLnet NGI0-Entrust under EU grant agreement No 101069594.
-* https://nlnet.nl/project/LibreSOC-GigabitRouter/
+* https://nlnet.nl/project/Libre-SOC-OpenPOWER-ISA
 * https://bugs.libre-soc.org/show_bug.cgi?id=672
 * https://libre-soc.org/openpower/sv/cookbook/pospopcount/
 """
@@ -39,7 +39,7 @@ class PosPopCountTestCase(FHDLTestCase):
             [
                 "mtspr 9, 3",               # move r3 to CTR
                 # VL = MIN(CTR,MAXVL=8), Rc=1 (CR0 set if CTR ends)
-                "setvl 3,0,8,0,1,1",        # set MVL=8, VL=CTR and CR0 (Rc=1)
+                "setvl 3,0,8,0,1,1",        # set MVL=8, VL=MIN(MVL,CTR)
                 # load VL bytes (update r4 addr) but compressed (dw=8)
                 "addi 6, 0, 0",             # initialise r6 to zero
                 "sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
@@ -91,13 +91,6 @@ class PosPopCountTestCase(FHDLTestCase):
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_mem=initial_mem,
                                        initial_regs=initial_regs)
-            mem = sim.mem.dump(printout=True, asciidump=True)
-            print (mem)
-            # contents of memory expected at:
-            #    element 0:   r1=0x10, D=24, => EA = 0x10+24*0 = 16 (0x10)
-            #    element 1:   r1=0x10, D=24, => EA = 0x10+24*1 = 40 (0x28)
-            # therefore, at address 0x10 ==> 0x1234
-            # therefore, at address 0x28 ==> 0x1235
             for (k, val) in enumerate(expected):
                 print("idx, count, reg", k, val, sim.gpr(k+16).value)
             for (k, val) in enumerate(expected):
@@ -115,6 +108,9 @@ class PosPopCountTestCase(FHDLTestCase):
                             mem=initial_mem)
         print("GPRs")
         simulator.gpr.dump()
+        print("mem")
+        mem = sim.mem.dump(printout=True, asciidump=True)
+        print (mem)
         return simulator
 
 
