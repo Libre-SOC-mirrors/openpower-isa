@@ -1166,6 +1166,13 @@ class SyscallEmulator(openpower.syscalls.Dispatcher):
         self.__isacaller.halted = True
         raise ExitSyscallCalled(status)
 
+    def sys_write(self, fd, buf, count, *rest):
+        buf = self.__isacaller.mem.get_ctypes(buf, count, is_write=False)
+        try:
+            return os.write(fd, buf)
+        except OSError as e:
+            return -e.errno
+
 
 class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     # decoder2 - an instance of power_decoder2
