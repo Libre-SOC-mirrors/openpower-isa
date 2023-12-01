@@ -62,13 +62,14 @@ class SyscallTestCase(FHDLTestCase):
         MSR[52:58] = SRR1[52:58]
         MSR[60:64] = SRR1[60:64]
 
-        self.assertEqual(sim.spr['SRR0'], 8)    # PC to return to: CIA+4
+        self.assertEqual(sim.spr['SRR0'], 4)    # PC to return to: CIA+4
         self.assertEqual(sim.spr['SRR1'], SRR1) # MSR to restore after sc return
 
-        # FIXME this is currently hardcoded to the same way as in test_trap.py.
-        # However, I'd have expected 0x9000000000002903, not 0x9000000000000001.
-        MSR = SelectableInt(0x9000000000000001, 64)
+        MSR = SelectableInt(0x9000000000002903, 64)
         self.assertEqual(sim.msr, MSR)          # MSR changed to this by sc/trap
+
+        # we need to actually return to right after the sc
+        self.assertEqual(sim.pc.CIA, 4)
 
         print("SYSCALL SRR1", hex(int(SRR1)), hex(int(sim.spr['SRR1'])))
         print("SYSCALL MSR", hex(int(MSR)), hex(int(sim.msr)), hex(DEFAULT_MSR))
@@ -80,6 +81,8 @@ class SyscallTestCase(FHDLTestCase):
         initial_regs[0] = 20 # getpid
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs)
+            self.assertEqual(hex(sim.imem.ld(0, width=8, swap=False)),
+                             "0x44000002", "insn wasn't restored correctly")
             self.assertEqual(sim.gpr(3), os.getpid())
 
     def test_sc_getuid(self):

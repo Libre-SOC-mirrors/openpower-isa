@@ -2019,8 +2019,6 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # 2. Call the HDL implementation which invokes trap.
         # 3. Reroute the guest system call to host system call.
         # 4. Force return from the interrupt as if we had guest OS.
-        #    "executing" rfid requires putting 0x4c000024 temporarily
-        #    into the program at the PC. TODO investigate and remove
         if ((asmop in ("sc", "scv")) and
                 (self.syscall is not None) and
                 not syscall_emu_active):
@@ -2038,10 +2036,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.gpr.write(3, result, False, self.namespace["XLEN"])
 
             # Return from interrupt
-            backup = self.imem.ld(pc, 4, False, True, instr_fetch=True)
-            self.imem.st(pc, 0x4c000024, width=4, swap=True)
             yield from self.call("rfid", syscall_emu_active=True)
-            self.imem.st(pc, backup, width=4, swap=True)
+            return
         elif ((name in ("rfid", "hrfid")) and syscall_emu_active):
             asmop = "rfid"
 
