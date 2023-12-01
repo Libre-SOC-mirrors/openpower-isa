@@ -18,6 +18,7 @@ from copy import deepcopy
 from functools import wraps
 import os
 import sys
+from elftools.elf.elffile import ELFFile  # for isinstance
 
 from nmigen.sim import Settle
 import openpower.syscalls
@@ -25,7 +26,7 @@ from openpower.consts import (MSRb, PIb,  # big-endian (PowerISA versions)
                               SVP64CROffs, SVP64MODEb)
 from openpower.decoder.helpers import (ISACallerHelper, ISAFPHelpers, exts,
                                        gtu, undefined, copy_assign_rhs)
-from openpower.decoder.isa.mem import Mem, MemMMap, MemException
+from openpower.decoder.isa.mem import Mem, MemMMap, MemException, LoadedELF
 from openpower.decoder.isa.radixmmu import RADIX
 from openpower.decoder.isa.svshape import SVSHAPE
 from openpower.decoder.isa.svstate import SVP64State
@@ -1193,7 +1194,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  initial_fpscr=0,
                  insnlog=None,
                  use_mmap_mem=False,
-                 use_syscall_emu=False):
+                 use_syscall_emu=False,
+                 emulating_mmap=False):
         if use_syscall_emu:
             self.syscall = SyscallEmulator(isacaller=self)
             if not use_mmap_mem:
@@ -1201,6 +1203,16 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 use_mmap_mem = True
         else:
             self.syscall = None
+
+        # we will eventually be able to load ELF files without use_syscall_emu
+        # (e.g. the linux kernel), so do it in a separate if block
+        if isinstance(initial_insns, ELFFile):
+            if not use_mmap_mem:
+                log("forcing use_mmap_mem due to loading an ELF file")
+                use_mmap_mem = True
+            if not emulating_mmap:
+                log("forcing emulating_mmap due to loading an ELF file")
+                emulating_mmap = True
 
         # trace log file for model output. if None do nothing
         self.insnlog = insnlog
@@ -1272,9 +1284,15 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if use_mmap_mem:
             self.mem = MemMMap(row_bytes=8,
                                initial_mem=initial_mem,
-                               misaligned_ok=True)
+                               misaligned_ok=True,
+                               emulating_mmap=emulating_mmap)
             self.imem = self.mem
-            self.mem.initialize(row_bytes=4, initial_mem=initial_insns)
+            lelf = self.mem.initialize(row_bytes=4, initial_mem=initial_insns)
+            if isinstance(lelf, LoadedELF):  # stuff parsed from ELF
+                initial_pc = lelf.pc
+                for k, v in lelf.gprs.items():
+                    self.gpr[k] = SelectableInt(v, 64)
+                initial_fpscr = lelf.fpscr
             self.mem.log_fancy(kind=LogType.InstrInOuts)
         else:
             self.mem = Mem(row_bytes=8, initial_mem=initial_mem,
