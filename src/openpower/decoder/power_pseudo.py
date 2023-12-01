@@ -22,6 +22,7 @@ from nmigen import Module, Signal
 from openpower.decoder.pseudo.parser import GardenSnakeCompiler
 from openpower.decoder.selectable_int import SelectableInt, selectconcat
 from openpower.decoder.isa.caller import GPR, Mem
+from openpower.util import log
 
 
 ####### Test code #######
@@ -269,7 +270,7 @@ def convert_to_pure_python(pcode, helper=False, filename="string"):
 
 def convert_to_python(pcode, form, incl_carry, helper=False, filename="string"):
 
-    print("form", form)
+    log("form", form)
     gsc = GardenSnakeCompiler(form=form, incl_carry=incl_carry, helper=helper)
 
     tree = gsc.compile(pcode, mode="exec", filename=filename)
@@ -312,13 +313,13 @@ def test():
 
     tree = _compile(code, mode="single", filename="string")
     tree = ast.fix_missing_locations(tree)
-    print(ast.dump(tree))
+    log(ast.dump(tree))
 
-    print("astor dump")
-    print(astor.dump_tree(tree))
-    print("to source")
+    log("astor dump")
+    log(astor.dump_tree(tree))
+    log("to source")
     source = astor.to_source(tree)
-    print(source)
+    log(source)
 
     # sys.exit(0)
 
@@ -364,7 +365,7 @@ def test():
 
     def process():
         for ins in instr:
-            print("0x{:X}".format(ins & 0xffffffff))
+            log("0x{:X}".format(ins & 0xffffffff))
 
             # ask the decoder to decode this binary data (endian'd)
             yield decode.bigendian.eq(0)  # little / big?
@@ -374,32 +375,32 @@ def test():
             # uninitialised regs, drop them into dict for function
             for rname in gsc.parser.uninit_regs:
                 d[rname] = SelectableInt(0, 64)  # uninitialised (to zero)
-                print("uninitialised", rname, hex(d[rname].value))
+                log("uninitialised", rname, hex(d[rname].value))
 
             # read regs, drop them into dict for function
             for rname in gsc.parser.read_regs:
                 regidx = yield getattr(decode.sigforms['X'], rname)
                 d[rname] = gsc.gpr[regidx]  # contents of regfile
                 d["_%s" % rname] = regidx  # actual register value
-                print("read reg", rname, regidx, hex(d[rname].value))
+                log("read reg", rname, regidx, hex(d[rname].value))
 
             exec(compiled_code, d)  # code gets executed here in dict "d"
-            print("Done")
+            log("Done")
 
-            print(d.keys())  # shows the variables that may have been created
+            log(d.keys())  # shows the variables that may have been created
 
-            print(decode.sigforms['X'])
+            log(decode.sigforms['X'])
             x = yield decode.sigforms['X'].RS
             ra = yield decode.sigforms['X'].RA
             rb = yield decode.sigforms['X'].RB
-            print("RA", ra, d['RA'])
-            print("RB", rb, d['RB'])
-            print("RS", x)
+            log("RA", ra, d['RA'])
+            log("RB", rb, d['RB'])
+            log("RS", x)
 
             for wname in gsc.parser.write_regs:
                 reg = getform[wname]
                 regidx = yield reg
-                print("write regs", regidx, wname, d[wname], reg)
+                log("write regs", regidx, wname, d[wname], reg)
                 gsc.gpr[regidx] = d[wname]
 
     sim.add_process(process)
@@ -414,7 +415,7 @@ def test():
         for j in range(16):
             hexstr.append("%02x" % gsc.mem.mem[i+j])
         hexstr = ' '.join(hexstr)
-        print("mem %4x" % i, hexstr)
+        log("mem %4x" % i, hexstr)
 
 
 if __name__ == '__main__':
