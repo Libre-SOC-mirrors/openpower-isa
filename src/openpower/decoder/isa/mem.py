@@ -198,7 +198,7 @@ class MemCommon:
         val2 = v >> ((width-misaligned)*8)
         addr2 = (st_addr >> self.word_log2) << self.word_log2
         addr2 += self.bytes_per_word
-        print("v, val2", hex(v), hex(val2), "ad", addr2)
+        log("v, val2", hex(v), hex(val2), "ad", addr2)
         self._st(addr2, val2, width=width-misaligned, swap=False)
 
     def __call__(self, addr, sz):
@@ -323,6 +323,10 @@ _NEG_PG_IDX_START = _PAGE_COUNT // 2  # start of negative half of address space
 BLOCK_SIZE = 1 << 28  # reduced so it works on armv7a
 
 assert BLOCK_SIZE % MMAP_PAGE_SIZE == 0
+assert MMAP_PAGE_SIZE % mmap.PAGESIZE == 0, "host's page size is too big"
+assert 2 ** (mmap.PAGESIZE.bit_length() - 1) == mmap.PAGESIZE, \
+    "host's page size isn't a power of 2"
+
 DEFAULT_BLOCK_ADDRS = (
     0,  # low end of user space
     2 ** 47 - BLOCK_SIZE,  # high end of user space
@@ -464,6 +468,10 @@ class MemMMap(MemCommon):
         self.modified_pages = set()
         self.mmap_emu_data_block = mmap_emu_data_block
         self.__mmap_emu_alloc_blocks = set()  # type: set[MMapEmuBlock] | None
+
+        for addr, block in self.mem_blocks.items():
+            block_addr = ctypes.addressof(ctypes.c_ubyte.from_buffer(block))
+            log("0x%X -> 0x%X len=0x%X" % (addr, block_addr, BLOCK_SIZE))
 
         # build the list of unbacked blocks -- those address ranges that have
         # no backing memory so mmap can't allocate there. These are maintained
@@ -628,7 +636,7 @@ class MemMMap(MemCommon):
         # type: (int, MMapPageFlags) -> bool
         """ if addr is the page just before a GROW_DOWN block, try to grow it.
         returns True if successful. """
-        raise NotImplementedError  # FIXME: implement
+        return False  # FIXME: implement
 
     def brk_syscall(self, addr):
         assert self.emulating_mmap, "brk syscall requires emulating_mmap=True"
@@ -642,6 +650,7 @@ class MemMMap(MemCommon):
         raise NotImplementedError  # FIXME: finish
 
     def mmap_syscall(self, addr, length, prot, flags, fd, offset, is_mmap2):
+        assert self.emulating_mmap, "mmap syscall requires emulating_mmap=True"
         if is_mmap2:
             offset *= 4096  # specifically *not* the page size
         prot_read = bool(prot & ppc_flags.PROT_READ)
@@ -736,21 +745,43 @@ class MemMMap(MemCommon):
         syscall.argtypes = (ctypes.c_long,) * 6
         call_no = ctypes.c_long(ppc_flags.host_defines['SYS_mmap'])
         host_prot = ppc_flags.host_defines['PROT_READ']
-        if block.flags & prot_write:
-            host_prot = ppc_flags.host_defines['PROT_WRITE']
+        if block.flags & MMapPageFlags.W:
+            host_prot |= ppc_flags.host_defines['PROT_WRITE']
         host_flags = ppc_flags.host_defines['MAP_FIXED']
         host_flags |= ppc_flags.host_defines['MAP_PRIVATE']
+        length = len(offsets)
+        extra_zeros_length = 0
+        extra_zeros_start = 0
         if file is None:
             host_flags |= ppc_flags.host_defines['MAP_ANONYMOUS']
+        else:
+            file_sz = os.fstat(fd).st_size
+            # host-page-align file_sz, rounding up
+            file_sz = (file_sz + mmap.PAGESIZE - 1) & ~(mmap.PAGESIZE - 1)
+            extra_zeros_length = max(0, length - (file_sz - offset))
+            extra_zeros_start = buf_addr + (file_sz - offset)
+            length -= extra_zeros_length
         res = int(syscall(
-            call_no, ctypes.c_long(buf_addr), ctypes.c_long(len(offsets)),
+            call_no, ctypes.c_long(buf_addr), ctypes.c_long(length),
             ctypes.c_long(host_prot), ctypes.c_long(host_flags),
             ctypes.c_long(fd), ctypes.c_long(offset)))
-        syscall.restype = restype
-        syscall.argtypes = argtypes
         if res == -1:
             return -ctypes.get_errno()
         self.__mmap_emu_map_fixed(block, replace=True, dry_run=False)
+        if extra_zeros_length != 0:
+            host_flags = ppc_flags.host_defines['MAP_ANONYMOUS']
+            host_flags |= ppc_flags.host_defines['MAP_FIXED']
+            host_flags |= ppc_flags.host_defines['MAP_PRIVATE']
+            if -1 == int(syscall(
+                    call_no, ctypes.c_long(extra_zeros_start),
+                    ctypes.c_long(extra_zeros_length),
+                    ctypes.c_long(host_prot), ctypes.c_long(host_flags),
+                    ctypes.c_long(-1), ctypes.c_long(0))):
+                return -ctypes.get_errno()
+        if file is not None:
+            # memory could be non-zero, mark as modified
+            for page_idx in block.page_indexes:
+                self.modified_pages.add(page_idx)
         return block.addrs.start
 
     @staticmethod
