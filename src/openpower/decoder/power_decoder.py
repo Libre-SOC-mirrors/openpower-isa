@@ -211,8 +211,8 @@ class PowerOp:
             setattr(self, field, Signal(reset_less=True, name=fname))
         self._fields = fields
         # comment out, bit too high debug level
-        #print("PowerOp debug", name, debug_report)
-        #print("        fields", fields)
+        #log("PowerOp debug", name, debug_report)
+        #log("        fields", fields)
 
     @staticmethod
     def like(other):
@@ -389,7 +389,7 @@ class PowerDecoder(Elaboratable):
     def divide_opcodes(self, d):
         divided = {}
         mask = self.suffix_mask(d)
-        #print("mask", hex(mask))
+        #log("mask", hex(mask))
         for row in d.opcodes:
             opcode = row['opcode']
             if d.opint and '-' not in opcode:
@@ -492,9 +492,9 @@ class PowerDecoder(Elaboratable):
                 decs.append(cases)
             if case_does_something:
                 eqs += eq
-                #print("submodule eqs", self.pname, eq)
+                #log("submodule eqs", self.pname, eq)
 
-        #print("submodules", self.pname, submodules)
+        #log("submodules", self.pname, submodules)
 
         # GC collection is really slow and shouldn't be needed
         # gc.collect()
@@ -506,7 +506,7 @@ class PowerDecoder(Elaboratable):
             if not isinstance(dlist, list):  # XXX HACK: take first pattern
                 dlist = [dlist]
             for dec in dlist:
-                #print("subdec", dec.pattern, self.pname)
+                #log("subdec", dec.pattern, self.pname)
                 mname = get_pname("dec%d" % dec.pattern, self.pname)
                 if mname in submodules:
                     # sigh, HACK...
@@ -517,9 +517,9 @@ class PowerDecoder(Elaboratable):
                                           col_subset=self.col_subset,
                                           row_subset=self.row_subsetfn,
                                           conditions=self.conditions)
-                log("subdecoder", mname, subdecoder)
+                #log("subdecoder", mname, subdecoder)
                 if not subdecoder.tree_analyse():  # doesn't do anything
-                    log("analysed, DELETING", mname)
+                    #log("analysed, DELETING", mname)
                     del subdecoder
                     continue                      # skip
                 submodules[mname] = subdecoder
@@ -530,7 +530,7 @@ class PowerDecoder(Elaboratable):
         return eqs
 
     def elaborate(self, platform):
-        #print("decoder elaborate", self.pname, self.submodules)
+        #log("decoder elaborate", self.pname, self.submodules)
         m = Module()
         comb = m.d.comb
 
@@ -661,7 +661,7 @@ def create_pdecode_svp64_ldst(name=None, col_subset=None, row_subset=None,
 
     subsetting of the PowerOp decoding is possible by setting col_subset
     """
-    log("create_pdecode_svp64_ldst", name, col_subset, row_subset, include_fp)
+    #log("create_pdecode_svp64_ldst", name, col_subset, row_subset, include_fp)
 
     # some alteration to the CSV files is required for SV so we use
     # a class to do it
@@ -711,7 +711,7 @@ def create_pdecode(name=None, col_subset=None, row_subset=None,
 
     NOTE (sigh) the bitsel patterns are in LSB0 order, they should be MSB0
     """
-    log("create_pdecode", name, col_subset, row_subset, include_fp)
+    #log("create_pdecode", name, col_subset, row_subset, include_fp)
 
     # some alteration to the CSV files is required for SV so we use
     # a class to do it
@@ -805,7 +805,7 @@ if __name__ == '__main__':
         # row subset
 
         def rowsubsetfn(opcode, row):
-            log("row_subset", opcode, row)
+            #log("row_subset", opcode, row)
             return row['unit'] in ['LDST', 'FPU']
 
         conditions = {
@@ -837,7 +837,7 @@ if __name__ == '__main__':
         from nmigen.hdl.ir import Fragment
         elaborated = Fragment.get(pdecode, platform=None)
         elaborated_repr = fragment_repr(elaborated)
-        print(elaborated_repr)
+        #log(elaborated_repr)
 
         exit(0)
 
