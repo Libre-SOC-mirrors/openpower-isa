@@ -20,6 +20,7 @@ from nmigen import Module, ClockSignal
 from copy import copy, deepcopy
 from pprint import pformat
 import os
+from elftools.elf.elffile import ELFFile  # for isinstance
 
 # NOTE: to use cxxsim, export NMIGEN_SIM_MODE=cxxsim from the shell
 # Also, check out the cxxsim nmigen branch, and latest yosys from git
@@ -85,20 +86,37 @@ class SimRunner(StateRunner):
                   use_mmap_mem=self.use_mmap_mem,
                   use_syscall_emu=self.use_syscall_emu)
 
-        # run the loop of the instructions on the current test
-        index = sim.pc.CIA.value//4
-        while index < len(instructions):
+        index = ins = code = 0  # variables for nonlocal
+
+        def next_insn():
+            nonlocal index, ins, code
+            index = sim.pc.CIA.value//4
+            if index >= len(instructions):
+                return False
             ins, code = instructions[index]
 
             # extra new-line so it's easier to visually separate each
             # instruction in output
-            log(f"\n0x{sim.pc.CIA.value:04X}: {ins % (1 << 32):08X} {code}",
+            log("\n0x%04X: %08X %s" % (sim.pc.CIA.value,
+                                        ins % (1 << 32), code),
                 kind=LogType.InstrInOuts)
 
-            log("sim instr: 0x{:X} pc=0x{:X}".format(ins & 0xffffffff,
-                                                     sim.pc.CIA.value))
             log(index, code)
+            return True
 
+        if isinstance(gen, ELFFile):
+            def next_insn():
+                nonlocal index, ins, code
+                index = code = None
+                ins = sim.imem.ld(sim.pc.CIA.value, width=4, swap=False,
+                                  check_in_mem=True, instr_fetch=True)
+                ins_str = "None" if ins is None else "%08X" % ins
+                log("\n0x%04X: %s" % (sim.pc.CIA.value, ins_str),
+                    kind=LogType.InstrInOuts)
+                return not sim.halted
+
+        # run the loop of the instructions on the current test
+        while next_insn():
             # set up simulated instruction (in simdec2)
             try:
                 yield from sim.setup_one()
@@ -113,7 +131,6 @@ class SimRunner(StateRunner):
             except ExitSyscallCalled:
                 break
             yield Settle()
-            index = sim.pc.CIA.value//4
 
             # get sim register and memory TestState, add to list
             state = yield from TestState("sim", sim, dut, code)
@@ -293,11 +310,19 @@ class TestRunnerBase(FHDLTestCase):
                                     line.partition('#')[0].strip() != "":
                                 pc += 4
                         return "\n".join(out)
-                    log("assembly:\n" + format_assembly(program.assembly),
-                        kind=LogType.InstrInOuts)
-                    gen = list(program.generate_instructions())
-                    insncode = program.assembly.splitlines()
-                    instructions = list(zip(gen, insncode))
+                    if isinstance(program, ELFFile):
+                        f = os.readlink(
+                            "/proc/self/fd/%d" % program.stream.fileno())
+                        log("using program: " + f, kind=LogType.InstrInOuts)
+                        instructions = program
+                        gen = program
+                        insncode = None
+                    else:
+                        log("assembly:\n" + format_assembly(program.assembly),
+                            kind=LogType.InstrInOuts)
+                        gen = list(program.generate_instructions())
+                        insncode = program.assembly.splitlines()
+                        instructions = list(zip(gen, insncode))
 
                     ###### RUNNING OF EACH TEST #######
                     # StateRunner.step_test()
