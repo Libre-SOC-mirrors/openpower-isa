@@ -12,7 +12,6 @@ from openpower.test.common import TestAccumulatorBase, skip_case
 from openpower.test.state import ExpectedState
 from openpower.test.elf import compile_elf
 from openpower.consts import MSR, DEFAULT_MSR
-from copy import deepcopy
 
 SYSCALL_DEF = r"""
 #include <sys/syscall.h>
@@ -74,15 +73,15 @@ DEFAULT_USER_MSR = DEFAULT_MSR | (1 << MSR.PR) # needs problem state
 class SimpleCases(TestAccumulatorBase):
     def case_hello_world(self):
         prog = compile_elf(SYSCALL_DEF + hello_world)
-        self.add_case(prog, initial_sprs=deepcopy(initial_sprs),
+        self.add_case(prog, initial_sprs=initial_sprs.copy(),
                       initial_msr=DEFAULT_USER_MSR)
 
     def case_hello_world_with_data_and_bss(self):
         prog = compile_elf(SYSCALL_DEF + hello_word_data_bss)
-        self.add_case(prog, initial_sprs=deepcopy(initial_sprs),
+        self.add_case(prog, initial_sprs=initial_sprs.copy(),
                       initial_msr=DEFAULT_USER_MSR)
 
     def case_just_exit(self):
         prog = compile_elf(SYSCALL_DEF + just_exit)
-        self.add_case(prog, initial_sprs=deepcopy(initial_sprs),
+        self.add_case(prog, initial_sprs=initial_sprs.copy(),
                       initial_msr=DEFAULT_USER_MSR)
