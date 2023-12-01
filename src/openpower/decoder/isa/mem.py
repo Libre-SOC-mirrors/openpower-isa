@@ -25,6 +25,8 @@ from nmutil import plain_data
 from pathlib import Path
 from openpower.syscalls import ppc_flags
 import os
+from elftools.elf.elffile import ELFFile
+from elftools.elf.constants import P_FLAGS
 
 
 def swap_order(x, nbytes):
@@ -93,6 +95,8 @@ class MemCommon:
         self.initialize(row_bytes, initial_mem)
 
     def initialize(self, row_bytes, initial_mem):
+        if isinstance(initial_mem, ELFFile):
+            return load_elf(self, initial_mem)
         for addr, (val, width) in process_mem(initial_mem, row_bytes).items():
             # val = swap_order(val, width)
             self.st(addr, val, width, swap=False)
@@ -317,6 +321,7 @@ _ALLOWED_MMAP_STACK_FLAGS = MMapPageFlags.RWX | MMapPageFlags.GROWS_DOWN
 MMAP_PAGE_SIZE = 1 << 16  # size of chunk that we track
 _PAGE_COUNT = (1 << 48) // MMAP_PAGE_SIZE  # 48-bit address space
 _NEG_PG_IDX_START = _PAGE_COUNT // 2  # start of negative half of address space
+_USER_SPACE_SIZE = _NEG_PG_IDX_START * MMAP_PAGE_SIZE
 
 # code assumes BLOCK_SIZE is a power of two
 # BLOCK_SIZE = 1 << 32
@@ -327,10 +332,19 @@ assert MMAP_PAGE_SIZE % mmap.PAGESIZE == 0, "host's page size is too big"
 assert 2 ** (mmap.PAGESIZE.bit_length() - 1) == mmap.PAGESIZE, \
     "host's page size isn't a power of 2"
 
-DEFAULT_BLOCK_ADDRS = (
-    0,  # low end of user space
-    2 ** 47 - BLOCK_SIZE,  # high end of user space
-)
+def _make_default_block_addrs():
+    needed_page_addrs = (
+        0,  # low end of user space
+        0x10000000, # default ELF load address
+        _USER_SPACE_SIZE - MMAP_PAGE_SIZE,  # high end of user space
+    )
+    block_addrs = set()
+    for page_addr in needed_page_addrs:
+        offset = page_addr % BLOCK_SIZE
+        block_addrs.add(page_addr - offset)
+    return tuple(sorted(block_addrs))
+
+DEFAULT_BLOCK_ADDRS = _make_default_block_addrs()
 
 
 @plain_data.plain_data(frozen=True, unsafe_hash=True)
@@ -873,3 +887,128 @@ class MemMMap(MemCommon):
                 block_addr = next_block_addr
                 if bytes_ != zeros:
                     yield word_idx
+
+
+@plain_data.plain_data()
+class LoadedELF:
+    __slots__ = "elf_file", "pc", "gprs", "fpscr"
+
+    def __init__(self, elf_file, pc, gprs, fpscr):
+        self.elf_file = elf_file
+        self.pc = pc
+        self.gprs = gprs
+        self.fpscr = fpscr
+
+
+def raise_if_syscall_err(result):
+    if -4096 < result < 0:
+        raise OSError(-result, os.strerror(-result))
+    return result
+
+
+# TODO: change to much smaller size once GROWSDOWN is implemented
+DEFAULT_INIT_STACK_SZ = 4 << 20
+
+
+def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
+    if not isinstance(mem, MemMMap):
+        raise TypeError("MemMMap required to load ELFs")
+    if not isinstance(elf_file, ELFFile):
+        raise TypeError()
+    if elf_file.header['e_type'] != 'ET_EXEC':
+        raise NotImplementedError("dynamic binaries aren't implemented")
+    fd = elf_file.stream.fileno()
+    for segment in elf_file.iter_segments():
+        if segment.header['p_type'] in ('PT_DYNAMIC', 'PT_INTERP'):
+            raise NotImplementedError("dynamic binaries aren't implemented")
+        elif segment.header['p_type'] == 'PT_LOAD':
+            flags = segment.header['p_flags']
+            offset = segment.header['p_offset']
+            vaddr = segment.header['p_vaddr']
+            filesz = segment.header['p_filesz']
+            memsz = segment.header['p_memsz']
+            align = segment.header['p_align']
+            if align != 0x10000:
+                raise NotImplementedError("non-default ELF segment alignment")
+            if align < MMAP_PAGE_SIZE:
+                raise NotImplementedError("align less than MMAP_PAGE_SIZE")
+            prot = ppc_flags.PROT_NONE
+            if flags & P_FLAGS.PF_R:
+                prot |= ppc_flags.PROT_READ
+            if flags & P_FLAGS.PF_W:
+                prot |= ppc_flags.PROT_WRITE
+            if flags & P_FLAGS.PF_X:
+                prot |= ppc_flags.PROT_EXEC
+            # align start to page
+            adj = offset % MMAP_PAGE_SIZE
+            offset -= adj
+            assert offset >= 0
+            vaddr -= adj
+            filesz += adj
+            memsz += adj
+            # page-align, rounding up
+            filesz_aligned = (
+                filesz + MMAP_PAGE_SIZE - 1) & ~(MMAP_PAGE_SIZE - 1)
+            page_end_init_needed = filesz < memsz and filesz < filesz_aligned
+            zero_pages_needed = memsz > filesz_aligned
+            adj_prot = prot  # adjust prot for initialization
+            if page_end_init_needed:
+                # we need to initialize trailing bytes to zeros,
+                # so we need write access
+                adj_prot |= ppc_flags.PROT_WRITE
+            flags = ppc_flags.MAP_FIXED_NOREPLACE | ppc_flags.MAP_PRIVATE
+            result = mem.mmap_syscall(
+                vaddr, filesz, adj_prot, flags, fd, offset, is_mmap2=False)
+            raise_if_syscall_err(result)
+            if page_end_init_needed:
+                page_end = mem.get_ctypes(
+                    vaddr + filesz, filesz_aligned - filesz, True)
+                ctypes.memset(page_end, 0, len(page_end))
+            if zero_pages_needed:
+                result = mem.mmap_syscall(
+                    vaddr + filesz_aligned, memsz - filesz_aligned,
+                    prot, flags, fd=-1, offset=0, is_mmap2=False)
+                raise_if_syscall_err(result)
+        else:
+            log("ignoring ELF segment of type " + segment.header['p_type'])
+    # page-align stack_size, rounding up
+    stack_size = (stack_size + MMAP_PAGE_SIZE - 1) & ~(MMAP_PAGE_SIZE - 1)
+    stack_top = _USER_SPACE_SIZE
+    stack_low = stack_top - stack_size
+    prot = ppc_flags.PROT_READ | ppc_flags.PROT_WRITE
+    flags = ppc_flags.MAP_FIXED_NOREPLACE | ppc_flags.MAP_PRIVATE
+    result = mem.mmap_syscall(
+        stack_low, stack_size, prot, flags, fd=-1, offset=0, is_mmap2=False)
+    raise_if_syscall_err(result)
+    gprs = {}
+    if len(args):
+        raise NotImplementedError("allocate argv on the stack")
+    else:
+        argv = 0
+    if len(env):
+        raise NotImplementedError("allocate envp on the stack")
+    else:
+        envp = 0
+
+    # FIXME: incorrect, should point to the aux vector allocated on the stack
+    auxv = 0
+
+    # make space for red zone, 512 bytes specified in
+    # 64-bit ELF V2 ABI Specification v1.5 section 2.2.3.4
+    # https://files.openpower.foundation/s/cfA2oFPXbbZwEBK
+    stack_top -= 512
+
+    # align stack_top
+    stack_top -= stack_top % 16
+
+    # TODO: dynamically-linked binaries need to use the entry-point of ld.so
+    pc = elf_file.header['e_entry']
+    gprs[1] = stack_top
+    gprs[3] = len(args)  # argc
+    gprs[4] = argv
+    gprs[5] = envp
+    gprs[5] = auxv
+    gprs[7] = 0  # termination function pointer
+    gprs[12] = pc
+    fpscr = 0
+    return LoadedELF(elf_file, pc, gprs, fpscr)
