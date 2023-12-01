@@ -54,11 +54,12 @@ void _start() {
     syscall(SYS_write, 1, (const void *)msg_in_ro_data, sizeof(msg_in_ro_data) - 1);
     syscall(SYS_exit_group, 0);
 }
-""")
+"""
 
 just_exit = r"""
 void _start() {
     syscall(SYS_exit_group, 0);
+}
 """
 
 # we have to specify *all* sprs that our binary might possibly need to
