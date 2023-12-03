@@ -17,6 +17,10 @@ def parse_defines(flags, compiler):
 #include <errno.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <linux/utsname.h>
 """
     if isinstance(compiler, str):
         compiler = [compiler]
