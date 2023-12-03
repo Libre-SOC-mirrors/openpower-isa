@@ -71,7 +71,7 @@ class ISATestRunner(FHDLTestCase):
                         yield Settle()
 
                         ins, code = instructions[index]
-                        print("    0x{:X}".format(ins & 0xffffffff))
+                        print("    0x%x" % (ins & 0xffffffff))
                         opname = code.split(' ')[0]
                         print(code, opname)
 
@@ -156,7 +156,7 @@ def run_tst(generator, initial_regs,
             yield Settle()
 
             ins, code = instructions[index]
-            print("    0x{:X}".format(ins & 0xffffffff))
+            print("    0x%x" % (ins & 0xffffffff))
             opname = code.split(' ')[0]
             print(code, opname)
 
