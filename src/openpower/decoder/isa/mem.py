@@ -359,7 +359,7 @@ def _make_default_block_addrs():
 DEFAULT_BLOCK_ADDRS = _make_default_block_addrs()
 
 
-@plain_data.plain_data(frozen=True, unsafe_hash=True)
+@plain_data.plain_data(frozen=True, unsafe_hash=True, repr=False)
 class MMapEmuBlock:
     __slots__ = ("addrs", "flags", "file", "file_off")
 
@@ -447,6 +447,18 @@ class MMapEmuBlock:
             retval.append(plain_data.replace(
                 self, addrs=addrs, file_off=file_off))
         return retval
+
+    def __repr__(self):
+        parts = ["MMapEmuBlock(range(0x%X, 0x%X)"
+                 % (self.addrs.start, self.addrs.stop)]
+        if self.flags != MMapPageFlags.NONE:
+            parts.append(", flags=%r" % (self.flags, ))
+        if self.file is not None:
+            parts.append(", file=%r" % (self.file, ))
+        if self.file_off != 0:
+            parts.append(", file_off=0x%X" % (self.file_off, ))
+        parts.append(")")
+        return "".join(parts)
 
 
 # stuff marked "not available" is not in the powerpc64le headers on my system
