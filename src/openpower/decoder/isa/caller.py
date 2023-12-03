@@ -1302,7 +1302,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                  insnlog=None,
                  use_mmap_mem=False,
                  use_syscall_emu=False,
-                 emulating_mmap=False):
+                 emulating_mmap=False,
+                 real_page_size=None):
         if use_syscall_emu:
             self.syscall = SyscallEmulator(isacaller=self)
             if not use_mmap_mem:
@@ -1455,7 +1456,21 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                                'undefined': undefined,
                                'mode_is_64bit': True,
                                'SO': XER_bits['SO'],
-                               'XLEN': 64  # elwidth overrides
+                               'XLEN': 64,  # elwidth overrides
+                               })
+
+        # for LR/SC
+        if real_page_size is None:
+            real_page_size = 4096
+        self.real_page_size = real_page_size
+        self.reserve_addr = SelectableInt(0, self.XLEN)
+        self.reserve = SelectableInt(0, 1)
+        self.reserve_length = SelectableInt(0, 4)
+
+        self.namespace.update({'RESERVE': self.RESERVE,
+                               'RESERVE_ADDR': self.RESERVE_ADDR,
+                               'RESERVE_LENGTH': self.RESERVE_LENGTH,
+                               'REAL_PAGE_SIZE': self.REAL_PAGE_SIZE,
                                })
 
         for name in BFP_FLAG_NAMES:
@@ -1482,6 +1497,22 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     @property
     def XLEN(self):
         return self.namespace["XLEN"]
+
+    @property
+    def RESERVE(self):
+        return self.reserve
+
+    @property
+    def RESERVE_LENGTH(self):
+        return self.reserve_length
+
+    @property
+    def RESERVE_ADDR(self):
+        return self.reserve_addr
+
+    @property
+    def REAL_PAGE_SIZE(self):
+        return self.real_page_size
 
     @property
     def FPSCR(self):
@@ -1589,6 +1620,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         self.namespace['OV'] = self.spr['XER'][XER_bits['OV']].value
         self.namespace['OV32'] = self.spr['XER'][XER_bits['OV32']].value
         self.namespace['XLEN'] = xlen
+        self.namespace['RESERVE'] = self.reserve
+        self.namespace['RESERVE_ADDR'] = self.reserve_addr
+        self.namespace['RESERVE_LENGTH'] = self.reserve_length
 
         # add some SVSTATE convenience variables
         vl = self.svstate.vl
@@ -2358,6 +2392,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         for name in input_names:
             if name == "overflow":
                 inputs[name] = SelectableInt(0, 1)
+            elif name.startswith("RESERVE"):
+                inputs[name] = getattr(self, name)
             elif name == "FPSCR":
                 inputs[name] = self.FPSCR
             elif name in ("CA", "CA32", "OV", "OV32"):
@@ -2791,6 +2827,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         if isinstance(output, int):
             output = SelectableInt(output, EFFECTIVELY_UNLIMITED)
         # write FPSCR
+        if name.startswith("RESERVE"):
+            log("write %s 0x%x" % (name, output.value))
+            getattr(self, name).eq(output)
+            return
         if name in ['FPSCR', ]:
             log("write FPSCR 0x%x" % (output.value))
             self.FPSCR.eq(output)
