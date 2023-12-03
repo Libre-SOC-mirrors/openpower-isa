@@ -61,6 +61,15 @@ void _start() {
 }
 """
 
+static_glibc = r"""
+#include <stdio.h>
+
+int main() {
+    printf("Hello World!\n");
+    return 0;
+}
+"""
+
 # we have to specify *all* sprs that our binary might possibly need to
 # read, because ISACaller is annoying like that...
 # https://bugs.libre-soc.org/show_bug.cgi?id=1226#c2
@@ -83,5 +92,11 @@ class SimpleCases(TestAccumulatorBase):
 
     def case_just_exit(self):
         prog = compile_elf(SYSCALL_DEF + just_exit)
+        self.add_case(prog, initial_sprs=initial_sprs.copy(),
+                      initial_msr=DEFAULT_USER_MSR)
+
+    def case_static_glibc(self):
+        compiler_args = '-Os', '-static', '-xc'
+        prog = compile_elf(static_glibc, compiler_args)
         self.add_case(prog, initial_sprs=initial_sprs.copy(),
                       initial_msr=DEFAULT_USER_MSR)
