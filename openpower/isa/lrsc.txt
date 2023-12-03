@@ -1,0 +1,29 @@
+EA <- (RA|0) + (RB)
+undefined_case <- 0
+store_performed <- 0
+if RESERVE then
+  if RESERVE_LENGTH = 1 &
+      RESERVE_ADDR = real_addr(EA) then
+       MEM(EA, 1) <- (RS)56:63
+       undefined_case <- 0
+       store_performed <- 1
+   else
+       z <- 4096 # smallest implementation's real page size 
+       if RESERVE_ADDR / z = real_addr(EA) / z then
+          undefined_case <- 1
+       else
+         undefined_case <- 0
+         store_performed <- 0
+else
+  undefined_case <- 0
+  store_performed <- 0
+if undefined_case then
+  u1 <- undefined(0b1)
+  if u1 then
+     MEM(EA, 1) <- (RS)56:63
+  u2 <- undefined(0b0)
+  CR0 <- 0b00 || u2 || XERSO
+else
+  CR0 <- 0b00 || store_performed || XER[SO]
+RESERVE  0
+
