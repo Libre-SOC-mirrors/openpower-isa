@@ -209,11 +209,9 @@ def run_tst(args, generator, qemu,
                 ins = instructions[index]
                 if isinstance(ins, list):
                     ins, code = ins
-                    log("    0x{:X}".format(ins & 0xffffffff))
                     opname = code.split(' ')[0]
                     log(code, opname)
-                else:
-                    log("    0x{:X}".format(ins & 0xffffffff))
+                log("    0x%x" % (ins & 0xffffffff))
 
             # ask the decoder to decode this binary data (endian'd)
             yield from simulator.execute_one()
