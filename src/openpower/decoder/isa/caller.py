@@ -2104,6 +2104,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             illegal = False
             ins_name = dotstrp
 
+        # match against instructions treated as nop, see nop below
+        if asmop.startswith("dc"):
+            illegal = False
+            ins_name = "nop"
+
         # branch-conditional redirects to sv.bc
         if asmop.startswith('bc') and self.is_svp64_mode:
             ins_name = 'sv.%s' % ins_name
