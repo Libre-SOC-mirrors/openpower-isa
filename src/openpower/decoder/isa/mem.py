@@ -931,6 +931,7 @@ class MemMMap(MemCommon):
             # memory could be non-zero, mark as modified
             for page_idx in block.page_indexes:
                 self.modified_pages.add(page_idx)
+        log("mmap block=%s" % (block,), kind=LogType.InstrInOuts)
         return block.addrs.start
 
     @staticmethod
