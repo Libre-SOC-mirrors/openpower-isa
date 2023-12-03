@@ -1091,6 +1091,7 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
     if elf_file.header['e_type'] != 'ET_EXEC':
         raise NotImplementedError("dynamic binaries aren't implemented")
     fd = elf_file.stream.fileno()
+    heap_start = -1
     for segment in elf_file.iter_segments():
         if segment.header['p_type'] in ('PT_DYNAMIC', 'PT_INTERP'):
             raise NotImplementedError("dynamic binaries aren't implemented")
@@ -1122,6 +1123,9 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
             # page-align, rounding up
             filesz_aligned = (
                 filesz + MMAP_PAGE_SIZE - 1) & ~(MMAP_PAGE_SIZE - 1)
+            # page-align, rounding up
+            memsz_aligned = (
+                memsz + MMAP_PAGE_SIZE - 1) & ~(MMAP_PAGE_SIZE - 1)
             page_end_init_needed = filesz < memsz and filesz < filesz_aligned
             zero_pages_needed = memsz > filesz_aligned
             adj_prot = prot  # adjust prot for initialization
@@ -1142,6 +1146,7 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
                     vaddr + filesz_aligned, memsz - filesz_aligned,
                     prot, flags, fd=-1, offset=0, is_mmap2=False)
                 raise_if_syscall_err(result)
+            heap_start = max(heap_start, vaddr + memsz_aligned)
         else:
             log("ignoring ELF segment of type " + segment.header['p_type'])
     # page-align stack_size, rounding up
@@ -1162,6 +1167,9 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
         raise NotImplementedError("allocate envp on the stack")
     else:
         envp = 0
+
+    if heap_start > 0:
+        mem.heap_range = range(heap_start, heap_start)  # empty heap to start
 
     # FIXME: incorrect, should point to the aux vector allocated on the stack
     auxv = 0
