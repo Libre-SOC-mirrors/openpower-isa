@@ -365,7 +365,7 @@ def test():
 
     def process():
         for ins in instr:
-            log("0x{:X}".format(ins & 0xffffffff))
+            log("0x%x" % (ins & 0xffffffff))
 
             # ask the decoder to decode this binary data (endian'd)
             yield decode.bigendian.eq(0)  # little / big?
