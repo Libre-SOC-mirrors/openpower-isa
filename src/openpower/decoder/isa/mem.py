@@ -268,10 +268,10 @@ class MemCommon:
             return bytearray(line_size)
         mem_lines = defaultdict(make_line)
         subword_range = range(1 << self.word_log2)
-        for k in self.word_idxs():
-            addr = k << self.word_log2
-            for _ in subword_range:
-                v = self.ld(addr, width=1, reason=_ReadReason.Dump)
+        words = self.make_sim_state_dict()
+        for addr, word in words.items():
+            for i in subword_range:
+                v = (word >> i * 8) & 0xFF
                 mem_lines[addr >> log2_line_size][addr & subline_mask] = v
                 addr += 1
 
