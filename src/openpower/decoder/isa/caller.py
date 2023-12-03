@@ -2143,10 +2143,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                       MicrOp.OP_MTSPR.value] and spr_msb:
             instr_is_privileged = True
 
-        log("is priv", instr_is_privileged, hex(self.msr.value),
-            self.msr[MSRb.PR])
         # check MSR priv bit and whether op is privileged: if so, throw trap
-        if instr_is_privileged and self.msr[MSRb.PR] == 1:
+        PR = self.msr[MSRb.PR]
+        log("is priv", instr_is_privileged, hex(self.msr.value), PR)
+        if instr_is_privileged and PR == 1:
             self.call_trap(0x700, PIb.PRIV)
             return
 
