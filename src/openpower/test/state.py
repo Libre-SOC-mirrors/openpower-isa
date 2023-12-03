@@ -425,13 +425,7 @@ class SimState(State):
         mem = self.sim.mem
         if isinstance(mem, RADIX):
             mem = mem.mem
-        keys = list(mem.word_idxs())
-        self.mem = {}
-        # from each address in the underlying mem-simulated dictionary
-        # issue a 64-bit LD (with no byte-swapping)
-        for k in keys:
-            data = mem.ld(k*8, 8, False)
-            self.mem[k*8] = data
+        self.mem = mem.make_sim_state_dict()
 
 
 class ExpectedState(State):

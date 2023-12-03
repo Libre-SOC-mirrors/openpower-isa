@@ -19,6 +19,7 @@ import math
 import enum
 from cached_property import cached_property
 import mmap
+import struct
 from pickle import PicklingError
 import ctypes
 from nmutil import plain_data
@@ -114,6 +115,19 @@ class MemCommon:
     def word_idxs(self):
         raise NotImplementedError
         yield 0
+
+    def make_sim_state_dict(self):
+        """ returns a dict equivalent to:
+        retval = {}
+        for k in list(self.word_idxs()):
+            data = self.ld(k*8, 8, False)
+            retval[k*8] = data
+        """
+        retval = {}
+        for k in list(self.word_idxs()):
+            data = self.ld(k*8, 8, False, reason=_ReadReason.Dump)
+            retval[k*8] = data
+        return retval
 
     def _get_shifter_mask(self, wid, remainder, do_log=True):
         shifter = ((self.bytes_per_word - wid) - remainder) * \
@@ -1023,6 +1037,29 @@ class MemMMap(MemCommon):
                 block_addr = next_block_addr
                 if bytes_ != zeros:
                     yield word_idx
+
+    def make_sim_state_dict(self):
+        """ returns a dict equivalent to:
+        retval = {}
+        for k in list(self.word_idxs()):
+            data = self.ld(k*8, 8, False)
+            retval[k*8] = data
+        """
+        if self.bytes_per_word != 8:
+            return super().make_sim_state_dict()
+        retval = {}
+        page_struct = struct.Struct("<%dQ" % (MMAP_PAGE_SIZE // 8,))
+        assert page_struct.size == MMAP_PAGE_SIZE, "got wrong format"
+        for page_idx in self.modified_pages:
+            start = self.mmap_page_idx_to_addr(page_idx)
+            block, block_addr = self.__access_addr_range(
+                start, MMAP_PAGE_SIZE, MMapPageFlags.R)
+            # written this way to avoid unnecessary allocations
+            words = page_struct.unpack_from(block, block_addr)
+            for i, v in zip(range(start, start + MMAP_PAGE_SIZE, 8), words):
+                if v != 0:
+                    retval[i] = v
+        return retval
 
 
 @plain_data.plain_data()

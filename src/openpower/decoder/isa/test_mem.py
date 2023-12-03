@@ -80,6 +80,36 @@ Memory:
 0x7FFFFEDCBA90:  00 00 00 00 00 00 00 00  89 67 45 23 01 EF CD AB  |.........gE#....|
 """)
 
+    def test_make_sim_state_dict(self):
+        m = self.MemCls(row_bytes=8, initial_mem=(0x58, [
+            0x5DE6DA2A1137745E, 0x6054D17B4C773D2D,
+            0x5B66920D9540B825, 0x7753D053D9854A8F,
+            0x9F2A58E2B5B79829, 0x974AC142D081CE83,
+            0xAA963F95FC566F57, 0xE63A95A3F654A57E,
+            0x103709510CBE0EEF, 0,
+            0x5053575776376ACD, 0xCFDFF67B7C5096C2,
+            0x9F8FC1B06E7868A0, 0x6E7B1D27CCBAF8E7,
+            0xEB91B92FAF546BA1, 0x21FB683F34641876,
+        ]))
+
+        a = m.make_sim_state_dict()
+        b = m.make_sim_state_dict()
+        self.assertIsNot(a, b)  # must always return a new dict
+        self.assertEqual(a, b)  # should return the same result
+        expected = {
+            0x58: 0x5DE6DA2A1137745E, 0x60: 0x6054D17B4C773D2D,
+            0x68: 0x5B66920D9540B825, 0x70: 0x7753D053D9854A8F,
+            0x78: 0x9F2A58E2B5B79829, 0x80: 0x974AC142D081CE83,
+            0x88: 0xAA963F95FC566F57, 0x90: 0xE63A95A3F654A57E,
+            0x98: 0x103709510CBE0EEF, 0xA0: 0,
+            0xA8: 0x5053575776376ACD, 0xB0: 0xCFDFF67B7C5096C2,
+            0xB8: 0x9F8FC1B06E7868A0, 0xC0: 0x6E7B1D27CCBAF8E7,
+            0xC8: 0xEB91B92FAF546BA1, 0xD0: 0x21FB683F34641876,
+        }
+        if isinstance(m, MemMMap):
+            del expected[0xA0]  # MemMMap doesn't list zero entries
+        self.assertEqual(a, expected)
+
 
 class TestMemMMap(TestMemCommon):
     MemCls = MemMMap
