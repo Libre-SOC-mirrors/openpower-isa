@@ -1260,6 +1260,27 @@ class SyscallEmulator(openpower.syscalls.Dispatcher):
                     sysname, nodename, release, version, machine, domainname)
         return 0
 
+    def sys_readlink(self, pathname, buf, bufsiz, *rest):
+        dirfd = ppc_flags.AT_FDCWD
+        return self.sys_readlinkat(dirfd, pathname, buf, bufsiz)
+
+    def sys_readlinkat(self, dirfd, pathname, buf, bufsiz, *rest):
+        try:
+            path = self.__isacaller.mem.read_cstr(pathname)
+            buf = self.__isacaller.mem.get_ctypes(buf, bufsiz, is_write=True)
+        except (ValueError, MemException):
+            return -errno.EFAULT
+        try:
+            if dirfd == ppc_flags.AT_FDCWD:
+                result = os.readlink(path)
+            else:
+                result = os.readlink(path, dir_fd=dirfd)
+            retval = min(len(result), len(buf))
+            buf[:retval] = result[:retval]
+            return retval
+        except OSError as e:
+            return -e.errno
+
 
 class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     # decoder2 - an instance of power_decoder2
