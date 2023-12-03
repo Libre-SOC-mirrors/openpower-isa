@@ -2105,7 +2105,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             ins_name = dotstrp
 
         # match against instructions treated as nop, see nop below
-        if asmop.startswith("dc"):
+        if asmop.startswith("dcbt"):
             illegal = False
             ins_name = "nop"
 
