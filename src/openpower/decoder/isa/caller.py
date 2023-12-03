@@ -17,6 +17,9 @@ from collections import namedtuple
 from copy import deepcopy
 from functools import wraps
 import os
+import errno
+import struct
+from openpower.syscalls import ppc_flags
 import sys
 from elftools.elf.elffile import ELFFile  # for isinstance
 
@@ -1182,6 +1185,80 @@ class SyscallEmulator(openpower.syscalls.Dispatcher):
             return os.write(fd, buf)
         except OSError as e:
             return -e.errno
+
+    def sys_read(self, fd, buf, count, *rest):
+        buf = self.__isacaller.mem.get_ctypes(buf, count, is_write=True)
+        try:
+            return os.readv(fd, [buf])
+        except OSError as e:
+            return -e.errno
+
+    def sys_mmap(self, addr, length, prot, flags, fd, offset, *rest):
+        return self.__isacaller.mem.mmap_syscall(
+            addr, length, prot, flags, fd, offset, is_mmap2=False)
+
+    def sys_mmap2(self, addr, length, prot, flags, fd, offset, *rest):
+        return self.__isacaller.mem.mmap_syscall(
+            addr, length, prot, flags, fd, offset, is_mmap2=True)
+
+    def sys_brk(self, addr, *rest):
+        return self.__isacaller.mem.brk_syscall(addr)
+
+    def sys_munmap(self, addr, length, *rest):
+        return -errno.ENOSYS  # TODO: implement
+
+    def sys_mprotect(self, addr, length, prot, *rest):
+        return -errno.ENOSYS  # TODO: implement
+
+    def sys_pkey_mprotect(self, addr, length, prot, pkey, *rest):
+        return -errno.ENOSYS  # TODO: implement
+
+    def sys_openat(self, dirfd, pathname, flags, mode, *rest):
+        try:
+            path = self.__isacaller.mem.read_cstr(pathname)
+        except (ValueError, MemException):
+            return -errno.EFAULT
+        try:
+            if dirfd == ppc_flags.AT_FDCWD:
+                return os.open(path, flags, mode)
+            else:
+                return os.open(path, flags, mode, dir_fd=dirfd)
+        except OSError as e:
+            return -e.errno
+
+    def _uname(self):
+        uname = os.uname()
+        sysname = b'Linux'
+        nodename = uname.nodename.encode()
+        release = b'5.6.0-1-powerpc64le'
+        version = b'#1 SMP Debian 5.6.7-1 (2020-04-29)'
+        machine = b'ppc64le'
+        domainname = b''
+        return sysname, nodename, release, version, machine, domainname
+
+    def sys_uname(self, buf, *rest):
+        s = struct.Struct("<65s65s65s65s65s")
+        try:
+            buf = self.__isacaller.mem.get_ctypes(buf, s.size, is_write=True)
+        except (ValueError, MemException):
+            return -errno.EFAULT
+        sysname, nodename, release, version, machine, domainname = \
+            self._uname()
+        s.pack_into(buf, 0, sysname, nodename, release, version, machine)
+        return 0
+
+    def sys_newuname(self, buf, *rest):
+        name_len = ppc_flags.__NEW_UTS_LEN + 1
+        s = struct.Struct("<%ds%ds%ds%ds%ds%ds" % ((name_len,) * 6))
+        try:
+            buf = self.__isacaller.mem.get_ctypes(buf, s.size, is_write=True)
+        except (ValueError, MemException):
+            return -errno.EFAULT
+        sysname, nodename, release, version, machine, domainname = \
+            self._uname()
+        s.pack_into(buf, 0,
+                    sysname, nodename, release, version, machine, domainname)
+        return 0
 
 
 class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):

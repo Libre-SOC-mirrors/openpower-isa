@@ -301,6 +301,23 @@ class MemCommon:
         lines = "\n".join(lines)
         log(f"\n{name}:\n{lines}\n", kind=kind)
 
+    def read_cstr(self, addr):
+        """ returns a `bytearray` for the c string starting at addr, the
+        returned `bytearray` doesn't contain the nul terminator.
+
+        modifying the returned `bytearray` doesn't modify bytes in `self`
+        -- it is a copy.
+        """
+        retval = bytearray()
+        while True:
+            b = self.ld(addr, width=1)
+            if b:
+                retval.append(b)
+                addr += 1
+            else:
+                break
+        return retval
+
 
 class Mem(MemCommon):
     def __init__(self, row_bytes=8, initial_mem=None, misaligned_ok=False):
