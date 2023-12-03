@@ -3,7 +3,7 @@ import errno
 import inspect
 import json
 import pathlib
-
+from openpower.util import log, LogType
 
 
 def architecture(arch, bits=0):
@@ -188,6 +188,9 @@ class Dispatcher:
 
         identifier = str(identifier)
         entry = self.__guest[identifier][1][0]
+
+        log("syscalls.Dispatcher[%s] (%s)" % (identifier, entry),
+            kind=LogType.InstrInOuts)
 
         return getattr(self, entry)
 
