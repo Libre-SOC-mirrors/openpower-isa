@@ -80,6 +80,10 @@ class _ReadReason(enum.Enum):
             return MMapPageFlags.X
         return MMapPageFlags.R
 
+    @cached_property
+    def ld_logs(self):
+        return self is not self.Dump
+
 
 class MemCommon:
     def __init__(self, row_bytes, initial_mem, misaligned_ok):
@@ -111,21 +115,25 @@ class MemCommon:
         raise NotImplementedError
         yield 0
 
-    def _get_shifter_mask(self, wid, remainder):
+    def _get_shifter_mask(self, wid, remainder, do_log=True):
         shifter = ((self.bytes_per_word - wid) - remainder) * \
             8  # bits per byte
         # XXX https://bugs.libre-soc.org/show_bug.cgi?id=377
         # BE/LE mode?
         shifter = remainder * 8
         mask = (1 << (wid * 8)) - 1
-        log("width,rem,shift,mask", wid, remainder, hex(shifter), hex(mask))
+        if do_log:
+            log("width,rem,shift,mask",
+                wid, remainder, hex(shifter), hex(mask))
         return shifter, mask
 
     # TODO: Implement ld/st of lesser width
     def ld(self, address, width=8, swap=True, check_in_mem=False,
            instr_fetch=False, reason=None):
-        log("ld from addr 0x%x width %d" % (address, width),
-            swap, check_in_mem, instr_fetch)
+        do_log = reason is not None and reason.ld_logs
+        if do_log:
+            log("ld from addr 0x%x width %d" % (address, width),
+                swap, check_in_mem, instr_fetch)
         self.last_ld_addr = address  # record last load
         ldaddr = address
         remainder = address & (self.bytes_per_word - 1)
@@ -144,16 +152,19 @@ class MemCommon:
                 return None
             else:
                 val = 0
-        log("ld mem @ 0x%x rem %d : 0x%x" % (ldaddr, remainder, val))
+        if do_log:
+            log("ld mem @ 0x%x rem %d : 0x%x" % (ldaddr, remainder, val))
 
         if width != self.bytes_per_word:
-            shifter, mask = self._get_shifter_mask(width, remainder)
-            log("masking", hex(val), hex(mask << shifter), shifter)
+            shifter, mask = self._get_shifter_mask(width, remainder, do_log)
+            if do_log:
+                log("masking", hex(val), hex(mask << shifter), shifter)
             val = val & (mask << shifter)
             val >>= shifter
         if swap:
             val = swap_order(val, width)
-        log("Read 0x%x from addr 0x%x" % (val, ldaddr))
+        if do_log:
+            log("Read 0x%x from addr 0x%x" % (val, ldaddr))
         return val
 
     def _st(self, addr, v, width=8, swap=True):
