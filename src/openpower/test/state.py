@@ -255,23 +255,29 @@ class State:
                 (self.state_type, s2.state_type, repr(self.code)))
 
     def compare_mem(self, s2):
-        # copy dics to preserve state mem then pad empty locs since
-        # different Power ISA objects may differ how theystore memory
+        # copy dicts to preserve state mem then pad empty locs since
+        # different Power ISA objects may differ how they store memory
+        if getattr(self, "mem", None) is None:
+            return
+        if getattr(s2, "mem", None) is None:
+            return
         s1mem, s2mem = self.mem.copy(), s2.mem.copy()
         for i in set(self.mem).difference(set(s2.mem)):
             s2mem[i] = 0
         for i in set(s2.mem).difference(set(self.mem)):
             s1mem[i] = 0
         for i in s1mem:
-            self.dut.assertEqual(s1mem[i], s2mem[i],
-                "mem mismatch location %d %s" % (i, self.code))
+            if s1mem[i] != s2mem[i]:
+                self.dut.assertEqual(hex(s1mem[i]), hex(s2mem[i]),
+                    "mem mismatch location 0x%X %s" % (i, self.code))
 
     def dump_state_tofile(self, testname=None, testfile=None):
         """dump_state_tofile:  Takes a passed in teststate object along
         with a test name and generates a code file located at
         /tmp/testfile/testname to set an expected state object
         """
-        lindent = ' '*8 # indent for code
+        single_indent = ' ' * 4
+        lindent = single_indent * 2 # indent for code
         # create the path
         if testname is not None:
             path = "/tmp/expected/"
@@ -310,15 +316,28 @@ class State:
 
         # FPSCR
         if self.fpscr != 0:
-            sout.write(f"{lindent}e.fpscr = {self.fpscr:#x}\n")
+            sout.write("%se.fpscr = 0x%x\n" % (lindent, self.fpscr))
 
         # SPRs
         for k, v in self.sprs.nonzero().items():
-            sout.write(f"{lindent}e.sprs[{k.name!r}] = {v:#x}\n")
+            sout.write("%se.sprs[%r] = 0x%x\n" % (lindent, k.name, v))
 
         # MSR
         if self.msr != 0:
-            sout.write(f"{lindent}e.msr = {self.msr:#x}\n")
+            sout.write("%se.msr = 0x%x\n" % (lindent, self.msr))
+
+        # memory
+        if getattr(self, "mem", None) is not None:
+            sout.write(lindent + "e.mem = {\n")
+            lindent2 = lindent + single_indent
+            for k, v in self.mem.items():
+                vh = (v >> 48) & 0xFFFF
+                vhm = (v >> 32) & 0xFFFF
+                vlm = (v >> 16) & 0xFFFF
+                vl = v & 0xFFFF
+                sout.write("%s0x%04X: 0x%04X_%04X_%04X_%04X,\n" % (
+                    lindent2, k, vh, vhm, vlm, vl))
+            sout.write(lindent + "}\n")
 
         if sout != sys.stdout:
             sout.close()
@@ -437,7 +456,7 @@ class ExpectedState(State):
     """
     def __init__(self, int_regs=None, pc=0, crregs=None,
                  so=0, ov=0, ca=0, fp_regs=None, fpscr=0, sprs=None,
-                 msr=DEFAULT_MSR, xer_other=0):
+                 msr=DEFAULT_MSR, xer_other=0, mem=None):
         if fp_regs is None:
             fp_regs = 32
         if isinstance(fp_regs, int):
@@ -476,6 +495,9 @@ class ExpectedState(State):
         self.xer_other = xer_other
         self.sprs = StateSPRs(sprs)
         self.msr = msr
+        if mem is not None:
+            mem = dict(mem)
+        self.mem = mem
 
     def get_fpregs(self):
         if False: yield

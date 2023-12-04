@@ -410,6 +410,7 @@ class TestRunnerBase(FHDLTestCase):
                         test.expected.code = 0
                         # do actual comparison, against last item
                         last_sim.compare(test.expected)
+                        last_sim.compare_mem(test.expected)
 
                     # check number of instructions run (sanity)
                     if self.run_hdl and self.run_sim:
