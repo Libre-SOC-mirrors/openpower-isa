@@ -25,8 +25,11 @@ X-Form
 
 Pseudo-code:
 
-    # TODO
-    undefined(0)
+    EA <- (RA|0) + (RB)
+    RESERVE <- 1
+    RESERVE_LENGTH <- 1
+    RESERVE_ADDR <- real_addr(EA)
+    RT <- [0]*56 || MEM(EA, 1)
 
 Special Registers Altered:
 
@@ -40,8 +43,11 @@ X-Form
 
 Pseudo-code:
 
-    # TODO
-    undefined(0)
+    EA <- (RA|0) + (RB)
+    RESERVE <- 1
+    RESERVE_LENGTH <- 2
+    RESERVE_ADDR <- real_addr(EA)
+    RT <- [0]*48 || MEM(EA, 2)
 
 Special Registers Altered:
 
@@ -73,8 +79,11 @@ X-Form
 
 Pseudo-code:
 
-    # TODO
-    undefined(0)
+    EA <- (RA|0) + (RB)
+    RESERVE <- 1
+    RESERVE_LENGTH <- 8
+    RESERVE_ADDR <- real_addr(EA)
+    RT <- MEM(EA, 8)
 
 Special Registers Altered:
 
@@ -88,8 +97,35 @@ X-Form
 
 Pseudo-code:
 
-    # TODO
-    undefined(0)
+    EA <- (RA|0) + (RB)
+    undefined_case <- 0
+    store_performed <- 0b0
+    if RESERVE then
+        if ((RESERVE_LENGTH = 1) &
+           (RESERVE_ADDR = real_addr(EA))) then
+            MEM(EA, 1) <- (RS)[56:63]
+            undefined_case <- 0
+            store_performed <- 0b1
+        else
+            # set z to smallest real page size supported by implementation
+            z <- REAL_PAGE_SIZE
+            if (RESERVE_ADDR / z) = (real_addr(EA) / z) then
+                undefined_case <- 1
+            else
+                undefined_case <- 0
+                store_performed <- 0b0
+    else
+        undefined_case <- 0
+        store_performed <- 0b0
+    if undefined_case then
+        u1 <- undefined(0b1)
+        if u1 then
+            MEM(EA, 1) <- (RS)[56:63]
+        u2 <- undefined(0b1)
+        CR0 <- 0b00 || u2 || XER[SO]
+    else
+        CR0 <- 0b00 || store_performed || XER[SO]
+    RESERVE <- 0
 
 Special Registers Altered:
 
@@ -103,8 +139,35 @@ X-Form
 
 Pseudo-code:
 
-    # TODO
-    undefined(0)
+    EA <- (RA|0) + (RB)
+    undefined_case <- 0
+    store_performed <- 0b0
+    if RESERVE then
+        if ((RESERVE_LENGTH = 2) &
+           (RESERVE_ADDR = real_addr(EA))) then
+            MEM(EA, 2) <- (RS)[48:63]
+            undefined_case <- 0
+            store_performed <- 0b1
+        else
+            # set z to smallest real page size supported by implementation
+            z <- REAL_PAGE_SIZE
+            if (RESERVE_ADDR / z) = (real_addr(EA) / z) then
+                undefined_case <- 1
+            else
+                undefined_case <- 0
+                store_performed <- 0b0
+    else
+        undefined_case <- 0
+        store_performed <- 0b0
+    if undefined_case then
+        u1 <- undefined(0b1)
+        if u1 then
+            MEM(EA, 2) <- (RS)[48:63]
+        u2 <- undefined(0b1)
+        CR0 <- 0b00 || u2 || XER[SO]
+    else
+        CR0 <- 0b00 || store_performed || XER[SO]
+    RESERVE <- 0
 
 Special Registers Altered:
 
@@ -160,8 +223,35 @@ X-Form
 
 Pseudo-code:
 
-    # TODO
-    undefined(0)
+    EA <- (RA|0) + (RB)
+    undefined_case <- 0
+    store_performed <- 0b0
+    if RESERVE then
+        if ((RESERVE_LENGTH = 8) &
+           (RESERVE_ADDR = real_addr(EA))) then
+            MEM(EA, 8) <- (RS)
+            undefined_case <- 0
+            store_performed <- 0b1
+        else
+            # set z to smallest real page size supported by implementation
+            z <- REAL_PAGE_SIZE
+            if (RESERVE_ADDR / z) = (real_addr(EA) / z) then
+                undefined_case <- 1
+            else
+                undefined_case <- 0
+                store_performed <- 0b0
+    else
+        undefined_case <- 0
+        store_performed <- 0b0
+    if undefined_case then
+        u1 <- undefined(0b1)
+        if u1 then
+            MEM(EA, 8) <- (RS)
+        u2 <- undefined(0b1)
+        CR0 <- 0b00 || u2 || XER[SO]
+    else
+        CR0 <- 0b00 || store_performed || XER[SO]
+    RESERVE <- 0
 
 Special Registers Altered:
 
