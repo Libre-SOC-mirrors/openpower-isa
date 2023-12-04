@@ -651,7 +651,7 @@ class MemMMap(MemCommon):
         # mark pages as empty
         for page_idx in block.page_indexes:
             self.__page_flags.pop(page_idx)
-            self.modified_pages.remove(page_idx)
+            self.modified_pages.discard(page_idx)
         return retval
 
     def __mmap_emu_zero_block(self, block):
@@ -716,13 +716,13 @@ class MemMMap(MemCommon):
                 return None
             for page_idx in r:
                 self.__page_flags.pop(page_idx)
-                self.modified_pages.remove(page_idx)
+                self.modified_pages.discard(page_idx)
         else:
             # expanding -- map pages at end, they're cleared already
             r = range(block.page_indexes.stop, new_block.page_indexes.stop)
             for page_idx in r:
                 self.__page_flags[page_idx] = block.flags
-                self.modified_pages.remove(page_idx)  # cleared page
+                self.modified_pages.discard(page_idx)  # cleared page
         self.__mmap_emu_alloc_blocks.remove(block)
         self.__mmap_emu_alloc_blocks.add(new_block)
         return new_block
