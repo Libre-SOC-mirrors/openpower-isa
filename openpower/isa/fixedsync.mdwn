@@ -275,3 +275,44 @@ Special Registers Altered:
 
     CR0
 
+# Store Quadword Conditional Indexed
+
+X-Form
+
+* stqcx. RSp,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA|0) + (RB)
+    undefined_case <- 0
+    store_performed <- 0b0
+    if RESERVE then
+        if ((RESERVE_LENGTH = 16) &
+           (RESERVE_ADDR = real_addr(EA))) then
+            MEM(EA, 16) <- (RSp)
+            undefined_case <- 0
+            store_performed <- 0b1
+        else
+            # set z to smallest real page size supported by implementation
+            z <- REAL_PAGE_SIZE
+            if (RESERVE_ADDR / z) = (real_addr(EA) / z) then
+                undefined_case <- 1
+            else
+                undefined_case <- 0
+                store_performed <- 0b0
+    else
+        undefined_case <- 0
+        store_performed <- 0b0
+    if undefined_case then
+        u1 <- undefined(0b1)
+        if u1 then
+            MEM(EA, 16) <- (RSp)
+        u2 <- undefined(0b1)
+        CR0 <- 0b00 || u2 || XER[SO]
+    else
+        CR0 <- 0b00 || store_performed || XER[SO]
+    RESERVE <- 0
+
+Special Registers Altered:
+
+    CR0
