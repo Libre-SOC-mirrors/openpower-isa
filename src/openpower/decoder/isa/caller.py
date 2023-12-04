@@ -1461,7 +1461,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
         # for LR/SC
         if real_page_size is None:
-            real_page_size = 4096
+            # PowerISA v3.1B Book III Section 6.7 page 1191 (1217)
+            # defines real page size as 2 ** 12 bytes (4KiB)
+            real_page_size = 2 ** 12
         self.real_page_size = real_page_size
         self.reserve_addr = SelectableInt(0, self.XLEN)
         self.reserve = SelectableInt(0, 1)
