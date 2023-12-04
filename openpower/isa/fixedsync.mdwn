@@ -17,6 +17,21 @@ Special Registers Altered:
 
     None
 
+# Synchronise
+
+XL-Form
+
+* sync L,SC
+
+Pseudo-code:
+
+    # TODO
+    undefined(0)
+
+Special Registers Altered:
+
+    None
+
 # Load Byte And Reserve Indexed
 
 X-Form
