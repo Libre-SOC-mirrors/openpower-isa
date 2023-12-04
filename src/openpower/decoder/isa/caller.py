@@ -1186,6 +1186,29 @@ class SyscallEmulator(openpower.syscalls.Dispatcher):
         except OSError as e:
             return -e.errno
 
+    def sys_writev(self, fd, iov, iovcnt, *rest):
+        IOV_MAX = 1024
+        if iovcnt < 0 or iovcnt > IOV_MAX:
+            return -errno.EINVAL
+        struct_iovec = struct.Struct("<QQ")
+        try:
+            if iovcnt > 0:
+                iov = self.__isacaller.mem.get_ctypes(
+                    iov, struct_iovec.size * iovcnt, is_write=False)
+                iov = list(struct_iovec.iter_unpack(iov))
+            else:
+                iov = []
+            for i, iovec in enumerate(iov):
+                iov_base, iov_len = iovec
+                iov[i] = self.__isacaller.mem.get_ctypes(
+                    iov_base, iov_len, is_write=False)
+        except (ValueError, MemException):
+            return -errno.EFAULT
+        try:
+            return os.writev(fd, iov)
+        except OSError as e:
+            return -e.errno
+
     def sys_read(self, fd, buf, count, *rest):
         buf = self.__isacaller.mem.get_ctypes(buf, count, is_write=True)
         try:
