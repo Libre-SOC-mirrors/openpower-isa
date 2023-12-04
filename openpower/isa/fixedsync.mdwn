@@ -89,6 +89,24 @@ Special Registers Altered:
 
     None
 
+# Load Quadword And Reserve Indexed
+
+X-Form
+
+* lqarx RTp,RA,RB,EH
+
+Pseudo-code:
+
+    EA <- (RA|0) + (RB)
+    RESERVE <- 1
+    RESERVE_LENGTH <- 16
+    RESERVE_ADDR <- real_addr(EA)
+    RTp <- MEM(EA, 16)
+
+Special Registers Altered:
+
+    None
+
 # Store Byte Conditional Indexed
 
 X-Form
