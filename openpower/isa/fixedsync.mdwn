@@ -58,7 +58,7 @@ Pseudo-code:
     EA <- (RA|0) + (RB)
     RESERVE <- 1
     RESERVE_LENGTH <- 4
-    RESERVE_ADDR <- EA # real_addr(EA)
+    RESERVE_ADDR <- real_addr(EA)
     RT <- [0]*32 || MEM(EA, 4)
 
 Special Registers Altered:

@@ -1514,6 +1514,14 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def REAL_PAGE_SIZE(self):
         return self.real_page_size
 
+    def real_addr(self, EA):
+        """ get the "real address to which `EA` maps"
+
+        Specified in PowerISA v3.1B Book II Section 1.7.2.1 page 1049 (1075)
+        """
+        # FIXME: translate EA to a physical address
+        return EA
+
     @property
     def FPSCR(self):
         return self.fpscr
