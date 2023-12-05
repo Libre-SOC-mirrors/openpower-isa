@@ -38,7 +38,7 @@ class PosPopCountTestCase(FHDLTestCase):
         lst = SVP64Asm(
             [
                 "mtspr 9, 3",               # move r3 to CTR
-                # VL = MIN(CTR,MAXVL=8), Rc=1 (CR0 set if CTR ends)
+                # VL = MIN(CTR,MAXVL=8)
                 "setvl 3,0,8,0,1,1",        # set MVL=8, VL=MIN(MVL,CTR)
                 # load VL bytes (update r4 addr) but compressed (dw=8)
                 "addi 6, 0, 0",             # initialise r6 to zero
