@@ -27,7 +27,7 @@ def compile_elf(src_code, compiler_args=DEF_CC_ARGS, compiler=DEF_CC):
         dump_out = run([
             'powerpc64le-linux-gnu-objdump', '-dfprsF', '-Mraw', f.name],
             stdout=PIPE, check=True, encoding='utf-8').stdout
-        log(dump_out, kind=LogType.InstrInOuts)
+        log(dump_out)
         f = ELFFile(f)
         cleanup = None
         return f
