@@ -96,7 +96,9 @@ class SimpleCases(TestAccumulatorBase):
                       initial_msr=DEFAULT_USER_MSR)
 
     def case_static_glibc(self):
-        compiler_args = '-Os', '-static', '-xc'
+        # we enable debug info because it makes following along in gdb
+        # much easier.
+        compiler_args = '-Os', '-static', '-xc', '-g'
         prog = compile_elf(static_glibc, compiler_args)
         self.add_case(prog, initial_sprs=initial_sprs.copy(),
                       initial_msr=DEFAULT_USER_MSR)
