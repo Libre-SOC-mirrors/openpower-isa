@@ -1180,7 +1180,10 @@ class SyscallEmulator(openpower.syscalls.Dispatcher):
         raise ExitSyscallCalled(status)
 
     def sys_write(self, fd, buf, count, *rest):
-        buf = self.__isacaller.mem.get_ctypes(buf, count, is_write=False)
+        if count != 0:
+            buf = self.__isacaller.mem.get_ctypes(buf, count, is_write=False)
+        else:
+            buf = b""
         try:
             return os.write(fd, buf)
         except OSError as e:
@@ -1210,7 +1213,10 @@ class SyscallEmulator(openpower.syscalls.Dispatcher):
             return -e.errno
 
     def sys_read(self, fd, buf, count, *rest):
-        buf = self.__isacaller.mem.get_ctypes(buf, count, is_write=True)
+        if count != 0:
+            buf = self.__isacaller.mem.get_ctypes(buf, count, is_write=True)
+        else:
+            buf = bytearray()
         try:
             return os.readv(fd, [buf])
         except OSError as e:
@@ -1290,7 +1296,11 @@ class SyscallEmulator(openpower.syscalls.Dispatcher):
     def sys_readlinkat(self, dirfd, pathname, buf, bufsiz, *rest):
         try:
             path = self.__isacaller.mem.read_cstr(pathname)
-            buf = self.__isacaller.mem.get_ctypes(buf, bufsiz, is_write=True)
+            if bufsiz != 0:
+                buf = self.__isacaller.mem.get_ctypes(
+                    buf, bufsiz, is_write=True)
+            else:
+                buf = bytearray()
         except (ValueError, MemException):
             return -errno.EFAULT
         try:
