@@ -991,6 +991,12 @@ class MemMMap(MemCommon):
     def __access_addr_range_err(self, start_addr, size, needed_flag):
         assert needed_flag != MMapPageFlags.W, \
             "can't write to address 0x%X size 0x%X" % (start_addr, size)
+        if self.emulating_mmap:
+            exc = MemException("access not allowed",
+                               "memory access not allowed: addr=0x%X: %s"
+                               % (start_addr, needed_flag))
+            exc.dar = start_addr
+            raise exc
         return None, 0
 
     def __access_addr_range(self, start_addr, size, needed_flag):
