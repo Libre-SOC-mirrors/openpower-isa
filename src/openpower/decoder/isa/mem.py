@@ -1181,37 +1181,100 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
     result = mem.mmap_syscall(
         stack_low, stack_size, prot, flags, fd=-1, offset=0, is_mmap2=False)
     raise_if_syscall_err(result)
+
+    env_bytes = bytearray()
+    env_offsets = []
+    for env_entry in env:
+        env_offsets.append(len(env_bytes))
+        if isinstance(env_entry, str):
+            env_entry = env_entry.encode()
+        else:
+            env_entry = bytes(env_entry)
+        if b"\0" in env_entry:
+            raise ValueError("env var byte-string can't contain NUL")
+        if b"=" not in env_entry:
+            raise ValueError("env var is missing =")
+        env_bytes += env_entry
+        env_bytes += b"\0"
+
+    stack_top -= len(env_bytes)
+    env_bytes_addr = stack_top
+    if len(env_bytes):
+        mem.get_ctypes(env_bytes_addr, len(env_bytes), True)[:] = env_bytes
+
+    args = tuple(args)
+    if len(args) == 0:
+        args = ("program",)  # glibc depends on argc != 0
+    args_bytes = bytearray()
+    arg_offsets = []
+    for arg in args:
+        arg_offsets.append(len(args_bytes))
+        if isinstance(arg, str):
+            arg = arg.encode()
+        else:
+            arg = bytes(arg)
+        if b"\0" in arg:
+            raise ValueError("argument byte-string can't contain NUL")
+        args_bytes += arg
+        args_bytes += b"\0"
+    args_bytes += b"\0"
+    stack_top -= len(args_bytes)
+    args_bytes_addr = stack_top
+    mem.get_ctypes(args_bytes_addr, len(args_bytes), True)[:] = args_bytes
+
+    stack_top -= stack_top % 8  # align stack top for auxv
+
+    auxv_t = struct.Struct("<QQ")
+    auxv = 0
+    def write_auxv_entry(a_type, a_un):
+        nonlocal stack_top, auxv
+        stack_top -= auxv_t.size
+        auxv = stack_top
+        buf = mem.get_ctypes(stack_top, auxv_t.size, True)
+        auxv_t.pack_into(buf, 0, a_type, a_un)
+
+    # TODO: put more in auxv
+
+    write_auxv_entry(ppc_flags.AT_NULL, 0)  # final auxv entry
+
+    # final envp entry
+    stack_top -= 8
+    mem.get_ctypes(stack_top, 8, True)[:] = bytes(8)
+
+    for env_offset in reversed(env_offsets):
+        stack_top -= 8
+        env_addr = env_offset + env_bytes_addr
+        mem.get_ctypes(stack_top, 8, True)[:] = env_addr.to_bytes(8, 'little')
+
+    envp = stack_top
+
+    # final argv entry
+    stack_top -= 8
+    mem.get_ctypes(stack_top, 8, True)[:] = bytes(8)
+
+    for arg_offset in reversed(arg_offsets):
+        stack_top -= 8
+        arg_addr = arg_offset + args_bytes_addr
+        mem.get_ctypes(stack_top, 8, True)[:] = arg_addr.to_bytes(8, 'little')
+
+    argv = stack_top
+    argc = len(arg_offsets)
+
+    stack_top -= 8
+    mem.get_ctypes(stack_top, 8, True)[:] = argc.to_bytes(8, 'little')
+
     gprs = {}
-    if len(args):
-        raise NotImplementedError("allocate argv on the stack")
-    else:
-        argv = 0
-    if len(env):
-        raise NotImplementedError("allocate envp on the stack")
-    else:
-        envp = 0
 
     if heap_start > 0:
         mem.heap_range = range(heap_start, heap_start)  # empty heap to start
 
-    # FIXME: incorrect, should point to the aux vector allocated on the stack
-    auxv = 0
-
-    # make space for red zone, 512 bytes specified in
-    # 64-bit ELF V2 ABI Specification v1.5 section 2.2.3.4
-    # https://files.openpower.foundation/s/cfA2oFPXbbZwEBK
-    stack_top -= 512
-
-    # align stack_top
-    stack_top -= stack_top % 16
-
     # TODO: dynamically-linked binaries need to use the entry-point of ld.so
     pc = elf_file.header['e_entry']
     gprs[1] = stack_top
-    gprs[3] = len(args)  # argc
-    gprs[4] = argv
-    gprs[5] = envp
-    gprs[5] = auxv
+    gprs[3] = 0  # argc -- apparently just zeroed by linux
+    gprs[4] = 0  # argv -- apparently just zeroed by linux
+    gprs[5] = 0  # envp -- apparently just zeroed by linux
+    gprs[6] = 0  # auxv -- apparently just zeroed by linux
     gprs[7] = 0  # termination function pointer
     gprs[12] = pc
     fpscr = 0
