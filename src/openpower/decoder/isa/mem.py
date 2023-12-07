@@ -583,8 +583,6 @@ class MemMMap(MemCommon):
             raise ValueError("heap_range is not a suitable range")
         if value.start % MMAP_PAGE_SIZE != 0:
             raise ValueError("heap_range.start must be aligned")
-        if value.stop % MMAP_PAGE_SIZE != 0:
-            raise ValueError("heap_range.stop must be aligned")
         self.__heap_range = value
 
     @staticmethod
@@ -766,9 +764,14 @@ class MemMMap(MemCommon):
             # can't shrink heap to negative size
             return self.heap_range.stop  # don't change heap
 
+        unaligned_addr = addr
+
         # round addr up to the nearest page
-        addr_div_page_size = -(-addr // MMAP_PAGE_SIZE)  # ceil(addr / size)
-        addr = addr_div_page_size * MMAP_PAGE_SIZE
+        addr = (addr + MMAP_PAGE_SIZE - 1) & ~(MMAP_PAGE_SIZE - 1)
+
+        heap_stop = self.heap_range.stop
+        # round heap_stop up to the nearest page
+        heap_stop = (heap_stop + MMAP_PAGE_SIZE - 1) & ~(MMAP_PAGE_SIZE - 1)
 
         # something else could be mmap-ped in the middle of the heap,
         # be careful...
@@ -780,7 +783,7 @@ class MemMMap(MemCommon):
                 # if the heap was split.
                 # the heap must not be a file mapping.
                 # the heap must not be shared, and must be RW
-                if b.addrs.stop == self.heap_range.stop and b.file is None \
+                if b.addrs.stop == heap_stop and b.file is None \
                         and b.flags == MMapPageFlags.RW:
                     block = b
                     break
@@ -794,10 +797,10 @@ class MemMMap(MemCommon):
             # unmap heap block
             if self.__mmap_emu_unmap(block) < 0:
                 block = None  # can't unmap heap block
-        elif addr > self.heap_range.stop and block is None:
+        elif addr > heap_stop and block is None:
             # map new heap block
             try:
-                addrs = range(self.heap_range.stop, addr)
+                addrs = range(heap_stop, addr)
                 block = MMapEmuBlock(addrs, flags=MMapPageFlags.RW)
                 if not self.__mmap_emu_map_fixed(block,
                                                  replace=False, dry_run=True):
@@ -823,8 +826,8 @@ class MemMMap(MemCommon):
             return self.heap_range.stop  # don't change heap
 
         # success! assign new heap_range
-        self.heap_range = range(self.heap_range.start, addr)
-        return self.heap_range.stop  # return new brk address
+        self.heap_range = range(self.heap_range.start, unaligned_addr)
+        return unaligned_addr  # return new brk address
 
     def mmap_syscall(self, addr, length, prot, flags, fd, offset, is_mmap2):
         assert self.emulating_mmap, "mmap syscall requires emulating_mmap=True"
