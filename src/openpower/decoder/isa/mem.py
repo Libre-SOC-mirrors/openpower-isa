@@ -1352,6 +1352,10 @@ def load_elf(
     auxv_entry(ppc_flags.AT_SECURE, bool(was_setuid_like))
     auxv_entry(ppc_flags.AT_RANDOM, rand_byte16)
     auxv_entry(ppc_flags.AT_HWCAP2, hwcap2)
+    auxv_entry(ppc_flags.AT_EXECFN, program_name)
+    auxv_entry(ppc_flags.AT_PLATFORM, platform)
+    auxv_entry(ppc_flags.AT_BASE_PLATFORM, base_platform)
+    auxv_entry(ppc_flags.AT_EXECFD, execfd)
     auxv_entry(ppc_flags.AT_NULL, 0)  # final auxv entry
 
     total_sz = ((len(arg_offsets) + 1) + (len(env_offsets) + 1) + 1) * 8
