@@ -22,7 +22,7 @@ def cmpd(x, y):
 # see https://bugs.libre-soc.org/show_bug.cgi?id=1183#c3
 def sv_cmpi(gpr, CR, vl, ra, si):
     i = 0
-    while i < VL:
+    while i < vl:
         CR[idx] = cmpd(gpr[rz + i], si)
         if CR[idx].lt:
             break
