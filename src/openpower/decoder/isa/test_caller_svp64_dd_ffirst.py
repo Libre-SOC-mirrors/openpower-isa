@@ -9,7 +9,28 @@ from openpower.simulator.program import Program
 from openpower.insndb.asm import SVP64Asm
 
 
-class DecoderTestCase(FHDLTestCase):
+def cmpd(x, y):
+    class CRfield: object
+    CRf = CRfield()
+    CRf.lt = x < y
+    CRf.gt = x > y
+    CRf.eq = x == y
+    return CRf
+
+
+# example sv.cmpi/ff=lt 0, 1, *10, 5
+# see https://bugs.libre-soc.org/show_bug.cgi?id=1183#c3
+def sv_cmpi(gpr, CR, vl, ra, si):
+    i = 0
+    while i < VL:
+        CR[idx] = cmpd(gpr[rz + i], si)
+        if CR[idx].lt:
+            break
+        i += 1
+    return i # new VL
+
+
+class DDFFirstTestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
         for i in range(32):
