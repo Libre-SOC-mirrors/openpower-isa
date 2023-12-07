@@ -36,6 +36,63 @@ class DDFFirstTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
+    def test_1(self):
+        lst = SVP64Asm(["sv.cmpi/ff=lt 0, 1, *10, 5"
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        svstate.vl = 4  # VL
+        svstate.maxvl = 4  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
+
+        gprs = [0] * 64
+        gprs[10] = 5
+        gprs[11] = 6
+
+        res = []
+        cr_res = []
+        # store GPRs
+        for i, x in enumerate(vec):
+            gprs[i] = x
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=gprs,
+                                       svstate=svstate)
+            for i in range(4):
+                val = sim.gpr(i).value
+                res.append(val)
+                cr_res.append(0)
+                print("i", i, val)
+            # confirm that the results are as expected
+            expected = deepcopy(vec)
+            expected_vl = 0
+            for i in range(4):
+                # calculate expected result and expected CR field
+                result = vec[i] - gprs[8]
+                crf = ((result==0)<<1) | ((result > 0)<<2) | ((result < 0) << 3)
+                cr_res[i] = crf
+                if result <= 0:
+                    break
+                # VLi=0 - test comes FIRST!
+                expected[i] = result
+                # only write out if successful
+                expected_vl += 1
+
+            for i, v in enumerate(cr_res):
+                crf = sim.crl[i].get_range().value
+                print ("crf", i, res[i], bin(crf), bin(v))
+                self.assertEqual(crf, v)
+
+            for i, v in enumerate(res):
+                self.assertEqual(v, expected[i])
+
+            self.assertEqual(sim.svstate.vl, expected_vl)
+            self.assertEqual(sim.svstate.maxvl, 4)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
+
     def test_sv_addi_ffirst_le(self):
         lst = SVP64Asm(["sv.subf./ff=le *0,8,*0"
                         ])
