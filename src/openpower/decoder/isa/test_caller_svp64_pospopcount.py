@@ -109,7 +109,7 @@ class PosPopCountTestCase(FHDLTestCase):
         print("GPRs")
         simulator.gpr.dump()
         print("mem")
-        mem = sim.mem.dump(printout=True, asciidump=True)
+        mem = simulator.mem.dump(printout=True, asciidump=True)
         print (mem)
         return simulator
 
