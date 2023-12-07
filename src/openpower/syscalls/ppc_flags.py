@@ -22,6 +22,7 @@ def parse_defines(flags, compiler):
 #include <fcntl.h>
 #include <linux/utsname.h>
 #include <linux/auxvec.h>
+#include <sys/auxv.h>
 """
     if isinstance(compiler, str):
         compiler = [compiler]

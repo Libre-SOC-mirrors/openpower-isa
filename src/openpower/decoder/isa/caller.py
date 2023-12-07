@@ -2237,6 +2237,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # 2. Call the HDL implementation which invokes trap.
         # 3. Reroute the guest system call to host system call.
         # 4. Force return from the interrupt as if we had guest OS.
+        # FIXME: enable PPC_FEATURE2_SCV in mem.py DEFAULT_AT_HWCAP2 when
+        # scv emulation works.
         if ((asmop in ("sc", "scv")) and
                 (self.syscall is not None) and
                 not syscall_emu_active):

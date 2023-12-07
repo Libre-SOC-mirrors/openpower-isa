@@ -1105,8 +1105,57 @@ def raise_if_syscall_err(result):
 # TODO: change to much smaller size once GROWSDOWN is implemented
 DEFAULT_INIT_STACK_SZ = 4 << 20
 
+# TODO: power9 identifies PowerISA v3.0, figure out if it's best...
+DEFAULT_AT_PLATFORM = "power9"  # default value of AT_PLATFORM
+DEFAULT_AT_BASE_PLATFORM = "power9"  # default value of AT_BASE_PLATFORM
+# TODO: use correct cache block sizes
+DEFAULT_AT_DCACHEBSIZE = 128  # default value of AT_DCACHEBSIZE
+DEFAULT_AT_ICACHEBSIZE = 128  # default value of AT_ICACHEBSIZE
+DEFAULT_AT_UCACHEBSIZE = 0  # default value of AT_UCACHEBSIZE
+DEFAULT_AT_L1I_CACHESIZE = 0x8000  # default value of AT_L1I_CACHESIZE
+DEFAULT_AT_L1I_CACHEGEOMETRY = 0x80  # default value of AT_L1I_CACHEGEOMETRY
+DEFAULT_AT_L1D_CACHESIZE = 0x8000  # default value of AT_L1D_CACHESIZE
+DEFAULT_AT_L1D_CACHEGEOMETRY = 0x80  # default value of AT_L1D_CACHEGEOMETRY
+DEFAULT_AT_L2_CACHESIZE = 0  # default value of AT_L2_CACHESIZE
+DEFAULT_AT_L2_CACHEGEOMETRY = 0  # default value of AT_L2_CACHEGEOMETRY
+DEFAULT_AT_L3_CACHESIZE = 0  # default value of AT_L3_CACHESIZE
+DEFAULT_AT_L3_CACHEGEOMETRY = 0  # default value of AT_L3_CACHEGEOMETRY
 
-def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
+# default value of AT_HWCAP
+DEFAULT_AT_HWCAP = (ppc_flags.PPC_FEATURE_32 | ppc_flags.PPC_FEATURE_64 |
+    ppc_flags.PPC_FEATURE_HAS_FPU | ppc_flags.PPC_FEATURE_HAS_MMU |
+    ppc_flags.PPC_FEATURE_ARCH_2_06 | ppc_flags.PPC_FEATURE_TRUE_LE)
+
+# default value of AT_HWCAP2
+DEFAULT_AT_HWCAP2 = (ppc_flags.PPC_FEATURE2_ARCH_2_07 |
+    ppc_flags.PPC_FEATURE2_HAS_ISEL | ppc_flags.PPC_FEATURE2_HAS_TAR |
+    ppc_flags.PPC_FEATURE2_ARCH_3_00 | ppc_flags.PPC_FEATURE2_DARN)
+
+# FIXME: enable when scv emulation works
+# DEFAULT_AT_HWCAP2 |= ppc_flags.PPC_FEATURE2_SCV
+
+# FIXME: enable if/when v3.1 PO1 prefixed insns work
+# DEFAULT_AT_HWCAP2 |= ppc_flags.PPC_FEATURE2_ARCH_3_1
+
+CLOCKS_PER_SEC = 100
+
+
+def load_elf(
+    mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ,
+    platform=DEFAULT_AT_PLATFORM, base_platform=DEFAULT_AT_BASE_PLATFORM,
+    rand_byte16=None, dcachebsize=DEFAULT_AT_DCACHEBSIZE,
+    icachebsize=DEFAULT_AT_ICACHEBSIZE, ucachebsize=DEFAULT_AT_UCACHEBSIZE,
+    l1i_cachesize=DEFAULT_AT_L1I_CACHESIZE,
+    l1i_cachegeometry=DEFAULT_AT_L1I_CACHEGEOMETRY,
+    l1d_cachesize=DEFAULT_AT_L1D_CACHESIZE,
+    l1d_cachegeometry=DEFAULT_AT_L1D_CACHEGEOMETRY,
+    l2_cachesize=DEFAULT_AT_L2_CACHESIZE,
+    l2_cachegeometry=DEFAULT_AT_L2_CACHEGEOMETRY,
+    l3_cachesize=DEFAULT_AT_L3_CACHESIZE,
+    l3_cachegeometry=DEFAULT_AT_L3_CACHEGEOMETRY,
+    hwcap=DEFAULT_AT_HWCAP, hwcap2=DEFAULT_AT_HWCAP2,
+    was_setuid_like=False, execfd=None,
+):
     if not isinstance(mem, MemMMap):
         raise TypeError("MemMMap required to load ELFs")
     if not isinstance(elf_file, ELFFile):
@@ -1115,7 +1164,9 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
         raise NotImplementedError("dynamic binaries aren't implemented")
     fd = elf_file.stream.fileno()
     heap_start = -1
+    phnum = 0
     for segment in elf_file.iter_segments():
+        phnum += 1
         if segment.header['p_type'] in ('PT_DYNAMIC', 'PT_INTERP'):
             raise NotImplementedError("dynamic binaries aren't implemented")
         elif segment.header['p_type'] == 'PT_LOAD':
@@ -1182,6 +1233,30 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
         stack_low, stack_size, prot, flags, fd=-1, offset=0, is_mmap2=False)
     raise_if_syscall_err(result)
 
+    def copy_to_stack(buf):
+        nonlocal stack_top
+        l = len(buf)
+        stack_top -= l
+        addr = stack_top
+        if l > 0:
+            mem.get_ctypes(addr, l, True)[:] = buf
+        return addr
+
+    def copy_cstr_to_stack(s):
+        if s is None:
+            return None
+        if isinstance(s, str):
+            s = s.encode()
+        else:
+            s = bytes(s)
+        if b"\0" in s:
+            raise ValueError("c string can't contain NUL")
+        s += b"\0"
+        return copy_to_stack(s)
+
+    stack_top -= 7  # weird, but matches linux
+    program_name = copy_cstr_to_stack(os.readlink("/proc/self/fd/%i" % fd))
+
     env_bytes = bytearray()
     env_offsets = []
     for env_entry in env:
@@ -1204,7 +1279,7 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
 
     args = tuple(args)
     if len(args) == 0:
-        args = ("program",)  # glibc depends on argc != 0
+        args = ("",)  # glibc depends on argc != 0
     args_bytes = bytearray()
     arg_offsets = []
     for arg in args:
@@ -1222,46 +1297,88 @@ def load_elf(mem, elf_file, args=(), env=(), stack_size=DEFAULT_INIT_STACK_SZ):
     args_bytes_addr = stack_top
     mem.get_ctypes(args_bytes_addr, len(args_bytes), True)[:] = args_bytes
 
-    stack_top -= stack_top % 8  # align stack top for auxv
+    stack_top -= stack_top % 16  # align stack top for auxv
 
-    auxv_t = struct.Struct("<QQ")
-    auxv = 0
-    def write_auxv_entry(a_type, a_un):
-        nonlocal stack_top, auxv
-        stack_top -= auxv_t.size
-        auxv = stack_top
-        buf = mem.get_ctypes(stack_top, auxv_t.size, True)
-        auxv_t.pack_into(buf, 0, a_type, a_un)
+    platform = copy_cstr_to_stack(platform)
+    base_platform = copy_cstr_to_stack(base_platform)
 
-    # TODO: put more in auxv
+    if rand_byte16 is not None:
+        rand_byte16 = bytes(rand_byte16)
+        if len(rand_byte16) != 16:
+            raise ValueError("rand_byte16 has wrong length, must be 16 bytes")
+        rand_byte16 = copy_to_stack(rand_byte16)
 
-    write_auxv_entry(ppc_flags.AT_NULL, 0)  # final auxv entry
+    auxv_entries = []
 
-    # final envp entry
-    stack_top -= 8
-    mem.get_ctypes(stack_top, 8, True)[:] = bytes(8)
+    def auxv_entry(a_type, a_un):
+        if a_type is None or a_un is None:
+            return
+        auxv_entries.append((a_type, a_un))
 
-    for env_offset in reversed(env_offsets):
-        stack_top -= 8
-        env_addr = env_offset + env_bytes_addr
-        mem.get_ctypes(stack_top, 8, True)[:] = env_addr.to_bytes(8, 'little')
+    auxv_entry(ppc_flags.AT_IGNOREPPC, ppc_flags.AT_IGNOREPPC)
+    auxv_entry(ppc_flags.AT_IGNOREPPC, ppc_flags.AT_IGNOREPPC)
+    auxv_entry(ppc_flags.AT_DCACHEBSIZE, dcachebsize)
+    auxv_entry(ppc_flags.AT_ICACHEBSIZE, icachebsize)
+    auxv_entry(ppc_flags.AT_UCACHEBSIZE, ucachebsize)
+    vdso_addr = None  # TODO: add vdso
+    auxv_entry(ppc_flags.AT_SYSINFO_EHDR, vdso_addr)
+    auxv_entry(ppc_flags.AT_L1I_CACHESIZE, l1i_cachesize)
+    auxv_entry(ppc_flags.AT_L1I_CACHEGEOMETRY, l1i_cachegeometry)
+    auxv_entry(ppc_flags.AT_L1D_CACHESIZE, l1d_cachesize)
+    auxv_entry(ppc_flags.AT_L1D_CACHEGEOMETRY, l1d_cachegeometry)
+    auxv_entry(ppc_flags.AT_L2_CACHESIZE, l2_cachesize)
+    auxv_entry(ppc_flags.AT_L2_CACHEGEOMETRY, l2_cachegeometry)
+    auxv_entry(ppc_flags.AT_L3_CACHESIZE, l3_cachesize)
+    auxv_entry(ppc_flags.AT_L3_CACHEGEOMETRY, l3_cachegeometry)
 
-    envp = stack_top
+    # TODO: latest linux kernel has AT_MINSIGSTKSZ,
+    # ignoring for now since it's not included in Debian 10's kernel.
 
-    # final argv entry
-    stack_top -= 8
-    mem.get_ctypes(stack_top, 8, True)[:] = bytes(8)
+    auxv_entry(ppc_flags.AT_HWCAP, hwcap)
+    auxv_entry(ppc_flags.AT_PAGESZ, MMAP_PAGE_SIZE)
+    auxv_entry(ppc_flags.AT_CLKTCK, CLOCKS_PER_SEC)
+    auxv_entry(ppc_flags.AT_PHDR, 0)  # FIXME: use correct value
+    auxv_entry(ppc_flags.AT_PHENT, 56)  # sizeof(elf_phdr)
+    auxv_entry(ppc_flags.AT_PHNUM, phnum)
+    auxv_entry(ppc_flags.AT_BASE, 0)  # FIXME: use interpreter address
+    flags = 0
+    # FIXME: if using emulated binfmt_misc bit-or in AT_FLAGS_PRESERVE_ARGV0
+    auxv_entry(ppc_flags.AT_FLAGS, flags)
+    auxv_entry(ppc_flags.AT_ENTRY, elf_file.header['e_entry'])
+    auxv_entry(ppc_flags.AT_UID, os.getuid())
+    auxv_entry(ppc_flags.AT_EUID, os.geteuid())
+    auxv_entry(ppc_flags.AT_GID, os.getgid())
+    auxv_entry(ppc_flags.AT_EGID, os.getegid())
+    auxv_entry(ppc_flags.AT_SECURE, bool(was_setuid_like))
+    auxv_entry(ppc_flags.AT_RANDOM, rand_byte16)
+    auxv_entry(ppc_flags.AT_HWCAP2, hwcap2)
+    auxv_entry(ppc_flags.AT_NULL, 0)  # final auxv entry
 
-    for arg_offset in reversed(arg_offsets):
-        stack_top -= 8
-        arg_addr = arg_offset + args_bytes_addr
-        mem.get_ctypes(stack_top, 8, True)[:] = arg_addr.to_bytes(8, 'little')
+    total_sz = ((len(arg_offsets) + 1) + (len(env_offsets) + 1) + 1) * 8
+    total_sz += 16 * len(auxv_entries)
+    stack_top -= total_sz
+    stack_top -= stack_top % 16  # align stack
+    write_addr = stack_top
 
-    argv = stack_top
+    def write8(v):
+        nonlocal write_addr
+        mem.get_ctypes(write_addr, 8, True)[:] = v.to_bytes(8, 'little')
+        write_addr += 8
+
     argc = len(arg_offsets)
-
-    stack_top -= 8
-    mem.get_ctypes(stack_top, 8, True)[:] = argc.to_bytes(8, 'little')
+    write8(argc)
+    argv = write_addr
+    for arg_offset in arg_offsets:
+        write8(arg_offset + args_bytes_addr)
+    write8(0)
+    envp = write_addr
+    for env_offset in env_offsets:
+        write8(env_offset + env_bytes_addr)
+    write8(0)
+    auxv = write_addr
+    for a_type, a_un in auxv_entries:
+        write8(a_type)
+        write8(a_un)
 
     gprs = {}
 
