@@ -1098,6 +1098,24 @@ class LoadedELF:
         self.gprs = gprs
         self.fpscr = fpscr
 
+    def dump_gdb_init(self, mem):
+        lines = []
+        lines.append("---BEGIN GDB INIT---")
+        lines.append("starti")
+        for k, v in self.gprs.items():
+            lines.append("set var $r%d = 0x%X" % (k, v))
+        args_addr = self.gprs[1]
+        args_len = _USER_SPACE_SIZE - args_addr
+        args = mem.get_ctypes(args_addr, args_len, False)
+        chunk_size = 16
+        assert args_addr % chunk_size == 0
+        for offset in range(0, args_len, chunk_size):
+            parts = ", ".join(hex(args[offset + i]) for i in range(chunk_size))
+            lines.append("set var {unsigned char[%d]}0x%X = {%s}"
+                         % (chunk_size, args_addr + offset, parts))
+        lines.append("---END GDB INIT---")
+        log("\n".join(lines), kind=LogType.InstrInOuts)
+
 
 def raise_if_syscall_err(result):
     if -4096 < result < 0:
@@ -1402,4 +1420,6 @@ def load_elf(
     gprs[7] = 0  # termination function pointer
     gprs[12] = pc
     fpscr = 0
-    return LoadedELF(elf_file, pc, gprs, fpscr)
+    retval = LoadedELF(elf_file, pc, gprs, fpscr)
+    retval.dump_gdb_init(mem)
+    return retval
