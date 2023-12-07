@@ -151,6 +151,11 @@ def create_full_args(*, read_regs, special_regs, uninit_regs, write_regs,
         *read_regs, *uninit_regs, *write_regs, *special_regs], extra=extra)
 
 
+def is_ffirst_mode(dec2):
+    rm_mode = yield dec2.rm_dec.mode
+    return rm_mode == SVP64RMMode.FFIRST.value
+
+
 class GPR(dict):
     def __init__(self, decoder, isacaller, svstate, regfile):
         dict.__init__(self)
@@ -2435,7 +2440,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("        vli", vli_)
         log("     cr_bit", cr_bit)
         log("      rc_en", rc_en)
-        if not rc_en or rm_mode != SVP64RMMode.FFIRST.value:
+        if not rc_en or not is_ffirst_mode(self.dec2):
             return False, False
         # get the CR vevtor, do BO-test
         crf = "CR0"
@@ -2913,7 +2918,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         vfirst = self.svstate.vfirst
         log("    SV Vertical First", vf, vfirst)
         if not vf and vfirst == 1:
-            if insn_name.startswith("sv.bc"):
+            # SV Branch-Conditional required to be as-if-vector
+            # because there *is* no destination register
+            # (SV normally only terminates on 1st scalar reg written
+            #  except in [slightly-misnamed] mapreduce mode)
+            if insn_name.startswith("sv.bc") or ffirst:
                 self.update_pc_next()
                 return False
             self.update_nia()
@@ -2936,6 +2945,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         sv_ptype = yield self.dec2.dec.op.SV_Ptype
         out_vec = not (yield self.dec2.no_out_vec)
         in_vec = not (yield self.dec2.no_in_vec)
+        rm_mode = yield self.dec2.rm_dec.mode
         log("    svstate.vl", vl)
         log("    svstate.mvl", mvl)
         log("         rm.subvl", subvl)
@@ -2950,6 +2960,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("    out_vec", out_vec)
         log("    in_vec", in_vec)
         log("    sv_ptype", sv_ptype, sv_ptype == SVPType.P2.value)
+        log("    rm_mode", rm_mode)
         # check if this was an sv.bc* and if so did it succeed
         if self.is_svp64_mode and insn_name.startswith("sv.bc"):
             end_loop = self.namespace['end_loop']
@@ -2965,6 +2976,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             svp64_is_vector = (out_vec or in_vec)
         else:
             svp64_is_vector = out_vec
+        # also if data-dependent fail-first is used, only in_vec is tested,
+        # allowing *scalar destinations* to be used as an accumulator.
+        # effectively this implies /mr (mapreduce mode) is 100% on with ddffirst
+        # see https://bugs.libre-soc.org/show_bug.cgi?id=1183#c16
+        if is_ffirst_mode(self.dec2):
+            svp64_is_vector = in_vec
+
         # loops end at the first "hit" (source or dest)
         yield from self.advance_svstate_steps()
         loopend = self.loopend
