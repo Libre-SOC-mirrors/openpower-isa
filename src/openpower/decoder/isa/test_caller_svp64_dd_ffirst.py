@@ -10,7 +10,9 @@ from openpower.insndb.asm import SVP64Asm
 
 
 def cmpd(x, y):
-    class CRfield: object
+    class CRfield:
+        def __repr__(self):
+            return "<lt %d gt %d eq %d>" % (self.lt, self.gt, self.eq)
     CRf = CRfield()
     CRf.lt = x < y
     CRf.gt = x > y
