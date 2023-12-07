@@ -26,6 +26,7 @@ def sv_cmpi(gpr, CR, vl, ra, si):
     i = 0
     while i < vl:
         CR[i] = cmpd(gpr[ra + i], si)
+        log("sv_cmpi test", i, gpr[ra + i], si, CR[i], CR[i].lt)
         if CR[i].lt:
             break
         i += 1
@@ -51,7 +52,7 @@ class DDFFirstTestCase(FHDLTestCase):
         print("SVSTATE", bin(svstate.asint()))
 
         gprs = [0] * 32
-        gprs[10] = 4
+        gprs[10] = 7
         gprs[11] = 5
         gprs[12] = 12
 
