@@ -43,19 +43,20 @@ class DDFFirstTestCase(FHDLTestCase):
 
         # SVSTATE
         svstate = SVP64State()
-        svstate.vl = 4  # VL
-        svstate.maxvl = 4  # MAXVL
+        vl = 3  # VL
+        svstate.vl = vl  # VL
+        svstate.maxvl = vl  # MAXVL
         print("SVSTATE", bin(svstate.asint()))
 
-        gprs = [0] * 64
-        gprs[10] = 5
-        gprs[11] = 6
+        gprs = [0] * 32
+        gprs[10] = 4
+        gprs[11] = 5
+        gprs[12] = 12
 
         res = []
-        cr_res = []
-        # store GPRs
-        for i, x in enumerate(vec):
-            gprs[i] = x
+        cr_res = [0]*8
+
+        newvl = sv_cmpi(gprs, cr_res, vl, 10, 5)
 
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs=gprs,
