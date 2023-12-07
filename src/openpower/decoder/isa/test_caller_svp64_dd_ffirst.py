@@ -7,7 +7,7 @@ from openpower.decoder.isa.test_caller import run_tst
 from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
 from openpower.insndb.asm import SVP64Asm
-
+from openpower.util import log
 
 def cmpd(x, y):
     class CRfield:
@@ -59,7 +59,8 @@ class DDFFirstTestCase(FHDLTestCase):
         cr_res = [0]*8
 
         newvl = sv_cmpi(gprs, cr_res, vl, 10, 5)
-
+        log("sv_cmpi", newvl, cr_res)
+        
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs=gprs,
                                        svstate=svstate)
