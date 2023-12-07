@@ -23,8 +23,8 @@ def cmpd(x, y):
 def sv_cmpi(gpr, CR, vl, ra, si):
     i = 0
     while i < vl:
-        CR[idx] = cmpd(gpr[ra + i], si)
-        if CR[idx].lt:
+        CR[i] = cmpd(gpr[ra + i], si)
+        if CR[i].lt:
             break
         i += 1
     return i # new VL
