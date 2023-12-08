@@ -14,7 +14,7 @@ def cmpd(x, y):
         def __repr__(self):
             return "<lt %d gt %d eq %d>" % (self.lt, self.gt, self.eq)
         def __int__(self):
-            return CRf.lt<<3 | CRf.gt<<2 | CRf.eq<<1
+            return (CRf.lt<<3) | (CRf.gt<<2) | (CRf.eq<<1)
     CRf = CRfield()
     CRf.lt = x < y
     CRf.gt = x > y
@@ -40,10 +40,10 @@ def sv_cmpi(gpr, CR, vl, ra, si):
 def sv_maxu(gpr, CR, vl, ra, rb, rt):
     i = 0
     while i < vl:
-        CR[0] = cmpd(gpr[rb], gpr[ra+i])
+        CR[0] = cmpd(gpr[ra+i], gpr[rb])
         gpr[rt] = gpr[rb] if CR[0].gt else gpr[ra+i]
-        log("sv_maxss test", i, gpr[ra + i], gpr[rb+i], CR[0], CR[0].lt)
-        if not CR[0].lt:
+        log("sv_maxss test", i, gpr[ra + i], gpr[rb+i], CR[0], CR[0].gt)
+        if not CR[0].gt:
             break
         i += 1
     return i # new VL
@@ -56,7 +56,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_maxu_ddffirst_single(self):
-        lst = SVP64Asm(["sv.minmax/ff=gt 4, *10, 4, 1" # scalar RB=RT
+        lst = SVP64Asm(["sv.minmax./ff=le 4, *10, 4, 1" # scalar RB=RT
                         ])
         lst = list(lst)
 
