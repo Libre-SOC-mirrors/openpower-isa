@@ -13,6 +13,8 @@ def cmpd(x, y):
     class CRfield:
         def __repr__(self):
             return "<lt %d gt %d eq %d>" % (self.lt, self.gt, self.eq)
+        def __int__(self):
+            return CRf.lt<<3 | CRf.gt<<2 | CRf.eq<<1
     CRf = CRfield()
     CRf.lt = x < y
     CRf.gt = x > y
@@ -33,11 +35,74 @@ def sv_cmpi(gpr, CR, vl, ra, si):
     return i # new VL
 
 
+# example sv.cmpi/ff=lt 0, 1, *10, 5
+# see https://bugs.libre-soc.org/show_bug.cgi?id=1183#c3
+def sv_maxu(gpr, CR, vl, ra, rb, rt):
+    i = 0
+    while i < vl:
+        CR[0] = cmpd(gpr[rb], gpr[ra+i])
+        gpr[rt] = gpr[rb] if CR[0].gt else gpr[ra+i]
+        log("sv_maxss test", i, gpr[ra + i], gpr[rb+i], CR[0], CR[0].lt)
+        if not CR[0].lt:
+            break
+        i += 1
+    return i # new VL
+
+
 class DDFFirstTestCase(FHDLTestCase):
 
     def _check_regs(self, sim, expected):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
+
+    def test_sv_maxu_ddffirst_single(self):
+        lst = SVP64Asm(["sv.minmax/ff=gt 4, *10, 4, 1" # scalar RB=RT
+                        ])
+        lst = list(lst)
+
+        # SVSTATE
+        svstate = SVP64State()
+        vl = 4  # VL
+        svstate.vl = vl  # VL
+        svstate.maxvl = vl  # MAXVL
+        print("SVSTATE", bin(svstate.asint()))
+
+        gprs = [0] * 32
+        gprs[4] =  2 # start (RT&RB) accumulator
+        gprs[10] = 3 # vector starts here
+        gprs[11] = 4
+        gprs[12] = 1
+        gprs[13] = 0
+
+        res = []
+        cr_res = [0]*8
+
+        res = deepcopy(gprs)
+        expected_vl = sv_maxu(res, cr_res, vl, 10, 5, 5)
+        log("sv_maxu", expected_vl, cr_res)
+
+        with Program(lst, bigendian=False) as program:
+            sim = self.run_tst_program(program, initial_regs=gprs,
+                                       svstate=svstate)
+            for i in range(4):
+                val = sim.gpr(i).value
+                res.append(val)
+                cr_res.append(0)
+                print("i", i, val)
+            # confirm that the results are as expected
+
+            for i, v in enumerate(cr_res[:vl]):
+                crf = sim.crl[i].get_range().value
+                print ("crf", i, res[i], bin(crf), bin(int(v)))
+                self.assertEqual(crf, int(v))
+
+            for i, v in enumerate(res):
+                self.assertEqual(v, res[i])
+
+            self.assertEqual(sim.svstate.vl, expected_vl)
+            self.assertEqual(sim.svstate.maxvl, 4)
+            self.assertEqual(sim.svstate.srcstep, 0)
+            self.assertEqual(sim.svstate.dststep, 0)
 
     def test_1(self):
         lst = SVP64Asm(["sv.cmpi/ff=lt 0, 1, *10, 5"
@@ -61,7 +126,7 @@ class DDFFirstTestCase(FHDLTestCase):
 
         newvl = sv_cmpi(gprs, cr_res, vl, 10, 5)
         log("sv_cmpi", newvl, cr_res)
-        
+
         with Program(lst, bigendian=False) as program:
             sim = self.run_tst_program(program, initial_regs=gprs,
                                        svstate=svstate)
