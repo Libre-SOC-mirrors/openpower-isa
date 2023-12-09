@@ -114,7 +114,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def tst_1(self):
+    def test_1(self):
         lst = SVP64Asm(["sv.cmpi/ff=lt 0, 1, *10, 5"
                         ])
         lst = list(lst)
@@ -173,7 +173,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def tst_sv_addi_ffirst_le(self):
+    def test_sv_addi_ffirst_le(self):
         lst = SVP64Asm(["sv.subf./ff=le *0,8,*0"
                         ])
         lst = list(lst)
@@ -230,7 +230,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def tst_sv_addi_ffirst(self):
+    def test_sv_addi_ffirst(self):
         lst = SVP64Asm(["sv.subf./ff=eq *0,8,*0"
                         ])
         lst = list(lst)
@@ -282,7 +282,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def tst_sv_addi_ffirst_rc1(self):
+    def test_sv_addi_ffirst_rc1(self):
         lst = SVP64Asm(["sv.subf/ff=RC1 *0,8,*0"  # RC1 auto-sets EQ (and Rc=1)
                         ])
         lst = list(lst)
@@ -325,7 +325,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def tst_sv_addi_ffirst_vli(self):
+    def test_sv_addi_ffirst_vli(self):
         """data-dependent fail-first with VLi=1, the test comes *after* write
         """
         lst = SVP64Asm(["sv.subf/ff=RC1/vli *0,8,*0"
