@@ -80,7 +80,6 @@ Pseudo-code:
         a <- b
         b <- t
     # store the entire selected source (even in word mode)
-    # if Rc = 1 then store the result of comparing a and b to CR0
     if a <u b then RT <- (RA|0)
     else           RT <- (RB)
 

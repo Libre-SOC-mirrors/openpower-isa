@@ -1766,6 +1766,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         cr_field = selectconcat(negative, positive, zero, SO)
         log("handle_comparison cr_field", self.cr, cr_idx, cr_field)
         self.crl[cr_idx].eq(cr_field)
+        return cr_field
 
     def set_pc(self, pc_val):
         self.namespace['NIA'] = SelectableInt(pc_val, 64)
@@ -2488,10 +2489,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         elif cr0 is None:
             # if there was not an explicit CR0 in the pseudocode,
             # do implicit Rc=1
-            self.handle_comparison(result, regnum, overflow, no_so=is_setvl)
+            c = self.handle_comparison(result, regnum, overflow, no_so=is_setvl)
+            log("implicit cr0", c)
         else:
             # otherwise we just blat CR0 into the required regnum
-            log("explicit rc0", cr0)
+            log("explicit cr0", cr0)
             self.crl[regnum].eq(cr0)
 
     def do_outregs(self, info, outs, ca_en, ffirst_hit, ew_dst, outs_ok):

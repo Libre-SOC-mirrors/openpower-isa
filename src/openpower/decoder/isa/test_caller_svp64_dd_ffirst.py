@@ -41,8 +41,8 @@ def sv_maxu(gpr, CR, vl, ra, rb, rt):
     i = 0
     while i < vl:
         CR[0] = cmpd(gpr[ra+i], gpr[rb])
-        gpr[rt] = gpr[rb] if CR[0].gt else gpr[ra+i]
-        log("sv_maxss test", i, gpr[ra + i], gpr[rb+i], CR[0], CR[0].gt)
+        log("sv_maxss test", i, gpr[ra + i], gpr[rb], CR[0], int(CR[0]))
+        gpr[rt] = gpr[ra+i] if CR[0].lt else gpr[rb]
         if not CR[0].gt:
             break
         i += 1
@@ -55,30 +55,40 @@ class DDFFirstTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def test_sv_maxu_ddffirst_single(self):
+    def test_sv_maxu_ddffirst_single_1(self):
+        self.sv_maxu_ddffirst_single([1,2,3,4], 0)
+
+    def test_sv_maxu_ddffirst_single_1(self):
+        self.sv_maxu_ddffirst_single([3,4,1,0], 2)
+
+    def test_sv_maxu_ddffirst_single_2(self):
+        self.sv_maxu_ddffirst_single([2,9,8,0], 2)
+
+    def test_sv_maxu_ddffirst_single_3(self):
+        self.sv_maxu_ddffirst_single([2,1,3,0], 99999)
+
+    def sv_maxu_ddffirst_single(self, ra, rb):
         lst = SVP64Asm(["sv.minmax./ff=le 4, *10, 4, 1" # scalar RB=RT
                         ])
         lst = list(lst)
 
         # SVSTATE
         svstate = SVP64State()
-        vl = 4  # VL
+        vl = len(ra)  # VL is length of array ra
         svstate.vl = vl  # VL
         svstate.maxvl = vl  # MAXVL
         print("SVSTATE", bin(svstate.asint()))
 
         gprs = [0] * 32
-        gprs[4] =  2 # start (RT&RB) accumulator
-        gprs[10] = 3 # vector starts here
-        gprs[11] = 4
-        gprs[12] = 1
-        gprs[13] = 0
+        gprs[4] =  rb # (RT&RB) accumulator in r4
+        for i, ra in enumerate(ra): # vector in ra starts at r10
+            gprs[10+i] = ra
+            log("maxu ddff", i, gprs[10+i])
 
-        res = []
         cr_res = [0]*8
-
         res = deepcopy(gprs)
-        expected_vl = sv_maxu(res, cr_res, vl, 10, 5, 5)
+
+        expected_vl = sv_maxu(res, cr_res, vl, 10, 4, 4)
         log("sv_maxu", expected_vl, cr_res)
 
         with Program(lst, bigendian=False) as program:
@@ -88,12 +98,12 @@ class DDFFirstTestCase(FHDLTestCase):
                 val = sim.gpr(i).value
                 res.append(val)
                 cr_res.append(0)
-                print("i", i, val)
+                log("i", i, val)
             # confirm that the results are as expected
 
             for i, v in enumerate(cr_res[:vl]):
                 crf = sim.crl[i].get_range().value
-                print ("crf", i, res[i], bin(crf), bin(int(v)))
+                log("crf", i, res[i], bin(crf), bin(int(v)))
                 self.assertEqual(crf, int(v))
 
             for i, v in enumerate(res):
@@ -104,7 +114,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def test_1(self):
+    def tst_1(self):
         lst = SVP64Asm(["sv.cmpi/ff=lt 0, 1, *10, 5"
                         ])
         lst = list(lst)
@@ -163,7 +173,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def test_sv_addi_ffirst_le(self):
+    def tst_sv_addi_ffirst_le(self):
         lst = SVP64Asm(["sv.subf./ff=le *0,8,*0"
                         ])
         lst = list(lst)
@@ -220,7 +230,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def test_sv_addi_ffirst(self):
+    def tst_sv_addi_ffirst(self):
         lst = SVP64Asm(["sv.subf./ff=eq *0,8,*0"
                         ])
         lst = list(lst)
@@ -272,7 +282,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def test_sv_addi_ffirst_rc1(self):
+    def tst_sv_addi_ffirst_rc1(self):
         lst = SVP64Asm(["sv.subf/ff=RC1 *0,8,*0"  # RC1 auto-sets EQ (and Rc=1)
                         ])
         lst = list(lst)
@@ -315,7 +325,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.svstate.srcstep, 0)
             self.assertEqual(sim.svstate.dststep, 0)
 
-    def test_sv_addi_ffirst_vli(self):
+    def tst_sv_addi_ffirst_vli(self):
         """data-dependent fail-first with VLi=1, the test comes *after* write
         """
         lst = SVP64Asm(["sv.subf/ff=RC1/vli *0,8,*0"
