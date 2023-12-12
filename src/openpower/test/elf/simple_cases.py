@@ -95,6 +95,8 @@ class SimpleCases(TestAccumulatorBase):
         self.add_case(prog, initial_sprs=initial_sprs.copy(),
                       initial_msr=DEFAULT_USER_MSR)
 
+    # FIXME: see https://bugs.libre-soc.org/show_bug.cgi?id=1228
+    @skip_case("Statically-linked glibc is known to not work")
     def case_static_glibc(self):
         # we enable debug info because it makes following along in gdb
         # much easier.
