@@ -13,3 +13,4 @@ dist
 /crtl*
 /formal_test_temp
 /test-out/
+*.iso
