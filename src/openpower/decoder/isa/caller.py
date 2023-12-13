@@ -2441,7 +2441,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("        vli", vli_)
         log("     cr_bit", cr_bit)
         log("      rc_en", rc_en)
-        if not rc_en or not is_ffirst_mode(self.dec2):
+        ffirst = yield from is_ffirst_mode(self.dec2)
+        if not rc_en or not ffirst:
             return False, False
         # get the CR vevtor, do BO-test
         crf = "CR0"
@@ -2983,7 +2984,8 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # allowing *scalar destinations* to be used as an accumulator.
         # effectively this implies /mr (mapreduce mode) is 100% on with ddffirst
         # see https://bugs.libre-soc.org/show_bug.cgi?id=1183#c16
-        if is_ffirst_mode(self.dec2):
+        ffirst = yield from is_ffirst_mode(self.dec2)
+        if ffirst:
             svp64_is_vector = in_vec
 
         # loops end at the first "hit" (source or dest)
