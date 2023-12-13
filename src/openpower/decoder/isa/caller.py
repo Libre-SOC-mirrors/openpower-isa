@@ -2924,6 +2924,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # because there *is* no destination register
             # (SV normally only terminates on 1st scalar reg written
             #  except in [slightly-misnamed] mapreduce mode)
+            ffirst = yield from is_ffirst_mode(self.dec2)
             if insn_name.startswith("sv.bc") or ffirst:
                 self.update_pc_next()
                 return False
