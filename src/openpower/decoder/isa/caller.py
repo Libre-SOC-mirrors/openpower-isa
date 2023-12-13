@@ -2607,7 +2607,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             if name in fregs:
                 fval = self.fpr(base, is_vec, offs, ew_src)
                 reg_val = SelectableInt(fval)
-                assert ew_src == XLEN, "TODO fix elwidth conversion"
+                assert ew_src == self.XLEN, "TODO fix elwidth conversion"
                 self.trace("r:FPR:%d:%d:%d " % (base, offs, ew_src))
                 log("read fp reg %d/%d: 0x%x" % (base, offs, reg_val.value),
                     kind=LogType.InstrInOuts)
