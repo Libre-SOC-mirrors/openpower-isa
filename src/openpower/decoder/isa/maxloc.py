@@ -1,3 +1,8 @@
+# Implementation of FORTRAN maxloc in python
+# Copyright (C) Luke Kenneth Casson Leighton <lkcl@lkcl.net>
+# License: LGPLv3+
+# https://bugs.libre-soc.org/show_bug.cgi?id=676#c2
+
 def m2(a):
     m = 0;
     nm = 0;
