@@ -35,8 +35,8 @@ def sv_cmpi(gpr, CR, vl, ra, si):
     return i # new VL
 
 
-# example sv.cmpi/ff=lt 0, 1, *10, 5
-# see https://bugs.libre-soc.org/show_bug.cgi?id=1183#c3
+# example sv.minmax/ff=lt 0, 1, *10, 5
+# see https://bugs.libre-soc.org/show_bug.cgi?id=676
 def sv_maxu(gpr, CR, vl, ra, rb, rt):
     i = 0
     while i < vl:
