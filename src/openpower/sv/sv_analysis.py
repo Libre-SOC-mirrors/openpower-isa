@@ -539,8 +539,11 @@ def extra_classifier(insn_name, value, name, res, regs):
             res['0'] = 'd:FRS'  # FRS: Rdest1_EXTRA3
             res['1'] = 's:FRS'  # FRS: Rsrc1_EXTRA3
         elif insn_name == 'setvl':
-            res['0'] = 'd:RT'  # RT: Rdest1_EXTRA3
-            res['1'] = 's:RA'  # RS: Rsrc1_EXTRA3
+            res['0'] = 'd:RT'        # RT: Rdest1_EXTRA3
+            res['1'] = 's:RA'        # RS: Rsrc1_EXTRA3
+        elif insn_name == 'svstep':
+            res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA3
+            res['1'] = 's:RA'        # RA: Rsrc1_EXTRA3
         else:
             raise NotImplementedError(insn_name)
 
@@ -657,8 +660,6 @@ def extra_classifier(insn_name, value, name, res, regs):
 
     elif value == 'RM-1P-1D':
         res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
-        if insn_name == 'svstep':
-            res['0'] = 'd:RT;d:CR0'  # RT,CR0: Rdest1_EXTRA3
         if insn_name == 'fmvis':
             res['0'] = 'd:FRS'  # FRS: Rdest1_EXTRA3
 

@@ -60,10 +60,10 @@ class SVSTATETestCase(FHDLTestCase):
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add 1, *5, *9',
                         'sv.addi *12, 1, 1',
-                        "svstep. 0, 1, 0",
+                        "svstep. 0, 0, 1, 0",
                         'sv.add 1, *5, *9',
                         'sv.addi *12, 1, 1',
-                        "svstep. 0, 1, 0",
+                        "svstep. 0, 0, 1, 0",
                         ])
 
         sequence is as follows:
@@ -92,10 +92,10 @@ class SVSTATETestCase(FHDLTestCase):
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add 1, *5, *9',       # scalar dest (into r1)
                         'sv.addi *12, 1, 1',       # scalar src (from r1)
-                        "svstep. 0, 1, 0",  # svstep
+                        "svstep. 0, 0, 1, 0",  # svstep
                         'sv.add 1, *5, *9',       # again, scalar dest
                         'sv.addi *12, 1, 1',       # but vector dest
-                        "svstep. 0, 1, 0",  # svstep (end: sets CR0.SO)
+                        "svstep. 0, 0, 1, 0",  # svstep (end: sets CR0.SO)
                         ])
         lst = list(lst)
 

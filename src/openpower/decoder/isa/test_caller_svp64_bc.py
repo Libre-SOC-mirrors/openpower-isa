@@ -316,7 +316,7 @@ class DecoderTestCase(FHDLTestCase):
                 "setvl 0, 0, %d, 1, 1, 1" % maxvl, # VL = MAXVL = 2, vf=1
                 "sv.cmpi *cr0, 1, *10, 0x10", # compare reg val with immediate
                 "sv.bc 0, *2, 0x10", # jmp if CTR!=0 AND reg not equal to imm
-                "svstep. 27, 1, 0",
+                "svstep. 27, 0, 1, 0",
                 "bc 4, 3, -0x14", # CR_BI=0, jump to start of loop (sv.cmpi)
                 "or 0, 0, 0", # jump to here if terminate VF loop early
             ]

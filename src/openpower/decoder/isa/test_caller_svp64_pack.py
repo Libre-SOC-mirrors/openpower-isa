@@ -20,11 +20,11 @@ class DecoderTestCase(FHDLTestCase):
         """tests pack mode
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
-                        "svstep 0, 15, 0",  # set dst-pack
-                        "sv.svstep./vec2 *0, 5, 1",  # svstep get vector srcstep
-                        "sv.svstep./vec2 *8, 6, 1",  # svstep get vector dststep
-                        "sv.svstep./vec2 *16, 7, 1",  # svstep get src substep
-                        "sv.svstep./vec2 *24, 8, 1",  # svstep get dst substep
+                        "svstep 0, 0, 15, 0",  # set dst-pack
+                        "sv.svstep./vec2 *0,0,5,1",  # svstep get vector srcstep
+                        "sv.svstep./vec2 *8,0,6,1",  # svstep get vector dststep
+                        "sv.svstep./vec2 *16,0,7,1",  # svstep get src substep
+                        "sv.svstep./vec2 *24,0,8,1",  # svstep get dst substep
                         ])
         lst = list(lst)
 
@@ -70,7 +70,7 @@ class DecoderTestCase(FHDLTestCase):
         the vector output in the order of their own values.
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
-                        "svstep 0, 14, 0",  # set src-pack
+                        "svstep 0, 0, 14, 0",  # set src-pack
                         "sv.ori/vec2 *0, *32, 0",  # copy 01234567 to new order
                         ])
         lst = list(lst)
@@ -108,7 +108,7 @@ class DecoderTestCase(FHDLTestCase):
         """tests pack mode
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
-                        "svstep 0, 15, 0",  # set dst-pack
+                        "svstep 0, 0, 15, 0",  # set dst-pack
                         "sv.ori/vec2 *0, *32, 0",  # copy 01234567 to new order
                         ])
         lst = list(lst)
@@ -146,7 +146,7 @@ class DecoderTestCase(FHDLTestCase):
         """tests pack mode with a predicate
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
-                        "svstep 0, 15, 0",  # set dst-pack
+                        "svstep 0, 0, 15, 0",  # set dst-pack
                         "sv.ori/vec2/m=r3 *8, *16, 0",
                         ])
         lst = list(lst)
@@ -203,7 +203,7 @@ class DecoderTestCase(FHDLTestCase):
         """tests unpack mode with predicate
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
-                        "svstep 0, 14, 0",  # set src-pack
+                        "svstep 0, 0, 14, 0",  # set src-pack
                         "sv.ori/vec2/m=r3 *8, *16, 0",  # copy with mask
                         ])
         lst = list(lst)

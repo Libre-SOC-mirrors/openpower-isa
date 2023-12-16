@@ -260,7 +260,7 @@ class FFTTestCase(FHDLTestCase):
                             "svshape 8, 1, 1, 1, 1",
                              "svremap 31, 1, 0, 2, 0, 1, 0",
                             "sv.ffmadds *0, *8, *0",
-                            "svstep. 12, 1, 0",
+                            "svstep. 12, 0, 1, 0",
                             "bc 6, 3, -16"
                             ])
             runs a full in-place O(N log2 N) butterfly schedule for
@@ -275,7 +275,7 @@ class FFTTestCase(FHDLTestCase):
             "svshape 8, 1, 1, 1, 1",
             "svremap 31, 1, 0, 2, 0, 1, 0",
             "sv.ffmadds *0, *8, *0",
-            "svstep. 27, 1, 0",
+            "svstep. 27, 0, 1, 0",
             "bc 6, 3, -16"
         ])
         lst = list(lst)
@@ -347,7 +347,7 @@ class FFTTestCase(FHDLTestCase):
                          # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
                          "svremap 26, 0, 0, 0, 0, 1, 1",
                         "sv.ffadds *0, 24, *0",
-                        "svstep. 27, 1, 0",
+                        "svstep. 27, 0, 1, 0",
                         "bc 6, 3, -28"
                             ])
 
@@ -386,7 +386,7 @@ class FFTTestCase(FHDLTestCase):
             # RA: scal RB: jl (S0) RC: n/a RT: jl (S0) EA: jh (S1)
             "svremap 26, 0, 0, 0, 0, 1, 0",
             "sv.ffadds *0, 24, *0",
-            "svstep. 27, 1, 0",
+            "svstep. 27, 0, 1, 0",
             "bc 6, 3, -28"
         ])
         lst = list(lst)
@@ -622,7 +622,7 @@ class FFTTestCase(FHDLTestCase):
             "sv.ffadds *8, 26, *8",    # vh/vl +- tpim
 
             # svstep loop
-            "svstep. 27, 1, 0",
+            "svstep. 27, 0, 1, 0",
             "bc 6, 3, -56"
         ])
         lst = list(lst)

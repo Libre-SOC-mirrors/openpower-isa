@@ -438,8 +438,8 @@ class DCTTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["svshape 8, 1, 1, 5, 0",
                         "svremap 0, 0, 0, 2, 0, 1, 1",
-                        "sv.svstep *4, 3, 1",  # svstep get vector of ci
-                        "sv.svstep *16, 2, 1",  # svstep get vector of step
+                        "sv.svstep *4, 0, 3, 1",  # svstep get vector of ci
+                        "sv.svstep *16, 0, 2, 1",  # svstep get vector of step
                         "addi 1, 0, 0x0000",
                         "setvl 0, 0, 7, 0, 1, 1",
                         "sv.std *4, 0(1)",

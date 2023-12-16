@@ -296,8 +296,8 @@ class DecoderTestCase(FHDLTestCase):
 
     def test_svstep_1(self):
         lst = SVP64Asm(["setvl 0, 0, 10, 1, 1, 1",  # actual setvl (VF mode)
-                        "svstep 0, 1, 0",  # svstep
-                        "svstep 0, 1, 0",  # svstep
+                        "svstep 0, 0, 1, 0",  # svstep
+                        "svstep 0, 0, 1, 0",  # svstep
                         ])
         lst = list(lst)
 
@@ -327,8 +327,8 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep when it reaches VL
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",  # actual setvl (VF mode)
-                        "svstep. 0, 1, 0",  # svstep (Rc=1)
-                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0",  # svstep (Rc=1)
                         ])
         lst = list(lst)
 
@@ -365,8 +365,8 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep when it *doesn't* reach VL
         """
         lst = SVP64Asm(["setvl 0, 0, 3, 1, 1, 1",  # actual setvl (VF mode)
-                        "svstep. 0, 1, 0",  # svstep (Rc=1)
-                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0",  # svstep (Rc=1)
                         ])
         lst = list(lst)
 
@@ -580,12 +580,12 @@ class DecoderTestCase(FHDLTestCase):
             # set triple butterfly mode with persistent "REMAP"
             "svshape 8, 1, 1, 1, 1",
             "svremap 31, 1, 0, 2, 0, 1, 1",
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 2, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 2, 0, 2, 0",  # svstep (Rc=1)
         ])
         lst = list(lst)
 
@@ -624,9 +624,9 @@ class DecoderTestCase(FHDLTestCase):
             # set triple butterfly mode with persistent "REMAP"
             "svshape 8, 1, 1, 1, 1",
             "svremap 31, 1, 0, 2, 0, 1, 1",
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
         ])
         lst = list(lst)
 
@@ -665,10 +665,10 @@ class DecoderTestCase(FHDLTestCase):
             # set triple butterfly mode with persistent "REMAP"
             "svshape 8, 1, 1, 1, 1",
             "svremap 31, 1, 0, 2, 0, 1, 1",
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
         ])
         lst = list(lst)
 
@@ -708,10 +708,10 @@ class DecoderTestCase(FHDLTestCase):
             # set triple butterfly mode with persistent "REMAP"
             "svshape 8, 1, 1, 1, 1",
             "svremap 31, 1, 0, 2, 0, 1, 1",
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 0, 2, 0",  # svstep (Rc=1)
-            "svstep. 2, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 0, 0, 2, 0",  # svstep (Rc=1)
+            "svstep. 2, 0, 2, 0",  # svstep (Rc=1)
         ])
         lst = list(lst)
 
@@ -760,8 +760,8 @@ class DecoderTestCase(FHDLTestCase):
             # set FFT triple butterfly mode with persistent "REMAP"
             "svshape 8, 1, 1, 1, 0",
             "svremap 0, 0, 0, 2, 0, 1, 1",
-            "sv.svstep *0, 1, 1",  # svstep get vector of j+halfsize
-            "sv.svstep *16, 3, 1",  # svstep get vector of k in exptable[k]
+            "sv.svstep *0, 0, 1, 1",  # svstep get vector of j+halfsize
+            "sv.svstep *16, 0, 3, 1",  # svstep get vector of k in exptable[k]
         ])
         lst = list(lst)
 
@@ -828,10 +828,10 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep with an add, when it reaches VL
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add *1, *5, *9',
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0", # svstep (Rc=1)
                         "setvl. 0, 0, 1, 1, 0, 0",
                         'sv.add *1, *5, *9',
-                        "svstep. 3, 1, 0", # svstep (Rc=1)
+                        "svstep. 3, 0, 1, 0", # svstep (Rc=1)
                         "setvl 4, 0, 1, 0, 0, 0", # getvl
                         ])
         sequence is as follows:
@@ -846,9 +846,9 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add *1, *5, *9',
-                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0",  # svstep (Rc=1)
                         'sv.add *1, *5, *9',
-                        "svstep. 3, 1, 0",  # svstep (Rc=1)
+                        "svstep. 3, 0, 1, 0",  # svstep (Rc=1)
                         "setvl 4, 0, 1, 0, 0, 0",  # getvl
                         ])
         lst = list(lst)
@@ -900,7 +900,7 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep with a branch.
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add *1, *5, *9',
-                        "svstep. 0, 1, 0", # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0", # svstep (Rc=1)
                         "bc 6, 3, -0xc"
                         ])
         sequence is as follows:
@@ -926,7 +926,7 @@ class DecoderTestCase(FHDLTestCase):
         """
         lst = SVP64Asm(["setvl 0, 0, 2, 1, 1, 1",
                         'sv.add *1, *5, *9',
-                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0",  # svstep (Rc=1)
                         "bc 6, 3, -0xc"  # branch to add (64-bit op so -0xc!)
                         ])
         lst = list(lst)
@@ -981,9 +981,9 @@ class DecoderTestCase(FHDLTestCase):
         lst = SVP64Asm(["setvl 0, 0, 5, 1, 1, 1",
                         'sv.cmp 0, 1, *4, 14',  # r8 contains the temp
                         'sv.isel 14,*4,14,1',  # copy if cmp was greater
-                        "svstep. 12, 6, 0",  # get srcstep
+                        "svstep. 12, 0, 6, 0",  # get srcstep
                         'sv.isel 10,12,10,1',  # copy if cmp was greater
-                        "svstep. 0, 1, 0",  # svstep (Rc=1)
+                        "svstep. 0, 0, 1, 0",  # svstep (Rc=1)
                         "bc 6, 3, -0x24"  # branch to cmp
                         ])
         lst = list(lst)
@@ -1061,8 +1061,8 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep "straight", placing srcstep, dststep into vector
         """
         lst = SVP64Asm(["setvl 0, 0, 4, 0, 1, 1",
-                        "sv.svstep *0, 5, 1",  # svstep get vector srcstep
-                        "sv.svstep. *4, 6, 1",  # svstep get vector dststep
+                        "sv.svstep *0, 0, 5, 1",  # svstep get vector srcstep
+                        "sv.svstep. *4, 0, 6, 1",  # svstep get vector dststep
                         ])
         lst = list(lst)
 
@@ -1100,8 +1100,8 @@ class DecoderTestCase(FHDLTestCase):
         """tests svstep "straight", placing srcstep, dststep into vector
         """
         lst = SVP64Asm(["setvl 0, 0, 5, 0, 1, 1",
-                        "sv.svstep/m=r30 *0, 5, 1",  # svstep get vector srcstep
-                        "sv.svstep./m=r30 *8, 6, 1", # svstep get vector dststep
+                        "sv.svstep/m=r30 *0,0,5,1",  # svstep get vector srcstep
+                        "sv.svstep./m=r30 *8,0,6,1", # svstep get vector dststep
                         ])
         lst = list(lst)
 
