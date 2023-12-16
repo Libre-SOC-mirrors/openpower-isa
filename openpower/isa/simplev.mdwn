@@ -5,8 +5,8 @@
 
 SVL-Form
 
-* svstep RT,SVi,vf (Rc=0)
-* svstep. RT,SVi,vf (Rc=1)
+* svstep RT,RA,SVi,vf (Rc=0)
+* svstep. RT,RA,SVi,vf (Rc=1)
 
 Pseudo-code:
 

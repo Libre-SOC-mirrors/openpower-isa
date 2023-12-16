@@ -3015,7 +3015,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.svstate.vfirst = 0
         return nia_update
 
-    def SVSTATE_NEXT(self, mode, submode):
+    def SVSTATE_NEXT(self, mode, submode, RA=None):
         """explicitly moves srcstep/dststep on to next element, for
         "Vertical-First" mode.  this function is called from
         setvl pseudo-code, as a pseudo-op "svstep"

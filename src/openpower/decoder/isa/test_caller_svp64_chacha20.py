@@ -162,8 +162,8 @@ class SVSTATETestCase(FHDLTestCase):
             'sv.xor/w=32 *%d, *%d, *%d' % (block, block, block),
             'svremap 31, 0, 3, 2, 2, 0, 0',  # RA=2, RB=3, RS=2 (0b01110)
             'sv.rldcl/w=32 *%d, *%d, *%d, 0' % (block, block, shifts),
-            'svstep. %d, 1, 0' % ctr,      # step to next in-regs element
-            'bc 6, 3, -0x28',               # svstep. Rc=1 loop-end-condition?
+            'svstep. %d, 0, 1, 0' % ctr,     # step to next in-regs element
+            'bc 6, 3, -0x28',                # svstep. Rc=1 loop-end-condition?
             # inner-loop done: outer loop standard CTR-decrement to setvl again
             'bc 16, 0, -0x30',
         ])
