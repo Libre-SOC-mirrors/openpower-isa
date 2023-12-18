@@ -20,18 +20,31 @@ from openpower.util import log
 
 
 
-# example sv.cmpi/ff=lt 0, 1, *10, 5
+def cmpd(x, y):
+    class CRfield:
+        def __repr__(self):
+            return "<lt %d gt %d eq %d>" % (self.lt, self.gt, self.eq)
+        def __int__(self):
+            return (CRf.lt<<3) | (CRf.gt<<2) | (CRf.eq<<1)
+    CRf = CRfield()
+    CRf.lt = x < y
+    CRf.gt = x > y
+    CRf.eq = x == y
+    return CRf
+
+
+# example sv.minmax/ff=lt 0, 1, *10, 5
 # see https://bugs.libre-soc.org/show_bug.cgi?id=1183#c3
-def sv_maxu(gpr, CR, vl, ra, rb, rt):
-    i = 0
+def sv_maxu(gpr, vl, ra, rb, rt):
+    CR0, i = None, 0
     while i < vl:
-        CR[0] = cmpd(gpr[ra+i], gpr[rb])
-        log("sv_maxss test", i, gpr[ra + i], gpr[rb], CR[0], int(CR[0]))
-        gpr[rt] = gpr[ra+i] if CR[0].lt else gpr[rb]
-        if not CR[0].gt:
+        CR0 = cmpd(gpr[ra+i], gpr[rb])
+        log("sv_maxss test", i, gpr[ra + i], gpr[rb], CR0, int(CR0))
+        gpr[rt] = gpr[ra+i] if CR0.lt else gpr[rb]
+        if not CR0.gt:
             break
         i += 1
-    return i # new VL
+    return i, CR0 # new VL
 
 
 class DDFFirstTestCase(FHDLTestCase):
@@ -53,7 +66,29 @@ class DDFFirstTestCase(FHDLTestCase):
         self.sv_maxloc([2,1,3,0])
 
     def sv_maxloc(self, ra):
+        """
+            m, nm, i, n = 0, 0, 0, len(a)
+            while (i<n):
+                while (i<n and a[i]<=m) : i += 1
+                while (i<n and a[i] > m): m, nm, i = a[i], i, i+1
+            return nm
+        """
+
         lst = SVP64Asm(["sv.minmax./ff=le 4, *10, 4, 1" # scalar RB=RT
+                "mtspr 9, 3",               # move r3 to CTR
+                # VL = MIN(CTR,MAXVL=8)
+                "setvl 3,0,8,0,1,1",        # set MVL=8, VL=MIN(MVL,CTR)
+                # load VL bytes (update r4 addr) but compressed (dw=8)
+                "addi 6, 0, 0",             # initialise r6 to zero
+                "sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
+                # gather performs the transpose (which gets us to positional..)
+                "gbbd 8,6",
+                # now those bits have been turned around, popcount and sum them
+                "setvl 0,0,8,0,1,1",        # set MVL=VL=8
+                "sv.popcntd/sw=8 *24,*8",   # do the (now transposed) popcount
+                "sv.add *16,*16,*24",       # and accumulate in results
+                # branch back if CTR still non-zero. works even though VL=8
+                "sv.bc/all 16, *0, -0x28", # reduce CTR by VL and stop if -ve
                         ])
         lst = list(lst)
 
