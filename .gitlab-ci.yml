@@ -126,4 +126,10 @@ build:
 
         - python3 -m openpower.syscalls json linux > src/openpower/syscalls/syscalls.json
 
-        - SILENCELOG=1 SIM_NO_VCD=1 pytest -v --maxfail=10
+        # maxschedchunk substantially speeds up testing -- by ~2x on CI
+        # it is supported by the version of pytest-xdist used by both this file
+        # and the dev-env-setup scripts (which should be the same versions).
+        #
+        # maxfail=10 because otherwise the output log is too long and gitlab
+        # truncates it, removing the testing summary.
+        - SILENCELOG=1 SIM_NO_VCD=1 pytest -v --maxfail=10 --maxschedchunk=1
