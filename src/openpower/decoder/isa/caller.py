@@ -566,6 +566,8 @@ def get_cr_in(dec2, name):
         if in_sel == CRInSel.BFA.value:
     if name in ['BA', 'BB']:
         if in_sel == CRInSel.BA_BB.value:
+    if name == 'BFA':
+        if in_sel == CRInSel.BFA.value:
             return in1, cr_isvec
     log("get_cr_in not found", name)
     return None, False
