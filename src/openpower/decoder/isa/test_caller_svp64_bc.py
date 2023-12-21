@@ -204,12 +204,11 @@ class DecoderTestCase(FHDLTestCase):
         occurs with CTR being reduced *at least* by VL.
         """
         for i in [1, 2, 3]:
-            lst = SVP64Asm(
-                [
-                    "sv.bc/ctr/all 16, *0, 0xc",  # branch, test CTR, reducing by VL
-                    "addi 3, 0, 0x1234",   # if tests fail this shouldn't execute
-                    "or 0, 0, 0"]          # branch target
-            )
+            lst = SVP64Asm([
+                "sv.bc/ctr/all 16, *0, 0xc", # branch, test CTR, reducing by VL
+                "addi 3, 0, 0x1234",         # if tests fail shouldn't execute
+                "or 0, 0, 0"                 # branch target
+            ])
             lst = list(lst)
 
             # SVSTATE (in this case, VL=2)
