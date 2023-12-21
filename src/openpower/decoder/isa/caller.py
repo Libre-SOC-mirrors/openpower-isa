@@ -427,13 +427,15 @@ def _get_predcr(mask):
 
 # read individual CR fields (0..VL-1), extract the required bit
 # and construct the mask
-def get_predcr(crl, mask, vl):
-    idx, noninv = _get_predcr(mask)
+def get_predcr(crl, predselect, vl):
+    idx, noninv = _get_predcr(predselect)
     mask = 0
     for i in range(vl):
         cr = crl[i+SVP64CROffs.CRPred]
         if cr[idx].value == noninv:
             mask |= (1 << i)
+        log("get_predcr", vl, idx, noninv, i+SVP64CROffs.CRPred,
+                          bin(cr.asint()), cr[idx].value, bin(mask))
     return mask
 
 
@@ -559,6 +561,9 @@ def get_cr_in(dec2, name):
     # identify which regnames map to in / o2
     if name == 'BI':
         if in_sel == CRInSel.BI.value:
+            return in1, cr_isvec
+    if name == 'BFA':
+        if in_sel == CRInSel.BFA.value:
             return in1, cr_isvec
     log("get_cr_in not found", name)
     return None, False
@@ -1642,6 +1647,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 # low 2 LSBs (CR field selector) remain same, CR num extended
                 assert regnum <= 7, "sigh, TODO, 128 CR fields"
                 val = (val & 0b11) | (regnum << 2)
+            elif self.is_svp64_mode and name in ['BFA']:  # TODO, more CRs
+                regnum, is_vec = yield from get_cr_in(self.dec2, name)
+                log('hack %s' % name, regnum, is_vec)
+                val = regnum
             elif self.is_svp64_mode and name in ['BF']:  # TODO, more CRs
                 regnum, is_vec = yield from get_cr_out(self.dec2, "BF")
                 log('hack %s' % name, regnum, is_vec)
