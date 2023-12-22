@@ -53,10 +53,10 @@ class DDFFirstTestCase(FHDLTestCase):
         for i in range(32):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
-    def tst_sv_maxloc_1(self):
-        self.sv_maxloc([1,2,3,4])
+    def test_sv_maxloc_1(self):
+        self.sv_maxloc([1,2,3,0])
 
-    def test_sv_maxloc_2(self):
+    def tst_sv_maxloc_2(self):
         self.sv_maxloc([3,4,1,5])
 
     def tst_sv_maxloc_3(self):
@@ -90,9 +90,9 @@ class DDFFirstTestCase(FHDLTestCase):
                 "setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
                 "sv.addi/mr/m=lt 4, *5, 0", # r4 = last non-masked value
                 "sv.minmax./ff=lt/m=ge 4, *10, 4, 1", # scalar RB=RT
-                "sv.svstep/mr 3, 0, 6, 1",  # svstep: get vector dststep
+                "sv.svstep/mr 2, 0, 6, 1",  # svstep: get vector dststep
                 "setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
-                "sv.bc/all/m=ge 24, 19, -0x38", # until r10[i]>r4 (and dec CTR)
+                "sv.bc/all/m=ge 16, 19, -0x38", # until r10[i]>r4 (and dec CTR)
                         ])
         lst = list(lst)
 
@@ -105,7 +105,7 @@ class DDFFirstTestCase(FHDLTestCase):
 
         gprs = [0] * 32
         gprs[3] =  vl # variable n: to go into CTR
-        gprs[4] =  0  # variable m: max current number found
+        gprs[4] =  2  # variable m: max current number found
         for i, ra in enumerate(ra): # vector in ra starts at r10
             gprs[10+i] = ra
             log("maxu ddff", i, gprs[10+i])
