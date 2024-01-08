@@ -2679,10 +2679,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # if there was not an explicit CR0 in the pseudocode,
             # do implicit Rc=1
             c = self.handle_comparison(result, regnum, overflow, no_so=is_setvl)
-            log("implicit cr0", c)
+            log("implicit cr0 %d" % regnum, c)
         else:
             # otherwise we just blat CR0 into the required regnum
-            log("explicit cr0", cr0)
+            log("explicit cr0 %d" % regnum, cr0)
             self.crl[regnum].eq(cr0)
 
     def do_outregs(self, info, outs, ca_en, ffirst_hit, ew_dst, outs_ok):

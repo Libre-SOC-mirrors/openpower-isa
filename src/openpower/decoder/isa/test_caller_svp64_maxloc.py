@@ -17,6 +17,7 @@ from openpower.decoder.selectable_int import SelectableInt
 from openpower.simulator.program import Program
 from openpower.insndb.asm import SVP64Asm
 from openpower.util import log
+from openpower.decoder.isa.maxloc import m2
 
 
 
@@ -54,7 +55,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_maxloc_1(self):
-        self.sv_maxloc([1,2,3,0])
+        self.sv_maxloc([0,6,1,7])
 
     def tst_sv_maxloc_2(self):
         self.sv_maxloc([3,4,1,5])
@@ -85,14 +86,17 @@ class DDFFirstTestCase(FHDLTestCase):
                 #"addi 6, 0, 0",             # initialise r6 to zero
                 #"sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
                 # while (i<n and a[i]<=m) : i += 1
-                "sv.minmax./ff=ge *5, *10, *4, 1", # scalar RB=RT
+                "sv.minmax./ff=ge/m=ge *5, *10, *4, 1", # scalar RB=RT
                 "sv.mcrf/m=ge *4,*0", # masked-copy CR0-CR3 to CR4-CR7
                 "setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
                 "sv.addi/mr/m=lt 4, *5, 0", # r4 = last non-masked value
-                "sv.minmax./ff=lt/m=ge 4, *10, 4, 1", # scalar RB=RT
+                "mtcrf 128, 0",       # clear CR0
+                "sv.minmax./ff=lt/m=ge/vli 4, *10, 4, 1", # scalar RB=RT
                 "sv.svstep/mr 2, 0, 6, 1",  # svstep: get vector dststep
-                "setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
-                "sv.bc/all/m=ge 16, 19, -0x38", # until r10[i]>r4 (and dec CTR)
+                "sv.creqv *16,*16,*16", # masked-copy CR0-CR3 to CR4-CR7
+                "bc 12,0, -0x3c"            # CR0 lt bit clear, branch back
+                #"setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
+                #"sv.bc/all/m=ge 16, 19, -0x3c", # until r10[i]>r4 (and dec CTR)
                         ])
         lst = list(lst)
 
