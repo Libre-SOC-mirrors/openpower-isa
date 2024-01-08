@@ -834,8 +834,8 @@ class DecoderTestCase(FHDLTestCase):
 
         # some memory with addresses to get from.  all locations are offset 8
         initial_mem = { 24: 0xfeed0001, 32: 48, # data @ 24, ptr @ 32+8 -> 48
-                        48: 0xfeed0002, 56: 16, # data @ 48, ptr @ 48+8 -> 16
-                        16: 0xfeed0003, 24: 80, # data @ 16, ptr @ 16+8 -> 80
+                        48: 0xfeed0002, 56: 8 , # data @ 48, ptr @ 48+8 -> 8
+                        8 : 0xfeed0003, 16: 80, # data @ 16, ptr @ 16+8 -> 80
                         80: 0xfeed0004, 88: 0,  # data @ 80, ptr @ 80+8 -> 0
                       }
 
@@ -888,8 +888,8 @@ class DecoderTestCase(FHDLTestCase):
 
         # some memory with addresses to get from.  all locations are offset 8
         initial_mem = { 24: 0xfeed0001, 32: 48, # data @ 24, ptr @ 32+8 -> 48
-                        48: 0xfeed0002, 56: 16, # data @ 48, ptr @ 48+8 -> 16
-                        16: 0xfeed0003, 24: 80, # data @ 16, ptr @ 16+8 -> 80
+                        48: 0xfeed0002, 56: 8 , # data @ 48, ptr @ 48+8 -> 8
+                        8 : 0xfeed0003, 16: 80, # data @ 16, ptr @ 16+8 -> 80
                         80: 0xfeed0004, 88: 0,  # data @ 80, ptr @ 80+8 -> 0
                       }
 
