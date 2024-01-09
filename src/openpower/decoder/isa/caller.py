@@ -564,6 +564,8 @@ def get_cr_in(dec2, name):
             return in1, cr_isvec
     if name == 'BFA':
         if in_sel == CRInSel.BFA.value:
+    if name in ['BA', 'BB']:
+        if in_sel == CRInSel.BA_BB.value:
             return in1, cr_isvec
     log("get_cr_in not found", name)
     return None, False
@@ -588,6 +590,9 @@ def get_cr_out(dec2, name):
     # identify which regnames map to out / o2
     if name == 'BF':
         if out_sel == CROutSel.BF.value:
+            return out, o_isvec
+    if name == 'BT':
+        if out_sel == CROutSel.BT.value:
             return out, o_isvec
     if name == 'CR0':
         if out_sel == CROutSel.CR0.value:
@@ -1640,20 +1645,24 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         for name in op_fields:
             # CR immediates. deal with separately.  needs modifying
             # pseudocode
-            if self.is_svp64_mode and name in ['BI']:  # TODO, more CRs
-                # BI is a 5-bit, must reconstruct the value
-                regnum, is_vec = yield from get_cr_in(self.dec2, name)
+            crlen5 = ['BC', 'BA', 'BB', 'BT', 'BI'] # 5-bit
+            crlen3 = ['BF', 'BFA']                  # 3-bit (BF: bit-field)
+            if self.is_svp64_mode and name in crlen5:
+                # 5-bit, must reconstruct the value
+                if name in ['BT']:
+                    regnum, is_vec = yield from get_cr_out(self.dec2, name)
+                else:
+                    regnum, is_vec = yield from get_cr_in(self.dec2, name)
                 sig = getattr(fields, name)
                 val = yield sig
                 # low 2 LSBs (CR field selector) remain same, CR num extended
                 assert regnum <= 7, "sigh, TODO, 128 CR fields"
                 val = (val & 0b11) | (regnum << 2)
-            elif self.is_svp64_mode and name in ['BFA']:  # TODO, more CRs
-                regnum, is_vec = yield from get_cr_in(self.dec2, name)
-                log('hack %s' % name, regnum, is_vec)
-                val = regnum
-            elif self.is_svp64_mode and name in ['BF']:  # TODO, more CRs
-                regnum, is_vec = yield from get_cr_out(self.dec2, "BF")
+            elif self.is_svp64_mode and name in crlen3:
+                if name in ['BF']:
+                    regnum, is_vec = yield from get_cr_out(self.dec2, name)
+                else:
+                    regnum, is_vec = yield from get_cr_in(self.dec2, name)
                 log('hack %s' % name, regnum, is_vec)
                 val = regnum
             else:
@@ -1662,10 +1671,11 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # these are all opcode fields involved in index-selection of CR,
             # and need to do "standard" arithmetic.  CR[BA+32] for example
             # would, if using SelectableInt, only be 5-bit.
-            if name in ['BF', 'BFA', 'BFB', 'BC', 'BA', 'BB', 'BT', 'BI']:
-                self.namespace[name] = val
-            else:
-                self.namespace[name] = SelectableInt(val, sig.width)
+            if name not in crlen3 and name not in crlen5:
+                val = SelectableInt(val, sig.width)
+
+            # finally put the field into the namespace
+            self.namespace[name] = val
 
         self.namespace['XER'] = self.spr['XER']
         self.namespace['CA'] = self.spr['XER'][XER_bits['CA']].value
