@@ -562,10 +562,9 @@ def get_cr_in(dec2, name):
     if name == 'BI':
         if in_sel == CRInSel.BI.value:
             return in1, cr_isvec
-    if name == 'BFA':
-        if in_sel == CRInSel.BFA.value:
     if name in ['BA', 'BB']:
         if in_sel == CRInSel.BA_BB.value:
+            return in1, cr_isvec
     if name == 'BFA':
         if in_sel == CRInSel.BFA.value:
             return in1, cr_isvec
