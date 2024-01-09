@@ -1505,7 +1505,7 @@ Pseudo-code:
         else if cmp_l <u cmp_r then result <- a
         else result <- b
     if any_snan then SetFX(FPSCR.VXSNAN)
-    if (FPSCR.VE = 0) | ¬any_snan then (FRT) <- result
+    if (FPSCR.VE = 0) | ¬any_snan then FRT <- result
 
 Special Registers Altered:
 
