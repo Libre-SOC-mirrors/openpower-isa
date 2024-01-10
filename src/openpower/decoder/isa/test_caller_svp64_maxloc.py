@@ -93,7 +93,7 @@ class DDFFirstTestCase(FHDLTestCase):
                 "mtcrf 128, 0",       # clear CR0
                 "sv.minmax./ff=lt/m=ge 4, *10, 4, 1", # uses r4 as accumulator
                 "sv.svstep/mr 3, 0, 6, 1",  # svstep: get vector dststep
-                "sv.addi/m=1<<r3 *10, 4, 0", # put r4 into vector at r10
+                "sv.addi/dm=1<<r3 *4, 4, 0", # put r4 into vector at r4
                 "sv.creqv *16,*16,*16", # set mask on already-tested
                 "bc 12,0, -0x44"            # CR0 lt bit clear, branch back
                 #"setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)

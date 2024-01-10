@@ -248,7 +248,7 @@ class GPR(dict):
         log("GPR getitem", attr, rnum)
         return self.regfile[rnum]
 
-    def dump(self, printout=True, heading="log"):
+    def dump(self, printout=True, heading="reg"):
         res = []
         for i in range(len(self)):
             res.append(self[i].value)
