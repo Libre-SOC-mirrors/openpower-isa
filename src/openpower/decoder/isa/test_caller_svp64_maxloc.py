@@ -55,7 +55,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_maxloc_1(self):
-        self.sv_maxloc([0,6,1,7])
+        self.sv_maxloc([0,6,1,2])
 
     def tst_sv_maxloc_2(self):
         self.sv_maxloc([3,4,1,5])
@@ -81,20 +81,21 @@ class DDFFirstTestCase(FHDLTestCase):
                 #"addi 5, 4, 0",             # copy m(r4) to r5
                 # VL = MIN(CTR,MAXVL=4)
                 "mtcrf 255,0",              # clear CR entirely
-                "setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
+                "setvl 2,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
                 # load VL bytes (update r4 addr) but compressed (dw=8)
                 #"addi 6, 0, 0",             # initialise r6 to zero
                 #"sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
                 # while (i<n and a[i]<=m) : i += 1
-                "sv.minmax./ff=ge/m=ge *5, *10, *4, 1", # scalar RB=RT
+                "sv.minmax./ff=ge/m=ge *5, *10, *4, 1",
                 "sv.mcrf/m=ge *4,*0", # masked-copy CR0-CR3 to CR4-CR7
-                "setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
+                "setvl 2,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
                 "sv.addi/mr/m=lt 4, *5, 0", # r4 = last non-masked value
                 "mtcrf 128, 0",       # clear CR0
-                "sv.minmax./ff=lt/m=ge/vli 4, *10, 4, 1", # scalar RB=RT
-                "sv.svstep/mr 2, 0, 6, 1",  # svstep: get vector dststep
-                "sv.creqv *16,*16,*16", # masked-copy CR0-CR3 to CR4-CR7
-                "bc 12,0, -0x3c"            # CR0 lt bit clear, branch back
+                "sv.minmax./ff=lt/m=ge 4, *10, 4, 1", # uses r4 as accumulator
+                "sv.svstep/mr 3, 0, 6, 1",  # svstep: get vector dststep
+                "sv.addi/m=1<<r3 *10, 4, 0", # put r4 into vector at r10
+                "sv.creqv *16,*16,*16", # set mask on already-tested
+                "bc 12,0, -0x44"            # CR0 lt bit clear, branch back
                 #"setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
                 #"sv.bc/all/m=ge 16, 19, -0x3c", # until r10[i]>r4 (and dec CTR)
                         ])

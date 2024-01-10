@@ -2048,7 +2048,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             log("    %s sim-execute" % dbg, hex(self._pc), code)
         opname = code.split(' ')[0]
         try:
-            yield from self.call(opname)         # execute the instruction
+            asmop = yield from self.call(opname) # execute the instruction
         except MemException as e:                # check for memory errors
             if e.args[0] == 'unaligned':         # alignment error
                 # run a Trap but set DAR first
@@ -2078,9 +2078,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             raise e                          # ... re-raise
 
         # append to the trace log file
-        self.trace(" # %s\n" % code)
+        self.trace(" # %s %s\n" % (asmop, code))
 
-        log("gprs after code", code)
+        log("gprs after insn %s - code" % asmop, code)
         self.gpr.dump()
         crs = []
         for i in range(len(self.crl)):
@@ -2214,7 +2214,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         ins_name = name.strip()  # remove spaces if not already done so
         if self.halted:
             log("halted - not executing", ins_name)
-            return
+            return name
 
         # TODO, asmregs is from the spec, e.g. add RT,RA,RB
         # see http://bugs.libre-riscv.org/show_bug.cgi?id=282
@@ -2245,12 +2245,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("is priv", instr_is_privileged, hex(self.msr.value), PR)
         if instr_is_privileged and PR == 1:
             self.call_trap(0x700, PIb.PRIV)
-            return
+            return asmop
 
         # check halted condition
         if ins_name == 'attn':
             self.halted = True
-            return
+            return asmop
 
         # User mode system call emulation consists of several steps:
         # 1. Detect whether instruction is sc or scv.
@@ -2277,7 +2277,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
             # Return from interrupt
             yield from self.call("rfid", syscall_emu_active=True)
-            return
+            return asmop
         elif ((name in ("rfid", "hrfid")) and syscall_emu_active):
             asmop = "rfid"
 
@@ -2339,7 +2339,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.call_trap(0x700, PIb.ILLEG)
             print("name %s != %s - calling ILLEGAL trap, PC: %x" %
                   (ins_name, asmop, self.pc.CIA.value))
-            return
+            return asmop
 
         # this is for setvl "Vertical" mode: if set true,
         # srcstep/dststep is explicitly advanced. mode says which SVSTATE to
@@ -2351,7 +2351,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # but PowerDecoder has a pattern for nop
         if ins_name == 'nop':
             self.update_pc_next()
-            return
+            return asmop
 
         # get elwidths, defaults to 64
         xlen = 64
@@ -2410,7 +2410,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 self.svp64_reset_loop()
                 self.update_nia()
                 self.update_pc_next()
-                return
+                return asmop
             srcstep, dststep, ssubstep, dsubstep = self.get_src_dststeps()
             pred_dst_zero = self.pred_dst_zero
             pred_src_zero = self.pred_src_zero
@@ -2422,7 +2422,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.pc.update(self.namespace, self.is_svp64_mode)
             log("SVP64: VL=0, end of call", self.namespace['CIA'],
                 self.namespace['NIA'], kind=LogType.InstrInOuts)
-            return
+            return asmop
 
         # for when SVREMAP is active, using pre-arranged schedule.
         # note: modifying PowerDecoder2 needs to "settle"
@@ -2623,9 +2623,10 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # truncate and make the exception "disappear".
         if self.FPSCR.FEX and (self.msr[MSRb.FE0] or self.msr[MSRb.FE1]):
             self.call_trap(0x700, PIb.FP)
-            return
+            return asmop
 
         yield from self.do_nia(asmop, ins_name, rc_en, ffirst_hit)
+        return asmop
 
     def check_ffirst(self, info, rc_en, srcstep):
         """fail-first mode: checks a bit of Rc Vector, truncates VL
