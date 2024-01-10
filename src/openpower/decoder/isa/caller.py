@@ -248,7 +248,7 @@ class GPR(dict):
         log("GPR getitem", attr, rnum)
         return self.regfile[rnum]
 
-    def dump(self, printout=True):
+    def dump(self, printout=True, heading="log"):
         res = []
         for i in range(len(self)):
             res.append(self[i].value)
@@ -258,7 +258,7 @@ class GPR(dict):
                 for j in range(8):
                     s.append("%08x" % res[i+j])
                 s = ' '.join(s)
-                log("reg", "%2d" % i, s, kind=LogType.InstrInOuts)
+                log(heading, "%2d" % i, s, kind=LogType.InstrInOuts)
         return res
 
 
