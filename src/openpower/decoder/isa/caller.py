@@ -171,6 +171,9 @@ class GPR(dict):
     def __call__(self, ridx, is_vec=False, offs=0, elwidth=64):
         if isinstance(ridx, SelectableInt):
             ridx = ridx.value
+        # scalar is enforced here
+        if not is_vec:
+            offs = 0
         if elwidth == 64:
             return self[ridx+offs]
         # rrrright.  start by breaking down into row/col, based on elwidth
