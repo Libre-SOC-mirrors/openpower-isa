@@ -555,8 +555,9 @@ def get_cr_in(dec2, name):
     sv_override = yield dec2.dec_cr_in.sv_override
     # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
     in1 = yield dec2.e.read_cr1.data
+    in2 = yield dec2.e.read_cr2.data
     cr_isvec = yield dec2.cr_in_isvec
-    log("get_cr_in", in_sel, CROutSel.CR0.value, in1, cr_isvec)
+    log("get_cr_in", name, in_sel, CROutSel.CR0.value, in1, in2, cr_isvec)
     log("    sv_cr_in", sv_cr_in)
     log("    cr_bf", in_bitfield)
     log("    spec", spec)
@@ -565,9 +566,12 @@ def get_cr_in(dec2, name):
     if name == 'BI':
         if in_sel == CRInSel.BI.value:
             return in1, cr_isvec
-    if name in ['BA', 'BB']:
+    if name == 'BA':
         if in_sel == CRInSel.BA_BB.value:
             return in1, cr_isvec
+    if name == 'BB':
+        if in_sel == CRInSel.BA_BB.value:
+            return in2, cr_isvec
     if name == 'BFA':
         if in_sel == CRInSel.BFA.value:
             return in1, cr_isvec
