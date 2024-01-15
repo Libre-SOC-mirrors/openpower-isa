@@ -55,7 +55,7 @@ class DDFFirstTestCase(FHDLTestCase):
             self.assertEqual(sim.gpr(i), SelectableInt(expected[i], 64))
 
     def test_sv_maxloc_1(self):
-        self.sv_maxloc([9,10,11,10])
+        self.sv_maxloc([1,3,3,3])
 
     def tst_sv_maxloc_2(self):
         self.sv_maxloc([3,4,1,5])
@@ -91,11 +91,15 @@ class DDFFirstTestCase(FHDLTestCase):
                 "setvl 2,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
                 #"sv.addi/mr/sm=ge/dm=ns 4, *4, 0", # r4 = last non-masked value
                 "mtcrf 128, 0",       # clear CR0 (in case VL=0?)
-                "sv.minmax./ff=lt/m=ge 4, *10, 4, 1", # uses r4 as accumulator
-                "sv.svstep/mr/m=ge 3, 0, 6, 1",  # svstep: get vector dststep
+                "sv.minmax./ff=le/m=ge 4, *10, 4, 1", # uses r4 as accumulator
+                "cror 0,1,0",           # test for greater or equal, or VL=0
+                "cror 0,2,0",           # test for greater or equal, or VL=0
+                "sv.creqv *19,*16,*16", # set mask on already-tested
+                "sv.crand *19,*19,0", # clear if CR0=0
+                "sv.svstep/mr/m=so 1, 0, 6, 1",  # svstep: get vector dststep
                 "sv.creqv *16,*16,*16", # set mask on already-tested
                 #"sv.addi/dm=1<<r3 *5, 4, 0", # put r4 into vector at r5
-                "bc 12,0, -0x34"            # CR0 lt bit clear, branch back
+                "bc 12,0, -0x4c"            # CR0 lt bit clear, branch back
                 #"setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
                 #"sv.bc/m=ge 16, 19, -0x3c", # until r10[i]>r4 (and dec CTR)
                         ])
