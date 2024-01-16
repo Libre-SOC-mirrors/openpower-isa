@@ -21,7 +21,7 @@ Special Registers Altered:
 
 XL-Form
 
-* sync L,SC
+* sync L2
 
 Pseudo-code:
 
