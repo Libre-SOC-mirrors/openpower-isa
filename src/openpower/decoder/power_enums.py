@@ -278,6 +278,7 @@ class Reg(Enum):
     CR1 = auto()
     BF = auto()
     BFA = auto()
+    BFB = auto()
     BA = auto()
     BB = auto()
     BC = auto()
@@ -652,6 +653,7 @@ class RegType(Enum):
     CR_3BIT = 2 # CR field; the CR register is 32-bit
     BF = CR_3BIT
     BFA = CR_3BIT
+    BFB = CR_3BIT
 
     CR_5BIT = 3 # bit of the 32-bit CR register
     BA = CR_5BIT
@@ -747,6 +749,7 @@ _insns = [
     "cprop", # AV bitmanip
     "crand", "crandc", "creqv",
     "crnand", "crnor", "cror", "crorc", "crxor",
+    "crternlogi", # ternary bitmanip
     "darn",
     "dcbf", "dcbst", "dcbt", "dcbtst", "dcbz",
     "divd", "divde", "divdeo", "divdeu",
@@ -965,6 +968,7 @@ class MicrOp(Enum):
     OP_PEXT = 110
     OP_SETBC = 111
     OP_BMAT = 112 # bmatflip/xor/and - known by many names (vgbbd in Power)
+    OP_CRTERNLOG = 113
 
 
 class SelType(Enum):
@@ -1138,6 +1142,7 @@ class CRInSel(Enum):
     WHOLE_REG = 6
     CR1 = 7
     BA = 8
+    BFA_BFB_BF = 9
 
     def __str__(self):
         return self.name

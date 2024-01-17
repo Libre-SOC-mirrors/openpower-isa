@@ -1652,7 +1652,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # these are all opcode fields involved in index-selection of CR,
             # and need to do "standard" arithmetic.  CR[BA+32] for example
             # would, if using SelectableInt, only be 5-bit.
-            if name in ['BF', 'BFA', 'BC', 'BA', 'BB', 'BT', 'BI']:
+            if name in ['BF', 'BFA', 'BFB', 'BC', 'BA', 'BB', 'BT', 'BI']:
                 self.namespace[name] = val
             else:
                 self.namespace[name] = SelectableInt(val, sig.width)
@@ -2275,7 +2275,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        "brh", "brw", "brd",
                        'setvl', 'svindex', 'svremap', 'svstep',
                        'svshape', 'svshape2',
-                       'ternlogi', 'bmask', 'cprop', 'gbbd',
+                       'crternlogi', 'ternlogi', 'bmask', 'cprop', 'gbbd',
                        'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
                        'fmvis', 'fishmv', 'pcdec', "maddedu", "divmod2du",
                        "dsld", "dsrd", "maddedus",

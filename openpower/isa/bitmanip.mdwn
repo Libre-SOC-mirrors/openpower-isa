@@ -40,6 +40,30 @@ Special Registers Altered:
 
     CR0                    (if Rc=1)
 
+# Condition Register Ternary Bitwise Logic Immediate
+
+CRB-Form
+
+* crternlogi BF,BFA,BFB,TLI,msk
+
+Pseudo-code:
+
+    bf <- CR[4*BF+32:4*BF+35]
+    bfa <- CR[4*BFA+32:4*BFA+35]
+    bfb <- CR[4*BFB+32:4*BFB+35]
+
+    result <- [0] * 4
+    do i = 0 to 3
+      idx <- bf[i] || bfa[i] || bfb[i]
+      result[i] <- TLI[7-idx]
+    do i = 0 to 3
+        if msk[i] = 1 then
+            CR[4*BF+32+i] <- result[i]
+
+Special Registers Altered:
+
+     CR field BF
+
 # Add With Shift By Immediate
 
 Z23-Form

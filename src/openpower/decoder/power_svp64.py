@@ -8,7 +8,7 @@ import os
 
 # identifies register by type
 def is_CR_3bit(regname):
-    return regname in ['BF', 'BFA']
+    return regname in ['BF', 'BFA', 'BFB']
 
 def is_CR_5bit(regname):
     return regname in ['BA', 'BB', 'BC', 'BI', 'BT']
@@ -155,6 +155,11 @@ class SVP64RM:
                 index1 = svp64_src.get('BA', None)
                 index2 = svp64_src.get('BB', None)
                 entry['sv_cr_in'] = "Idx_%d_%d" % (index1, index2)
+            elif cr_in == 'BFA_BFB_BF':
+                index1 = svp64_src.get('BFA', None)
+                index2 = svp64_src.get('BFB', None)
+                index3 = svp64_src.get('BF', None)
+                entry['sv_cr_in'] = "Idx_%d_%d_%d" % (index1, index2, index3)
 
             # CRout a lot easier.  ignore WHOLE_REG for now
             cr_out = entry['CR out']

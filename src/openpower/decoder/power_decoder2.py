@@ -654,6 +654,13 @@ class DecodeCRIn(Elaboratable):
                 comb += self.cr_bitfield_b.ok.eq(1)
                 comb += self.cr_bitfield_o.data.eq(self.dec.BT[2:5])
                 comb += self.cr_bitfield_o.ok.eq(1)
+            with m.Case(CRInSel.BFA_BFB_BF):
+                comb += self.cr_bitfield.data.eq(self.dec.FormCRB.BFA)
+                comb += self.cr_bitfield.ok.eq(1)
+                comb += self.cr_bitfield_b.data.eq(self.dec.FormCRB.BFB)
+                comb += self.cr_bitfield_b.ok.eq(1)
+                comb += self.cr_bitfield_o.data.eq(self.dec.FormCRB.BF)
+                comb += self.cr_bitfield_o.ok.eq(1)
             with m.Case(CRInSel.BC):
                 comb += self.cr_bitfield.data.eq(self.dec.BC[2:5])
                 comb += self.cr_bitfield.ok.eq(1)
@@ -1543,7 +1550,7 @@ class PowerDecode2(PowerDecodeSubset):
                 (e.read_cr1, self.dec_cr_in, "cr_bitfield", ),
                 (e.read_cr2, self.dec_cr_in, "cr_bitfield_b", ),
                 (e.read_cr3, self.dec_cr_in, "cr_bitfield_o", ),
-                    (e.write_cr, self.dec_cr_out, "cr_bitfield", )):
+                (e.write_cr, self.dec_cr_out, "cr_bitfield", )):
                 fromreg = getattr(cr, name)
                 comb += to_reg.data.eq(fromreg.data)
                 comb += to_reg.ok.eq(fromreg.ok)

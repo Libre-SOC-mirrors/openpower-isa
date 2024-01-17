@@ -391,6 +391,11 @@ class SVP64Record(Dataclass):
             record["cr_in"] = "BA"
             record["cr_in2"] = "BB"
             del record["CR in"]
+        elif record["CR in"] == "BFA_BFB_BF":
+            record["cr_in"] = "BFA"
+            record["cr_in2"] = "BFB"
+            #record["cr_out"] = "BF" # only use BFA_BFB_BF when BF is a dest
+            del record["CR in"]
 
         extra = []
         for idx in range(0, 4):
@@ -453,6 +458,15 @@ class SVP64Record(Dataclass):
         if sels["cr_in"] is _CRInSel.BA_BB:
             sels["cr_in"] = _CRIn2Sel.BA
             sels["cr_in2"] = _CRIn2Sel.BB
+            idxs["cr_in2"] = idxs["cr_in"]
+            for key in ("cr_in", "cr_in2"):
+                regs[key] = _Reg(sels[key])
+                seltype[key] = _SelType.SRC
+
+        # should only be used when BF is also a destination
+        if sels["cr_in"] is _CRInSel.BFA_BFB_BF:
+            sels["cr_in"] = _CRIn2Sel.BFA
+            sels["cr_in2"] = _CRIn2Sel.BFB
             idxs["cr_in2"] = idxs["cr_in"]
             for key in ("cr_in", "cr_in2"):
                 regs[key] = _Reg(sels[key])

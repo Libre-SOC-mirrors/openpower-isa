@@ -402,7 +402,7 @@
     BF (6:8)
          Field used to specify one of the CR fields or one of
          the FPSCR fields to be used as a target.
-         Formats: D, X, XL, XX2, XX3, Z22
+         Formats: D, X, XL, XX2, XX3, Z22, CRB
     BFA (22:24)
          Field used to specify one of the CR fields 
          to be used as a source.
@@ -414,7 +414,11 @@
     BFA (11:13)
          Field used to specify one of the CR fields or one of
          the FPSCR fields to be used as a source.
-         Formats: X, XL
+         Formats: X, XL, CRB
+    BFB (16:18)
+         Field used to specify one of the CR fields
+         to be used as a source.
+         Formats: CRB
     BH (19:20)
          Field used to specify a hint in the Branch Condi-
          tional to Link Register and Branch Conditional to

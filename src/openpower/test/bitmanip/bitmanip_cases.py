@@ -4,7 +4,7 @@ from openpower.endian import bigendian
 from openpower.simulator.program import Program
 from openpower.test.state import ExpectedState
 from nmutil.sim_util import hash_256
-from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.caller import SVP64State, CRFields
 from openpower.util import log
 import struct
 import itertools
@@ -31,6 +31,54 @@ class BitManipTestCase(TestAccumulatorBase):
         log("hex", hex(initial_regs[1]), hex(e.intregs[0]))
 
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def do_case_crternlogi(self, bf, bfa, bfb, imm, mask):
+        lst = [f"crternlogi 3,4,5,%d,%d" % (imm, mask)]
+        # set up CR
+        bf %= 2 ** 4
+        bfa %= 2 ** 4
+        bfb %= 2 ** 4
+        cr = CRFields()
+        cr.crl[3][0:4] = bf
+        cr.crl[4][0:4]  = bfa
+        cr.crl[5][0:4]  = bfb
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bf, bfa, bfb)
+        print("mask tli", bin(mask), bin(imm))
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        expected = bf&~mask # start at BF, mask overwrites masked bits only
+        checks = (bfb, bfa, bf) # LUT positions 1<<0=bfb 1<<1=bfa 1<<2=bf
+        for i in range(4):
+            lut_index = 0
+            for j, check in enumerate(checks):
+                if check & (1<<i):
+                    lut_index |= 1<<j
+            maskbit = (mask >> i) & 0b1
+            if (imm & (1<<lut_index)) and maskbit:
+                expected |= 1<<i
+        e.crregs[3] = expected
+        e.crregs[4] = bfa
+        e.crregs[5] = bfb
+        self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
+                                       initial_cr=initial_cr)
+
+    def case_crternlogi_0(self):
+        self.do_case_crternlogi(0b1111,
+                                0b1100,
+                                0b1010,
+                                0x80, 0b1111)
+
+    def case_crternlogi_random(self):
+        for i in range(100):
+            rc = bool(hash_256(f"crternlogi rc {i}") & 1)
+            imm = hash_256(f"crternlogi imm {i}") & 0xFF
+            bf = hash_256(f"crternlogi bf {i}") % 2 ** 4
+            bfa = hash_256(f"crternlogi bfa {i}") % 2 ** 4
+            bfb = hash_256(f"crternlogi bfb {i}") % 2 ** 4
+            msk = hash_256(f"crternlogi msk {i}") % 2 ** 4
+            self.do_case_crternlogi(bf, bfa, bfb, imm, msk)
 
     def do_case_ternlogi(self, rc, rt, ra, rb, imm):
         rc_dot = "." if rc else ""
