@@ -171,9 +171,6 @@ class GPR(dict):
     def __call__(self, ridx, is_vec=False, offs=0, elwidth=64):
         if isinstance(ridx, SelectableInt):
             ridx = ridx.value
-        # scalar is enforced here
-        if not is_vec:
-            offs = 0
         if elwidth == 64:
             return self[ridx+offs]
         # rrrright.  start by breaking down into row/col, based on elwidth
@@ -251,7 +248,7 @@ class GPR(dict):
         log("GPR getitem", attr, rnum)
         return self.regfile[rnum]
 
-    def dump(self, printout=True, heading="reg"):
+    def dump(self, printout=True):
         res = []
         for i in range(len(self)):
             res.append(self[i].value)
@@ -261,7 +258,7 @@ class GPR(dict):
                 for j in range(8):
                     s.append("%08x" % res[i+j])
                 s = ' '.join(s)
-                log(heading, "%2d" % i, s, kind=LogType.InstrInOuts)
+                log("reg", "%2d" % i, s, kind=LogType.InstrInOuts)
         return res
 
 
@@ -555,9 +552,8 @@ def get_cr_in(dec2, name):
     sv_override = yield dec2.dec_cr_in.sv_override
     # get the IN1/2/3 from the decoder (includes SVP64 remap and isvec)
     in1 = yield dec2.e.read_cr1.data
-    in2 = yield dec2.e.read_cr2.data
     cr_isvec = yield dec2.cr_in_isvec
-    log("get_cr_in", name, in_sel, CROutSel.CR0.value, in1, in2, cr_isvec)
+    log("get_cr_in", in_sel, CROutSel.CR0.value, in1, cr_isvec)
     log("    sv_cr_in", sv_cr_in)
     log("    cr_bf", in_bitfield)
     log("    spec", spec)
@@ -566,14 +562,10 @@ def get_cr_in(dec2, name):
     if name == 'BI':
         if in_sel == CRInSel.BI.value:
             return in1, cr_isvec
-    if name == 'BA':
-        if in_sel == CRInSel.BA_BB.value:
-            return in1, cr_isvec
-    if name == 'BB':
-        if in_sel == CRInSel.BA_BB.value:
-            return in2, cr_isvec
     if name == 'BFA':
         if in_sel == CRInSel.BFA.value:
+    if name in ['BA', 'BB']:
+        if in_sel == CRInSel.BA_BB.value:
             return in1, cr_isvec
     log("get_cr_in not found", name)
     return None, False
@@ -2055,7 +2047,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             log("    %s sim-execute" % dbg, hex(self._pc), code)
         opname = code.split(' ')[0]
         try:
-            asmop = yield from self.call(opname) # execute the instruction
+            yield from self.call(opname)         # execute the instruction
         except MemException as e:                # check for memory errors
             if e.args[0] == 'unaligned':         # alignment error
                 # run a Trap but set DAR first
@@ -2085,9 +2077,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             raise e                          # ... re-raise
 
         # append to the trace log file
-        self.trace(" # %s %s\n" % (asmop, code))
+        self.trace(" # %s\n" % code)
 
-        log("gprs after insn %s - code" % asmop, code)
+        log("gprs after code", code)
         self.gpr.dump()
         crs = []
         for i in range(len(self.crl)):
@@ -2221,12 +2213,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         ins_name = name.strip()  # remove spaces if not already done so
         if self.halted:
             log("halted - not executing", ins_name)
-            return name
+            return
 
         # TODO, asmregs is from the spec, e.g. add RT,RA,RB
         # see http://bugs.libre-riscv.org/show_bug.cgi?id=282
         asmop = yield from self.get_assembly_name()
-        log("call", ins_name, asmop, kind=LogType.InstrInOuts)
+        log("call", ins_name, asmop,
+            kind=LogType.InstrInOuts)
 
         # sv.setvl is *not* a loop-function. sigh
         log("is_svp64_mode", self.is_svp64_mode, asmop)
@@ -2252,12 +2245,12 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         log("is priv", instr_is_privileged, hex(self.msr.value), PR)
         if instr_is_privileged and PR == 1:
             self.call_trap(0x700, PIb.PRIV)
-            return asmop
+            return
 
         # check halted condition
         if ins_name == 'attn':
             self.halted = True
-            return asmop
+            return
 
         # User mode system call emulation consists of several steps:
         # 1. Detect whether instruction is sc or scv.
@@ -2284,7 +2277,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
 
             # Return from interrupt
             yield from self.call("rfid", syscall_emu_active=True)
-            return asmop
+            return
         elif ((name in ("rfid", "hrfid")) and syscall_emu_active):
             asmop = "rfid"
 
@@ -2346,7 +2339,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.call_trap(0x700, PIb.ILLEG)
             print("name %s != %s - calling ILLEGAL trap, PC: %x" %
                   (ins_name, asmop, self.pc.CIA.value))
-            return asmop
+            return
 
         # this is for setvl "Vertical" mode: if set true,
         # srcstep/dststep is explicitly advanced. mode says which SVSTATE to
@@ -2358,7 +2351,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # but PowerDecoder has a pattern for nop
         if ins_name == 'nop':
             self.update_pc_next()
-            return asmop
+            return
 
         # get elwidths, defaults to 64
         xlen = 64
@@ -2417,7 +2410,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                 self.svp64_reset_loop()
                 self.update_nia()
                 self.update_pc_next()
-                return asmop
+                return
             srcstep, dststep, ssubstep, dsubstep = self.get_src_dststeps()
             pred_dst_zero = self.pred_dst_zero
             pred_src_zero = self.pred_src_zero
@@ -2429,7 +2422,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             self.pc.update(self.namespace, self.is_svp64_mode)
             log("SVP64: VL=0, end of call", self.namespace['CIA'],
                 self.namespace['NIA'], kind=LogType.InstrInOuts)
-            return asmop
+            return
 
         # for when SVREMAP is active, using pre-arranged schedule.
         # note: modifying PowerDecoder2 needs to "settle"
@@ -2630,10 +2623,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
         # truncate and make the exception "disappear".
         if self.FPSCR.FEX and (self.msr[MSRb.FE0] or self.msr[MSRb.FE1]):
             self.call_trap(0x700, PIb.FP)
-            return asmop
+            return
 
         yield from self.do_nia(asmop, ins_name, rc_en, ffirst_hit)
-        return asmop
 
     def check_ffirst(self, info, rc_en, srcstep):
         """fail-first mode: checks a bit of Rc Vector, truncates VL

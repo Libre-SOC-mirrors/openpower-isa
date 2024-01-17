@@ -970,10 +970,13 @@ class MicrOp(Enum):
     OP_SETBC = 111
     OP_BMAT = 112 # bmatflip/xor/and - known by many names (vgbbd in Power)
     OP_CRTERNLOG = 113
+<<<<<<< HEAD
     OP_BINLOG = 114
     OP_CRBINLOG = 115
     OP_CRFBINLOG = 116
     OP_CRFTERNLOG = 117
+=======
+>>>>>>> ef668555 (bug 1034: add crternlogi. involved adding a new CR field BFA_BFB_BF sigh)
 
 
 class SelType(Enum):
