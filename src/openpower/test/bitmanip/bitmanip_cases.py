@@ -80,6 +80,52 @@ class BitManipTestCase(TestAccumulatorBase):
             msk = hash_256(f"crternlogi msk {i}") % 2 ** 4
             self.do_case_crternlogi(bf, bfa, bfb, imm, msk)
 
+    def do_case_crbinlog(self, bf, bfa, bfb, mask):
+        lst = ["crbinlog 3,4,5,%d" % mask]
+        # set up CR
+        bf %= 2 ** 4
+        bfa %= 2 ** 4
+        bfb %= 2 ** 4
+        cr = CRFields()
+        cr.crl[3][0:4] = bf
+        cr.crl[4][0:4]  = bfa
+        cr.crl[5][0:4]  = bfb
+        lut = bfb
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bf, bfa, bfb)
+        print("mask lut2", bin(mask), bin(lut))
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        expected = bf&~mask # start at BF, mask overwrites masked bits only
+        checks = (bfa, bf) # LUT positions 1<<0=bfa 1<<1=bf
+        for i in range(4):
+            lut_index = 0
+            for j, check in enumerate(checks):
+                if check & (1<<i):
+                    lut_index |= 1<<j
+            maskbit = (mask >> i) & 0b1
+            if (lut & (1<<lut_index)) and maskbit:
+                expected |= 1<<i
+        e.crregs[3] = expected
+        e.crregs[4] = bfa
+        e.crregs[5] = bfb
+        self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
+                                       initial_cr=initial_cr)
+
+    def case_crbinlog_0(self):
+        self.do_case_crbinlog(0b1111,
+                              0b1100,
+                              0x8, 0b1111)
+
+    def case_crbinlog_random(self):
+        for i in range(100):
+            bf = hash_256(f"crbinlog bf {i}") % 2 ** 4
+            bfa = hash_256(f"crbinlog bfa {i}") % 2 ** 4
+            bfb = hash_256(f"crbinlog bfb {i}") % 2 ** 4
+            msk = hash_256(f"crbinlog msk {i}") % 2 ** 4
+            self.do_case_crbinlog(bf, bfa, bfb, msk)
+
     def do_case_ternlogi(self, rc, rt, ra, rb, imm):
         rc_dot = "." if rc else ""
         lst = [f"ternlogi{rc_dot} 3, 4, 5, {imm}"]
@@ -145,10 +191,10 @@ class BitManipTestCase(TestAccumulatorBase):
     def case_binlog_0(self):
         self.do_case_binlog(0x8000_0000_FFFF_0000,
                             0x8000_0000_FF00_FF00,
-                            0x80, 1)
+                            0x8, 1)
         self.do_case_binlog(0x8000_0000_FFFF_0000,
                             0x8000_0000_FF00_FF00,
-                            0x80, 0)
+                            0x8, 0)
 
     def case_binlog_random(self):
         for i in range(100):
