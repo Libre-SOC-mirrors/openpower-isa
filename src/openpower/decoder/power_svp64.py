@@ -156,9 +156,11 @@ class SVP64RM:
                 index2 = svp64_src.get('BB', None)
                 entry['sv_cr_in'] = "Idx_%d_%d" % (index1, index2)
             elif cr_in == 'BFA_BFB_BF':
+                # three indices but one is a source *and* destination
+                # BF is marked as a dest but is actually also src
                 index1 = svp64_src.get('BFA', None)
                 index2 = svp64_src.get('BFB', None)
-                index3 = svp64_src.get('BF', None)
+                index3 = svp64_dest.get('BF', None) # read-modify-write
                 entry['sv_cr_in'] = "Idx_%d_%d_%d" % (index1, index2, index3)
 
             # CRout a lot easier.  ignore WHOLE_REG for now

@@ -546,7 +546,11 @@ def extra_classifier(insn_name, value, name, res, regs):
 
     elif value == 'RM-1P-2S1D':
         res['Etype'] = 'EXTRA3'  # RM EXTRA3 type
-        if insn_name.startswith('cr'):
+        if insn_name in ['crbinlog', 'crternlogi']:
+            res['0'] = 'd:BF'  # BF: Rdest1_EXTRA3
+            res['1'] = 's:BFA'  # BFA: Rsrc1_EXTRA3
+            res['2'] = 's:BFB'  # BFB: Rsrc2_EXTRA3
+        elif insn_name.startswith('cr'):
             res['0'] = 'd:BT'  # BT: Rdest1_EXTRA3
             res['1'] = 's:BA'  # BA: Rsrc1_EXTRA3
             res['2'] = 's:BB'  # BB: Rsrc2_EXTRA3
