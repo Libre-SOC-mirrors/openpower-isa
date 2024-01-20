@@ -749,6 +749,7 @@ _insns = [
     "cprop", # AV bitmanip
     "crand", "crandc", "creqv",
     "crnand", "crnor", "cror", "crorc", "crxor",
+    "crbinlog", # binary bitmanip
     "crternlogi", # ternary bitmanip
     "darn",
     "dcbf", "dcbst", "dcbt", "dcbtst", "dcbz",
@@ -834,7 +835,7 @@ _insns = [
     "subf", "subfc", "subfco", "subfe", "subfeo", "subfic",
     "subfme", "subfmeo", "subfo", "subfze", "subfzeo",
     "sync",
-    "ternlogi",
+    "binlog", "ternlogi", # binary/ternary (lut2/lut3)
     "td", "tdi",
     "tlbie", "tlbiel", "tlbsync",
     "tw", "twi",
@@ -969,6 +970,8 @@ class MicrOp(Enum):
     OP_SETBC = 111
     OP_BMAT = 112 # bmatflip/xor/and - known by many names (vgbbd in Power)
     OP_CRTERNLOG = 113
+    OP_BINLOG = 114
+    OP_CRBINLOG = 115
 
 
 class SelType(Enum):
@@ -1158,6 +1161,7 @@ class CRInSel(Enum):
 class CRIn2Sel(Enum):
     NONE = 0
     BB = 1
+    BFB = 2
 
     def __str__(self):
         return self.name

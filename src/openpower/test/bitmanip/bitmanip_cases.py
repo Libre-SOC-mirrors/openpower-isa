@@ -115,6 +115,49 @@ class BitManipTestCase(TestAccumulatorBase):
             e.crregs[0] = (eq << 1) | (gt << 2) | (lt << 3)
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
+    def do_case_binlog(self, ra, rb, rc, nh):
+        lst = ["binlog 3, 4, 5, 6, %d" % nh]
+        initial_regs = [0] * 32
+        initial_regs[4] = ra
+        initial_regs[5] = rb
+        initial_regs[6] = rc
+        lut = rc & 0b11111111 # one of two 4-bit LUTs is in 1st 8 bits
+        if nh == 1: # top half (bits 4-7... sigh MSB 56-59) else 0-3 (60-63)
+            lut = lut >> 4
+        lut = lut & 0b1111
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        expected = 0
+        for i in range(64):
+            lut_index = 0
+            if rb & 2 ** i:
+                lut_index |= 2 ** 0
+            if ra & 2 ** i:
+                lut_index |= 2 ** 1
+            if lut & 2 ** lut_index:
+                expected |= 2 ** i
+        e.intregs[3] = expected
+        e.intregs[4] = ra
+        e.intregs[5] = rb
+        e.intregs[6] = rc
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_binlog_0(self):
+        self.do_case_binlog(0x8000_0000_FFFF_0000,
+                            0x8000_0000_FF00_FF00,
+                            0x80, 1)
+        self.do_case_binlog(0x8000_0000_FFFF_0000,
+                            0x8000_0000_FF00_FF00,
+                            0x80, 0)
+
+    def case_binlog_random(self):
+        for i in range(100):
+            ra = hash_256(f"binlog ra {i}") % 2 ** 64
+            rb = hash_256(f"binlog rb {i}") % 2 ** 64
+            rc = hash_256(f"binlog rc {i}") % 2 ** 8
+            nh = hash_256(f"binlog nh {i}") & 0b1
+            self.do_case_binlog(ra, rb, rc, nh)
+
     def do_case_grev(self, w, is_imm, ra, rb):
         bits = 32 if w else 64
         masked_rb = rb % bits

@@ -13,6 +13,7 @@
 # 1.6.2.2 BM2-FORM
     |0     |6    |11    |16    |21   |26 |27    31|
     | PO   |  RT |   RA |   RB |bm   |L  |   XO   |
+    | PO   |  RT |   RA |   RB |RC   |nh |   XO   |
 
 # 1.6.2.2 CRB-FORM
     |0     |6    |9   |11   |14   | 16  |19   |26   | 31|
@@ -729,6 +730,10 @@
         Field used to specify the number of bytes to move
         in an immediate Move Assist instruction.
         Formats: X
+    nh (26)
+        Field used to specify which half of RC to select as a
+        LUT2 (4-bit lookup) table.
+        Formats: BM2
     OC (6:20)
         Field used by the Embedded Hypervisor Privilege
         instruction.
@@ -784,7 +789,7 @@
     RC (21:25)
         Field used to specify a GPR to be used as a
         source.
-        Formats: VA, VA2, SVD, SVDS
+        Formats: VA, VA2, SVD, SVDS, BM2
     Rc (31)
         RECORD bit.
         0    Do not alter the Condition Register.
