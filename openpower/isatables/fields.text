@@ -120,6 +120,7 @@
     | PO   |    FRS        |  RA         |  RB         |   XO |  / |
     | PO   |  FRSp         |  RA         |  RB         |   XO |  / |
     | PO   |     BT        |  ///        |  ///        |   XO |Rc  |
+    | PO   |     BT        |   BA        | BFB //      |   XO | 1  |
     | PO   |     ///       |  RA         |  RB         |   XO |  / |
     | PO   |     ///       |  ///        |  RB         |   XO |  / |
     | PO   |     ///       |  ///        |  ///        |   XO |  / |
@@ -385,7 +386,7 @@
     BA (11:15)
         Field used to specify a bit in the CR to be used as
         a source.
-        Formats: XL
+        Formats: XL, X
     BB (16:20)
          Field used to specify a bit in the CR to be used as
          a source.
@@ -419,7 +420,7 @@
     BFB (16:18)
          Field used to specify one of the CR fields
          to be used as a source.
-         Formats: CRB
+         Formats: CRB, X
     BH (19:20)
          Field used to specify a hint in the Branch Condi-
          tional to Link Register and Branch Conditional to
@@ -446,7 +447,7 @@
     BT (6:10)
          Field used to specify a bit in the CR or in the
          FPSCR to be used as a target.
-         Formats: XL
+         Formats: XL, X
     BX,B (30,16:20)
         Fields that are concatenated to specify a VSR to
         be used as a source.

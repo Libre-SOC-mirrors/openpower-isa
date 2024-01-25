@@ -1,6 +1,6 @@
 opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry out,ldst len,BR,sgn ext,upd,rsrv,32b,sgn,rc,lk,sgl pipe,comment,form,CONDITIONS,unofficial,comment2
 --------00-,SHIFT_ROT,OP_TERNLOG,RA,RB,RT,RT,NONE,CR0,0,0,ZERO,0,NONE,0,0,0,0,0,0,RC_ONLY,0,0,ternlogi,TLI,,1,unofficial until submitted and approved/renumbered by the opf isa wg
---------01-,CR,OP_CRTERNLOG,NONE,NONE,NONE,NONE,BFA_BFB_BF,BF,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,crternlogi,CRB,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+--------010,CR,OP_CRFTERNLOG,NONE,NONE,NONE,NONE,BFA_BFB_BF,BF,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,crfternlogi,CRB,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 ------00100,ALU,OP_MADDSUBRS,RA,CONST_SH,RB,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddsubrs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 ------01100,ALU,OP_MADDRS,RA,CONST_SH,RB,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddrs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 ------10100,ALU,OP_MSUBRS,RA,CONST_SH,RB,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,msubrs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg

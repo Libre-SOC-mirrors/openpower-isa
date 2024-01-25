@@ -85,6 +85,7 @@ class SVP64Asm:
 
         # identify if it is a word instruction
         record = DB[opcode]
+        #log("record", record)
         if record is not None:
             insn = WordInstruction.assemble(record=record, arguments=fields)
             yield from insn.disassemble(record=record, style=Style.LEGACY)
@@ -101,6 +102,7 @@ class SVP64Asm:
         v30b_op = opmodes.pop(0)    # first is the v3.0B
 
         record = DB[v30b_op]
+        #log("record v30b", record)
         if record is not None:
             insn = SVP64Instruction.assemble(record=record,
                 arguments=fields, specifiers=opmodes)
@@ -309,8 +311,9 @@ if __name__ == '__main__':
     ]
     lst = [
         #"sv.cmp/ff=gt *0,*1,*2,0",
-        "dsld 5,4,5,3",
-
+        #"dsld 5,4,5,3",
+        "crfbinlog 3,4,5,15",
+        #"crbinlog 3,4,5",
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))

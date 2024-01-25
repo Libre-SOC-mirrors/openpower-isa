@@ -749,8 +749,8 @@ _insns = [
     "cprop", # AV bitmanip
     "crand", "crandc", "creqv",
     "crnand", "crnor", "cror", "crorc", "crxor",
-    "crbinlog", # binary bitmanip
-    "crternlogi", # ternary bitmanip
+    "crbinlog", "crfbinlog", # binary bitmanip (field and CR bit)
+    "crternlogi", "crfternlogi", # ternary bitmanip (field and CR bit)
     "darn",
     "dcbf", "dcbst", "dcbt", "dcbtst", "dcbz",
     "divd", "divde", "divdeo", "divdeu",
@@ -972,6 +972,8 @@ class MicrOp(Enum):
     OP_CRTERNLOG = 113
     OP_BINLOG = 114
     OP_CRBINLOG = 115
+    OP_CRFBINLOG = 116
+    OP_CRFTERNLOG = 117
 
 
 class SelType(Enum):
@@ -1146,6 +1148,7 @@ class CRInSel(Enum):
     CR1 = 7
     BA = 8
     BFA_BFB_BF = 9
+    BA_BFB = 10 # maaamma miiia... definitely time for CRin1/2 in CSV...
 
     def __str__(self):
         return self.name

@@ -160,8 +160,15 @@ class SVP64RM:
                 # BF is marked as a dest but is actually also src
                 index1 = svp64_src.get('BFA', None)
                 index2 = svp64_src.get('BFB', None)
-                index3 = svp64_dest.get('BF', None) # read-modify-write
-                entry['sv_cr_in'] = "Idx_%d_%d_%d" % (index1, index2, index3)
+                # long story, a kludge should allow the 3rd source to be id'd
+                #index3 = svp64_dest.get('BF', None) # read-modify-write
+                entry['sv_cr_in'] = "Idx_%d_%d" % (index1, index2)
+            elif cr_in == 'BA_BFB':
+                # three indices, BT and BA are 5-bit source, BFB is 3-bit
+                # BF is marked as a dest but is actually also src
+                index1 = svp64_src.get('BA', None)
+                index2 = svp64_src.get('BFB', None)
+                entry['sv_cr_in'] = "Idx_%d_%d" % (index1, index2)
 
             # CRout a lot easier.  ignore WHOLE_REG for now
             cr_out = entry['CR out']

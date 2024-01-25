@@ -75,7 +75,7 @@ Special registers altered:
 
 CRB-Form
 
-* crternlogi BF,BFA,BFB,TLI,msk
+* crfternlogi BF,BFA,BFB,TLI,msk
 
 Pseudo-code:
 
@@ -95,11 +95,26 @@ Special Registers Altered:
 
      CR field BF
 
+# Condition Register Field Ternary Bitwise Logic Immediate
+
+CRB-Form
+
+* crternlogi BT,BA,BB,TLI
+
+Pseudo-code:
+
+    idx <- CR[BT+32] || CR[BA+32] || CR[BB+32]
+    CR[4*BF+32] <- TLI[7-idx]
+
+Special Registers Altered:
+
+     CR field BF
+
 # Condition Register Field Dynamic Binary Logic
 
 CRB-Form
 
-* crbinlog BF,BFA,BFB,msk
+* crfbinlog BF,BFA,BFB,msk
 
 Pseudo-code:
 
@@ -133,6 +148,24 @@ Description:
 Special registers altered:
 
     CR field BF
+
+# Condition Register Dynamic Binary Logic
+
+X-Form
+
+* crbinlog BT,BA,BFB
+
+Pseudo-code:
+
+    a <- CR[BT+32]
+    b <- CR[BA]
+    lut <- CR[4*BFB+32:4*BFB+35]
+    idx <- CR[BT+32] || CR[BA+32]
+    CR[BT+32] <- lut[3-idx]
+
+Special registers altered:
+
+    CR[BT+32]
 
 # Add With Shift By Immediate
 

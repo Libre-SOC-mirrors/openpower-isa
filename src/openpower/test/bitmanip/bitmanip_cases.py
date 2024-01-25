@@ -18,6 +18,36 @@ def bmatflip(ra):
     return result
 
 
+def crfbinlog(bf, bfa, bfb, mask):
+    lut = bfb
+    expected = bf&~mask # start at BF, mask overwrites masked bits only
+    checks = (bfa, bf) # LUT positions 1<<0=bfa 1<<1=bf
+    for i in range(4):
+        lut_index = 0
+        for j, check in enumerate(checks):
+            if check & (1<<i):
+                lut_index |= 1<<j
+        maskbit = (mask >> i) & 0b1
+        if (lut & (1<<lut_index)) and maskbit:
+            expected |= 1<<i
+    return expected
+
+
+def ternlogi(rc, rt, ra, rb, imm):
+    expected = 0
+    for i in range(64):
+        lut_index = 0
+        if rb & 2 ** i:
+            lut_index |= 2 ** 0
+        if ra & 2 ** i:
+            lut_index |= 2 ** 1
+        if rt & 2 ** i:
+            lut_index |= 2 ** 2
+        if imm & 2 ** lut_index:
+            expected |= 2 ** i
+    return expected
+
+
 class BitManipTestCase(TestAccumulatorBase):
     def case_gbbd(self):
         lst = ["gbbd 0, 1"]
@@ -32,8 +62,8 @@ class BitManipTestCase(TestAccumulatorBase):
 
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
 
-    def do_case_crternlogi(self, bf, bfa, bfb, imm, mask):
-        lst = [f"crternlogi 3,4,5,%d,%d" % (imm, mask)]
+    def do_case_crfternlogi(self, bf, bfa, bfb, imm, mask):
+        lst = [f"crfternlogi 3,4,5,%d,%d" % (imm, mask)]
         # set up CR
         bf %= 2 ** 4
         bfa %= 2 ** 4
@@ -64,24 +94,24 @@ class BitManipTestCase(TestAccumulatorBase):
         self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
                                        initial_cr=initial_cr)
 
-    def case_crternlogi_0(self):
-        self.do_case_crternlogi(0b1111,
+    def case_crfternlogi_0(self):
+        self.do_case_crfternlogi(0b1111,
                                 0b1100,
                                 0b1010,
                                 0x80, 0b1111)
 
-    def case_crternlogi_random(self):
+    def case_crfternlogi_random(self):
         for i in range(100):
-            rc = bool(hash_256(f"crternlogi rc {i}") & 1)
-            imm = hash_256(f"crternlogi imm {i}") & 0xFF
-            bf = hash_256(f"crternlogi bf {i}") % 2 ** 4
-            bfa = hash_256(f"crternlogi bfa {i}") % 2 ** 4
-            bfb = hash_256(f"crternlogi bfb {i}") % 2 ** 4
-            msk = hash_256(f"crternlogi msk {i}") % 2 ** 4
-            self.do_case_crternlogi(bf, bfa, bfb, imm, msk)
+            rc = bool(hash_256(f"crfternlogi rc {i}") & 1)
+            imm = hash_256(f"crfternlogi imm {i}") & 0xFF
+            bf = hash_256(f"crfternlogi bf {i}") % 2 ** 4
+            bfa = hash_256(f"crfternlogi bfa {i}") % 2 ** 4
+            bfb = hash_256(f"crfternlogi bfb {i}") % 2 ** 4
+            msk = hash_256(f"crfternlogi msk {i}") % 2 ** 4
+            self.do_case_crfternlogi(bf, bfa, bfb, imm, msk)
 
-    def do_case_crbinlog(self, bf, bfa, bfb, mask):
-        lst = ["crbinlog 3,4,5,%d" % mask]
+    def do_case_crfbinlog(self, bf, bfa, bfb, mask):
+        lst = ["crfbinlog 3,4,5,%d" % mask]
         # set up CR
         bf %= 2 ** 4
         bfa %= 2 ** 4
@@ -97,34 +127,24 @@ class BitManipTestCase(TestAccumulatorBase):
 
         lst = list(SVP64Asm(lst, bigendian))
         e = ExpectedState(pc=4)
-        expected = bf&~mask # start at BF, mask overwrites masked bits only
-        checks = (bfa, bf) # LUT positions 1<<0=bfa 1<<1=bf
-        for i in range(4):
-            lut_index = 0
-            for j, check in enumerate(checks):
-                if check & (1<<i):
-                    lut_index |= 1<<j
-            maskbit = (mask >> i) & 0b1
-            if (lut & (1<<lut_index)) and maskbit:
-                expected |= 1<<i
-        e.crregs[3] = expected
+        e.crregs[3] = crfbinlog(bf, bfa, bfb, mask)
         e.crregs[4] = bfa
         e.crregs[5] = bfb
         self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
                                        initial_cr=initial_cr)
 
-    def case_crbinlog_0(self):
-        self.do_case_crbinlog(0b1111,
-                              0b1100,
-                              0x8, 0b1111)
+    def case_crfbinlog_0(self):
+        self.do_case_crfbinlog(0b1111,
+                               0b1100,
+                               0x8, 0b1111)
 
-    def case_crbinlog_random(self):
+    def case_crfbinlog_random(self):
         for i in range(100):
-            bf = hash_256(f"crbinlog bf {i}") % 2 ** 4
-            bfa = hash_256(f"crbinlog bfa {i}") % 2 ** 4
-            bfb = hash_256(f"crbinlog bfb {i}") % 2 ** 4
-            msk = hash_256(f"crbinlog msk {i}") % 2 ** 4
-            self.do_case_crbinlog(bf, bfa, bfb, msk)
+            bf = hash_256(f"crfbinlog bf {i}") % 2 ** 4
+            bfa = hash_256(f"crfbinlog bfa {i}") % 2 ** 4
+            bfb = hash_256(f"crfbinlog bfb {i}") % 2 ** 4
+            msk = hash_256(f"crfbinlog msk {i}") % 2 ** 4
+            self.do_case_crfbinlog(bf, bfa, bfb, msk)
 
     def do_case_ternlogi(self, rc, rt, ra, rb, imm):
         rc_dot = "." if rc else ""
