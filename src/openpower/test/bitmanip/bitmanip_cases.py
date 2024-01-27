@@ -389,3 +389,47 @@ class BitManipTestCase(TestAccumulatorBase):
             res =[hex(e.intregs[10 + i]) for i in range(VL)]
             with self.subTest(case_idx=idx, RS_in=RS, expected_RA=res):
                 self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def do_case_sv_crternlogi(self, idx, bt, ba, bb, imm):
+        lst = ["sv.crternlogi 0,8,16,%d" % imm]
+        # set up CR to match bt bit 0, ba bit 4, bb bit 8, in MSB0 order
+        # bearing in mind that CRFields.cr is a 64-bit SelectableInt. sigh.
+        cr = CRFields()
+        for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
+            cr.cr[32+i+0] = t
+            cr.cr[32+i+8] = a
+            cr.cr[32+i+16] = b
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bt, ba, bb,
+              "tli", bin(imm), lst)
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=8)
+        for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
+            k,j = i >> 2, (3 - (i % 4))
+            expected = crternlogi(t, a, b, imm) << j
+            e.crregs[k+0] |= crternlogi(t, a, b, imm) << j
+            e.crregs[k+2] |= a << j
+            e.crregs[k+4] |= b << j
+        with self.subTest(case_idx=idx):
+            VL = len(bt)
+            svstate = SVP64State()
+            svstate.vl = VL
+            svstate.maxvl = VL
+            self.add_case(Program(lst, bigendian), initial_regs=None,
+                          expected=e,
+                          initial_cr=initial_cr,
+                          initial_svstate=svstate)
+
+    def case_sv_crternlogi(self):
+        for i in range(1):
+            bt, ba, bb = [], [], []
+            for j in range(2):
+                t = hash_256("crternlogi bt %d %d" % (i, j)) & 1
+                a = hash_256("crternlogi ba %d %d" % (i, j)) & 1
+                b = hash_256("crternlogi bb %d %d" % (i, j)) & 1
+                bt.append(t)
+                ba.append(a)
+                bb.append(b)
+            imm = hash_256("crternlogi imm %d" % (i)) & 0xFF
+            self.do_case_sv_crternlogi(i, bt, ba, bb, imm)
