@@ -313,7 +313,9 @@ if __name__ == '__main__':
         #"sv.cmp/ff=gt *0,*1,*2,0",
         #"dsld 5,4,5,3",
         "crfbinlog 3,4,5,15",
-        #"crbinlog 3,4,5",
+        "crbinlog 3,4,5",
+        "crfternlogi 3,4,5,149,5",
+        "crternlogi 3,4,5,149",
     ]
     isa = SVP64Asm(lst, macros=macros)
     log("list:\n", "\n\t".join(list(isa)))

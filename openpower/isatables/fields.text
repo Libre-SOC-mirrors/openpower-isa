@@ -346,6 +346,7 @@
     |0   |6   |11   |16   |21   |29  |31 |
     | PO | RT |  RA |  RB | TLI | XO |Rc |
     | PO | RT |  RA |  RB | TLI | XO |L  |
+    | PO | BT |  BA |  BB | TLI | XO |/  |
 
 # 1.6.38 MM-FORM
     |0    |6    |11   |16   |21   |24 |25  |31  |
@@ -386,11 +387,11 @@
     BA (11:15)
         Field used to specify a bit in the CR to be used as
         a source.
-        Formats: XL, X
+        Formats: XL, X, TLI
     BB (16:20)
          Field used to specify a bit in the CR to be used as
          a source.
-         Formats: XL
+         Formats: XL, TLI
     BC (21:25)
          Field used to specify a bit in the CR to be used as
          a source.
@@ -447,7 +448,7 @@
     BT (6:10)
          Field used to specify a bit in the CR or in the
          FPSCR to be used as a target.
-         Formats: XL, X
+         Formats: XL, X, TLI
     BX,B (30,16:20)
         Fields that are concatenated to specify a VSR to
         be used as a source.

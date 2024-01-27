@@ -157,8 +157,6 @@ X-Form
 
 Pseudo-code:
 
-    a <- CR[BT+32]
-    b <- CR[BA]
     lut <- CR[4*BFB+32:4*BFB+35]
     idx <- CR[BT+32] || CR[BA+32]
     CR[BT+32] <- lut[3-idx]

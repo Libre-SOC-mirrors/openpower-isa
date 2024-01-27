@@ -48,6 +48,20 @@ def ternlogi(rc, rt, ra, rb, imm):
     return expected
 
 
+def crfternlogi(bf, bfa, bfb, imm, mask):
+    expected = bf&~mask # start at BF, mask overwrites masked bits only
+    checks = (bfb, bfa, bf) # LUT positions 1<<0=bfb 1<<1=bfa 1<<2=bf
+    for i in range(4):
+        lut_index = 0
+        for j, check in enumerate(checks):
+            if check & (1<<i):
+                lut_index |= 1<<j
+        maskbit = (mask >> i) & 0b1
+        if (imm & (1<<lut_index)) and maskbit:
+            expected |= 1<<i
+    return expected
+
+
 class BitManipTestCase(TestAccumulatorBase):
     def case_gbbd(self):
         lst = ["gbbd 0, 1"]
@@ -78,17 +92,7 @@ class BitManipTestCase(TestAccumulatorBase):
 
         lst = list(SVP64Asm(lst, bigendian))
         e = ExpectedState(pc=4)
-        expected = bf&~mask # start at BF, mask overwrites masked bits only
-        checks = (bfb, bfa, bf) # LUT positions 1<<0=bfb 1<<1=bfa 1<<2=bf
-        for i in range(4):
-            lut_index = 0
-            for j, check in enumerate(checks):
-                if check & (1<<i):
-                    lut_index |= 1<<j
-            maskbit = (mask >> i) & 0b1
-            if (imm & (1<<lut_index)) and maskbit:
-                expected |= 1<<i
-        e.crregs[3] = expected
+        e.crregs[3] = crfternlogi(bf, bfa, bfb, imm, mask)
         e.crregs[4] = bfa
         e.crregs[5] = bfb
         self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
@@ -102,7 +106,6 @@ class BitManipTestCase(TestAccumulatorBase):
 
     def case_crfternlogi_random(self):
         for i in range(100):
-            rc = bool(hash_256(f"crfternlogi rc {i}") & 1)
             imm = hash_256(f"crfternlogi imm {i}") & 0xFF
             bf = hash_256(f"crfternlogi bf {i}") % 2 ** 4
             bfa = hash_256(f"crfternlogi bfa {i}") % 2 ** 4
