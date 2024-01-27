@@ -97,14 +97,14 @@ Special Registers Altered:
 
 # Condition Register Field Ternary Bitwise Logic Immediate
 
-CRB-Form
+TLI-Form
 
 * crternlogi BT,BA,BB,TLI
 
 Pseudo-code:
 
     idx <- CR[BT+32] || CR[BA+32] || CR[BB+32]
-    CR[4*BF+32] <- TLI[7-idx]
+    CR[4*BT+32] <- TLI[7-idx]
 
 Special Registers Altered:
 

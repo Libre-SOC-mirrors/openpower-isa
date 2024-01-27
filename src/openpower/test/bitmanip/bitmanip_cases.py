@@ -48,6 +48,18 @@ def ternlogi(rc, rt, ra, rb, imm):
     return expected
 
 
+def crternlogi(bt, ba, bb, imm):
+    expected = 0
+    checks = (bb, ba, bt) # LUT positions 1<<0=bb 1<<1=ba 1<<2=bt
+    lut_index = 0
+    for j, check in enumerate(checks):
+        if check & 1:
+            lut_index |= 1<<j
+    if imm & (1<<lut_index):
+        expected |= 1
+    return expected
+
+
 def crfternlogi(bf, bfa, bfb, imm, mask):
     expected = bf&~mask # start at BF, mask overwrites masked bits only
     checks = (bfb, bfa, bf) # LUT positions 1<<0=bfb 1<<1=bfa 1<<2=bf
@@ -75,6 +87,40 @@ class BitManipTestCase(TestAccumulatorBase):
         log("hex", hex(initial_regs[1]), hex(e.intregs[0]))
 
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def do_case_crternlogi(self, bt, ba, bb, imm):
+        lst = ["crternlogi 0,4,8,%d" % imm]
+        # set up CR to match bt bit 0, ba bit 4, bb bit 8, in MSB0 order
+        # bearing in mind that CRFields.cr is a 64-bit SelectableInt. sigh.
+        cr = CRFields()
+        cr.cr[32+0] = bt
+        cr.cr[32+4] = ba
+        cr.cr[32+8] = bb
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bt, ba, bb,
+              "tli", bin(imm), lst)
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        e.crregs[0] = crternlogi(bt, ba, bb, imm) << 3
+        e.crregs[1] = ba << 3
+        e.crregs[2] = bb << 3
+        self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
+                                       initial_cr=initial_cr)
+
+    def case_crternlogi_0(self):
+        self.do_case_crternlogi(0b1,
+                                0b1,
+                                0b1,
+                                0x80)
+
+    def case_crternlogi_random(self):
+        for i in range(100):
+            imm = hash_256(f"crternlogi imm {i}") & 0xFF
+            bt = hash_256(f"crternlogi bt {i}") & 1
+            ba = hash_256(f"crternlogi ba {i}") & 1
+            bb = hash_256(f"crternlogi bb {i}") & 1
+            self.do_case_crternlogi(bt, ba, bb, imm)
 
     def do_case_crfternlogi(self, bf, bfa, bfb, imm, mask):
         lst = [f"crfternlogi 3,4,5,%d,%d" % (imm, mask)]
