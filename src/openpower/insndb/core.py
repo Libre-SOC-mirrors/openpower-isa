@@ -288,6 +288,11 @@ class PPCRecord(Dataclass):
             record["cr_in2"] = "BB"
             del record["CR in"]
 
+        if record["CR in"] == "BA_BFB":
+            record["cr_in"] = "BA"
+            record["cr_in2"] = "BFB"
+            del record["CR in"]
+
         flags = set()
         for flag in frozenset(PPCRecord.Flags):
             if bool(record.pop(flag, "")):
@@ -396,6 +401,10 @@ class SVP64Record(Dataclass):
             record["cr_in2"] = "BFB"
             #record["cr_out"] = "BF" # only use BFA_BFB_BF when BF is a dest
             del record["CR in"]
+        if record["CR in"] == "BA_BFB": # maaamma miiiia... enough!
+            record["cr_in"] = "BA"
+            record["cr_in2"] = "BFB"
+            del record["CR in"]
 
         extra = []
         for idx in range(0, 4):
@@ -458,6 +467,14 @@ class SVP64Record(Dataclass):
         if sels["cr_in"] is _CRInSel.BA_BB:
             sels["cr_in"] = _CRIn2Sel.BA
             sels["cr_in2"] = _CRIn2Sel.BB
+            idxs["cr_in2"] = idxs["cr_in"]
+            for key in ("cr_in", "cr_in2"):
+                regs[key] = _Reg(sels[key])
+                seltype[key] = _SelType.SRC
+
+        if sels["cr_in"] is _CRInSel.BA_BFB:
+            sels["cr_in"] = _CRIn2Sel.BA
+            sels["cr_in2"] = _CRIn2Sel.BFB
             idxs["cr_in2"] = idxs["cr_in"]
             for key in ("cr_in", "cr_in2"):
                 regs[key] = _Reg(sels[key])
