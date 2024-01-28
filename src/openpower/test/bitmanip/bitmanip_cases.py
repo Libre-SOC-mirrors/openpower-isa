@@ -391,7 +391,7 @@ class BitManipTestCase(TestAccumulatorBase):
                 self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
     def do_case_sv_crternlogi(self, idx, bt, ba, bb, imm):
-        lst = ["sv.crternlogi 0,8,16,%d" % imm]
+        lst = ["sv.crternlogi *0,*8,*16,%d" % imm]
         # set up CR to match bt bit 0, ba bit 4, bb bit 8, in MSB0 order
         # bearing in mind that CRFields.cr is a 64-bit SelectableInt. sigh.
         cr = CRFields()

@@ -1439,36 +1439,40 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
     )))
 
     def remap(self, value, vector, regtype):
+        # if 5-bit, take out the lower 2 bits (EQ/LT/GT/SO)
+        # and reduce the value down to the CR Field number only
         if regtype is _RegType.CR_5BIT:
             subvalue = (value & 0b11)
             value >>= 2
 
-        if vector:
-            extra = (value & 0b1111)
-            value >>= 4
-        else:
-            extra = (value >> 3)
-            value &= 0b111
+        print ("CR field remap", self.record.etype, "vector", vector,
+                "subval", subvalue, "value", value)
 
         if self.record.etype is _SVEType.EXTRA2:
+            # very reduced range
             if vector:
-                assert (extra & 0b111) == 0, \
-                    "vector CR cannot fit into EXTRA2"
-                extra = (0b10 | (extra >> 3))
+                # vector range is CR0-CR120 in increments of 8
+                assert value % 8 == 0, "vector CR cannot fit into EXTRA2"
+                extra = 0b10 | ((value>>3)&0b1)
+                value >>= 4
             else:
-                assert (extra >> 1) == 0, \
-                    "scalar CR cannot fit into EXTRA2"
-                extra &= 0b01
+                # scalar range is CR0-CR15 in increments of 1
+                assert value < 16, "scalar CR cannot fit into EXTRA2"
+                extra = (value >> 4)
+                value &= 0b1111
         elif self.record.etype is _SVEType.EXTRA3:
             if vector:
-                assert (extra & 0b11) == 0, \
-                    "vector CR cannot fit into EXTRA3"
-                extra = (0b100 | (extra >> 2))
+                # vector range is CR0-CR124 in increments of 4
+                assert value % 4 == 0, "vector CR cannot fit into EXTRA3"
+                extra = 0b100 | ((value>>2)&0b1)
+                value >>= 3
             else:
-                assert (extra >> 2) == 0, \
-                    "scalar CR cannot fit into EXTRA3"
-                extra &= 0b11
+                # scalar range is CR0-CR31 in increments of 1
+                assert value < 32, "scalar CR cannot fit into EXTRA3"
+                extra = (value >> 3)
+                value &= 0b111
 
+        # if 5-bit, restore the 2 lower 2 bits
         if regtype is _RegType.CR_5BIT:
             value = ((value << 2) | subvalue)
 
