@@ -287,8 +287,7 @@ class PPCRecord(Dataclass):
             record["cr_in"] = "BA"
             record["cr_in2"] = "BB"
             del record["CR in"]
-
-        if record["CR in"] == "BA_BFB":
+        elif record["CR in"] == "BA_BFB":
             record["cr_in"] = "BA"
             record["cr_in2"] = "BFB"
             del record["CR in"]
@@ -401,7 +400,7 @@ class SVP64Record(Dataclass):
             record["cr_in2"] = "BFB"
             #record["cr_out"] = "BF" # only use BFA_BFB_BF when BF is a dest
             del record["CR in"]
-        if record["CR in"] == "BA_BFB": # maaamma miiiia... enough!
+        elif record["CR in"] == "BA_BFB": # maaamma miiiia... enough!
             record["cr_in"] = "BA"
             record["cr_in2"] = "BFB"
             del record["CR in"]
