@@ -391,26 +391,34 @@ class BitManipTestCase(TestAccumulatorBase):
                 self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
 
     def do_case_sv_crternlogi(self, idx, bt, ba, bb, imm):
-        lst = ["sv.crternlogi *0,*8,*16,%d" % imm]
-        # set up CR to match bt bit 0, ba bit 4, bb bit 8, in MSB0 order
+        """note for now that this test is LIMITED due to the
+        range of CR EXTRA3 encoding, it can only do CR0 CR4 CR8 CR12 ... CR124
+        therefore BB is marked as *scalar*.
+        see https://bugs.libre-soc.org/show_bug.cgi?id=1034#c11
+        """
+        lst = ["sv.crternlogi *0,*16,31,%d" % imm]
+        # set up CR to match bt bit 0, ba bit 16, bb bit 31, in MSB0 order
         # bearing in mind that CRFields.cr is a 64-bit SelectableInt. sigh.
         cr = CRFields()
-        for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
-            cr.cr[32+i+0] = t
-            cr.cr[32+i+8] = a
-            cr.cr[32+i+16] = b
+        #for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
+        for i, (t, a) in enumerate(zip(bt, ba)):
+            cr.cr[32+i+0] = t   # *vector* BT
+            cr.cr[32+i+16] = a  # *vector* BA
+            # XXX cannot do vector yet cr.cr[32+i+32] = bb # *SCALAR* BB
+            cr.cr[32+31] = bb # *SCALAR* BB
         initial_cr = cr.cr.asint()
         print("initial cr", bin(initial_cr), bt, ba, bb,
               "tli", bin(imm), lst)
 
         lst = list(SVP64Asm(lst, bigendian))
         e = ExpectedState(pc=8)
-        for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
+        #for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
+        for i, (t, a) in enumerate(zip(bt, ba)):
             k,j = i >> 2, (3 - (i % 4))
-            expected = crternlogi(t, a, b, imm) << j
-            e.crregs[k+0] |= crternlogi(t, a, b, imm) << j
-            e.crregs[k+2] |= a << j
-            e.crregs[k+4] |= b << j
+            expected = crternlogi(t, a, bb, imm) << j
+            e.crregs[k+0] |= expected # vector result
+            e.crregs[k+4] |= a << j   # vector input BA
+        e.crregs[7] |= bb << 3        # scalar input BB
         with self.subTest(case_idx=idx):
             VL = len(bt)
             svstate = SVP64State()
@@ -432,4 +440,5 @@ class BitManipTestCase(TestAccumulatorBase):
                 ba.append(a)
                 bb.append(b)
             imm = hash_256("crternlogi imm %d" % (i)) & 0xFF
-            self.do_case_sv_crternlogi(i, bt, ba, bb, imm)
+            # temporarily do Vector BT, Vector BA, but *scalar* BB
+            self.do_case_sv_crternlogi(i, bt, ba, bb[0], imm)
