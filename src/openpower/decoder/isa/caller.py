@@ -1623,12 +1623,13 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def memassign(self, ea, sz, val):
         self.mem.memassign(ea, sz, val)
 
-    def prep_namespace(self, insn_name, formname, op_fields, xlen):
+    def prep_namespace(self, insn_name, info, xlen):
         # TODO: get field names from form in decoder*1* (not decoder2)
         # decoder2 is hand-created, and decoder1.sigform is auto-generated
         # from spec
         # then "yield" fields only from op_fields rather than hard-coded
         # list, here.
+        formname, op_fields = info.form, info.op_fields
         fields = self.decoder.sigforms[formname]
         log("prep_namespace", formname, op_fields, insn_name)
         for name in op_fields:
@@ -2353,8 +2354,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             info = self.instrs[asmop]
         else:
             info = self.instrs[ins_name]
-        yield from self.prep_namespace(ins_name, info.form, info.op_fields,
-                                       xlen)
+        yield from self.prep_namespace(ins_name, info, xlen)
 
         # dict retains order
         inputs = dict.fromkeys(create_full_args(
