@@ -104,7 +104,7 @@ TLI-Form
 Pseudo-code:
 
     idx <- CR[BT+32] || CR[BA+32] || CR[BB+32]
-    CR[4*BT+32] <- TLI[7-idx]
+    CR[BT+32] <- TLI[7-idx]
 
 Special Registers Altered:
 
