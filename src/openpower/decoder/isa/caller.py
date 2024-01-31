@@ -1654,7 +1654,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             # CR immediates. deal with separately.  needs modifying
             # pseudocode
             crlen5 = ['BC', 'BA', 'BB', 'BT', 'BI'] # 5-bit
-            crlen3 = ['BF', 'BFA']                  # 3-bit (BF: bit-field)
+            crlen3 = ['BF', 'BFA', 'BFB']           # 3-bit (BF: bit-field)
             if self.is_svp64_mode and name in crlen5:
                 # 5-bit, must reconstruct the value
                 if name in ['BT']:
