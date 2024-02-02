@@ -402,23 +402,29 @@ class BitManipTestCase(TestAccumulatorBase):
         cr = CRFields()
         #for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
         for i, (t, a) in enumerate(zip(bt, ba)):
-            cr.cr[32+i+0] = t   # *vector* BT
-            cr.cr[32+i+16] = a  # *vector* BA
+            cr.cr[32+i*4+0] = t   # *vector* BT
+            cr.cr[32+i*4+16] = a  # *vector* BA
             # XXX cannot do vector yet cr.cr[32+i+32] = bb # *SCALAR* BB
             cr.cr[32+31] = bb # *SCALAR* BB
         initial_cr = cr.cr.asint()
         print("initial cr", bin(initial_cr), bt, ba, bb,
               "tli", bin(imm), lst)
+        for i in range(8):
+            print("cr field %d" % i, bin(cr.crl[i].asint()))
 
         lst = list(SVP64Asm(lst, bigendian))
         e = ExpectedState(pc=8)
         #for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
+        # ok so remember that you have to do MSB0-to-LSB0 conversion
+        # so subtract 3-0 for vector BT=*0 and BA=*16 (hence n<<3) but 3-3
+        # (hence bb<<0) for BB=31 (the scalar BB)
         for i, (t, a) in enumerate(zip(bt, ba)):
-            k,j = i >> 2, (3 - (i % 4))
-            expected = crternlogi(t, a, bb, imm) << j
-            e.crregs[k+0] |= expected # vector result
-            e.crregs[k+4] |= a << j   # vector input BA
-        e.crregs[7] |= bb << 3        # scalar input BB
+            expected = crternlogi(t, a, bb, imm)
+            print("crternlogi expected", i, bin(expected))
+            e.crregs[i+0] &= ~1<<3       # clear vector result bit first
+            e.crregs[i+0] |= expected<<3 # vector result
+            e.crregs[i+4] |= a<<3        # vector input BA
+        e.crregs[7] |= bb<<0             # scalar input BB
         with self.subTest(case_idx=idx):
             VL = len(bt)
             svstate = SVP64State()
@@ -429,10 +435,13 @@ class BitManipTestCase(TestAccumulatorBase):
                           initial_cr=initial_cr,
                           initial_svstate=svstate)
 
+    def case_sv_crternlogi_0(self):
+        self.do_case_sv_crternlogi(0, [1,1,1], [1,0,1], 1, 0x80)
+
     def case_sv_crternlogi(self):
-        for i in range(1):
+        for i in range(100):
             bt, ba, bb = [], [], []
-            for j in range(2):
+            for j in range(3):
                 t = hash_256("crternlogi bt %d %d" % (i, j)) & 1
                 a = hash_256("crternlogi ba %d %d" % (i, j)) & 1
                 b = hash_256("crternlogi bb %d %d" % (i, j)) & 1
