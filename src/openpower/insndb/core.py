@@ -287,6 +287,10 @@ class PPCRecord(Dataclass):
             record["cr_in"] = "BA"
             record["cr_in2"] = "BB"
             del record["CR in"]
+        elif record["CR in"] == "BA_BFB":
+            record["cr_in"] = "BA"
+            record["cr_in2"] = "BFB"
+            del record["CR in"]
 
         flags = set()
         for flag in frozenset(PPCRecord.Flags):
@@ -391,6 +395,15 @@ class SVP64Record(Dataclass):
             record["cr_in"] = "BA"
             record["cr_in2"] = "BB"
             del record["CR in"]
+        elif record["CR in"] == "BFA_BFB_BF":
+            record["cr_in"] = "BFA"
+            record["cr_in2"] = "BFB"
+            #record["cr_out"] = "BF" # only use BFA_BFB_BF when BF is a dest
+            del record["CR in"]
+        elif record["CR in"] == "BA_BFB": # maaamma miiiia... enough!
+            record["cr_in"] = "BA"
+            record["cr_in2"] = "BFB"
+            del record["CR in"]
 
         extra = []
         for idx in range(0, 4):
@@ -453,6 +466,23 @@ class SVP64Record(Dataclass):
         if sels["cr_in"] is _CRInSel.BA_BB:
             sels["cr_in"] = _CRIn2Sel.BA
             sels["cr_in2"] = _CRIn2Sel.BB
+            idxs["cr_in2"] = idxs["cr_in"]
+            for key in ("cr_in", "cr_in2"):
+                regs[key] = _Reg(sels[key])
+                seltype[key] = _SelType.SRC
+
+        if sels["cr_in"] is _CRInSel.BA_BFB:
+            sels["cr_in"] = _CRIn2Sel.BA
+            sels["cr_in2"] = _CRIn2Sel.BFB
+            idxs["cr_in2"] = idxs["cr_in"]
+            for key in ("cr_in", "cr_in2"):
+                regs[key] = _Reg(sels[key])
+                seltype[key] = _SelType.SRC
+
+        # should only be used when BF is also a destination
+        if sels["cr_in"] is _CRInSel.BFA_BFB_BF:
+            sels["cr_in"] = _CRIn2Sel.BFA
+            sels["cr_in2"] = _CRIn2Sel.BFB
             idxs["cr_in2"] = idxs["cr_in"]
             for key in ("cr_in", "cr_in2"):
                 regs[key] = _Reg(sels[key])
@@ -1409,36 +1439,40 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
     )))
 
     def remap(self, value, vector, regtype):
+        # if 5-bit, take out the lower 2 bits (EQ/LT/GT/SO)
+        # and reduce the value down to the CR Field number only
         if regtype is _RegType.CR_5BIT:
             subvalue = (value & 0b11)
             value >>= 2
 
-        if vector:
-            extra = (value & 0b1111)
-            value >>= 4
-        else:
-            extra = (value >> 3)
-            value &= 0b111
+        print ("CR field remap", self.record.etype, "vector", vector,
+                "subval", subvalue, "value", value)
 
         if self.record.etype is _SVEType.EXTRA2:
+            # very reduced range
             if vector:
-                assert (extra & 0b111) == 0, \
-                    "vector CR cannot fit into EXTRA2"
-                extra = (0b10 | (extra >> 3))
+                # vector range is CR0-CR120 in increments of 8
+                assert value % 8 == 0, "vector CR cannot fit into EXTRA2"
+                extra = 0b10 | ((value>>3)&0b1)
+                value >>= 4
             else:
-                assert (extra >> 1) == 0, \
-                    "scalar CR cannot fit into EXTRA2"
-                extra &= 0b01
+                # scalar range is CR0-CR15 in increments of 1
+                assert value < 16, "scalar CR cannot fit into EXTRA2"
+                extra = (value >> 4)
+                value &= 0b1111
         elif self.record.etype is _SVEType.EXTRA3:
             if vector:
-                assert (extra & 0b11) == 0, \
-                    "vector CR cannot fit into EXTRA3"
-                extra = (0b100 | (extra >> 2))
+                # vector range is CR0-CR124 in increments of 4
+                assert value % 4 == 0, "vector CR cannot fit into EXTRA3"
+                extra = 0b100 | ((value>>2)&0b1)
+                value >>= 3
             else:
-                assert (extra >> 2) == 0, \
-                    "scalar CR cannot fit into EXTRA3"
-                extra &= 0b11
+                # scalar range is CR0-CR31 in increments of 1
+                assert value < 32, "scalar CR cannot fit into EXTRA3"
+                extra = (value >> 3)
+                value &= 0b111
 
+        # if 5-bit, restore the 2 lower 2 bits
         if regtype is _RegType.CR_5BIT:
             value = ((value << 2) | subvalue)
 

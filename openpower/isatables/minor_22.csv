@@ -40,7 +40,8 @@ opcode,unit,internal op,in1,in2,in3,out,CR in,CR out,inv A,inv out,cry in,cry ou
 ------10001,ALU,OP_BMASK,RA,RB,NONE,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,bmask,BM2,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 -----00011-,ALU,OP_FMVIS,NONE,CONST_UI,NONE,FRS,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,fmvis,DX,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 -----01011-,ALU,OP_FISHMV,FRS,CONST_UI,NONE,FRS,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,fishmv,DX,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-------01000,ALU,OP_MADDSUBRS,RA,CONST_SH,RB,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddsubrs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-------01001,ALU,OP_MADDRS,RA,CONST_SH,RB,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,maddrs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
-------01011,ALU,OP_MSUBRS,RA,CONST_SH,RB,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,1,0,NONE,0,0,msubrs,A,,1,unofficial until submitted and approved/renumbered by the opf isa wg
 0101110110-,ALU,OP_BMAT,RA,NONE,NONE,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,gbbd,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+------00001,SHIFT_ROT,OP_BINLOG,RA,RB,RC,RT,NONE,NONE,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,binlog,BM2,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+-----001001,CR,OP_CRFBINLOG,NONE,NONE,NONE,NONE,BFA_BFB_BF,BF,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,crfbinlog,CRB,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+00001011101,CR,OP_CRBINLOG,NONE,NONE,NONE,NONE,BA_BFB,BT,0,0,ZERO,0,NONE,0,0,0,0,0,0,NONE,0,0,crbinlog,X,,1,unofficial until submitted and approved/renumbered by the opf isa wg
+

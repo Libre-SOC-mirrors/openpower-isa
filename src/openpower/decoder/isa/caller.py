@@ -1641,19 +1641,20 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
     def memassign(self, ea, sz, val):
         self.mem.memassign(ea, sz, val)
 
-    def prep_namespace(self, insn_name, formname, op_fields, xlen):
+    def prep_namespace(self, insn_name, info, xlen):
         # TODO: get field names from form in decoder*1* (not decoder2)
         # decoder2 is hand-created, and decoder1.sigform is auto-generated
         # from spec
         # then "yield" fields only from op_fields rather than hard-coded
         # list, here.
+        formname, op_fields = info.form, info.op_fields
         fields = self.decoder.sigforms[formname]
         log("prep_namespace", formname, op_fields, insn_name)
         for name in op_fields:
             # CR immediates. deal with separately.  needs modifying
             # pseudocode
             crlen5 = ['BC', 'BA', 'BB', 'BT', 'BI'] # 5-bit
-            crlen3 = ['BF', 'BFA']                  # 3-bit (BF: bit-field)
+            crlen3 = ['BF', 'BFA', 'BFB']           # 3-bit (BF: bit-field)
             if self.is_svp64_mode and name in crlen5:
                 # 5-bit, must reconstruct the value
                 if name in ['BT']:
@@ -2301,7 +2302,9 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
                        "brh", "brw", "brd",
                        'setvl', 'svindex', 'svremap', 'svstep',
                        'svshape', 'svshape2',
-                       'ternlogi', 'bmask', 'cprop', 'gbbd',
+                       'binlog', 'crbinlog', 'crfbinlog',
+                       'crternlogi', 'crfternlogi', 'ternlogi',
+                       'bmask', 'cprop', 'gbbd',
                        'absdu', 'absds', 'absdacs', 'absdacu', 'avgadd',
                        'fmvis', 'fishmv', 'pcdec', "maddedu", "divmod2du",
                        "dsld", "dsrd", "maddedus",
@@ -2377,8 +2380,7 @@ class ISACaller(ISACallerHelper, ISAFPHelpers, StepLoop):
             info = self.instrs[asmop]
         else:
             info = self.instrs[ins_name]
-        yield from self.prep_namespace(ins_name, info.form, info.op_fields,
-                                       xlen)
+        yield from self.prep_namespace(ins_name, info, xlen)
 
         # dict retains order
         inputs = dict.fromkeys(create_full_args(

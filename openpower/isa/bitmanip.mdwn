@@ -40,6 +40,131 @@ Special Registers Altered:
 
     CR0                    (if Rc=1)
 
+# GPR Dynamic Binary Logic
+
+BM2-Form
+
+* binlog RT,RA,RB,RC,nh
+
+Pseudo-code:
+
+    if nh = 1 then lut <- (RC)[56:59]
+    else           lut <- (RC)[60:63]
+    result <- [0] * 64
+    do i = 0 to 63
+      idx <- (RA)[i] || (RB)[i]
+      result[i] <- lut[3-idx]
+    RT <- result
+
+Description:
+
+    If nh contains a 0, let lut be the four LSBs of RC
+    (bits 60 to 63).  Otherwise let lut be the next
+    four LSBs of RC (bits 56 to 59).
+
+    Let j be the value of the concatenation of the
+    contents of bit i of RT with bit i of RB.
+
+    The value of bit j of lut is placed into bit i of RT.
+
+Special registers altered:
+
+    None
+
+# Condition Register Ternary Bitwise Logic Immediate
+
+CRB-Form
+
+* crfternlogi BF,BFA,BFB,TLI,msk
+
+Pseudo-code:
+
+    bf <- CR[4*BF+32:4*BF+35]
+    bfa <- CR[4*BFA+32:4*BFA+35]
+    bfb <- CR[4*BFB+32:4*BFB+35]
+
+    result <- [0] * 4
+    do i = 0 to 3
+      idx <- bf[i] || bfa[i] || bfb[i]
+      result[i] <- TLI[7-idx]
+    do i = 0 to 3
+        if msk[i] = 1 then
+            CR[4*BF+32+i] <- result[i]
+
+Special Registers Altered:
+
+     CR field BF
+
+# Condition Register Field Ternary Bitwise Logic Immediate
+
+TLI-Form
+
+* crternlogi BT,BA,BB,TLI
+
+Pseudo-code:
+
+    idx <- CR[BT+32] || CR[BA+32] || CR[BB+32]
+    CR[BT+32] <- TLI[7-idx]
+
+Special Registers Altered:
+
+     CR field BF
+
+# Condition Register Field Dynamic Binary Logic
+
+CRB-Form
+
+* crfbinlog BF,BFA,BFB,msk
+
+Pseudo-code:
+
+    a <- CR[4*BF+32:4*BFA+35]
+    b <- CR[4*BFA+32:4*BFA+35]
+    lut <- CR[4*BFB+32:4*BFB+35]
+
+    result <- [0] * 4
+    do i = 0 to 3
+      idx <- a[i] || b[i]
+      result[i] <- lut[3-idx]
+    do i = 0 to 3
+        if msk[i] = 1 then
+            CR[4*BF+32+i] <- result[i]
+
+Description:
+
+    For each integer value i, 0 to 3, do the following.
+
+    Let j be the value of the concatenation of the
+    contents of bit i of CR Field BF with bit i of CR Field BFA.
+
+    If bit i of msk is set to 1 then the value of bit j of
+    CR Field BFB is placed into bit i of CR Field BF.
+
+    Otherwise, if bit i of msk is a zero then bit i of
+    CR Field BF is unchanged.
+
+    If `msk` is zero an Illegal Instruction trap is raised.
+
+Special registers altered:
+
+    CR field BF
+
+# Condition Register Dynamic Binary Logic
+
+X-Form
+
+* crbinlog BT,BA,BFB
+
+Pseudo-code:
+
+    lut <- CR[4*BFB+32:4*BFB+35]
+    idx <- CR[BT+32] || CR[BA+32]
+    CR[BT+32] <- lut[3-idx]
+
+Special registers altered:
+
+    CR[BT+32]
+
 # Add With Shift By Immediate
 
 Z23-Form

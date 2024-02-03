@@ -4,7 +4,7 @@ from openpower.endian import bigendian
 from openpower.simulator.program import Program
 from openpower.test.state import ExpectedState
 from nmutil.sim_util import hash_256
-from openpower.decoder.isa.caller import SVP64State
+from openpower.decoder.isa.caller import SVP64State, CRFields
 from openpower.util import log
 import struct
 import itertools
@@ -16,6 +16,62 @@ def bmatflip(ra):
             b = (ra >> (63-k*8-j)) & 1
             result |= b << (63-j*8-k)
     return result
+
+
+def crfbinlog(bf, bfa, bfb, mask):
+    lut = bfb
+    expected = bf&~mask # start at BF, mask overwrites masked bits only
+    checks = (bfa, bf) # LUT positions 1<<0=bfa 1<<1=bf
+    for i in range(4):
+        lut_index = 0
+        for j, check in enumerate(checks):
+            if check & (1<<i):
+                lut_index |= 1<<j
+        maskbit = (mask >> i) & 0b1
+        if (lut & (1<<lut_index)) and maskbit:
+            expected |= 1<<i
+    return expected
+
+
+def ternlogi(rc, rt, ra, rb, imm):
+    expected = 0
+    for i in range(64):
+        lut_index = 0
+        if rb & 2 ** i:
+            lut_index |= 2 ** 0
+        if ra & 2 ** i:
+            lut_index |= 2 ** 1
+        if rt & 2 ** i:
+            lut_index |= 2 ** 2
+        if imm & 2 ** lut_index:
+            expected |= 2 ** i
+    return expected
+
+
+def crternlogi(bt, ba, bb, imm):
+    expected = 0
+    checks = (bb, ba, bt) # LUT positions 1<<0=bb 1<<1=ba 1<<2=bt
+    lut_index = 0
+    for j, check in enumerate(checks):
+        if check & 1:
+            lut_index |= 1<<j
+    if imm & (1<<lut_index):
+        expected |= 1
+    return expected
+
+
+def crfternlogi(bf, bfa, bfb, imm, mask):
+    expected = bf&~mask # start at BF, mask overwrites masked bits only
+    checks = (bfb, bfa, bf) # LUT positions 1<<0=bfb 1<<1=bfa 1<<2=bf
+    for i in range(4):
+        lut_index = 0
+        for j, check in enumerate(checks):
+            if check & (1<<i):
+                lut_index |= 1<<j
+        maskbit = (mask >> i) & 0b1
+        if (imm & (1<<lut_index)) and maskbit:
+            expected |= 1<<i
+    return expected
 
 
 class BitManipTestCase(TestAccumulatorBase):
@@ -31,6 +87,113 @@ class BitManipTestCase(TestAccumulatorBase):
         log("hex", hex(initial_regs[1]), hex(e.intregs[0]))
 
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def do_case_crternlogi(self, bt, ba, bb, imm):
+        lst = ["crternlogi 0,4,8,%d" % imm]
+        # set up CR to match bt bit 0, ba bit 4, bb bit 8, in MSB0 order
+        # bearing in mind that CRFields.cr is a 64-bit SelectableInt. sigh.
+        cr = CRFields()
+        cr.cr[32+0] = bt
+        cr.cr[32+4] = ba
+        cr.cr[32+8] = bb
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bt, ba, bb,
+              "tli", bin(imm), lst)
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        e.crregs[0] = crternlogi(bt, ba, bb, imm) << 3
+        e.crregs[1] = ba << 3
+        e.crregs[2] = bb << 3
+        self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
+                                       initial_cr=initial_cr)
+
+    def case_crternlogi_0(self):
+        self.do_case_crternlogi(0b1,
+                                0b1,
+                                0b1,
+                                0x80)
+
+    def case_crternlogi_random(self):
+        for i in range(100):
+            imm = hash_256(f"crternlogi imm {i}") & 0xFF
+            bt = hash_256(f"crternlogi bt {i}") & 1
+            ba = hash_256(f"crternlogi ba {i}") & 1
+            bb = hash_256(f"crternlogi bb {i}") & 1
+            self.do_case_crternlogi(bt, ba, bb, imm)
+
+    def do_case_crfternlogi(self, bf, bfa, bfb, imm, mask):
+        lst = [f"crfternlogi 3,4,5,%d,%d" % (imm, mask)]
+        # set up CR
+        bf %= 2 ** 4
+        bfa %= 2 ** 4
+        bfb %= 2 ** 4
+        cr = CRFields()
+        cr.crl[3][0:4] = bf
+        cr.crl[4][0:4]  = bfa
+        cr.crl[5][0:4]  = bfb
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bf, bfa, bfb)
+        print("mask tli", bin(mask), bin(imm))
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        e.crregs[3] = crfternlogi(bf, bfa, bfb, imm, mask)
+        e.crregs[4] = bfa
+        e.crregs[5] = bfb
+        self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
+                                       initial_cr=initial_cr)
+
+    def case_crfternlogi_0(self):
+        self.do_case_crfternlogi(0b1111,
+                                0b1100,
+                                0b1010,
+                                0x80, 0b1111)
+
+    def case_crfternlogi_random(self):
+        for i in range(100):
+            imm = hash_256(f"crfternlogi imm {i}") & 0xFF
+            bf = hash_256(f"crfternlogi bf {i}") % 2 ** 4
+            bfa = hash_256(f"crfternlogi bfa {i}") % 2 ** 4
+            bfb = hash_256(f"crfternlogi bfb {i}") % 2 ** 4
+            msk = hash_256(f"crfternlogi msk {i}") % 2 ** 4
+            self.do_case_crfternlogi(bf, bfa, bfb, imm, msk)
+
+    def do_case_crfbinlog(self, bf, bfa, bfb, mask):
+        lst = ["crfbinlog 3,4,5,%d" % mask]
+        # set up CR
+        bf %= 2 ** 4
+        bfa %= 2 ** 4
+        bfb %= 2 ** 4
+        cr = CRFields()
+        cr.crl[3][0:4] = bf
+        cr.crl[4][0:4]  = bfa
+        cr.crl[5][0:4]  = bfb
+        lut = bfb
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bf, bfa, bfb)
+        print("mask lut2", bin(mask), bin(lut))
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        e.crregs[3] = crfbinlog(bf, bfa, bfb, mask)
+        e.crregs[4] = bfa
+        e.crregs[5] = bfb
+        self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
+                                       initial_cr=initial_cr)
+
+    def case_crfbinlog_0(self):
+        self.do_case_crfbinlog(0b1111,
+                               0b1100,
+                               0x8, 0b1111)
+
+    def case_crfbinlog_random(self):
+        for i in range(100):
+            bf = hash_256(f"crfbinlog bf {i}") % 2 ** 4
+            bfa = hash_256(f"crfbinlog bfa {i}") % 2 ** 4
+            bfb = hash_256(f"crfbinlog bfb {i}") % 2 ** 4
+            msk = hash_256(f"crfbinlog msk {i}") % 2 ** 4
+            self.do_case_crfbinlog(bf, bfa, bfb, msk)
 
     def do_case_ternlogi(self, rc, rt, ra, rb, imm):
         rc_dot = "." if rc else ""
@@ -66,6 +229,49 @@ class BitManipTestCase(TestAccumulatorBase):
             lt = expected < 0
             e.crregs[0] = (eq << 1) | (gt << 2) | (lt << 3)
         self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def do_case_binlog(self, ra, rb, rc, nh):
+        lst = ["binlog 3, 4, 5, 6, %d" % nh]
+        initial_regs = [0] * 32
+        initial_regs[4] = ra
+        initial_regs[5] = rb
+        initial_regs[6] = rc
+        lut = rc & 0b11111111 # one of two 4-bit LUTs is in 1st 8 bits
+        if nh == 1: # top half (bits 4-7... sigh MSB 56-59) else 0-3 (60-63)
+            lut = lut >> 4
+        lut = lut & 0b1111
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        expected = 0
+        for i in range(64):
+            lut_index = 0
+            if rb & 2 ** i:
+                lut_index |= 2 ** 0
+            if ra & 2 ** i:
+                lut_index |= 2 ** 1
+            if lut & 2 ** lut_index:
+                expected |= 2 ** i
+        e.intregs[3] = expected
+        e.intregs[4] = ra
+        e.intregs[5] = rb
+        e.intregs[6] = rc
+        self.add_case(Program(lst, bigendian), initial_regs, expected=e)
+
+    def case_binlog_0(self):
+        self.do_case_binlog(0x8000_0000_FFFF_0000,
+                            0x8000_0000_FF00_FF00,
+                            0x8, 1)
+        self.do_case_binlog(0x8000_0000_FFFF_0000,
+                            0x8000_0000_FF00_FF00,
+                            0x8, 0)
+
+    def case_binlog_random(self):
+        for i in range(100):
+            ra = hash_256(f"binlog ra {i}") % 2 ** 64
+            rb = hash_256(f"binlog rb {i}") % 2 ** 64
+            rc = hash_256(f"binlog rc {i}") % 2 ** 8
+            nh = hash_256(f"binlog nh {i}") & 0b1
+            self.do_case_binlog(ra, rb, rc, nh)
 
     def do_case_grev(self, w, is_imm, ra, rb):
         bits = 32 if w else 64
@@ -183,3 +389,65 @@ class BitManipTestCase(TestAccumulatorBase):
             res =[hex(e.intregs[10 + i]) for i in range(VL)]
             with self.subTest(case_idx=idx, RS_in=RS, expected_RA=res):
                 self.add_case(prog, gprs, expected=e, initial_svstate=svstate)
+
+    def do_case_sv_crternlogi(self, idx, bt, ba, bb, imm):
+        """note for now that this test is LIMITED due to the
+        range of CR EXTRA3 encoding, it can only do CR0 CR4 CR8 CR12 ... CR124
+        therefore BB is marked as *scalar*.
+        see https://bugs.libre-soc.org/show_bug.cgi?id=1034#c11
+        """
+        lst = ["sv.crternlogi *0,*16,31,%d" % imm]
+        # set up CR to match bt bit 0, ba bit 16, bb bit 31, in MSB0 order
+        # bearing in mind that CRFields.cr is a 64-bit SelectableInt. sigh.
+        cr = CRFields()
+        #for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
+        for i, (t, a) in enumerate(zip(bt, ba)):
+            cr.cr[32+i*4+0] = t   # *vector* BT
+            cr.cr[32+i*4+16] = a  # *vector* BA
+            # XXX cannot do vector yet cr.cr[32+i+32] = bb # *SCALAR* BB
+            cr.cr[32+31] = bb # *SCALAR* BB
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bt, ba, bb,
+              "tli", bin(imm), lst)
+        for i in range(8):
+            print("cr field %d" % i, bin(cr.crl[i].asint()))
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=8)
+        #for i, (t, a, b) in enumerate(zip(bt, ba, bb)):
+        # ok so remember that you have to do MSB0-to-LSB0 conversion
+        # so subtract 3-0 for vector BT=*0 and BA=*16 (hence n<<3) but 3-3
+        # (hence bb<<0) for BB=31 (the scalar BB)
+        for i, (t, a) in enumerate(zip(bt, ba)):
+            expected = crternlogi(t, a, bb, imm)
+            print("crternlogi expected", i, bin(expected))
+            e.crregs[i+0] &= ~1<<3       # clear vector result bit first
+            e.crregs[i+0] |= expected<<3 # vector result
+            e.crregs[i+4] |= a<<3        # vector input BA
+        e.crregs[7] |= bb<<0             # scalar input BB
+        with self.subTest(case_idx=idx):
+            VL = len(bt)
+            svstate = SVP64State()
+            svstate.vl = VL
+            svstate.maxvl = VL
+            self.add_case(Program(lst, bigendian), initial_regs=None,
+                          expected=e,
+                          initial_cr=initial_cr,
+                          initial_svstate=svstate)
+
+    def case_sv_crternlogi_0(self):
+        self.do_case_sv_crternlogi(0, [1,1,1], [1,0,1], 1, 0x80)
+
+    def case_sv_crternlogi(self):
+        for i in range(100):
+            bt, ba, bb = [], [], []
+            for j in range(3):
+                t = hash_256("crternlogi bt %d %d" % (i, j)) & 1
+                a = hash_256("crternlogi ba %d %d" % (i, j)) & 1
+                b = hash_256("crternlogi bb %d %d" % (i, j)) & 1
+                bt.append(t)
+                ba.append(a)
+                bb.append(b)
+            imm = hash_256("crternlogi imm %d" % (i)) & 0xFF
+            # temporarily do Vector BT, Vector BA, but *scalar* BB
+            self.do_case_sv_crternlogi(i, bt, ba, bb[0], imm)

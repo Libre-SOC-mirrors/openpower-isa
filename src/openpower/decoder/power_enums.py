@@ -278,6 +278,7 @@ class Reg(Enum):
     CR1 = auto()
     BF = auto()
     BFA = auto()
+    BFB = auto()
     BA = auto()
     BB = auto()
     BC = auto()
@@ -652,6 +653,7 @@ class RegType(Enum):
     CR_3BIT = 2 # CR field; the CR register is 32-bit
     BF = CR_3BIT
     BFA = CR_3BIT
+    BFB = CR_3BIT
 
     CR_5BIT = 3 # bit of the 32-bit CR register
     BA = CR_5BIT
@@ -747,6 +749,8 @@ _insns = [
     "cprop", # AV bitmanip
     "crand", "crandc", "creqv",
     "crnand", "crnor", "cror", "crorc", "crxor",
+    "crbinlog", "crfbinlog", # binary bitmanip (field and CR bit)
+    "crternlogi", "crfternlogi", # ternary bitmanip (field and CR bit)
     "darn",
     "dcbf", "dcbst", "dcbt", "dcbtst", "dcbz",
     "divd", "divde", "divdeo", "divdeu",
@@ -831,7 +835,7 @@ _insns = [
     "subf", "subfc", "subfco", "subfe", "subfeo", "subfic",
     "subfme", "subfmeo", "subfo", "subfze", "subfzeo",
     "sync",
-    "ternlogi",
+    "binlog", "ternlogi", # binary/ternary (lut2/lut3)
     "td", "tdi",
     "tlbie", "tlbiel", "tlbsync",
     "tw", "twi",
@@ -965,6 +969,11 @@ class MicrOp(Enum):
     OP_PEXT = 110
     OP_SETBC = 111
     OP_BMAT = 112 # bmatflip/xor/and - known by many names (vgbbd in Power)
+    OP_CRTERNLOG = 113
+    OP_BINLOG = 114
+    OP_CRBINLOG = 115
+    OP_CRFBINLOG = 116
+    OP_CRFTERNLOG = 117
 
 
 class SelType(Enum):
@@ -1138,6 +1147,8 @@ class CRInSel(Enum):
     WHOLE_REG = 6
     CR1 = 7
     BA = 8
+    BFA_BFB_BF = 9
+    BA_BFB = 10 # maaamma miiia... definitely time for CRin1/2 in CSV...
 
     def __str__(self):
         return self.name
@@ -1153,6 +1164,7 @@ class CRInSel(Enum):
 class CRIn2Sel(Enum):
     NONE = 0
     BB = 1
+    BFB = 2
 
     def __str__(self):
         return self.name
