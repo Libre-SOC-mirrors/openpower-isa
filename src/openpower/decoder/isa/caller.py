@@ -634,6 +634,9 @@ def get_out_map(dec2, name):
     if name == 'RA':
         if out_sel == OutSel.RA.value:
             return True
+    elif name == 'RS':
+        if out_sel == OutSel.RS.value:
+            return True
     elif name == 'RT':
         if out_sel == OutSel.RT.value:
             return True
@@ -696,14 +699,12 @@ def get_out2_map(dec2, name):
     if name == 'RS':
         fft_en = yield dec2.implicit_rs
         if fft_en:
-            log("get_idx_out2", out_sel, OutSel.RS.value,
-                out)
+            log("get_idx_out2", out_sel, OutSel.RS.value, out)
             return True
     if name == 'FRS':
         fft_en = yield dec2.implicit_rs
         if fft_en:
-            log("get_idx_out2", out_sel, OutSel.FRS.value,
-                out)
+            log("get_idx_out2", out_sel, OutSel.FRS.value, out)
             return True
     return False
 
@@ -723,6 +724,7 @@ def get_idx_out2(dec2, name, ewmode=False):
     if ismap:
         log("get_idx_out2", name, out_sel, out, o_isvec)
         return out, o_isvec
+    log("get_idx_out2 not found", name, out_sel, out, o_isvec)
     return None, False
 
 
