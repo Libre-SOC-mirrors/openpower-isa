@@ -563,6 +563,9 @@ def get_cr_in(dec2, name):
     log("    spec", spec)
     log("    override", sv_override)
     # identify which regnames map to in / o2
+    if name == 'BC':
+        if in_sel == CRInSel.BC.value:
+            return in1, cr_isvec
     if name == 'BI':
         if in_sel == CRInSel.BI.value:
             return in1, cr_isvec
