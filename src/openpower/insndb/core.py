@@ -1445,9 +1445,6 @@ class ConditionRegisterFieldOperand(ExtendableOperand):
             subvalue = (value & 0b11)
             value >>= 2
 
-        print ("CR field remap", self.record.etype, "vector", vector,
-                "subval", subvalue, "value", value)
-
         if self.record.etype is _SVEType.EXTRA2:
             # very reduced range
             if vector:
