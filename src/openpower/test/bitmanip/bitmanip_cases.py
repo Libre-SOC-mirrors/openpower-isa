@@ -28,6 +28,7 @@ def crfbinlog(bf, bfa, bfb, mask):
             if check & (1<<i):
                 lut_index |= 1<<j
         maskbit = (mask >> i) & 0b1
+        lut_index = 3-lut_index # MSB0 inversion
         if (lut & (1<<lut_index)) and maskbit:
             expected |= 1<<i
     return expected
@@ -38,11 +39,11 @@ def ternlogi(rc, rt, ra, rb, imm):
     for i in range(64):
         lut_index = 0
         if rb & 2 ** i:
-            lut_index |= 2 ** 0
+            lut_index |= 2 ** 2
         if ra & 2 ** i:
             lut_index |= 2 ** 1
         if rt & 2 ** i:
-            lut_index |= 2 ** 2
+            lut_index |= 2 ** 0
         if imm & 2 ** lut_index:
             expected |= 2 ** i
     return expected
@@ -55,6 +56,7 @@ def crternlogi(bt, ba, bb, imm):
     for j, check in enumerate(checks):
         if check & 1:
             lut_index |= 1<<j
+    lut_index = 7-lut_index # MSB0 inversion
     if imm & (1<<lut_index):
         expected |= 1
     return expected
@@ -69,6 +71,7 @@ def crfternlogi(bf, bfa, bfb, imm, mask):
             if check & (1<<i):
                 lut_index |= 1<<j
         maskbit = (mask >> i) & 0b1
+        lut_index = 7-lut_index # MSB0 inversion
         if (imm & (1<<lut_index)) and maskbit:
             expected |= 1<<i
     return expected
@@ -216,6 +219,7 @@ class BitManipTestCase(TestAccumulatorBase):
                 lut_index |= 2 ** 1
             if rt & 2 ** i:
                 lut_index |= 2 ** 2
+            lut_index = 7-lut_index # MSB0 inversion
             if imm & 2 ** lut_index:
                 expected |= 2 ** i
         e.intregs[3] = expected
@@ -249,6 +253,7 @@ class BitManipTestCase(TestAccumulatorBase):
                 lut_index |= 2 ** 0
             if ra & 2 ** i:
                 lut_index |= 2 ** 1
+            lut_index = 3-lut_index # MSB0 inversion
             if lut & 2 ** lut_index:
                 expected |= 2 ** i
         e.intregs[3] = expected

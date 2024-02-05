@@ -33,7 +33,7 @@ Pseudo-code:
     result <- [0] * XLEN
     do i = 0 to XLEN - 1
       idx <- (RT)[i] || (RA)[i] || (RB)[i]
-      result[i] <- TLI[7-idx]
+      result[i] <- TLI[idx]
     RT <- result
 
 Special Registers Altered:
@@ -53,7 +53,7 @@ Pseudo-code:
     result <- [0] * 64
     do i = 0 to 63
       idx <- (RA)[i] || (RB)[i]
-      result[i] <- lut[3-idx]
+      result[i] <- lut[idx]
     RT <- result
 
 Description:
@@ -86,7 +86,7 @@ Pseudo-code:
     result <- [0] * 4
     do i = 0 to 3
       idx <- bf[i] || bfa[i] || bfb[i]
-      result[i] <- TLI[7-idx]
+      result[i] <- TLI[idx]
     do i = 0 to 3
         if msk[i] = 1 then
             CR[4*BF+32+i] <- result[i]
@@ -104,7 +104,7 @@ TLI-Form
 Pseudo-code:
 
     idx <- CR[BT+32] || CR[BA+32] || CR[BB+32]
-    CR[BT+32] <- TLI[7-idx]
+    CR[BT+32] <- TLI[idx]
 
 Special Registers Altered:
 
@@ -125,7 +125,7 @@ Pseudo-code:
     result <- [0] * 4
     do i = 0 to 3
       idx <- a[i] || b[i]
-      result[i] <- lut[3-idx]
+      result[i] <- lut[idx]
     do i = 0 to 3
         if msk[i] = 1 then
             CR[4*BF+32+i] <- result[i]
@@ -159,7 +159,7 @@ Pseudo-code:
 
     lut <- CR[4*BFB+32:4*BFB+35]
     idx <- CR[BT+32] || CR[BA+32]
-    CR[BT+32] <- lut[3-idx]
+    CR[BT+32] <- lut[idx]
 
 Special registers altered:
 
