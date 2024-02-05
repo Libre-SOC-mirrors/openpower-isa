@@ -89,14 +89,14 @@ class DDFFirstTestCase(FHDLTestCase):
                 "mtcrf 128, 0",       # clear CR0 (in case VL=0?)
                 # while (i<n and a[i]>m):
                 "sv.minmax./ff=le/m=ge 4, *10, 4, 1", # uses r4 as accumulator
-                #"crternlogi 0,1,2,127"  # test greater/equal or VL=0
-                "cror 0,1,0",           # test for greater or equal, or VL=0
-                "cror 0,2,0",           # test for greater or equal, or VL=0
+                "crternlogi 0,1,2,127",  # test greater/equal or VL=0
+                #"cror 0,1,0",           # test for greater or equal, or VL=0
+                #"cror 0,2,0",           # test for greater or equal, or VL=0
                 "sv.creqv *19,*16,*16", # set mask on already-tested
                 "sv.crand *19,*19,0",   # clear if CR0=0
                 "sv.svstep/mr/m=so 1, 0, 6, 1",  # svstep: get vector dststep
                 "sv.creqv *16,*16,*16", # set mask on already-tested
-                "bc 12,0, -0x4c"            # CR0 lt bit clear, branch back
+                "bc 12,0, -0x48"            # CR0 lt bit clear, branch back
                         ])
         lst = list(lst)
 
