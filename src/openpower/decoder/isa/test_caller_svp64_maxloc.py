@@ -82,26 +82,21 @@ class DDFFirstTestCase(FHDLTestCase):
                 # VL = MIN(CTR,MAXVL=4)
                 "mtcrf 255,0",              # clear CR entirely
                 "setvl 2,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
-                # load VL bytes (update r4 addr) but compressed (dw=8)
-                #"addi 6, 0, 0",             # initialise r6 to zero
-                #"sv.lbzu/pi/dw=8 *6, 1(4)", # should be /lf here as well
                 # while (i<n and a[i]<=m) : i += 1
                 "sv.cmp/ff=gt/m=ge *0,0,*10,4", # truncates VL to min
                 "sv.creqv *16,*16,*16", # set mask on already-tested
                 "setvl 2,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
-                #"sv.addi/mr/sm=ge/dm=ns 4, *4, 0", # r4 = last non-masked value
                 "mtcrf 128, 0",       # clear CR0 (in case VL=0?)
+                # while (i<n and a[i]>m):
                 "sv.minmax./ff=le/m=ge 4, *10, 4, 1", # uses r4 as accumulator
+                #"crternlogi 0,1,2,127"  # test greater/equal or VL=0
                 "cror 0,1,0",           # test for greater or equal, or VL=0
                 "cror 0,2,0",           # test for greater or equal, or VL=0
                 "sv.creqv *19,*16,*16", # set mask on already-tested
-                "sv.crand *19,*19,0", # clear if CR0=0
+                "sv.crand *19,*19,0",   # clear if CR0=0
                 "sv.svstep/mr/m=so 1, 0, 6, 1",  # svstep: get vector dststep
                 "sv.creqv *16,*16,*16", # set mask on already-tested
-                #"sv.addi/dm=1<<r3 *5, 4, 0", # put r4 into vector at r5
                 "bc 12,0, -0x4c"            # CR0 lt bit clear, branch back
-                #"setvl 3,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
-                #"sv.bc/m=ge 16, 19, -0x3c", # until r10[i]>r4 (and dec CTR)
                         ])
         lst = list(lst)
 
