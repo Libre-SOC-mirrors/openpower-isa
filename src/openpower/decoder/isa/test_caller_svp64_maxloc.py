@@ -75,28 +75,28 @@ class DDFFirstTestCase(FHDLTestCase):
             return nm
         """
 
+        # note that m (above) is r4. sv.cmp can be used in the first
+        # while loop because m (r4) does not change. sv.minmax. has
+        # to be used in the key while loop because r4 is sequentially
+        # replaced (mapreduce mode) each time. also note that i is
+        # represented as a bitmask (CR bits 16,20,24,28)
+
         lst = SVP64Asm([
-                "mtspr 9, 3",               # move r3 to CTR
-                "addi 0, 0, 0",             # r0=0
-                #"addi 5, 4, 0",             # copy m(r4) to r5
-                # VL = MIN(CTR,MAXVL=4)
-                "mtcrf 255,0",              # clear CR entirely
-                "setvl 2,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
-                # while (i<n and a[i]<=m) : i += 1
+                # while (i<n)
+                "setvl 2,0,4,0,1,1",            # set MVL=4, VL=MIN(MVL,CTR)
+                #    while (i<n and a[i]<=m) : i += 1
                 "sv.cmp/ff=gt/m=ge *0,0,*10,4", # truncates VL to min
-                "sv.creqv *16,*16,*16", # set mask on already-tested
-                "setvl 2,0,4,0,1,1",        # set MVL=4, VL=MIN(MVL,CTR)
-                "mtcrf 128, 0",       # clear CR0 (in case VL=0?)
-                # while (i<n and a[i]>m):
-                "sv.minmax./ff=le/m=ge 4, *10, 4, 1", # uses r4 as accumulator
-                "crternlogi 0,1,2,127",  # test greater/equal or VL=0
-                #"cror 0,1,0",           # test for greater or equal, or VL=0
-                #"cror 0,2,0",           # test for greater or equal, or VL=0
-                "sv.creqv *19,*16,*16", # set mask on already-tested
-                "sv.crand *19,*19,0",   # clear if CR0=0
-                "sv.svstep/mr/m=so 1, 0, 6, 1",  # svstep: get vector dststep
-                "sv.creqv *16,*16,*16", # set mask on already-tested
-                "bc 12,0, -0x48"            # CR0 lt bit clear, branch back
+                "sv.creqv *16,*16,*16",         # set mask on already-tested
+                "setvl 2,0,4,0,1,1",            # set MVL=4, VL=MIN(MVL,CTR)
+                "mtcrf 128, 0",                 # clear CR0 (in case VL=0?)
+                #    while (i<n and a[i]>m):
+                "sv.minmax./ff=le/m=ge 4,*10,4,1", # uses r4 as accumulator
+                "crternlogi 0,1,2,127",         # test greater/equal or VL=0
+                "sv.crand *19,*16,0",           # clear if CR0.eq=0
+                #      nm = i (count masked bits. could use crweirds here TODO)
+                "sv.svstep/mr/m=so 1, 0, 6, 1", # svstep: get vector dststep
+                "sv.creqv *16,*16,*16",         # set mask on already-tested
+                "bc 12,0, -0x40"                # CR0 lt bit clear, branch back
                         ])
         lst = list(lst)
 
