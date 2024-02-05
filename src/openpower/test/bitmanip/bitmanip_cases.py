@@ -18,6 +18,20 @@ def bmatflip(ra):
     return result
 
 
+def crbinlog(bt, ba, bfb):
+    lut = bfb
+    expected = 0
+    checks = (ba, bt) # LUT positions 1<<0=ba 1<<1=bt
+    lut_index = 0
+    for j, check in enumerate(checks):
+        if check & 1:
+            lut_index |= 1<<j
+    lut_index = 3-lut_index # MSB0 inversion
+    if lut & (1<<lut_index):
+        expected = 1
+    return expected
+
+
 def crfbinlog(bf, bfa, bfb, mask):
     lut = bfb
     expected = bf&~mask # start at BF, mask overwrites masked bits only
@@ -161,6 +175,37 @@ class BitManipTestCase(TestAccumulatorBase):
             bfb = hash_256(f"crfternlogi bfb {i}") % 2 ** 4
             msk = hash_256(f"crfternlogi msk {i}") % 2 ** 4
             self.do_case_crfternlogi(bf, bfa, bfb, imm, msk)
+
+    def do_case_crbinlog(self, bt, ba, bfb):
+        lst = ["crbinlog 4,8,0"]
+        # set up CR
+        cr = CRFields()
+        cr.cr[32+4] = bt     # BT bit
+        cr.cr[32+8] = ba     # BA bit
+        cr.crl[0][0:4] = bfb # BFB *field*
+        lut = bfb
+        initial_cr = cr.cr.asint()
+        print("initial cr", bin(initial_cr), bt, ba, bfb)
+
+        lst = list(SVP64Asm(lst, bigendian))
+        e = ExpectedState(pc=4)
+        e.crregs[1] = crbinlog(bt, ba, bfb) << 3 # overwrites BT
+        e.crregs[2] = ba << 3
+        e.crregs[0] = bfb
+        self.add_case(Program(lst, bigendian), initial_regs=None, expected=e,
+                                       initial_cr=initial_cr)
+
+    def case_crbinlog_0(self):
+        self.do_case_crbinlog(0b1,
+                               0b1,
+                               0x8)
+
+    def case_crbinlog_random(self):
+        for i in range(100):
+            bt = hash_256(f"crbinlog bt {i}") % 2
+            ba = hash_256(f"crbinlog ba {i}") % 2
+            bfb = hash_256(f"crbinlog bfb {i}") % 2 ** 4
+            self.do_case_crbinlog(bt, ba, bfb)
 
     def do_case_crfbinlog(self, bf, bfa, bfb, mask):
         lst = ["crfbinlog 3,4,5,%d" % mask]
