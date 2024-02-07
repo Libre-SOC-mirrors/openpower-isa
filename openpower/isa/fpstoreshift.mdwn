@@ -4,7 +4,7 @@
 
 X-Form
 
-* stfsx FRS,RA,RB,SH
+* stfssx FRS,RA,RB,SH
 
 Pseudo-code:
 
@@ -28,7 +28,7 @@ Special Registers Altered:
 
 X-Form
 
-* stfsux FRS,RA,RB,SH
+* stfsusx FRS,RA,RB,SH
 
 Pseudo-code:
 
@@ -57,7 +57,7 @@ Special Registers Altered:
 
 X-Form
 
-* stfdx FRS,RA,RB,SH
+* stfdsx FRS,RA,RB,SH
 
 Pseudo-code:
 
@@ -81,7 +81,7 @@ Special Registers Altered:
 
 X-Form
 
-* stfdux FRS,RA,RB,SH
+* stfdusx FRS,RA,RB,SH
 
 Pseudo-code:
 
@@ -109,7 +109,7 @@ Special Registers Altered:
 
 X-Form
 
-* stfiwx FRS,RA,RB,SH
+* stfiwsx FRS,RA,RB,SH
 
 Pseudo-code:
 
