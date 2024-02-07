@@ -30,7 +30,7 @@ Special Registers Altered:
 
     None
 
-# Store Floating-Point Double with Update Indexed
+# Store Floating-Point Double with Update Shifted Indexed
 
 X-Form
 

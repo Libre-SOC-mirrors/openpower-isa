@@ -6,7 +6,7 @@
 <!-- https://bugs.libre-soc.org/show_bug.cgi?id=1055 -->
 <!-- https://libre-soc.org/openpower/sv/rfc/ls004/ -->
 
-# Store Byte with Post-Update Indexed
+# Store Byte with Post-Update Indexed Shifted
 
 Z23-Form
 
@@ -34,7 +34,7 @@ Special Registers Altered:
 
     None
 
-# Store Halfword with Post-Update Indexed
+# Store Halfword with Post-Update Indexed Shifted
 
 Z23-Form
 
@@ -62,7 +62,7 @@ Special Registers Altered:
 
     None
 
-# Store Word with Post-Update Indexed
+# Store Word with Post-Update Indexed Shifted
 
 Z23-Form
 
@@ -90,7 +90,7 @@ Special Registers Altered:
 
     None
 
-# Store Doubleword with Post-Update Indexed
+# Store Doubleword with Post-Update Indexed Shifted
 
 Z23-Form
 
