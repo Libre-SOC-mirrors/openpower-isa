@@ -1,0 +1,154 @@
+<!-- DRAFT Floating-point Shifted storage access instructions. -->
+
+# Load Floating-Point Single Indexed Shifted
+
+X-Form
+
+* lfssx FRT,RA,RB,SH
+
+Pseudo-code:
+
+    EA <- (RA|0) + (RB)<<(SH+1)
+    FRT <- DOUBLE(MEM(EA, 4))
+
+Description:
+
+    Let the effective address (EA) be the sum of (RA|0) with
+    the contents of register RB shifted by (SH+1).
+
+    The word in storage addressed by EA is interpreted as
+    a floating-point single-precision operand. This word is
+    converted to floating-point double format (see
+    page 138) and placed into register FRT.
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Single with Update Indexed Shifted
+
+X-Form
+
+* lfsusx FRT,RA,RB,SH
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)<<(SH+1)
+    FRT <- DOUBLE(MEM(EA, 4))
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and the contents of register RA.
+
+    The word in storage addressed by EA is interpreted as
+    a floating-point single-precision operand. This word is
+    converted to floating-point double format (see
+    page 138) and placed into register FRT.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Double Indexed Shifted
+
+X-Form
+
+* lfdsx FRT,RA,RB,SH
+
+Pseudo-code:
+
+    EA <- (RA|0) + (RB)<<(SH+1)
+    FRT <- MEM(EA, 8)
+
+Description:
+
+    Let the effective address (EA) be the sum of (RA|0) with
+    the contents of register RB shifted by (SH+1).
+
+    The doubleword in storage addressed by EA is loaded
+    into register FRT.
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point Double with Update Indexed
+
+X-Form
+
+* lfdusx FRT,RA,RB,SH
+
+Pseudo-code:
+
+    EA <- (RA) + (RB)<<(SH+1)
+    FRT <- MEM(EA, 8)
+    RA <- EA
+
+Description:
+
+    Let the effective address (EA) be the sum of the contents of
+    register RB shifted by (SH+1), and the contents of register RA.
+
+    The doubleword in storage addressed by EA is loaded
+    into register FRT.
+
+    EA is placed into register RA.
+
+    If RA=0, the instruction form is invalid.
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point as Integer Word Algebraic Indexed Shifted
+
+X-Form
+
+* lfiwasx FRT,RA,RB,SH
+
+Pseudo-code:
+
+    EA <- (RA|0) + (RB)<<(SH+1)
+    FRT <- EXTS(MEM(EA, 4))
+
+Description:
+
+    Let the effective address (EA) be the sum of (RA|0) with
+    the contents of register RB shifted by (SH+1).
+
+    The word in storage addressed by EA is loaded into
+    FRT [32:63]. FRT [0:31] are filled with a copy of bit 0 of the
+    loaded word.
+
+Special Registers Altered:
+
+    None
+
+# Load Floating-Point as Integer Word Zero Indexed Shifted
+
+X-Form
+
+* lfiwzsx FRT,RA,RB
+
+Pseudo-code:
+
+    EA <- (RA|0) + (RB)<<(SH+1)
+    FRT <- [0]*32 || MEM(EA, 4)
+
+Description:
+
+    Let the effective address (EA) be the sum of (RA|0) with
+    the contents of register RB shifted by (SH+1).
+
+    The word in storage addressed by EA is loaded into
+    FRT [32:63]. FRT [0:31] are set to 0.
+
+Special Registers Altered:
+
+    None
