@@ -77,12 +77,12 @@ class DDFFirstTestCase(FHDLTestCase):
         self.sv_maxloc([9,0,10,11])
 
     def test_sv_maxloc_random(self):
-        random.seed(1) # set the same seed (consistent test)
+        random.seed(2) # set the same seed (consistent test)
         for i in range(50):
             array = []
             for j in range(4):
                 array.append(random.randint(0, 20))
-            with self.subTest(i=i):
+            with self.subTest(name="test_sv_maxloc_random_%d" % i, i=i):
                 self.sv_maxloc(array)
 
     def sv_maxloc(self, ra):
@@ -101,21 +101,20 @@ class DDFFirstTestCase(FHDLTestCase):
         # represented as a bitmask (CR bits 16,20,24,28)
 
         lst = SVP64Asm([
-            # while (i<n)
-            "setvl 2,0,4,0,1,1",                  # set MVL=4, VL=MIN(MVL,CTR)
-            #    while (i<n and a[i]<=m) : i += 1
-            "sv.cmp/ff=gt/m=ge *0,0,*10,4",       # truncates VL to min
-            "sv.creqv *16,*16,*16",               # set mask on already-tested
-            "setvl 2,0,4,0,1,1",                  # set MVL=4, VL=MIN(MVL,CTR)
-            "mtcrf 128, 0",                       # clear CR0 (in case VL=0?)
-            #    while (i<n and a[i]>m):
-            "sv.minmax./ff=le/m=ge/mr 4,*10,4,1", # uses r4 as accumulator
-            "crternlogi 0,1,2,127",               # test greater/equal or VL=0
-            "sv.crand *19,*16,0",                 # clear if CR0.eq=0
-            #      nm = i (count masked bits. could use crweirds here TODO)
-            "sv.svstep/mr/m=so 1, 0, 6, 1",       # svstep: get vector dststep
-            "sv.creqv *16,*16,*16",               # set mask on already-tested
-            "bc 12,0, -0x40"                      # CR0 lt bit clear, branch back
+          # while (i<n)
+          "setvl 2,0,4,0,1,1",                  # set MVL=4, VL=MIN(MVL,CTR)
+          #    while (i<n and a[i]<=m) : i += 1
+          "sv.cmp/ff=gt/m=ge *0,0,*10,4",       # truncates VL to min
+          "sv.creqv *16,*16,*16",               # set mask on already-tested
+          "setvl 2,0,4,0,1,1",                  # set MVL=4, VL=MIN(MVL,CTR)
+          "mtcrf 128, 0",                       # clear CR0 (in case VL=0?)
+          #    while (i<n and a[i]>m):
+          "sv.minmax./ff=le/m=ge/mr 4,*10,4,1", # uses r4 as accumulator
+          "sv.crnand/m=lt/zz *19,*16,0",        # combine LT if CR0.eq=0
+          #      nm = i (count masked bits. could use crweirds here TODO)
+          "sv.svstep/mr/m=so 1, 0, 6, 1",       # svstep: get vector dststep
+          "sv.creqv *16,*16,*16",               # set mask on already-tested
+          "bc 12,0, -0x3c"                      # CR0 lt bit clear, branch back
                         ])
         lst = list(lst)
 
