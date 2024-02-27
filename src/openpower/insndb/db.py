@@ -276,7 +276,7 @@ def main():
 
     def traverse(root, visitor, walker):
         with visitor(root):
-            for (node, *_) in walker(root):
+            for node in walker(root):
                 traverse(root=node, visitor=visitor, walker=walker)
 
     traverse(root=root, visitor=visitor, walker=Walker())
