@@ -4,18 +4,20 @@ on:
     branches:
         - __mirror
   schedule:
-    # Run everyday at 3 AM UTC
-    - cron: '0 3 * * *'
+    # Run everyday at 3 AM UTC on Sunday
+    - cron: '0 3 * * 0'
   workflow_dispatch:
 
 jobs:
   mirror:
     runs-on: ubuntu-latest
     name: mirror
+    permissions:
+      contents: write
     steps:
       - name: mirror
         id: mirror
-        uses: bridgelightcloud/github-mirror-action@v2
+        uses: Libre-SOC-mirrors/github-mirror-action@main
         with:
-          origin: ''
+          origin: 'https://git.libre-soc.org/git/openpower-isa.git'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
